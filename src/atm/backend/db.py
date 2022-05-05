@@ -19,7 +19,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS member (memberid INT, name TEXT, avatar
 cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, truckersmpid BIGINT, steamid BIGINT, data TEXT, status INT, closedBy BIGINT, closedTimestamp BIGINT)")
 # status = 0: pending | 1: accepted | 2: declined
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (discordid BIGINT, discordname TEXT, email TEXT, data TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(30), discordid BIGINT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
 conn.commit()
 """
 CREATE INDEX auditlog_memberid ON auditlog (memberid);

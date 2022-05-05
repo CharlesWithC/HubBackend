@@ -34,14 +34,23 @@ async def user(response: Response, authorization: Optional[str] = Header(None)):
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT data FROM session WHERE token = '{stoken}'")
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    cur.execute(f"SELECT data FROM user WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
     data = json.loads(b64d(t[0][0]))
     access_token = data["access_token"]
     user_data = discord_auth.get_user_data_from_token(access_token)
+    cur.execute(f"SELECT memberid FROM member WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    if len(t) > 0:
+        user_data["memberid"] = t[0][0]
+    else:
+        user_data["memberid"] = None
     if "message" in user_data.keys():
         response.status_code = 401
         return {"error": True, "descriptor": user_data["message"]}
@@ -62,10 +71,8 @@ async def login(code: str, response: Response):
         cur = conn.cursor()
         stoken = str(uuid4())
         cur.execute(f"DELETE FROM user WHERE discordid = {user_data['id']}")
-        cur.execute(f"INSERT INTO user (discordid, discordname, email, data) VALUES \
-            ('{user_data['id']}', '{b64e(user_data['username'])}', '{b64e(user_data['email'])}', '{b64e(json.dumps(tokens))}')")
-        cur.execute(f"INSERT INTO session (token, discordid, timestamp) VALUES \
-            ('{stoken}', '{user_data['id']}', '{int(time.time())}')")
+        cur.execute(f"INSERT INTO user VALUES ('{user_data['id']}', '{b64e(user_data['username'])}', '{b64e(user_data['email'])}', '{b64e(json.dumps(tokens))}')")
+        cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}')")
         conn.commit()
         user_data["token"] = stoken
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
