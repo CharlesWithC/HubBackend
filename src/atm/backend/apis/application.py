@@ -13,7 +13,7 @@ from db import newconn
 from functions import *
 
 @app.post("/atm/application")
-async def newApplication(response: Response, authorization: Optional[str] = Header(None)):
+async def newApplication(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -35,8 +35,6 @@ async def newApplication(response: Response, authorization: Optional[str] = Head
 
     form = await request.form()
     apptype = form["apptype"]
-    truckerspmid = form["truckersmpid"]
-    steamid = form["steamid"]
     data = b64e(json.dumps(form["data"]))
 
     # get application id count(*)
@@ -46,13 +44,13 @@ async def newApplication(response: Response, authorization: Optional[str] = Head
     if len(t) != 0:
         applicationid = t[0][0]
 
-    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, {truckerspmid}, {steamid}, '{data}', 0, 0, 0)")
+    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, 0, 0)")
     conn.commit()
 
     return {"error": False, "response": {"message": "Application added", "applicationid": applicationid}}
 
 @app.patch("/atm/application")
-async def updateApplication(response: Response, authorization: Optional[str] = Header(None)):
+async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -74,17 +72,35 @@ async def updateApplication(response: Response, authorization: Optional[str] = H
 
     form = await request.form()
     applicationid = form["applicationid"]
-    truckerspmid = form["truckersmpid"]
-    steamid = form["steamid"]
     data = b64e(json.dumps(form["data"]))
 
-    cur.execute(f"UPDATE application SET truckersmpid = {truckerspmid}, steamid = {steamid}, data = '{data}' WHERE applicationid = {applicationid}")
+    cur.execute(f"SELECT discordid, data, status FROM application WHERE applicationid = {applicationid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        # response.status_code = 400
+        return {"error": True, "descriptor": "Application not found"}
+    if discordid != t[0][0]:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "You are not the applicant"}
+    if t[0][2] != 0:
+        # response.status_code = 400
+        if t[0][2] == 1:
+            return {"error": True, "descriptor": "Application already accepted"}
+        elif t[0][2] == 2:
+            return {"error": True, "descriptor": "Application already declined"}
+        else:
+            return {"error": True, "descriptor": "Application already processed, status unknown."}
+    if data == t[0][1]:
+        # response.status_code = 401
+        return {"error": False, "response": {"message": "Application not updated: Data not changed", "applicationid": applicationid}}
+
+    cur.execute(f"UPDATE application SET data = '{data}' WHERE applicationid = {applicationid}")
     conn.commit()
 
     return {"error": False, "response": {"message": "Application updated", "applicationid": applicationid}}
 
 @app.post("/atm/application/status")
-async def updateApplicationStatus(response: Response, authorization: Optional[str] = Header(None)):
+async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -103,13 +119,15 @@ async def updateApplicationStatus(response: Response, authorization: Optional[st
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT memberid, roles FROM member WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) > 0:
         adminid = t[0][0]
-        roles = t[0][1]
+        roles = t[0][1].split(",")
+        if roles == [""]:
+            roles = []
         adminhighest = 99999
-        for i in roles.split(","):
+        for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
         if adminhighest >= 30:
@@ -127,7 +145,7 @@ async def updateApplicationStatus(response: Response, authorization: Optional[st
     return {"error": False, "response": {"message": "Application status updated", "applicationid": applicationid, "status": status}}
 
 @app.get("/atm/application")
-async def getApplication(response: Response, applicationid: int, authorization: Optional[str] = Header(None)):
+async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -146,30 +164,32 @@ async def getApplication(response: Response, applicationid: int, authorization: 
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT memberid, roles FROM member WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
     if len(t) > 0:
         adminid = t[0][0]
-        roles = t[0][1]
-        for i in roles.split(","):
+        roles = t[0][1].split(",")
+        if roles == [""]:
+            roles = []
+        for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
+        # response.status_code = 404
         return {"error": True, "descriptor": "404: Not found"}
     
     if adminhighest >= 30 and discordid != t[0][1]:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    return {"error": False, "response": {"message": "Application found", "application": t[0], "truckersmpid": t[0][2], "steamid": t[0][3], "data": json.loads(b64d(t[0][4]))}}
+    return {"error": False, "response": {"message": "Application found", "application": t[0], "steamid": t[0][3], "data": json.loads(b64d(t[0][4]))}}
 
 @app.get("/atm/application/list")
-async def getApplicationList(response: Response, authorization: Optional[str] = Header(None)):
+async def getApplicationList(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -188,13 +208,15 @@ async def getApplicationList(response: Response, authorization: Optional[str] = 
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT memberid, roles FROM member WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
     if len(t) > 0:
         adminid = t[0][0]
-        roles = t[0][1]
-        for i in roles.split(","):
+        roles = t[0][1].split(",")
+        if roles == [""]:
+            roles = []
+        for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
 
@@ -205,11 +227,11 @@ async def getApplicationList(response: Response, authorization: Optional[str] = 
     cur.execute(f"SELECT * FROM application")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
+        # response.status_code = 404
         return {"error": True, "descriptor": "404: Not found"}
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "discordid": tt[1], "truckersmpid": tt[2], "steamid": tt[3]})
+        ret.append({"applicationid": tt[0], "discordid": tt[1]})
 
-    return {"error": False, "response": {"message": "Application list found", "applications": ret}}
+    return {"error": False, "response": ret}

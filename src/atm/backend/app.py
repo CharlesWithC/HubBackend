@@ -19,4 +19,8 @@ if os.path.exists("./config.json"):
     config_txt = open("./config.json","r").read()
     config = Dict2Obj(json.loads(config_txt))
     
-app = FastAPI()
+app = FastAPI(openapi_url="/atm/openapi.json", docs_url="/atm/doc", redoc_url=None)
+def openapi():
+    with open("openapi.json", "r") as openapi:
+        return json.load(openapi)
+app.openapi = openapi

@@ -7,44 +7,35 @@
     <script src="/js/functions.js"></script>
 	<link rel="stylesheet" href="/css/login.css">
     <script>
-		function DiscordLogin(){
-			location.href='https://drivershub.charlws.com/atm/user/login';
-		}
         function validate(){
-            token = getUrlParameter("token");
+            var sPageURL = window.location.search.substring(1),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/validate",
-                type: "GET",
+                url: "https://drivershub.charlws.com/atm/user/steambind",
+                type: "POST",
                 dataType: "json",
                 headers: {
-                    "Authorization": "Bearer " + token
+                    "Authorization": "Bearer " + localStorage.getItem("token")
+                },
+                data: {
+                    "openid": sPageURL
                 },
                 success: function(data){
                     if(data.error == false){
-                        localStorage.setItem("token", token);
-                        if(data.response.extra == ""){
-                            window.location.href = "/";
-                            $("#msg").html("You are being redirected to Drivers Hub.");
-                        } else if(data.response.extra == "steamauth") {
-                            $("#title").html("Steam Authorization");
-                            $("#msg").html("We need to verify your Steam account in order to verify your TruckersMP account. Only your steam id is stored during this authorization.");
-                            $("#steamauth").show();
-                        } else if(data.response.extra == "truckersmp") {
-                            $("#title").html("TruckersMP Bind");
-                            $("#msg").html("Enter your TruckersMP User ID and we'll check if it's bound to your steam account.");
-                            $("#truckersmpbind").show();
-                        }
+                        $("#title").html("TruckersMP Bind");
+                        $("#msg").html("Enter your TruckersMP User ID and we'll check if it's bound to your steam account.");
+                        $("#truckersmpbind").show();
                     }
                     else{
                         $("#msg").html("Invalid token, please retry.");
-                        $("#loginbtn").show();
                     }
                 },
                 error: function(data){
                     $("#msg").html("Invalid token, please retry.");
-                    $("#loginbtn").show();
                 }
-            });
+            });            
         }
         function TMPBind(){
             $.ajax({
@@ -86,12 +77,9 @@
 		<!-- Login form -->
 		<form id="login">
 			<header>
-                <h1 id="title">Discord Authorization</h1>
-                <p id="msg">Validating authorization token...</p>
+                <h1 id="title">Steam Authorization</h1>
+                <p id="msg">Validating steam authorization...</p>
 			</header>
-            <section id="loginbtn" style="display:none">
-                <button type="button" onclick="DiscordLogin();">Login With Discord</button>
-            </section>
             <section id="steamauth" style="display:none">
                 <a href="https://drivershub.charlws.com/atm/user/steamauth">
                     <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png">
