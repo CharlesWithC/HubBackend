@@ -7,6 +7,10 @@ from fastapi.responses import RedirectResponse
 from discord_oauth2 import DiscordAuth
 from uuid import uuid4
 import json, time
+from datetime import datetime
+import discord, asyncio
+from discord import Webhook
+import aiohttp
 
 from app import app, config
 from db import newconn
@@ -35,7 +39,8 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     form = await request.form()
     apptype = form["apptype"]
-    data = b64e(json.dumps(form["data"]))
+    data = json.loads(form["data"])
+    data = b64e(json.dumps(data))
 
     # get application id count(*)
     cur.execute(f"SELECT COUNT(*) FROM application")
@@ -46,6 +51,27 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, 0, 0)")
     conn.commit()
+
+    data = json.loads(form["data"])
+    apptype = int(apptype)
+    APPTYPE = {1: "Driver", 2: "Staff", 3: "LOA"}
+    cur.execute(f"SELECT name, avatar, email FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    msg = f"Applicant: <@{discordid}> (`{discordid}`)\nEmail: {t[0][2]}\n\n"
+    for d in data.keys():
+        msg += f"**{d}**: {data[d]}\n\n"
+
+    async with aiohttp.ClientSession() as session:
+        webhook = Webhook.from_url(config.appwebhook, session=session)
+
+        embed = discord.Embed(title = f"New {APPTYPE[apptype]} Application", description = msg, color = 0x770202)
+        if t[0][1].startswith("a_"):
+            embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
+        else:
+            embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
+        embed.set_footer(text = f"Application ID: {applicationid} ")
+        embed.timestamp = datetime.now()
+        await webhook.send(embed = embed)
 
     return {"error": False, "response": {"message": "Application added", "applicationid": applicationid}}
 
@@ -72,7 +98,8 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     form = await request.form()
     applicationid = form["applicationid"]
-    data = b64e(json.dumps(form["data"]))
+    data = json.loads(form["data"])
+    data = b64e(json.dumps(data))
 
     cur.execute(f"SELECT discordid, data, status FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
@@ -124,8 +151,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if len(t) > 0:
         adminid = t[0][0]
         roles = t[0][1].split(",")
-        if roles == [""]:
-            roles = []
+        while "" in roles:
+            roles.remove("")
         adminhighest = 99999
         for i in roles:
             if int(i) < adminhighest:
@@ -139,7 +166,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     status = form["status"]
 
     cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {int(time.time())} WHERE applicationid = {applicationid}")
-    cur.execute(f"INSERT INTO auditlog VALUES ({adminid}, 'Updated application {applicationid} status to {status}', {int(time.time())})")
+    await AuditLog(adminid, f"Updated application {applicationid} status to {status}")
     conn.commit()
 
     return {"error": False, "response": {"message": "Application status updated", "applicationid": applicationid, "status": status}}
@@ -170,8 +197,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
     if len(t) > 0:
         adminid = t[0][0]
         roles = t[0][1].split(",")
-        if roles == [""]:
-            roles = []
+        while "" in roles:
+            roles.remove("")
         for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
@@ -214,8 +241,8 @@ async def getApplicationList(request: Request, response: Response, authorization
     if len(t) > 0:
         adminid = t[0][0]
         roles = t[0][1].split(",")
-        if roles == [""]:
-            roles = []
+        while "" in roles:
+            roles.remove("")
         for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
@@ -224,7 +251,7 @@ async def getApplicationList(request: Request, response: Response, authorization
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT * FROM application")
+    cur.execute(f"SELECT applicationid, discordid FROM application")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
@@ -232,6 +259,6 @@ async def getApplicationList(request: Request, response: Response, authorization
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "discordid": tt[1]})
+        ret.append({"applicationid": tt[0], "discordid": f"{tt[1]}"})
 
     return {"error": False, "response": ret}

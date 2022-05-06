@@ -24,3 +24,9 @@ def openapi():
     with open("openapi.json", "r") as openapi:
         return json.load(openapi)
 app.openapi = openapi
+
+# import discord
+# from discord.ext import commands,tasks
+
+# intents = discord.Intents().all()
+# bot = commands.Bot(command_prefix='dh?', intents=intents)

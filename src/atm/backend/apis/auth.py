@@ -25,37 +25,9 @@ discord_auth = DiscordAuth(client_id, client_secret, callback_url)
 async def userLogin():
     # login_url = discord_auth.login()
     return RedirectResponse(url=oauth2_url, status_code=302)
-
-@app.get("/atm/user/userid")
-async def getuserid(request: Request, response: Response, authorization: str = Header(None)):
-    if authorization is None:
-        response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    cur.execute(f"SELECT userid FROM user WHERE discordid = '{discordid}'")
-    t = cur.fetchall()
-    userid = t[0][0]
-    if userid == -1:
-        # response.status_code = 400
-        return {"error": True, "descriptor": "User is not yet a member."}
-    return {"error": False, "response": {"userid": userid}}
-
+    
 @app.get('/atm/user/callback')
-async def userCallback(code: str, response: Response):
+async def userCallback(code: str, request: Request, response: Response):
     tokens = discord_auth.get_tokens(code)
     if "access_token" in tokens.keys():
         user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
@@ -75,11 +47,11 @@ async def userCallback(code: str, response: Response):
         email = user_data['email']
         email = email.replace("'", "''")
         if len(t) == 0:
-            cur.execute(f"INSERT INTO user VALUES (-1, '{user_data['id']}', '{username}', '{user_data['avatar']}', '',\
+            cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{user_data['avatar']}', '',\
                 '{email}', 0, 0, '', {int(time.time())})")
         else:
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
-        cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}')")
+        cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
         conn.commit()
         user_data["token"] = stoken
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
@@ -100,12 +72,13 @@ async def userValidate(response: Response, authorization: str = Header(None)):
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
     cur.execute(f"SELECT steamid, truckersmpid FROM user WHERE discordid = '{t[0][0]}'")
     t = cur.fetchall()
     steamid = t[0][0]
@@ -115,7 +88,7 @@ async def userValidate(response: Response, authorization: str = Header(None)):
         extra = "steamauth"
     elif truckersmpid == 0:
         extra = "truckersmp"
-    return {"error": False, "response": {"message": "Validated", "discordid": discordid, "extra": extra}}
+    return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
 @app.get("/atm/user/steamauth")
 async def steamOpenid(response: Response):
@@ -240,126 +213,3 @@ async def userRevoke(request: Request, response: Response, authorization: str = 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     conn.commit()
     return {"error": False, "response": {"response_message": "Token revoked"}}
-
-@app.post('/atm/user/ban')
-async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    if authorization is None:
-        response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    if adminroles == ['']:
-        adminroles = []
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 30:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    
-    form = await request.form()
-    discordid = form["discordid"]
-    try:
-        discordid = int(discordid)
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": "Invalid discordid."}
-
-    cur.execute(f"SELECT roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) > 0:
-        roles = t[0][0]
-        userroles = t[0][0].split(",")
-        if userroles == ['']:
-            userroles = []
-        userhighest = 99999
-        for i in userroles:
-            if int(i) < userhighest:
-                userhighest = int(i)
-        if userhighest <= adminhighest:
-            # response.status_code = 401
-            return {"error": True, "descriptor": "User has higher / equal role."}
-
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"INSERT INTO banned VALUES ({discordid})")
-        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
-        conn.commit()
-        return {"error": False, "response": {"response_message": "User banned.", "discordid": discordid}}
-    else:
-        return {"error": True, "descriptor": "User already banned."}
-
-@app.post('/atm/user/unban')
-async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    if authorization is None:
-        response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    if adminroles == ['']:
-        adminroles = []
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 30:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    
-    form = await request.form()
-    discordid = form["discordid"]
-    try:
-        discordid = int(discordid)
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": "Invalid discordid."}
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        return {"error": True, "descriptor": "User not banned."}
-    else:
-        cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
-        conn.commit()
-        return {"error": False, "response": {"response_message": "User unbanned.", "discordid": discordid}}

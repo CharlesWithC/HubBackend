@@ -83,6 +83,83 @@
                 }
             }
         },
+        "/atm/user/info": {
+            "get": {
+                "summary": "Get User Information",
+                "tags": ["user"],
+                "operationId": "getUserInfo",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/user/bio": {
+            "post": {
+                "summary": "Update User Bio",
+                "tags": ["user"],
+                "operationId": "updateUserBio",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "bio": {
+                                        "description": "Bio (Max length 500)",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["bio"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/user/validate": {
             "get": {
                 "summary": "Validate Token",
@@ -141,6 +218,36 @@
                         }
                     }
                 }
+            }
+        },
+        "/atm/user/list": {
+            "get": {
+                "summary": "Get User List (Not registered members)",
+                "tags": ["user"],
+                "operationId": "getUserList",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "bearerAuth": []
+                }]
             }
         },
         "/atm/user/ban": {
@@ -503,9 +610,6 @@
                 "summary": "Get All Roles",
                 "tags": ["member"],
                 "operationId": "getAllRoles",
-                "security": [{
-                    "bearerAuth": []
-                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -572,7 +676,7 @@
                                 "type": "object",
                                 "properties": {
                                     "apptype": {
-                                        "description": "Application Type (driver 1 / staff 2)",
+                                        "description": "Application Type (driver 1 / staff 2 / LOA 3)",
                                         "type": "integar"
                                     },
                                     "data": {

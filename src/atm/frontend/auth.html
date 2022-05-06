@@ -5,7 +5,7 @@
     <title>Authorization - At The Mile Logistics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/js/functions.js"></script>
-	<link rel="stylesheet" href="/css/login.css">
+	<link rel="stylesheet" href="css/login.css">
     <script>
 		function DiscordLogin(){
 			location.href='https://drivershub.charlws.com/atm/user/login';
@@ -26,12 +26,24 @@
                             window.location.href = "/";
                             $("#msg").html("You are being redirected to Drivers Hub.");
                         } else if(data.response.extra == "steamauth") {
-                            $("#title").html("Steam Authorization");
-                            $("#msg").html("We need to verify your Steam account in order to verify your TruckersMP account. Only your steam id is stored during this authorization.");
+                            // Format title
+                            $("#title").html("Steam Authorization Needed <br>");
+                            $("#title").css("font-size", "1.5em");
+                            
+                            // Format message
+                            $("#msg").html("We need to check your steam account to ensure: <br><br> - You own the game <br> - To check that you are a truckersMP user.");
+                            
+                            // Show steam openID button
                             $("#steamauth").show();
                         } else if(data.response.extra == "truckersmp") {
-                            $("#title").html("TruckersMP Bind");
-                            $("#msg").html("Enter your TruckersMP User ID and we'll check if it's bound to your steam account.");
+                            // Format title
+                            $("#title").html("TruckersMP Connection");
+                            $("#title").css("font-size", "1.5em");
+                            
+                            // Format message
+                            $("#msg").html("Enter your TruckersMP User ID below <br> and we'll check if it's bound to your steam account.");
+                            
+                            // Show the ID div
                             $("#truckersmpbind").show();
                         }
                     }
@@ -72,7 +84,7 @@
                 }
             });        
         }
-        $(document).ready(function(){
+        $(document).ready(function() {
             validate();
         });
     </script>
@@ -94,11 +106,12 @@
             </section>
             <section id="steamauth" style="display:none">
                 <a href="https://drivershub.charlws.com/atm/user/steamauth">
-                    <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png">
+                    <br>
+                    <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
                 </a>
             </section>
             <section id="truckersmpbind" style="display:none">
-                <input type="number" id="truckersmpid" placeholder="TruckersMP User ID">
+                <input type="text" id="truckersmpid" placeholder="TruckersMP User ID" style="display: block; margin-left: auto; margin-right: auto; width: 50%;" class="hover">
                 <br>
                 <button type="button" onclick="TMPBind();">Check</button>
             </section>

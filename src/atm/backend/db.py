@@ -19,7 +19,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, t
 cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, data TEXT,\
      status INT, closedBy BIGINT, closedTimestamp BIGINT)")
 # status = 0: pending | 1: accepted | 2: declined
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")
 conn.commit()
 """

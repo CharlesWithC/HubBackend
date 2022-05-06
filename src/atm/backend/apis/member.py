@@ -14,8 +14,10 @@ from functions import *
 
 ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operating Officer", \
     4: "Chief Administrative Officer", 5: "Chief Technology Officier", 9: "Leadership", 10: "Lead Developer", 15: "Tester", \
-        20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Development Staff", \
-            40: "Event Manager", 41: "Event Staff", 50: "Media Team", 100: "Driver", 10000: "External Staff"}
+        20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Leave of absence", 31: "Development Staff", \
+            40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
+                60: "Convoy Supervisor", 61: "Convoy Control",\
+                 100: "Driver", 10000: "External Staff"}
 
 @app.get("/atm/member/list")
 async def memberList(request: Request, response: Response, authorization: str = Header(None)):
@@ -47,11 +49,11 @@ async def memberList(request: Request, response: Response, authorization: str = 
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name FROM user ORDER BY userid ASC")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid >= 0 ORDER BY userid ASC")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"userid": tt[0], "name": tt[1]})
+        ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}"})
     return {"error": False, "response": ret}
     
 @app.get('/atm/member/info')
@@ -81,8 +83,8 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
-    if adminroles == ['']:
-        adminroles = []
+    while "" in adminroles:
+        adminroles.remove("")
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
@@ -97,7 +99,7 @@ async def member(response: Response, userid: int, authorization: str = Header(No
             # response.status_code = 404
             return {"error": True, "descriptor": "Member not found."}
         roles = [int(i) for i in t[0][3].split(",")]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": t[0][5], "steamid": t[0][6]}}
+        return {"error": False, "response": {"userid": userid, "username": t[0][1], "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -105,10 +107,10 @@ async def member(response: Response, userid: int, authorization: str = Header(No
             # response.status_code = 404
             return {"error": True, "descriptor": "Member not found."}
         roles = t[0][3].split(",")
-        if roles == [""]:
-            roles = []
+        while "" in roles:
+            roles.remove("")
         roles = [int(i) for i in roles]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "email": t[0][8], "discordid":t[0][0], "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": t[0][5], "steamid": t[0][6]}}
+        return {"error": False, "response": {"userid": userid, "username": t[0][1], "email": t[0][8], "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
 
 @app.post('/atm/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
@@ -137,8 +139,8 @@ async def addMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
-    if adminroles == ['']:
-        adminroles = []
+    while "" in adminroles:
+        adminroles.remove("")
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
@@ -158,7 +160,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     if len(t) > 0:
         userid = t[0][0]
     
-    cur.execute(f"SELECT userid, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 400
@@ -169,9 +171,9 @@ async def addMember(request: Request, response: Response, authorization: str = H
     if t[0][1] == 0 or t[0][2] == 0:
         # response.status_code = 400
         return {"error": True, "descriptor": "User must have verified their TruckersMP and Steam account."}
-    
+    name = t[0][3]
     cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
-    cur.execute(f"INSERT INTO auditlog VALUES ({adminid}, 'Added member {userid} (Discord ID {discordid})', {int(time.time())})")
+    await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
     conn.commit()
 
     return {"error": False, "response": {"message": "Member added", "userid": userid}}    
@@ -203,8 +205,8 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
-    if adminroles == ['']:
-        adminroles = []
+    while "" in adminroles:
+        adminroles.remove("")
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
@@ -213,17 +215,19 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     form = await request.form()
     userid = form["userid"]
     roles = form["roles"].split(",")
+    while "" in roles:
+        roles.remove("")
     roles = [int(i) for i in roles]
-    cur.execute(f"SELECT roles FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT name, roles FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
         return {"error": True, "descriptor": "Member not found."}
-    oldroles = t[0][0].split(",")
-    if oldroles == [""]:
-        oldroles = []
-    else:
-        oldroles = [int(i) for i in oldroles]
+    username = t[0][0]
+    oldroles = t[0][1].split(",")
+    while "" in oldroles:
+        oldroles.remove("")
+    oldroles = [int(i) for i in oldroles]
     addedroles = []
     removedroles = []
     for role in roles:
@@ -249,13 +253,13 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
 
-    audit = f"Updated {userid} roles: "
+    audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
     for add in addedroles:
-        audit += f"+{ROLES[add]},"
+        audit += f"**+** {ROLES[add]}\n"
     for remove in removedroles:
-        audit += f"-{ROLES[remove]},"
+        audit += f"**-** {ROLES[remove]}\n"
     audit = audit[:-1].replace("'","''")
-    cur.execute(f"INSERT INTO auditlog VALUES ({adminid}, '{audit}', {int(time.time())})")
+    await AuditLog(adminid, audit)
     conn.commit()
 
     return {"error": False, "response": {"message": "Roles updated.", "roles": roles}}

@@ -4,6 +4,21 @@
   font-family: 'Nunito' !important;
 }
 
+.hover {
+  position: relative;
+  top: 30%;
+  margin: 0 auto;
+  text-align: center;
+  width: 60%;
+  transition: transform 300ms ease-in-out;
+  transition: 600ms ease-in-out;
+}
+
+.hover:hover {
+  transform: scale(1.1, 1.1);
+  border: 2px #eee solid;
+}
+
 body {
   height: 100vh;
   width: 100vw;
