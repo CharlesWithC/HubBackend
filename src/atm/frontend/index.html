@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>At The Mile Logistics</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
+  <script src="js/main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    function ShowTab(tabname, btnname) {
+      $(".tabs").hide();
+      $(tabname).show();
+      $(".tabbtns").removeClass("bg-indigo-500");
+      $(btnname).addClass("bg-indigo-500");
+      if (tabname == "#SubmitApp") {
+        $("#driverappsel").attr("selected", "selected");
+      }
+    }
+
+    function SubmitApp() {
+      apptype = $("#appselect").find(":selected").text();
+      data = "";
+      if (apptype == "Driver") {
+        apptype = 1;
+        if ($("#in-another-vtc").prop("checked")) {
+          alert("You can be only within on VTC!");
+          return;
+        }
+        if (!$("#da-agree").prop("checked")) {
+          alert("You must agree to the terms and conditions!");
+          return;
+        }
+        q1 = $("#da-q1").val();
+        q2 = $("#da-q2").val();
+        q3 = $("#da-q3").val();
+        q4 = $("#da-q4").val();
+        data = {
+          "Birthday": q1,
+          "How did you find us?": q2,
+          "What are your interests?": q3,
+          "Why do you want to be a part our VTC?": q4
+        };
+      } else if (apptype == "Staff") {
+        apptype = 2;
+        if (!$("#sa-agree").prop("checked")) {
+          alert("You must agree to the terms and conditions!");
+          return;
+        }
+        q1 = $("#sa-q1").val();
+        q2 = $("#sa-q2").val();
+        q3 = $("#sa-q3").val();
+        q4 = $("#sa-q4").val();
+        q5 = $("#sa-q5").val();
+        pos = $("#sa-select").find(":selected").text();
+        data = {
+          "Applying For": pos,
+          "Birthday": q1,
+          "Country & Time Zone": q2,
+          "Summary": q3,
+          "Why are you interested in joining the position you are applying for? What do you want to achieve?": q4,
+          "Do you have a lot of time to dedicate to this position? ": q5
+        }
+      } else if (apptype == "LOA") {
+        apptype = 3;
+        q1 = $("#la-q1").val();
+        q2 = $("#la-q2").val();
+        q3 = $("#la-q3").val();
+        data = {
+          "Start Date": q1,
+          "End Date": q2,
+          "Reason": q3
+        }
+      }
+      data = JSON.stringify(data);
+
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/application",
+        type: "POST",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        data: {
+          "apptype": apptype,
+          "data": data
+        },
+        success: function (data) {
+          if (data.error == false) {
+            alert("Application submitted successfully!");
+          } else {
+            alert("Error: " + data.descriptor)
+          }
+        },
+        error: function (data) {
+          alert("Error");
+        }
+      });
+    }
+
+    function validate() {
+      token = localStorage.getItem("token");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/validate",
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        success: function (data) {
+          if (data.error == false) {
+            if (data.response.extra != "") {
+              window.location.href = "/login";
+            }
+          } else {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          }
+        },
+        error: function (data) {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        }
+      });
+      roles = JSON.parse(localStorage.getItem("roles"));
+      name = localStorage.getItem("name");
+      avatar = localStorage.getItem("avatar");
+      discordid = localStorage.getItem("discordid");
+      if (roles != null && roles != undefined) {
+        highestrole = 99999;
+        for (i = 0; i < roles.length; i++) {
+          if (roles[i] < highestrole) {
+            highestrole = roles[i];
+          }
+        }
+        if (highestrole < 30) {
+          $("#MyAppSpan").html("All Applications");
+          if (highestrole <= 10)
+            $("#MyAppSpan2").html("All Applications (You are Leadership so you can see all applications)");
+          else
+            $("#MyAppSpan2").html("All Applications (You are Human Resources Staff so you can see all applications)");
+        }
+      }
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/info",
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        success: function (data) {
+          if (data.error == false) {
+            localStorage.setItem("roles", JSON.stringify(data.response.roles));
+            localStorage.setItem("name", data.response.name);
+            localStorage.setItem("avatar", data.response.avatar);
+            localStorage.setItem("discordid", data.response.discordid);
+            roles = data.response.roles;
+            highestrole = 99999;
+            for (i = 0; i < roles.length; i++) {
+              if (roles[i] < highestrole) {
+                highestrole = roles[i];
+              }
+            }
+            if (highestrole < 30) {
+              $("#MyAppSpan").html("All Applications");
+              if (highestrole <= 10)
+                $("#MyAppSpan2").html("All Applications (You are Leadership so you can see all applications)");
+              else
+                $("#MyAppSpan2").html(
+                  "All Applications (You are Human Resources Staff so you can see all applications)");
+            }
+          } else {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          }
+        },
+        error: function (data) {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        }
+      });
+    }
+    $(document).ready(function () {
+      validate();
+      $("#logout").click(function () {
+        token = localStorage.getItem("token")
+        $.ajax({
+          url: "https://drivershub.charlws.com/atm/user/revoke",
+          type: "POST",
+          dataType: "json",
+          headers: {
+            "Authorization": "Bearer " + token
+          },
+          success: function (data) {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          },
+          error: function (data) {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          }
+        });
+      });
+      $('#appselect').on('change', function () {
+        var value = $(this).val();
+        $(".apptabs").hide();
+        if (value == "driver") {
+          $("#DriverApp").show();
+        } else if (value == "staff") {
+          $("#StaffApp").show();
+        } else if (value == "loa") {
+          $("#LOAApp").show();
+        }
+      });
+    });
+  </script>
+</head>
+
+<body class="antialiased bg-body text-body font-body">
+  <div class="">
+
+    <div>
+      <nav class="lg:hidden py-6 px-6 bg-gray-800">
+        <div class="flex items-center justify-between">
+          <a class="text-2xl text-white font-semibold" style="cursor: pointer"><img src="images/banner.png" alt=""
+              width="200"></a>
+          <button class="navbar-burger flex items-center rounded focus:outline-none">
+            <svg class="text-white bg-indigo-500 hover:bg-indigo-600 block h-8 w-8 p-2 rounded" viewbox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <title>Mobile menu</title>
+              <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"></path>
+            </svg></button>
+        </div>
+      </nav>
+      <div class="hidden lg:block navbar-menu relative z-50">
+        <div class="navbar-backdrop fixed lg:hidden inset-0 bg-gray-800 opacity-10"></div>
+        <nav
+          class="fixed top-0 left-0 bottom-0 flex flex-col w-3/4 lg:w-80 sm:max-w-xs pt-6 pb-8 bg-gray-800 overflow-y-auto">
+          <div class="flex w-full items-center px-6 pb-6 mb-6 lg:border-b border-gray-700">
+            <a class="text-xl text-white font-semibold" style="cursor: pointer"><img src="images/banner.png" alt=""
+                width="100%"></a>
+          </div>
+          <div class="px-4 pb-6">
+            <ul class="text-sm font-medium">
+              <li>
+                <a id="HomeTabBtn"
+                  class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
+                  style="cursor: pointer" onclick="ShowTab('#HomeTab', '#HomeTabBtn')">
+                  <span class="inline-block mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-smart-home" width="18"
+                      height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M19 8.71l-5.333 -4.148a2.666 2.666 0 0 0 -3.274 0l-5.334 4.148a2.665 2.665 0 0 0 -1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-7.2c0 -.823 -.38 -1.6 -1.03 -2.105" />
+                      <path d="M16 15c-2.21 1.333 -5.792 1.333 -8 0" /> </svg> </span>
+                  <span>Home</span>
+                  <span class="inline-block ml-auto">
+                  </span>
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div class="px-4 pb-6">
+            <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Recruitment Center</h3>
+            <ul class="mb-8 text-sm font-medium">
+              <li>
+                <a id="MyAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
+                  style="cursor: pointer" onclick="ShowTab('#MyApp', '#MyAppBtn')">
+                  <span class="inline-block mr-3">
+                    <svg class="text-indigo-100 w-5 h-5" viewbox="0 0 18 18" fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M14.9066 3.12873C14.9005 3.12223 14.8987 3.11358 14.8923 3.10722C14.8859 3.10086 14.8771 3.09893 14.8706 3.09278C13.3119 1.53907 11.2008 0.666626 8.99996 0.666626C6.79914 0.666626 4.68807 1.53907 3.12935 3.09278C3.12279 3.09893 3.11404 3.10081 3.10763 3.10722C3.10122 3.11363 3.09944 3.12222 3.09334 3.12873C1.93189 4.29575 1.14217 5.78067 0.823851 7.39609C0.505534 9.01151 0.672885 10.685 1.30478 12.2054C1.93668 13.7258 3.00481 15.025 4.37435 15.9389C5.7439 16.8528 7.35348 17.3405 8.99996 17.3405C10.6464 17.3405 12.256 16.8528 13.6256 15.9389C14.9951 15.025 16.0632 13.7258 16.6951 12.2054C17.327 10.685 17.4944 9.01151 17.1761 7.39609C16.8578 5.78067 16.068 4.29575 14.9066 3.12873ZM8.99992 15.6666C8.00181 15.6663 7.01656 15.4414 6.11714 15.0087C5.21773 14.5759 4.42719 13.9464 3.80409 13.1666H7.15015C7.38188 13.4286 7.66662 13.6383 7.98551 13.782C8.3044 13.9257 8.65017 14 8.99992 14C9.34968 14 9.69544 13.9257 10.0143 13.782C10.3332 13.6383 10.618 13.4286 10.8497 13.1666H14.1958C13.5727 13.9464 12.7821 14.5759 11.8827 15.0087C10.9833 15.4414 9.99804 15.6663 8.99992 15.6666ZM8.16659 11.5C8.16659 11.3351 8.21546 11.174 8.30703 11.037C8.3986 10.8999 8.52875 10.7931 8.68102 10.7301C8.83329 10.667 9.00085 10.6505 9.1625 10.6826C9.32415 10.7148 9.47263 10.7942 9.58918 10.9107C9.70572 11.0272 9.78509 11.1757 9.81724 11.3374C9.8494 11.499 9.83289 11.6666 9.76982 11.8189C9.70675 11.9711 9.59994 12.1013 9.4629 12.1929C9.32586 12.2844 9.16474 12.3333 8.99992 12.3333C8.77898 12.3331 8.56714 12.2452 8.41091 12.089C8.25468 11.9327 8.16681 11.7209 8.16659 11.5ZM15.1751 11.5017L15.1665 11.5H11.4999C11.4983 10.9846 11.3373 10.4824 11.0389 10.0623C10.7405 9.64218 10.3193 9.32472 9.83325 9.15352V6.49996C9.83325 6.27894 9.74546 6.06698 9.58918 5.9107C9.4329 5.75442 9.22093 5.66663 8.99992 5.66663C8.77891 5.66663 8.56695 5.75442 8.41067 5.9107C8.25439 6.06698 8.16659 6.27894 8.16659 6.49996V9.15352C7.68054 9.32472 7.25939 9.64218 6.96098 10.0623C6.66256 10.4824 6.50151 10.9846 6.49992 11.5H2.83334L2.82474 11.5017C2.60799 10.9669 2.46221 10.406 2.39114 9.83329H3.16659C3.3876 9.83329 3.59956 9.74549 3.75584 9.58921C3.91212 9.43293 3.99992 9.22097 3.99992 8.99996C3.99992 8.77894 3.91212 8.56698 3.75584 8.4107C3.59956 8.25442 3.3876 8.16663 3.16659 8.16663H2.39114C2.54005 6.9821 3.00621 5.85981 3.74037 4.91838L4.28597 5.46399C4.36335 5.54137 4.4552 5.60274 4.5563 5.64462C4.65739 5.68649 4.76574 5.70804 4.87517 5.70804C4.98459 5.70804 5.09294 5.68649 5.19404 5.64461C5.29513 5.60274 5.38699 5.54136 5.46436 5.46399C5.54173 5.38661 5.60311 5.29476 5.64498 5.19366C5.68686 5.09257 5.70841 4.98422 5.70841 4.87479C5.70841 4.76537 5.68686 4.65702 5.64498 4.55592C5.60311 4.45483 5.54173 4.36297 5.46435 4.2856L4.91881 3.74005C5.86016 3.00613 6.98227 2.5401 8.16659 2.39118V3.16663C8.16659 3.38764 8.25439 3.5996 8.41067 3.75588C8.56695 3.91216 8.77891 3.99996 8.99992 3.99996C9.22093 3.99996 9.4329 3.91216 9.58918 3.75588C9.74546 3.5996 9.83325 3.38764 9.83325 3.16663V2.39118C11.0176 2.5401 12.1397 3.00613 13.081 3.74005L12.5355 4.2856C12.3792 4.44186 12.2914 4.6538 12.2914 4.87479C12.2914 5.09578 12.3792 5.30772 12.5355 5.46399C12.6917 5.62025 12.9037 5.70804 13.1247 5.70804C13.3457 5.70804 13.5576 5.62026 13.7139 5.46399L14.2595 4.91838C14.9936 5.85981 15.4598 6.9821 15.6087 8.16663H14.8333C14.6122 8.16663 14.4003 8.25442 14.244 8.4107C14.0877 8.56698 13.9999 8.77894 13.9999 8.99996C13.9999 9.22097 14.0877 9.43293 14.244 9.58921C14.4003 9.74549 14.6122 9.83329 14.8333 9.83329H15.6087C15.5376 10.406 15.3919 10.9669 15.1751 11.5017Z"
+                        fill="currentColor"></path>
+                    </svg></span>
+                  <span id="MyAppSpan">My Applications</span>
+                  <span class="inline-block ml-auto">
+                  </span>
+                </a>
+              </li>
+
+              </li>
+              <li>
+
+              </li>
+              <li>
+                <a id="SubmitAppBtn"
+                  class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                  style="cursor: pointer" onclick="ShowTab('#SubmitApp', '#SubmitAppBtn')">
+                  <span class="inline-block mr-3">
+                    <svg class="w-5 h-5" viewbox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M17.6416 1.71669C17.0442 1.6138 16.4394 1.56084 15.8332 1.55835C13.7652 1.55666 11.7403 2.14966 9.99991 3.26669C8.25503 2.16433 6.23045 1.58588 4.16657 1.60002C3.56045 1.6025 2.95558 1.65546 2.35824 1.75835C2.16258 1.79209 1.98539 1.89457 1.85859 2.04735C1.73178 2.20013 1.66369 2.39316 1.66657 2.59169V12.5917C1.66479 12.7141 1.69001 12.8355 1.74045 12.9471C1.79089 13.0586 1.8653 13.1577 1.95839 13.2373C2.05147 13.3169 2.16096 13.3749 2.27904 13.4074C2.39712 13.4398 2.5209 13.4459 2.64157 13.425C3.83576 13.2183 5.05924 13.2526 6.23996 13.5259C7.42068 13.7993 8.53476 14.3061 9.51657 15.0167L9.61657 15.075H9.70824C9.80066 15.1135 9.89979 15.1334 9.99991 15.1334C10.1 15.1334 10.1992 15.1135 10.2916 15.075H10.3832L10.4832 15.0167C11.4582 14.2903 12.5691 13.767 13.75 13.4778C14.931 13.1887 16.158 13.1395 17.3582 13.3334C17.4789 13.3542 17.6027 13.3482 17.7208 13.3157C17.8389 13.2833 17.9483 13.2252 18.0414 13.1456C18.1345 13.0661 18.2089 12.967 18.2594 12.8554C18.3098 12.7438 18.335 12.6225 18.3332 12.5V2.50002C18.3246 2.31015 18.2512 2.12895 18.1254 1.98647C17.9996 1.84399 17.8289 1.7488 17.6416 1.71669ZM9.16657 12.7917C7.62481 11.9806 5.90867 11.5573 4.16657 11.5584C3.89157 11.5584 3.61657 11.5584 3.33324 11.5584V3.22502C3.61079 3.20902 3.88903 3.20902 4.16657 3.22502C5.9444 3.22306 7.68342 3.74476 9.16657 4.72502V12.7917ZM16.6666 11.5917C16.3832 11.5917 16.1082 11.5917 15.8332 11.5917C14.0911 11.5906 12.375 12.0139 10.8332 12.825V4.72502C12.3164 3.74476 14.0554 3.22306 15.8332 3.22502C16.1108 3.20902 16.389 3.20902 16.6666 3.22502V11.5917ZM17.6416 15.05C17.0442 14.9471 16.4394 14.8942 15.8332 14.8917C13.7652 14.89 11.7403 15.483 9.99991 16.6C8.2595 15.483 6.2346 14.89 4.16657 14.8917C3.56045 14.8942 2.95558 14.9471 2.35824 15.05C2.24976 15.0672 2.14576 15.1057 2.05221 15.1633C1.95866 15.2208 1.87741 15.2963 1.81313 15.3854C1.74885 15.4744 1.70281 15.5753 1.67766 15.6822C1.65251 15.7891 1.64874 15.9 1.66657 16.0084C1.70892 16.2248 1.83532 16.4156 2.01807 16.539C2.20082 16.6623 2.42502 16.7083 2.64157 16.6667C3.83576 16.4599 5.05924 16.4942 6.23996 16.7676C7.42068 17.0409 8.53476 17.5478 9.51657 18.2584C9.65771 18.3588 9.82665 18.4128 9.99991 18.4128C10.1732 18.4128 10.3421 18.3588 10.4832 18.2584C11.4651 17.5478 12.5791 17.0409 13.7599 16.7676C14.9406 16.4942 16.1641 16.4599 17.3582 16.6667C17.5748 16.7083 17.799 16.6623 17.9817 16.539C18.1645 16.4156 18.2909 16.2248 18.3332 16.0084C18.3511 15.9 18.3473 15.7891 18.3222 15.6822C18.297 15.5753 18.251 15.4744 18.1867 15.3854C18.1224 15.2963 18.0412 15.2208 17.9476 15.1633C17.8541 15.1057 17.7501 15.0672 17.6416 15.05Z"
+                        fill="currentColor"></path>
+                    </svg></span>
+                  <span>Submit Application</span>
+                  <span class="inline-block ml-auto">
+                    <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                      xmlns="http://www.w3.org/2000/svg"></svg></span>
+                </a>
+            </ul>
+          </div>
+          <div class="px-4 pb-6">
+            <div class="">
+              <a id="logout" class="flex items-center pl-3 py-3 pr-2 text-gray-50 hover:bg-gray-900 rounded"
+                style="cursor: pointer">
+                <span class="inline-block mr-4">
+                  <svg class="text-gray-600 w-5 h-5" viewbox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M0.333618 8.99996C0.333618 9.22097 0.421416 9.43293 0.577696 9.58922C0.733976 9.7455 0.945938 9.83329 1.16695 9.83329H7.49195L5.57528 11.7416C5.49718 11.8191 5.43518 11.9113 5.39287 12.0128C5.35057 12.1144 5.32879 12.2233 5.32879 12.3333C5.32879 12.4433 5.35057 12.5522 5.39287 12.6538C5.43518 12.7553 5.49718 12.8475 5.57528 12.925C5.65275 13.0031 5.74492 13.0651 5.84647 13.1074C5.94802 13.1497 6.05694 13.1715 6.16695 13.1715C6.27696 13.1715 6.38588 13.1497 6.48743 13.1074C6.58898 13.0651 6.68115 13.0031 6.75862 12.925L10.0919 9.59163C10.1678 9.51237 10.2273 9.41892 10.2669 9.31663C10.3503 9.11374 10.3503 8.88618 10.2669 8.68329C10.2273 8.581 10.1678 8.48755 10.0919 8.40829L6.75862 5.07496C6.68092 4.99726 6.58868 4.93563 6.48716 4.89358C6.38564 4.85153 6.27683 4.82988 6.16695 4.82988C6.05707 4.82988 5.94826 4.85153 5.84674 4.89358C5.74522 4.93563 5.65298 4.99726 5.57528 5.07496C5.49759 5.15266 5.43595 5.2449 5.3939 5.34642C5.35185 5.44794 5.33021 5.55674 5.33021 5.66663C5.33021 5.77651 5.35185 5.88532 5.3939 5.98683C5.43595 6.08835 5.49759 6.18059 5.57528 6.25829L7.49195 8.16663H1.16695C0.945938 8.16663 0.733976 8.25442 0.577696 8.4107C0.421416 8.56698 0.333618 8.77895 0.333618 8.99996ZM11.1669 0.666626H2.83362C2.17058 0.666626 1.53469 0.930018 1.06585 1.39886C0.59701 1.8677 0.333618 2.50358 0.333618 3.16663V5.66663C0.333618 5.88764 0.421416 6.0996 0.577696 6.25588C0.733976 6.41216 0.945938 6.49996 1.16695 6.49996C1.38797 6.49996 1.59993 6.41216 1.75621 6.25588C1.91249 6.0996 2.00028 5.88764 2.00028 5.66663V3.16663C2.00028 2.94561 2.08808 2.73365 2.24436 2.57737C2.40064 2.42109 2.6126 2.33329 2.83362 2.33329H11.1669C11.388 2.33329 11.5999 2.42109 11.7562 2.57737C11.9125 2.73365 12.0003 2.94561 12.0003 3.16663V14.8333C12.0003 15.0543 11.9125 15.2663 11.7562 15.4225C11.5999 15.5788 11.388 15.6666 11.1669 15.6666H2.83362C2.6126 15.6666 2.40064 15.5788 2.24436 15.4225C2.08808 15.2663 2.00028 15.0543 2.00028 14.8333V12.3333C2.00028 12.1123 1.91249 11.9003 1.75621 11.744C1.59993 11.5878 1.38797 11.5 1.16695 11.5C0.945938 11.5 0.733976 11.5878 0.577696 11.744C0.421416 11.9003 0.333618 12.1123 0.333618 12.3333V14.8333C0.333618 15.4963 0.59701 16.1322 1.06585 16.6011C1.53469 17.0699 2.17058 17.3333 2.83362 17.3333H11.1669C11.83 17.3333 12.4659 17.0699 12.9347 16.6011C13.4036 16.1322 13.6669 15.4963 13.6669 14.8333V3.16663C13.6669 2.50358 13.4036 1.8677 12.9347 1.39886C12.4659 0.930018 11.83 0.666626 11.1669 0.666626Z"
+                      fill="currentColor"></path>
+                  </svg></span>
+                <span>Log Out</span>
+              </a>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <section id="HomeTab" class="py-8 tabs">
+        <div class="mx-auto lg:ml-80" style="padding:50px;padding-top:0">
+          <div class="py-8 px-6">
+            <div class="p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
+              <div class="flex">
+                <div class="w-auto">
+                  <span class="w-auto inline-block mr-2">
+                    <svg width="20" height="20" viewbox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M10 0C4.5 0 0 4.5 0 10C0 15.5 4.5 20 10 20C15.5 20 20 15.5 20 10C20 4.5 15.5 0 10 0ZM11 14C11 14.6 10.6 15 10 15C9.4 15 9 14.6 9 14V10C9 9.4 9.4 9 10 9C10.6 9 11 9.4 11 10V14ZM10 7C9.4 7 9 6.6 9 6C9 5.4 9.4 5 10 5C10.6 5 11 5.4 11 6C11 6.6 10.6 7 10 7Z"
+                        fill="#382CDD"></path>
+                    </svg></span>
+                </div>
+                <div class="w-full">
+                  <div class="flex mb-2">
+                    <h3 class="text-indigo-800 font-medium">Welcome to At The Mile Logistics Drivers Hub!</h3>
+
+                  </div>
+                  <div class="pr-6">
+                    <p class="text-sm text-indigo-700">This is beta version. If you met an issue, please report it in
+                      our Discord Server. More functions are being added.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="MyApp" class="py-8 tabs" style="display: none;">
+        <div class="container px-4 mx-auto lg:ml-80" style="padding:50px;padding-top:0">
+          <div class="pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold" id="MyAppSpan2">My Applications (Coming out soon)</h3>
+            </div>
+            <div class="p-4 overflow-x-auto">
+              <!-- <table class="table-auto w-full">
+                <thead>
+                  <tr class="text-xs text-gray-500 text-left">
+                    <th class="pb-3 font-medium">Application ID</th>
+                    <th class="pb-3 font-medium">Date Submitted</th>
+                    <th class="pb-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="text-xs bg-gray-50">
+                    <td class="py-5 px-6 font-medium">SR2451EW32</td>
+                    <td class="font-medium">08.04.2021</td>
+
+
+                    <td>
+                      <span class="inline-block py-1 px-2 text-white bg-green-500 rounded-full">Accepted</span>
+                    </td>
+                  </tr>
+                  <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium">SR2451EW32</td>
+                    <td class="font-medium">08.04.2021</td>
+
+
+                    <td>
+                      <span class="inline-block py-1 px-2 text-white bg-red-500 rounded-full">Denied</span>
+                    </td>
+                  </tr>
+                  <tr class="text-xs bg-gray-50">
+                    <td class="py-5 px-6 font-medium">SR2451EW32</td>
+                    <td class="font-medium">08.04.2021</td>
+
+
+                    <td>
+                      <span class="inline-block py-1 px-2 text-white bg-orange-500 rounded-full">Pending</span>
+                    </td>
+                  </tr>
+                  <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium">SR2451EW32</td>
+                    <td class="font-medium">08.04.2021</td>
+
+
+                    <td>
+                      <span class="inline-block py-1 px-2 text-white bg-green-500 rounded-full">Accepted</span>
+                    </td>
+                  </tr>
+                  <tr class="text-xs bg-gray-50">
+                    <td class="py-5 px-6 font-medium">SR2451EW32</td>
+                    <td class="font-medium">08.04.2021</td>
+
+
+                    <td>
+                      <span class="inline-block py-1 px-2 text-white rounded-full bg-orange-500">Waiting for HR</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table> -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="SubmitApp" class="py-8 tabs" style="display: none;">
+        <div class="container px-4 mx-auto lg:ml-80" style="padding:50px;padding-top:0">
+          <form>
+            <h1 class="mb-2 text-2xl font-bold font-heading text-left">1. Choose Application</h1>
+
+            <div class="mb-6">
+              <div class="container px-4 mx-auto">
+                <label class="block text-sm font-medium mb-2 text-left" for="">Are you applying for driver or staff? Or
+                  just requesting a LOA?<br>Please select an application:</label>
+                <div class="relative" style="width:200px">
+                  <select id="appselect"
+                    class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                    name="field-name">
+                    <option value="driver" id="driverappsel">Driver</option>
+                    <option value="staff">Staff</option>
+                    <option value="loa">LOA</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h1 class="mb-2 text-2xl font-bold font-heading text-left">2. Fill Application</h1>
+
+            <div class="container px-4 mx-auto apptabs" id="DriverApp">
+              <div class="mb-6" style="width:400px">
+                <label class="block text-sm font-medium mb-2" for="">What is your birthdate?</label>
+                <input id="da-q1"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder="MM/DD/YYYY"></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">How did you find us?</label>
+                <textarea id="da-q2"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder="Enter a short answer"></textarea></div>
+
+
+              <div class="mb-6">
+                <div class="mb-1">
+                  <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Are you currenty in
+                    another VTC?</label>
+                  <label>
+                    <input type="radio" name="in-another-vtc" value="yes" id="in-another-vtc">
+                    <span class="ml-2">Yes</span>
+                  </label>
+                </div>
+                <div>
+                  <label>
+                    <input type="radio" name="in-another-vtc" value="yes" checked>
+                    <span class="ml-2">No</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">What are your interests?</label>
+                <textarea id="da-q3"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder="Tell us a little bit about yourself."></textarea></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Why do you want to be a part our VTC?</label>
+                <textarea id="da-q4"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5"
+                  placeholder="Why would you like to join us? This doesn't need to be complicated."></textarea></div>
+
+              <div class="mb-6">
+                <label>
+                  <input type="checkbox" name="field-name" value="example value" id="da-agree">
+                  <span class="ml-2">By joining At The Mile VTC you agree to follow both discord and VTC rules at all
+                    times? Do you agree to our terms?</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="container px-4 mx-auto apptabs" id="StaffApp" style="display:none">
+              <div class="mb-6" style="width:400px">
+                <label class="block text-sm font-medium mb-2" for="">What is your birthdate?</label>
+                <input id="sa-q1"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder="MM/DD/YYYY"></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">What country do you live in? Also include your Time
+                  Zone </label>
+                <textarea id="sa-q2"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder="US, Canada, UK, etc"></textarea></div>
+
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Which position are you
+                  applying for?</label>
+                <div class="relative" style="width:500px">
+                  <select id="sa-select"
+                    class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                    name="field-name">
+                    <option>Media Team (VTC Member)</option>
+                    <option>Events Staff (VTC Member)</option>
+                    <option>Convoy Control (External Position)</option>
+                    <option>Community Moderator (External Position)</option>
+                    <option>Development Staff (Internal and External Position)</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Please provide a summary about yourself. </label>
+                <textarea id="sa-q3"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5"
+                  placeholder="You may include hobbies, work positions, or any unique facts about yourself!"></textarea>
+              </div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Why are you interested in joining the position you
+                  are applying for? What do you want to achieve?</label>
+                <textarea id="sa-q4"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5"
+                  placeholder="Explain why does that position interest you and what do you want to achieve."></textarea>
+              </div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Do you have a lot of time to dedicate to this
+                  position?</label>
+                <textarea id="sa-q5"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder="Explain your time availability."></textarea>
+              </div>
+
+              <div class="mb-6">
+                <label>
+                  <input id="sa-agree" type="checkbox" name="field-name" value="example value">
+                  <span class="ml-2">By joining At The Mile Logistics, you agree to our rules and terms of service. As a
+                    Internal or External Staff, you also agree to work without financial compensation. Do you agree to
+                    these terms?</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="container px-4 mx-auto apptabs" id="LOAApp" style="display:none">
+              <div class="mb-6" style="width:400px">
+                <label class="block text-sm font-medium mb-2" for="">Start Date</label>
+                <input id="la-q1"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder="MM/DD/YYYY"></div>
+
+              <div class="mb-6" style="width:400px">
+                <label class="block text-sm font-medium mb-2" for="">End Date</label>
+                <input id="la-q2"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder="MM/DD/YYYY"></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Reason for LOA </label>
+                <textarea id="la-q3"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder="Your answer"></textarea></div>
+            </div>
+
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="SubmitApp()">Submit</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+  </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="js/charts-demo.js"></script>
+  <div style="position: fixed;bottom: 10px;color: lightgrey;margin:10px;z-index:1000;font-size:10px">
+		<p>Copyright &copy 2022 At The Mile Logistics</p>
+		<p>Credits: CharlesWithC#7777 sticks#6436</p>
+  </div>
+</body>
+
+</html>

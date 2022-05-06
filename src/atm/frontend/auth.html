@@ -11,6 +11,14 @@
 			location.href='https://drivershub.charlws.com/atm/user/login';
 		}
         function validate(){
+            message = getUrlParameter("message");
+            if(message){
+                $("#title").html("Error");
+                $("#msg").html(message);
+                $("#msg").show();
+                $("#loginbtn").show();
+                return;
+            }
             token = getUrlParameter("token");
             $.ajax({
                 url: "https://drivershub.charlws.com/atm/user/validate",
@@ -116,6 +124,12 @@
                 <button type="button" onclick="TMPBind();">Check</button>
             </section>
 		</form>
+	</div>
+    </div>
+	<div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
+		&nbsp;Copyright &copy 2022 At The Mile Logistics
+		<br>
+		Credits: CharlesWithC#7777 sticks#6436
 	</div>
 </body>
 </html>

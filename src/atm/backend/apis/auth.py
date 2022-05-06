@@ -38,8 +38,15 @@ async def userCallback(code: str, request: Request, response: Response):
         cur.execute(f"SELECT * FROM banned WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         if len(t) > 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": "You are banned."}
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are banned.", status_code=302)
+
+        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bottoken}"})
+        if r.status_code != 200:
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=Failed to check if you are in discord.", status_code=302)
+        d = json.loads(r.text)
+        if not "user" in d.keys():
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are not in our discord server.", status_code=302)
+
         cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         username = user_data['username']
@@ -56,7 +63,7 @@ async def userCallback(code: str, request: Request, response: Response):
         user_data["token"] = stoken
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
     response.status_code = 401
-    return {"error": True, "descriptor": tokens["error_description"].replace('\\"', "'")}
+    return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
 @app.get('/atm/user/validate')
 async def userValidate(response: Response, authorization: str = Header(None)):

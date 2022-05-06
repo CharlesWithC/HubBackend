@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi.responses import RedirectResponse
 from discord_oauth2 import DiscordAuth
 from uuid import uuid4
-import json, time
+import json, time, math
 
 from app import app, config
 from db import newconn
@@ -20,7 +20,7 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
                  100: "Driver", 10000: "External Staff"}
 
 @app.get("/atm/member/list")
-async def memberList(request: Request, response: Response, authorization: str = Header(None)):
+async def memberList(page:int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -54,7 +54,9 @@ async def memberList(request: Request, response: Response, authorization: str = 
     ret = []
     for tt in t:
         ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}"})
-    return {"error": False, "response": ret}
+    ret = ret[(page-1)*30:page*30]
+    totpage = math.ceil(len(ret)/30)
+    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
     
 @app.get('/atm/member/info')
 async def member(response: Response, userid: int, authorization: str = Header(None)):

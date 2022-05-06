@@ -225,6 +225,15 @@
                 "summary": "Get User List (Not registered members)",
                 "tags": ["user"],
                 "operationId": "getUserList",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -446,6 +455,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -476,7 +494,7 @@
                 "parameters": [{
                     "required": true,
                     "schema": {
-                        "title": "Userid",
+                        "title": "User ID",
                         "type": "integer"
                     },
                     "name": "userid",
@@ -818,6 +836,23 @@
                 "operationId": "getApplicationList_atm_application_list_get",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                },{
+                    "required": true,
+                    "schema": {
+                        "title": "Application Type (0 - All, 1 - Driver, 2 - Staff, 3 - LOA)",
+                        "type": "integer"
+                    },
+                    "name": "apptype",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {

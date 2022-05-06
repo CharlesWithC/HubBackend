@@ -1,61 +1,71 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Login - At The Mile Logistics</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<meta charset="UTF-8">
+	<title>Login - At The Mile Logistics</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+		integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<link rel="stylesheet" href="css/login.css">
 	<script>
-		function DiscordLogin(){
-			location.href='https://drivershub.charlws.com/atm/user/login';
+		function DiscordLogin() {
+			location.href = 'https://drivershub.charlws.com/atm/user/login';
 		}
-        function validate(){
-            token = localStorage.getItem("token");
-			if(token == undefined){
+
+		function validate() {
+			token = localStorage.getItem("token");
+			if (token == undefined) {
 				return;
 			}
-            $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/validate",
-                type: "GET",
-                dataType: "json",
-                headers: {
-                    "Authorization": "Bearer " + token
-                },
-                success: function(data){
-                    if(data.error == false){
-                        localStorage.setItem("token", token);
-                        if(data.response.extra == ""){
-                            window.location.href = "/";
-                        } else {
+			$.ajax({
+				url: "https://drivershub.charlws.com/atm/user/validate",
+				type: "GET",
+				dataType: "json",
+				headers: {
+					"Authorization": "Bearer " + token
+				},
+				success: function (data) {
+					if (data.error == false) {
+						localStorage.setItem("token", token);
+						if (data.response.extra == "") {
+							window.location.href = "/";
+						} else {
 							window.location.href = "/auth?token=" + token;
 						}
-                    }
-                }
-            });
-        }
-		$(document).ready(function(){
+					}
+				}
+			});
+		}
+		$(document).ready(function () {
 			validate();
 		});
 	</script>
 </head>
+
 <body style="overflow:hidden">
 	<div id="formContainer">
-	<div class="formLeft">
-		<img src="https://i.hep.gg/ndjTN6f4X">
+		<div class="formLeft">
+			<img src="https://i.hep.gg/ndjTN6f4X">
+		</div>
+		<div class="formRight">
+			<!-- Login form -->
+			<form id="login">
+				<header>
+					<h1>Welcome back</h1>
+					<p>Please login to access the Drivers Hub.</p>
+				</header>
+				<section>
+					<button type="button" onclick="DiscordLogin();">Login With Discord</button>
+				</section>
+			</form>
+		</div>
 	</div>
-	<div class="formRight">
-		<!-- Login form -->
-		<form id="login">
-			<header>
-				<h1>Welcome back</h1>
-				<p>Please login to access the Drivers Hub.</p>
-			</header>
-			<section>
-				<button type="button" onclick="DiscordLogin();">Login With Discord</button>
-			</section>
-		</form>
+	<div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
+		&nbsp;Copyright &copy 2022 At The Mile Logistics
+		<br>
+		Credits: CharlesWithC#7777 sticks#6436
 	</div>
-</div>
 </body>
+
 </html>

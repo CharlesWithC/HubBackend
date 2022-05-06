@@ -5,7 +5,7 @@ from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
 from fastapi.responses import RedirectResponse
 from uuid import uuid4
-import json, time, requests
+import json, time, requests, math
 
 from app import app, config
 from db import newconn
@@ -165,7 +165,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": False, "response": {"response_message": "User unbanned.", "discordid": discordid}}
 
 @app.get("/atm/user/list")
-async def userList(request: Request, response: Response, authorization: str = Header(None)):
+async def userList(page:int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -199,7 +199,9 @@ async def userList(request: Request, response: Response, authorization: str = He
     ret = []
     for tt in t:
         ret.append({"name": tt[1], "discordid": f"{tt[2]}"})
-    return {"error": False, "response": ret}
+    ret = ret[(page-1)*30:page*30]
+    totpage = math.ceil(len(ret)/30)
+    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.get('/atm/user/info')
 async def userInfo(response: Response, authorization: str = Header(None)):
