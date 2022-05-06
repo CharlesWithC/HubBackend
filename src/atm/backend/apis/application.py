@@ -2,6 +2,7 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
+from typing import Optional
 import json, time, math
 from datetime import datetime
 import discord
@@ -248,7 +249,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
     return {"error": False, "response": {"message": "Application found", "application": t[0], "steamid": t[0][3], "data": json.loads(b64d(t[0][4]))}}
 
 @app.get("/atm/application/list")
-async def getApplicationList(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None)):
+async def getApplicationList(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), showall: Optional[bool] = False):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -280,9 +281,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
                 adminhighest = int(i)
 
     t = None
-    if adminhighest >= 30 and discordid != t[0][1]:
-        response.status_code = 401
-
+    if adminhighest >= 30 and discordid != t[0][1] or showall == False:
         limit = ""
         if apptype != 0:
             limit = f" AND apptype = {apptype}"

@@ -1039,6 +1039,14 @@
                     },
                     "name": "apptype",
                     "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Show all (Leadership / HR only)",
+                        "type": "boolean"
+                    },
+                    "name": "showall",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
