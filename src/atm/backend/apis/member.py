@@ -2,9 +2,6 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from fastapi.responses import RedirectResponse
-from discord_oauth2 import DiscordAuth
 from uuid import uuid4
 import json, time, math
 
@@ -54,8 +51,8 @@ async def memberList(page:int, request: Request, response: Response, authorizati
     ret = []
     for tt in t:
         ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}"})
-    ret = ret[(page-1)*30:page*30]
     totpage = math.ceil(len(ret)/30)
+    ret = ret[(page-1)*30:page*30]
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
     
 @app.get('/atm/member/info')

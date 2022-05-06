@@ -2,13 +2,9 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from fastapi.responses import RedirectResponse
-from discord_oauth2 import DiscordAuth
-from uuid import uuid4
 import json, time, math
 from datetime import datetime
-import discord, asyncio
+import discord
 from discord import Webhook
 import aiohttp, requests
 
@@ -309,6 +305,6 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
     ret = []
     for tt in t:
         ret.append({"applicationid": tt[0], "apptype": tt[1], "discordid": f"{tt[2]}", "status": tt[4], "submitTimestamp": tt[3], "closedTimestamp": tt[5]})
-    ret = ret[(page-1)*10:page*10]
     totpage = math.ceil(len(ret)/10)
+    ret = ret[(page-1)*10:page*10]
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}

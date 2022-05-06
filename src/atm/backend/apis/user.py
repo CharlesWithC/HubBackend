@@ -2,8 +2,6 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from fastapi.responses import RedirectResponse
 from uuid import uuid4
 import json, time, requests, math
 
@@ -199,8 +197,8 @@ async def userList(page:int, request: Request, response: Response, authorization
     ret = []
     for tt in t:
         ret.append({"name": tt[1], "discordid": f"{tt[2]}"})
-    ret = ret[(page-1)*30:page*30]
     totpage = math.ceil(len(ret)/30)
+    ret = ret[(page-1)*30:page*30]
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.get('/atm/user/info')
@@ -233,7 +231,7 @@ async def userInfo(response: Response, authorization: str = Header(None)):
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    return {"error": False, "response": {"userid": t[0][0], "username": t[0][1], "email": t[0][8], "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
+    return {"error": False, "response": {"userid": t[0][0], "name": t[0][1], "email": t[0][8], "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
 
 @app.post('/atm/user/bio')
 async def updateUserBio(request: Request, response: Response, authorization: str = Header(None)):

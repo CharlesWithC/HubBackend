@@ -13,6 +13,9 @@ passwd = config["mysql_passwd"]
 dbname = config["mysql_db"]
 conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
 cur = conn.cursor()
+cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (aid INT, userid INT, title TEXT, content TEXT, \
+    atype INT, timestamp BIGINT)")
+# atype = 0: info | 1: event | 2: warning | 3: critical
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")

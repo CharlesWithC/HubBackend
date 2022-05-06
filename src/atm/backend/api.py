@@ -10,6 +10,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
+import apis.announcement
 import apis.application
 import apis.auth
 import apis.member

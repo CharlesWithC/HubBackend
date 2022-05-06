@@ -650,6 +650,192 @@
                 }
             }
         },
+        "/atm/announcement": {
+            "get": {
+                "summary": "Get Announcement List",
+                "tags": ["announcement"],
+                "operationId": "getAnnouncement",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Announcement",
+                "tags": ["announcement"],
+                "operationId": "postAnnouncement",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "description": "Content",
+                                        "type": "string"
+                                    },
+                                    "atype": {
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle)",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["title", "content", "atype"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update Announcement",
+                "tags": ["announcement"],
+                "operationId": "patchAnnouncement",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "aid": {
+                                        "description": "Announcement ID",
+                                        "type": "integar"
+                                    },
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "description": "Content",
+                                        "type": "string"
+                                    },
+                                    "atype": {
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle)",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["aid", "title", "content", "atype"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Announcement",
+                "tags": ["announcement"],
+                "operationId": "delAnnouncement",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Announcement ID",
+                        "type": "integer"
+                    },
+                    "name": "aid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/application": {
             "get": {
                 "summary": "Get Application Detail",
@@ -938,8 +1124,11 @@
         "name": "member",
         "description": "Members who have joined At The Mile Logistics"
     },{
+        "name": "announcement",
+        "description": "Announcements"
+    },{
         "name": "application",
-        "description": "Applications (Driver / Staff)"
+        "description": "Applications"
     },{
         "name": "manage",
         "description": "Management"
