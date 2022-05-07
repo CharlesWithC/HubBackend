@@ -15,11 +15,16 @@ async def getAnnouncement(page: int, response: Response):
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT title, content, atype, timestamp FROM announcement WHERE aid >= 0 ORDER BY timestamp DESC")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid FROM announcement WHERE aid >= 0 ORDER BY timestamp DESC")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "timestamp": tt[3]})
+        cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
+        n = cur.fetchall()
+        name = "Unknown User"
+        if len(n) > 0:
+            name = n[0][0]
+        ret.append({"title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
     totpage = math.ceil(len(ret) / 10)
     ret = ret[(page - 1) * 10 : page * 10]
 

@@ -10,11 +10,34 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
+  <link rel="stylesheet" href="css/recuritmentcenter.css">
   <script src="js/main.js"></script>
+  <script src="js/functions.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
     integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+    function toastFactory(type, title, text, time, showConfirmButton) {
+      const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: showConfirmButton || false,
+          timer: time || '3000',
+          timerProgressBar: true,
+          didOpen: (toast) => {
+              toast.addEventListener('mouseenter', Swal.stopTimer);
+              toast.addEventListener('mouseleave', Swal.resumeTimer);
+            },
+        });
+
+        Toast.fire({
+            icon: type,
+            title: '<strong>' + title + '</strong>',
+            html: text,
+        });
+    }
+    
     function ShowTab(tabname, btnname) {
       $(".tabs").hide();
       $(tabname).show();
@@ -30,18 +53,52 @@
       data = "";
       if (apptype == "Driver") {
         apptype = 1;
-        if ($("#in-another-vtc").prop("checked")) {
-          alert("You can be only within on VTC!");
-          return;
-        }
-        if (!$("#da-agree").prop("checked")) {
-          alert("You must agree to the terms and conditions!");
-          return;
-        }
+        
         q1 = $("#da-q1").val();
         q2 = $("#da-q2").val();
         q3 = $("#da-q3").val();
         q4 = $("#da-q4").val();
+
+
+        // Check if any of the questions are empty
+        if (q1 == "" || q2 == "" || q3 == "" || q4 == "") {
+          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+        }
+
+        
+        // Checks for is in vtc and terms
+        if ($("#in-another-vtc").prop("checked")) {
+          toastFactory("warning", "Error","You can only be in one VTC at a time!", 5000, false);
+          return;
+        }
+        
+        if (!$("#da-agree").prop("checked")) {
+          toastFactory("warning", "Error", "You must agree to the terms and conditions!", 5000, false);
+          return;
+        }
+
+        // Check if q1 is a vaild date
+        const birthDate = new Date(q1);
+        
+        if (isNaN(birthDate.getTime())) {
+          toastFactory("warning", "Error", "You must enter a valid date!", 5000, false);
+          return;
+        }
+
+        // Check that q1 follows the MM/DD/YYYY format
+        if (q1.length != 10) {
+          toastFactory("warning", "Error", "You must enter a date in the MM/DD/YYYY format!", 5000, false);
+          return;
+        }
+
+        // Check if they are at least 13 years old
+        const today = new Date();
+
+        if (today.getFullYear() - birthDate.getFullYear() < 13) {
+          toastFactory("warning", "Error", "You must be at least 13 years old to apply!", 5000, false);
+          return;
+        }
+        
         data = {
           "Birthday": q1,
           "How did you find us?": q2,
@@ -50,16 +107,26 @@
         };
       } else if (apptype == "Staff") {
         apptype = 2;
-        if (!$("#sa-agree").prop("checked")) {
-          alert("You must agree to the terms and conditions!");
-          return;
-        }
+        
         q1 = $("#sa-q1").val();
         q2 = $("#sa-q2").val();
         q3 = $("#sa-q3").val();
         q4 = $("#sa-q4").val();
         q5 = $("#sa-q5").val();
         pos = $("#sa-select").find(":selected").text();
+
+        // Check if any of the questions are empty
+        if (q1 == "" || q2 == "" || q3 == "" || q4 == "" || q5 == "") {
+          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+          return;
+        }
+
+        if (!$("#sa-agree").prop("checked")) {
+          toastFactory("warning", "Error", "You must agree to the terms and conditions!", 5000, false);
+          return;
+        }
+        
+        
         data = {
           "Applying For": pos,
           "Birthday": q1,
@@ -73,6 +140,13 @@
         q1 = $("#la-q1").val();
         q2 = $("#la-q2").val();
         q3 = $("#la-q3").val();
+        
+        // Check if any of the questions are empty
+        if (q1 == "" || q2 == "" || q3 == "") {
+          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+          return;
+        }
+        
         data = {
           "Start Date": q1,
           "End Date": q2,
@@ -80,6 +154,12 @@
         }
       }
       data = JSON.stringify(data);
+
+      // After we've reached here, change the submit button text to "Submitting..."
+      $("#submitAppBttn").html("Submitting...");
+
+      // Disable the submit button
+      $("#submitAppBttn").prop("disabled", true);
 
       $.ajax({
         url: "https://drivershub.charlws.com/atm/application",
@@ -94,13 +174,45 @@
         },
         success: function (data) {
           if (data.error == false) {
-            alert("Application submitted successfully!");
+            // Un-disable the submit button
+            $("#submitAppBttn").prop("disabled", false);
+            $("#submitAppBttn").html("Submit");
+            
+            // Trigger req swal.fire
+            Swal.fire({
+                title: 'Success',
+                text: 'Your application has been submitted! Best of luck!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+             })
           } else {
-            alert("Error: " + data.descriptor)
+            // Un-disable the submit button
+            $("#submitAppBttn").prop("disabled", false);
+            $("#submitAppBttn").html("Submit");
+
+            // Trigger req swal.fire
+            Swal.fire({
+              title: 'An Error Occured While Submitting Your Application',
+              text: `Please let us know on discord and open a ticket and show this error: ${data.descriptor}`,
+              icon: 'error',
+              confirmButtonText: 'OK'
+            })
           }
         },
         error: function (data) {
-          alert("Error");
+          // Un-disable the submit button
+          $("#submitAppBttn").prop("disabled", false);
+          $("#submitAppBttn").html("Submit");
+
+          // Trigger req swal.fire
+          Swal.fire({
+              title: 'An Error Occured While Submitting Your Application',
+              text: `Please let us know on discord and open a ticket and show this error: ERROR_UNHANDLED`,
+              icon: 'error',
+              confirmButtonText: 'OK'
+          })
+
+          console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor : 'No Error Descriptor - check cors?');
         }
       });
     }
@@ -138,13 +250,19 @@
         for (i = 0; i < roles.length; i++) {
           if (roles[i] < highestrole) {
             highestrole = roles[i];
+            if(roles[i] == 40 || roles[i] == 41){
+              $("#anncreate").show(); // event staff
+            }
           }
         }
         if (highestrole < 100) {
           $("#stafftabs").show();
-          if(highestrole >= 30){
+          if (highestrole >= 30) {
             $("#AllAppBtn").hide();
           }
+        }
+        if (highestrole <= 10) {
+          $("#anncreate").show();
         }
       }
       $.ajax({
@@ -178,6 +296,135 @@
         }
       });
     }
+
+    // function getLatestAnnouncements() {
+    //   // Bindings
+      
+    //   // text-indigo-700 = info
+    //   // text-red-700 = error
+    //   // text-orange-700 = warning
+
+    //   // Svg Paths 
+    //   // info = infoIconPath
+    //   // error = errorIconPath
+    //   // warning = warningIconPath
+
+    //   // Api responses
+    //   // info = list[0].atype = "0" or "1"
+    //   // warning = list[0].atype = "2"
+    //   // error = list[0].atype = "3"
+
+    //   // Get the latest announcements
+    //   $.ajax({
+    //     url: "https://drivershub.charlws.com/atm/announcement?page=1",
+    //     type: "GET",
+    //     dataType: "json"
+    //   }).done(function (data) {
+    //      const list = data.response.list;
+    //      let announcement;
+
+    //      // Loop through the list and find the closest timestamp to the current time
+    //      for(i = 0; i < list.length; i++) {
+    //        // Check the timestamp to see if it's within the last 24 hours
+    //       if(list[i].timestamp > (Date.now() - (86400000))) {
+    //         // If it is, set the announcement to the current announcement
+    //         announcement = list[i];
+    //         // Break the loop
+    //         break;
+    //       }
+
+    //       // Are we at the end of the list?
+    //       if(i == list.length - 1) {
+    //         // If we are, check to see if announcement is set
+    //         if(announcement == undefined) {
+    //           // We did not find one within 24 hours, so pick list[0]
+    //           announcement = list[0];
+    //           console.warn('No announcements found within 24 hours - falling back to first announcement (list[0])');
+    //         }
+    //       }
+    //     }
+
+    //     // Set the announcement using the
+    //     // announcementBannerTitle
+    //     // and announcementBannerSubtitle respectively
+    //     $("#announcementBannerTitle").html(announcement.title);
+    //     $("#announcementBannerSubtitle").html(announcement.content);
+
+    //     // Set the announcement icon
+    //     // Check if either 0 or 1
+    //     if(announcement.atype == "0" || announcement.atype == "1") {
+    //       // Info, unhide the info icon
+    //       $("#infoIconPath").show();
+
+    //       // Add text-indigo-700 to the announcementBannerSubtitle
+    //       $("#announcementBannerSubtitle").addClass("text-indigo-700");
+
+    //     } else if(announcement.atype == "2") {
+    //       // Warning, unhide the warning icon
+    //       $("#warningIconPath").show();
+
+    //       // Add text-orange-700 to the announcementBannerSubtitle
+    //       $("#announcementBannerSubtitle").addClass("text-orange-700");
+    //     } else if(announcement.atype == "3") {
+    //       // Error, unhide the error icon
+    //       $("#errorIconPath").show();
+
+    //       // Add text-red-700 to the announcementBannerSubtitle
+    //       $("#announcementBannerSubtitle").addClass("text-red-700");
+    //     }
+
+    //   })
+    // }
+
+    // function getPastAnnouncements() {
+    //   // Get the past announcements
+    //   $.ajax({
+    //     url: "https://drivershub.charlws.com/atm/announcement?page=1",
+    //     type: "GET",
+    //     dataType: "json"
+    //   }).done(function (data) {
+    //     // Each announcement will be added to the pastAnnouncementsBody tbody
+    //     // Loop through the list, and add each announcement to the tbody - should follow this format
+    //     // <tr class="text-xs bg-gray-50">
+    //     //  <td class="py-5 px-6 font-medium">{Announcement Type}</td>
+    //     //  <td class="font-medium">{Announcement Title}</td>
+    //     //  <td class="font-medium">{Announcement Date Sent}</td>
+    //     //  <td>
+    //     //      <span class="text-black">{Announcement content}</span>
+    //     //  </td>
+    //     // </tr>
+
+    //     // Remember to translate atype to Information (0, 1), Warning (2), Critcal (3)
+
+    //     const list = data.response.list;
+    //     for(i = 0; i < list.length; i++) {
+    //       // Start the row
+    //       let row = $("<tr class='text-xs bg-gray-50'>");
+    //       let postedDate = new Date(list[i].timestamp * 1000);
+
+    //       // Format the posted date to the following format:
+    //       // {Month} {Day}, {Year}
+    //       let postedDateString = postedDate.toLocaleString("en-US", {
+    //         month: "short",
+    //         day: "numeric",
+    //         year: "numeric"
+    //       });
+          
+    //       // Add the announcement type
+    //       row.append($("<td class='py-5 px-6 font-medium'>").html(list[i].atype == "0" ? "Information" : list[i].atype == "1" ? "Information" : list[i].atype == "2" ? "Warning" : "Critical"));
+    //       // Add the sent date
+    //       row.append($("<td class='font-medium'>").html(postedDateString));
+    //       // Add the announcement title
+    //       row.append($("<td class='font-medium'>").html(list[i].title));
+    //       // Add the announcement content
+    //       row.append($("<td>").html(list[i].content));
+
+    //       // Add the row to the tbody
+    //       $("#pastAnnouncementsBody").append(row);
+    //     }
+    //   })
+    // }
+
     $(document).ready(function () {
       validate();
       $("#logout").click(function () {
@@ -210,13 +457,63 @@
           $("#LOAApp").show();
         }
       });
+      annpage = 2;
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/announcement?page=1",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          ann = data.response.list;
+          if (ann.length > 0) {
+            a = ann[0];
+            dt = getDateTime(a.timestamp * 1000);
+            content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" + a
+              .content.replaceAll("\n", "<br>");
+            TYPES = ["info", "info", "warning", "criticle", "resolved"];
+            banner = genBanner(TYPES[a.atype], a.title, content);
+            $("#HomeTab").append(banner);
+          }
+          for (i = 0; i < ann.length; i++) {
+            a = ann[i];
+            dt = getDateTime(a.timestamp * 1000);
+            content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" + a
+              .content.replaceAll("\n", "<br>");
+            TYPES = ["info", "info", "warning", "criticle", "resolved"];
+            banner = genBanner(TYPES[a.atype], a.title, content);
+            $("#anns").append(banner);
+          }
+        }
+      });
+      $("#annloadmore").click(function () {
+        $.ajax({
+          url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
+          type: "GET",
+          dataType: "json",
+          success: function (data) {
+            ann = data.response.list;
+            for (i = 0; i < ann.length; i++) {
+              a = ann[i];
+              dt = getDateTime(a.timestamp * 1000);
+              content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" +
+                a
+                .content.replaceAll("\n", "<br>");
+              TYPES = ["info", "info", "warning", "criticle", "resolved"];
+              banner = genBanner(TYPES[a.atype], a.title, content);
+              $("#anns").append(banner);
+            }
+            if(ann.length == 0){
+              $("#annloadmore").html("&nbsp;No more&nbsp;");
+              $("#annloadmore").attr("disabled", "disabled");
+            }
+          }
+        });
+      });
     });
   </script>
 </head>
 
 <body class="antialiased bg-body text-body font-body">
   <div class="">
-
     <div>
       <nav class="lg:hidden py-6 px-6 bg-gray-800">
         <div class="flex items-center justify-between">
@@ -235,8 +532,8 @@
         <nav
           class="fixed top-0 left-0 bottom-0 flex flex-col w-3/4 lg:w-80 sm:max-w-xs pt-6 pb-8 bg-gray-800 overflow-y-auto">
           <div class="flex w-full items-center px-6 pb-6 mb-6 lg:border-b border-gray-700">
-            <a class="text-xl text-white font-semibold" style="cursor: pointer" onclick="ShowTab('#HomeTab', '#HomeTabBtn')"><img src="images/banner.png" alt=""
-                width="100%"></a>
+            <a class="text-xl text-white font-semibold" style="cursor: pointer"
+              onclick="ShowTab('#HomeTab', '#HomeTabBtn')"><img src="images/banner.png" alt="" width="100%"></a>
           </div>
           <div class="px-4 pb-6">
             <ul class="text-sm font-medium">
@@ -270,7 +567,7 @@
                       <path
                         d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z" />
                     </svg> </span>
-                  <span>Announcements</span>
+                  <span >Announcements</span>
                   <span class="inline-block ml-auto">
                   </span>
                 </a>
@@ -353,42 +650,54 @@
       </div>
 
       <section id="HomeTab" class="py-8 tabs">
-        <div class="mx-auto lg:ml-80" style="padding:50px;padding-top:0">
-          <div class="py-8 px-6">
-            <div class="p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
-              <div class="flex">
-                <div class="w-auto">
-                  <span class="w-auto inline-block mr-2">
-                    <svg width="20" height="20" viewbox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M10 0C4.5 0 0 4.5 0 10C0 15.5 4.5 20 10 20C15.5 20 20 15.5 20 10C20 4.5 15.5 0 10 0ZM11 14C11 14.6 10.6 15 10 15C9.4 15 9 14.6 9 14V10C9 9.4 9.4 9 10 9C10.6 9 11 9.4 11 10V14ZM10 7C9.4 7 9 6.6 9 6C9 5.4 9.4 5 10 5C10.6 5 11 5.4 11 6C11 6.6 10.6 7 10 7Z"
-                        fill="#382CDD"></path>
-                    </svg></span>
-                </div>
-                <div class="w-full">
-                  <div class="flex mb-2">
-                    <h3 class="text-indigo-800 font-medium">Welcome to At The Mile Logistics Drivers Hub!</h3>
+      </section>
 
-                  </div>
-                  <div class="pr-6">
-                    <p class="text-sm text-indigo-700">This is beta version. If you met an issue, please report it in
-                      our Discord Server. More functions are being added.</p>
-                  </div>
-                </div>
-              </div>
+      <section id="AnnTab" class="py-8 tabs" style="display:none">
+        <div style="position: relative;margin:20px;">
+          <button id="anncreate" type="button" style="display:none"
+            class="mx-auto lg:ml-80 w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">New Announcement</button>
+        </div>
+        <div id="anns">
+
+        </div>
+        <div style="position: relative; left: calc( 100% - 200px );width:200px">
+          <button id="annloadmore" type="button"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">Load More</button>
+        </div>
+      </section>
+
+      <section id="AnnTab" class="py-8 tabs" style="display: none;">
+        <div class="container px-4 mx-auto lg:ml-80" style="padding:50px; padding-top:0;">
+          <div class="pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold" id="MyAppSpan2">Past announcements</h3>
+            </div>
+            <div class="p-4 overflow-x-auto">
+              <table class="table-auto w-full">
+                <thead>
+                  <tr class="text-xs text-gray-500 text-left">
+                    <th class="pb-3 font-medium">Announcement Type</th>
+                    <th class="pb-3 font-medium">Date Sent</th>
+                    <th class="pb-3 font-medium">Title</th>
+                    <th class="pb-3 font-medium">Content</th>
+                  </tr>
+                </thead>
+                <tbody id="pastAnnouncementsBody">
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </section>
 
       <section id="MyApp" class="py-8 tabs" style="display: none;">
-        <div class="container px-4 mx-auto lg:ml-80" style="padding:50px;padding-top:0">
+        <div class="container px-4 mx-auto lg:ml-80" style="padding:50px; padding-top:0;">
           <div class="pt-4 bg-white shadow rounded">
             <div class="flex px-6 pb-4 border-b">
-              <h3 class="text-xl font-bold" id="MyAppSpan2">My Applications (Coming out soon)</h3>
+              <h3 class="text-xl font-bold" id="MyAppSpan2">My Applications</h3>
             </div>
-            <div class="p-4 overflow-x-auto">
-              <!-- <table class="table-auto w-full">
+            <div class="p-4 overflow-x-auto" style="display: none;">
+              <table class="table-auto w-full">
                 <thead>
                   <tr class="text-xs text-gray-500 text-left">
                     <th class="pb-3 font-medium">Application ID</th>
@@ -400,8 +709,6 @@
                   <tr class="text-xs bg-gray-50">
                     <td class="py-5 px-6 font-medium">SR2451EW32</td>
                     <td class="font-medium">08.04.2021</td>
-
-
                     <td>
                       <span class="inline-block py-1 px-2 text-white bg-green-500 rounded-full">Accepted</span>
                     </td>
@@ -443,7 +750,7 @@
                     </td>
                   </tr>
                 </tbody>
-              </table> -->
+              </table>
             </div>
           </div>
         </div>
@@ -623,7 +930,7 @@
 
             <button type="button"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="SubmitApp()">Submit</button>
+              onclick="SubmitApp()" id="submitAppBttn">Submit</button>
           </form>
         </div>
       </section>

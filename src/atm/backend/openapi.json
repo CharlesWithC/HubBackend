@@ -690,7 +690,7 @@
                                         "type": "string"
                                     },
                                     "atype": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle)",
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved)",
                                         "type": "integer"
                                     }
                                 }
@@ -747,7 +747,7 @@
                                         "type": "string"
                                     },
                                     "atype": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle)",
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved)",
                                         "type": "integer"
                                     }
                                 }

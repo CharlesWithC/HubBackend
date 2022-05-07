@@ -39,6 +39,3 @@ async def AuditLog(userid, text):
         embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
         embed.timestamp = datetime.now()
         await webhook.send(embed=embed)
-
-def DM(discordid, title, description, footer):
-    
