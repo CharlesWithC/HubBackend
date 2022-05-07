@@ -15,7 +15,7 @@ async def getAnnouncement(page: int, response: Response):
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid FROM announcement WHERE aid >= 0 ORDER BY timestamp DESC")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 ORDER BY timestamp DESC")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -24,7 +24,7 @@ async def getAnnouncement(page: int, response: Response):
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        ret.append({"title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
+        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
     totpage = math.ceil(len(ret) / 10)
     ret = ret[(page - 1) * 10 : page * 10]
 
@@ -71,6 +71,9 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     if not ok:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+
+    if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
+        return {"error": True, "descriptor": "Event staff can only post event announcements."}
 
     cur.execute(f"SELECT COUNT(*) FROM announcement")
     t = cur.fetchall()
@@ -138,11 +141,17 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     content = b64e(form["content"])
     atype = int(form["atype"])
 
-    cur.execute(f"SELECT * FROM announcement WHERE aid = {aid}")
+    cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
         return {"error": True, "descriptor": "Announcement not found!"}
+    creator = t[0][0]
+    if creator != adminid and adminhighest >= 10:
+        return {"error": True, "descriptor": "Only announcement creator can edit it."}
+
+    if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
+        return {"error": True, "descriptor": "Event staff can only post event announcements."}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
     await AuditLog(adminid, f"Updated announcement #{aid}")
@@ -197,6 +206,9 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     if len(t) == 0:
         # response.status_code = 404
         return {"error": True, "descriptor": "Announcement not found!"}
+    creator = t[0][0]
+    if creator != adminid and adminhighest >= 10: # creator or leadership
+        return {"error": True, "descriptor": "Only announcement creator can delete it."}
     
     cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")
     await AuditLog(adminid, f"Deleted announcement #{aid}")

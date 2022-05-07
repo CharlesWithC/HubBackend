@@ -48,6 +48,181 @@
       }
     }
 
+    function NewAnn() {
+      anntype = parseInt($("#annselect").find(":selected").val());
+      title = $("#anntitle").val();
+      content = $("#anncontent").val();
+      annid = $("#annid").val();
+
+      $("#newAnnBtn").html("Working...");
+      $("#newAnnBtn").prop("disabled", true);
+      
+      op = "create";
+      if (isNumber(annid)) {
+        if (title != "" || content != "") {
+          op="update";
+        } else {
+          op="delete";
+        }
+      }
+
+      if (op == "update") {
+        annid = parseInt(annid);
+        $.ajax({
+          url: "https://drivershub.charlws.com/atm/announcement",
+          type: "PATCH",
+          dataType: "json",
+          headers: {
+            "Authorization": "Bearer " + token
+          },
+          data: {
+            "aid": annid,
+            "title": title,
+            "content": content,
+            "atype": anntype
+          },
+          success: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+            if (data.error == false) {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'Success',
+                text: 'Announcement updated! Refresh page to view it!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+              })
+            } else {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'An Error Occured While Updating Announcement',
+                text: data.descriptor,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              })
+            }
+          },
+          error: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+
+            // Trigger req swal.fire
+            Swal.fire({
+              title: 'An Error Occured While Updating Announcement',
+              text: data.descriptor,
+              icon: 'error',
+              confirmButtonText: 'OK'
+            })
+
+            console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor :
+              'No Error Descriptor - check cors?');
+          }
+        });
+      } else if (op == "create"){
+        $.ajax({
+          url: "https://drivershub.charlws.com/atm/announcement",
+          type: "POST",
+          dataType: "json",
+          headers: {
+            "Authorization": "Bearer " + token
+          },
+          data: {
+            "title": title,
+            "content": content,
+            "atype": anntype
+          },
+          success: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+            if (data.error == false) {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'Success',
+                text: 'Announcement created! Refresh page to view it!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+              })
+            } else {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'An Error Occured While Creating Announcement',
+                text: data.descriptor,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              })
+            }
+          },
+          error: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+
+            // Trigger req swal.fire
+            Swal.fire({
+              title: 'An Error Occured While Creating Announcement',
+              text: data.descriptor,
+              icon: 'error',
+              confirmButtonText: 'OK'
+            })
+
+            console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor :
+              'No Error Descriptor - check cors?');
+          }
+        });
+      } else if (op == "delete") {
+        annid = parseInt(annid);
+        $.ajax({
+          url: "https://drivershub.charlws.com/atm/announcement?aid=" + annid,
+          type: "DELETE",
+          dataType: "json",
+          headers: {
+            "Authorization": "Bearer " + token
+          },
+          success: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+            if (data.error == false) {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'Success',
+                text: 'Announcement deleted!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+              })
+            } else {
+              // Trigger req swal.fire
+              Swal.fire({
+                title: 'An Error Occured While Deleting Announcement',
+                text: data.descriptor,
+                icon: 'error',
+                confirmButtonText: 'OK'
+              })
+            }
+          },
+          error: function (data) {
+            // Un-disable the submit button
+            $("#newAnnBtn").prop("disabled", false);
+            $("#newAnnBtn").html("Submit");
+
+            // Trigger req swal.fire
+            Swal.fire({
+              title: 'An Error Occured While Deleting Announcement',
+              text: data.descriptor,
+              icon: 'error',
+              confirmButtonText: 'OK'
+            })
+
+            console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor :
+              'No Error Descriptor - check cors?');
+          }
+        });
+      }
+    }
+
     function SubmitApp() {
       apptype = $("#appselect").find(":selected").text();
       data = "";
@@ -60,9 +235,10 @@
         q4 = $("#da-q4").val();
 
 
-        // Check if any of the questions are empty
+        // Check if any of the fields are empty
         if (q1 == "" || q2 == "" || q3 == "" || q4 == "") {
-          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+          toastFactory("warning", "Error", "You must fill in all the fields!", 5000, false);
+          return;
         }
 
 
@@ -115,9 +291,9 @@
         q5 = $("#sa-q5").val();
         pos = $("#sa-select").find(":selected").text();
 
-        // Check if any of the questions are empty
+        // Check if any of the fields are empty
         if (q1 == "" || q2 == "" || q3 == "" || q4 == "" || q5 == "") {
-          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+          toastFactory("warning", "Error", "You must fill in all the fields!", 5000, false);
           return;
         }
 
@@ -141,9 +317,9 @@
         q2 = $("#la-q2").val();
         q3 = $("#la-q3").val();
 
-        // Check if any of the questions are empty
+        // Check if any of the fields are empty
         if (q1 == "" || q2 == "" || q3 == "") {
-          toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
+          toastFactory("warning", "Error", "You must fill in all the fields!", 5000, false);
           return;
         }
 
@@ -249,17 +425,40 @@
       highestrole = localStorage.getItem("highestrole");
       $("#name").html(name);
       $("#role").html(highestrole);
-      if (avatar.startsWith("a_"))
-        $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif");
-      else
-        $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
+      if (avatar != null) {
+        if (avatar.startsWith("a_"))
+          $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif");
+        else
+          $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
+      }
       if (roles != null && roles != undefined) {
         highestrole = 99999;
         for (i = 0; i < roles.length; i++) {
           if (roles[i] < highestrole) {
             highestrole = roles[i];
             if (roles[i] == 40 || roles[i] == 41) {
-              $("#anncreate").show(); // event staff
+              $("#newann").show(); // event staff
+              if (roles[i] == 40)
+                $("#annrole").html("Event Manager");
+              else
+                $("#annrole").html("Event Staff");
+              setInterval(function () {
+                title = $("#anntitle").val();
+                content = $("#anncontent").val();
+                annid = $("#annid").val();
+                if (isNumber(annid)) {
+                  if (title != "" || content != "") {
+                    $("#newAnnBtn").html("Update Announcement");
+                    $("#newAnnBtn").css("background-color", "green");
+                  } else {
+                    $("#newAnnBtn").html("Delete Announcement");
+                    $("#newAnnBtn").css("background-color", "red");
+                  }
+                } else {
+                  $("#newAnnBtn").html("New Announcement");
+                  $("#newAnnBtn").css("background-color", "blue");
+                }
+              });
             }
           }
         }
@@ -270,7 +469,25 @@
           }
         }
         if (highestrole <= 10) {
-          $("#anncreate").show();
+          $("#newann").show();
+          $("#annrole").html("Leadership");
+          setInterval(function () {
+            title = $("#anntitle").val();
+            content = $("#anncontent").val();
+            annid = $("#annid").val();
+            if (isNumber(annid)) {
+              if (title != "" || content != "") {
+                $("#newAnnBtn").html("Update Announcement");
+                $("#newAnnBtn").css("background-color", "green");
+              } else {
+                $("#newAnnBtn").html("Delete Announcement");
+                $("#newAnnBtn").css("background-color", "red");
+              }
+            } else {
+              $("#newAnnBtn").html("New Announcement");
+              $("#newAnnBtn").css("background-color", "blue");
+            }
+          });
         }
       }
       $.ajax({
@@ -365,7 +582,8 @@
           if (ann.length > 0) {
             a = ann[0];
             dt = getDateTime(a.timestamp * 1000);
-            content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" + a
+            content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
+              "</b> by <i>" + a.by + "</i></span><br>" + a
               .content.replaceAll("\n", "<br>");
             TYPES = ["info", "info", "warning", "criticle", "resolved"];
             banner = genBanner(TYPES[a.atype], a.title, content);
@@ -374,7 +592,8 @@
           for (i = 0; i < ann.length; i++) {
             a = ann[i];
             dt = getDateTime(a.timestamp * 1000);
-            content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" + a
+            content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
+              "</b> by <i>" + a.by + "</i></span><br>" + a
               .content.replaceAll("\n", "<br>");
             TYPES = ["info", "info", "warning", "criticle", "resolved"];
             banner = genBanner(TYPES[a.atype], a.title, content);
@@ -392,7 +611,8 @@
             for (i = 0; i < ann.length; i++) {
               a = ann[i];
               dt = getDateTime(a.timestamp * 1000);
-              content = "<span style='font-size:10px;color:grey'>" + dt + " by " + a.by + "</span><br>" +
+              content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
+                "</b> by <i>" + a.by + "</i></span><br>" +
                 a
                 .content.replaceAll("\n", "<br>");
               TYPES = ["info", "info", "warning", "criticle", "resolved"];
@@ -530,20 +750,6 @@
                 </a>
             </ul>
           </div>
-          <div class="px-4 pb-6">
-            <div class="">
-              <a id="logout" class="flex items-center pl-3 py-3 pr-2 text-gray-50 hover:bg-gray-900 rounded"
-                style="cursor: pointer">
-                <span class="inline-block mr-4">
-                  <svg class="text-gray-600 w-5 h-5" viewbox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M0.333618 8.99996C0.333618 9.22097 0.421416 9.43293 0.577696 9.58922C0.733976 9.7455 0.945938 9.83329 1.16695 9.83329H7.49195L5.57528 11.7416C5.49718 11.8191 5.43518 11.9113 5.39287 12.0128C5.35057 12.1144 5.32879 12.2233 5.32879 12.3333C5.32879 12.4433 5.35057 12.5522 5.39287 12.6538C5.43518 12.7553 5.49718 12.8475 5.57528 12.925C5.65275 13.0031 5.74492 13.0651 5.84647 13.1074C5.94802 13.1497 6.05694 13.1715 6.16695 13.1715C6.27696 13.1715 6.38588 13.1497 6.48743 13.1074C6.58898 13.0651 6.68115 13.0031 6.75862 12.925L10.0919 9.59163C10.1678 9.51237 10.2273 9.41892 10.2669 9.31663C10.3503 9.11374 10.3503 8.88618 10.2669 8.68329C10.2273 8.581 10.1678 8.48755 10.0919 8.40829L6.75862 5.07496C6.68092 4.99726 6.58868 4.93563 6.48716 4.89358C6.38564 4.85153 6.27683 4.82988 6.16695 4.82988C6.05707 4.82988 5.94826 4.85153 5.84674 4.89358C5.74522 4.93563 5.65298 4.99726 5.57528 5.07496C5.49759 5.15266 5.43595 5.2449 5.3939 5.34642C5.35185 5.44794 5.33021 5.55674 5.33021 5.66663C5.33021 5.77651 5.35185 5.88532 5.3939 5.98683C5.43595 6.08835 5.49759 6.18059 5.57528 6.25829L7.49195 8.16663H1.16695C0.945938 8.16663 0.733976 8.25442 0.577696 8.4107C0.421416 8.56698 0.333618 8.77895 0.333618 8.99996ZM11.1669 0.666626H2.83362C2.17058 0.666626 1.53469 0.930018 1.06585 1.39886C0.59701 1.8677 0.333618 2.50358 0.333618 3.16663V5.66663C0.333618 5.88764 0.421416 6.0996 0.577696 6.25588C0.733976 6.41216 0.945938 6.49996 1.16695 6.49996C1.38797 6.49996 1.59993 6.41216 1.75621 6.25588C1.91249 6.0996 2.00028 5.88764 2.00028 5.66663V3.16663C2.00028 2.94561 2.08808 2.73365 2.24436 2.57737C2.40064 2.42109 2.6126 2.33329 2.83362 2.33329H11.1669C11.388 2.33329 11.5999 2.42109 11.7562 2.57737C11.9125 2.73365 12.0003 2.94561 12.0003 3.16663V14.8333C12.0003 15.0543 11.9125 15.2663 11.7562 15.4225C11.5999 15.5788 11.388 15.6666 11.1669 15.6666H2.83362C2.6126 15.6666 2.40064 15.5788 2.24436 15.4225C2.08808 15.2663 2.00028 15.0543 2.00028 14.8333V12.3333C2.00028 12.1123 1.91249 11.9003 1.75621 11.744C1.59993 11.5878 1.38797 11.5 1.16695 11.5C0.945938 11.5 0.733976 11.5878 0.577696 11.744C0.421416 11.9003 0.333618 12.1123 0.333618 12.3333V14.8333C0.333618 15.4963 0.59701 16.1322 1.06585 16.6011C1.53469 17.0699 2.17058 17.3333 2.83362 17.3333H11.1669C11.83 17.3333 12.4659 17.0699 12.9347 16.6011C13.4036 16.1322 13.6669 15.4963 13.6669 14.8333V3.16663C13.6669 2.50358 13.4036 1.8677 12.9347 1.39886C12.4659 0.930018 11.83 0.666626 11.1669 0.666626Z"
-                      fill="currentColor"></path>
-                  </svg></span>
-                <span>Log Out</span>
-              </a>
-            </div>
-          </div>
         </nav>
       </div>
       <section class="py-5 px-6 bg-white shadow mx-auto lg:ml-80">
@@ -551,9 +757,18 @@
           <div class="flex items-center">
             <div class="hidden lg:block" style="margin-left:auto;margin-right:0">
               <button class="flex">
+                <a id="logout" style="cursor: pointer;margin-top:11px">
+                  <span class="inline-block mr-4">
+                    <svg class="text-gray-600 w-5 h-5" viewbox="0 0 14 18" fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M0.333618 8.99996C0.333618 9.22097 0.421416 9.43293 0.577696 9.58922C0.733976 9.7455 0.945938 9.83329 1.16695 9.83329H7.49195L5.57528 11.7416C5.49718 11.8191 5.43518 11.9113 5.39287 12.0128C5.35057 12.1144 5.32879 12.2233 5.32879 12.3333C5.32879 12.4433 5.35057 12.5522 5.39287 12.6538C5.43518 12.7553 5.49718 12.8475 5.57528 12.925C5.65275 13.0031 5.74492 13.0651 5.84647 13.1074C5.94802 13.1497 6.05694 13.1715 6.16695 13.1715C6.27696 13.1715 6.38588 13.1497 6.48743 13.1074C6.58898 13.0651 6.68115 13.0031 6.75862 12.925L10.0919 9.59163C10.1678 9.51237 10.2273 9.41892 10.2669 9.31663C10.3503 9.11374 10.3503 8.88618 10.2669 8.68329C10.2273 8.581 10.1678 8.48755 10.0919 8.40829L6.75862 5.07496C6.68092 4.99726 6.58868 4.93563 6.48716 4.89358C6.38564 4.85153 6.27683 4.82988 6.16695 4.82988C6.05707 4.82988 5.94826 4.85153 5.84674 4.89358C5.74522 4.93563 5.65298 4.99726 5.57528 5.07496C5.49759 5.15266 5.43595 5.2449 5.3939 5.34642C5.35185 5.44794 5.33021 5.55674 5.33021 5.66663C5.33021 5.77651 5.35185 5.88532 5.3939 5.98683C5.43595 6.08835 5.49759 6.18059 5.57528 6.25829L7.49195 8.16663H1.16695C0.945938 8.16663 0.733976 8.25442 0.577696 8.4107C0.421416 8.56698 0.333618 8.77895 0.333618 8.99996ZM11.1669 0.666626H2.83362C2.17058 0.666626 1.53469 0.930018 1.06585 1.39886C0.59701 1.8677 0.333618 2.50358 0.333618 3.16663V5.66663C0.333618 5.88764 0.421416 6.0996 0.577696 6.25588C0.733976 6.41216 0.945938 6.49996 1.16695 6.49996C1.38797 6.49996 1.59993 6.41216 1.75621 6.25588C1.91249 6.0996 2.00028 5.88764 2.00028 5.66663V3.16663C2.00028 2.94561 2.08808 2.73365 2.24436 2.57737C2.40064 2.42109 2.6126 2.33329 2.83362 2.33329H11.1669C11.388 2.33329 11.5999 2.42109 11.7562 2.57737C11.9125 2.73365 12.0003 2.94561 12.0003 3.16663V14.8333C12.0003 15.0543 11.9125 15.2663 11.7562 15.4225C11.5999 15.5788 11.388 15.6666 11.1669 15.6666H2.83362C2.6126 15.6666 2.40064 15.5788 2.24436 15.4225C2.08808 15.2663 2.00028 15.0543 2.00028 14.8333V12.3333C2.00028 12.1123 1.91249 11.9003 1.75621 11.744C1.59993 11.5878 1.38797 11.5 1.16695 11.5C0.945938 11.5 0.733976 11.5878 0.577696 11.744C0.421416 11.9003 0.333618 12.1123 0.333618 12.3333V14.8333C0.333618 15.4963 0.59701 16.1322 1.06585 16.6011C1.53469 17.0699 2.17058 17.3333 2.83362 17.3333H11.1669C11.83 17.3333 12.4659 17.0699 12.9347 16.6011C13.4036 16.1322 13.6669 15.4963 13.6669 14.8333V3.16663C13.6669 2.50358 13.4036 1.8677 12.9347 1.39886C12.4659 0.930018 11.83 0.666626 11.1669 0.666626Z"
+                        fill="currentColor"></path>
+                    </svg></span>
+                </a>
                 <div class="mr-3">
-                  <p id="name" class="text-sm" style="text-align:right"></p>
-                  <p id="role" class="text-sm text-gray-500" style="text-align:right"></p>
+                  <p id="name" class="text-sm" style="text-align:right">CharlesWithC</p>
+                  <p id="role" class="text-sm text-gray-500" style="text-align:right">Loner</p>
                 </div>
                 <div class="mr-2"><img id="avatar" class="w-10 h-10 rounded-full object-cover object-right" width="40"
                     src="https://cdn.discordapp.com/avatars/873178118213472286/a_20ad49948c848062f8b5b538e78fa75c.gif"
@@ -568,10 +783,55 @@
       </section>
 
       <section id="AnnTab" class="py-8 tabs" style="display:none">
-        <div style="position: relative;margin:20px;">
-          <button id="anncreate" type="button" style="display:none"
-            class="mx-auto lg:ml-80 w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">New
-            Announcement</button>
+        <div class="container px-4 mx-auto lg:ml-80" id="newann">
+          <div style="margin:20px">
+            <p>You are <b><span id="annrole"></span></b> so you can deal with announcements.</p>
+            <p>To create an announcement, input <b>title, content and type</b>, announcement id is NOT needed.</p>
+            <p>To update an announcement, input <b>announcement id, title, content and type</b></p>
+            <p>To delete an announcement, input ONLY <b>announcement id</b> and leave the other fields empty.</p>
+            <p>Watch out that the button will change based on your inputs!</p>
+            <br>
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Announcement ID</label>
+              <input id="annid" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="text" name=""
+                placeholder="Needed only for editing / deleting, not required for creating announcements."></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Title</label>
+              <input id="anntitle"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                name="" placeholder=""></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Content</label>
+              <textarea id="anncontent"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder=""></textarea></div>
+
+            <div class="relative" style="width:200px">
+              <label class="block text-sm font-medium mb-2 text-left" for="">Announcement Type:</label>
+              <select id="annselect"
+                class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name">
+                <option value="0">Information</option>
+                <option value="1">Event</option>
+                <option value="2">Warning</option>
+                <option value="3">Critical</option>
+                <option value="4">Resolved</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                </svg>
+              </div>
+            </div>
+
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="NewAnn()" id="newAnnBtn">New Announcement</button>
+          </div>
+          <hr>
         </div>
         <div id="anns">
 

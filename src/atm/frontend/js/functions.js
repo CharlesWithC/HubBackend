@@ -1,29 +1,29 @@
 function getUrlParameter(sParam) {
-    var sPageURL = window.location.search.substring(1),
-        sURLVariables = sPageURL.split('&'),
-        sParameterName,
-        i;
+  var sPageURL = window.location.search.substring(1),
+    sURLVariables = sPageURL.split('&'),
+    sParameterName,
+    i;
 
-    for (i = 0; i < sURLVariables.length; i++) {
-        sParameterName = sURLVariables[i].split('=');
+  for (i = 0; i < sURLVariables.length; i++) {
+    sParameterName = sURLVariables[i].split('=');
 
-        if (sParameterName[0] === sParam) {
-            return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
-        }
+    if (sParameterName[0] === sParam) {
+      return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
     }
-    return false;
+  }
+  return false;
 };
 
 function getCookie(cookiename) {
-    // Get name followed by anything except a semicolon
-    var cookiestring = RegExp(cookiename + "=[^;]+").exec(document.cookie);
-    // Return everything after the equal sign, or an empty string if the cookie name not found
-    return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, "") : "");
+  // Get name followed by anything except a semicolon
+  var cookiestring = RegExp(cookiename + "=[^;]+").exec(document.cookie);
+  // Return everything after the equal sign, or an empty string if the cookie name not found
+  return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, "") : "");
 }
 
-function genBanner(btype, title, content){
-    if(btype == "info"){
-        return `
+function genBanner(btype, title, content) {
+  if (btype == "info") {
+    return `
         <div class="py-8 px-6 mx-auto lg:ml-80">
           <div class="p-6 bg-gray-50 border-l-4 border-2 border-indigo-500 rounded-r-lg">
             <div class="flex">
@@ -36,17 +36,17 @@ function genBanner(btype, title, content){
               </div>
               <div class="w-full">
                 <div class="flex">
-                  <h3 class="text-indigo-800 font-medium">`+title+`</h3>
+                  <h3 class="text-indigo-800 font-medium">` + title + `</h3>
                 </div>
                 <div class="pr-6">
-                  <p class="text-sm text-indigo-700">`+content+`</p>
+                  <p class="text-sm text-indigo-700">` + content + `</p>
                 </div>
               </div>
             </div>
           </div>
         </div>`;
-    } else if(btype == "criticle"){
-        return `
+  } else if (btype == "criticle") {
+    return `
         <div class="py-8 px-6 mx-auto lg:ml-80">
           <div class="p-6 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
             <div class="flex">
@@ -59,17 +59,17 @@ function genBanner(btype, title, content){
               </div>
               <div class="w-full">
                 <div class="flex">
-                  <h3 class="text-red-800 font-medium">`+title+`</h3>
+                  <h3 class="text-red-800 font-medium">` + title + `</h3>
                 </div>
                 <div class="pr-6">
-                  <p class="text-sm text-red-700">`+content+`</p>
+                  <p class="text-sm text-red-700">` + content + `</p>
                 </div>
               </div>
             </div>
           </div>
         </div>`;
-    } else if(btype == "resolved"){
-        return `
+  } else if (btype == "resolved") {
+    return `
         <div class="py-8 px-6 mx-auto lg:ml-80">
           <div class="p-6 bg-gray-50 border-l-4 border-2 border-green-500 rounded-r-lg">
             <div class="flex">
@@ -82,17 +82,17 @@ function genBanner(btype, title, content){
               </div>
               <div class="w-full">
                 <div class="flex">
-                  <h3 class="text-green-800 font-medium">`+title+`</h3>
+                  <h3 class="text-green-800 font-medium">` + title + `</h3>
                 </div>
                 <div class="pr-6">
-                  <p class="text-sm text-green-700">`+content+`</p>
+                  <p class="text-sm text-green-700">` + content + `</p>
                 </div>
               </div>
             </div>
           </div>
         </div>`;
-    } else if(btype == "warning"){
-        return `<div class="py-8 px-6 mx-auto lg:ml-80">
+  } else if (btype == "warning") {
+    return `<div class="py-8 px-6 mx-auto lg:ml-80">
             <div class="p-6 bg-gray-50 border-l-4 border-2 border-orange-500 rounded-r-lg">
             <div class="flex">
                 <div class="w-auto">
@@ -104,20 +104,24 @@ function genBanner(btype, title, content){
                 </div>
                 <div class="w-full">
                 <div class="flex">
-                    <h3 class="text-orange-800 font-medium">Example for Banner</h3>
+                    <h3 class="text-orange-800 font-medium">`+title+`</h3>
                 </div>
                 <div class="pr-6">
-                    <p class="text-sm text-orange-700">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Reprehenderit vel expedita, aut similique voluptates modi dolorem maxime illum.</p>
+                    <p class="text-sm text-orange-700">`+content+`</p>
                 </div>
                 </div>
             </div>
             </div>
         </div>
         </div>`;
-    }
+  }
 }
 
-function getDateTime(timestamp){
+function getDateTime(timestamp) {
   dt = new Date(timestamp);
   return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear() + " " + dt.getHours() + ":" + dt.getMinutes();
+}
+
+function isNumber(n) {
+  return /^-?[\d.]+(?:e-?\d+)?$/.test(n);
 }
