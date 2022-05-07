@@ -20,24 +20,24 @@
   <script>
     function toastFactory(type, title, text, time, showConfirmButton) {
       const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: showConfirmButton || false,
-          timer: time || '3000',
-          timerProgressBar: true,
-          didOpen: (toast) => {
-              toast.addEventListener('mouseenter', Swal.stopTimer);
-              toast.addEventListener('mouseleave', Swal.resumeTimer);
-            },
-        });
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: showConfirmButton || false,
+        timer: time || '3000',
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer);
+          toast.addEventListener('mouseleave', Swal.resumeTimer);
+        },
+      });
 
-        Toast.fire({
-            icon: type,
-            title: '<strong>' + title + '</strong>',
-            html: text,
-        });
+      Toast.fire({
+        icon: type,
+        title: '<strong>' + title + '</strong>',
+        html: text,
+      });
     }
-    
+
     function ShowTab(tabname, btnname) {
       $(".tabs").hide();
       $(tabname).show();
@@ -53,7 +53,7 @@
       data = "";
       if (apptype == "Driver") {
         apptype = 1;
-        
+
         q1 = $("#da-q1").val();
         q2 = $("#da-q2").val();
         q3 = $("#da-q3").val();
@@ -65,13 +65,13 @@
           toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
         }
 
-        
+
         // Checks for is in vtc and terms
         if ($("#in-another-vtc").prop("checked")) {
-          toastFactory("warning", "Error","You can only be in one VTC at a time!", 5000, false);
+          toastFactory("warning", "Error", "You can only be in one VTC at a time!", 5000, false);
           return;
         }
-        
+
         if (!$("#da-agree").prop("checked")) {
           toastFactory("warning", "Error", "You must agree to the terms and conditions!", 5000, false);
           return;
@@ -79,7 +79,7 @@
 
         // Check if q1 is a vaild date
         const birthDate = new Date(q1);
-        
+
         if (isNaN(birthDate.getTime())) {
           toastFactory("warning", "Error", "You must enter a valid date!", 5000, false);
           return;
@@ -98,7 +98,7 @@
           toastFactory("warning", "Error", "You must be at least 13 years old to apply!", 5000, false);
           return;
         }
-        
+
         data = {
           "Birthday": q1,
           "How did you find us?": q2,
@@ -107,7 +107,7 @@
         };
       } else if (apptype == "Staff") {
         apptype = 2;
-        
+
         q1 = $("#sa-q1").val();
         q2 = $("#sa-q2").val();
         q3 = $("#sa-q3").val();
@@ -125,8 +125,8 @@
           toastFactory("warning", "Error", "You must agree to the terms and conditions!", 5000, false);
           return;
         }
-        
-        
+
+
         data = {
           "Applying For": pos,
           "Birthday": q1,
@@ -140,13 +140,13 @@
         q1 = $("#la-q1").val();
         q2 = $("#la-q2").val();
         q3 = $("#la-q3").val();
-        
+
         // Check if any of the questions are empty
         if (q1 == "" || q2 == "" || q3 == "") {
           toastFactory("warning", "Error", "You must fill in all the questions!", 5000, false);
           return;
         }
-        
+
         data = {
           "Start Date": q1,
           "End Date": q2,
@@ -177,14 +177,14 @@
             // Un-disable the submit button
             $("#submitAppBttn").prop("disabled", false);
             $("#submitAppBttn").html("Submit");
-            
+
             // Trigger req swal.fire
             Swal.fire({
-                title: 'Success',
-                text: 'Your application has been submitted! Best of luck!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-             })
+              title: 'Success',
+              text: 'Your application has been submitted! Best of luck!',
+              icon: 'success',
+              confirmButtonText: 'OK'
+            })
           } else {
             // Un-disable the submit button
             $("#submitAppBttn").prop("disabled", false);
@@ -206,13 +206,14 @@
 
           // Trigger req swal.fire
           Swal.fire({
-              title: 'An Error Occured While Submitting Your Application',
-              text: `Please let us know on discord and open a ticket and show this error: ERROR_UNHANDLED`,
-              icon: 'error',
-              confirmButtonText: 'OK'
+            title: 'An Error Occured While Submitting Your Application',
+            text: `Please let us know on discord and open a ticket and show this error: ERROR_UNHANDLED`,
+            icon: 'error',
+            confirmButtonText: 'OK'
           })
 
-          console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor : 'No Error Descriptor - check cors?');
+          console.warn('Failed to submit application (Unhandled Error): ', data.descriptor ? data.descriptor :
+            'No Error Descriptor - check cors?');
         }
       });
     }
@@ -245,12 +246,19 @@
       name = localStorage.getItem("name");
       avatar = localStorage.getItem("avatar");
       discordid = localStorage.getItem("discordid");
+      highestrole = localStorage.getItem("highestrole");
+      $("#name").html(name);
+      $("#role").html(highestrole);
+      if (avatar.startsWith("a_"))
+        $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif");
+      else
+        $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
       if (roles != null && roles != undefined) {
         highestrole = 99999;
         for (i = 0; i < roles.length; i++) {
           if (roles[i] < highestrole) {
             highestrole = roles[i];
-            if(roles[i] == 40 || roles[i] == 41){
+            if (roles[i] == 40 || roles[i] == 41) {
               $("#anncreate").show(); // event staff
             }
           }
@@ -285,6 +293,24 @@
                 highestrole = roles[i];
               }
             }
+            name = data.response.name;
+            avatar = data.response.avatar;
+            discordid = data.response.discordid;
+            $("#name").html(name);
+            if (avatar.startsWith("a_"))
+              $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif");
+            else
+              $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
+            $.ajax({
+              url: "https://drivershub.charlws.com/atm/member/roles",
+              type: "GET",
+              dataType: "json",
+              success: function (data) {
+                hrole = data.response[highestrole];
+                localStorage.setItem("highestrole", hrole);
+                $("#role").html(hrole);
+              }
+            });
           } else {
             localStorage.removeItem("token");
             window.location.href = "/login";
@@ -296,134 +322,6 @@
         }
       });
     }
-
-    // function getLatestAnnouncements() {
-    //   // Bindings
-      
-    //   // text-indigo-700 = info
-    //   // text-red-700 = error
-    //   // text-orange-700 = warning
-
-    //   // Svg Paths 
-    //   // info = infoIconPath
-    //   // error = errorIconPath
-    //   // warning = warningIconPath
-
-    //   // Api responses
-    //   // info = list[0].atype = "0" or "1"
-    //   // warning = list[0].atype = "2"
-    //   // error = list[0].atype = "3"
-
-    //   // Get the latest announcements
-    //   $.ajax({
-    //     url: "https://drivershub.charlws.com/atm/announcement?page=1",
-    //     type: "GET",
-    //     dataType: "json"
-    //   }).done(function (data) {
-    //      const list = data.response.list;
-    //      let announcement;
-
-    //      // Loop through the list and find the closest timestamp to the current time
-    //      for(i = 0; i < list.length; i++) {
-    //        // Check the timestamp to see if it's within the last 24 hours
-    //       if(list[i].timestamp > (Date.now() - (86400000))) {
-    //         // If it is, set the announcement to the current announcement
-    //         announcement = list[i];
-    //         // Break the loop
-    //         break;
-    //       }
-
-    //       // Are we at the end of the list?
-    //       if(i == list.length - 1) {
-    //         // If we are, check to see if announcement is set
-    //         if(announcement == undefined) {
-    //           // We did not find one within 24 hours, so pick list[0]
-    //           announcement = list[0];
-    //           console.warn('No announcements found within 24 hours - falling back to first announcement (list[0])');
-    //         }
-    //       }
-    //     }
-
-    //     // Set the announcement using the
-    //     // announcementBannerTitle
-    //     // and announcementBannerSubtitle respectively
-    //     $("#announcementBannerTitle").html(announcement.title);
-    //     $("#announcementBannerSubtitle").html(announcement.content);
-
-    //     // Set the announcement icon
-    //     // Check if either 0 or 1
-    //     if(announcement.atype == "0" || announcement.atype == "1") {
-    //       // Info, unhide the info icon
-    //       $("#infoIconPath").show();
-
-    //       // Add text-indigo-700 to the announcementBannerSubtitle
-    //       $("#announcementBannerSubtitle").addClass("text-indigo-700");
-
-    //     } else if(announcement.atype == "2") {
-    //       // Warning, unhide the warning icon
-    //       $("#warningIconPath").show();
-
-    //       // Add text-orange-700 to the announcementBannerSubtitle
-    //       $("#announcementBannerSubtitle").addClass("text-orange-700");
-    //     } else if(announcement.atype == "3") {
-    //       // Error, unhide the error icon
-    //       $("#errorIconPath").show();
-
-    //       // Add text-red-700 to the announcementBannerSubtitle
-    //       $("#announcementBannerSubtitle").addClass("text-red-700");
-    //     }
-
-    //   })
-    // }
-
-    // function getPastAnnouncements() {
-    //   // Get the past announcements
-    //   $.ajax({
-    //     url: "https://drivershub.charlws.com/atm/announcement?page=1",
-    //     type: "GET",
-    //     dataType: "json"
-    //   }).done(function (data) {
-    //     // Each announcement will be added to the pastAnnouncementsBody tbody
-    //     // Loop through the list, and add each announcement to the tbody - should follow this format
-    //     // <tr class="text-xs bg-gray-50">
-    //     //  <td class="py-5 px-6 font-medium">{Announcement Type}</td>
-    //     //  <td class="font-medium">{Announcement Title}</td>
-    //     //  <td class="font-medium">{Announcement Date Sent}</td>
-    //     //  <td>
-    //     //      <span class="text-black">{Announcement content}</span>
-    //     //  </td>
-    //     // </tr>
-
-    //     // Remember to translate atype to Information (0, 1), Warning (2), Critcal (3)
-
-    //     const list = data.response.list;
-    //     for(i = 0; i < list.length; i++) {
-    //       // Start the row
-    //       let row = $("<tr class='text-xs bg-gray-50'>");
-    //       let postedDate = new Date(list[i].timestamp * 1000);
-
-    //       // Format the posted date to the following format:
-    //       // {Month} {Day}, {Year}
-    //       let postedDateString = postedDate.toLocaleString("en-US", {
-    //         month: "short",
-    //         day: "numeric",
-    //         year: "numeric"
-    //       });
-          
-    //       // Add the announcement type
-    //       row.append($("<td class='py-5 px-6 font-medium'>").html(list[i].atype == "0" ? "Information" : list[i].atype == "1" ? "Information" : list[i].atype == "2" ? "Warning" : "Critical"));
-    //       // Add the sent date
-    //       row.append($("<td class='font-medium'>").html(postedDateString));
-    //       // Add the announcement title
-    //       row.append($("<td class='font-medium'>").html(list[i].title));
-    //       // Add the announcement content
-    //       row.append($("<td>").html(list[i].content));
-
-    //       // Add the row to the tbody
-    //       $("#pastAnnouncementsBody").append(row);
-    //     }
-    //   })
-    // }
 
     $(document).ready(function () {
       validate();
@@ -501,7 +399,7 @@
               banner = genBanner(TYPES[a.atype], a.title, content);
               $("#anns").append(banner);
             }
-            if(ann.length == 0){
+            if (ann.length == 0) {
               $("#annloadmore").html("&nbsp;No more&nbsp;");
               $("#annloadmore").attr("disabled", "disabled");
             }
@@ -567,7 +465,7 @@
                       <path
                         d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z" />
                     </svg> </span>
-                  <span >Announcements</span>
+                  <span>Announcements</span>
                   <span class="inline-block ml-auto">
                   </span>
                 </a>
@@ -648,6 +546,23 @@
           </div>
         </nav>
       </div>
+      <section class="py-5 px-6 bg-white shadow mx-auto lg:ml-80">
+        <nav class="relative">
+          <div class="flex items-center">
+            <div class="hidden lg:block" style="margin-left:auto;margin-right:0">
+              <button class="flex">
+                <div class="mr-3">
+                  <p id="name" class="text-sm" style="text-align:right"></p>
+                  <p id="role" class="text-sm text-gray-500" style="text-align:right"></p>
+                </div>
+                <div class="mr-2"><img id="avatar" class="w-10 h-10 rounded-full object-cover object-right" width="40"
+                    src="https://cdn.discordapp.com/avatars/873178118213472286/a_20ad49948c848062f8b5b538e78fa75c.gif"
+                    alt="" /></div>
+              </button>
+            </div>
+          </div>
+        </nav>
+      </section>
 
       <section id="HomeTab" class="py-8 tabs">
       </section>
@@ -655,14 +570,16 @@
       <section id="AnnTab" class="py-8 tabs" style="display:none">
         <div style="position: relative;margin:20px;">
           <button id="anncreate" type="button" style="display:none"
-            class="mx-auto lg:ml-80 w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">New Announcement</button>
+            class="mx-auto lg:ml-80 w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">New
+            Announcement</button>
         </div>
         <div id="anns">
 
         </div>
         <div style="position: relative; left: calc( 100% - 200px );width:200px">
           <button id="annloadmore" type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">Load More</button>
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">Load
+            More</button>
         </div>
       </section>
 
