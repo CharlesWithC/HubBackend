@@ -140,6 +140,12 @@ async def steamBind(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "Invalid steam authentication."}
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
+
+    cur.execute(f"SELECT steamid FROM user WHERE discordid != '{t[0][0]}'")
+    t = cur.fetchall()
+    if len(t) > 0:
+        return {"error": True, "descriptor": "Steam account already bound to another user."}
+
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{t[0][0]}'")
     conn.commit()
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}

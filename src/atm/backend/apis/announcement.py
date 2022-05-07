@@ -11,11 +11,39 @@ from db import newconn
 from functions import *
 
 @app.get("/atm/announcement")
-async def getAnnouncement(page: int, response: Response):
+async def getAnnouncement(page: int, response: Response, authorization: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    userid = t[0][0]
+    roles = t[0][1].split(",")
+    limit = ""
+    if userid == -1 or "10000" in roles: # external staff / not registered
+        limit = "AND pvt = 0"
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 ORDER BY timestamp DESC")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -50,13 +78,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
+    adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
     adminhighest = 99999
@@ -86,10 +115,24 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     content = b64e(form["content"])
     atype = int(form["atype"])
     timestamp = int(time.time())
+    pvt = int(bool(form["pvt"]))
+    channelid = form["channelid"]
+    if not channelid.isdigit():
+        channleid = 0
 
-    cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp})")
+    cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp}, {pvt})")
     await AuditLog(adminid, f"Created announcement #{aid}")
     conn.commit()
+
+    if channelid != 0:
+        try:
+            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": "<@&929761730089877634>", "embed": {"title": b64d(title), "description": b64d(content), 
+                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
+                            "timestamp": str(datetime.now())}}))
+        except:
+            pass
 
     return {"error": False, "response": {"message": "Announcement created.", "aid": aid}}
 
@@ -113,13 +156,14 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
+    adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
     adminhighest = 99999
@@ -140,6 +184,10 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     title = b64e(form["title"])
     content = b64e(form["content"])
     atype = int(form["atype"])
+    pvt = int(bool(form["pvt"]))
+    channelid = form["channelid"]
+    if not channelid.isdigit():
+        channleid = 0
 
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
@@ -156,6 +204,16 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
     await AuditLog(adminid, f"Updated announcement #{aid}")
     conn.commit()
+
+    if channelid != 0:
+        try:
+            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": "<@&929761730089877634>", "embed": {"title": b64d(title), "description": b64d(content), 
+                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
+                            "timestamp": str(datetime.now())}}))
+        except:
+            pass
 
     return {"error": False, "response": {"message": "Announcement updated.", "aid": aid}}
 

@@ -53,6 +53,12 @@
       title = $("#anntitle").val();
       content = $("#anncontent").val();
       annid = $("#annid").val();
+      pvt = $("#annpvt-1").prop("checked");
+      chnid = $("#annchan").val().replaceAll(" ", "");
+      if(chnid != "" && !isNumber(chnid)){
+          toastFactory("warning", "Error", "Channel ID must be an integar if specified!", 5000, false);
+          return;
+      }
 
       $("#newAnnBtn").html("Working...");
       $("#newAnnBtn").prop("disabled", true);
@@ -79,7 +85,9 @@
             "aid": annid,
             "title": title,
             "content": content,
-            "atype": anntype
+            "atype": anntype,
+            "pvt": pvt,
+            "channelid": chnid
           },
           success: function (data) {
             // Un-disable the submit button
@@ -131,7 +139,9 @@
           data: {
             "title": title,
             "content": content,
-            "atype": anntype
+            "atype": anntype,
+            "pvt": pvt,
+            "channelid": chnid
           },
           success: function (data) {
             // Un-disable the submit button
@@ -455,7 +465,7 @@
                     $("#newAnnBtn").css("background-color", "red");
                   }
                 } else {
-                  $("#newAnnBtn").html("New Announcement");
+                  $("#newAnnBtn").html("Create Announcement");
                   $("#newAnnBtn").css("background-color", "blue");
                 }
               });
@@ -484,7 +494,7 @@
                 $("#newAnnBtn").css("background-color", "red");
               }
             } else {
-              $("#newAnnBtn").html("New Announcement");
+              $("#newAnnBtn").html("Create Announcement");
               $("#newAnnBtn").css("background-color", "blue");
             }
           });
@@ -577,6 +587,9 @@
         url: "https://drivershub.charlws.com/atm/announcement?page=1",
         type: "GET",
         dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
         success: function (data) {
           ann = data.response.list;
           if (ann.length > 0) {
@@ -606,6 +619,9 @@
           url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
           type: "GET",
           dataType: "json",
+          headers: {
+            "Authorization": "Bearer " + token
+          },
           success: function (data) {
             ann = data.response.list;
             for (i = 0; i < ann.length; i++) {
@@ -798,7 +814,7 @@
                 </div>
                 <div class="pr-6">
                   <p class="text-sm text-indigo-700">We are excited to release the beta version of At The Mile Logistics
-                    Drivers Hub. And we are still adding new features. 
+                    Drivers Hub. And we are still adding new features.
                     <br>If you met an issue, please report it in our Discord Community.</p>
                 </div>
               </div>
@@ -852,9 +868,31 @@
               </div>
             </div>
 
+            <div class="mb-6">
+              <div class="mb-1">
+                <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Visibility:</label>
+                <label>
+                  <input type="radio" name="announcement-visibility" value="yes" checked>
+                  <span class="annpvt-0">Public (All user on Drivers Hub can view)</span>
+                </label>
+              </div>
+              <div>
+                <label>
+                  <input type="radio" name="announcement-visibility" value="yes" id="annpvt-1">
+                  <span class="annpvt-1">Private (Only ATM Members can view)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Discord Channel ID</label>
+              <input id="annchan"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                name="" placeholder="Leave empty if you don't want this announcement to be forwarded to Discord"></div>
+
             <button type="button"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="NewAnn()" id="newAnnBtn">New Announcement</button>
+              onclick="NewAnn()" id="newAnnBtn">Create Announcement</button>
           </div>
           <hr>
         </div>

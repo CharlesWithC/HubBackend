@@ -690,12 +690,20 @@
                                         "type": "string"
                                     },
                                     "atype": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved)",
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
                                         "type": "integer"
+                                    },
+                                    "pvt": {
+                                        "description": "Is Private?",
+                                        "type": "boolean"
+                                    },
+                                    "channelid": {
+                                        "description": "Discord Channel ID to forward announcement",
+                                        "type": "string"
                                     }
                                 }
                             },
-                            "required": ["title", "content", "atype"]
+                            "required": ["title", "content", "atype", "pvt", "channelid"]
                         }
                     }
                 },
@@ -747,12 +755,20 @@
                                         "type": "string"
                                     },
                                     "atype": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved)",
+                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
                                         "type": "integer"
+                                    },
+                                    "pvt": {
+                                        "description": "Is Private?",
+                                        "type": "boolean"
+                                    },
+                                    "channelid": {
+                                        "description": "Discord Channel ID to forward announcement",
+                                        "type": "string"
                                     }
                                 }
                             },
-                            "required": ["aid", "title", "content", "atype"]
+                            "required": ["aid", "title", "content", "atype", "pvt", "channelid"]
                         }
                     }
                 },
