@@ -18,12 +18,13 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (aid INT, userid INT, titl
 # atype = 0: info | 1: event | 2: warning | 3: critical
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, data TEXT,\
      status INT, submitTimestamp BIGINT, closedBy BIGINT, closedTimestamp BIGINT)")
 # status = 0: pending | 1: accepted | 2: declined
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
 conn.commit()
 """
 CREATE INDEX user_userid ON user (userid);
@@ -33,6 +34,7 @@ CREATE INDEX application_applicationid ON application (applicationid);
 CREATE INDEX application_discordid ON application (discordid);
 CREATE INDEX session_token ON session (token);
 CREATE INDEX banned_discordid ON banned (discordid);
+CREATE INDEX settings_discordid ON settings (discordid);
 """
 del cur
 

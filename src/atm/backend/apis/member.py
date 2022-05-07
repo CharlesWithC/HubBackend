@@ -4,6 +4,7 @@
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
 import json, time, math
+import requests
 
 from app import app, config
 from db import newconn
@@ -174,6 +175,23 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
     await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
     conn.commit()
+
+    try:
+        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        durl = "https://discord.com/api/v9/users/@me/channels"
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}))
+        d = json.loads(r.text)
+        if "id" in d:
+            channelid = d["id"]
+            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Member Update",
+                "description": f"You are now a member of At The Mile Logistics!",
+                    "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
+                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
+                         "timestamp": str(datetime.now())}}))
+
+    except:
+        pass
 
     return {"error": False, "response": {"message": "Member added", "userid": userid}}    
 

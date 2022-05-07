@@ -17,36 +17,6 @@
                 }
             }
         },
-        "/atm/user/userid": {
-            "get": {
-                "summary": "Get User ID",
-                "tags": ["user"],
-                "operationId": "getuserid_atm_user_userid_get",
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{
-                    "bearerAuth": []
-                }]
-            }
-        },
         "/atm/user/callback": {
             "get": {
                 "summary": "Discord Login Callback",
@@ -90,6 +60,15 @@
                 "operationId": "getUserInfo",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Queried User's Discord ID (staff-only)",
+                        "type": "string"
+                    },
+                    "name": "qdiscordid",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1048,6 +1027,78 @@
                     "name": "showall",
                     "in": "query"
                 }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/application/positions": {
+            "get": {
+                "summary": "Get Staff Application Positions",
+                "tags": ["application"],
+                "operationId": "getApplicationPositions",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Update Staff Application Positions",
+                "tags": ["application", "manage"],
+                "operationId": "updateApplicationPositions",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "positions": {
+                                        "description": "Positions, split with ','",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["positions"]
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",

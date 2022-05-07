@@ -3,39 +3,12 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
+from typing import Optional
 import json, time, requests, math
 
 from app import app, config
 from db import newconn
 from functions import *
-
-@app.get("/atm/user/userid")
-async def getuserid(request: Request, response: Response, authorization: str = Header(None)):
-    if authorization is None:
-        response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    cur.execute(f"SELECT userid FROM user WHERE discordid = '{discordid}'")
-    t = cur.fetchall()
-    userid = t[0][0]
-    if userid == -1:
-        # response.status_code = 400
-        return {"error": True, "descriptor": "User is not yet a member."}
-    return {"error": False, "response": {"userid": userid}}
 
 @app.post('/atm/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
@@ -202,7 +175,7 @@ async def userList(page:int, request: Request, response: Response, authorization
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.get('/atm/user/info')
-async def userInfo(response: Response, authorization: str = Header(None)):
+async def userInfo(response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -226,6 +199,26 @@ async def userInfo(response: Response, authorization: str = Header(None)):
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+    if t[0][0] >= 0:
+        adminid = t[0][0]
+        roles = t[0][3].split(",")
+        while "" in roles:
+            roles.remove("")
+        adminhighest = 99999
+        for i in roles:
+            if int(i) < adminhighest:
+                adminhighest = int(i)
+        if adminhighest >= 30 and discordid != 0 and discordid != qdiscordid:
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+    else:
+        if discordid != 0 and discordid != qdiscordid:
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+    if qdiscordid != 0:
+        discordid = qdiscordid        
+        cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
 
     roles = t[0][3].split(",")
     while "" in roles:
