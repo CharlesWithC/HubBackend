@@ -56,13 +56,13 @@
 
       $("#newAnnBtn").html("Working...");
       $("#newAnnBtn").prop("disabled", true);
-      
+
       op = "create";
       if (isNumber(annid)) {
         if (title != "" || content != "") {
-          op="update";
+          op = "update";
         } else {
-          op="delete";
+          op = "delete";
         }
       }
 
@@ -120,7 +120,7 @@
               'No Error Descriptor - check cors?');
           }
         });
-      } else if (op == "create"){
+      } else if (op == "create") {
         $.ajax({
           url: "https://drivershub.charlws.com/atm/announcement",
           type: "POST",
@@ -780,6 +780,31 @@
       </section>
 
       <section id="HomeTab" class="py-8 tabs">
+        <div class="py-8 px-6 mx-auto lg:ml-80">
+          <div class="p-6 bg-gray-50 border-l-4 border-2 border-indigo-500 rounded-r-lg">
+            <div class="flex">
+              <div class="w-auto">
+                <span class="w-auto inline-block mr-2">
+                  <svg width="20" height="20" viewbox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M10 0C4.5 0 0 4.5 0 10C0 15.5 4.5 20 10 20C15.5 20 20 15.5 20 10C20 4.5 15.5 0 10 0ZM11 14C11 14.6 10.6 15 10 15C9.4 15 9 14.6 9 14V10C9 9.4 9.4 9 10 9C10.6 9 11 9.4 11 10V14ZM10 7C9.4 7 9 6.6 9 6C9 5.4 9.4 5 10 5C10.6 5 11 5.4 11 6C11 6.6 10.6 7 10 7Z"
+                      fill="#382CDD"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="w-full">
+                <div class="flex">
+                  <h3 class="text-indigo-800 font-medium">Welcome back!</h3>
+                </div>
+                <div class="pr-6">
+                  <p class="text-sm text-indigo-700">We are excited to release the beta version of At The Mile Logistics
+                    Drivers Hub. And we are still adding new features. 
+                    <br>If you met an issue, please report it in our Discord Community.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="AnnTab" class="py-8 tabs" style="display:none">
