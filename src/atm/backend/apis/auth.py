@@ -128,6 +128,7 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
 
     form = await request.form()
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
@@ -141,12 +142,12 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
-    cur.execute(f"SELECT steamid FROM user WHERE discordid != '{t[0][0]}'")
+    cur.execute(f"SELECT * FROM user WHERE discordid != '{discordid}' AND steamid = {steamid}")
     t = cur.fetchall()
     if len(t) > 0:
         return {"error": True, "descriptor": "Steam account already bound to another user."}
 
-    cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{t[0][0]}'")
+    cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     conn.commit()
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
 

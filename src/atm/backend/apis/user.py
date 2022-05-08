@@ -199,24 +199,20 @@ async def userInfo(response: Response, authorization: str = Header(None), qdisco
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
-    if t[0][0] >= 0:
-        adminid = t[0][0]
-        roles = t[0][3].split(",")
-        while "" in roles:
-            roles.remove("")
-        adminhighest = 99999
-        for i in roles:
-            if int(i) < adminhighest:
-                adminhighest = int(i)
-        if adminhighest >= 30 and discordid != 0 and discordid != qdiscordid:
+    adminid = t[0][0]
+    roles = t[0][3].split(",")
+    while "" in roles:
+        roles.remove("")
+    adminhighest = 99999
+    for i in roles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+    if discordid != qdiscordid and qdiscordid != 0:
+        print("Checking non-me")
+        if adminhighest >= 30:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
-    else:
-        if discordid != 0 and discordid != qdiscordid:
-            response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
-    if qdiscordid != 0:
-        discordid = qdiscordid        
+    if discordid == qdiscordid:    
         cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
 
