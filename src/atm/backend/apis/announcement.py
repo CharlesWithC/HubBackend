@@ -56,11 +56,11 @@ async def getAnnouncement(page: int, response: Response, authorization: str = He
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
-    tot = 0
+    totpage = 0
     if len(t) > 0:
-        tot = t[0][0]
+        totpage = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.post("/atm/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
@@ -108,11 +108,11 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
         return {"error": True, "descriptor": "Event staff can only post event announcements."}
 
-    cur.execute(f"SELECT COUNT(*) FROM announcement")
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
     t = cur.fetchall()
-    aid = 0
-    if len(t) > 0:
-        aid = t[0][0]
+    aid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {aid+1} WHERE skey = 'nxtannid'")
+    conn.commit()
 
     form = await request.form()
     title = b64e(form["title"])

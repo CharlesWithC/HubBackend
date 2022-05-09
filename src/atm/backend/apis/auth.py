@@ -227,4 +227,4 @@ async def userRevoke(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     conn.commit()
-    return {"error": False, "response": {"response_message": "Token revoked"}}
+    return {"error": False, "response": {"message": "Token revoked"}}

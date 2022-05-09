@@ -41,6 +41,11 @@ CREATE INDEX driver_userid ON driver (userid);
 CREATE INDEX dlog_logid ON dlog (logid);
 CREATE INDEX dlog_userid ON dlog (userid);
 CREATE INDEX dlog_topspeed ON dlog (topspeed);
+
+INSERT INTO settings VALUES (0, 'nxtuserid', 0);
+INSERT INTO settings VALUES (0, 'nxtappid', 0);
+INSERT INTO settings VALUES (0, 'nxtannid', 0);
+INSERT INTO settings VALUES (0, 'nxtlogid', 0);
 """
 del cur
 

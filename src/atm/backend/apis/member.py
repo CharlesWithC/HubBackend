@@ -117,8 +117,8 @@ async def member(response: Response, userid: int, authorization: str = Header(No
             # response.status_code = 404
             return {"error": True, "descriptor": "Member not found."}
         roles = [int(i) for i in t[0][3].split(",")]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "avatar": t[0][2], \
-            "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+        return {"error": False, "response": {"userid": userid, "name": t[0][1], "discordid": t[0][0], "avatar": t[0][2], \
+            "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
                 "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
@@ -130,9 +130,9 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         while "" in roles:
             roles.remove("")
         roles = [int(i) for i in roles]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "email": t[0][8], \
+        return {"error": False, "response": {"userid": userid, "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], \
-                "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
+                "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
                     "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
 
 @app.post('/atm/member/add')
@@ -176,11 +176,11 @@ async def addMember(request: Request, response: Response, authorization: str = H
     form = await request.form()
     discordid = form["discordid"]
 
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
     t = cur.fetchall()
-    userid = 0
-    if len(t) > 0:
-        userid = t[0][0]
+    userid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
+    conn.commit()
     
     cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -386,14 +386,18 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
 
-    if "100" in roles:
+    if "100" in addedroles:
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
         p = cur.fetchall()
         if len(p) == 0:
             cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0)")
             conn.commit()
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
-
+    if "100" in removedroles:
+        cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
+        cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+    
     audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
     for add in addedroles:
         audit += f"**+** {ROLES[add]}\n"

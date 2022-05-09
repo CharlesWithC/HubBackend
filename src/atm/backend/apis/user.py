@@ -77,7 +77,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
         conn.commit()
         await AuditLog(adminid, f"Banned user with Discord ID `{discordid}`")
-        return {"error": False, "response": {"response_message": "User banned.", "discordid": discordid}}
+        return {"error": False, "response": {"message": "User banned.", "discordid": discordid}}
     else:
         return {"error": True, "descriptor": "User already banned."}
 
@@ -133,7 +133,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
         conn.commit()
         await AuditLog(adminid, f"Unbanned user with Discord ID `{discordid}`")
-        return {"error": False, "response": {"response_message": "User unbanned.", "discordid": discordid}}
+        return {"error": False, "response": {"message": "User unbanned.", "discordid": discordid}}
 
 @app.get("/atm/user/list")
 async def userList(page:int, request: Request, response: Response, authorization: str = Header(None)):
@@ -226,7 +226,7 @@ async def userInfo(response: Response, authorization: str = Header(None), qdisco
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    return {"error": False, "response": {"userid": t[0][0], "name": t[0][1], "email": t[0][8], "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
+    return {"error": False, "response": {"userid": t[0][0], "name": t[0][1], "email": t[0][8], "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
 
 @app.post('/atm/user/bio')
 async def updateUserBio(request: Request, response: Response, authorization: str = Header(None)):

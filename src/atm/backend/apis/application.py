@@ -39,11 +39,11 @@ async def newApplication(request: Request, response: Response, authorization: st
     data = json.loads(form["data"])
     data = b64e(json.dumps(data))
 
-    cur.execute(f"SELECT COUNT(*) FROM application")
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
     t = cur.fetchall()
-    applicationid = 0
-    if len(t) != 0:
-        applicationid = t[0][0]
+    applicationid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
+    conn.commit()
 
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, {int(time.time())}, 0, 0)")
     conn.commit()
@@ -384,7 +384,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
 
     t = None
     tot = 0
-    if adminhighest >= 30 and discordid != t[0][1] or showall == False:
+    if adminhighest >= 30 or showall == False:
         limit = ""
         if apptype != 0:
             limit = f" AND apptype = {apptype}"

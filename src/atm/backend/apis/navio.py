@@ -54,11 +54,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
     top_speed = d["data"]["object"]["truck"]["top_speed"]
     cur.execute(f"UPDATE driver SET distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, revenue = revenue + {money}, xp = xp + {xp} WHERE userid = {userid}")
-    cur.execute(f"SELECT COUNT(*) FROM dlog")
+    
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
     t = cur.fetchall()
-    logid = 0
-    if len(t) > 0:
-        logid = t[0][0]
+    logid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
+    conn.commit()
+
     cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{b64e(json.dumps(d))}', {top_speed}, {int(time.time())})")
     conn.commit()
     return {"error": False, "response": "Logged"}

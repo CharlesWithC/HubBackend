@@ -18,6 +18,8 @@
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+    rolelist = {};
+
     function toastFactory(type, title, text, time, showConfirmButton) {
       const Toast = Swal.mixin({
         toast: true,
@@ -47,13 +49,16 @@
         $("#driverappsel").attr("selected", "selected");
       }
       if (tabname == "#MyApp") {
-        loadMyApp(1);
+        loadMyApp();
       }
       if (tabname == "#AllApp") {
-        loadAllApp(1);
+        loadAllApp();
       }
       if (tabname == "#AllUsers") {
-        loadUsersIntoTable(1);
+        loadUsers();
+      }
+      if (tabname == "#AllMembers") {
+        loadMembers();
       }
     }
 
@@ -497,6 +502,10 @@
           $("#stafftabs").show();
           if (highestrole >= 30) {
             $("#AllAppBtn").hide();
+            $("#AllMemberStaff").hide();
+          } else {
+            $("#AllMemberStaff").show();
+            $("#AllAppBtn").show();
           }
         }
         if (highestrole <= 10) {
@@ -554,9 +563,21 @@
               type: "GET",
               dataType: "json",
               success: function (data) {
+                rolelist = data.response;
                 hrole = data.response[highestrole];
                 localStorage.setItem("highestrole", hrole);
                 $("#role").html(hrole);
+                roleids = Object.keys(rolelist);
+                for (var i = 0; i < roleids.length; i++) {
+                  if(roleids[i] <= highestrole)
+                    $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                      `" name="assignrole" value="role` + roleids[i] + `">
+  <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                  else
+                    $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                      `" name="assignrole" value="role` + roleids[i] + `">
+  <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                }
               }
             });
           } else {
@@ -571,19 +592,29 @@
       });
     }
 
-    function loadUsersIntoTable(page) {
+    function loadMembers() {
+      page = $("#mpages").val();
+      if (page == "") page = 1;
       $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/list?page=" + page,
+        url: "https://drivershub.charlws.com/atm/member/list?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
-          if (data.error) return toastFactory("error", "Error loading users.", data.descriptor, 5000, false);
-          $("#usersTable").empty();
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          $("#membersTable").empty();
           const users = data.response.list;
 
+          if (users.length == 0) {
+            $("#membersTableHead").hide();
+            $("#membersTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">Nothing found</td>
+            </tr>`);
+            return;
+          }
           for (i = 0; i < users.length; i++) {
             const user = users[i];
             // Fill the table using this format: 
@@ -592,23 +623,401 @@
             //    <td class="font-medium">name here</td>
             //  </tr>
             //
-
-            $("#usersTable").append(`
+            $("#mtotpages").html(Math.ceil(data.response.tot / 30));
+            $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">${user.discordid}</td>
+              <td class="py-5 px-6 font-medium">${user.userid}</td>
               <td class="font-medium">${user.name}</td>
+              <td class="font-medium"><a style="cursor:pointer;color:grey" id="MemberInfoBtn${user.userid}" onclick="memberDetail('${user.userid}')">Show Details</td>
             </tr>`)
           }
         },
         error: function (data) {
-          toastFactory("error", "Error loading users.", "Please check the console for more info.", 5000, false);
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+          console.warn(`Failed to load members. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function memberDetail(userid) {
+      $("#MemberInfoBtn" + userid).attr("disabled", "disabled");
+      $("#MemberInfoBtn" + userid).html("Loading...");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          info = "";
+          if (!data.error) {
+            d = data.response;
+            roles = d.roles;
+            rtxt = "";
+            for (var i = 0; i < roles.length; i++)
+              if (rolelist[roles[i]] != undefined) rtxt += rolelist[roles[i]] + ", ";
+              else rtxt += "Unknown Role (ID " + roles[i] + "), ";
+            rtxt = rtxt.substring(0, rtxt.length - 2);
+            info += "<p style='text-align:left'><b>Name:</b> " + d.name + "</p>";
+            info += "<p style='text-align:left'><b>User ID:</b> " + d.userid + "</p>"
+            info += "<p style='text-align:left'><b>Roles:</b> " + rtxt + "</p>";
+            if (d.email != undefined) info += "<p style='text-align:left'><b>Email:</b> " + d.email + "</p>";
+            info += "<p style='text-align:left'><b>Discord ID:</b> " + d.discordid + "</p>";
+            info +=
+              "<p style='text-align:left'><b>TruckersMP ID:</b> <a href='https://truckersmp.com/user/" +
+              d.truckersmpid + "'>" + d.truckersmpid + "</a></p>";
+            info +=
+              "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
+              d.steamid + "'>" + d.steamid + "</a></p>";
+            info += "<br><p style='text-align:left'><b>Join:</b> " + getDateTime(d.join * 1000) + "</p>";
+            info += "<p style='text-align:left'><b>Distance Driven:</b> " + d.distance + "km</p>";
+            info += "<p style='text-align:left'><b>Revenue Earned:</b> $" + d.revenue + "</p>";
+            info += "<p style='text-align:left'><b>Fuel Consumed:</b> " + d.fuel + "L</p>";
+            info += "<p style='text-align:left'><b>XP Earned:</b> " + d.xp + "</p>";
+
+          }
+          Swal.fire({
+            title: d.name,
+            html: info,
+            icon: 'info',
+            confirmButtonText: 'Close'
+          })
+          $("#MemberInfoBtn" + userid).removeAttr("disabled");
+          $("#MemberInfoBtn" + userid).html("Show Details");
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
+    lastfetch = -1;
+
+    function fetchRoles() {
+      userid = $("#memberroleid").val();
+      if (!isNumber(userid)) {
+        toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
+        return;
+      }
+      $("#fetchRolesBtn").html("Working...");
+      $("#fetchRolesBtn").attr("disabled", "disabled");
+      $("#rolelist").children().children().prop("checked", false);
+      $("#memberrolename").html("");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          $("#fetchRolesBtn").html("Fetch Existing Roles");
+          $("#fetchRolesBtn").removeAttr("disabled");
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          info = "";
+          if (!data.error) {
+            lastfetch = userid;
+            d = data.response;
+            roles = d.roles;
+            rtxt = "";
+            $("#memberrolename").html(d.name);
+            for (var i = 0; i < roles.length; i++)
+              $("#role" + roles[i]).prop("checked", true);
+            return toastFactory("success", "Success!", "Existing roles are checked!", 5000, false);
+          }
+        },
+        error: function (data) {
+          $("#fetchRolesBtn").html("Fetch Existing Roles");
+          $("#fetchRolesBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
+    function updateMemberRoles() {
+      userid = $("#memberroleid").val();
+      if (!isNumber(userid)) {
+        toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
+        return;
+      }
+      if(lastfetch != userid){
+        toastFactory("error", "Error:", "Please fetch the roles first.", 5000, false);
+        return;
+      }
+      $("#updateMemberRolesBtn").html("Working...");
+      $("#updateMemberRolesBtn").attr("disabled", "disabled");
+      d = $('input[name="assignrole"]:checked');
+      roles = [];
+      for (var i = 0; i < d.length; i++) {
+        roles.push(d[i].id.replaceAll("role", ""));
+      }
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/role",
+        type: "POST",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          "userid": userid,
+          "roles": roles.join(",")
+        },
+        success: function (data) {
+          $("#updateMemberRolesBtn").html("Update");
+          $("#updateMemberRolesBtn").removeAttr("disabled");
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          info = "";
+          if (!data.error) {
+            return toastFactory("success", "Success!", "Member roles updated!", 5000, false);
+          }
+        },
+        error: function (data) {
+          $("#updateMemberRolesBtn").html("Update");
+          $("#updateMemberRolesBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
+    function dismissUser() {
+      if ($("#dismissbtn").html() != "Confirm?") {
+        $("#dismissbtn").html("Confirm?");
+        return;
+      }
+      $("#dismissbtn").html("Working...");
+      $("#dismissbtn").attr("disabled", "disabled");
+      userid = $("#dismissUserID").val();
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/dismiss?userid=" + String(userid),
+        type: "DELETE",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          $("#dismissUserID").val("");
+          $("#dismissbtn").removeAttr("disabled");
+          $("#dismissbtn").html("Dismiss");
+          return toastFactory("success", "Success", "Member dismissed", 5000, false);
+        },
+        error: function (data) {
+          $("#dismissbtn").removeAttr("disabled");
+          $("#dismissbtn").html("Dismiss");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to dismiss member. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
+    function loadUsers() {
+      page = $("#pupages").val();
+      if (page == "") page = 1;
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/list?page=" + page,
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          $("#usersTable").empty();
+          const users = data.response.list;
+
+          if (users.length == 0) {
+            $("#usersTableHead").hide();
+            $("#usersTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">Nothing found</td>
+            </tr>`);
+            return;
+          }
+          for (i = 0; i < users.length; i++) {
+            const user = users[i];
+            // Fill the table using this format: 
+            // <tr class="text-xs bg-gray-50">
+            //  <td class="py-5 px-6 font-medium">id here</td>
+            //    <td class="font-medium">name here</td>
+            //  </tr>
+            //
+            $("#putotpages").html(Math.ceil(data.response.tot / 30));
+            $("#usersTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">${user.discordid}</td>
+              <td class="font-medium">${user.name}</td>
+              <td class="font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
+            </tr>`)
+          }
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
           console.warn(`Failed to load users. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
           console.log(data);
         }
       })
     }
 
-    function loadMyApp(page) {
+    function addUser() {
+      discordid = $("#adddiscordid").val();
+      if (!isNumber(discordid)) {
+        return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
+      }
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/add",
+        type: "POSt",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          discordid: discordid
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          toastFactory("success", "Success", "User added successfully. User ID: "+ data.response.userid, 5000, false);
+          loadUsers();
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to add user. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function userDetail(discordid) {
+      $("#UserInfoBtn" + discordid).attr("disabled", "disabled");
+      $("#UserInfoBtn" + discordid).html("Loading...");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/info?qdiscordid=" + String(discordid),
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          info = "";
+          if (!data.error) {
+            d = data.response;
+            info += "<p style='text-align:left'><b>Name:</b> " + d.name + "</p>";
+            info += "<p style='text-align:left'><b>Email:</b> " + d.email + "</p>";
+            info += "<p style='text-align:left'><b>Discord ID:</b> " + discordid + "</p>";
+            info +=
+              "<p style='text-align:left'><b>TruckersMP ID:</b> <a href='https://truckersmp.com/user/" +
+              d.truckersmpid + "'>" + d.truckersmpid + "</a></p>";
+            info +=
+              "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
+              d.steamid + "'>" + d.steamid + "</a></p><br>";
+          }
+          Swal.fire({
+            title: d.name,
+            html: info,
+            icon: 'info',
+            confirmButtonText: 'Close'
+          })
+          $("#UserInfoBtn" + discordid).removeAttr("disabled");
+          $("#UserInfoBtn" + discordid).html("Show Details");
+        },
+        error: function (data) {
+          $("#UserInfoBtn" + discordid).attr("disabled", "disabled");
+          $("#UserInfoBtn" + discordid).html("Loading...");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load user details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
+    function banUser() {
+      discordid = $("#bandiscordid").val();
+      if (!isNumber(discordid)) {
+        return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
+      }
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/ban",
+        type: "POSt",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          discordid: discordid
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          toastFactory("success", "Success", "User banned successfully.", 5000, false);
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to ban user. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function unbanUser() {
+      discordid = $("#bandiscordid").val();
+      if (!isNumber(discordid)) {
+        return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
+      }
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/user/unban",
+        type: "POSt",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          discordid: discordid
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          toastFactory("success", "Success", "User unbanned successfully.", 5000, false);
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to unban user. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function loadMyApp() {
+      page = $("#myapppage").val();
       $.ajax({
         url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0",
         type: "GET",
@@ -617,74 +1026,9 @@
           "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
-          console.log(data);
-          if (data.error) return toastFactory("error", "Error loading applications.", data.descriptor, 5000,
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
             false);
           $("#myappTable").empty();
-          const applications = data.response.list;
-          APPTYPE = ["", "Driver", "Staff", "LOA"];
-          STATUS = ["Pending", "Accepted", "Declined"]
-          if (applications.length == 0) {
-            $("#myappTableHead").hide();
-            $("#myappTable").append(`
-            <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">You haven't created any applications</td>
-            </tr>`);
-            return;
-          }
-          $("#myappTableHead").show();
-          for (i = 0; i < applications.length; i++) {
-            const application = applications[i];
-            // Fill the table using this format: 
-            // <tr class="text-xs bg-gray-50">
-            //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
-            //  </tr>
-            //
-            apptype = APPTYPE[application.apptype];
-            creation = getDateTime(application.submitTimestamp * 1000);
-            closedat = getDateTime(application.closedTimestamp * 1000);
-            if (application.closedTimestamp == 0) {
-              closedat = "/";
-              console.log(closedat);
-            }
-            status = STATUS[application.status];
-
-            $("#myappTable").append(`
-            <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">${application.applicationid}</td>
-              <td class="font-medium">${apptype}</td>
-              <td class="font-medium">${creation}</td>
-              <td class="font-medium">${status}</td>
-              <td class="font-medium">${closedat}</td>
-            </tr>`);
-          }
-        },
-        error: function (data) {
-          toastFactory("error", "Error loading applications.", "Please check the console for more info.", 5000,
-            false);
-          console.warn(
-            `Failed to load applications. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
-          console.log(data);
-        }
-      })
-    }
-
-    function loadAllApp(page) {
-      $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
-        type: "GET",
-        dataType: "json",
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("token")
-        },
-        success: function (data) {
-          console.log(data);
-          if (data.error) return toastFactory("error", "Error loading applications.", data.descriptor, 5000,
-            false);
-          $("#myappTable").empty();
-          $("#totpages").html(Math.ceil(data.response.tot / 10));
-          $("#allapppage").val(data.response.page);
           const applications = data.response.list;
           APPTYPE = ["", "Driver", "Staff", "LOA"];
           STATUS = ["Pending", "Accepted", "Declined"]
@@ -697,6 +1041,7 @@
             return;
           }
           $("#myappTableHead").show();
+          $("#myapptotpages").html(Math.ceil(data.response.tot / 10));
           for (i = 0; i < applications.length; i++) {
             const application = applications[i];
             // Fill the table using this format: 
@@ -715,6 +1060,72 @@
             status = STATUS[application.status];
 
             $("#myappTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">${application.applicationid}</td>
+              <td class="font-medium">${apptype}</td>
+              <td class="font-medium">${creation}</td>
+              <td class="font-medium">${status}</td>
+              <td class="font-medium">${closedat}</td>
+              <td class="font-medium"><a style="cursor:pointer;color:grey" id="MyAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
+            </tr>`);
+          }
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load applications. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function loadAllApp() {
+      page = $('#allapppage').val();
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          console.log(data);
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          $("#allappTable").empty();
+          $("#totpages").html(Math.ceil(data.response.tot / 10));
+          $("#allapppage").val(data.response.page);
+          const applications = data.response.list;
+          APPTYPE = ["", "Driver", "Staff", "LOA"];
+          STATUS = ["Pending", "Accepted", "Declined"];
+          if (applications.length == 0) {
+            $("#allappTableHead").hide();
+            $("#allappTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">Nothing found</td>
+            </tr>`);
+            return;
+          }
+          $("#allappTableHead").show();
+          for (i = 0; i < applications.length; i++) {
+            const application = applications[i];
+            // Fill the table using this format: 
+            // <tr class="text-xs bg-gray-50">
+            //  <td class="py-5 px-6 font-medium">id here</td>
+            //    <td class="font-medium">name here</td>
+            //  </tr>
+            //
+            apptype = APPTYPE[application.apptype];
+            creation = getDateTime(application.submitTimestamp * 1000);
+            closedat = getDateTime(application.closedTimestamp * 1000);
+            if (application.closedTimestamp == 0) {
+              closedat = "/";
+              console.log(closedat);
+            }
+            status = STATUS[application.status];
+
+            $("#allappTable").append(`
             <tr class="text-xs bg-gray-50" id="AllApp${application.applicationid}">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="py-5 px-6 font-medium">${application.discordid}</td>
@@ -727,7 +1138,7 @@
           }
         },
         error: function (data) {
-          toastFactory("error", "Error loading applications.", "Please check the console for more info.", 5000,
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
             false);
           console.warn(
             `Failed to load applications. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
@@ -739,6 +1150,8 @@
     function appDetail(applicationid) {
       $("#AllAppBtn" + applicationid).attr("disabled", "disabled");
       $("#AllAppBtn" + applicationid).html("Loading...");
+      $("#MyAppBtn" + applicationid).attr("disabled", "disabled");
+      $("#MyAppBtn" + applicationid).html("Loading...");
       $.ajax({
         url: "https://drivershub.charlws.com/atm/application?applicationid=" + applicationid,
         type: "GET",
@@ -747,13 +1160,13 @@
           "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
-          if (data.error) return toastFactory("error", "Error loading application detail.", data.descriptor, 5000,
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
             false);
           d = data.response.data;
           discordid = data.response.discordid;
           keys = Object.keys(d);
           if (keys.length == 0) {
-            return toastFactory("error", "Error loading application detail.", "Application has no data", 5000,
+            return toastFactory("error", "Error:", "Application has no data", 5000,
               false);
           }
           APPTYPE = ["", "Driver", "Staff", "LOA"];
@@ -775,15 +1188,15 @@
               info = "";
               if (!data.error) {
                 d = data.response;
-                info += "<p style='text-align:left'><b>Name:</b><br> " + d.name + "</p><br>";
-                info += "<p style='text-align:left'><b>Email:</b><br> " + d.email + "</p><br>";
-                info += "<p style='text-align:left'><b>Discord ID:</b><br> " + discordid + "</p><br>";
+                info += "<p style='text-align:left'><b>Name:</b> " + d.name + "</p>";
+                info += "<p style='text-align:left'><b>Email:</b> " + d.email + "</p>";
+                info += "<p style='text-align:left'><b>Discord ID:</b> " + discordid + "</p>";
                 info +=
-                  "<p style='text-align:left'><b>TruckersMP ID:</b><br> <a href='https://truckersmp.com/user/" +
-                  d.truckersmpid + "'>" + d.truckersmpid + "</a></p><br>";
+                  "<p style='text-align:left'><b>TruckersMP ID:</b> <a href='https://truckersmp.com/user/" +
+                  d.truckersmpid + "'>" + d.truckersmpid + "</a></p>";
                 info +=
-                  "<p style='text-align:left'><b>Steam ID:</b><br> <a href='https://steamcommunity.com/profiles/" +
-                  d.steamid + "'>" + d.steamid + "</p><br>";
+                  "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
+                  d.steamid + "'>" + d.steamid + "</a></p><br>";
               }
               Swal.fire({
                 title: apptype + ' Application #' + applicationid,
@@ -793,11 +1206,17 @@
               })
               $("#AllAppBtn" + applicationid).removeAttr("disabled");
               $("#AllAppBtn" + applicationid).html("Show Details");
+              $("#MyAppBtn" + applicationid).removeAttr("disabled");
+              $("#MyAppBtn" + applicationid).html("Show Details");
             }
           });
         },
         error: function (data) {
-          toastFactory("error", "Error loading applications.", "Please check the console for more info.", 5000,
+          $("#AllAppBtn" + applicationid).removeAttr("disabled");
+          $("#AllAppBtn" + applicationid).html("Show Details");
+          $("#MyAppBtn" + applicationid).removeAttr("disabled");
+          $("#MyAppBtn" + applicationid).html("Show Details");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
             false);
           console.warn(
             `Failed to load applications. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
@@ -825,14 +1244,17 @@
         success: function (data) {
           $("#updateAppStatusBtn").removeAttr("disabled");
           $("#updateAppStatusBtn").html("Update");
-          if (data.error) return toastFactory("error", "Error updating application status.", data.descriptor,
+          if (data.error) return toastFactory("error", "Error:", data.descriptor,
             5000, false);
-          else return toastFactory("success", "Application status updated.", data.response.message, 5000, false);
+          else {
+            loadAllApp();
+            return toastFactory("success", "Application status updated.", data.response.message, 5000, false);
+          }
         },
         error: function (data) {
           $("#updateAppStatusBtn").removeAttr("disabled");
           $("#updateAppStatusBtn").html("Update");
-          toastFactory("error", "Error updating application status.", "Please check the console for more info.",
+          toastFactory("error", "Error:", "Please check the console for more info.",
             5000,
             false);
           console.warn(
@@ -844,6 +1266,10 @@
 
     $(document).ready(function () {
       validate();
+
+      $("#pupages").val("1");
+      $("#allapppage").val("1");
+      $("#myapppage").val("1");
 
       $("#logout").click(function () {
         token = localStorage.getItem("token")
@@ -964,6 +1390,7 @@
               onclick="ShowTab('#HomeTab', '#HomeTabBtn')"><img src="images/banner.png" alt="" width="100%"></a>
           </div>
           <div class="px-4 pb-6">
+            <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">At The Mile</h3>
             <ul class="text-sm font-medium">
               <li>
                 <a id="HomeTabBtn"
@@ -1000,6 +1427,26 @@
                   </span>
                 </a>
               </li>
+
+              <li>
+                <a id="AllMemberBtn"
+                  class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                  style="cursor: pointer" onclick="ShowTab('#AllMembers', '#AllMemberBtn')">
+                  <span class="inline-block mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="feather feather-users">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg> </span>
+                  <span>Members</span>
+                  <span class="inline-block ml-auto">
+                    <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                      xmlns="http://www.w3.org/2000/svg"></svg></span>
+                </a>
+              </li>
             </ul>
           </div>
           <div class="px-4 pb-6">
@@ -1009,12 +1456,12 @@
                 <a id="MyAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
                   style="cursor: pointer" onclick="ShowTab('#MyApp', '#MyAppBtn')">
                   <span class="inline-block mr-3">
-                    <svg class="text-indigo-100 w-5 h-5" viewbox="0 0 18 18" fill="none"
-                      xmlns="http://www.w3.org/2000/svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                      class="bi bi-archive" viewBox="0 0 16 16">
                       <path
-                        d="M14.9066 3.12873C14.9005 3.12223 14.8987 3.11358 14.8923 3.10722C14.8859 3.10086 14.8771 3.09893 14.8706 3.09278C13.3119 1.53907 11.2008 0.666626 8.99996 0.666626C6.79914 0.666626 4.68807 1.53907 3.12935 3.09278C3.12279 3.09893 3.11404 3.10081 3.10763 3.10722C3.10122 3.11363 3.09944 3.12222 3.09334 3.12873C1.93189 4.29575 1.14217 5.78067 0.823851 7.39609C0.505534 9.01151 0.672885 10.685 1.30478 12.2054C1.93668 13.7258 3.00481 15.025 4.37435 15.9389C5.7439 16.8528 7.35348 17.3405 8.99996 17.3405C10.6464 17.3405 12.256 16.8528 13.6256 15.9389C14.9951 15.025 16.0632 13.7258 16.6951 12.2054C17.327 10.685 17.4944 9.01151 17.1761 7.39609C16.8578 5.78067 16.068 4.29575 14.9066 3.12873ZM8.99992 15.6666C8.00181 15.6663 7.01656 15.4414 6.11714 15.0087C5.21773 14.5759 4.42719 13.9464 3.80409 13.1666H7.15015C7.38188 13.4286 7.66662 13.6383 7.98551 13.782C8.3044 13.9257 8.65017 14 8.99992 14C9.34968 14 9.69544 13.9257 10.0143 13.782C10.3332 13.6383 10.618 13.4286 10.8497 13.1666H14.1958C13.5727 13.9464 12.7821 14.5759 11.8827 15.0087C10.9833 15.4414 9.99804 15.6663 8.99992 15.6666ZM8.16659 11.5C8.16659 11.3351 8.21546 11.174 8.30703 11.037C8.3986 10.8999 8.52875 10.7931 8.68102 10.7301C8.83329 10.667 9.00085 10.6505 9.1625 10.6826C9.32415 10.7148 9.47263 10.7942 9.58918 10.9107C9.70572 11.0272 9.78509 11.1757 9.81724 11.3374C9.8494 11.499 9.83289 11.6666 9.76982 11.8189C9.70675 11.9711 9.59994 12.1013 9.4629 12.1929C9.32586 12.2844 9.16474 12.3333 8.99992 12.3333C8.77898 12.3331 8.56714 12.2452 8.41091 12.089C8.25468 11.9327 8.16681 11.7209 8.16659 11.5ZM15.1751 11.5017L15.1665 11.5H11.4999C11.4983 10.9846 11.3373 10.4824 11.0389 10.0623C10.7405 9.64218 10.3193 9.32472 9.83325 9.15352V6.49996C9.83325 6.27894 9.74546 6.06698 9.58918 5.9107C9.4329 5.75442 9.22093 5.66663 8.99992 5.66663C8.77891 5.66663 8.56695 5.75442 8.41067 5.9107C8.25439 6.06698 8.16659 6.27894 8.16659 6.49996V9.15352C7.68054 9.32472 7.25939 9.64218 6.96098 10.0623C6.66256 10.4824 6.50151 10.9846 6.49992 11.5H2.83334L2.82474 11.5017C2.60799 10.9669 2.46221 10.406 2.39114 9.83329H3.16659C3.3876 9.83329 3.59956 9.74549 3.75584 9.58921C3.91212 9.43293 3.99992 9.22097 3.99992 8.99996C3.99992 8.77894 3.91212 8.56698 3.75584 8.4107C3.59956 8.25442 3.3876 8.16663 3.16659 8.16663H2.39114C2.54005 6.9821 3.00621 5.85981 3.74037 4.91838L4.28597 5.46399C4.36335 5.54137 4.4552 5.60274 4.5563 5.64462C4.65739 5.68649 4.76574 5.70804 4.87517 5.70804C4.98459 5.70804 5.09294 5.68649 5.19404 5.64461C5.29513 5.60274 5.38699 5.54136 5.46436 5.46399C5.54173 5.38661 5.60311 5.29476 5.64498 5.19366C5.68686 5.09257 5.70841 4.98422 5.70841 4.87479C5.70841 4.76537 5.68686 4.65702 5.64498 4.55592C5.60311 4.45483 5.54173 4.36297 5.46435 4.2856L4.91881 3.74005C5.86016 3.00613 6.98227 2.5401 8.16659 2.39118V3.16663C8.16659 3.38764 8.25439 3.5996 8.41067 3.75588C8.56695 3.91216 8.77891 3.99996 8.99992 3.99996C9.22093 3.99996 9.4329 3.91216 9.58918 3.75588C9.74546 3.5996 9.83325 3.38764 9.83325 3.16663V2.39118C11.0176 2.5401 12.1397 3.00613 13.081 3.74005L12.5355 4.2856C12.3792 4.44186 12.2914 4.6538 12.2914 4.87479C12.2914 5.09578 12.3792 5.30772 12.5355 5.46399C12.6917 5.62025 12.9037 5.70804 13.1247 5.70804C13.3457 5.70804 13.5576 5.62026 13.7139 5.46399L14.2595 4.91838C14.9936 5.85981 15.4598 6.9821 15.6087 8.16663H14.8333C14.6122 8.16663 14.4003 8.25442 14.244 8.4107C14.0877 8.56698 13.9999 8.77894 13.9999 8.99996C13.9999 9.22097 14.0877 9.43293 14.244 9.58921C14.4003 9.74549 14.6122 9.83329 14.8333 9.83329H15.6087C15.5376 10.406 15.3919 10.9669 15.1751 11.5017Z"
-                        fill="currentColor"></path>
-                    </svg></span>
+                        d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                  </span>
                   <span id="MyAppSpan">My Applications</span>
                   <span class="inline-block ml-auto">
                   </span>
@@ -1027,11 +1474,17 @@
                   class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                   style="cursor: pointer" onclick="ShowTab('#SubmitApp', '#SubmitAppBtn')">
                   <span class="inline-block mr-3">
-                    <svg class="w-5 h-5" viewbox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 12H5M8 12H5M5 12V9M5 12V15" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" />
                       <path
-                        d="M17.6416 1.71669C17.0442 1.6138 16.4394 1.56084 15.8332 1.55835C13.7652 1.55666 11.7403 2.14966 9.99991 3.26669C8.25503 2.16433 6.23045 1.58588 4.16657 1.60002C3.56045 1.6025 2.95558 1.65546 2.35824 1.75835C2.16258 1.79209 1.98539 1.89457 1.85859 2.04735C1.73178 2.20013 1.66369 2.39316 1.66657 2.59169V12.5917C1.66479 12.7141 1.69001 12.8355 1.74045 12.9471C1.79089 13.0586 1.8653 13.1577 1.95839 13.2373C2.05147 13.3169 2.16096 13.3749 2.27904 13.4074C2.39712 13.4398 2.5209 13.4459 2.64157 13.425C3.83576 13.2183 5.05924 13.2526 6.23996 13.5259C7.42068 13.7993 8.53476 14.3061 9.51657 15.0167L9.61657 15.075H9.70824C9.80066 15.1135 9.89979 15.1334 9.99991 15.1334C10.1 15.1334 10.1992 15.1135 10.2916 15.075H10.3832L10.4832 15.0167C11.4582 14.2903 12.5691 13.767 13.75 13.4778C14.931 13.1887 16.158 13.1395 17.3582 13.3334C17.4789 13.3542 17.6027 13.3482 17.7208 13.3157C17.8389 13.2833 17.9483 13.2252 18.0414 13.1456C18.1345 13.0661 18.2089 12.967 18.2594 12.8554C18.3098 12.7438 18.335 12.6225 18.3332 12.5V2.50002C18.3246 2.31015 18.2512 2.12895 18.1254 1.98647C17.9996 1.84399 17.8289 1.7488 17.6416 1.71669ZM9.16657 12.7917C7.62481 11.9806 5.90867 11.5573 4.16657 11.5584C3.89157 11.5584 3.61657 11.5584 3.33324 11.5584V3.22502C3.61079 3.20902 3.88903 3.20902 4.16657 3.22502C5.9444 3.22306 7.68342 3.74476 9.16657 4.72502V12.7917ZM16.6666 11.5917C16.3832 11.5917 16.1082 11.5917 15.8332 11.5917C14.0911 11.5906 12.375 12.0139 10.8332 12.825V4.72502C12.3164 3.74476 14.0554 3.22306 15.8332 3.22502C16.1108 3.20902 16.389 3.20902 16.6666 3.22502V11.5917ZM17.6416 15.05C17.0442 14.9471 16.4394 14.8942 15.8332 14.8917C13.7652 14.89 11.7403 15.483 9.99991 16.6C8.2595 15.483 6.2346 14.89 4.16657 14.8917C3.56045 14.8942 2.95558 14.9471 2.35824 15.05C2.24976 15.0672 2.14576 15.1057 2.05221 15.1633C1.95866 15.2208 1.87741 15.2963 1.81313 15.3854C1.74885 15.4744 1.70281 15.5753 1.67766 15.6822C1.65251 15.7891 1.64874 15.9 1.66657 16.0084C1.70892 16.2248 1.83532 16.4156 2.01807 16.539C2.20082 16.6623 2.42502 16.7083 2.64157 16.6667C3.83576 16.4599 5.05924 16.4942 6.23996 16.7676C7.42068 17.0409 8.53476 17.5478 9.51657 18.2584C9.65771 18.3588 9.82665 18.4128 9.99991 18.4128C10.1732 18.4128 10.3421 18.3588 10.4832 18.2584C11.4651 17.5478 12.5791 17.0409 13.7599 16.7676C14.9406 16.4942 16.1641 16.4599 17.3582 16.6667C17.5748 16.7083 17.799 16.6623 17.9817 16.539C18.1645 16.4156 18.2909 16.2248 18.3332 16.0084C18.3511 15.9 18.3473 15.7891 18.3222 15.6822C18.297 15.5753 18.251 15.4744 18.1867 15.3854C18.1224 15.2963 18.0412 15.2208 17.9476 15.1633C17.8541 15.1057 17.7501 15.0672 17.6416 15.05Z"
-                        fill="currentColor"></path>
-                    </svg></span>
+                        d="M6.25 6L6.49485 5.72018C7.29167 4.80952 8.70833 4.80952 9.50515 5.72017L13.8476 10.683C14.5074 11.437 14.5074 12.563 13.8476 13.317L9.50515 18.2798C8.70833 19.1905 7.29167 19.1905 6.49485 18.2798L6.25 18"
+                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M13 19L17.8844 13.3016C18.5263 12.5526 18.5263 11.4474 17.8844 10.6984L13 5"
+                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M17 19L21.8844 13.3016C22.5263 12.5526 22.5263 11.4474 21.8844 10.6984L17 5"
+                        stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /> </svg> </span>
                   <span>Submit Application</span>
                   <span class="inline-block ml-auto">
                     <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
@@ -1047,13 +1500,13 @@
                   class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                   style="cursor: pointer" onclick="ShowTab('#AllApp', '#AllAppBtn')">
                   <span class="inline-block mr-3">
-                    <svg class="text-indigo-100 w-5 h-5" viewbox="0 0 18 18" fill="none"
-                      xmlns="http://www.w3.org/2000/svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                      class="bi bi-archive" viewBox="0 0 16 16">
                       <path
-                        d="M14.9066 3.12873C14.9005 3.12223 14.8987 3.11358 14.8923 3.10722C14.8859 3.10086 14.8771 3.09893 14.8706 3.09278C13.3119 1.53907 11.2008 0.666626 8.99996 0.666626C6.79914 0.666626 4.68807 1.53907 3.12935 3.09278C3.12279 3.09893 3.11404 3.10081 3.10763 3.10722C3.10122 3.11363 3.09944 3.12222 3.09334 3.12873C1.93189 4.29575 1.14217 5.78067 0.823851 7.39609C0.505534 9.01151 0.672885 10.685 1.30478 12.2054C1.93668 13.7258 3.00481 15.025 4.37435 15.9389C5.7439 16.8528 7.35348 17.3405 8.99996 17.3405C10.6464 17.3405 12.256 16.8528 13.6256 15.9389C14.9951 15.025 16.0632 13.7258 16.6951 12.2054C17.327 10.685 17.4944 9.01151 17.1761 7.39609C16.8578 5.78067 16.068 4.29575 14.9066 3.12873ZM8.99992 15.6666C8.00181 15.6663 7.01656 15.4414 6.11714 15.0087C5.21773 14.5759 4.42719 13.9464 3.80409 13.1666H7.15015C7.38188 13.4286 7.66662 13.6383 7.98551 13.782C8.3044 13.9257 8.65017 14 8.99992 14C9.34968 14 9.69544 13.9257 10.0143 13.782C10.3332 13.6383 10.618 13.4286 10.8497 13.1666H14.1958C13.5727 13.9464 12.7821 14.5759 11.8827 15.0087C10.9833 15.4414 9.99804 15.6663 8.99992 15.6666ZM8.16659 11.5C8.16659 11.3351 8.21546 11.174 8.30703 11.037C8.3986 10.8999 8.52875 10.7931 8.68102 10.7301C8.83329 10.667 9.00085 10.6505 9.1625 10.6826C9.32415 10.7148 9.47263 10.7942 9.58918 10.9107C9.70572 11.0272 9.78509 11.1757 9.81724 11.3374C9.8494 11.499 9.83289 11.6666 9.76982 11.8189C9.70675 11.9711 9.59994 12.1013 9.4629 12.1929C9.32586 12.2844 9.16474 12.3333 8.99992 12.3333C8.77898 12.3331 8.56714 12.2452 8.41091 12.089C8.25468 11.9327 8.16681 11.7209 8.16659 11.5ZM15.1751 11.5017L15.1665 11.5H11.4999C11.4983 10.9846 11.3373 10.4824 11.0389 10.0623C10.7405 9.64218 10.3193 9.32472 9.83325 9.15352V6.49996C9.83325 6.27894 9.74546 6.06698 9.58918 5.9107C9.4329 5.75442 9.22093 5.66663 8.99992 5.66663C8.77891 5.66663 8.56695 5.75442 8.41067 5.9107C8.25439 6.06698 8.16659 6.27894 8.16659 6.49996V9.15352C7.68054 9.32472 7.25939 9.64218 6.96098 10.0623C6.66256 10.4824 6.50151 10.9846 6.49992 11.5H2.83334L2.82474 11.5017C2.60799 10.9669 2.46221 10.406 2.39114 9.83329H3.16659C3.3876 9.83329 3.59956 9.74549 3.75584 9.58921C3.91212 9.43293 3.99992 9.22097 3.99992 8.99996C3.99992 8.77894 3.91212 8.56698 3.75584 8.4107C3.59956 8.25442 3.3876 8.16663 3.16659 8.16663H2.39114C2.54005 6.9821 3.00621 5.85981 3.74037 4.91838L4.28597 5.46399C4.36335 5.54137 4.4552 5.60274 4.5563 5.64462C4.65739 5.68649 4.76574 5.70804 4.87517 5.70804C4.98459 5.70804 5.09294 5.68649 5.19404 5.64461C5.29513 5.60274 5.38699 5.54136 5.46436 5.46399C5.54173 5.38661 5.60311 5.29476 5.64498 5.19366C5.68686 5.09257 5.70841 4.98422 5.70841 4.87479C5.70841 4.76537 5.68686 4.65702 5.64498 4.55592C5.60311 4.45483 5.54173 4.36297 5.46435 4.2856L4.91881 3.74005C5.86016 3.00613 6.98227 2.5401 8.16659 2.39118V3.16663C8.16659 3.38764 8.25439 3.5996 8.41067 3.75588C8.56695 3.91216 8.77891 3.99996 8.99992 3.99996C9.22093 3.99996 9.4329 3.91216 9.58918 3.75588C9.74546 3.5996 9.83325 3.38764 9.83325 3.16663V2.39118C11.0176 2.5401 12.1397 3.00613 13.081 3.74005L12.5355 4.2856C12.3792 4.44186 12.2914 4.6538 12.2914 4.87479C12.2914 5.09578 12.3792 5.30772 12.5355 5.46399C12.6917 5.62025 12.9037 5.70804 13.1247 5.70804C13.3457 5.70804 13.5576 5.62026 13.7139 5.46399L14.2595 4.91838C14.9936 5.85981 15.4598 6.9821 15.6087 8.16663H14.8333C14.6122 8.16663 14.4003 8.25442 14.244 8.4107C14.0877 8.56698 13.9999 8.77894 13.9999 8.99996C13.9999 9.22097 14.0877 9.43293 14.244 9.58921C14.4003 9.74549 14.6122 9.83329 14.8333 9.83329H15.6087C15.5376 10.406 15.3919 10.9669 15.1751 11.5017Z"
-                        fill="currentColor"></path>
-                    </svg></span>
-                  <span>All Applications</span>
+                        d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                  </span>
+                  <span>Applications</span>
                   <span class="inline-block ml-auto">
                     <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
                       xmlns="http://www.w3.org/2000/svg"></svg></span>
@@ -1064,13 +1517,12 @@
                   class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                   style="cursor: pointer" onclick="ShowTab('#AllUsers', '#AllUserBtn')">
                   <span class="inline-block mr-3">
-                    <svg class="text-indigo-100 w-5 h-5" viewbox="0 0 18 18" fill="none"
-                      xmlns="http://www.w3.org/2000/svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                      fill="currentColor">
                       <path
-                        d="M14.9066 3.12873C14.9005 3.12223 14.8987 3.11358 14.8923 3.10722C14.8859 3.10086 14.8771 3.09893 14.8706 3.09278C13.3119 1.53907 11.2008 0.666626 8.99996 0.666626C6.79914 0.666626 4.68807 1.53907 3.12935 3.09278C3.12279 3.09893 3.11404 3.10081 3.10763 3.10722C3.10122 3.11363 3.09944 3.12222 3.09334 3.12873C1.93189 4.29575 1.14217 5.78067 0.823851 7.39609C0.505534 9.01151 0.672885 10.685 1.30478 12.2054C1.93668 13.7258 3.00481 15.025 4.37435 15.9389C5.7439 16.8528 7.35348 17.3405 8.99996 17.3405C10.6464 17.3405 12.256 16.8528 13.6256 15.9389C14.9951 15.025 16.0632 13.7258 16.6951 12.2054C17.327 10.685 17.4944 9.01151 17.1761 7.39609C16.8578 5.78067 16.068 4.29575 14.9066 3.12873ZM8.99992 15.6666C8.00181 15.6663 7.01656 15.4414 6.11714 15.0087C5.21773 14.5759 4.42719 13.9464 3.80409 13.1666H7.15015C7.38188 13.4286 7.66662 13.6383 7.98551 13.782C8.3044 13.9257 8.65017 14 8.99992 14C9.34968 14 9.69544 13.9257 10.0143 13.782C10.3332 13.6383 10.618 13.4286 10.8497 13.1666H14.1958C13.5727 13.9464 12.7821 14.5759 11.8827 15.0087C10.9833 15.4414 9.99804 15.6663 8.99992 15.6666ZM8.16659 11.5C8.16659 11.3351 8.21546 11.174 8.30703 11.037C8.3986 10.8999 8.52875 10.7931 8.68102 10.7301C8.83329 10.667 9.00085 10.6505 9.1625 10.6826C9.32415 10.7148 9.47263 10.7942 9.58918 10.9107C9.70572 11.0272 9.78509 11.1757 9.81724 11.3374C9.8494 11.499 9.83289 11.6666 9.76982 11.8189C9.70675 11.9711 9.59994 12.1013 9.4629 12.1929C9.32586 12.2844 9.16474 12.3333 8.99992 12.3333C8.77898 12.3331 8.56714 12.2452 8.41091 12.089C8.25468 11.9327 8.16681 11.7209 8.16659 11.5ZM15.1751 11.5017L15.1665 11.5H11.4999C11.4983 10.9846 11.3373 10.4824 11.0389 10.0623C10.7405 9.64218 10.3193 9.32472 9.83325 9.15352V6.49996C9.83325 6.27894 9.74546 6.06698 9.58918 5.9107C9.4329 5.75442 9.22093 5.66663 8.99992 5.66663C8.77891 5.66663 8.56695 5.75442 8.41067 5.9107C8.25439 6.06698 8.16659 6.27894 8.16659 6.49996V9.15352C7.68054 9.32472 7.25939 9.64218 6.96098 10.0623C6.66256 10.4824 6.50151 10.9846 6.49992 11.5H2.83334L2.82474 11.5017C2.60799 10.9669 2.46221 10.406 2.39114 9.83329H3.16659C3.3876 9.83329 3.59956 9.74549 3.75584 9.58921C3.91212 9.43293 3.99992 9.22097 3.99992 8.99996C3.99992 8.77894 3.91212 8.56698 3.75584 8.4107C3.59956 8.25442 3.3876 8.16663 3.16659 8.16663H2.39114C2.54005 6.9821 3.00621 5.85981 3.74037 4.91838L4.28597 5.46399C4.36335 5.54137 4.4552 5.60274 4.5563 5.64462C4.65739 5.68649 4.76574 5.70804 4.87517 5.70804C4.98459 5.70804 5.09294 5.68649 5.19404 5.64461C5.29513 5.60274 5.38699 5.54136 5.46436 5.46399C5.54173 5.38661 5.60311 5.29476 5.64498 5.19366C5.68686 5.09257 5.70841 4.98422 5.70841 4.87479C5.70841 4.76537 5.68686 4.65702 5.64498 4.55592C5.60311 4.45483 5.54173 4.36297 5.46435 4.2856L4.91881 3.74005C5.86016 3.00613 6.98227 2.5401 8.16659 2.39118V3.16663C8.16659 3.38764 8.25439 3.5996 8.41067 3.75588C8.56695 3.91216 8.77891 3.99996 8.99992 3.99996C9.22093 3.99996 9.4329 3.91216 9.58918 3.75588C9.74546 3.5996 9.83325 3.38764 9.83325 3.16663V2.39118C11.0176 2.5401 12.1397 3.00613 13.081 3.74005L12.5355 4.2856C12.3792 4.44186 12.2914 4.6538 12.2914 4.87479C12.2914 5.09578 12.3792 5.30772 12.5355 5.46399C12.6917 5.62025 12.9037 5.70804 13.1247 5.70804C13.3457 5.70804 13.5576 5.62026 13.7139 5.46399L14.2595 4.91838C14.9936 5.85981 15.4598 6.9821 15.6087 8.16663H14.8333C14.6122 8.16663 14.4003 8.25442 14.244 8.4107C14.0877 8.56698 13.9999 8.77894 13.9999 8.99996C13.9999 9.22097 14.0877 9.43293 14.244 9.58921C14.4003 9.74549 14.6122 9.83329 14.8333 9.83329H15.6087C15.5376 10.406 15.3919 10.9669 15.1751 11.5017Z"
-                        fill="currentColor"></path>
-                    </svg></span>
-                  <span>Pending User List</span>
+                        d="M14 14.252V22H4a8 8 0 0 1 10-7.748zM12 13c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm6 4v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z" />
+                    </svg> </span>
+                  <span>Pending Users</span>
                   <span class="inline-block ml-auto">
                     <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
                       xmlns="http://www.w3.org/2000/svg"></svg></span>
@@ -1111,7 +1563,7 @@
         <div style="padding:50px;padding-top:0;">
           <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
             <div class="flex px-6 pb-4 border-b">
-              <h3 class="text-xl font-bold" id="MyAppSpan2">Update Application Status</h3>
+              <h3 class="text-xl font-bold">Update Application Status</h3>
             </div>
             <div class="p-4 overflow-x-auto" style="display: block;">
               <div class="mb-6">
@@ -1144,11 +1596,11 @@
           <br>
           <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
             <div class="flex px-6 pb-4 border-b">
-              <h3 class="text-xl font-bold" id="MyAppSpan2">All Applications</h3>
+              <h3 class="text-xl font-bold">Applications</h3>
             </div>
             <div class="p-4 overflow-x-auto" style="display: block;">
               <table class="table-auto w-full">
-                <thead id="myappTableHead" style="display:none">
+                <thead id="allappTableHead" style="display:none">
                   <tr class="text-xs text-gray-500 text-left">
                     <th class="pb-3 font-medium">ID</th>
                     <th class="pb-3 font-medium">Discord ID</th>
@@ -1158,7 +1610,7 @@
                     <th class="pb-3 font-medium">Closed At</th>
                   </tr>
                 </thead>
-                <tbody id="myappTable">
+                <tbody id="allappTable">
                   <tr class="text-xs bg-gray-50">
                     <td class="py-5 px-6 font-medium">Nothing found</td>
                   </tr>
@@ -1169,10 +1621,10 @@
               <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
               <input id="allapppage" style="width:50px;display:inline"
                 class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder="" value="1"></input> / <span id="totpages"></span>
+                name="field-name" rows="5" placeholder="" value="1"></input> / <span id="totpages">-</span>
               <button type="button"
                 class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-                onclick="loadAllApp($('#allapppage').val())" id="updateAppStatusBtn">Show</button></div>
+                onclick="loadAllApp()" id="updateAppStatusBtn">Show</button></div>
           </div>
         </div>
     </div>
@@ -1183,11 +1635,52 @@
       <div style="padding:50px;padding-top:0;">
         <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
           <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold" id="MyAppSpan2">Pending Users</h3>
+            <h3 class="text-xl font-bold">Add User to Member List</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <div class="mb-6">
+              <p>Only do this when the member is accepted as a driver / staff.</p>
+              <br>
+              <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+              <input id="adddiscordid" style="width:200px"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder=""></input>
+            </div>
+
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="addUser()">Add</button>
+          </div>
+        </div>
+        <br>
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Ban / Unban User</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+              <input id="bandiscordid" style="width:200px"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder=""></input>
+            </div>
+
+            <button type="button" style="background-color:red"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="banUser()">Ban</button>
+            <button type="button" style="background-color:green"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="unbanUser()">Unban</button>
+          </div>
+        </div>
+        <br>
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Pending Users</h3>
           </div>
           <div class="p-4 overflow-x-auto" style="display: block;">
             <table class="table-auto w-full">
-              <thead>
+              <thead id="usersTableHead">
                 <tr class="text-xs text-gray-500 text-left">
                   <th class="pb-3 font-medium">Discord ID</th>
                   <th class="pb-3 font-medium">Name</th>
@@ -1200,6 +1693,14 @@
               </tbody>
             </table>
           </div>
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="pupages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadUsers()">Show</button></div>
         </div>
     </section>
 
@@ -1233,8 +1734,8 @@
 
     <section id="AnnTab" class="py-8 tabs" style="display:none">
       <div style="padding:50px;padding-top:0;">
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="container px-4" id="newann">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newann">
+          <div class="container px-4">
             <div style="margin:20px">
               <p>You are <b><span id="annrole"></span></b> so you can deal with announcements.</p>
               <p>To create an announcement, input <b>title, content and type</b>, announcement id is NOT needed.</p>
@@ -1296,7 +1797,8 @@
               </div>
 
               <div class="mb-6">
-                <label class="block text-sm font-medium mb-2" for="">Discord Channel ID</label>
+                <label class="block text-sm font-medium mb-2" for="">Discord Channel ID (Public 929856834645426217 |
+                  Private 941537039340412929 | Or any other)</label>
                 <input id="annchan"
                   class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
                   name="" placeholder="Leave empty if you don't want this announcement to be forwarded to Discord">
@@ -1325,11 +1827,95 @@
       </div>
     </section>
 
-    <section id="MyApp" class="py-8 tabs" style="display: none;">
-      <div class="container px-4 mx-auto lg:ml-80" style="padding:50px; padding-top:0;">
-        <div class="pt-4 bg-white shadow rounded">
+    <section id="AllMembers" class="py-8 tabs" style="display:none">
+      <div style="padding:50px;padding-top:0;">
+        <div id="AllMemberStaff" style="display:none">
+          <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold">Assign roles</h3>
+            </div>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <div class="mb-6">
+                <p>Fetch member roles first, this will overwrite all existing roles.</p>
+                <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
+                  navio company!</p>
+                <br>
+                <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
+                <input id="memberroleid" style="width:200px;display:inline"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></input>
+                <button type="button" id="fetchRolesBtn"
+                  class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                  onclick="fetchRoles()">Fetch Existing Roles</button>
+              </div>
+              <span id="memberrolename" style="font-size:30px"></span>
+              <div class="mb-6" id="rolelist">
+
+              </div>
+
+              <button type="button" id="updateMemberRolesBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="updateMemberRoles()">Update</button>
+            </div>
+          </div>
+          <br>
+          <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold">Dismiss</h3>
+            </div>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <div class="mb-6">
+                <p style="color:red">Dangerous! This will wipe member delivery log and everything, and kick member from
+                  navio company!</p>
+                <br>
+                <label class="block text-sm font-medium mb-2" for="">User ID</label>
+                <input id="dismissUserID" style="width:200px"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></input>
+              </div>
+
+              <button type="button" style="background-color:red" id="dismissbtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="dismissUser()">Dismiss</button>
+            </div>
+          </div>
+        </div>
+        <br>
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
           <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold" id="MyAppSpan2">My Applications</h3>
+            <h3 class="text-xl font-bold">Members</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <table class="table-auto w-full">
+              <thead id="membersTableHead">
+                <tr class="text-xs text-gray-500 text-left">
+                  <th class="pb-3 font-medium">User ID</th>
+                  <th class="pb-3 font-medium">Name</th>
+                </tr>
+              </thead>
+              <tbody id="membersTable">
+                <tr class="text-xs bg-gray-50">
+                  <td class="py-5 px-6 font-medium">Nothing found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="mpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMembers()">Show</button></div>
+        </div>
+    </section>
+
+    <section id="MyApp" class="py-8 tabs" style="display:none">
+      <div style="padding:50px; padding-top:0;">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">My Applications</h3>
           </div>
 
           <div class="p-4 overflow-x-auto" style="display: block;">
@@ -1345,11 +1931,20 @@
               </thead>
               <tbody id="myappTable">
                 <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">You haven't created any applications</td>
+                  <td class="py-5 px-6 font-medium">Nothing found</td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="myapppage" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMyApp()">Show</button></div>
         </div>
       </div>
     </section>
