@@ -294,12 +294,22 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT userid, steamid FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT userid, steamid, roles FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "descriptor": "User not found"}
     userid = t[0][0]
     steamid = t[0][1]
+    roles = t[0][2].split(",")
+    while "" in roles:
+        roles.remove("")
+    highest = 99999
+    for i in roles:
+        if int(i) < highest:
+            highest = int(i)
+    if adminhighest >= highest:
+        return {"error": True, "descriptor": "User position is higher than or equal to you"}
+
     cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
     cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
