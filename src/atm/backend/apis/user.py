@@ -172,10 +172,10 @@ async def userList(page:int, request: Request, response: Response, authorization
         ret.append({"name": tt[1], "discordid": f"{tt[2]}"})
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
     t = cur.fetchall()
-    totpage = 0
+    tot = 0
     if len(t) > 0:
-        totpage = t[0][0]
-    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
+        tot = t[0][0]
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
 @app.get('/atm/user/info')
 async def userInfo(response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
@@ -210,14 +210,17 @@ async def userInfo(response: Response, authorization: str = Header(None), qdisco
     for i in roles:
         if int(i) < adminhighest:
             adminhighest = int(i)
+            
     if discordid != qdiscordid and qdiscordid != 0:
-        print("Checking non-me")
         if adminhighest >= 30:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
-    if discordid == qdiscordid:    
-        cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+        discordid = qdiscordid
+        
+        cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {qdiscordid}")
         t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": "User not found"}
 
     roles = t[0][3].split(",")
     while "" in roles:

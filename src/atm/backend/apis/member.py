@@ -55,11 +55,11 @@ async def memberList(page:int, request: Request, response: Response, authorizati
     
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
     t = cur.fetchall()
-    totpage = 0
+    tot = 0
     if len(t) > 0:
-        totpage = t[0][0]
+        tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
     
 @app.get('/atm/member/info')
 async def member(response: Response, userid: int, authorization: str = Header(None)):

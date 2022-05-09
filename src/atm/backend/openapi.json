@@ -980,6 +980,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Application ID",
+                        "type": "integer"
+                    },
+                    "name": "applicationid",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",

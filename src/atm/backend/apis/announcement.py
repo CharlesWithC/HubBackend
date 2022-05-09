@@ -56,11 +56,11 @@ async def getAnnouncement(page: int, response: Response, authorization: str = He
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
-    totpage = 0
+    tot = 0
     if len(t) > 0:
-        totpage = t[0][0]
+        tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
 @app.post("/atm/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
