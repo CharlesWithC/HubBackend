@@ -47,13 +47,18 @@ async def memberList(page:int, request: Request, response: Response, authorizati
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid >= 0 ORDER BY userid ASC")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 30}, 30")
     t = cur.fetchall()
     ret = []
     for tt in t:
         ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}"})
-    totpage = math.ceil(len(ret)/30)
-    ret = ret[(page-1)*30:page*30]
+    
+    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
+    t = cur.fetchall()
+    totpage = 0
+    if len(t) > 0:
+        totpage = t[0][0]
+
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
     
 @app.get('/atm/member/info')
@@ -92,6 +97,19 @@ async def member(response: Response, userid: int, authorization: str = Header(No
 
     conn = newconn()
     cur = conn.cursor()
+
+    distance = 0
+    revenue = 0
+    fuel = 0
+    xp = 0
+    cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
+    t = cur.fetchall()
+    if len(t) > 0:
+        distance = t[0][1]
+        revenue = t[0][2]
+        fuel = t[0][3]
+        xp = t[0][4]
+
     if adminhighest >= 30: # non hr or upper
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -99,7 +117,9 @@ async def member(response: Response, userid: int, authorization: str = Header(No
             # response.status_code = 404
             return {"error": True, "descriptor": "Member not found."}
         roles = [int(i) for i in t[0][3].split(",")]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
+        return {"error": False, "response": {"userid": userid, "username": t[0][1], "avatar": t[0][2], \
+            "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+                "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -110,7 +130,10 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         while "" in roles:
             roles.remove("")
         roles = [int(i) for i in roles]
-        return {"error": False, "response": {"userid": userid, "username": t[0][1], "email": t[0][8], "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
+        return {"error": False, "response": {"userid": userid, "username": t[0][1], "email": t[0][8], \
+            "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], \
+                "truckesmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
+                    "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
 
 @app.post('/atm/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
@@ -153,7 +176,6 @@ async def addMember(request: Request, response: Response, authorization: str = H
     form = await request.form()
     discordid = form["discordid"]
 
-    # get next userid by count(*)
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
     t = cur.fetchall()
     userid = 0
@@ -195,6 +217,99 @@ async def addMember(request: Request, response: Response, authorization: str = H
 
     return {"error": False, "response": {"message": "Member added", "userid": userid}}    
 
+@app.delete("/atm/member/resign")
+async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    cur.execute(f"SELECT userid, steamid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    userid = t[0][0]
+    if userid == -1:
+        return {"error": False, "descriptor": "Not a member"}
+    steamid = t[0][1]
+    cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
+    cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    conn.commit()
+
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+    
+    await AuditLog(userid, f'Member resigned')
+    return {"error": False, "response": {"message": "Member resigned"}}
+
+@app.delete("/atm/member/dismiss")
+async def dismissMember(userid: int, request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    adminid = t[0][0]
+    adminroles = t[0][1].split(",")
+    while "" in adminroles:
+        adminroles.remove("")
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+
+    if adminhighest >= 30:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+
+    cur.execute(f"SELECT userid, steamid FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": True, "descriptor": "User not found"}
+    userid = t[0][0]
+    steamid = t[0][1]
+    cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
+    cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    conn.commit()
+
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+    
+    await AuditLog(adminid, f'Dismissed member {userid}')
+    return {"error": False, "response": {"message": "Member dismissed"}}
+
 @app.post('/atm/member/role')
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
@@ -235,13 +350,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    cur.execute(f"SELECT name, roles FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT name, roles, steamid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
         return {"error": True, "descriptor": "Member not found."}
     username = t[0][0]
     oldroles = t[0][1].split(",")
+    steamid = t[0][2]
     while "" in oldroles:
         oldroles.remove("")
     oldroles = [int(i) for i in oldroles]
@@ -269,6 +385,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
+
+    if "100" in roles:
+        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
+        p = cur.fetchall()
+        if len(p) == 0:
+            cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0)")
+            conn.commit()
+        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
 
     audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
     for add in addedroles:

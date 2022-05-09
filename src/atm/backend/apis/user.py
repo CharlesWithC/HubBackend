@@ -165,13 +165,16 @@ async def userList(page:int, request: Request, response: Response, authorization
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 LIMIT {(page-1) * 30}, 30")
     t = cur.fetchall()
     ret = []
     for tt in t:
         ret.append({"name": tt[1], "discordid": f"{tt[2]}"})
-    totpage = math.ceil(len(ret)/30)
-    ret = ret[(page-1)*30:page*30]
+    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
+    t = cur.fetchall()
+    totpage = 0
+    if len(t) > 0:
+        totpage = t[0][0]
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.get('/atm/user/info')

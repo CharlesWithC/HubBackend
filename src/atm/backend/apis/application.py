@@ -39,7 +39,6 @@ async def newApplication(request: Request, response: Response, authorization: st
     data = json.loads(form["data"])
     data = b64e(json.dumps(data))
 
-    # get application id count(*)
     cur.execute(f"SELECT COUNT(*) FROM application")
     t = cur.fetchall()
     applicationid = 0
@@ -380,31 +379,39 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
                 adminhighest = int(i)
 
     t = None
+    totpage = 0
     if adminhighest >= 30 and discordid != t[0][1] or showall == False:
         limit = ""
         if apptype != 0:
             limit = f" AND apptype = {apptype}"
 
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit}")
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} LIMIT {(page-1) * 10}, 10")
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 404
             return {"error": True, "descriptor": "404: Not found"}
+        cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
+        t = cur.fetchall()
+        if len(t) > 0:
+            totpage = t[0][0]
     else:
         limit = ""
         if apptype != 0:
             limit = f" WHERE apptype = {apptype}"
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit}")
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} LIMIT {(page-1) * 10}, 10")
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 404
             return {"error": True, "descriptor": "404: Not found"}
+        cur.execute(f"SELECT COUNT(*) FROM application")
+        t = cur.fetchall()
+        if len(t) > 0:
+            totpage = t[0][0]
 
     ret = []
     for tt in t:
         ret.append({"applicationid": tt[0], "apptype": tt[1], "discordid": f"{tt[2]}", "status": tt[4], "submitTimestamp": tt[3], "closedTimestamp": tt[5]})
-    totpage = math.ceil(len(ret)/10)
-    ret = ret[(page-1)*10:page*10]
+
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
 @app.get("/atm/application/positions")

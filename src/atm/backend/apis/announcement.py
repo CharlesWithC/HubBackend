@@ -43,7 +43,7 @@ async def getAnnouncement(page: int, response: Response, authorization: str = He
     if userid == -1 or "10000" in roles: # external staff / not registered
         limit = "AND pvt = 0"
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -53,8 +53,12 @@ async def getAnnouncement(page: int, response: Response, authorization: str = He
         if len(n) > 0:
             name = n[0][0]
         ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
-    totpage = math.ceil(len(ret) / 10)
-    ret = ret[(page - 1) * 10 : page * 10]
+        
+    cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
+    t = cur.fetchall()
+    totpage = 0
+    if len(t) > 0:
+        totpage = t[0][0]
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": totpage}}
 
@@ -126,9 +130,12 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     if channelid != 0:
         try:
+            role = "<@&929761730089877634>"
+            if pvt == 1:
+                role = "<@&941548239776272454>"
             headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": "<@&929761730089877634>", "embed": {"title": b64d(title), "description": b64d(content), 
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
                     "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
                             "timestamp": str(datetime.now())}}))
         except:
@@ -207,9 +214,12 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
 
     if channelid != 0:
         try:
+            role = "<@&929761730089877634>"
+            if pvt == 1:
+                role = "<@&941548239776272454>"
             headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": "<@&929761730089877634>", "embed": {"title": b64d(title), "description": b64d(content), 
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
                     "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
                             "timestamp": str(datetime.now())}}))
         except:

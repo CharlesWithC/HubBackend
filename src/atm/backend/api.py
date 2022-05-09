@@ -13,7 +13,9 @@ from functions import *
 import apis.announcement
 import apis.application
 import apis.auth
+import apis.dlog
 import apis.member
+import apis.navio
 import apis.user
 
 @app.get('/atm/info')

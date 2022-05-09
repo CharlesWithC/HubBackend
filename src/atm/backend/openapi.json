@@ -551,6 +551,75 @@
                 }
             }
         },
+        "/atm/member/resign": {
+            "delete": {
+                "summary": "Member Resign (self-operation)",
+                "tags": ["member", "manage"],
+                "operationId": "resignMember",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/member/dismiss": {
+            "delete": {
+                "summary": "Dismiss Member (staff-operation)",
+                "tags": ["member", "manage"],
+                "operationId": "dismissMember",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/member/role": {
             "post": {
                 "summary": "Set Member Roles",
@@ -607,6 +676,78 @@
                 "summary": "Get All Roles",
                 "tags": ["member"],
                 "operationId": "getAllRoles",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/dlog/list": {
+            "get": {
+                "summary": "Get Delivery Log List",
+                "tags": ["dlog"],
+                "operationId": "getDlogList",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/dlog/detail": {
+            "get": {
+                "summary": "Get Delivery Log Detail",
+                "tags": ["dlog"],
+                "operationId": "getDlogDetail",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Log ID",
+                        "type": "integer"
+                    },
+                    "name": "logid",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1198,6 +1339,9 @@
     },{
         "name": "member",
         "description": "Members who have joined At The Mile Logistics"
+    },{
+        "name": "dlog",
+        "description": "Delivery Log"
     },{
         "name": "announcement",
         "description": "Announcements"
