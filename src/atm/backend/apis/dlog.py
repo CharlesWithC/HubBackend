@@ -70,6 +70,36 @@ async def dlotStats():
         "neweuroprofit": neweuroprofit, "newdollarprofit": newdollarprofit, \
             "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
 
+@app.get("/atm/dlog/leaderboard")
+async def dlotLeaderboard():
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt FROM driver ORDER BY distance / 1.6 + eventpnt DESC LIMIT 20")
+    t = cur.fetchall()
+    ret = []
+    for tt in t:
+        cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
+        p = cur.fetchall()
+        if len(p) == 0:
+            continue
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "totalpnt": tt[1]})
+    return {"error": False, "response": ret[:5]}
+
+@app.get("/atm/dlog/newdrivers")
+async def dlotNewDriver():
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT userid FROM driver ORDER BY joints DESC LIMIT 20")
+    t = cur.fetchall()
+    ret = []
+    for tt in t:
+        cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
+        p = cur.fetchall()
+        if len(p) == 0:
+            continue
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2]})
+    return {"error": False, "response": ret[:5]}
+
 @app.get("/atm/dlog/list")
 async def dlogList(page: int, speedlimit: Optional[int] = 0):
     conn = newconn()

@@ -780,6 +780,60 @@
                 }
             }
         },
+        "/atm/dlog/leaderboard": {
+            "get": {
+                "summary": "Get Distance Leaderboard",
+                "tags": ["dlog"],
+                "operationId": "getDlogLeaderboard",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/dlog/newdrivers": {
+            "get": {
+                "summary": "Get New Drivers",
+                "tags": ["dlog"],
+                "operationId": "getNewDrivers",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/dlog/list": {
             "get": {
                 "summary": "Get Delivery Log List",

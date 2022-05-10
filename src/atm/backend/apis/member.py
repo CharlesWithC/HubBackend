@@ -495,9 +495,9 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"UPDATE driver SET distance = distance + {distance}, eventpnt = eventpnt + {eventpnt} WHERE userid = {userid}")
     conn.commit()
 
-    if distance > 0:
+    if int(distance) > 0:
         distance = "+" + str(distance)
-    if eventpnt > 0:
+    if int(eventpnt) > 0:
         eventpnt = "+" + str(eventpnt)
 
     await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} Miles\n{eventpnt} Event Points")
