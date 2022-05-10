@@ -1845,6 +1845,8 @@
             name = user.name;
             discordid = user.discordid;
             avatar = user.avatar;
+            dt = new Date(user.joints * 1000);
+            joindt = pad(dt.getDate(), 2) + "/" + pad(dt.getMonth() + 1, 2);
             if (avatar != null) {
               if (avatar.startsWith("a_"))
                 src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
@@ -1853,6 +1855,7 @@
             }
             $("#newdriverTable").append(`<tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium"><img src='${src}' width="20px" style="display:inline"> ${name}</td>
+              <td class="py-5 px-6">${joindt}</td>
             </tr>`);
           }
         }

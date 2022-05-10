@@ -89,7 +89,7 @@ async def dlotLeaderboard():
 async def dlotNewDriver():
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid FROM driver ORDER BY joints DESC LIMIT 20")
+    cur.execute(f"SELECT userid, joints FROM driver ORDER BY joints DESC LIMIT 20")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -97,7 +97,7 @@ async def dlotNewDriver():
         p = cur.fetchall()
         if len(p) == 0:
             continue
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2]})
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "joints": tt[1]})
     return {"error": False, "response": ret[:5]}
 
 @app.get("/atm/dlog/list")
