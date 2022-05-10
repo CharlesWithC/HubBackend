@@ -18,7 +18,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (aid INT, userid INT, titl
 # atype = 0: info | 1: event | 2: warning | 3: critical
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, distance DOUBLE, revenue DOUBLE, fuel DOUBLE, xp DOUBLE)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")

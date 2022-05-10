@@ -11,11 +11,11 @@ from db import newconn
 from functions import *
 
 ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operating Officer", \
-    4: "Chief Administrative Officer", 5: "Chief Technology Officier", 9: "Leadership", 10: "Lead Developer", 15: "Tester", \
-        20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Leave of absence", 31: "Development Staff", \
+    4: "Chief Administrative Officer", 5: "Chief Technology Officier", 9: "Leadership", \
+        20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Lead Developer", 31: "Development Staff", \
             40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
                 60: "Convoy Supervisor", 61: "Convoy Control",\
-                 100: "Driver", 10000: "External Staff"}
+                 99: "Leave of absence", 100: "Driver", 10000: "External Staff"}
 
 @app.get("/atm/member/list")
 async def memberList(page:int, request: Request, response: Response, authorization: str = Header(None)):
@@ -99,16 +99,18 @@ async def member(response: Response, userid: int, authorization: str = Header(No
     cur = conn.cursor()
 
     distance = 0
-    revenue = 0
+    totjobs = 0
     fuel = 0
     xp = 0
+    eventpnt = 0
     cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) > 0:
-        distance = t[0][1]
-        revenue = t[0][2]
+        totjobs = t[0][1]
+        distance = t[0][2]
         fuel = t[0][3]
         xp = t[0][4]
+        eventpnt = t[0][5]
 
     if adminhighest >= 30: # non hr or upper
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
@@ -116,10 +118,13 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         if len(t) == 0:
             # response.status_code = 404
             return {"error": True, "descriptor": "Member not found."}
-        roles = [int(i) for i in t[0][3].split(",")]
+        roles = t[0][3].split(",")
+        while "" in roles:
+            roles.remove("")
+        roles = [int(i) for i in roles]
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "discordid": t[0][0], "avatar": t[0][2], \
             "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-                "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
+                "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -133,7 +138,7 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], \
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
-                    "distance": distance, "revenue": revenue, "fuel": fuel, "xp": xp}}
+                    "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt}}
 
 @app.post('/atm/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
@@ -201,7 +206,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     try:
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}))
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
         if "id" in d:
             channelid = d["id"]
@@ -210,7 +215,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
                 "description": f"You are now a member of At The Mile Logistics!",
                     "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now())}}))
+                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
 
     except:
         pass
@@ -396,14 +401,28 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
 
-    if "100" in addedroles:
+    if 100 in addedroles:
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
         p = cur.fetchall()
         if len(p) == 0:
             cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0)")
             conn.commit()
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
-    if "100" in removedroles:
+    
+        try:
+            cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
+            t = cur.fetchall()
+            userdiscordid = t[0][0]
+            role = f"<@{userdiscordid}>"
+            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+            ddurl = f"https://discord.com/api/v9/channels/938604968573812786/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": "Team Update", "description": f"<@{userdiscordid}> has joined **At The Mile Logistics** as a **Driver**. Welcome to the family <:atmlove:931247295201149038>", 
+                    "footer": {"text": f"At The Mile | Team Update", "icon_url": config.gicon}, "image": {"url": "https://images-ext-2.discordapp.net/external/15IxWrNDPD_4ThKYDuctEfFfccn_MYjXo-XzbWJUbEs/https/media.discordapp.net/attachments/931964061669801994/971510588960309298/Team_Update_2022.png"},\
+                            "timestamp": str(datetime.now()), "color": 11730944}}))
+        except:
+            pass
+
+    if 100 in removedroles:
         cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
         cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
@@ -422,3 +441,51 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 @app.get("/atm/member/roles")
 async def getRoles(request: Request, response: Response):
     return {"error": False, "response": ROLES}
+
+@app.post("/atm/member/point")
+async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    adminid = t[0][0]
+    adminroles = t[0][1].split(",")
+    while "" in adminroles:
+        adminroles.remove("")
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+
+    if adminhighest >= 30: # not hr level or upper
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    
+    form = await request.form()
+    userid = form["userid"]
+    distance = int(int(form["mile"])*1.6)
+    eventpnt = form["eventpnt"]
+
+    cur.execute(f"UPDATE driver SET distance = distance + {distance}, eventpnt = eventpnt + {eventpnt} WHERE userid = {userid}")
+    conn.commit()
+
+    return {"error": False, "response": {"message": "Points updated."}}

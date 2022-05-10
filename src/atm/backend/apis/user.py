@@ -55,11 +55,11 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 400
         return {"error": True, "descriptor": "Invalid discordid."}
 
-    cur.execute(f"SELECT roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) > 0:
-        roles = t[0][0]
-        userroles = t[0][0].split(",")
+        roles = t[0][1]
+        userroles = roles.split(",")
         while "" in userroles:
             userroles.remove("")
         userhighest = 99999
@@ -69,11 +69,16 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         if userhighest <= adminhighest:
             # response.status_code = 401
             return {"error": True, "descriptor": "User has higher / equal role."}
+    userid = t[0][0]
+
+    if userid != -1:
+        return {"error": True, "descriptor": "Dismiss member before banning."}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         cur.execute(f"INSERT INTO banned VALUES ({discordid})")
+        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
         conn.commit()
         await AuditLog(adminid, f"Banned user with Discord ID `{discordid}`")

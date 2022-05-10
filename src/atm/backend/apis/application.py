@@ -79,7 +79,7 @@ async def newApplication(request: Request, response: Response, authorization: st
     try:
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}))
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
         if "id" in d:
             channelid = d["id"]
@@ -88,7 +88,7 @@ async def newApplication(request: Request, response: Response, authorization: st
                 "description": f"One of our staff will get back to you shortly. If you want to update your application, please refer to `My Applications` in Drivers Hub.",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now())}}))
+                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
 
     except:
         pass
@@ -145,17 +145,16 @@ async def updateApplication(request: Request, response: Response, authorization:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    cur.execute(f"SELECT name FROM user WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    name = t[0][0]
 
     form = await request.form()
     applicationid = form["applicationid"]
-    data = json.loads(form["data"])
-    data = b64e(json.dumps(data))
+    message = form["message"]
 
     cur.execute(f"SELECT discordid, data, status FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
-    if len(t) == 0:
-        # response.status_code = 400
-        return {"error": True, "descriptor": "Application not found"}
     if discordid != t[0][0]:
         # response.status_code = 401
         return {"error": True, "descriptor": "You are not the applicant"}
@@ -167,33 +166,40 @@ async def updateApplication(request: Request, response: Response, authorization:
             return {"error": True, "descriptor": "Application already declined"}
         else:
             return {"error": True, "descriptor": "Application already processed, status unknown."}
-    if data == t[0][1]:
-        # response.status_code = 401
-        return {"error": False, "response": {"message": "Application not updated: Data not changed", "applicationid": applicationid}}
+
+    discordid = t[0][0]
+    data = json.loads(b64d(t[0][1]))
+    i = 1
+    while 1:
+        if not f"[Message] {name} #{i}" in data.keys():
+            break
+        i += 1
+        
+    data[f"[Message] {name} #{i}"] = message
+    data = b64e(json.dumps(data))
 
     cur.execute(f"UPDATE application SET data = '{data}' WHERE applicationid = {applicationid}")
     conn.commit()
 
-    data = json.loads(form["data"])
+    data = json.loads(b64d(data))
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
-    for d in data.keys():
-        msg += f"**{d}**: {data[d]}\n\n"
+    msg += f"**New message**: {message}\n\n"
 
     try:
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}))
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
         if "id" in d:
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Application Updated",
-                "description": f"This is a reminder that your update has been recorded.",
+                "description": f"This is a reminder that your message has been recorded.",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now())}}))
+                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
 
     except:
         pass
@@ -202,7 +208,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(config.appwebhook, session=session)
 
-            embed = discord.Embed(title = f"Application #{applicationid} Updated", description = msg, color = 0x770202)
+            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = msg, color = 0x770202)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -215,7 +221,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(config.appwebhook, session=session)
 
-            embed = discord.Embed(title = f"Application #{applicationid} Updated", description = "*Message too long, please view application on website.*", color = 0x770202)
+            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = 0x770202)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -224,7 +230,7 @@ async def updateApplication(request: Request, response: Response, authorization:
             embed.timestamp = datetime.now()
             await webhook.send(content = "<@&941544363878670366> <@&941544365950644224>", embed = embed)
 
-    return {"error": False, "response": {"message": "Application updated", "applicationid": applicationid}}
+    return {"error": False, "response": {"message": "Message added", "applicationid": applicationid}}
 
 @app.post("/atm/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
@@ -246,10 +252,11 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles,name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminid = t[0][0]
     roles = t[0][1].split(",")
+    adminname = t[0][2]
     while "" in roles:
         roles.remove("")
     adminhighest = 99999
@@ -263,6 +270,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     form = await request.form()
     applicationid = form["applicationid"]
     status = form["status"]
+    message = form["message"]
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     statustxt = f"Unknown Status ({status})"
     if int(status) in STATUS.keys():
@@ -275,8 +283,21 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         return {"error": True, "descriptor": "404: Not found"}
 
     discordid = t[0][2]
+    data = json.loads(b64d(t[0][3]))
+    i = 1
+    while 1:
+        if not f"[Message] {adminname} #{i}" in data.keys():
+            break
+        i += 1
+        
+    data[f"[Message] {adminname} #{i}"] = message
+    data = b64e(json.dumps(data))
 
-    cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {int(time.time())} WHERE applicationid = {applicationid}")
+    closedts = 0
+    if status != 0:
+        closedts = int(time.time())
+
+    cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {closedts}, data = '{data}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application {applicationid} status to {statustxt}")
     conn.commit()
 
@@ -287,19 +308,21 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
             statustxt = STATUS[int(status)]
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}))
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
         if "id" in d:
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Application Status Updated",
-                "description": f"This is a reminder that one of our staff has updated the application status.",
+                "description": f"[Message] {message}",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": statustxt, "inline": True}, \
                         {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}, {"name": "Responsible Staff", "value": f"<@{discordid}> (`{discordid}`)", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now())}}))
+                        "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
 
     except:
+        import traceback
+        traceback.print_exc()
         pass
 
     return {"error": False, "response": {"message": "Application status updated", "applicationid": applicationid, "status": status}}

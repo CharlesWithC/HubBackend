@@ -119,7 +119,9 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     content = b64e(form["content"])
     atype = int(form["atype"])
     timestamp = int(time.time())
-    pvt = int(bool(form["pvt"]))
+    pvt = 0
+    if form["pvt"] == "true":
+        pvt = 1
     channelid = form["channelid"]
     if not channelid.isdigit():
         channleid = 0
@@ -137,7 +139,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
                     "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now())}}))
+                            "timestamp": str(datetime.now()), "color": 11730944, "color": 11730944}}))
         except:
             pass
 
@@ -191,7 +193,9 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     title = b64e(form["title"])
     content = b64e(form["content"])
     atype = int(form["atype"])
-    pvt = int(bool(form["pvt"]))
+    pvt = 0
+    if form["pvt"] == "true":
+        pvt = 1
     channelid = form["channelid"]
     if not channelid.isdigit():
         channleid = 0
@@ -221,7 +225,7 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
                     "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now())}}))
+                            "timestamp": str(datetime.now()), "color": 11730944}}))
         except:
             pass
 

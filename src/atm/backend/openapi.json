@@ -671,6 +671,61 @@
                 }
             }
         },
+        "/atm/member/point": {
+            "post": {
+                "summary": "Add Member Points",
+                "tags": ["member", "manage"],
+                "operationId": "addMemberPoints",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "userid": {
+                                        "description": "User ID",
+                                        "type": "integer"
+                                    },
+                                    "mile": {
+                                        "description": "Miles",
+                                        "type": "string"
+                                    },
+                                    "eventpnt": {
+                                        "description": "Event points",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["userid", "mile", "eventpnt"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/member/roles": {
             "get": {
                 "summary": "Get All Roles",
@@ -1060,7 +1115,7 @@
                 }
             },
             "patch": {
-                "summary": "Update Application",
+                "summary": "Add Message to Application",
                 "tags": ["application"],
                 "operationId": "updateApplication_atm_application_patch",
                 "security": [{
@@ -1077,13 +1132,13 @@
                                         "description": "Application ID",
                                         "type": "integar"
                                     },
-                                    "data": {
-                                        "description": "Application Data (json string)",
+                                    "message": {
+                                        "description": "Message",
                                         "type": "string"
                                     }
                                 }
                             },
-                            "required": ["applicationid", "data"]
+                            "required": ["applicationid", "message"]
                         }
                     }
                 },
@@ -1131,10 +1186,14 @@
                                     "status": {
                                         "description": "Application Status (Pending 0| Accepted 1 | Declined 2)",
                                         "type": "integar"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "integar"
                                     }
                                 }
                             },
-                            "required": ["applicationid", "status"]
+                            "required": ["applicationid", "status", "message"]
                         }
                     }
                 },

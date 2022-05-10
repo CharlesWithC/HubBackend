@@ -674,10 +674,13 @@
               "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
               d.steamid + "'>" + d.steamid + "</a></p>";
             info += "<br><p style='text-align:left'><b>Join:</b> " + getDateTime(d.join * 1000) + "</p>";
-            info += "<p style='text-align:left'><b>Distance Driven:</b> " + d.distance + "km</p>";
-            info += "<p style='text-align:left'><b>Revenue Earned:</b> $" + d.revenue + "</p>";
-            info += "<p style='text-align:left'><b>Fuel Consumed:</b> " + d.fuel + "L</p>";
+            info += "<p style='text-align:left'><b>Total Jobs:</b> " + d.totjobs + "</p>";
+            info += "<p style='text-align:left'><b>Distance Driven:</b> " + parseInt(d.distance / 1.6) + "Mi</p>";
+            info += "<p style='text-align:left'><b>Fuel Consumed:</b> " + parseInt(d.fuel) + "L</p>";
             info += "<p style='text-align:left'><b>XP Earned:</b> " + d.xp + "</p>";
+            info += "<p style='text-align:left'><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
+            info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt) +
+              "</p>";
 
           }
           Swal.fire({
@@ -795,7 +798,51 @@
       });
     }
 
+    function updateMemberPoints() {
+      userid = $("#memberpntid").val();
+      if (!isNumber(userid)) {
+        toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
+        return;
+      }
+      miles = $("#memberpntmile").val();
+      eventpnt = $("#memberpntevent").val();
+      $("#updateMemberPointsBtn").html("Working...");
+      $("#updateMemberPointsBtn").attr("disabled", "disabled");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/point",
+        type: "POST",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          "userid": userid,
+          "mile": miles,
+          "eventpnt": eventpnt
+        },
+        success: function (data) {
+          $("#updateMemberPointsBtn").html("Update");
+          $("#updateMemberPointsBtn").removeAttr("disabled");
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          info = "";
+          if (!data.error) {
+            return toastFactory("success", "Success!", "Member points updated!", 5000, false);
+          }
+        },
+        error: function (data) {
+          $("#updateMemberPointsBtn").html("Update");
+          $("#updateMemberPointsBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
     dismissid = 0;
+
     function dismissUser() {
       userid = $("#dismissUserID").val();
       if ($("#dismissbtn").html() != "Confirm?" || dismissid != userid) {
@@ -811,7 +858,7 @@
           success: function (data) {
             $("#dismissbtn").html("Dismiss");
             $("#dismissbtn").removeAttr("disabled");
-              $("#memberdismissname").html("");
+            $("#memberdismissname").html("");
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             info = "";
             if (!data.error) {
@@ -819,7 +866,7 @@
               d = data.response;
               roles = d.roles;
               rtxt = "";
-              $("#memberdismissname").html("Dismiss <b>"+d.name+"</b>?");
+              $("#memberdismissname").html("Dismiss <b>" + d.name + "</b>?");
               $("#dismissbtn").html("Confirm?");
               dismissid = userid;
             }
@@ -1011,6 +1058,7 @@
         success: function (data) {
           if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
             false);
+          loadUsers();
           toastFactory("success", "Success", "User banned successfully.", 5000, false);
         },
         error: function (data) {
@@ -1115,6 +1163,47 @@
           console.log(data);
         }
       })
+    }
+
+    function addAppMessage() {
+      appid = $("#appmsgid").val();
+      if (!isNumber(appid)) {
+        toastFactory("error", "Error:", "Please enter a valid application ID.", 5000, false);
+        return;
+      }
+      message = $("#appmsgcontent").val();
+      $("#addAppMessageBtn").html("Adding...");
+      $("#addAppMessageBtn").attr("disabled", "disabled");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/application",
+        type: "PATCH",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          "applicationid": appid,
+          "message": message
+        },
+        success: function (data) {
+          $("#addAppMessageBtn").html("Add");
+          $("#addAppMessageBtn").removeAttr("disabled");
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          info = "";
+          if (!data.error) {
+            return toastFactory("success", "Success!", "Message added!", 5000, false);
+          }
+        },
+        error: function (data) {
+          $("#addAppMessageBtn").html("Add");
+          $("#addAppMessageBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
     }
 
     function loadAllApp() {
@@ -1237,7 +1326,7 @@
               }
               Swal.fire({
                 title: apptype + ' Application #' + applicationid,
-                html: info + ret,
+                html: info + ret.replaceAll("\n", "<br>"),
                 icon: 'info',
                 confirmButtonText: 'Close'
               })
@@ -1267,6 +1356,7 @@
       $("#updateAppStatusBtn").html("Updating...");
       appid = $("#appstatusid").val();
       appstatus = parseInt($("#appstatussel").find(":selected").val());
+      message = $("#appmessage").val();
       $.ajax({
         url: "https://drivershub.charlws.com/atm/application/status",
         type: "POST",
@@ -1276,7 +1366,8 @@
         },
         data: {
           "applicationid": appid,
-          "status": appstatus
+          "status": appstatus,
+          "message": message
         },
         success: function (data) {
           $("#updateAppStatusBtn").removeAttr("disabled");
@@ -1290,7 +1381,43 @@
         },
         error: function (data) {
           $("#updateAppStatusBtn").removeAttr("disabled");
-          $("#updateAppStatusBtn").html("Update");
+          $("#updateAppStat usBtn").html("Update");
+          toastFactory("error", "Error:", "Please check the console for more info.",
+            5000,
+            false);
+          console.warn(
+            `Failed to load applications. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function updateStaffPosition() {
+      $("#updateStaffPositionBtn").attr("disabled", true);
+      $("#updateStaffPositionBtn").html("Updating...");
+      positions = $("#staffposedit").val().replaceAll("\n", ",");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/application/positions",
+        type: "POST",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          "positions": positions
+        },
+        success: function (data) {
+          $("#updateStaffPositionBtn").removeAttr("disabled");
+          $("#updateStaffPositionBtn").html("Update");
+          if (data.error) return toastFactory("error", "Error:", data.descriptor,
+            5000, false);
+          else {
+            return toastFactory("success", "Success!", data.response.message, 5000, false);
+          }
+        },
+        error: function (data) {
+          $("#updateStaffPositionBtn").removeAttr("disabled");
+          $("#updateStaffPositionBtn").html("Update");
           toastFactory("error", "Error:", "Please check the console for more info.",
             5000,
             false);
@@ -1368,6 +1495,20 @@
             banner = genBanner(TYPES[a.atype], a.title, content);
             $("#anns").append(banner);
           }
+        }
+      });
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/application/positions",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          positions = data.response;
+          positionstxt = "";
+          for(var i = 0 ; i < positions.length ; i++){
+            positionstxt += positions[i] + "\n";
+            $("#sa-select").append("<option>" + positions[i] + "</option>");
+          }
+          $("#staffposedit").val(positionstxt);
         }
       });
       $("#annloadmore").click(function () {
@@ -1625,6 +1766,12 @@
                 </div>
               </div>
 
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Message</label>
+                <textarea id="appmessage"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></textarea></div>
+
               <button type="button"
                 class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
                 onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
@@ -1664,12 +1811,58 @@
                 onclick="loadAllApp()" id="updateAppStatusBtn">Show</button></div>
           </div>
         </div>
+        <br>
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
+              <textarea id="staffposedit"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder=""></textarea></div>
+
+            <button type="button" id="updateStaffPositionBtn"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+          </div>
+        </div>
     </div>
 
     </section>
 
     <section id="AllUsers" class="py-8 tabs" style="display: none;">
       <div style="padding:50px;padding-top:0;">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Pending Users</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <table class="table-auto w-full">
+              <thead id="usersTableHead">
+                <tr class="text-xs text-gray-500 text-left">
+                  <th class="pb-3 font-medium">Discord ID</th>
+                  <th class="pb-3 font-medium">Name</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable">
+                <tr class="text-xs bg-gray-50">
+                  <td class="py-5 px-6 font-medium">Nothing found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="pupages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadUsers()">Show</button></div>
+        </div>
+        <br>
         <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold">Add User to Member List</h3>
@@ -1709,35 +1902,6 @@
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="unbanUser()">Unban</button>
           </div>
-        </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Pending Users</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <table class="table-auto w-full">
-              <thead id="usersTableHead">
-                <tr class="text-xs text-gray-500 text-left">
-                  <th class="pb-3 font-medium">Discord ID</th>
-                  <th class="pb-3 font-medium">Name</th>
-                </tr>
-              </thead>
-              <tbody id="usersTable">
-                <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">Nothing found</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="mb-6" style="float:right">
-            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-            <input id="pupages" style="width:50px;display:inline"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
-            <button type="button"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="loadUsers()">Show</button></div>
         </div>
     </section>
 
@@ -1866,6 +2030,35 @@
 
     <section id="AllMembers" class="py-8 tabs" style="display:none">
       <div style="padding:50px;padding-top:0;">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Members</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <table class="table-auto w-full">
+              <thead id="membersTableHead">
+                <tr class="text-xs text-gray-500 text-left">
+                  <th class="pb-3 font-medium">User ID</th>
+                  <th class="pb-3 font-medium">Name</th>
+                </tr>
+              </thead>
+              <tbody id="membersTable">
+                <tr class="text-xs bg-gray-50">
+                  <td class="py-5 px-6 font-medium">Nothing found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="mpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMembers()">Show</button></div>
+        </div>
+        <br>
         <div id="AllMemberStaff" style="display:none">
           <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
             <div class="flex px-6 pb-4 border-b">
@@ -1898,6 +2091,38 @@
           <br>
           <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
             <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold">Update member points</h3>
+            </div>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <div class="mb-6">
+                <p>Negative numbers work, they deduct the points.</p>
+                <br>
+                <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
+                <input id="memberpntid" style="width:200px;display:inline"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></input>
+              </div>
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
+                <input id="memberpntmile" style="width:200px;display:inline"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></input>
+              </div>
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
+                <input id="memberpntevent" style="width:200px;display:inline"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></input>
+              </div>
+
+              <button type="button" id="updateMemberPointsBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="updateMemberPoints()">Update</button>
+            </div>
+          </div>
+          <br>
+          <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
               <h3 class="text-xl font-bold">Dismiss</h3>
             </div>
             <div class="p-4 overflow-x-auto" style="display: block;">
@@ -1919,39 +2144,33 @@
             </div>
           </div>
         </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Members</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <table class="table-auto w-full">
-              <thead id="membersTableHead">
-                <tr class="text-xs text-gray-500 text-left">
-                  <th class="pb-3 font-medium">User ID</th>
-                  <th class="pb-3 font-medium">Name</th>
-                </tr>
-              </thead>
-              <tbody id="membersTable">
-                <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">Nothing found</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="mb-6" style="float:right">
-            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-            <input id="mpages" style="width:50px;display:inline"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
-            <button type="button"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="loadMembers()">Show</button></div>
-        </div>
     </section>
 
     <section id="MyApp" class="py-8 tabs" style="display:none">
       <div style="padding:50px; padding-top:0;">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Add Message to Application</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+              <input id="appmsgid" style="width:200px"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="Integar ID"></input>
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Message Content</label>
+              <textarea id="appmsgcontent"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder=""></textarea></div>
+
+            <button type="button" id="addAppMessageBtn"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="addAppMessage()">Add</button>
+          </div>
+        </div>
+        <br>
         <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold">My Applications</h3>
@@ -2092,11 +2311,6 @@
                   <select id="sa-select"
                     class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
                     name="field-name">
-                    <option>Media Team (VTC Member)</option>
-                    <option>Events Staff (VTC Member)</option>
-                    <option>Convoy Control (External Position)</option>
-                    <option>Community Moderator (External Position)</option>
-                    <option>Development Staff (Internal and External Position)</option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">

@@ -29,6 +29,7 @@ async def dlogList(page: int, speedlimit: Optional[int] = 0):
         destination_company = data["data"]["object"]["destination_company"]["name"]
         cargo = data["data"]["object"]["cargo"]["name"]
         cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        distance = data["data"]["object"]["driven_distance"]/1.6
 
         name = "Unknown Driver"
         cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
@@ -36,7 +37,7 @@ async def dlogList(page: int, speedlimit: Optional[int] = 0):
         if len(p) > 0:
             name = p[0][0]
 
-        ret.append({"logid": tt[3], "userid": tt[0], "name": name, "source_city": source_city, "source_company": source_company, "destination_city": destination_city, "destination_company": destination_company, "cargo": cargo, "cargo_mass": cargo_mass, "timestamp": tt[2]})
+        ret.append({"logid": tt[3], "userid": tt[0], "name": name, "distance": distance, "source_city": source_city, "source_company": source_company, "destination_city": destination_city, "destination_company": destination_company, "cargo": cargo, "cargo_mass": cargo_mass, "timestamp": tt[2]})
 
     return {"error": False, "response": ret}
 
