@@ -405,7 +405,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
         p = cur.fetchall()
         if len(p) == 0:
-            cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0)")
+            cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0, 0, {int(time.time())})")
             conn.commit()
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
     

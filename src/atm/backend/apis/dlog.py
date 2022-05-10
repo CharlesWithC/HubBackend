@@ -11,6 +11,65 @@ from app import app, config
 from db import newconn
 from functions import *
 
+@app.get("/atm/dlog/stats")
+async def dlotStats():
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT COUNT(*) FROM driver")
+    drivers = cur.fetchone()[0]
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE joints >= {int(time.time())-86400}")
+    newdrivers = cur.fetchone()[0]
+
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1")
+    jobs = cur.fetchone()[0]
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1 AND timestamp >= {int(time.time())-86400}")
+    newjobs = cur.fetchone()[0]
+
+    # euro profit
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1")
+    europrofit = cur.fetchone()[0]
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp >= {int(time.time())-86400}")
+    neweuroprofit = cur.fetchone()[0]
+    
+    # dollar profit
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2")
+    dollarprofit = cur.fetchone()[0]
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp >= {int(time.time())-86400}")
+    newdollarprofit = cur.fetchone()[0]
+
+    if europrofit is None:
+        europrofit = 0
+    if dollarprofit is None:
+        dollarprofit = 0
+    if neweuroprofit is None:
+        neweuroprofit = 0
+    if newdollarprofit is None:
+        newdollarprofit = 0
+
+    cur.execute(f"SELECT SUM(fuel) FROM dlog")
+    fuel = cur.fetchone()[0]
+    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
+    newfuel = cur.fetchone()[0]
+    if fuel is None:
+        fuel = 0
+    if newfuel is None:
+        newfuel = 0
+
+    cur.execute(f"SELECT SUM(distance) FROM dlog")
+    distance = cur.fetchone()[0]
+    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
+    newdistance = cur.fetchone()[0]
+    if distance is None:
+        distance = 0
+    if newdistance is None:
+        newdistance = 0
+
+    return {"error": False, "response": {"drivers": drivers, "newdrivers": newdrivers, \
+        "jobs": jobs, "newjobs": newjobs, "europrofit": europrofit, "dollarprofit": dollarprofit, \
+        "neweuroprofit": neweuroprofit, "newdollarprofit": newdollarprofit, \
+            "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
+
 @app.get("/atm/dlog/list")
 async def dlogList(page: int, speedlimit: Optional[int] = 0):
     conn = newconn()

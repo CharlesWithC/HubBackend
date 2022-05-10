@@ -1504,11 +1504,45 @@
         success: function (data) {
           positions = data.response;
           positionstxt = "";
-          for(var i = 0 ; i < positions.length ; i++){
+          for (var i = 0; i < positions.length; i++) {
             positionstxt += positions[i] + "\n";
             $("#sa-select").append("<option>" + positions[i] + "</option>");
           }
           $("#staffposedit").val(positionstxt);
+        }
+      });
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          d = data.response;
+          drivers = sigfig(parseInt(d.drivers));
+          newdrivers = sigfig(parseInt(d.newdrivers));
+          drivers = drivers.split(".")[0];
+          newdrivers = newdrivers.split(".")[0];
+          jobs = sigfig(parseInt(d.jobs));
+          newjobs = sigfig(parseInt(d.newjobs));
+          jobs = jobs.split(".")[0];
+          newjobs = newjobs.split(".")[0];
+          distance = sigfig(d.distance/1.6) + "Mi";
+          newdistance = sigfig(d.newdistance/1.6) + "Mi";
+          europrofit = "€" + sigfig(d.europrofit);
+          neweuroprofit = "€" + sigfig(d.neweuroprofit);
+          dollarprofit = "$" + sigfig(d.dollarprofit);
+          newdollarprofit = "$" + sigfig(d.newdollarprofit);
+          fuel = sigfig(d.fuel) + "L";
+          newfuel = sigfig(d.newfuel) + "L";
+          $("#alldriver").html(drivers);
+          $("#newdriver").html(newdrivers);
+          $("#alldistance").html(distance);
+          $("#newdistance").html(newdistance);
+          $("#alljob").html(jobs);
+          $("#newjob").html(newjobs);
+          $("#allprofit").html(europrofit + " + " + dollarprofit);
+          $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
+          $("#allfuel").html(fuel);
+          $("#newfuel").html(newfuel);
         }
       });
       $("#annloadmore").click(function () {
@@ -1620,6 +1654,24 @@
                       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg> </span>
                   <span>Members</span>
+                  <span class="inline-block ml-auto">
+                    <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                      xmlns="http://www.w3.org/2000/svg"></svg></span>
+                </a>
+              </li>
+
+              <li>
+                <a id="DeliveryBtn"
+                  class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                  style="cursor: pointer" onclick="ShowTab('#Delivery', '#DeliveryBtn')">
+                  <span class="inline-block mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                      class="bi bi-truck" viewBox="0 0 16 16">
+                      <path
+                        d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
+                        ></path>
+                    </svg> </span>
+                  <span>Deliveries</span>
                   <span class="inline-block ml-auto">
                     <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
                       xmlns="http://www.w3.org/2000/svg"></svg></span>
@@ -1791,7 +1843,7 @@
                     <th class="pb-3 font-medium">Type</th>
                     <th class="pb-3 font-medium">Submitted At</th>
                     <th class="pb-3 font-medium">Status</th>
-                    <th class="pb-3 font-medium">Closed At</th>
+                    <th class="pb-3 font-medium">Last Staff Reply</th>
                   </tr>
                 </thead>
                 <tbody id="allappTable">
@@ -1810,22 +1862,22 @@
                 class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
                 onclick="loadAllApp()" id="updateAppStatusBtn">Show</button></div>
           </div>
-        </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
-              <textarea id="staffposedit"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></textarea></div>
+          <br>
+          <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+            <div class="flex px-6 pb-4 border-b">
+              <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
+            </div>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
+                <textarea id="staffposedit"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></textarea></div>
 
-            <button type="button" id="updateStaffPositionBtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+              <button type="button" id="updateStaffPositionBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+            </div>
           </div>
         </div>
     </div>
@@ -1906,6 +1958,136 @@
     </section>
 
     <section id="HomeTab" class="py-8 tabs mx-auto lg:ml-80">
+      <div class="px-4 mx-auto">
+        <div class="flex flex-wrap -m-4">
+          <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg"
+                    class="icon icon-tabler icon-tabler-steering-wheel" width="18" height="18" viewBox="0 0 24 24"
+                    stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="2" />
+                    <line x1="12" y1="14" x2="12" y2="21" />
+                    <line x1="10" y1="12" x2="3.25" y2="10" />
+                    <line x1="14" y1="12" x2="20.75" y2="10" /> </svg> </span>
+                <h3 class="text-sm text-gray-600">Drivers</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="alldriver">-</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                  <svg width="18" height="10" viewbox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.5 5.83333C16.3906 5.83339 16.2822 5.81188 16.181 5.77002C16.0799 5.72817 15.988 5.66678 15.9106 5.58939C15.8332 5.512 15.7719 5.42011 15.73 5.31897C15.6881 5.21784 15.6666 5.10945 15.6667 5V2.84505L10.4225 8.08916C10.3452 8.16656 10.2533 8.22796 10.1522 8.26985C10.0511 8.31175 9.94277 8.33331 9.83333 8.33331C9.7239 8.33331 9.61554 8.31175 9.51445 8.26985C9.41335 8.22796 9.3215 8.16656 9.24414 8.08916L6.50002 5.34505L2.08919 9.75583C1.93245 9.90975 1.72127 9.99555 1.50159 9.99456C1.28191 9.99356 1.07151 9.90586 0.91617 9.75052C0.760831 9.59518 0.673123 9.38478 0.672128 9.1651C0.671133 8.94542 0.756932 8.73424 0.910858 8.5775L5.91086 3.5775C5.98822 3.5001 6.08007 3.4387 6.18116 3.39681C6.28226 3.35492 6.39062 3.33335 6.50005 3.33335C6.60948 3.33335 6.71784 3.35492 6.81893 3.39681C6.92003 3.4387 7.01188 3.5001 7.08924 3.5775L9.83336 6.32161L14.4883 1.66666H12.3334C12.1123 1.66666 11.9004 1.57887 11.7441 1.42259C11.5878 1.2663 11.5 1.05434 11.5 0.833329C11.5 0.612315 11.5878 0.400352 11.7441 0.244073C11.9004 0.0877924 12.1123 -4.76837e-06 12.3334 -4.76837e-06H16.5C16.6095 -6.67572e-05 16.7179 0.0214453 16.819 0.063302C16.9201 0.105159 17.012 0.166539 17.0894 0.243935C17.1668 0.321329 17.2282 0.413218 17.2701 0.514352C17.3119 0.615484 17.3334 0.723876 17.3334 0.833329V5C17.3334 5.10945 17.3119 5.21784 17.2701 5.31897C17.2282 5.42011 17.1668 5.512 17.0894 5.58939C17.012 5.66678 16.9201 5.72817 16.819 5.77002C16.7179 5.81188 16.6095 5.83339 16.5 5.83333Z"
+                      fill="#17BB84"></path>
+                  </svg></span><span><span id="newdriver"></span></span></span>
+            </div>
+          </div>
+          <!-- <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    class="bi bi-activity" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                      d="M6 2a.5.5 0 0 1 .47.33L10 12.036l1.53-4.208A.5.5 0 0 1 12 7.5h3.5a.5.5 0 0 1 0 1h-3.15l-1.88 5.17a.5.5 0 0 1-.94 0L6 3.964 4.47 8.171A.5.5 0 0 1 4 8.5H.5a.5.5 0 0 1 0-1h3.15l1.88-5.17A.5.5 0 0 1 6 2Z"
+                      fill="#382CDD"></path>
+                  </svg> </span>
+                <h3 class="text-sm text-gray-600">Live</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">Now</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="livedriver">Coming soon!</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2"></span></span>
+            </div>
+          </div> -->
+          <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                    <path
+                      d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
+                      fill="blue"></path>
+                  </svg></span>
+                <h3 class="text-sm text-gray-600">Jobs</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="alljob">-</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                  <svg width="18" height="10" viewbox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.5 5.83333C16.3906 5.83339 16.2822 5.81188 16.181 5.77002C16.0799 5.72817 15.988 5.66678 15.9106 5.58939C15.8332 5.512 15.7719 5.42011 15.73 5.31897C15.6881 5.21784 15.6666 5.10945 15.6667 5V2.84505L10.4225 8.08916C10.3452 8.16656 10.2533 8.22796 10.1522 8.26985C10.0511 8.31175 9.94277 8.33331 9.83333 8.33331C9.7239 8.33331 9.61554 8.31175 9.51445 8.26985C9.41335 8.22796 9.3215 8.16656 9.24414 8.08916L6.50002 5.34505L2.08919 9.75583C1.93245 9.90975 1.72127 9.99555 1.50159 9.99456C1.28191 9.99356 1.07151 9.90586 0.91617 9.75052C0.760831 9.59518 0.673123 9.38478 0.672128 9.1651C0.671133 8.94542 0.756932 8.73424 0.910858 8.5775L5.91086 3.5775C5.98822 3.5001 6.08007 3.4387 6.18116 3.39681C6.28226 3.35492 6.39062 3.33335 6.50005 3.33335C6.60948 3.33335 6.71784 3.35492 6.81893 3.39681C6.92003 3.4387 7.01188 3.5001 7.08924 3.5775L9.83336 6.32161L14.4883 1.66666H12.3334C12.1123 1.66666 11.9004 1.57887 11.7441 1.42259C11.5878 1.2663 11.5 1.05434 11.5 0.833329C11.5 0.612315 11.5878 0.400352 11.7441 0.244073C11.9004 0.0877924 12.1123 -4.76837e-06 12.3334 -4.76837e-06H16.5C16.6095 -6.67572e-05 16.7179 0.0214453 16.819 0.063302C16.9201 0.105159 17.012 0.166539 17.0894 0.243935C17.1668 0.321329 17.2282 0.413218 17.2701 0.514352C17.3119 0.615484 17.3334 0.723876 17.3334 0.833329V5C17.3334 5.10945 17.3119 5.21784 17.2701 5.31897C17.2282 5.42011 17.1668 5.512 17.0894 5.58939C17.012 5.66678 16.9201 5.72817 16.819 5.77002C16.7179 5.81188 16.6095 5.83339 16.5 5.83333Z"
+                      fill="#17BB84"></path>
+                  </svg></span><span><span id="newjob"></span></span></span>
+            </div>
+          </div>
+          <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="feather feather-map-pin">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                </span>
+                <h3 class="text-sm text-gray-600">Distance</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="alldistance">-</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                  <svg width="18" height="10" viewbox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.5 5.83333C16.3906 5.83339 16.2822 5.81188 16.181 5.77002C16.0799 5.72817 15.988 5.66678 15.9106 5.58939C15.8332 5.512 15.7719 5.42011 15.73 5.31897C15.6881 5.21784 15.6666 5.10945 15.6667 5V2.84505L10.4225 8.08916C10.3452 8.16656 10.2533 8.22796 10.1522 8.26985C10.0511 8.31175 9.94277 8.33331 9.83333 8.33331C9.7239 8.33331 9.61554 8.31175 9.51445 8.26985C9.41335 8.22796 9.3215 8.16656 9.24414 8.08916L6.50002 5.34505L2.08919 9.75583C1.93245 9.90975 1.72127 9.99555 1.50159 9.99456C1.28191 9.99356 1.07151 9.90586 0.91617 9.75052C0.760831 9.59518 0.673123 9.38478 0.672128 9.1651C0.671133 8.94542 0.756932 8.73424 0.910858 8.5775L5.91086 3.5775C5.98822 3.5001 6.08007 3.4387 6.18116 3.39681C6.28226 3.35492 6.39062 3.33335 6.50005 3.33335C6.60948 3.33335 6.71784 3.35492 6.81893 3.39681C6.92003 3.4387 7.01188 3.5001 7.08924 3.5775L9.83336 6.32161L14.4883 1.66666H12.3334C12.1123 1.66666 11.9004 1.57887 11.7441 1.42259C11.5878 1.2663 11.5 1.05434 11.5 0.833329C11.5 0.612315 11.5878 0.400352 11.7441 0.244073C11.9004 0.0877924 12.1123 -4.76837e-06 12.3334 -4.76837e-06H16.5C16.6095 -6.67572e-05 16.7179 0.0214453 16.819 0.063302C16.9201 0.105159 17.012 0.166539 17.0894 0.243935C17.1668 0.321329 17.2282 0.413218 17.2701 0.514352C17.3119 0.615484 17.3334 0.723876 17.3334 0.833329V5C17.3334 5.10945 17.3119 5.21784 17.2701 5.31897C17.2282 5.42011 17.1668 5.512 17.0894 5.58939C17.012 5.66678 16.9201 5.72817 16.819 5.77002C16.7179 5.81188 16.6095 5.83339 16.5 5.83333Z"
+                      fill="#17BB84"></path>
+                  </svg></span><span><span id="newdistance"></span></span></span>
+            </div>
+          </div>
+          <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    fill="currentColor" class="bi bi-coin" viewBox="0 0 16 16">
+                    <path
+                      d="M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9H5.5zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518l.087.02z" />
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                    <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12z" />
+                  </svg> </span>
+                <h3 class="text-sm text-gray-600">Profit</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="allprofit">-</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                  <svg width="18" height="10" viewbox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.5 5.83333C16.3906 5.83339 16.2822 5.81188 16.181 5.77002C16.0799 5.72817 15.988 5.66678 15.9106 5.58939C15.8332 5.512 15.7719 5.42011 15.73 5.31897C15.6881 5.21784 15.6666 5.10945 15.6667 5V2.84505L10.4225 8.08916C10.3452 8.16656 10.2533 8.22796 10.1522 8.26985C10.0511 8.31175 9.94277 8.33331 9.83333 8.33331C9.7239 8.33331 9.61554 8.31175 9.51445 8.26985C9.41335 8.22796 9.3215 8.16656 9.24414 8.08916L6.50002 5.34505L2.08919 9.75583C1.93245 9.90975 1.72127 9.99555 1.50159 9.99456C1.28191 9.99356 1.07151 9.90586 0.91617 9.75052C0.760831 9.59518 0.673123 9.38478 0.672128 9.1651C0.671133 8.94542 0.756932 8.73424 0.910858 8.5775L5.91086 3.5775C5.98822 3.5001 6.08007 3.4387 6.18116 3.39681C6.28226 3.35492 6.39062 3.33335 6.50005 3.33335C6.60948 3.33335 6.71784 3.35492 6.81893 3.39681C6.92003 3.4387 7.01188 3.5001 7.08924 3.5775L9.83336 6.32161L14.4883 1.66666H12.3334C12.1123 1.66666 11.9004 1.57887 11.7441 1.42259C11.5878 1.2663 11.5 1.05434 11.5 0.833329C11.5 0.612315 11.5878 0.400352 11.7441 0.244073C11.9004 0.0877924 12.1123 -4.76837e-06 12.3334 -4.76837e-06H16.5C16.6095 -6.67572e-05 16.7179 0.0214453 16.819 0.063302C16.9201 0.105159 17.012 0.166539 17.0894 0.243935C17.1668 0.321329 17.2282 0.413218 17.2701 0.514352C17.3119 0.615484 17.3334 0.723876 17.3334 0.833329V5C17.3334 5.10945 17.3119 5.21784 17.2701 5.31897C17.2282 5.42011 17.1668 5.512 17.0894 5.58939C17.012 5.66678 16.9201 5.72817 16.819 5.77002C16.7179 5.81188 16.6095 5.83339 16.5 5.83333Z"
+                      fill="#17BB84"></path>
+                  </svg></span><span><span id="newprofit"></span></span></span>
+            </div>
+          </div>
+          <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="p-6 rounded bg-white">
+              <div class="flex mb-2"><span class="inline-block mr-2">
+                  <svg style="color: #382CDD" version="1.1" id="fuel" xmlns="http://www.w3.org/2000/svg" width="15"
+                    height="15" viewBox="0 0 18 18">
+                    <path
+                      d="M13,6L13,6v5.5c0,0.2761-0.2239,0.5-0.5,0.5S12,11.7761,12,11.5v-2C12,8.6716,11.3284,8,10.5,8H9V2c0-0.5523-0.4477-1-1-1H2 C1.4477,1,1,1.4477,1,2v11c0,0.5523,0.4477,1,1,1h6c0.5523,0,1-0.4477,1-1V9h1.5C10.7761,9,11,9.2239,11,9.5v2 c0,0.8284,0.6716,1.5,1.5,1.5s1.5-0.6716,1.5-1.5V5c0-0.5523-0.4477-1-1-1l0,0V2.49C12.9946,2.2178,12.7723,1.9999,12.5,2 c-0.2816,0.0047-0.5062,0.2367-0.5015,0.5184C11.9987,2.5289,11.9992,2.5395,12,2.55V5C12,5.5523,12.4477,6,13,6s1-0.4477,1-1 s-0.4477-1-1-1 M8,6.5C8,6.7761,7.7761,7,7.5,7h-5C2.2239,7,2,6.7761,2,6.5v-3C2,3.2239,2.2239,3,2.5,3h5C7.7761,3,8,3.2239,8,3.5 V6.5z"
+                      fill="#382CDD"></path>
+                  </svg> </span>
+                <h3 class="text-sm text-gray-600">Fuel</h3><span
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+              </div>
+              <h2 class="mb-2 text-3xl font-bold" id="allfuel">-</h2>
+              <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                  <svg width="18" height="10" viewbox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.5 5.83333C16.3906 5.83339 16.2822 5.81188 16.181 5.77002C16.0799 5.72817 15.988 5.66678 15.9106 5.58939C15.8332 5.512 15.7719 5.42011 15.73 5.31897C15.6881 5.21784 15.6666 5.10945 15.6667 5V2.84505L10.4225 8.08916C10.3452 8.16656 10.2533 8.22796 10.1522 8.26985C10.0511 8.31175 9.94277 8.33331 9.83333 8.33331C9.7239 8.33331 9.61554 8.31175 9.51445 8.26985C9.41335 8.22796 9.3215 8.16656 9.24414 8.08916L6.50002 5.34505L2.08919 9.75583C1.93245 9.90975 1.72127 9.99555 1.50159 9.99456C1.28191 9.99356 1.07151 9.90586 0.91617 9.75052C0.760831 9.59518 0.673123 9.38478 0.672128 9.1651C0.671133 8.94542 0.756932 8.73424 0.910858 8.5775L5.91086 3.5775C5.98822 3.5001 6.08007 3.4387 6.18116 3.39681C6.28226 3.35492 6.39062 3.33335 6.50005 3.33335C6.60948 3.33335 6.71784 3.35492 6.81893 3.39681C6.92003 3.4387 7.01188 3.5001 7.08924 3.5775L9.83336 6.32161L14.4883 1.66666H12.3334C12.1123 1.66666 11.9004 1.57887 11.7441 1.42259C11.5878 1.2663 11.5 1.05434 11.5 0.833329C11.5 0.612315 11.5878 0.400352 11.7441 0.244073C11.9004 0.0877924 12.1123 -4.76837e-06 12.3334 -4.76837e-06H16.5C16.6095 -6.67572e-05 16.7179 0.0214453 16.819 0.063302C16.9201 0.105159 17.012 0.166539 17.0894 0.243935C17.1668 0.321329 17.2282 0.413218 17.2701 0.514352C17.3119 0.615484 17.3334 0.723876 17.3334 0.833329V5C17.3334 5.10945 17.3119 5.21784 17.2701 5.31897C17.2282 5.42011 17.1668 5.512 17.0894 5.58939C17.012 5.66678 16.9201 5.72817 16.819 5.77002C16.7179 5.81188 16.6095 5.83339 16.5 5.83333Z"
+                      fill="#17BB84"></path>
+                  </svg></span><span><span id="newfuel"></span></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="py-8 px-6">
         <div class="p-6 bg-gray-50 border-l-4 border-2 border-indigo-500 rounded-r-lg">
           <div class="flex">
@@ -1925,7 +2107,7 @@
               <div class="pr-6">
                 <p class="text-sm text-indigo-700">We are excited to release the beta version of At The Mile Logistics
                   Drivers Hub. And we are still adding new features.
-                  <br>If you met an issue, please report it in our Discord Community.</p>
+                  <br>If you met an issue, please open a technical ticket in our Discord Community.</p>
               </div>
             </div>
           </div>
@@ -2184,7 +2366,7 @@
                   <th class="pb-3 font-medium">Type</th>
                   <th class="pb-3 font-medium">Submitted At</th>
                   <th class="pb-3 font-medium">Status</th>
-                  <th class="pb-3 font-medium">Closed At</th>
+                  <th class="pb-3 font-medium">Last Staff Reply</th>
                 </tr>
               </thead>
               <tbody id="myappTable">

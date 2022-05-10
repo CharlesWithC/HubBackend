@@ -48,13 +48,21 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         return {"error": True, "descriptor": "User not found."}
     userid = t[0][0]
     username = t[0][1]
-    driven_distance = d["data"]["object"]["driven_distance"]
+    driven_distance = float(d["data"]["object"]["driven_distance"])
     fuel_used = d["data"]["object"]["fuel_used"]
+    game = d["data"]["object"]["game"]["short_name"]
+    munitint = 1 # euro
+    if not game.startswith("e"):
+        munitint = 2 # dollar
+    revenue = 0
     xp = 0
+    isdelivered = 0
     if e == "job.delivered":
+        revenue = d["data"]["object"]["events"][-1]["meta"]["revenue"]
+        isdelivered = 1
         xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
         if driven_distance < 0:
-            driven_distance = d["data"]["object"]["events"][-1]["meta"]["distance"]
+            driven_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"]
@@ -66,7 +74,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
     conn.commit()
 
-    cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{b64e(json.dumps(d))}', {top_speed}, {int(time.time())})")
+    cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{b64e(json.dumps(d))}', {top_speed}, {int(time.time())}, \
+        {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance})")
     conn.commit()
 
     try:
@@ -78,12 +87,10 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         cargo_mass = d["data"]["object"]["cargo"]["mass"]
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/942178734025371758/messages"
-        game = d["data"]["object"]["game"]["short_name"]
         munit = "€"
         if not game.startswith("e"):
             munit = "$"
         if e == "job.delivered":
-            revenue = d["data"]["object"]["events"][-1]["meta"]["revenue"]
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
                     "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
