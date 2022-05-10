@@ -27,15 +27,15 @@ async def dlotStats():
     newjobs = cur.fetchone()[0]
 
     # euro profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1")
     europrofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1 AND timestamp >= {int(time.time())-86400}")
     neweuroprofit = cur.fetchone()[0]
     
     # dollar profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2")
     dollarprofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2 AND timestamp >= {int(time.time())-86400}")
     newdollarprofit = cur.fetchone()[0]
 
     if europrofit is None:

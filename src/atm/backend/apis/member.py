@@ -47,11 +47,18 @@ async def memberList(page:int, request: Request, response: Response, authorizati
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 30}, 30")
+    cur.execute(f"SELECT userid, name, discordid, roles FROM user WHERE userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 30}, 30")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}"})
+        roles = tt[3].split(",")
+        while "" in roles:
+            roles.remove("")
+        highestrole = 99999
+        for role in roles:
+            if int(role) < highestrole:
+                highestrole = int(role)
+        ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}", "highestrole": highestrole})
     
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
     t = cur.fetchall()

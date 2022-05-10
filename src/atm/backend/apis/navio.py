@@ -62,6 +62,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         isdelivered = 1
         xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
         driven_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
+    else:
+        revenue = -float(d["data"]["object"]["events"][-1]["meta"]["penalty"])
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"]

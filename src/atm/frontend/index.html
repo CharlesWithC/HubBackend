@@ -639,8 +639,10 @@
             unittxt = "€";
             if (delivery.unit == 2) unittxt = "$";
             profit = TSeparator(delivery.profit);
+            color = "black";
+            if(delivery.profit < 0) color = "grey";
             $("#deliveryTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs bg-gray-50" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
               <td class="font-medium">${delivery.name}</td>
               <td class="font-medium">${delivery.source_company}, ${delivery.source_city}</td>
@@ -661,7 +663,7 @@
       })
     }
 
-    function deliveryDetail(logid){
+    function deliveryDetail(logid) {
       $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
       $("#DeliveryInfoBtn" + logid).html("Loading...");
       $.ajax({
@@ -680,9 +682,9 @@
             userid = d.userid;
             name = d.name;
             d = d.data;
-            if(d.type == "job.delivered"){
+            if (d.type == "job.delivered") {
               d = d.data.object;
-              planned_distance = TSeparator(parseInt(d.planned_distance/1.6)) + "Mi";
+              planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
               fuel_used_org = d.fuel_used;
               fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
               cargo = d.cargo.name;
@@ -693,23 +695,24 @@
               destination_city = d.destination_city.name;
               truck = d.truck.brand.name + " " + d.truck.name;
               license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
-              top_speed = parseInt(d.truck.top_speed/1.6);
+              top_speed = parseInt(d.truck.top_speed / 1.6);
               trailer = "";
               trs = "";
-              if(d.trailers.length > 1) trs = "s";
-              for(var i = 0; i < d.trailers.length ; i++){
-                trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i].license_plate + " | ";
+              if (d.trailers.length > 1) trs = "s";
+              for (var i = 0; i < d.trailers.length; i++) {
+                trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
+                  .license_plate + " | ";
               }
               punit = "€";
-              if(!d.game.short_name.startsWith("e")) punit = "$";
-              meta = d.events[d.events.length-1].meta;
+              if (!d.game.short_name.startsWith("e")) punit = "$";
+              meta = d.events[d.events.length - 1].meta;
               revenue = TSeparator(meta.revenue);
               earned_xp = meta.earned_xp;
               cargo_damage = meta.cargo_damage;
-              distance = meta.distance;
+              distance = TSeparator(parseInt(meta.distance / 1.6)) + "Mi";
               auto_park = meta.auto_park;
               auto_load = meta.auto_load;
-              avg_fuel = TSeparator(parseInt(fuel_used_org / (distance/1.6) * 100));
+              avg_fuel = TSeparator(parseInt(fuel_used_org / (distance / 1.6) * 100));
 
               info = "<div style='text-align:left'><p><b>From</b>: " + source_city + "</p>";
               info += "<p><b>To</b>: " + destination_city + "</p>";
@@ -721,36 +724,91 @@
               info += "<p><b>Driven Distance</b>: " + distance + "</p>";
               info += "<p><b>Profit</b>: " + revenue + " " + punit + "</p>";
               info += "<p><b>XP</b>: " + earned_xp + "</p>";
-              info += "<p><b>Damage</b>: " + cargo_damage + "%</p>";
+              info += "<p><b>Damage</b>: " + parseInt(cargo_damage * 100) + "%</p>";
               info += "<p><b>Truck</b>: " + truck + "</p>";
               info += "<p><b>Truck's License Plate</b>: " + license_plate + "</p>";
-              info += "<p><b>Trailer's License Plate"+trs+"</b>: " + trailer.slice(0, -3) + "</p>";
+              info += "<p><b>Trailer's License Plate" + trs + "</b>: " + trailer.slice(0, -3) + "</p>";
               info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
               info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
               info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
               extra = "";
-              if(auto_park) extra += "Auto Park | ";
-              if(auto_load) extra += "Auto Load | ";
-              if(extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+              if (auto_park) extra += "Auto Park | ";
+              if (auto_load) extra += "Auto Load | ";
+              if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+              Swal.fire({
+                title: "Delivery Log #" + logid,
+                html: info,
+                icon: 'info',
+                confirmButtonText: 'Close'
+              })
+            } else if (d.type == "job.cancelled") {
+              d = d.data.object;
+              planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
+              fuel_used_org = d.fuel_used;
+              fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
+              driven_distance = TSeparator(parseInt(d.driven_distance / 1.6)) + "Mi";
+              driven_distance_org = d.driven_distance;
+              cargo = d.cargo.name;
+              cargo_damage = d.cargo.damage * 100;
+              cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
+              source_company = d.source_company.name;
+              source_city = d.source_city.name;
+              destination_company = d.destination_company.name;
+              destination_city = d.destination_city.name;
+              truck = d.truck.brand.name + " " + d.truck.name;
+              license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
+              top_speed = parseInt(d.truck.top_speed / 1.6);
+              trailer = "";
+              trs = "";
+              if (d.trailers.length > 1) trs = "s";
+              for (var i = 0; i < d.trailers.length; i++) {
+                trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
+                  .license_plate + " | ";
+              }
+              punit = "€";
+              if (!d.game.short_name.startsWith("e")) punit = "$";
+              meta = d.events[d.events.length - 1].meta;
+              penalty = TSeparator(meta.penalty);
+              avg_fuel = TSeparator(parseInt(fuel_used_org / (driven_distance_org / 1.6) * 100));
+
+              info = "<div style='text-align:left'><p><b>From</b>: " + source_city + "</p>";
+              info += "<p><b>To</b>: " + destination_city + "</p>";
+              info += "<p><b>Cargo</b>: " + cargo + "</p>";
+              info += "<p><b>Weight</b>: " + cargo_mass + "</p>";
+              info += "<p><b>Initial Company</b>: " + source_company + "</p>";
+              info += "<p><b>Target Company</b>: " + destination_company + "</p>";
+              info += "<p><b>Planned Distance</b>: " + planned_distance + "</p>";
+              info += "<p><b>Driven Distance</b>: " + driven_distance + "</p>";
+              info += "<p><b>Penalty</b>: " + penalty + " " + punit + "</p>";
+              info += "<p><b>Damage</b>: " + parseInt(cargo_damage) + "%</p>";
+              info += "<p><b>Truck</b>: " + truck + "</p>";
+              info += "<p><b>Truck's License Plate</b>: " + license_plate + "</p>";
+              info += "<p><b>Trailer's License Plate" + trs + "</b>: " + trailer.slice(0, -3) + "</p>";
+              info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
+              info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
+              info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
+              extra = "";
+              if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+              Swal.fire({
+                title: "Job Cancelled #" + logid,
+                html: info,
+                icon: 'error',
+                confirmButtonText: 'Close'
+              })
             }
 
           }
-          Swal.fire({
-            title: "Delivery Log #" + logid,
-            html: info,
-            icon: 'info',
-            confirmButtonText: 'Close'
-          })
-          $("#DeliveryInfoBtn" + userid).removeAttr("disabled");
-          $("#DeliveryInfoBtn" + userid).html("Show Details");
+          $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
+          $("#DeliveryInfoBtn" + logid).html("Show Details");
         },
         error: function (data) {
-          $("#DeliveryInfoBtn" + userid).removeAttr("disabled");
-          $("#DeliveryInfoBtn" + userid).html("Show Details");
+          $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
+          $("#DeliveryInfoBtn" + logid).html("Show Details");
           toastFactory("error", "Error:", "Please check the console for more info.", 5000,
             false);
           console.warn(
-            `Failed to load delivery log details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            `Failed to load delivery log details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`
+          );
           console.log(data);
         }
       });
@@ -790,10 +848,18 @@
             //    <td class="font-medium">name here</td>
             //  </tr>
             //
+            highestrole = user.highestrole;
+            color = "blue"; // Member
+            if (highestrole < 100) color = "#ff0000"; // Staff
+            if (highestrole <= 9) color = "#770202"; // Leadership
+            if (highestrole > 100) color = "grey"; // External
+            highestrole = rolelist[highestrole];
+            if (highestrole == undefined) highestrole = "/";
             $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${user.userid}</td>
-              <td class="font-medium">${user.name}</td>
+              <td class="font-medium" style="color:${color}">${user.name}</td>
+              <td class="font-medium" style="color:${color}">${highestrole}</td>
               <td class="font-medium"><a style="cursor:pointer;color:grey" id="MemberInfoBtn${user.userid}" onclick="memberDetail('${user.userid}')">Show Details</td>
             </tr>`)
           }
@@ -1324,12 +1390,16 @@
             }
             status = STATUS[application.status];
 
+            color = "blue";
+            if (application.status == 1) color = "green";
+            if (application.status == 2) color = "red";
+
             $("#myappTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="font-medium">${apptype}</td>
               <td class="font-medium">${creation}</td>
-              <td class="font-medium">${status}</td>
+              <td class="font-medium" style="color:${color}">${status}</td>
               <td class="font-medium">${closedat}</td>
               <td class="font-medium"><a style="cursor:pointer;color:grey" id="MyAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
             </tr>`);
@@ -1436,13 +1506,17 @@
             }
             status = STATUS[application.status];
 
+            color = "blue";
+            if (application.status == 1) color = "green";
+            if (application.status == 2) color = "red";
+
             $("#allappTable").append(`
             <tr class="text-xs bg-gray-50" id="AllApp${application.applicationid}">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="py-5 px-6 font-medium">${application.discordid}</td>
               <td class="font-medium">${apptype}</td>
               <td class="font-medium">${creation}</td>
-              <td class="font-medium">${status}</td>
+              <td class="font-medium" style="color:${color}">${status}</td>
               <td class="font-medium">${closedat}</td>
               <td class="font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
             </tr>`);
@@ -2201,7 +2275,7 @@
                       d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
                       fill="blue"></path>
                   </svg></span>
-                <h3 class="text-sm text-gray-600">Jobs</h3><span
+                <h3 class="text-sm text-gray-600">Delivered</h3><span
                   class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
               </div>
               <h2 class="mb-2 text-3xl font-bold" id="alljob">-</h2>
@@ -2414,6 +2488,7 @@
                 <tr class="text-xs text-gray-500 text-left">
                   <th class="pb-3 font-medium">User ID</th>
                   <th class="pb-3 font-medium">Name</th>
+                  <th class="pb-3 font-medium">Highest Role</th>
                 </tr>
               </thead>
               <tbody id="membersTable">
@@ -2535,7 +2610,7 @@
                   <th class="pb-3 font-medium">Driver</th>
                   <th class="pb-3 font-medium">From</th>
                   <th class="pb-3 font-medium">To</th>
-                  <th class="pb-3 font-medium">Distance</th>
+                  <th class="pb-3 font-medium">Driven Distance</th>
                   <th class="pb-3 font-medium">Cargo</th>
                   <th class="pb-3 font-medium">Profit</th>
                 </tr>
