@@ -60,6 +60,9 @@
       if (tabname == "#AllMembers") {
         loadMembers();
       }
+      if (tabname == "#Delivery") {
+        loadDelivery();
+      }
     }
 
     function NewAnn() {
@@ -592,6 +595,167 @@
       });
     }
 
+    function loadDelivery() {
+      page = $("#dpages").val();
+      if (page == "") page = 1;
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page,
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          $("#deliveryTable").empty();
+          const deliveries = data.response.list;
+
+          if (deliveries.length == 0) {
+            $("#deliveryTableHead").hide();
+            $("#deliveryTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            return;
+          }
+          $("#deliveryTableHead").show();
+          $("#dtotpages").html(Math.ceil(data.response.tot / 30));
+          for (i = 0; i < deliveries.length; i++) {
+            const delivery = deliveries[i];
+            // Fill the table using this format: 
+            // <tr class="text-xs bg-gray-50">
+            //  <td class="py-5 px-6 font-medium">id here</td>
+            //    <td class="font-medium">name here</td>
+            //  </tr>
+            //
+            distance = TSeparator(parseInt(delivery.distance / 1.6));
+            cargo_mass = parseInt(delivery.cargo_mass / 1000);
+            unittxt = "€";
+            if (delivery.unit == 2) unittxt = "$";
+            profit = TSeparator(delivery.profit);
+            $("#deliveryTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">${delivery.logid}</td>
+              <td class="font-medium">${delivery.name}</td>
+              <td class="font-medium">${delivery.source_company}, ${delivery.source_city}</td>
+              <td class="font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
+              <td class="font-medium">${distance}Mi</td>
+              <td class="font-medium">${delivery.cargo} (${cargo_mass}t)</td>
+              <td class="font-medium">${unittxt}${profit}</td>
+              <td class="font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>
+            </tr>`);
+          }
+        },
+        error: function (data) {
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+          console.warn(
+            `Failed to load delivery log. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function deliveryDetail(logid){
+      $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
+      $("#DeliveryInfoBtn" + logid).html("Loading...");
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
+            false);
+          info = "";
+          if (!data.error) {
+            d = data.response;
+            userid = d.userid;
+            name = d.name;
+            d = d.data;
+            if(d.type == "job.delivered"){
+              d = d.data.object;
+              planned_distance = TSeparator(parseInt(d.planned_distance/1.6)) + "Mi";
+              fuel_used_org = d.fuel_used;
+              fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
+              cargo = d.cargo.name;
+              cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
+              source_company = d.source_company.name;
+              source_city = d.source_city.name;
+              destination_company = d.destination_company.name;
+              destination_city = d.destination_city.name;
+              truck = d.truck.brand.name + " " + d.truck.name;
+              license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
+              top_speed = parseInt(d.truck.top_speed/1.6);
+              trailer = "";
+              trs = "";
+              if(d.trailers.length > 1) trs = "s";
+              for(var i = 0; i < d.trailers.length ; i++){
+                trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i].license_plate + " | ";
+              }
+              punit = "€";
+              if(!d.game.short_name.startsWith("e")) punit = "$";
+              meta = d.events[d.events.length-1].meta;
+              revenue = TSeparator(meta.revenue);
+              earned_xp = meta.earned_xp;
+              cargo_damage = meta.cargo_damage;
+              distance = meta.distance;
+              auto_park = meta.auto_park;
+              auto_load = meta.auto_load;
+              avg_fuel = TSeparator(parseInt(fuel_used_org / (distance/1.6) * 100));
+
+              info = "<div style='text-align:left'><p><b>From</b>: " + source_city + "</p>";
+              info += "<p><b>To</b>: " + destination_city + "</p>";
+              info += "<p><b>Cargo</b>: " + cargo + "</p>";
+              info += "<p><b>Weight</b>: " + cargo_mass + "</p>";
+              info += "<p><b>Initial Company</b>: " + source_company + "</p>";
+              info += "<p><b>Target Company</b>: " + destination_company + "</p>";
+              info += "<p><b>Planned Distance</b>: " + planned_distance + "</p>";
+              info += "<p><b>Driven Distance</b>: " + distance + "</p>";
+              info += "<p><b>Profit</b>: " + revenue + " " + punit + "</p>";
+              info += "<p><b>XP</b>: " + earned_xp + "</p>";
+              info += "<p><b>Damage</b>: " + cargo_damage + "%</p>";
+              info += "<p><b>Truck</b>: " + truck + "</p>";
+              info += "<p><b>Truck's License Plate</b>: " + license_plate + "</p>";
+              info += "<p><b>Trailer's License Plate"+trs+"</b>: " + trailer.slice(0, -3) + "</p>";
+              info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
+              info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
+              info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
+              extra = "";
+              if(auto_park) extra += "Auto Park | ";
+              if(auto_load) extra += "Auto Load | ";
+              if(extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+            }
+
+          }
+          Swal.fire({
+            title: "Delivery Log #" + logid,
+            html: info,
+            icon: 'info',
+            confirmButtonText: 'Close'
+          })
+          $("#DeliveryInfoBtn" + userid).removeAttr("disabled");
+          $("#DeliveryInfoBtn" + userid).html("Show Details");
+        },
+        error: function (data) {
+          $("#DeliveryInfoBtn" + userid).removeAttr("disabled");
+          $("#DeliveryInfoBtn" + userid).html("Show Details");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+            false);
+          console.warn(
+            `Failed to load delivery log details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      });
+    }
+
     function loadMembers() {
       page = $("#mpages").val();
       if (page == "") page = 1;
@@ -612,9 +776,12 @@
             $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
           }
+          $("#membersTableHead").show();
+          $("#mtotpages").html(Math.ceil(data.response.tot / 30));
           for (i = 0; i < users.length; i++) {
             const user = users[i];
             // Fill the table using this format: 
@@ -623,7 +790,6 @@
             //    <td class="font-medium">name here</td>
             //  </tr>
             //
-            $("#mtotpages").html(Math.ceil(data.response.tot / 30));
             $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${user.userid}</td>
@@ -693,6 +859,8 @@
           $("#MemberInfoBtn" + userid).html("Show Details");
         },
         error: function (data) {
+          $("#MemberInfoBtn" + userid).removeAttr("disabled");
+          $("#MemberInfoBtn" + userid).html("Show Details");
           toastFactory("error", "Error:", "Please check the console for more info.", 5000,
             false);
           console.warn(
@@ -806,6 +974,12 @@
       }
       miles = $("#memberpntmile").val();
       eventpnt = $("#memberpntevent").val();
+      if (!isNumber(miles)) {
+        miles = 0;
+      }
+      if (!isNumber(eventpnt)) {
+        eventpnt = 0;
+      }
       $("#updateMemberPointsBtn").html("Working...");
       $("#updateMemberPointsBtn").attr("disabled", "disabled");
       $.ajax({
@@ -933,9 +1107,12 @@
             $("#usersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
           }
+          $("#usersTableHead").show();
+          $("#putotpages").html(Math.ceil(data.response.tot / 30));
           for (i = 0; i < users.length; i++) {
             const user = users[i];
             // Fill the table using this format: 
@@ -944,7 +1121,6 @@
             //    <td class="font-medium">name here</td>
             //  </tr>
             //
-            $("#putotpages").html(Math.ceil(data.response.tot / 30));
             $("#usersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${user.discordid}</td>
@@ -1122,6 +1298,10 @@
             $("#myappTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
           }
@@ -1230,6 +1410,11 @@
             $("#allappTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
           }
@@ -1508,6 +1693,7 @@
             positionstxt += positions[i] + "\n";
             $("#sa-select").append("<option>" + positions[i] + "</option>");
           }
+          positionstxt = positionstxt.slice(0, -1);
           $("#staffposedit").val(positionstxt);
         }
       });
@@ -1525,8 +1711,8 @@
           newjobs = sigfig(parseInt(d.newjobs));
           jobs = jobs.split(".")[0];
           newjobs = newjobs.split(".")[0];
-          distance = sigfig(d.distance/1.6) + "Mi";
-          newdistance = sigfig(d.newdistance/1.6) + "Mi";
+          distance = sigfig(d.distance / 1.6) + "Mi";
+          newdistance = sigfig(d.newdistance / 1.6) + "Mi";
           europrofit = "€" + sigfig(d.europrofit);
           neweuroprofit = "€" + sigfig(d.neweuroprofit);
           dollarprofit = "$" + sigfig(d.dollarprofit);
@@ -1668,8 +1854,8 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                       class="bi bi-truck" viewBox="0 0 16 16">
                       <path
-                        d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
-                        ></path>
+                        d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z">
+                      </path>
                     </svg> </span>
                   <span>Deliveries</span>
                   <span class="inline-block ml-auto">
@@ -1849,6 +2035,11 @@
                 <tbody id="allappTable">
                   <tr class="text-xs bg-gray-50">
                     <td class="py-5 px-6 font-medium">Nothing found</td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
                   </tr>
                 </tbody>
               </table>
@@ -1901,6 +2092,7 @@
               <tbody id="usersTable">
                 <tr class="text-xs bg-gray-50">
                   <td class="py-5 px-6 font-medium">Nothing found</td>
+                  <td class="py-5 px-6 font-medium"></td>
                 </tr>
               </tbody>
             </table>
@@ -2227,6 +2419,7 @@
               <tbody id="membersTable">
                 <tr class="text-xs bg-gray-50">
                   <td class="py-5 px-6 font-medium">Nothing found</td>
+                  <td class="py-5 px-6 font-medium"></td>
                 </tr>
               </tbody>
             </table>
@@ -2328,6 +2521,51 @@
         </div>
     </section>
 
+    <section id="Delivery" class="py-8 tabs" style="display:none">
+      <div style="padding:50px;padding-top:0;">
+        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+          <div class="flex px-6 pb-4 border-b">
+            <h3 class="text-xl font-bold">Delivery Log</h3>
+          </div>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <table class="table-auto w-full">
+              <thead id="deliveryTableHead">
+                <tr class="text-xs text-gray-500 text-left">
+                  <th class="pb-3 font-medium">Log ID</th>
+                  <th class="pb-3 font-medium">Driver</th>
+                  <th class="pb-3 font-medium">From</th>
+                  <th class="pb-3 font-medium">To</th>
+                  <th class="pb-3 font-medium">Distance</th>
+                  <th class="pb-3 font-medium">Cargo</th>
+                  <th class="pb-3 font-medium">Profit</th>
+                </tr>
+              </thead>
+              <tbody id="deliveryTable">
+                <tr class="text-xs bg-gray-50">
+                  <td class="py-5 px-6 font-medium">Nothing found</td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-6" style="float:right">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="dpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadDelivery()">Show</button></div>
+        </div>
+      </div>
+    </section>
+
     <section id="MyApp" class="py-8 tabs" style="display:none">
       <div style="padding:50px; padding-top:0;">
         <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
@@ -2372,6 +2610,10 @@
               <tbody id="myappTable">
                 <tr class="text-xs bg-gray-50">
                   <td class="py-5 px-6 font-medium">Nothing found</td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
+                  <td class="py-5 px-6 font-medium"></td>
                 </tr>
               </tbody>
             </table>

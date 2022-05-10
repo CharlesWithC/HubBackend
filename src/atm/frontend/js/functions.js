@@ -178,3 +178,7 @@ function log10(num) {
   // Handles floating-point errors log10(1000) otherwise fails at (2.99999996)
   return (Math.round(Math.log(num) / Math.LN10 * 1e6) / 1e6);
 }
+
+function TSeparator(num){
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}

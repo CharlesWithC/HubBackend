@@ -496,4 +496,6 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
         cur.execute(f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     conn.commit()
 
+    await AuditLog(adminid, f"Updated open staff positions to: {positions}")
+
     return {"error": False, "response": {"message": "Application positions updated", "positions": positions}}

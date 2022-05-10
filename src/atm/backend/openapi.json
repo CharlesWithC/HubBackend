@@ -753,6 +753,33 @@
                 }
             }
         },
+        "/atm/dlog/stats": {
+            "get": {
+                "summary": "Get Company Statistics",
+                "tags": ["dlog"],
+                "operationId": "getDlogStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/dlog/list": {
             "get": {
                 "summary": "Get Delivery Log List",
