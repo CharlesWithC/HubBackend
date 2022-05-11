@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from discord_oauth2 import DiscordAuth
 from pysteamsignin.steamsignin import SteamSignIn
 from uuid import uuid4
-import json, time, requests
+import json, time, requests, validators
 
 from app import app, config
 from db import newconn
@@ -131,9 +131,21 @@ async def steamBind(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
@@ -178,9 +190,21 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     truckersmpid = form["truckersmpid"]

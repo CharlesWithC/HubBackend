@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
-import json, time, math
+import json, time, math, validators
 import requests
 from datetime import datetime
 

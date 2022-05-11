@@ -2,7 +2,7 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
-import json, time, math
+import json, time, math, validators
 from datetime import datetime
 import requests
 
@@ -33,9 +33,21 @@ async def getAnnouncement(page: int, request: Request, response: Response, autho
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -90,9 +102,21 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -178,9 +202,21 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -269,9 +305,21 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
-    if ip != request.client.host:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:

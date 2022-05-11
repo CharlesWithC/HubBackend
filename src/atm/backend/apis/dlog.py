@@ -2,7 +2,7 @@
 # Author: @Charles-1414
 
 from fastapi import FastAPI, Response, Request, Header
-import json, time, math
+import json, time, math, validators
 from typing import Optional
 from datetime import datetime
 import requests
