@@ -75,7 +75,7 @@
       aid = $("#annid").val();
 
       $("#fetchAnnouncementBtn").html("Working...");
-      $("#fetchAnnouncementBtn").prop("disabled", true);
+      $("#fetchAnnouncementBtn").attr("disabled", "disabled");
 
       $.ajax({
         url: "https://drivershub.charlws.com/atm/announcement?aid=" + aid,
@@ -120,7 +120,7 @@
       }
 
       $("#newAnnBtn").html("Working...");
-      $("#newAnnBtn").prop("disabled", true);
+      $("#newAnnBtn").attr("disabled", "disabled");
 
       op = "create";
       if (isNumber(annid)) {
@@ -309,7 +309,7 @@
       }
 
       $("#fetchEventBtn").html("Working...");
-      $("#fetchEventBtn").prop("disabled", true);
+      $("#fetchEventBtn").attr("disabled", "disabled");
 
       $.ajax({
         url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
@@ -319,6 +319,9 @@
           "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+          $("#fetchEventBtn").html("Fetch Data");
+          $("#fetchEventBtn").removeAttr("disabled");
+
           if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
 
           const event = data.response;
@@ -336,6 +339,8 @@
           $("#eventimgs").val(imgs);
         },
         error: function (data) {
+          $("#fetchEventBtn").html("Fetch Data");
+          $("#fetchEventBtn").removeAttr("disabled");
           toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
           console.warn(
             `Failed to fetch event. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
@@ -358,7 +363,7 @@
       img = $("#eventimgs").val().replaceAll("\n", ",");
 
       $("#newEventBtn").html("Working...");
-      $("#newEventBtn").prop("disabled", true);
+      $("#newEventBtn").attr("disabled", "disabled");
 
       op = "create";
       if (isNumber(eventid)) {
@@ -673,7 +678,7 @@
       $("#submitAppBttn").html("Submitting...");
 
       // Disable the submit button
-      $("#submitAppBttn").prop("disabled", true);
+      $("#submitAppBttn").attr("disabled", "disabled");
 
       $.ajax({
         url: "https://drivershub.charlws.com/atm/application",
