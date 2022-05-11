@@ -12,6 +12,10 @@
 		function DiscordLogin() {
 			location.href = 'https://drivershub.charlws.com/atm/user/login';
 		}
+		function GuestLogin(){
+			localStorage.setItem("token","guest");
+			location.href = '/';
+		}
 
 		function validate() {
 			token = localStorage.getItem("token");
@@ -53,13 +57,16 @@
 		</div>
 		<div class="formRight">
 			<!-- Login form -->
-			<form id="login">
+			<form id="login" style="margin-top:40px">
 				<header>
 					<h1>Welcome back</h1>
 					<p>Please login to access the Drivers Hub.</p>
 				</header>
 				<section>
 					<button type="button" onclick="DiscordLogin();">Login With Discord</button>
+				</section>
+				<section style="position:relative;float:right;margin-top:-30px">
+					<p style="font-size:15px;color:grey;text-align:right"><br><a style="cursor:pointer" onclick="GuestLogin();">Guest Login</a></p>
 				</section>
 			</form>
 		</div>

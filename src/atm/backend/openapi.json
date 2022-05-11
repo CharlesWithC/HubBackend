@@ -815,6 +815,9 @@
                 "summary": "Get Distance Leaderboard",
                 "tags": ["dlog"],
                 "operationId": "getDlogLeaderboard",
+                "security": [{
+                    "bearerAuth": []
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -842,6 +845,9 @@
                 "summary": "Get New Drivers",
                 "tags": ["dlog"],
                 "operationId": "getNewDrivers",
+                "security": [{
+                    "bearerAuth": []
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -869,6 +875,9 @@
                 "summary": "Get Delivery Log List",
                 "tags": ["dlog"],
                 "operationId": "getDlogList",
+                "security": [{
+                    "bearerAuth": []
+                }],
                 "parameters": [{
                     "required": true,
                     "schema": {
@@ -905,6 +914,9 @@
                 "summary": "Get Delivery Log Detail",
                 "tags": ["dlog"],
                 "operationId": "getDlogDetail",
+                "security": [{
+                    "bearerAuth": []
+                }],
                 "parameters": [{
                     "required": true,
                     "schema": {

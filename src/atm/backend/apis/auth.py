@@ -76,14 +76,12 @@ async def userValidate(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]

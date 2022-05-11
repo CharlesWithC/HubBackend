@@ -865,6 +865,16 @@
 
     function validate() {
       token = localStorage.getItem("token");
+      userid = localStorage.getItem("userid");
+      if (token == "guest") {
+        $("#header").prepend(
+          "<p style='color:orange'>Guest Mode - <a style='color:grey' href='/login'>Login</a></p>");
+        return;
+      }
+      if (userid != -1) {
+        $("#AllMemberBtn").show();
+      }
+      $("#recruitment").show();
       $.ajax({
         url: "https://drivershub.charlws.com/atm/user/validate",
         type: "GET",
@@ -873,18 +883,19 @@
           "Authorization": "Bearer " + token
         },
         success: function (data) {
-          if (data.error == false) {
-            if (data.response.extra != "") {
-              window.location.href = "/login";
-            }
-          } else {
+          if (data.error) {
             localStorage.removeItem("token");
             window.location.href = "/login";
           }
-        },
-        error: function (data) {
-          localStorage.removeItem("token");
-          window.location.href = "/login";
+          if (data.response.extra == "steamauth") {
+            $("#header").prepend(
+              "<p style='color:orange'>Steam not bound! You must bind it to become a member! <a style='color:grey' href='/auth?token=" +
+              token + "'>Click here to bind it</a></p>");
+          } else if (data.response.extra == "truckersmp") {
+            $("#header").prepend(
+              "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth?token=" +
+              token + "'>Click here to bind it</a></p>");
+          }
         }
       });
       $.ajax({
@@ -901,6 +912,9 @@
             localStorage.setItem("avatar", data.response.avatar);
             localStorage.setItem("discordid", data.response.discordid);
             localStorage.setItem("userid", data.response.userid);
+            if (data.response.userid != -1) {
+              $("#AllMemberBtn").show();
+            }
             roles = data.response.roles;
             highestrole = 99999;
             for (i = 0; i < roles.length; i++) {
@@ -971,7 +985,7 @@
             $("#deliveryTableHead").hide();
             $("#deliveryTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -998,6 +1012,11 @@
             profit = TSeparator(delivery.profit);
             color = "black";
             if (delivery.profit < 0) color = "grey";
+            dtl = "";
+            if (localStorage.getItem("token") != "guest") {
+              dtl =
+                `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
+            }
             $("#deliveryTable").append(`
             <tr class="text-xs bg-gray-50" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
@@ -1007,7 +1026,7 @@
               <td class="py-5 px-6 font-medium">${distance}Mi</td>
               <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
               <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>
+              ${dtl}
             </tr>`);
           }
         },
@@ -1197,7 +1216,7 @@
             $("#eventTableHead").hide();
             $("#eventTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -1216,7 +1235,7 @@
             dts = event.dts * 1000;
             now = +new Date();
             color = "black";
-            if (now >= mts - 1000 * 60 * 60) {
+            if (now >= mts - 1000 * 60 * 60 * 6) {
               color = "blue";
             }
             if (now >= mts && now <= dts + 1000 * 60 * 30) {
@@ -1292,7 +1311,7 @@
             $("#membersTableHead").hide();
             $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
@@ -1829,7 +1848,7 @@
             $("#usersTableHead").hide();
             $("#usersTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
             return;
@@ -2020,7 +2039,7 @@
             $("#myappTableHead").hide();
             $("#myappTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2136,7 +2155,7 @@
             $("#allappTableHead").hide();
             $("#allappTable").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">Nothing found</td>
+              <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2372,8 +2391,8 @@
       validate();
 
       setInterval(function () {
-        if ($("#HomeTab").width() / 3 <= 250) {
-          if ($("#HomeTab").width() / 2 <= 250) {
+        if ($("#HomeTab").width() / 3 <= 300) {
+          if ($("#HomeTab").width() / 2 <= 300) {
             $(".statscard").css("width", "100%");
           } else {
             $(".statscard").css("width", "50%");
@@ -2435,7 +2454,7 @@
               .content.replaceAll("\n", "<br>");
             TYPES = ["info", "info", "warning", "criticle", "resolved"];
             banner = genBanner(TYPES[a.atype], a.title, content);
-            $("#HomeTabLeft").append(banner.replaceAll("py-8 ",""));
+            $("#HomeTabLeft").append(banner.replaceAll("py-8 ", ""));
           }
           for (i = 0; i < ann.length; i++) {
             a = ann[i];
@@ -2655,7 +2674,7 @@
               </li>
 
               <li>
-                <a id="AllMemberBtn"
+                <a id="AllMemberBtn" style="display:none"
                   class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                   style="cursor: pointer" onclick="ShowTab('#AllMembers', '#AllMemberBtn')">
                   <span class="inline-block mr-3">
@@ -2709,7 +2728,7 @@
               </li>
             </ul>
           </div>
-          <div class="px-4 pb-6">
+          <div class="px-4 pb-6" id="recruitment" style="display:none">
             <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Recruitment Center</h3>
             <ul class="text-sm font-medium">
               <li>
@@ -2794,9 +2813,9 @@
       </div>
       <section class="py-5 px-6 bg-white shadow mx-auto lg:ml-80">
         <nav class="relative">
-          <div class="flex items-center">
+          <div class="flex items-center" id="header">
             <div class="hidden lg:block" style="margin-left:auto;margin-right:0">
-              <button class="flex" onclick="ShowTab('#ProfileTab', '#ProfileTabBtn')">
+              <div class="flex">
                 <a id="logout" style="cursor: pointer;margin-top:11px">
                   <span class="inline-block mr-4">
                     <svg class="text-gray-600 w-5 h-5" viewbox="0 0 14 18" fill="none"
@@ -2806,14 +2825,16 @@
                         fill="currentColor"></path>
                     </svg></span>
                 </a>
-                <div class="mr-3">
-                  <p id="name" class="text-sm" style="text-align:right">CharlesWithC</p>
-                  <p id="role" class="text-sm text-gray-500" style="text-align:right">Loner</p>
-                </div>
-                <div class="mr-2"><img id="avatar" class="w-10 h-10 rounded-full object-cover object-right" width="40"
-                    src="https://cdn.discordapp.com/avatars/873178118213472286/a_20ad49948c848062f8b5b538e78fa75c.gif"
-                    alt="" /></div>
-              </button>
+                <button class="flex" onclick="ShowTab('#ProfileTab', '#ProfileTabBtn')">
+                  <div class="mr-3">
+                    <p id="name" class="text-sm" style="text-align:right">CharlesWithC</p>
+                    <p id="role" class="text-sm text-gray-500" style="text-align:right">Guest</p>
+                  </div>
+                  <div class="mr-2"><img id="avatar" class="w-10 h-10 rounded-full object-cover object-right" width="40"
+                      src="https://cdn.discordapp.com/avatars/873178118213472286/a_20ad49948c848062f8b5b538e78fa75c.gif"
+                      alt="" /></div>
+                </button>
+              </div>
             </div>
           </div>
         </nav>
@@ -2878,7 +2899,7 @@
                 </thead>
                 <tbody id="allappTable">
                   <tr class="text-xs bg-gray-50">
-                    <td class="py-5 px-6 font-medium">Nothing found</td>
+                    <td class="py-5 px-6 font-medium">No Data</td>
                     <td class="py-5 px-6 font-medium"></td>
                     <td class="py-5 px-6 font-medium"></td>
                     <td class="py-5 px-6 font-medium"></td>
@@ -2935,7 +2956,7 @@
               </thead>
               <tbody id="usersTable">
                 <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">Nothing found</td>
+                  <td class="py-5 px-6 font-medium">No Data</td>
                   <td class="py-5 px-6 font-medium"></td>
                 </tr>
               </tbody>
@@ -3195,15 +3216,15 @@
             <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
               <h2><b>Leaderboard</b></h2>
               <table class="table-auto w-full" style="margin-top:20px">
-                <thead id="leaderboardHead">
+                <!-- <thead id="leaderboardHead">
                   <tr class="text-xs text-gray-500 text-left">
                     <th class="py-5 px-6 pb-3 font-medium">Name</th>
                     <th class="py-5 px-6 pb-3 font-medium">Points</th>
                   </tr>
-                </thead>
+                </thead> -->
                 <tbody id="leaderboard">
                   <tr class="text-xs bg-gray-50">
-                    <td class="py-5 px-6 font-medium">Nothing found</td>
+                    <td class="py-5 px-6 font-medium">No Data</td>
                     <td class="py-5 px-6 font-medium"></td>
                   </tr>
                 </tbody>
@@ -3215,7 +3236,7 @@
               <table class="table-auto w-full" style="margin-top:20px">
                 <tbody id="newdriverTable">
                   <tr class="text-xs bg-gray-50">
-                    <td class="py-5 px-6 font-medium">Nothing found</td>
+                    <td class="py-5 px-6 font-medium">No Data</td>
                   </tr>
                 </tbody>
               </table>
@@ -3342,7 +3363,7 @@
             </thead>
             <tbody id="membersTable">
               <tr class="text-xs bg-gray-50">
-                <td class="py-5 px-6 font-medium">Nothing found</td>
+                <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
               </tr>
@@ -3467,7 +3488,7 @@
             </thead>
             <tbody id="deliveryTable">
               <tr class="text-xs bg-gray-50">
-                <td class="py-5 px-6 font-medium">Nothing found</td>
+                <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -3512,7 +3533,7 @@
             </thead>
             <tbody id="eventTable">
               <tr class="text-xs bg-gray-50">
-                <td class="py-5 px-6 font-medium">Nothing found</td>
+                <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -3673,7 +3694,7 @@
             </thead>
             <tbody id="myappTable">
               <tr class="text-xs bg-gray-50">
-                <td class="py-5 px-6 font-medium">Nothing found</td>
+                <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
