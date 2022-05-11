@@ -338,8 +338,8 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     if userid == -1:
         return {"error": False, "descriptor": "Not a member"}
     steamid = t[0][1]
-    cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
-    cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+    cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
+    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
@@ -419,8 +419,8 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     if adminhighest >= highest:
         return {"error": True, "descriptor": "User position is higher than or equal to you"}
 
-    cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
-    cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+    cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
+    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
@@ -579,8 +579,8 @@ If you have issues about Drivers Hub, open a technical ticket at <#9297617310167
                         "timestamp": str(datetime.now()), "color": 11730944}}))
 
     if 100 in removedroles:
-        cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
-        cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+        cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
+        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
     
     audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"

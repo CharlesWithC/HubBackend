@@ -16,26 +16,26 @@ async def dlotStats():
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT COUNT(*) FROM driver")
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
     drivers = cur.fetchone()[0]
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE joints >= {int(time.time())-86400}")
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND joints >= {int(time.time())-86400}")
     newdrivers = cur.fetchone()[0]
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >=0 AND isdelivered = 1")
     jobs = cur.fetchone()[0]
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >=0 AND isdelivered = 1 AND timestamp >= {int(time.time())-86400}")
     newjobs = cur.fetchone()[0]
 
     # euro profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 1")
     europrofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 1 AND timestamp >= {int(time.time())-86400}")
     neweuroprofit = cur.fetchone()[0]
     
     # dollar profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 2")
     dollarprofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 2 AND timestamp >= {int(time.time())-86400}")
     newdollarprofit = cur.fetchone()[0]
 
     if europrofit is None:
@@ -47,18 +47,18 @@ async def dlotStats():
     if newdollarprofit is None:
         newdollarprofit = 0
 
-    cur.execute(f"SELECT SUM(fuel) FROM dlog")
+    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0")
     fuel = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0 AND timestamp >= {int(time.time())-86400}")
     newfuel = cur.fetchone()[0]
     if fuel is None:
         fuel = 0
     if newfuel is None:
         newfuel = 0
 
-    cur.execute(f"SELECT SUM(distance) FROM dlog")
+    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid >=0")
     distance = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid >=0 AND timestamp >= {int(time.time())-86400}")
     newdistance = cur.fetchone()[0]
     if distance is None:
         distance = 0
@@ -74,7 +74,7 @@ async def dlotStats():
 async def dlotLeaderboard():
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt FROM driver ORDER BY distance / 1.6 + eventpnt DESC LIMIT 20")
+    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt FROM driver WHERE userid >= 0 ORDER BY distance / 1.6 + eventpnt DESC LIMIT 20")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -89,7 +89,7 @@ async def dlotLeaderboard():
 async def dlotNewDriver():
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid, joints FROM driver ORDER BY joints DESC LIMIT 20")
+    cur.execute(f"SELECT userid, joints FROM driver WHERE userid >= 0 ORDER BY joints DESC LIMIT 20")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -107,9 +107,9 @@ async def dlogList(page: int, speedlimit: Optional[int] = 0):
     if page <= 0:
         page = 1
     if speedlimit == 0:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     else:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -148,7 +148,7 @@ async def dlogList(page: int, speedlimit: Optional[int] = 0):
 async def dlogDetail(logid: int):
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid, data, timestamp FROM dlog WHERE logid = {logid}")
+    cur.execute(f"SELECT userid, data, timestamp FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "response": "Log not found"}

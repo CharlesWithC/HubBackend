@@ -32,8 +32,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             return {"error": True, "descriptor": "User not found."}
         userid = t[0][0]
         await AuditLog(userid, "Member resigned from Navio")
-        cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
-        cur.execute(f"DELETE FROM dlog WHERE userid = {userid}")
+        cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
+        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         conn.commit()
         
