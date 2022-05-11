@@ -25,7 +25,7 @@ async def memberList(page:int, request: Request, response: Response, authorizati
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -99,7 +99,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]

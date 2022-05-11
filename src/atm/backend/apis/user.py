@@ -240,7 +240,7 @@ async def userInfo(request: Request, response: Response, authorization: str = He
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -318,7 +318,7 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]

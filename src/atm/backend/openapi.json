@@ -141,7 +141,7 @@
         },
         "/atm/user/apptoken": {
             "post": {
-                "summary": "Generate New App Token",
+                "summary": "Generate New Application Token",
                 "tags": ["user"],
                 "operationId": "userGenAppToken",
                 "security": [{

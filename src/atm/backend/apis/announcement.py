@@ -16,7 +16,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]

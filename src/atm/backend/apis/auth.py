@@ -285,4 +285,4 @@ async def userBot(request: Request, response: Response, authorization: str = Hea
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     cur.execute(f"INSERT INTO appsession VALUES ('{stoken}', {discordid}, {int(time.time())})")
     conn.commit()
-    return {"error": False, "response": {"message": "App token updated", "token": stoken}}
+    return {"error": False, "response": {"message": "Application token updated", "token": stoken}}
