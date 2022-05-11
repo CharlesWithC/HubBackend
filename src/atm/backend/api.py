@@ -14,6 +14,7 @@ import apis.announcement
 import apis.application
 import apis.auth
 import apis.dlog
+import apis.event
 import apis.member
 import apis.navio
 import apis.user

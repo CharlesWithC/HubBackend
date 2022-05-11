@@ -11,8 +11,8 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.get("/atm/announcement")
-async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
+@app.get("/atm/event")
+async def getEvent(request: Request, response: Response, authorization: str = Header(None), page: Optional[int] = 1, eventid: Optional[int] = -1):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -65,43 +65,41 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if userid == -1 or "10000" in roles: # external staff / not registered
         limit = "AND pvt = 0"
 
-    if aid != -1:
-        cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid = {aid} {limit}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            return {"error": True, "descriptor": "Announcement not found"}
-        tt = t[0]
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
-        n = cur.fetchall()
-        name = "Unknown User"
-        if len(n) > 0:
-            name = n[0][0]
-        return {"error": False, "response": {"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]}}
-
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
+    if eventid != -1:
+        cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title FROM event WHERE eventid = {eventid} {limit}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": "Event not found"}
+        tt = t[0]
+        return {"error": False, "response": {"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(",")}}
+
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
-        n = cur.fetchall()
-        name = "Unknown User"
-        if len(n) > 0:
-            name = n[0][0]
-        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
+        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(",")})
+
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
+    t = cur.fetchall()
+    for tt in t:
+        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(",")})
         
-    cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
+    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret[:10], "page": page, "tot": tot}}
 
-@app.post("/atm/announcement")
-async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+@app.post("/atm/event")
+async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -160,47 +158,35 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
-        return {"error": True, "descriptor": "Event staff can only post event announcements."}
+        return {"error": True, "descriptor": "Event staff can only create events."}
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
     t = cur.fetchall()
-    aid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {aid+1} WHERE skey = 'nxtannid'")
+    nxteventid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {nxteventid+1} WHERE skey = 'nxteventid'")
     conn.commit()
 
     form = await request.form()
     title = b64e(form["title"])
-    content = b64e(form["content"])
-    atype = int(form["atype"])
-    timestamp = int(time.time())
+    tmplink = b64e(form["tmplink"])
+    departure = b64e(form["departure"])
+    destination = b64e(form["destination"])
+    distance = b64e(form["distance"])
+    mts = int(form["mts"])
+    dts = int(form["dts"])
+    img = b64e(form["img"])
     pvt = 0
     if form["pvt"] == "true":
         pvt = 1
-    channelid = form["channelid"]
-    if not channelid.isdigit():
-        channleid = 0
 
-    cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp}, {pvt})")
-    await AuditLog(adminid, f"Created announcement #{aid}")
+    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{tmplink}', '{departure}', '{destination}', '{distance}', {mts}, {dts}, '{img}', {pvt}, '{title}')")
+    await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 
-    if channelid != 0:
-        try:
-            role = "<@&929761730089877634>"
-            if pvt == 1:
-                role = "<@&941548239776272454>"
-            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now()), "color": 11730944, "color": 11730944}}))
-        except:
-            pass
+    return {"error": False, "response": {"message": "Event created.", "eventid": nxteventid}}
 
-    return {"error": False, "response": {"message": "Announcement created.", "aid": aid}}
-
-@app.patch("/atm/announcement")
-async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+@app.patch("/atm/event")
+async def patchEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -260,47 +246,35 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
-    aid = int(form["aid"])
+    eventid = int(form["eventid"])
     title = b64e(form["title"])
-    content = b64e(form["content"])
-    atype = int(form["atype"])
+    tmplink = b64e(form["tmplink"])
+    departure = b64e(form["departure"])
+    destination = b64e(form["destination"])
+    distance = b64e(form["distance"])
+    mts = int(form["mts"])
+    dts = int(form["dts"])
+    img = b64e(form["img"])
     pvt = 0
     if form["pvt"] == "true":
         pvt = 1
-    channelid = form["channelid"]
-    if not channelid.isdigit():
-        channleid = 0
 
-    cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
+    cur.execute(f"SELECT userid FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Announcement not found!"}
+        return {"error": True, "descriptor": "Event not found!"}
     creator = t[0][0]
-    if creator != adminid and adminhighest >= 10:
-        return {"error": True, "descriptor": "Only announcement creator can edit it."}
     
-    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
-    await AuditLog(adminid, f"Updated announcement #{aid}")
+    cur.execute(f"UPDATE event SET title = '{title}', tmplink = '{tmplink}', departure = '{departure}', destination = '{destination}', \
+        distance = '{distance}', mts = {mts}, dts = {dts}, img = '{img}', pvt = {pvt} WHERE eventid = {eventid}")
+    await AuditLog(adminid, f"Updated event #{eventid}")
     conn.commit()
 
-    if channelid != 0:
-        try:
-            role = "<@&929761730089877634>"
-            if pvt == 1:
-                role = "<@&941548239776272454>"
-            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now()), "color": 11730944}}))
-        except:
-            pass
+    return {"error": False, "response": {"message": "Event updated.", "eventid": eventid}}
 
-    return {"error": False, "response": {"message": "Announcement updated.", "aid": aid}}
-
-@app.delete("/atm/announcement")
-async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
+@app.delete("/atm/event")
+async def deleteEvent(eventid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -358,17 +332,14 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT * FROM announcement WHERE aid = {aid}")
+    cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Announcement not found!"}
-    creator = t[0][0]
-    if creator != adminid and adminhighest >= 10: # creator or leadership
-        return {"error": True, "descriptor": "Only announcement creator can delete it."}
+        return {"error": True, "descriptor": "Event not found!"}
     
-    cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")
-    await AuditLog(adminid, f"Deleted announcement #{aid}")
+    cur.execute(f"UPDATE event SET eventid = -eventid WHERE eventid = {eventid}")
+    await AuditLog(adminid, f"Deleted event #{eventid}")
     conn.commit()
 
-    return {"error": False, "response": {"message": "Announcement deleted."}}
+    return {"error": False, "response": {"message": "Event deleted."}}

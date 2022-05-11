@@ -938,19 +938,27 @@
         },
         "/atm/announcement": {
             "get": {
-                "summary": "Get Announcement List",
+                "summary": "Get Announcement",
                 "tags": ["announcement"],
                 "operationId": "getAnnouncement",
                 "security": [{
                     "bearerAuth": []
                 }],
                 "parameters": [{
-                    "required": true,
+                    "required": false,
                     "schema": {
-                        "title": "Page",
+                        "title": "Page (for list)",
                         "type": "integer"
                     },
                     "name": "page",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Announcement ID (for specific announcement)",
+                        "type": "integer"
+                    },
+                    "name": "aid",
                     "in": "query"
                 }],
                 "responses": {
@@ -1114,6 +1122,248 @@
                         "type": "integer"
                     },
                     "name": "aid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/event": {
+            "get": {
+                "summary": "Get Event",
+                "tags": ["event"],
+                "operationId": "getEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page (for list)",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Event ID (for specific event)",
+                        "type": "integer"
+                    },
+                    "name": "eventid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Event",
+                "tags": ["event"],
+                "operationId": "postEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "tmplink": {
+                                        "description": "TruckersMP Event Link",
+                                        "type": "string"
+                                    },
+                                    "departure": {
+                                        "description": "Depature Location",
+                                        "type": "string"
+                                    },
+                                    "destination": {
+                                        "description": "Destination Location",
+                                        "type": "string"
+                                    },
+                                    "distance": {
+                                        "description": "Distance (Add units)",
+                                        "type": "string"
+                                    },
+                                    "mts": {
+                                        "description": "Meetup Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "dts": {
+                                        "description": "Departure Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "img": {
+                                        "description": "Image Link (e.g. route, slots) | Separate with ','",
+                                        "type": "string"
+                                    },
+                                    "pvt": {
+                                        "description": "Is Private?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": ["tmplink", "title", "departure", "destination", "distance", "mts", "dts", "img", "pvt"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update Event",
+                "tags": ["event"],
+                "operationId": "patchEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "eventid": {
+                                        "description": "Event ID",
+                                        "type": "integar"
+                                    },
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "tmplink": {
+                                        "description": "TruckersMP Event Link",
+                                        "type": "string"
+                                    },
+                                    "departure": {
+                                        "description": "Depature Location",
+                                        "type": "string"
+                                    },
+                                    "destination": {
+                                        "description": "Destination Location",
+                                        "type": "string"
+                                    },
+                                    "distance": {
+                                        "description": "Distance (Add units)",
+                                        "type": "string"
+                                    },
+                                    "mts": {
+                                        "description": "Meetup Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "dts": {
+                                        "description": "Departure Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "img": {
+                                        "description": "Image Link (e.g. route, slots) | Separate with ','",
+                                        "type": "string"
+                                    },
+                                    "pvt": {
+                                        "description": "Is Private?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": ["title", "tmplink", "departure", "destination", "distance", "mts", "dts", "img", "pvt"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Event",
+                "tags": ["event"],
+                "operationId": "delEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Event ID",
+                        "type": "integer"
+                    },
+                    "name": "eventid",
                     "in": "query"
                 }],
                 "responses": {
@@ -1524,6 +1774,9 @@
     },{
         "name": "announcement",
         "description": "Announcements"
+    },{
+        "name": "event",
+        "description": "Events"
     },{
         "name": "application",
         "description": "Applications"

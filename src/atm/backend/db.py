@@ -21,6 +21,9 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, nam
 cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
+    mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT)")
+# tmplink = '' -> private convoy | m/dts -> meetup/departure timestamp | img -> multiple link separated with ','
 # unit = 1: euro | 2: dollar
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
@@ -44,11 +47,13 @@ CREATE INDEX driver_userid ON driver (userid);
 CREATE INDEX dlog_logid ON dlog (logid);
 CREATE INDEX dlog_userid ON dlog (userid);
 CREATE INDEX dlog_topspeed ON dlog (topspeed);
+CREATE INDEX event_eventid ON event (eventid);
 
 INSERT INTO settings VALUES (0, 'nxtuserid', 0);
 INSERT INTO settings VALUES (0, 'nxtappid', 0);
 INSERT INTO settings VALUES (0, 'nxtannid', 0);
 INSERT INTO settings VALUES (0, 'nxtlogid', 0);
+INSERT INTO settings VALUES (0, 'nxteventid', 0);
 """
 del cur
 
