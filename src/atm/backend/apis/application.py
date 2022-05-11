@@ -27,12 +27,17 @@ async def newApplication(request: Request, response: Response, authorization: st
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     apptype = form["apptype"]
@@ -139,12 +144,17 @@ async def updateApplication(request: Request, response: Response, authorization:
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT name FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     name = t[0][0]
@@ -246,12 +256,17 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles,name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminid = t[0][0]
@@ -341,12 +356,17 @@ async def getApplication(request: Request, response: Response, applicationid: in
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
@@ -387,12 +407,17 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
@@ -465,12 +490,17 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminid = t[0][0]

@@ -5,6 +5,7 @@ from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
 import json, time, math
 import requests
+from discord import Webhook
 
 from app import app, config
 from db import newconn
@@ -31,12 +32,17 @@ async def memberList(page:int, request: Request, response: Response, authorizati
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -69,7 +75,7 @@ async def memberList(page:int, request: Request, response: Response, authorizati
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
     
 @app.get('/atm/member/info')
-async def member(response: Response, userid: int, authorization: str = Header(None)):
+async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -82,12 +88,17 @@ async def member(response: Response, userid: int, authorization: str = Header(No
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -161,12 +172,17 @@ async def addMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -243,12 +259,17 @@ async def deleteMember(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -282,12 +303,17 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -346,12 +372,17 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -372,7 +403,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    cur.execute(f"SELECT name, roles, steamid FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
@@ -380,6 +411,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     username = t[0][0]
     oldroles = t[0][1].split(",")
     steamid = t[0][2]
+    discordid = t[0][3]
     while "" in oldroles:
         oldroles.remove("")
     oldroles = [int(i) for i in oldroles]
@@ -415,19 +447,53 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0, 0, {int(time.time())})")
             conn.commit()
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
-    
+        
+        cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        userdiscordid = t[0][0]
+        usermention = f"<@{userdiscordid}>"
+
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url("https://discordapp.com/api/webhooks/938826735053594685/jKO8djrHZbzafVOb9ooQVNosHrcDP9Wu5WtA39MuLChW1NQiAnVXrwCyagL-tn3ruanA", session=session)
+            embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **At The Mile Logistics** as a **Driver**. Welcome to the family <:atmlove:931247295201149038>", color = 0x770202)
+            embed.set_footer(text = f"At The Mile | Team Update", icon_url = config.gicon)
+            embed.set_image(url = "https://images-ext-2.discordapp.net/external/15IxWrNDPD_4ThKYDuctEfFfccn_MYjXo-XzbWJUbEs/https/media.discordapp.net/attachments/931964061669801994/971510588960309298/Team_Update_2022.png")
+            embed.timestamp = datetime.now()
+            await webhook.send(content = usermention, embed=embed)
+        
         try:
-            cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
-            t = cur.fetchall()
-            userdiscordid = t[0][0]
-            role = f"<@{userdiscordid}>"
-            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/938604968573812786/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": "Team Update", "description": f"<@{userdiscordid}> has joined **At The Mile Logistics** as a **Driver**. Welcome to the family <:atmlove:931247295201149038>", 
-                    "footer": {"text": f"At The Mile | Team Update", "icon_url": config.gicon}, "image": {"url": "https://images-ext-2.discordapp.net/external/15IxWrNDPD_4ThKYDuctEfFfccn_MYjXo-XzbWJUbEs/https/media.discordapp.net/attachments/931964061669801994/971510588960309298/Team_Update_2022.png"},\
-                            "timestamp": str(datetime.now()), "color": 11730944}}))
+            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/929761730450567194', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
         except:
             pass
+        try:
+            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/942478809175830588', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+        except:
+            pass
+        try:
+            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548239776272454', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+        except:
+            pass
+        try:
+            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548241126834206', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+        except:
+            pass
+        
+        msg = f"""Welcome <@{userdiscordid}> to the family! Please make yourself at home and check around for what you will need.
+ 
+Please do not forget to register with us in [TruckersMP](https://truckersmp.com/vtc/49940) <:TMP:929962995109462086>
+
+Download our tracker **Navio** by [clicking here](https://navio.app/download)
+
+If you need any help please ask us in <#941554016087834644> or create a Human Resources Ticket in <#929761731016786030> 
+
+If you have issues about Drivers Hub, open a technical ticket at <#929761731016786030> """
+
+        
+        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
+        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
+                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://images-ext-1.discordapp.net/external/4Nc9EpkQFAk_ajceY5jMfGZ_nqIqy_ZACoSnBDxaUZk/%3Fwidth%3D1024%26height%3D391/https/media.discordapp.net/attachments/929761734036684842/966551723202199572/ATS_2.png"},\
+                        "timestamp": str(datetime.now()), "color": 11730944}}))
 
     if 100 in removedroles:
         cur.execute(f"DELETE FROM driver WHERE userid = {userid}")
@@ -463,12 +529,17 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:

@@ -24,12 +24,17 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -100,12 +105,17 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -154,12 +164,17 @@ async def userList(page:int, request: Request, response: Response, authorization
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -183,7 +198,7 @@ async def userList(page:int, request: Request, response: Response, authorization
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
 @app.get('/atm/user/info')
-async def userInfo(response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
+async def userInfo(request: Request, response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -196,12 +211,17 @@ async def userInfo(response: Response, authorization: str = Header(None), qdisco
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -247,12 +267,17 @@ async def updateUserBio(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     bio = form["bio"]

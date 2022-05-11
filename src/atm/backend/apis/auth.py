@@ -22,7 +22,7 @@ dhdomain = config.dhdomain
 discord_auth = DiscordAuth(client_id, client_secret, callback_url)
 
 @app.get('/atm/user/login', response_class=RedirectResponse)
-async def userLogin():
+async def userLogin(request: Request):
     # login_url = discord_auth.login()
     return RedirectResponse(url=oauth2_url, status_code=302)
     
@@ -67,7 +67,7 @@ async def userCallback(code: str, request: Request, response: Response):
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
 @app.get('/atm/user/validate')
-async def userValidate(response: Response, authorization: str = Header(None)):
+async def userValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -99,7 +99,7 @@ async def userValidate(response: Response, authorization: str = Header(None)):
     return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
 @app.get("/atm/user/steamauth")
-async def steamOpenid(response: Response):
+async def steamOpenid(request: Request, response: Response):
     steamLogin = SteamSignIn()
     encodedData = steamLogin.ConstructURL('https://drivershub.charlws.com/atm/user/steamcallback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
@@ -123,12 +123,17 @@ async def steamBind(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
@@ -165,12 +170,17 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     truckersmpid = form["truckersmpid"]

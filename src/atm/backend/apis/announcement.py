@@ -11,7 +11,7 @@ from db import newconn
 from functions import *
 
 @app.get("/atm/announcement")
-async def getAnnouncement(page: int, response: Response, authorization: str = Header(None)):
+async def getAnnouncement(page: int, request: Request, response: Response, authorization: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()
     if authorization is None:
@@ -26,12 +26,16 @@ async def getAnnouncement(page: int, response: Response, authorization: str = He
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -76,12 +80,16 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -159,12 +167,17 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -245,12 +258,17 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
+    ip = t[0][1]
+    if ip != request.client.host:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:

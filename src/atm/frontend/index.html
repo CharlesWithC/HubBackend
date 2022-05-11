@@ -625,7 +625,7 @@
             return;
           }
           $("#deliveryTableHead").show();
-          $("#dtotpages").html(Math.ceil(data.response.tot / 30));
+          $("#dtotpages").html(Math.ceil(data.response.tot / 10));
           for (i = 0; i < deliveries.length; i++) {
             const delivery = deliveries[i];
             // Fill the table using this format: 
