@@ -47,6 +47,9 @@ async def getAnnouncement(page: int, request: Request, response: Response, autho
     if userid == -1 or "10000" in roles: # external staff / not registered
         limit = "AND pvt = 0"
 
+    if page <= 0:
+        page = 1
+
     cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []

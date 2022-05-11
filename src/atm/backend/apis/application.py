@@ -395,6 +395,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
 
 @app.get("/atm/application/list")
 async def getApplicationList(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), showall: Optional[bool] = False):
+    if page <= 0:
+        page = 1
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}

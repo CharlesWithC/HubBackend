@@ -152,6 +152,8 @@ async def userUnban(request: Request, response: Response, authorization: str = H
 
 @app.get("/atm/user/list")
 async def userList(page:int, request: Request, response: Response, authorization: str = Header(None)):
+    if page <= 0:
+        page = 1
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -185,7 +187,7 @@ async def userList(page:int, request: Request, response: Response, authorization
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 LIMIT {(page-1) * 30}, 30")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:

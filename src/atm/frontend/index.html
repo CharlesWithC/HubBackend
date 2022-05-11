@@ -598,6 +598,7 @@
     function loadDelivery() {
       page = $("#dpages").val();
       if (page == "") page = 1;
+      if (page == undefined) page = 1;
       $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page,
         type: "GET",
@@ -631,7 +632,7 @@
             // Fill the table using this format: 
             // <tr class="text-xs bg-gray-50">
             //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
+            //    <td class="py-5 px-6 font-medium">name here</td>
             //  </tr>
             //
             distance = TSeparator(parseInt(delivery.distance / 1.6));
@@ -644,13 +645,13 @@
             $("#deliveryTable").append(`
             <tr class="text-xs bg-gray-50" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
-              <td class="font-medium">${delivery.name}</td>
-              <td class="font-medium">${delivery.source_company}, ${delivery.source_city}</td>
-              <td class="font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
-              <td class="font-medium">${distance}Mi</td>
-              <td class="font-medium">${delivery.cargo} (${cargo_mass}t)</td>
-              <td class="font-medium">${unittxt}${profit}</td>
-              <td class="font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>
+              <td class="py-5 px-6 font-medium">${delivery.name}</td>
+              <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
+              <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
+              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
+              <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>
             </tr>`);
           }
         },
@@ -734,7 +735,10 @@
               extra = "";
               if (auto_park) extra += "Auto Park | ";
               if (auto_load) extra += "Auto Load | ";
-              if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+              if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p>";
+              dt = getDateTime(data.response.timestamp * 1000);
+              info += "<p><b>Time submitted</b>: " + dt + "</p>";
+              info += "</div>";
               Swal.fire({
                 title: "Delivery Log #" + logid,
                 html: info,
@@ -787,8 +791,9 @@
               info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
               info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
               info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
-              extra = "";
-              if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p></div>";
+              dt = getDateTime(data.response.timestamp * 1000);
+              info += "<p><b>Time submitted</b>: " + dt + "</p>";
+              info += "</div>";
               Swal.fire({
                 title: "Job Cancelled #" + logid,
                 html: info,
@@ -817,6 +822,7 @@
     function loadMembers() {
       page = $("#mpages").val();
       if (page == "") page = 1;
+      if (page == undefined) page = 1;
       $.ajax({
         url: "https://drivershub.charlws.com/atm/member/list?page=" + page,
         type: "GET",
@@ -839,13 +845,13 @@
             return;
           }
           $("#membersTableHead").show();
-          $("#mtotpages").html(Math.ceil(data.response.tot / 30));
+          $("#mtotpages").html(Math.ceil(data.response.tot / 10));
           for (i = 0; i < users.length; i++) {
             const user = users[i];
             // Fill the table using this format: 
             // <tr class="text-xs bg-gray-50">
             //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
+            //    <td class="py-5 px-6 font-medium">name here</td>
             //  </tr>
             //
             highestrole = user.highestrole;
@@ -855,12 +861,22 @@
             if (highestrole > 100) color = "grey"; // External
             highestrole = rolelist[highestrole];
             if (highestrole == undefined) highestrole = "/";
+            discordid = user.discordid;
+            avatar = user.avatar;
+            totalpnt = parseInt(user.totalpnt);
+            src = "";
+            if (avatar != null) {
+              if (avatar.startsWith("a_"))
+                src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+              else
+                src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+            }
             $("#membersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${user.userid}</td>
-              <td class="font-medium" style="color:${color}">${user.name}</td>
-              <td class="font-medium" style="color:${color}">${highestrole}</td>
-              <td class="font-medium"><a style="cursor:pointer;color:grey" id="MemberInfoBtn${user.userid}" onclick="memberDetail('${user.userid}')">Show Details</td>
+              <td class="py-5 px-6 font-medium" style="color:${color}"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${user.name}</td>
+              <td class="py-5 px-6 font-medium" style="color:${color}">${highestrole}</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="MemberInfoBtn${user.userid}" onclick="memberDetail('${user.userid}')">Show Details</td>
             </tr>`)
           }
         },
@@ -1156,6 +1172,7 @@
     function loadUsers() {
       page = $("#pupages").val();
       if (page == "") page = 1;
+      if (page == undefined) page = 1;
       $.ajax({
         url: "https://drivershub.charlws.com/atm/user/list?page=" + page,
         type: "GET",
@@ -1178,20 +1195,20 @@
             return;
           }
           $("#usersTableHead").show();
-          $("#putotpages").html(Math.ceil(data.response.tot / 30));
+          $("#putotpages").html(Math.ceil(data.response.tot / 10));
           for (i = 0; i < users.length; i++) {
             const user = users[i];
             // Fill the table using this format: 
             // <tr class="text-xs bg-gray-50">
             //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
+            //    <td class="py-5 px-6 font-medium">name here</td>
             //  </tr>
             //
             $("#usersTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${user.discordid}</td>
-              <td class="font-medium">${user.name}</td>
-              <td class="font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
+              <td class="py-5 px-6 font-medium">${user.name}</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
             </tr>`)
           }
         },
@@ -1378,7 +1395,7 @@
             // Fill the table using this format: 
             // <tr class="text-xs bg-gray-50">
             //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
+            //    <td class="py-5 px-6 font-medium">name here</td>
             //  </tr>
             //
             apptype = APPTYPE[application.apptype];
@@ -1397,11 +1414,11 @@
             $("#myappTable").append(`
             <tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
-              <td class="font-medium">${apptype}</td>
-              <td class="font-medium">${creation}</td>
-              <td class="font-medium" style="color:${color}">${status}</td>
-              <td class="font-medium">${closedat}</td>
-              <td class="font-medium"><a style="cursor:pointer;color:grey" id="MyAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
+              <td class="py-5 px-6 font-medium">${apptype}</td>
+              <td class="py-5 px-6 font-medium">${creation}</td>
+              <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
+              <td class="py-5 px-6 font-medium">${closedat}</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="MyAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
             </tr>`);
           }
         },
@@ -1494,7 +1511,7 @@
             // Fill the table using this format: 
             // <tr class="text-xs bg-gray-50">
             //  <td class="py-5 px-6 font-medium">id here</td>
-            //    <td class="font-medium">name here</td>
+            //    <td class="py-5 px-6 font-medium">name here</td>
             //  </tr>
             //
             apptype = APPTYPE[application.apptype];
@@ -1514,11 +1531,11 @@
             <tr class="text-xs bg-gray-50" id="AllApp${application.applicationid}">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="py-5 px-6 font-medium">${application.discordid}</td>
-              <td class="font-medium">${apptype}</td>
-              <td class="font-medium">${creation}</td>
-              <td class="font-medium" style="color:${color}">${status}</td>
-              <td class="font-medium">${closedat}</td>
-              <td class="font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
+              <td class="py-5 px-6 font-medium">${apptype}</td>
+              <td class="py-5 px-6 font-medium">${creation}</td>
+              <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
+              <td class="py-5 px-6 font-medium">${closedat}</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
             </tr>`);
           }
         },
@@ -1818,7 +1835,7 @@
             name = user.name;
             discordid = user.discordid;
             avatar = user.avatar;
-            totalpnt = parseInt(user.totalpnt);
+            totalpnt = TSeparator(parseInt(user.totalpnt));
             if (avatar != null) {
               if (avatar.startsWith("a_"))
                 src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
@@ -1826,7 +1843,7 @@
                 src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
             }
             $("#leaderboard").append(`<tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium"><img src='${src}' width="20px" style="display:inline"> ${name}</td>
+              <td class="py-5 px-6 font-medium"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
           }
@@ -1854,7 +1871,7 @@
                 src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
             }
             $("#newdriverTable").append(`<tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium"><img src='${src}' width="20px" style="display:inline"> ${name}</td>
+              <td class="py-5 px-6 font-medium"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</td>
               <td class="py-5 px-6">${joindt}</td>
             </tr>`);
           }
@@ -2153,12 +2170,12 @@
               <table class="table-auto w-full">
                 <thead id="allappTableHead" style="display:none">
                   <tr class="text-xs text-gray-500 text-left">
-                    <th class="pb-3 font-medium">ID</th>
-                    <th class="pb-3 font-medium">Discord ID</th>
-                    <th class="pb-3 font-medium">Type</th>
-                    <th class="pb-3 font-medium">Submitted At</th>
-                    <th class="pb-3 font-medium">Status</th>
-                    <th class="pb-3 font-medium">Last Staff Reply</th>
+                    <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Discord ID</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Type</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Submitted At</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Status</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Last Staff Reply</th>
                   </tr>
                 </thead>
                 <tbody id="allappTable">
@@ -2214,8 +2231,8 @@
             <table class="table-auto w-full">
               <thead id="usersTableHead">
                 <tr class="text-xs text-gray-500 text-left">
-                  <th class="pb-3 font-medium">Discord ID</th>
-                  <th class="pb-3 font-medium">Name</th>
+                  <th class="py-5 px-6 pb-3 font-medium">Discord ID</th>
+                  <th class="py-5 px-6 pb-3 font-medium">Name</th>
                 </tr>
               </thead>
               <tbody id="usersTable">
@@ -2446,8 +2463,8 @@
               <table class="table-auto w-full" style="margin-top:20px">
                 <thead id="leaderboardHead">
                   <tr class="text-xs text-gray-500 text-left">
-                    <th class="pb-3 font-medium">Name</th>
-                    <th class="pb-3 font-medium">Points</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Name</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Points</th>
                   </tr>
                 </thead>
                 <tbody id="leaderboard">
@@ -2580,9 +2597,9 @@
           <table class="table-auto w-full">
             <thead id="membersTableHead">
               <tr class="text-xs text-gray-500 text-left">
-                <th class="pb-3 font-medium">User ID</th>
-                <th class="pb-3 font-medium">Name</th>
-                <th class="pb-3 font-medium">Highest Role</th>
+                <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                <th class="py-5 px-6 pb-3 font-medium">Name</th>
+                <th class="py-5 px-6 pb-3 font-medium">Highest Role</th>
               </tr>
             </thead>
             <tbody id="membersTable">
@@ -2700,13 +2717,13 @@
           <table class="table-auto w-full">
             <thead id="deliveryTableHead">
               <tr class="text-xs text-gray-500 text-left">
-                <th class="pb-3 font-medium">Log ID</th>
-                <th class="pb-3 font-medium">Driver</th>
-                <th class="pb-3 font-medium">From</th>
-                <th class="pb-3 font-medium">To</th>
-                <th class="pb-3 font-medium">Driven Distance</th>
-                <th class="pb-3 font-medium">Cargo</th>
-                <th class="pb-3 font-medium">Profit</th>
+                <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                <th class="py-5 px-6 pb-3 font-medium">Driver</th>
+                <th class="py-5 px-6 pb-3 font-medium">From</th>
+                <th class="py-5 px-6 pb-3 font-medium">To</th>
+                <th class="py-5 px-6 pb-3 font-medium">Driven Distance</th>
+                <th class="py-5 px-6 pb-3 font-medium">Cargo</th>
+                <th class="py-5 px-6 pb-3 font-medium">Profit</th>
               </tr>
             </thead>
             <tbody id="deliveryTable">
@@ -2769,11 +2786,11 @@
           <table class="table-auto w-full">
             <thead id="myappTableHead" style="display:none">
               <tr class="text-xs text-gray-500 text-left">
-                <th class="pb-3 font-medium">ID</th>
-                <th class="pb-3 font-medium">Type</th>
-                <th class="pb-3 font-medium">Submitted At</th>
-                <th class="pb-3 font-medium">Status</th>
-                <th class="pb-3 font-medium">Last Staff Reply</th>
+                <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                <th class="py-5 px-6 pb-3 font-medium">Type</th>
+                <th class="py-5 px-6 pb-3 font-medium">Submitted At</th>
+                <th class="py-5 px-6 pb-3 font-medium">Status</th>
+                <th class="py-5 px-6 pb-3 font-medium">Last Staff Reply</th>
               </tr>
             </thead>
             <tbody id="myappTable">

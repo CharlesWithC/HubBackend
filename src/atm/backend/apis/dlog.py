@@ -104,6 +104,8 @@ async def dlotNewDriver():
 async def dlogList(page: int, speedlimit: Optional[int] = 0):
     conn = newconn()
     cur = conn.cursor()
+    if page <= 0:
+        page = 1
     if speedlimit == 0:
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     else:
