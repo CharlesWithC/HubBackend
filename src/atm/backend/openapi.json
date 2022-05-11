@@ -139,6 +139,36 @@
                 }
             }
         },
+        "/atm/user/apptoken": {
+            "post": {
+                "summary": "Generate New App Token",
+                "tags": ["user"],
+                "operationId": "userGenAppToken",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/user/validate": {
             "get": {
                 "summary": "Validate Token",

@@ -18,7 +18,7 @@ async def newApplication(request: Request, response: Response, authorization: st
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -28,28 +28,34 @@ async def newApplication(request: Request, response: Response, authorization: st
     conn = newconn()
     cur = conn.cursor()
 
+    isapptoken = False
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if validators.ipv6(ip) == True:
-        orgiptype = 6
-    curiptype = 4
-    if validators.ipv6(request.client.host) == True:
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if validators.ipv6(ip) == True:
+            orgiptype = 6
+        curiptype = 4
+        if validators.ipv6(request.client.host) == True:
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     apptype = form["apptype"]
@@ -147,7 +153,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -157,28 +163,34 @@ async def updateApplication(request: Request, response: Response, authorization:
     conn = newconn()
     cur = conn.cursor()
 
+    isapptoken = False
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if validators.ipv6(ip) == True:
-        orgiptype = 6
-    curiptype = 4
-    if validators.ipv6(request.client.host) == True:
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if validators.ipv6(ip) == True:
+            orgiptype = 6
+        curiptype = 4
+        if validators.ipv6(request.client.host) == True:
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT name FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     name = t[0][0]
@@ -383,7 +395,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -393,28 +405,34 @@ async def getApplication(request: Request, response: Response, applicationid: in
     conn = newconn()
     cur = conn.cursor()
 
+    isapptoken = False
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if validators.ipv6(ip) == True:
-        orgiptype = 6
-    curiptype = 4
-    if validators.ipv6(request.client.host) == True:
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if validators.ipv6(ip) == True:
+            orgiptype = 6
+        curiptype = 4
+        if validators.ipv6(request.client.host) == True:
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
@@ -448,7 +466,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
-    if not authorization.startswith("Bearer "):
+    if not authorization.startswith("Bearer ") and not authorization.startswith("App "):
         response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
@@ -458,28 +476,37 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
     conn = newconn()
     cur = conn.cursor()
 
+    isapptoken = False
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if validators.ipv6(ip) == True:
-        orgiptype = 6
-    curiptype = 4
-    if validators.ipv6(request.client.host) == True:
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
             response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if validators.ipv6(ip) == True:
+            orgiptype = 6
+        curiptype = 4
+        if validators.ipv6(request.client.host) == True:
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+    if isapptoken and showall:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999

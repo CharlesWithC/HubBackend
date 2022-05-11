@@ -23,6 +23,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIU
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE)")
 # unit = 1: euro | 2: dollar
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, data TEXT,\
      status INT, submitTimestamp BIGINT, closedBy BIGINT, closedTimestamp BIGINT)")

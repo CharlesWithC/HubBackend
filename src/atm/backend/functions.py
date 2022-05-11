@@ -2,8 +2,9 @@
 # Author: @Charles-1414
 
 from base64 import b64encode, b64decode
-
+import re
 def b64e(s):
+    s = re.sub(re.compile('<.*?>'), '', s)
     try:
         return b64encode(s.encode()).decode()
     except:

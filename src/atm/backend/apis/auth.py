@@ -262,3 +262,29 @@ async def userRevoke(request: Request, response: Response, authorization: str = 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     conn.commit()
     return {"error": False, "response": {"message": "Token revoked"}}
+
+@app.post('/atm/user/apptoken')
+async def userBot(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    stoken = str(uuid4())
+    cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
+    cur.execute(f"INSERT INTO appsession VALUES ('{stoken}', {discordid}, {int(time.time())})")
+    conn.commit()
+    return {"error": False, "response": {"message": "App token updated", "token": stoken}}
