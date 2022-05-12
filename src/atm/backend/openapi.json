@@ -1400,6 +1400,138 @@
                 }
             }
         },
+            "post": {
+                "summary": "Create Event",
+                "tags": ["event"],
+                "operationId": "postEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "tmplink": {
+                                        "description": "TruckersMP Event Link",
+                                        "type": "string"
+                                    },
+                                    "departure": {
+                                        "description": "Depature Location",
+                                        "type": "string"
+                                    },
+                                    "destination": {
+                                        "description": "Destination Location",
+                                        "type": "string"
+                                    },
+                                    "distance": {
+                                        "description": "Distance (Add units)",
+                                        "type": "string"
+                                    },
+                                    "mts": {
+                                        "description": "Meetup Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "dts": {
+                                        "description": "Departure Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "img": {
+                                        "description": "Image Link (e.g. route, slots) | Separate with ','",
+                                        "type": "string"
+                                    },
+                                    "pvt": {
+                                        "description": "Is Private?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": ["tmplink", "title", "departure", "destination", "distance", "mts", "dts", "img", "pvt"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/atm/event/attendee": {
+                "post": {
+                    "summary": "Update Event Attendees (Overwrite)",
+                    "tags": ["event", "manage"],
+                    "operationId": "updateEventAttendees",
+                    "security": [{
+                        "bearerAuth": []
+                    }],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/x-www-form-urlencoded": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "eventid": {
+                                            "description": "Event ID",
+                                            "type": "integar"
+                                        },
+                                        "points": {
+                                            "description": "Event Points",
+                                            "type": "integar"
+                                        },
+                                        "attendees": {
+                                            "description": "Attendees, separate with ','",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": ["eventid", "attendees"]
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Successful Response",
+                            "content": {
+                                "application/json": {
+                                    "schema": {}
+                                }
+                            }
+                        },
+                        "422": {
+                            "description": "Validation Error",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/HTTPValidationError"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
         "/atm/application": {
             "get": {
                 "summary": "Get Application Detail",

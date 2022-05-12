@@ -163,9 +163,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Updating Announcement',
-                text: data.descriptor ? data.descriptor :
-                  'An unknown error occured - please contact the devlopment team',
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -180,9 +179,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Updating Announcement',
-              text: data.descriptor ? data.descriptor :
-                'An unknown error occured - please contact the devlopment team',
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -221,9 +219,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Creating The Announcement',
-                text: data.descriptor ? data.descriptor :
-                  'An unknown error occured - please contact the devlopment team',
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -240,9 +237,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Creating The Announcement',
-              text: data.descriptor ? data.descriptor :
-                'An unknown error occured - please contact the devlopment team',
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -275,8 +271,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Deleting Announcement',
-                text: data.descriptor,
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -289,8 +285,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Deleting Announcement',
-              text: data.descriptor,
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -305,7 +301,7 @@
     function FetchEvent() {
       eventid = $("#eventid").val();
       if (!isNumber(eventid)) {
-        return toastFactory("error", "Error", "Event ID must be in integar timestamp!", 5000, false);
+        return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
       }
 
       $("#fetchEventBtn").html("Working...");
@@ -344,6 +340,92 @@
           toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
           console.warn(
             `Failed to fetch event. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function FetchEventAttendee() {
+      eventid = $("#aeventid").val();
+      if (!isNumber(eventid)) {
+        return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
+      }
+
+      $("#fetchEventAttendeeBtn").html("Working...");
+      $("#fetchEventAttendeeBtn").attr("disabled", "disabled");
+
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+        type: "GET",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+          $("#fetchEventAttendeeBtn").html("Fetch Existing Attendees");
+          $("#fetchEventAttendeeBtn").removeAttr("disabled");
+
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+
+          const event = data.response;
+          $("#attendeeId").val(event.attendeeid.replaceAll(",", ", "));
+        },
+        error: function (data) {
+          $("#fetchEventAttendeeBtn").html("Fetch Existing Attendees");
+          $("#fetchEventAttendeeBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+          console.warn(
+            `Failed to fetch event attendees. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+          console.log(data);
+        }
+      })
+    }
+
+    function UpdateEventAttendees() {
+      eventid = $("#aeventid").val();
+      if (!isNumber(eventid)) {
+        return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
+      }
+      attendeeid = $("#attendeeId").val();
+      points = $("#attendeePoints").val();
+      if (!isNumber(points)) {
+        return toastFactory("error", "Error", "Points must be in integar!", 5000, false);
+      }
+
+      $("#attendeeBtn").html("Working...");
+      $("#attendeeBtn").attr("disabled", "disabled");
+
+      $.ajax({
+        url: "https://drivershub.charlws.com/atm/event/attendee",
+        type: "POST",
+        dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+          "eventid": eventid,
+          "attendees": attendeeid,
+          "points": points
+        },
+        success: function (data) {
+          $("#attendeeBtn").html("Update");
+          $("#attendeeBtn").removeAttr("disabled");
+
+          if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+          loadEvent();
+          Swal.fire({
+            title: 'Event Attendees Updated!',
+            html: "<p style='text-align:left'>" + data.response.message.replaceAll("\n", "<br>") + "</p>",
+            icon: 'success',
+            confirmButtonText: 'OK'
+          })
+        },
+        error: function (data) {
+          $("#attendeeBtn").html("Update");
+          $("#attendeeBtn").removeAttr("disabled");
+          toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+          console.warn(
+            `Failed to update event attendees. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
           console.log(data);
         }
       })
@@ -416,9 +498,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Updating Event',
-                text: data.descriptor ? data.descriptor :
-                  'An unknown error occured - please contact the devlopment team',
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -433,9 +514,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Updating Event',
-              text: data.descriptor ? data.descriptor :
-                'An unknown error occured - please contact the devlopment team',
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -484,9 +564,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Creating The Event',
-                text: data.descriptor ? data.descriptor :
-                  'An unknown error occured - please contact the devlopment team',
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -503,9 +582,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Creating The Event',
-              text: data.descriptor ? data.descriptor :
-                'An unknown error occured - please contact the devlopment team',
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -539,8 +617,8 @@
             } else {
               // Trigger req swal.fire
               Swal.fire({
-                title: 'An Error Occured While Deleting Event',
-                text: data.descriptor,
+                title: 'Error',
+                text: data.descriptor ? data.descriptor : 'Unknown Error',
                 icon: 'error',
                 confirmButtonText: 'OK'
               })
@@ -553,8 +631,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Deleting Event',
-              text: data.descriptor,
+              title: 'Error',
+              text: data.descriptor ? data.descriptor : 'Unknown Error',
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -711,8 +789,8 @@
 
             // Trigger req swal.fire
             Swal.fire({
-              title: 'An Error Occured While Submitting Your Application',
-              text: `Please let us know on discord and open a ticket and show this error: ${data.descriptor}`,
+              title: 'Error',
+              text: `${data.descriptor}`,
               icon: 'error',
               confirmButtonText: 'OK'
             })
@@ -725,8 +803,8 @@
 
           // Trigger req swal.fire
           Swal.fire({
-            title: 'An Error Occured While Submitting Your Application',
-            text: `Please let us know on discord and open a ticket and show this error: ERROR_UNHANDLED`,
+            title: 'Error',
+            text: `ERROR_UNHANDLED`,
             icon: 'error',
             confirmButtonText: 'OK'
           })
@@ -1279,6 +1357,7 @@
       info += "<p><b>Distance</b>: " + event.distance + "</p>";
       info += "<p><b>Start Time</b>: " + getDateTime(event.mts * 1000) + "</p>";
       info += "<p><b>End Time</b>: " + getDateTime(event.dts * 1000) + "</p>";
+      info += "<p><b>Attendees</b>: " + event.attendee + "</p>";
       for (var i = 0; i < event.img.length; i++) {
         info += "<img src='" + event.img[i] + "' style='width:100%'/>";
       }
@@ -2521,6 +2600,9 @@
         url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
         type: "GET",
         dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
         success: function (data) {
           users = data.response;
           $("#leaderboard").empty();
@@ -2551,6 +2633,9 @@
         url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
         type: "GET",
         dataType: "json",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
         success: function (data) {
           users = data.response;
           $("#newdriverTable").empty();
@@ -3649,6 +3734,39 @@
         </div>
       </div>
     </div>
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Update Event Attendees (Overwrite)</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="">Event ID</label>
+            <input id="aeventid" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+              name="" placeholder="">
+            <button type="button" style="display:inline"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="FetchEventAttendee()" id="fetchEventAttendeeBtn">Fetch Existing Attendees</button>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="">Event Points</label>
+            <input id="attendeePoints" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+              name="" placeholder="">
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="">User ID (separate with ',')</label>
+            <input id="attendeeId"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+
+          <button type="button" id="attendeeBtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="UpdateEventAttendees()">Update</button>
+        </div>
+      </div>
   </section>
 
   <section id="MyApp" class="py-8 tabs" style="display:none">

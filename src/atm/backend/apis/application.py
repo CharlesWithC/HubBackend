@@ -58,9 +58,31 @@ async def newApplication(request: Request, response: Response, authorization: st
                 return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
-    apptype = form["apptype"]
+    apptype = int(form["apptype"])
     data = json.loads(form["data"])
     data = b64e(json.dumps(data))
+
+    cur.execute(f"SELECT userid FROM user WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    userid = t[0][0]
+
+    if apptype == 1:
+        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
+        p = cur.fetchall()
+        if len(p) > 0:
+            return {"error": True, "descriptor": "You are already a driver!"}
+        cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND userid = {userid}")
+        p = cur.fetchall()
+        if len(p) > 0:
+            return {"error": True, "descriptor": "You have already made a driver application! Use 'Add Message' instead of creating new application!"}
+    
+    cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submitTimestamp >= {int(time.time()) - 7200}")
+    p = cur.fetchall()
+    if len(p) > 0:
+        return {"error": True, "descriptor": "You cannot create multiple applications within 2 hours!"}
+
+    if userid == -1 and apptype == 3:
+        return {"error": True, "descriptor": "You cannot submit a LOA application until you become a member."}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
     t = cur.fetchall()
@@ -82,9 +104,6 @@ async def newApplication(request: Request, response: Response, authorization: st
     apptypetxt = "Unknown"
     if apptype in APPTYPE.keys():
         apptypetxt = APPTYPE[apptype]
-
-    if userid == -1 and apptype == 3:
-        return {"error": True, "descriptor": "You cannot submit a LOA application until you become a member."}
 
     durl = ""
     if apptype == 1:
@@ -116,7 +135,7 @@ async def newApplication(request: Request, response: Response, authorization: st
     except:
         pass
 
-    msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
+    msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
 
@@ -191,9 +210,10 @@ async def updateApplication(request: Request, response: Response, authorization:
                 conn.commit()
                 response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
-    cur.execute(f"SELECT name FROM user WHERE discordid = '{discordid}'")
+    cur.execute(f"SELECT name, userid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     name = t[0][0]
+    userid = t[0][1]
 
     form = await request.form()
     applicationid = form["applicationid"]
@@ -230,7 +250,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     data = json.loads(b64d(data))
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
-    msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
+    msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     msg += f"**New message**: {message}\n\n"
 
     try:
