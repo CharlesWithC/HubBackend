@@ -472,6 +472,14 @@
                     },
                     "name": "page",
                     "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Member name to search for",
+                        "type": "string"
+                    },
+                    "name": "search",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1071,7 +1079,7 @@
                                 "properties": {
                                     "aid": {
                                         "description": "Announcement ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "title": {
                                         "description": "Title",
@@ -1240,11 +1248,11 @@
                                     },
                                     "mts": {
                                         "description": "Meetup Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "dts": {
                                         "description": "Departure Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "img": {
                                         "description": "Image Link (e.g. route, slots) | Separate with ','",
@@ -1297,7 +1305,7 @@
                                 "properties": {
                                     "eventid": {
                                         "description": "Event ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "title": {
                                         "description": "Title",
@@ -1321,11 +1329,11 @@
                                     },
                                     "mts": {
                                         "description": "Meetup Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "dts": {
                                         "description": "Departure Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "img": {
                                         "description": "Image Link (e.g. route, slots) | Separate with ','",
@@ -1436,11 +1444,11 @@
                                     },
                                     "mts": {
                                         "description": "Meetup Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "dts": {
                                         "description": "Departure Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "img": {
                                         "description": "Image Link (e.g. route, slots) | Separate with ','",
@@ -1494,11 +1502,11 @@
                                     "properties": {
                                         "eventid": {
                                             "description": "Event ID",
-                                            "type": "integar"
+                                            "type": "integer"
                                         },
                                         "points": {
                                             "description": "Event Points",
-                                            "type": "integar"
+                                            "type": "integer"
                                         },
                                         "attendees": {
                                             "description": "Attendees, separate with ','",
@@ -1586,7 +1594,7 @@
                                 "properties": {
                                     "apptype": {
                                         "description": "Application Type (driver 1 / staff 2 / LOA 3)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "data": {
                                         "description": "Application Data (json string)",
@@ -1635,7 +1643,7 @@
                                 "properties": {
                                     "applicationid": {
                                         "description": "Application ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "message": {
                                         "description": "Message",
@@ -1686,15 +1694,15 @@
                                 "properties": {
                                     "applicationid": {
                                         "description": "Application ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "status": {
                                         "description": "Application Status (Pending 0| Accepted 1 | Declined 2)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "message": {
                                         "description": "Message",
-                                        "type": "integar"
+                                        "type": "integer"
                                     }
                                 }
                             },

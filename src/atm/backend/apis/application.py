@@ -567,7 +567,12 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "apptype": tt[1], "discordid": f"{tt[2]}", "status": tt[4], "submitTimestamp": tt[3], "closedTimestamp": tt[5]})
+        cur.execute(f"SELECT name FROM user WHERE discordid = {tt[2]}")
+        p = cur.fetchall()
+        name = "Unknown"
+        if len(p) > 0:
+            name = p[0][0]
+        ret.append({"applicationid": tt[0], "apptype": tt[1], "discordid": f"{tt[2]}", "name": name, "status": tt[4], "submitTimestamp": tt[3], "closedTimestamp": tt[5]})
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 

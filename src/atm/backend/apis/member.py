@@ -6,6 +6,7 @@ from uuid import uuid4
 import json, time, math, validators
 import requests
 from discord import Webhook
+from typing import Optional
 
 from app import app, config
 from db import newconn
@@ -18,8 +19,8 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
                 60: "Convoy Supervisor", 61: "Convoy Control",\
                  99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
 
-@app.get("/atm/member/list")
-async def memberList(page:int, request: Request, response: Response, authorization: str = Header(None)):
+@app.get('/atm/member/list')
+async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
     if page <= 0:
         page = 1
     if authorization is None:
@@ -72,8 +73,10 @@ async def memberList(page:int, request: Request, response: Response, authorizati
     if userid == -1:
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+
+    search = search.replace("'","''").lower()
     
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{search}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -86,14 +89,14 @@ async def memberList(page:int, request: Request, response: Response, authorizati
                 highestrole = int(role)
         ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}", "highestrole": highestrole, "avatar": tt[4]})
     
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid >= 0")
+    cur.execute(f"SELECT COUNT(*) FROM user WHERE LOWER(name) LIKE '%{search}%' AND userid >= 0")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
-    
+
 @app.get('/atm/member/info')
 async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     if authorization is None:

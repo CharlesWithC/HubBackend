@@ -840,6 +840,7 @@
             if (roles[i] == 40 || roles[i] == 41) {
               $("#newann").show(); // event staff
               $("#newevent").show(); // event staff
+              $("#eventattendee").show();
               if (roles[i] == 40) {
                 $("#annrole").html("Event Manager");
               } else {
@@ -899,6 +900,7 @@
         if (highestrole <= 10) {
           $("#newann").show();
           $("#newevent").show(); // event staff
+          $("#eventattendee").show();
           setInterval(function () {
             title = $("#anntitle").val();
             content = $("#anncontent").val();
@@ -1374,14 +1376,18 @@
       page = $("#mpages").val();
       if (page == "") page = 1;
       if (page == undefined) page = 1;
+      $("#searchMemberBtn").html("...");
+      $("#searchMemberBtn").attr("disabled", "disabled");
       $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/list?page=" + page,
+        url: "https://drivershub.charlws.com/atm/member/list?page=" + page + "&search=" + $("#searchname").val(),
         type: "GET",
         dataType: "json",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+          $("#searchMemberBtn").html("Go");
+          $("#searchMemberBtn").removeAttr("disabled");
           if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
           $("#membersTable").empty();
           const users = data.response.list;
@@ -1435,6 +1441,8 @@
           }
         },
         error: function (data) {
+          $("#searchMemberBtn").html("Go");
+          $("#searchMemberBtn").removeAttr("disabled");
           toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
           console.warn(`Failed to load members. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
           console.log(data);
@@ -2268,7 +2276,7 @@
             $("#allappTable").append(`
             <tr class="text-xs bg-gray-50" id="AllApp${application.applicationid}">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
-              <td class="py-5 px-6 font-medium">${application.discordid}</td>
+              <td class="py-5 px-6 font-medium">${application.name}</td>
               <td class="py-5 px-6 font-medium">${apptype}</td>
               <td class="py-5 px-6 font-medium">${creation}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
@@ -2443,6 +2451,10 @@
     }
 
     $(document).ready(function () {
+      $('#searchname').keypress(function (e) {
+        if (e.which == 13) loadMembers();
+      });
+
       function devwarn() {
         for (var i = 0; i < 3; i++) {
           setTimeout(function () {
@@ -2975,7 +2987,7 @@
                 <thead id="allappTableHead" style="display:none">
                   <tr class="text-xs text-gray-500 text-left">
                     <th class="py-5 px-6 pb-3 font-medium">ID</th>
-                    <th class="py-5 px-6 pb-3 font-medium">Discord ID</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Applicant</th>
                     <th class="py-5 px-6 pb-3 font-medium">Type</th>
                     <th class="py-5 px-6 pb-3 font-medium">Submitted At</th>
                     <th class="py-5 px-6 pb-3 font-medium">Status</th>
@@ -3435,7 +3447,15 @@
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
         <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Members</h3>
+          <h3 class="text-xl font-bold" style="margin-top:8px">Members</h3>
+          <div style="margin-left:auto">
+            <input id="searchname"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+              name="" style="width:200px;display:inline" placeholder="Search By Name">
+            <button type="button" style="display:inline"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMembers()" id="searchMemberBtn">Go</button>
+          </div>
         </div>
         <div class="p-4 overflow-x-auto" style="display: block;">
           <table class="table-auto w-full">
@@ -3735,7 +3755,7 @@
       </div>
     </div>
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="eventattendee" style="display:none">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Update Event Attendees (Overwrite)</h3>
         </div>
