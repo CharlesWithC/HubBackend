@@ -1,5 +1,5 @@
-# Copyright (C) 2021 Charles All rights reserved.
-# Author: @Charles-1414
+# Copyright (C) 2022 Charles All rights reserved.
+# Author: @CharlesWithC
 
 import MySQLdb
 from app import app

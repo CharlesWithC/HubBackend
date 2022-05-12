@@ -1,5 +1,5 @@
-# Copyright (C) 2021 Charles All rights reserved.
-# Author: @Charles-1414
+# Copyright (C) 2022 Charles All rights reserved.
+# Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
@@ -367,3 +367,77 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     conn.commit()
 
     return {"error": False, "response": {"message": "Bio updated.", "bio": bio}}
+
+@app.get("/atm/auditlog")
+async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None)):
+    if page <= 0:
+        page = 1
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    ip = t[0][1]
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    adminid = t[0][0]
+    adminroles = t[0][1].split(",")
+    while "" in adminroles:
+        adminroles.remove("")
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+
+    if adminhighest >= 100: # any staff
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+
+    cur.execute(f"SELECT * FROM auditlog ORDER BY timestamp DESC LIMIT {(page - 1) * 30}, 30")
+    t = cur.fetchall()
+    ret = []
+    for tt in t:
+        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
+        p = cur.fetchall()
+        name = "Unknown"
+        if len(p) > 0:
+            name = p[0][0]
+        ret.append({"timestamp": tt[2], "user": name, "operation": tt[1]})
+
+    cur.execute(f"SELECT COUNT(*) FROM auditlog")
+    t = cur.fetchall()
+    tot = t[0][0]
+
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
