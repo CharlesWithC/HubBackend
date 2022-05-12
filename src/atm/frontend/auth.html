@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Authorization - At The Mile Logistics</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/js/functions.js"></script>
-	<link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/login.css">
     <script>
-		function DiscordLogin(){
-			location.href='https://drivershub.charlws.com/atm/user/login';
-		}
-        function validate(){
+        function DiscordLogin() {
+            location.href = 'https://drivershub.charlws.com/atm/user/login';
+        }
+
+        function validate() {
             message = getUrlParameter("message");
-            if(message){
+            if (message) {
                 $("#title").html("Error");
                 $("#msg").html(message);
                 $("#msg").show();
@@ -27,46 +31,50 @@
                 headers: {
                     "Authorization": "Bearer " + token
                 },
-                success: function(data){
-                    if(data.error == false){
+                success: function (data) {
+                    if (data.error == false) {
                         localStorage.setItem("token", token);
-                        if(data.response.extra == ""){
+                        if (data.response.extra == "") {
                             window.location.href = "/";
                             $("#msg").html("You are being redirected to Drivers Hub.");
-                        } else if(data.response.extra == "steamauth") {
+                        } else if (data.response.extra == "steamauth") {
                             // Format title
                             $("#title").html("Steam Authorization Needed <br>");
                             $("#title").css("font-size", "1.5em");
-                            
+
                             // Format message
-                            $("#msg").html("We need to check your steam account to ensure: <br><br> - You own the game <br> - To check that you are a truckersMP user.");
-                            
+                            $("#msg").html(
+                                "We need to check your steam account to ensure: <br><br> - You own the game <br> - To check that you are a truckersMP user."
+                                );
+
                             // Show steam openID button
                             $("#steamauth").show();
-                        } else if(data.response.extra == "truckersmp") {
+                        } else if (data.response.extra == "truckersmp") {
                             // Format title
                             $("#title").html("TruckersMP Connection");
                             $("#title").css("font-size", "1.5em");
-                            
+
                             // Format message
-                            $("#msg").html("Enter your TruckersMP User ID below <br> and we'll check if it's bound to your steam account.");
-                            
+                            $("#msg").html(
+                                "Enter your TruckersMP User ID below <br> and we'll check if it's bound to your steam account."
+                                );
+
                             // Show the ID div
                             $("#truckersmpbind").show();
                         }
-                    }
-                    else{
+                    } else {
                         $("#msg").html("Invalid token, please retry.");
                         $("#loginbtn").show();
                     }
                 },
-                error: function(data){
+                error: function (data) {
                     $("#msg").html("Invalid token, please retry.");
                     $("#loginbtn").show();
                 }
             });
         }
-        function TMPBind(){
+
+        function TMPBind() {
             $.ajax({
                 url: "https://drivershub.charlws.com/atm/user/truckersmpbind",
                 type: "POST",
@@ -77,59 +85,66 @@
                 data: {
                     "truckersmpid": $("#truckersmpid").val()
                 },
-                success: function(data){
-                    if(data.error == false){
+                success: function (data) {
+                    if (data.error == false) {
                         $("#title").html("Welcome Back");
                         $("#msg").html("You are being redirected to Drivers Hub.");
                         window.location.href = "/";
-                    }
-                    else{
+                    } else {
                         $("#msg").html(data.descriptor);
                     }
                 },
-                error: function(data){
+                error: function (data) {
                     $("#msg").html(data.descriptor);
                 }
-            });        
+            });
         }
-        $(document).ready(function() {
+        $(document).ready(function () {
             validate();
+            $('#truckersmpid').keypress(function (e) {
+                e.preventDefault();
+                if (e.which == 13) TMPBind();
+            });
         });
     </script>
 </head>
+
 <body style="overflow:hidden">
-	<div id="formContainer">
-	<div class="formLeft">
-		<img src="https://i.hep.gg/ndjTN6f4X">
-	</div>
-	<div class="formRight">
-		<!-- Login form -->
-		<form id="login">
-			<header>
-                <h1 id="title">Discord Authorization</h1>
-                <p id="msg">Validating authorization token...</p>
-			</header>
-            <section id="loginbtn" style="display:none">
-                <button type="button" onclick="DiscordLogin();">Login With Discord</button>
-            </section>
-            <section id="steamauth" style="display:none">
-                <a href="https://drivershub.charlws.com/atm/user/steamauth">
+    <div id="formContainer">
+        <div class="formLeft">
+            <img src="https://i.hep.gg/ndjTN6f4X">
+        </div>
+        <div class="formRight">
+            <!-- Login form -->
+            <form id="login">
+                <header>
+                    <h1 id="title">Discord Authorization</h1>
+                    <p id="msg">Validating authorization token...</p>
+                </header>
+                <section id="loginbtn" style="display:none">
+                    <button type="button" onclick="DiscordLogin();">Login With Discord</button>
+                </section>
+                <section id="steamauth" style="display:none">
+                    <a href="https://drivershub.charlws.com/atm/user/steamauth">
+                        <br>
+                        <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png"
+                            style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
+                    </a>
+                </section>
+                <section id="truckersmpbind" style="display:none">
+                    <input type="text" id="truckersmpid" placeholder="TruckersMP User ID"
+                        style="display: block; margin-left: auto; margin-right: auto; width: 50%;" class="hover">
                     <br>
-                    <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
-                </a>
-            </section>
-            <section id="truckersmpbind" style="display:none">
-                <input type="text" id="truckersmpid" placeholder="TruckersMP User ID" style="display: block; margin-left: auto; margin-right: auto; width: 50%;" class="hover">
-                <br>
-                <button type="button" onclick="TMPBind();">Check</button>
-            </section>
-		</form>
-	</div>
+                    <button type="button" onclick="TMPBind();">Check</button>
+                </section>
+            </form>
+        </div>
     </div>
-	<div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
-		&nbsp;Copyright &copy 2022 CharlesWithC
-		<br>
-		Licensed to At The Mile Logistics 
-	</div>
+    <div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
+        &nbsp;Copyright &copy 2022 CharlesWithC
+        <br>
+        Licensed to At The Mile Logistics
+    </div>
 </body>
+
 </html>

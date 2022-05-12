@@ -1154,8 +1154,6 @@ function loadLeaderboard() {
         starttime = + new Date($("#lbstart").val()) / 1000;
         endtime = + new Date($("#lbend").val()) / 1000;
     }
-    console.log(starttime);
-    console.log(endtime);
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
@@ -1223,14 +1221,24 @@ function loadDelivery() {
     page = $("#dpages").val();
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    $("#loadDeliveryBtn").html("...");
+    $("#loadDeliveryBtn").attr("disabled", "disabled");
+    starttime = -1;
+    endtime = -1;
+    if($("#dstart").val() != "" && $("#dend").val() != ""){
+        starttime = + new Date($("#dstart").val()) / 1000;
+        endtime = + new Date($("#dend").val()) / 1000;
+    }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page,
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+            $("#loadDeliveryBtn").html("Go");
+            $("#loadDeliveryBtn").removeAttr("disabled");
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             $("#deliveryTable").empty();
             const deliveries = data.response.list;
@@ -1285,6 +1293,8 @@ function loadDelivery() {
             }
         },
         error: function (data) {
+            $("#loadDeliveryBtn").html("Go");
+            $("#loadDeliveryBtn").removeAttr("disabled");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
             console.warn(
                 `Failed to load delivery log. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
@@ -1960,14 +1970,24 @@ function loadUserDelivery() {
     page = $("#udpages").val();
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    $("#loadUserDeliveryBtn").html("...");
+    $("#loadUserDeliveryBtn").attr("disabled", "disabled");
+    starttime = -1;
+    endtime = -1;
+    if($("#udstart").val() != "" && $("#udend").val() != ""){
+        starttime = + new Date($("#udstart").val()) / 1000;
+        endtime = + new Date($("#udend").val()) / 1000;
+    }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&page=" + page,
+        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+            $("#loadUserDeliveryBtn").html("Go");
+            $("#loadUserDeliveryBtn").removeAttr("disabled");
             if (data.userDeliveryTable) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             $("#userDeliveryTable").empty();
             const deliveries = data.response.list;
@@ -2020,6 +2040,8 @@ function loadUserDelivery() {
             }
         },
         error: function (data) {
+            $("#loadUserDeliveryBtn").html("Go");
+            $("#loadUserDeliveryBtn").removeAttr("disabled");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
             console.warn(
                 `Failed to load delivery log. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
@@ -2756,6 +2778,15 @@ $(document).ready(function () {
 
     $('#searchname').keypress(function (e) {
         if (e.which == 13) loadMembers();
+    });
+    $('#dend').keypress(function (e) {
+        if (e.which == 13) loadDelivery();
+    });
+    $('#udend').keypress(function (e) {
+        if (e.which == 13) loadUserDelivery();
+    });
+    $('#lbend').keypress(function (e) {
+        if (e.which == 13) loadLeaderboard();
     });
 
     function devwarn() {

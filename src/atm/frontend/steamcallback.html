@@ -65,6 +65,10 @@
         }
         $(document).ready(function(){
             validate();
+            $('#truckersmpid').keypress(function (e) {
+                e.preventDefault();
+                if (e.which == 13) TMPBind();
+            });
         });
     </script>
 </head>

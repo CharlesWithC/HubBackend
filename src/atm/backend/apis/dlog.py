@@ -261,7 +261,8 @@ async def dlotNewDriver(request: Request, response: Response, authorization: str
     return {"error": False, "response": {"list": ret, "page": 1, "tot": 10}}
 
 @app.get("/atm/dlog/list")
-async def dlogList(page: int, request: Request, response: Response, authorization: str = Header(None), speedlimit: Optional[int] = 0, quserid: Optional[int] = -1):
+async def dlogList(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -319,10 +320,14 @@ async def dlogList(page: int, request: Request, response: Response, authorizatio
     if quserid != -1:
         limit = f"AND userid = {quserid}"
     
+    timelimit = ""
+    if starttime != -1 and endtime != -1:
+        timelimit = f"AND timestamp >= {starttime} AND timestamp <= {endtime}"
+    
     if speedlimit == 0:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     else:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -352,7 +357,7 @@ async def dlogList(page: int, request: Request, response: Response, authorizatio
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:

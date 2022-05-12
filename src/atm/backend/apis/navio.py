@@ -97,6 +97,14 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         source_company = d["data"]["object"]["source_company"]["name"]
         destination_city = d["data"]["object"]["destination_city"]["name"]
         destination_company = d["data"]["object"]["destination_company"]["name"]
+        if source_city is None:
+            source_city = ""
+        if source_company is None:
+            source_company = ""
+        if destination_city is None:
+            destination_city = ""
+        if destination_company is None:
+            destination_company = ""
         cargo = d["data"]["object"]["cargo"]["name"]
         cargo_mass = d["data"]["object"]["cargo"]["mass"]
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
