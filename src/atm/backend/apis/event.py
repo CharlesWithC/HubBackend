@@ -459,11 +459,12 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
         if attendee in orgattendees:
             continue
         attendee = int(attendee)
-        cur.execute(f"SELECT name FROM user WHERE userid = {attendee}")
+        cur.execute(f"SELECT name, discordid FROM user WHERE userid = {attendee}")
         t = cur.fetchall()
         if len(t) == 0:
             continue
         ret1 += f"{t[0][0]}, "
+        requests.get(f"http://127.0.0.1:58001/internal/event?users={t[0][1]}&point={points}")
         cnt += 1
         cur.execute(f"UPDATE driver SET eventpnt = eventpnt + {points} WHERE userid = {attendee}")
     ret1 = ret1[:-2]
@@ -476,11 +477,12 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     for attendee in orgattendees:
         if not attendee in attendees:
             attendee = int(attendee)
-            cur.execute(f"SELECT name FROM user WHERE userid = {attendee}")
+            cur.execute(f"SELECT name, discordid FROM user WHERE userid = {attendee}")
             t = cur.fetchall()
             if len(t) == 0:
                 continue
             ret2 += f"{t[0][0]}, "
+            requests.get(f"http://127.0.0.1:58001/internal/event?users={t[0][1]}&point=-{points}")
             cur.execute(f"UPDATE driver SET eventpnt = eventpnt - {points} WHERE userid = {attendee}")
             cnt += 1
     ret2 = ret2[:-2]

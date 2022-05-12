@@ -664,12 +664,19 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"UPDATE driver SET distance = distance + {distance}, eventpnt = eventpnt + {eventpnt} WHERE userid = {userid}")
     conn.commit()
 
+    cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
+    p = cur.fetchall()
+    udiscordid = p[0][0]
+    requests.get(f"http://127.0.0.1:58001/internal/mile?user={udiscordid}&mile={int(distance/1.6)}")
+    if int(eventpnt) != 0:
+        requests.get(f"http://127.0.0.1:58001/internal/event?users={udiscordid}&point={eventpnt}")
+
     if int(distance) > 0:
         distance = "+" + str(distance)
     if int(eventpnt) > 0:
         eventpnt = "+" + str(eventpnt)
 
-    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} Miles\n{eventpnt} Event Points")
+    await AuditLog(adminid, f"Updated user #{userid} points:\n{int(distance / 1.6)} Miles\n{eventpnt} Event Points")
 
     return {"error": False, "response": {"message": "Points updated."}}
 

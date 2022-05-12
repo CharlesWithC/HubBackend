@@ -124,6 +124,12 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                {"name": "XP Earned", "value": f"{xp}", "inline": True}],
                     "footer": {"text": username}, "color": 11730944,\
                         "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": 11730944}}), timeout=3)
+
+            cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
+            p = cur.fetchall()
+            udiscordid = p[0][0]
+            requests.get(f"http://127.0.0.1:58001/internal/mile?user={udiscordid}&mile={int(driven_distance/1.6)}")
+
     except:
         import traceback
         traceback.print_exc()
