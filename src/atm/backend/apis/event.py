@@ -212,7 +212,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     if form["pvt"] == "true":
         pvt = 1
 
-    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{tmplink}', '{departure}', '{destination}', '{distance}', {mts}, {dts}, '{img}', {pvt}, '{title}')")
+    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{tmplink}', '{departure}', '{destination}', '{distance}', {mts}, {dts}, '{img}', {pvt}, '{title}', '', 0)")
     await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 
@@ -490,7 +490,7 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     if ret == f"Updated event #{eventid} attendees\n":
         return {"error": False, "response": {"message": "No changes made."}}
 
-    cur.execute(f"UPDATE event SET attendee = '{','.join(attendees)}' WHERE eventid = {eventid}")
+    cur.execute(f"UPDATE event SET attendee = '{','.join(attendees)}', eventpnt = {points} WHERE eventid = {eventid}")
     conn.commit()
 
     ret = ret.replace("'","''")

@@ -22,7 +22,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distan
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
-    mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT)")
+    mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT, eventpnt INT)")
 # tmplink = '' -> private convoy | m/dts -> meetup/departure timestamp | img -> multiple link separated with ','
 # unit = 1: euro | 2: dollar
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")

@@ -1,8 +1,50 @@
+function toastFactory(type, title, text, time, showConfirmButton) {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: showConfirmButton || false,
+        timer: time || '3000',
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        },
+    });
+
+    Toast.fire({
+        icon: type,
+        title: '<strong>' + title + '</strong>',
+        html: text,
+    });
+}
+
+
 steamids = {};
 driverdata = {};
-const socket = new WebSocket('wss://gateway.navio.app/');
-socket.addEventListener("open", () => {
-    socket.send(
+membersteam = {};
+
+function UpdateSteam() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/steam",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            l = data.response.list;
+            for (var i = 0; i < l.length; i++) {
+                membersteam[l[i].steamid] = l[i].name;
+            }
+        }
+    });
+}
+UpdateSteam();
+setInterval(UpdateSteam, 60000);
+
+const etssocket = new WebSocket('wss://gateway.navio.app/');
+etssocket.addEventListener("open", () => {
+    etssocket.send(
         JSON.stringify({
             op: 1,
             data: {
@@ -14,7 +56,7 @@ socket.addEventListener("open", () => {
     );
 });
 
-socket.addEventListener("message", ({
+etssocket.addEventListener("message", ({
     data: message
 }) => {
     let {
@@ -24,7 +66,7 @@ socket.addEventListener("message", ({
 
     if (type === "AUTH_ACK") {
         setInterval(() => {
-            socket.send(
+            etssocket.send(
                 JSON.stringify({
                     op: 2,
                 }),
@@ -32,9 +74,63 @@ socket.addEventListener("message", ({
         }, data.heartbeat_interval * 1000);
     }
 
-    if (type === "NEW_EVENT" || type === "TELEMETRY_UPDATE") {
+    if (type === "TELEMETRY_UPDATE") {
         steamids[data.driver] = +new Date();
         driverdata[data.driver] = data;
+    }
+
+    if (type === "NEW_EVENT") {
+        if (data.type == 1) {
+            drivername = membersteam[data.driver];
+            if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
+            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> €" + TSeparator(data.revenue), 30000, false);
+        }
+    }
+});
+
+const atssocket = new WebSocket('wss://gateway.navio.app/');
+atssocket.addEventListener("open", () => {
+    atssocket.send(
+        JSON.stringify({
+            op: 1,
+            data: {
+                "subscribe_to_company": 25,
+                //"subscribe_to_all_drivers": true,
+                "game": "ats"
+            },
+        }),
+    );
+});
+
+atssocket.addEventListener("message", ({
+    data: message
+}) => {
+    let {
+        type,
+        data
+    } = JSON.parse(message)
+
+    if (type === "AUTH_ACK") {
+        setInterval(() => {
+            atssocket.send(
+                JSON.stringify({
+                    op: 2,
+                }),
+            );
+        }, data.heartbeat_interval * 1000);
+    }
+
+    if (type === "TELEMETRY_UPDATE") {
+        steamids[data.driver] = +new Date();
+        driverdata[data.driver] = data;
+    }
+
+    if (type === "NEW_EVENT") {
+        if (data.type == 1) {
+            drivername = membersteam[data.driver];
+            if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
+            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> $" + TSeparator(data.revenue), 30000, false);
+        }
     }
 });
 
@@ -48,22 +144,6 @@ function CountOnlineDriver() {
     }
     return Object.keys(steamids).length;
 }
-
-membersteam = {};
-$.ajax({
-    url: "https://drivershub.charlws.com/atm/member/steam",
-    type: "GET",
-    dataType: "json",
-    headers: {
-        "Authorization": "Bearer " + localStorage.getItem("token")
-    },
-    success: function (data) {
-        l = data.response.list;
-        for (var i = 0; i < l.length; i++) {
-            membersteam[l[i].steamid] = l[i].name;
-        }
-    }
-});
 
 setInterval(function () {
     cnt = CountOnlineDriver()
@@ -89,18 +169,18 @@ setInterval(function () {
 
     for (var i = 0; i < cnt; i++) {
         steamid = Object.keys(steamids)[i];
-        name = membersteam[parseInt(steamid)];
-        if (name == "undefined" || name == undefined) name = "Unknown";
+        drivername = membersteam[steamid];
+        if (drivername == "undefined" || drivername == undefined) drivername = "Unknown";
         d = driverdata[steamid];
         truck = d.truck.brand.name + " " + d.truck.name;
         cargo = "<i>Free roaming</i>";
         if (d.job != null)
             cargo = d.job.cargo.name;
-        speed = parseInt(d.truck.speed / 1.6) + "Mi/h";
-        distance = TSeparator(parseInt(d.truck.navigation.distance / 1.6)) + "Mi";
+        speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
+        distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
         $("#onlinedriver").append(`
             <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">${name}</td>
+              <td class="py-5 px-6 font-medium">${drivername}</td>
               <td class="py-5 px-6 font-medium">${truck}</td>
               <td class="py-5 px-6 font-medium">${cargo}</td>
               <td class="py-5 px-6 font-medium">${speed}</td>

@@ -71,7 +71,11 @@ async def dlotStats():
             "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
 
 @app.get("/atm/dlog/leaderboard")
-async def dlotLeaderboard(request: Request, response: Response, authorization: str = Header(None)):
+async def dlotLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
+
+    if page <= 0:
+        page = 1
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -123,18 +127,73 @@ async def dlotLeaderboard(request: Request, response: Response, authorization: s
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt FROM driver WHERE userid >= 0 ORDER BY distance / 1.6 + eventpnt DESC LIMIT 20")
+    if starttime != -1 and endtime != -1:
+        if starttime > endtime:
+            starttime, endtime = endtime, starttime
+        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime}")
+        t = cur.fetchall()
+        userdistance = {}
+        for tt in t:
+            if not tt[0] in userdistance.keys():
+                userdistance[tt[0]] = tt[1]
+            else:
+                userdistance[tt[0]] += tt[1]
+        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
+        t = cur.fetchall()
+        userevent = {}
+        for tt in t:
+            attendees = tt[0].split(",")
+            while "" in attendees:
+                attendees.remove("")
+            for ttt in attendees:
+                attendee = int(ttt)
+                if not attendee in userevent.keys():
+                    userevent[attendee] = tt[1]
+                else:
+                    userevent[attendee] += tt[1]
+        rank = {}
+        for k in userdistance.keys():
+            if k in userevent.keys():
+                rank[k] = round(userdistance[k]/1.6) + userevent[k]
+            else:
+                userevent[k] = 0
+                rank[k] = round(userdistance[k]/1.6)
+        for k in userevent.keys():
+            if not k in rank.keys():
+                rank[k] = userevent[k]
+                userdistance[k] = 0
+
+        rank = dict(sorted(rank.items(),key=lambda x:x[1]))
+        rank = list(rank.keys())[::-1]
+
+        ret = []
+        for userid in rank:
+            cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {userid}")
+            p = cur.fetchall()
+            ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                "distance": userdistance[userid], "eventpnt": userevent[userid], "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid]})
+
+        if (page - 1) * 10 >= len(ret):
+            return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
+
+        ret = ret[(page - 1) * 10 : page * 10]
+        return {"error": False, "response": {"list": ret, "page": page, "tot": len(ret)}}
+
+    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0) ORDER BY distance / 1.6 + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
         cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
         p = cur.fetchall()
-        if len(p) == 0:
-            continue
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "totalpnt": tt[1]})
-    return {"error": False, "response": ret[:5]}
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "totalpnt": tt[1]})
+
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0)")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
 @app.get("/atm/dlog/newdrivers")
 async def dlotNewDriver(request: Request, response: Response, authorization: str = Header(None)):
@@ -191,19 +250,18 @@ async def dlotNewDriver(request: Request, response: Response, authorization: str
 
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid, joints FROM driver WHERE userid >= 0 ORDER BY joints DESC LIMIT 20")
+    cur.execute(f"SELECT userid, joints FROM driver WHERE userid >= 0 ORDER BY joints DESC LIMIT 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
         cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
         p = cur.fetchall()
-        if len(p) == 0:
-            continue
         ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "joints": tt[1]})
-    return {"error": False, "response": ret[:5]}
+
+    return {"error": False, "response": {"list": ret, "page": 1, "tot": 10}}
 
 @app.get("/atm/dlog/list")
-async def dlogList(page: int, request: Request, response: Response, authorization: str = Header(None), speedlimit: Optional[int] = 0):
+async def dlogList(page: int, request: Request, response: Response, authorization: str = Header(None), speedlimit: Optional[int] = 0, quserid: Optional[int] = -1):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -256,10 +314,15 @@ async def dlogList(page: int, request: Request, response: Response, authorizatio
     cur = conn.cursor()
     if page <= 0:
         page = 1
+
+    limit = ""
+    if quserid != -1:
+        limit = f"AND userid = {quserid}"
+    
     if speedlimit == 0:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     else:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -289,7 +352,7 @@ async def dlogList(page: int, request: Request, response: Response, authorizatio
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:

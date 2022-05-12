@@ -1,5 +1,112 @@
 rolelist = {};
 
+token = localStorage.getItem("token");
+$(".pageinput").val("1");
+
+function loadStats() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            d = data.response;
+            drivers = sigfig(parseInt(d.drivers));
+            newdrivers = sigfig(parseInt(d.newdrivers));
+            drivers = drivers.split(".")[0];
+            newdrivers = newdrivers.split(".")[0];
+            jobs = sigfig(parseInt(d.jobs));
+            newjobs = sigfig(parseInt(d.newjobs));
+            jobs = jobs.split(".")[0];
+            newjobs = newjobs.split(".")[0];
+            distance = sigfig(d.distance / 1.6) + "Mi";
+            newdistance = sigfig(d.newdistance / 1.6) + "Mi";
+            europrofit = "€" + sigfig(d.europrofit);
+            neweuroprofit = "€" + sigfig(d.neweuroprofit);
+            dollarprofit = "$" + sigfig(d.dollarprofit);
+            newdollarprofit = "$" + sigfig(d.newdollarprofit);
+            fuel = sigfig(d.fuel) + "L";
+            newfuel = sigfig(d.newfuel) + "L";
+            $("#alldriver").html(drivers);
+            $("#newdriver").html(newdrivers);
+            $("#alldistance").html(distance);
+            $("#newdistance").html(newdistance);
+            $("#alljob").html(jobs);
+            $("#newjob").html(newjobs);
+            $("#allprofit").html(europrofit + " + " + dollarprofit);
+            $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
+            $("#allfuel").html(fuel);
+            $("#newfuel").html(newfuel);
+        }
+    });
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + token
+        },
+        success: function (data) {
+            users = data.response.list;
+            $("#leaderboard").empty();
+            for (var i = 0; i < 5; i++) {
+                user = users[i];
+                userid = user.userid;
+                name = user.name;
+                discordid = user.discordid;
+                avatar = user.avatar;
+                totalpnt = TSeparator(parseInt(user.totalpnt));
+                if (avatar != null) {
+                    if (avatar.startsWith("a_"))
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                    else
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+                } else {
+                    avatar = "/images/atm-black.png";
+                }
+                $("#leaderboard").append(`<tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+              <td class="py-5 px-6">${totalpnt}</td>
+            </tr>`);
+            }
+        }
+    });
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + token
+        },
+        success: function (data) {
+            users = data.response.list;
+            $("#newdriverTable").empty();
+            for (var i = 0; i < 5; i++) {
+                user = users[i];
+                userid = user.userid;
+                name = user.name;
+                discordid = user.discordid;
+                avatar = user.avatar;
+                dt = new Date(user.joints * 1000);
+                joindt = pad(dt.getDate(), 2) + "/" + pad(dt.getMonth() + 1, 2);
+                if (avatar != null) {
+                    if (avatar.startsWith("a_"))
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                    else
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+                } else {
+                    avatar = "/images/atm-black.png";
+                }
+                $("#newdriverTable").append(`<tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+              <td class="py-5 px-6">${joindt}</td>
+            </tr>`);
+            }
+        }
+    });
+}
+
 function toastFactory(type, title, text, time, showConfirmButton) {
     const Toast = Swal.mixin({
         toast: true,
@@ -51,6 +158,9 @@ function ShowTab(tabname, btnname) {
     }
     if (tabname == "#AuditLog") {
         loadAuditLog();
+    }
+    if (tabname == "#Leaderboard") {
+        loadLeaderboard();
     }
 }
 
@@ -939,6 +1049,7 @@ function validate() {
     }
     if (userid != -1) {
         $("#AllMemberBtn").show();
+        $("#LeaderboardBtn").show();
     }
     $("#recruitment").show();
     $.ajax({
@@ -1029,6 +1140,83 @@ function validate() {
             window.location.href = "/login";
         }
     });
+}
+
+function loadLeaderboard() {
+    page = $("#lpages").val();
+    if (page == "") page = 1;
+    if (page == undefined) page = 1;
+    $("#loadLeaderboardBtn").html("...");
+    $("#loadLeaderboardBtn").attr("disabled", "disabled");
+    starttime = -1;
+    endtime = -1;
+    if($("#lbstart").val() != "" && $("#lbend").val() != ""){
+        starttime = + new Date($("#lbstart").val()) / 1000;
+        endtime = + new Date($("#lbend").val()) / 1000;
+    }
+    console.log(starttime);
+    console.log(endtime);
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            $("#loadLeaderboardBtn").html("Go");
+            $("#loadLeaderboardBtn").removeAttr("disabled");
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            $("#leaderboardTable").empty();
+            const leaderboard = data.response.list;
+
+            if (leaderboard.length == 0) {
+                $("#leaderboardTableHead").hide();
+                $("#leaderboardTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+                return;
+            }
+            $("#leaderboardTableHead").show();
+            $("#ltotpages").html(Math.ceil(data.response.tot / 10));
+            for (i = 0; i < leaderboard.length; i++) {
+                user = leaderboard[i];
+                userid = user.userid;
+                name = user.name;
+                distance = TSeparator(parseInt(user.distance / 1.6));
+                discordid = user.discordid;
+                avatar = user.avatar;
+                totalpnt = TSeparator(parseInt(user.totalpnt));
+                if (avatar != null) {
+                    if (avatar.startsWith("a_"))
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                    else
+                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+                } else {
+                    avatar = "/images/atm-black.png";
+                }
+                $("#leaderboardTable").append(`<tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+                <td class="py-5 px-6">${distance}</td>
+                <td class="py-5 px-6">${user.eventpnt}</td>
+              <td class="py-5 px-6">${totalpnt}</td>
+            </tr>`);
+            }
+        },
+        error: function (data) {
+            $("#loadLeaderboardBtn").html("Go");
+            $("#loadLeaderboardBtn").removeAttr("disabled");
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load leaderboard. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
 }
 
 function loadDelivery() {
@@ -1137,7 +1325,7 @@ function deliveryDetail(logid) {
                     destination_city = d.destination_city.name;
                     truck = d.truck.brand.name + " " + d.truck.name;
                     license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
-                    top_speed = parseInt(d.truck.top_speed / 1.6);
+                    top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
                     trailer = "";
                     trs = "";
                     if (d.trailers.length > 1) trs = "s";
@@ -1766,7 +1954,84 @@ function dismissUser() {
     });
 }
 
+curprofile = -1;
+
+function loadUserDelivery() {
+    page = $("#udpages").val();
+    if (page == "") page = 1;
+    if (page == undefined) page = 1;
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&page=" + page,
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            if (data.userDeliveryTable) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            $("#userDeliveryTable").empty();
+            const deliveries = data.response.list;
+
+            if (deliveries.length == 0) {
+                $("#userDeliveryTableHead").hide();
+                $("#userDeliveryTable").append(`
+            <tr class="text-xs bg-gray-50">
+              <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+                return;
+            }
+            $("#userDeliveryTableHead").show();
+            $("#udtotpages").html(Math.ceil(data.response.tot / 10));
+            for (i = 0; i < deliveries.length; i++) {
+                const delivery = deliveries[i];
+                // Fill the table using this format: 
+                // <tr class="text-xs bg-gray-50">
+                //  <td class="py-5 px-6 font-medium">id here</td>
+                //    <td class="py-5 px-6 font-medium">name here</td>
+                //  </tr>
+                //
+                distance = TSeparator(parseInt(delivery.distance / 1.6));
+                cargo_mass = parseInt(delivery.cargo_mass / 1000);
+                unittxt = "€";
+                if (delivery.unit == 2) unittxt = "$";
+                profit = TSeparator(delivery.profit);
+                color = "black";
+                if (delivery.profit < 0) color = "grey";
+                dtl = "";
+                if (localStorage.getItem("token") != "guest") {
+                    dtl =
+                        `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
+                }
+                $("#userDeliveryTable").append(`
+            <tr class="text-xs bg-gray-50" style="color:${color}">
+              <td class="py-5 px-6 font-medium">${delivery.logid}</td>
+              <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
+              <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
+              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
+              <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
+              ${dtl}
+            </tr>`);
+            }
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load delivery log. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
 function loadProfile(userid) {
+    $("#udpages").val("1");
+    curprofile = userid;
+    loadUserDelivery(userid);
     tabname = "#ProfileTab";
     $(".tabs").hide();
     $(tabname).show();
@@ -2486,6 +2751,9 @@ function updateStaffPosition() {
 }
 
 $(document).ready(function () {
+    loadStats();
+    setInterval(loadStats, 60000);
+
     $('#searchname').keypress(function (e) {
         if (e.which == 13) loadMembers();
     });
@@ -2501,7 +2769,7 @@ $(document).ready(function () {
                     "%cUnless you understand exactly what you are doing, close this window and stay safe.",
                     "font-size: 15px;");
                 console.log(
-                    "%cIf you do understand exactly what you are doing, you should come work with us, submit an application at My Applications",
+                    "%cIf you do understand exactly what you are doing, you should come work with us, simply submit an application and we'll get back to you very soon",
                     "font-size: 15px;");
             }, 800 * i);
         }
@@ -2607,107 +2875,6 @@ $(document).ready(function () {
             }
             positionstxt = positionstxt.slice(0, -1);
             $("#staffposedit").val(positionstxt);
-        }
-    });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/stats",
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            d = data.response;
-            drivers = sigfig(parseInt(d.drivers));
-            newdrivers = sigfig(parseInt(d.newdrivers));
-            drivers = drivers.split(".")[0];
-            newdrivers = newdrivers.split(".")[0];
-            jobs = sigfig(parseInt(d.jobs));
-            newjobs = sigfig(parseInt(d.newjobs));
-            jobs = jobs.split(".")[0];
-            newjobs = newjobs.split(".")[0];
-            distance = sigfig(d.distance / 1.6) + "Mi";
-            newdistance = sigfig(d.newdistance / 1.6) + "Mi";
-            europrofit = "€" + sigfig(d.europrofit);
-            neweuroprofit = "€" + sigfig(d.neweuroprofit);
-            dollarprofit = "$" + sigfig(d.dollarprofit);
-            newdollarprofit = "$" + sigfig(d.newdollarprofit);
-            fuel = sigfig(d.fuel) + "L";
-            newfuel = sigfig(d.newfuel) + "L";
-            $("#alldriver").html(drivers);
-            $("#newdriver").html(newdrivers);
-            $("#alldistance").html(distance);
-            $("#newdistance").html(newdistance);
-            $("#alljob").html(jobs);
-            $("#newjob").html(newjobs);
-            $("#allprofit").html(europrofit + " + " + dollarprofit);
-            $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
-            $("#allfuel").html(fuel);
-            $("#newfuel").html(newfuel);
-        }
-    });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
-        type: "GET",
-        dataType: "json",
-        headers: {
-            "Authorization": "Bearer " + token
-        },
-        success: function (data) {
-            users = data.response;
-            $("#leaderboard").empty();
-            for (var i = 0; i < users.length; i++) {
-                user = users[i];
-                userid = user.userid;
-                name = user.name;
-                discordid = user.discordid;
-                avatar = user.avatar;
-                totalpnt = TSeparator(parseInt(user.totalpnt));
-                if (avatar != null) {
-                    if (avatar.startsWith("a_"))
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
-                    else
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
-                } else {
-                    avatar = "/images/atm-black.png";
-                }
-                $("#leaderboard").append(`<tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
-              <td class="py-5 px-6">${totalpnt}</td>
-            </tr>`);
-            }
-        }
-    });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
-        type: "GET",
-        dataType: "json",
-        headers: {
-            "Authorization": "Bearer " + token
-        },
-        success: function (data) {
-            users = data.response;
-            $("#newdriverTable").empty();
-            for (var i = 0; i < users.length; i++) {
-                user = users[i];
-                userid = user.userid;
-                name = user.name;
-                discordid = user.discordid;
-                avatar = user.avatar;
-                dt = new Date(user.joints * 1000);
-                joindt = pad(dt.getDate(), 2) + "/" + pad(dt.getMonth() + 1, 2);
-                if (avatar != null) {
-                    if (avatar.startsWith("a_"))
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
-                    else
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
-                } else {
-                    avatar = "/images/atm-black.png";
-                }
-                $("#newdriverTable").append(`<tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
-              <td class="py-5 px-6">${joindt}</td>
-            </tr>`);
-            }
         }
     });
     $("#annloadmore").click(function () {

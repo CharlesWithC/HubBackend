@@ -66,7 +66,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         revenue = -float(d["data"]["object"]["events"][-1]["meta"]["penalty"])
     if driven_distance < 0:
         driven_distance = 0
-    top_speed = d["data"]["object"]["truck"]["top_speed"]
+    top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
     cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
     
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")

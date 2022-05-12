@@ -730,5 +730,5 @@ async def memberSteam(request: Request, response: Response, authorization: str =
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"steamid": tt[0], "name": tt[1]})
+        ret.append({"steamid": str(tt[0]), "name": tt[1]})
     return {"error": False, "response": {"list": ret}}
