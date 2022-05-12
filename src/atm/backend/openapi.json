@@ -503,6 +503,36 @@
                 }
             }
         },
+        "/atm/member/steam": {
+            "get": {
+                "summary": "Get Full Member Name - SteamID List (For live data)",
+                "tags": ["member"],
+                "operationId": "getMemberSteamFull",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/member/info": {
             "get": {
                 "summary": "Get Member Information",
