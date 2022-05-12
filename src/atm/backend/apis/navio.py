@@ -11,6 +11,19 @@ from app import app, config
 from db import newconn
 from functions import *
 
+from random import randint
+
+GIFS = ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+    "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
+    "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
+    "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",
+    "https://c.tenor.com/jEW-3JELMG4AAAAM/skidding-white-pick-up.gif",
+    "https://c.tenor.com/JGw-jxHDAGoAAAAC/truck-lol.gif",
+    "https://c.tenor.com/2B9tkbj7CVEAAAAM/explode-truck.gif",
+    "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
+    "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
+    "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"]
+
 @app.post("/atm/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
     conn = newconn()
@@ -92,6 +105,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         if not game.startswith("e"):
             munit = "$"
         if e == "job.delivered":
+            k = randint(0, len(GIFS)-1)
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
                     "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
@@ -101,8 +115,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                {"name": "Revenue", "value": f"{munit}{revenue}", "inline": True},
                                {"name": "XP Earned", "value": f"{xp}", "inline": True}],
                     "footer": {"text": username}, "color": 11730944,\
-                        "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
-
+                        "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": 11730944}}), timeout=3)
     except:
         import traceback
         traceback.print_exc()
