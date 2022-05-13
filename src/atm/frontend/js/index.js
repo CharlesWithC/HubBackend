@@ -132,6 +132,9 @@ function ShowTab(tabname, btnname) {
     $(tabname).show();
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
+    if(tabname == "#Map"){
+        LoadETS2Map();
+    }
     if (tabname == "#SubmitApp") {
         $("#driverappsel").attr("selected", "selected");
     }
