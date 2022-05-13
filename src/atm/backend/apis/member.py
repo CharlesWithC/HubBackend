@@ -19,7 +19,7 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
                 60: "Convoy Supervisor", 61: "Convoy Control",\
                  98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
 
-LEVEL = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
+RANKING = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
 
 @app.get('/atm/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
@@ -742,8 +742,15 @@ async def memberSteam(request: Request, response: Response, authorization: str =
         ret.append({"steamid": str(tt[0]), "name": tt[1]})
     return {"error": False, "response": {"list": ret}}
 
-@app.get("/atm/member/upgrade")
-async def memberUpgrade(request: Request, response: Response, authorization: str = Header(None)):
+def point2rank(point):
+    keys = list(RANKING.keys())
+    for i in range(len(keys)):
+        if point < keys[i]:
+            return RANKING[keys[i-1]]
+    return RANKING[1000000]
+
+@app.patch("/atm/member/discordrole")
+async def memberDiscordrole(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -785,4 +792,43 @@ async def memberUpgrade(request: Request, response: Response, authorization: str
                 conn.commit()
                 response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
+    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    userid = t[0][0]
+    if userid == -1:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     
+    cur.execute(f"SELECT distance, eventpnt FROM driver WHERE userid = {userid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": True, "descriptor": "Member not driver"}
+    totalpnt = int(t[0][0] / 1.6 + t[0][1])
+    
+    rank = point2rank(totalpnt)
+
+    try:
+        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        r=requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}", headers=headers, timeout = 3)
+        d = json.loads(r.text)
+        if "roles" in d:
+            roles = d["roles"]
+            curroles = []
+            for role in roles:
+                if int(role) in list(RANKING.values()):
+                    curroles.append(int(role))
+            if rank in curroles:
+                return {"error": True, "descriptor": "You already have the role."}
+            else:
+                requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
+                for role in curroles:
+                    requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                return {"error": False, "response": "You have been given the role."}
+        else:
+            return {"error": True, "descriptor": "Member not in Discord Server"}
+
+    except:
+        pass

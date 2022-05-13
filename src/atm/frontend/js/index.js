@@ -920,7 +920,7 @@ function ShowStaffTabs() {
     avatar = localStorage.getItem("avatar");
     discordid = localStorage.getItem("discordid");
     highestrole = localStorage.getItem("highestrole");
-    if(highestrole == undefined || highestrole == "undefined") highestrole = "Loner";
+    if (highestrole == undefined || highestrole == "undefined") highestrole = "Loner";
     $("#name").html(name);
     $("#role").html(highestrole);
     if (avatar != null) {
@@ -1052,8 +1052,7 @@ function validate() {
         return;
     }
     if (userid != -1) {
-        $("#AllMemberBtn").show();
-        $("#LeaderboardBtn").show();
+        $("#memberOnlyTabs").show();
     }
     $("#recruitment").show();
     $.ajax({
@@ -1093,6 +1092,7 @@ function validate() {
                 localStorage.setItem("avatar", data.response.avatar);
                 localStorage.setItem("discordid", data.response.discordid);
                 localStorage.setItem("userid", data.response.userid);
+                userid = data.response.userid;
                 if (data.response.userid != -1) {
                     $("#AllMemberBtn").show();
                 }
@@ -1120,7 +1120,7 @@ function validate() {
                         rolelist = data.response;
                         hrole = data.response[highestrole];
                         localStorage.setItem("highestrole", hrole);
-                        if(hrole == undefined || hrole == "undefined") hrole = "Loner";
+                        if (hrole == undefined || hrole == "undefined") hrole = "Loner";
                         $("#role").html(hrole);
                         roleids = Object.keys(rolelist);
                         for (var i = 0; i < roleids.length; i++) {
@@ -1135,6 +1135,26 @@ function validate() {
                         }
                     }
                 });
+                if (userid != -1) {
+                    $.ajax({
+                        url: "https://drivershub.charlws.com/atm/member/info?userid=" + userid,
+                        type: "GET",
+                        dataType: "json",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        success: function (data) {
+                            if (data.error == false) {
+                                d = data.response;
+                                points = parseInt(d.distance / 1.6 + d.eventpnt);
+                                rank = point2rank(points);
+                                $("#ranktotpoints").html(TSeparator(points) + " - " + rank);
+                                if($("#role").html() == "Driver")
+                                    $("#role").html(rank);
+                            }
+                        }
+                    });
+                }
             } else {
                 localStorage.removeItem("token");
                 window.location.href = "/login";
@@ -1205,11 +1225,39 @@ function loadLeaderboard() {
                 $("#leaderboardTable").append(`<tr class="text-xs bg-gray-50">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+                <td class="py-5 px-6">${point2rank(user.totalpnt)}</td>
                 <td class="py-5 px-6">${distance}</td>
                 <td class="py-5 px-6">${user.eventpnt}</td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
             }
+        },
+        error: function (data) {
+            $("#loadLeaderboardBtn").html("Go");
+            $("#loadLeaderboardBtn").removeAttr("disabled");
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load leaderboard. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
+function requestRole() {
+    $("#requestRoleBtn").html("Working...");
+    $("#requestRoleBtn").attr("disabled", "disabled");
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/member/discordrole",
+        type: "PATCH",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            $("#requestRoleBtn").html("Request Role");
+            $("#requestRoleBtn").removeAttr("disabled");
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            else return toastFactory("success", "Success", "You have got your new role!", 5000, false);
         },
         error: function (data) {
             $("#loadLeaderboardBtn").html("Go");
@@ -2063,7 +2111,7 @@ function loadUserDelivery() {
 }
 
 function loadProfile(userid) {
-    if(userid < 0){
+    if (userid < 0) {
         return;
     }
     $("#udpages").val("1");
@@ -2087,13 +2135,13 @@ function loadProfile(userid) {
                 d = data.response;
                 roles = d.roles;
                 rtxt = "";
-                for (var i = 0; i < roles.length; i++){
-                    if(roles[i] == 0) color = "black";
-                    else if(roles[i] < 10) color = "#770202";
-                    else if(roles[i] <= 98) color = "#ff0000";
-                    else if(roles[i] == 99) color = "#4e6f7b";
-                    else if(roles[i] == 100) color = "#b30000";
-                    else if(roles[i] > 100) color = "grey";
+                for (var i = 0; i < roles.length; i++) {
+                    if (roles[i] == 0) color = "black";
+                    else if (roles[i] < 10) color = "#770202";
+                    else if (roles[i] <= 98) color = "#ff0000";
+                    else if (roles[i] == 99) color = "#4e6f7b";
+                    else if (roles[i] == 100) color = "#b30000";
+                    else if (roles[i] > 100) color = "grey";
                     if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
                     else rtxt += "Unknown Role (ID " + roles[i] + "), ";
                 }
@@ -2204,7 +2252,7 @@ function genNewAppToken() {
             $("#genAppTokenBtn").removeAttr("disabled");
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             $("#userAppToken").html(data.response.token);
-            return toastFactory("success", "Success", "APP Token generated!", 5000, false);
+            return toastFactory("success", "Success", "Application Token generated!", 5000, false);
         },
         error: function (data) {
             $("#genAppTokenBtn").html("Reset Token");

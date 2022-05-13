@@ -197,3 +197,38 @@ function parseMarkdown(markdownText) {
 
 	return htmlText.trim()
 }
+
+RANKING = {
+  0: "Trainee",
+  2000: "Rookie",
+  10000: "Driver",
+  15000: "Experience Driver",
+  25000: "Enthusiast Driver",
+  40000: "Master Driver",
+  50000: "Professional Driver",
+  75000: "Veteran Driver",
+  80000: "Elite Driver",
+  100000: "Ultimate Driver",
+  150000: "Cargo Specialist",
+  200000: "Ticketmaster",
+  250000: "Road Expert",
+  300000: "Ambitious Driver",
+  350000: "Long Haul Driver",
+  400000: "Big Rig Driver",
+  450000: "Cargo Elite",
+  500000: "Legendary Driver",
+  600000: "The Boss Driver",
+  700000: "Prestige Driver",
+  800000: "Global Driver",
+  900000: "King of the Road",
+  1000000: "Mile High Driver"}
+
+function point2rank(point){
+  keys = Object.keys(RANKING);
+  for(var i = 0; i < keys.length; i++){
+    if(point < keys[i]){
+      return RANKING[keys[i-1]];
+    }
+  }
+  return RANKING[1000000];
+}
