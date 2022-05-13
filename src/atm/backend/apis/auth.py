@@ -50,7 +50,7 @@ async def userCallback(code: str, request: Request, response: Response):
         cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         username = user_data['username']
-        username = username.replace("'", "''")
+        username = username.replace("'", "''").replace(",","")
         email = user_data['email']
         email = email.replace("'", "''")
         if len(t) == 0:

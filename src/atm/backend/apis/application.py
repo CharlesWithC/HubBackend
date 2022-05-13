@@ -71,7 +71,7 @@ async def newApplication(request: Request, response: Response, authorization: st
         p = cur.fetchall()
         if len(p) > 0:
             return {"error": True, "descriptor": "You are already a driver!"}
-        cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND userid = {userid}")
+        cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND discordid = {discordid}")
         p = cur.fetchall()
         if len(p) > 0:
             return {"error": True, "descriptor": "You have already made a driver application! Use 'Add Message' instead of creating new application!"}

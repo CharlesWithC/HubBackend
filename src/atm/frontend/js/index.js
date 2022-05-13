@@ -462,7 +462,16 @@ function FetchEventAttendee() {
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
 
             const event = data.response;
-            $("#attendeeId").val(event.attendeeid.replaceAll(",", ", "));
+            attendeeids = event.attendeeid.split(",");
+            attendeenames = event.attendee.split(",");
+            $(".attendee").remove();
+            for (let i = 0; i < attendeeids.length; i++) {
+                userid = attendeeids[i];
+                username = attendeenames[i];
+                if (userid == "") continue;
+                $("#attendeeId").before(`<span class='tag attendee' id='attendeeid-${userid}'>${username} (${userid})
+                <a style='cursor:pointer' onclick='$("#attendeeid-${userid}").remove()'><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16"> <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> </svg> </a></span>`);
+            }
         },
         error: function (data) {
             $("#fetchEventAttendeeBtn").html("Fetch Existing Attendees");
@@ -480,7 +489,11 @@ function UpdateEventAttendees() {
     if (!isNumber(eventid)) {
         return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
     }
-    attendeeid = $("#attendeeId").val();
+    attendeeid = "";
+    $(".attendee").each(function (index, value) {
+        attendeeid = $(value).prop('id').replaceAll("attendeeid-", "") + ",";
+    })
+    attendeeid = attendeeid.substring(0, attendeeid.length - 1);
     points = $("#attendeePoints").val();
     if (!isNumber(points)) {
         return toastFactory("error", "Error", "Points must be in integar!", 5000, false);
@@ -545,7 +558,7 @@ function NewEvent() {
 
     op = "create";
     if (isNumber(eventid)) {
-        if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
+        if (title != "" || from != "" || to != "" || distance != "") {
             op = "update";
         } else {
             op = "delete";
@@ -553,11 +566,6 @@ function NewEvent() {
     }
 
     if (op == "update") {
-        if (!isNumber(mts) || !isNumber(dts)) {
-            $("#newEventBtn").prop("disabled", false);
-            $("#newEventBtn").html("Submit");
-            return toastFactory("error", "Error", "Meetup & Departure Time must be in integar timestamp!", 5000, false);
-        }
         eventid = parseInt(eventid);
         $.ajax({
             url: "https://drivershub.charlws.com/atm/event",
@@ -621,11 +629,6 @@ function NewEvent() {
             }
         });
     } else if (op == "create") {
-        if (!isNumber(mts) || !isNumber(dts)) {
-            $("#newEventBtn").prop("disabled", false);
-            $("#newEventBtn").html("Submit");
-            return toastFactory("error", "Error", "Meetup & Departure Time must be in integar timestamp!", 5000, false);
-        }
         $.ajax({
             url: "https://drivershub.charlws.com/atm/event",
             type: "POST",
@@ -1150,9 +1153,9 @@ function loadLeaderboard() {
     $("#loadLeaderboardBtn").attr("disabled", "disabled");
     starttime = -1;
     endtime = -1;
-    if($("#lbstart").val() != "" && $("#lbend").val() != ""){
-        starttime = + new Date($("#lbstart").val()) / 1000;
-        endtime = + new Date($("#lbend").val()) / 1000;
+    if ($("#lbstart").val() != "" && $("#lbend").val() != "") {
+        starttime = +new Date($("#lbstart").val()) / 1000;
+        endtime = +new Date($("#lbend").val()) / 1000;
     }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
@@ -1225,9 +1228,9 @@ function loadDelivery() {
     $("#loadDeliveryBtn").attr("disabled", "disabled");
     starttime = -1;
     endtime = -1;
-    if($("#dstart").val() != "" && $("#dend").val() != ""){
-        starttime = + new Date($("#dstart").val()) / 1000;
-        endtime = + new Date($("#dend").val()) / 1000;
+    if ($("#dstart").val() != "" && $("#dend").val() != "") {
+        starttime = +new Date($("#dstart").val()) / 1000;
+        endtime = +new Date($("#dend").val()) / 1000;
     }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
@@ -1282,7 +1285,7 @@ function loadDelivery() {
                 $("#deliveryTable").append(`
             <tr class="text-xs bg-gray-50" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
-              <td class="py-5 px-6 font-medium">${delivery.name}</td>
+              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
               <td class="py-5 px-6 font-medium">${distance}Mi</td>
@@ -1750,48 +1753,63 @@ function memberDetail(userid) {
 lastfetch = -1;
 
 function fetchRoles() {
-    userid = $("#memberroleid").val();
-    if (!isNumber(userid)) {
-        toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
-        return;
-    }
+    val = $("#memberroleid").val();
     $("#fetchRolesBtn").html("Working...");
     $("#fetchRolesBtn").attr("disabled", "disabled");
     $("#rolelist").children().children().prop("checked", false);
     $("#memberrolename").html("");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
         type: "GET",
         dataType: "json",
         headers: {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
-            $("#fetchRolesBtn").html("Fetch Existing Roles");
-            $("#fetchRolesBtn").removeAttr("disabled");
-            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
-            info = "";
-            if (!data.error) {
-                lastfetch = userid;
-                d = data.response;
-                roles = d.roles;
-                rtxt = "";
-                $("#memberrolename").html(d.name);
-                for (var i = 0; i < roles.length; i++)
-                    $("#role" + roles[i]).prop("checked", true);
-                return toastFactory("success", "Success!", "Existing roles are checked!", 5000, false);
+            d = data.response.list;
+            if (d.length == 0) {
+                return toastFactory("error", "Error:", "No member with name " + val + " found.", 5000, false);
             }
+            userid = d[0].userid;
+
+            $.ajax({
+                url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+                type: "GET",
+                dataType: "json",
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem("token")
+                },
+                success: function (data) {
+                    $("#fetchRolesBtn").html("Fetch Existing Roles");
+                    $("#fetchRolesBtn").removeAttr("disabled");
+                    if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+                    info = "";
+                    if (!data.error) {
+                        lastfetch = userid;
+                        d = data.response;
+                        roles = d.roles;
+                        rtxt = "";
+                        $("#memberrolename").html(d.name + " (" + userid + ")");
+                        for (var i = 0; i < roles.length; i++)
+                            $("#role" + roles[i]).prop("checked", true);
+                        return toastFactory("success", "Success!", "Existing roles are fetched!", 5000, false);
+                    }
+                },
+                error: function (data) {
+                    $("#fetchRolesBtn").html("Fetch Existing Roles");
+                    $("#fetchRolesBtn").removeAttr("disabled");
+                    toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+                        false);
+                    console.warn(
+                        `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+                    console.log(data);
+                }
+            });
         },
         error: function (data) {
-            $("#fetchRolesBtn").html("Fetch Existing Roles");
-            $("#fetchRolesBtn").removeAttr("disabled");
-            toastFactory("error", "Error:", "Please check the console for more info.", 5000,
-                false);
-            console.warn(
-                `Failed to load member details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
-            console.log(data);
+            return toastFactory("error", "Error:", "Failed to get User ID", 5000, false);
         }
-    });
+    })
 }
 
 function updateMemberRoles() {
@@ -1974,9 +1992,9 @@ function loadUserDelivery() {
     $("#loadUserDeliveryBtn").attr("disabled", "disabled");
     starttime = -1;
     endtime = -1;
-    if($("#udstart").val() != "" && $("#udend").val() != ""){
-        starttime = + new Date($("#udstart").val()) / 1000;
-        endtime = + new Date($("#udend").val()) / 1000;
+    if ($("#udstart").val() != "" && $("#udend").val() != "") {
+        starttime = +new Date($("#udstart").val()) / 1000;
+        endtime = +new Date($("#udend").val()) / 1000;
     }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
@@ -2776,17 +2794,61 @@ $(document).ready(function () {
     loadStats();
     setInterval(loadStats, 60000);
 
-    $('#searchname').keypress(function (e) {
+    $('#searchname').keydown(function (e) {
         if (e.which == 13) loadMembers();
     });
-    $('#dend').keypress(function (e) {
+    $('#dend').keydown(function (e) {
         if (e.which == 13) loadDelivery();
     });
-    $('#udend').keypress(function (e) {
+    $('#udend').keydown(function (e) {
         if (e.which == 13) loadUserDelivery();
     });
-    $('#lbend').keypress(function (e) {
+    $('#lbend').keydown(function (e) {
         if (e.which == 13) loadLeaderboard();
+    });
+    $('#memberroleid').keydown(function (e) {
+        if (e.which == 13) fetchRoles();
+    });
+    $('#attendeeId').keydown(function (e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == 13) {
+            val = $("#attendeeId").val();
+            if (val == "") return;
+            $.ajax({
+                url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
+                type: "GET",
+                dataType: "json",
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem("token")
+                },
+                success: function (data) {
+                    d = data.response.list;
+                    if (d.length == 0) {
+                        return toastFactory("error", "Error:", "No member with name " + val + " found.", 5000, false);
+                    }
+                    userid = d[0].userid;
+                    username = d[0].name;
+                    if ($(`#attendeeid-${userid}`).length > 0) {
+                        return toastFactory("error", "Error:", "Member already added.", 5000, false);
+                    }
+                    $("#attendeeId").before(`<span class='tag attendee' id='attendeeid-${userid}'>${username} (${userid})
+                        <a style='cursor:pointer' onclick='$("#attendeeid-${userid}").remove()'><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16"> <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> </svg> </a></span>`);
+                    $("#attendeeId").val("");
+                },
+                error: function (data) {
+                    return toastFactory("error", "Error:", "Failed to get User ID", 5000, false);
+                }
+            })
+        } else if (keyCode == 8) {
+            e.preventDefault();
+            val = $("#attendeeId").val();
+            if (val != "") {
+                $("#attendeeId").val(val.substring(0, val.length - 1));
+                return;
+            }
+            ch = $("#attendeeIdWrap").children();
+            ch[ch.length - 2].remove();
+        }
     });
 
     function devwarn() {

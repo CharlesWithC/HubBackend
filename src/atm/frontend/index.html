@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
   <link rel="stylesheet" href="css/recuritmentcenter.css">
+  <link rel="stylesheet" href="css/index.css">
   <script src="js/main.js"></script>
   <script src="js/functions.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
@@ -116,7 +117,19 @@
                 class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Leaderboard', '#LeaderboardBtn')">
                 <span class="inline-block mr-3">
-                  <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M15 21H9V12.6C9 12.2686 9.26863 12 9.6 12H14.4C14.7314 12 15 12.2686 15 12.6V21Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/> <path d="M20.4 21H15V18.1C15 17.7686 15.2686 17.5 15.6 17.5H20.4C20.7314 17.5 21 17.7686 21 18.1V20.4C21 20.7314 20.7314 21 20.4 21Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/> <path d="M9 21V16.1C9 15.7686 8.73137 15.5 8.4 15.5H3.6C3.26863 15.5 3 15.7686 3 16.1V20.4C3 20.7314 3.26863 21 3.6 21H9Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/> <path d="M10.8056 5.11325L11.7147 3.1856C11.8314 2.93813 12.1686 2.93813 12.2853 3.1856L13.1944 5.11325L15.2275 5.42427C15.4884 5.46418 15.5923 5.79977 15.4035 5.99229L13.9326 7.4917L14.2797 9.60999C14.3243 9.88202 14.0515 10.0895 13.8181 9.96099L12 8.96031L10.1819 9.96099C9.94851 10.0895 9.67568 9.88202 9.72026 9.60999L10.0674 7.4917L8.59651 5.99229C8.40766 5.79977 8.51163 5.46418 8.77248 5.42427L10.8056 5.11325Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/> </svg>  </span>
+                  <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 21H9V12.6C9 12.2686 9.26863 12 9.6 12H14.4C14.7314 12 15 12.2686 15 12.6V21Z"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M20.4 21H15V18.1C15 17.7686 15.2686 17.5 15.6 17.5H20.4C20.7314 17.5 21 17.7686 21 18.1V20.4C21 20.7314 20.7314 21 20.4 21Z"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M9 21V16.1C9 15.7686 8.73137 15.5 8.4 15.5H3.6C3.26863 15.5 3 15.7686 3 16.1V20.4C3 20.7314 3.26863 21 3.6 21H9Z"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M10.8056 5.11325L11.7147 3.1856C11.8314 2.93813 12.1686 2.93813 12.2853 3.1856L13.1944 5.11325L15.2275 5.42427C15.4884 5.46418 15.5923 5.79977 15.4035 5.99229L13.9326 7.4917L14.2797 9.60999C14.3243 9.88202 14.0515 10.0895 13.8181 9.96099L12 8.96031L10.1819 9.96099C9.94851 10.0895 9.67568 9.88202 9.72026 9.60999L10.0674 7.4917L8.59651 5.99229C8.40766 5.79977 8.51163 5.46418 8.77248 5.42427L10.8056 5.11325Z"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /> </svg> </span>
                 <span>Leaderboard</span>
                 <span class="inline-block ml-auto">
                   <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
@@ -313,9 +326,8 @@
                 class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
                 name="" style="width:150px;display:inline" placeholder="">
               <p style="display:inline">~</p>
-              <input id="udend"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
-                name="" style="width:150px;display:inline" placeholder="">
+              <input id="udend" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="date" name="" style="width:150px;display:inline" placeholder="">
               <button type="button" style="display:inline"
                 class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
                 onclick="loadUserDelivery()" id="loadUserDeliveryBtn">Go</button>
@@ -349,8 +361,8 @@
           <div class="mb-6" style="float:right">
             <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
             <input id="udpages" style="width:50px;display:inline"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-              rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
             <button type="button"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="loadUserDelivery()">Show</button></div>
@@ -739,8 +751,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="mpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadMembers()">Show</button></div>
@@ -757,7 +769,7 @@
               <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
                 navio company!</p>
               <br>
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
+              <label class="block text-sm font-medium mb-2" for="">Member Name</label>
               <input id="memberroleid" style="width:200px;display:inline"
                 class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
                 name="field-name" rows="5" placeholder=""></input>
@@ -839,13 +851,11 @@
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Leaderboard</h3>
           <div style="margin-left:auto">
-            <input id="lbstart"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
-              name="" style="width:150px;display:inline" placeholder="">
+            <input id="lbstart" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+              type="date" name="" style="width:150px;display:inline" placeholder="">
             <p style="display:inline">~</p>
-            <input id="lbend"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
-              name="" style="width:150px;display:inline" placeholder="">
+            <input id="lbend" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+              type="date" name="" style="width:150px;display:inline" placeholder="">
             <button type="button" style="display:inline"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="loadLeaderboard()" id="loadLeaderboardBtn">Go</button>
@@ -874,8 +884,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="lpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadLeaderboard()">Show</button></div>
@@ -889,13 +899,11 @@
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Delivery Log</h3>
           <div style="margin-left:auto">
-            <input id="dstart"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
-              name="" style="width:150px;display:inline" placeholder="">
+            <input id="dstart" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+              type="date" name="" style="width:150px;display:inline" placeholder="">
             <p style="display:inline">~</p>
-            <input id="dend"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="date"
-              name="" style="width:150px;display:inline" placeholder="">
+            <input id="dend" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+              type="date" name="" style="width:150px;display:inline" placeholder="">
             <button type="button" style="display:inline"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="loadDelivery()" id="loadDeliveryBtn">Go</button>
@@ -931,8 +939,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="dpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadDelivery()">Show</button></div>
@@ -975,8 +983,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="epages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadEvent()">Show</button></div>
@@ -1098,11 +1106,17 @@
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
               name="" placeholder="">
           </div>
-          <div class="mb-6">
+          <!-- <div class="mb-6">
             <label class="block text-sm font-medium mb-2" for="">User ID (separate with ',')</label>
             <input id="attendeeId"
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
               rows="5" placeholder=""></input>
+          </div> -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="">Members (Hit enter to add multiple members)</label>
+            <div class="inputWrapper" id="attendeeIdWrap">
+                <input id="attendeeId" class="inputDefault inputInner" name="field-name" rows="5"
+                  placeholder=""></input></div>
           </div>
 
           <button type="button" id="attendeeBtn"
@@ -1145,8 +1159,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="myapppage" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadMyApp()">Show</button></div>
@@ -1382,8 +1396,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="allapppage" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="totpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="totpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadAllApp()" id="updateAppStatusBtn">Show</button></div>
@@ -1472,8 +1486,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="pupages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadUsers()">Show</button></div>
@@ -1548,8 +1562,8 @@
         <div class="mb-6" style="float:right">
           <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
           <input id="auditpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput" name="field-name"
-            rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadAuditLog()">Show</button></div>
