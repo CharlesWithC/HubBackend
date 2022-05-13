@@ -920,6 +920,7 @@ function ShowStaffTabs() {
     avatar = localStorage.getItem("avatar");
     discordid = localStorage.getItem("discordid");
     highestrole = localStorage.getItem("highestrole");
+    if(highestrole == undefined || highestrole == "undefined") highestrole = "Loner";
     $("#name").html(name);
     $("#role").html(highestrole);
     if (avatar != null) {
@@ -1119,6 +1120,7 @@ function validate() {
                         rolelist = data.response;
                         hrole = data.response[highestrole];
                         localStorage.setItem("highestrole", hrole);
+                        if(hrole == undefined || hrole == "undefined") hrole = "Loner";
                         $("#role").html(hrole);
                         roleids = Object.keys(rolelist);
                         for (var i = 0; i < roleids.length; i++) {
@@ -2061,6 +2063,9 @@ function loadUserDelivery() {
 }
 
 function loadProfile(userid) {
+    if(userid < 0){
+        return;
+    }
     $("#udpages").val("1");
     curprofile = userid;
     loadUserDelivery(userid);

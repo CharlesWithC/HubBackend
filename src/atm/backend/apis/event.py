@@ -114,7 +114,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)})
 
-    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400}{limit}")
+    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
@@ -470,7 +470,6 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
         if len(t) == 0:
             continue
         ret1 += f"{t[0][0]}, "
-        requests.get(f"http://127.0.0.1:58001/internal/event?users={t[0][1]}&point={points}")
         cnt += 1
         cur.execute(f"UPDATE driver SET eventpnt = eventpnt + {points} WHERE userid = {attendee}")
     ret1 = ret1[:-2]
@@ -488,7 +487,6 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
             if len(t) == 0:
                 continue
             ret2 += f"{t[0][0]}, "
-            requests.get(f"http://127.0.0.1:58001/internal/event?users={t[0][1]}&point=-{points}")
             cur.execute(f"UPDATE driver SET eventpnt = eventpnt - {points} WHERE userid = {attendee}")
             cnt += 1
     ret2 = ret2[:-2]

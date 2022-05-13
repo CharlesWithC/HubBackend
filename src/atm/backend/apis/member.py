@@ -19,6 +19,8 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
                 60: "Convoy Supervisor", 61: "Convoy Control",\
                  98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
 
+LEVEL = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
+
 @app.get('/atm/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
     if page <= 0:
@@ -167,6 +169,9 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         fuel = t[0][3]
         xp = t[0][4]
         eventpnt = t[0][5]
+    
+    if userid < 0:
+        return {"error": True, "descriptor": "Not a member"}
 
     if adminhighest >= 30: # non hr or upper
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
@@ -667,9 +672,6 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
     p = cur.fetchall()
     udiscordid = p[0][0]
-    requests.get(f"http://127.0.0.1:58001/internal/mile?user={udiscordid}&mile={int(distance/1.6)}")
-    if int(eventpnt) != 0:
-        requests.get(f"http://127.0.0.1:58001/internal/event?users={udiscordid}&point={eventpnt}")
 
     if int(distance) > 0:
         distance = "+" + form["mile"]
@@ -739,3 +741,48 @@ async def memberSteam(request: Request, response: Response, authorization: str =
     for tt in t:
         ret.append({"steamid": str(tt[0]), "name": tt[1]})
     return {"error": False, "response": {"list": ret}}
+
+@app.get("/atm/member/upgrade")
+async def memberUpgrade(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+
+    isapptoken = False
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if validators.ipv6(ip) == True:
+            orgiptype = 6
+        curiptype = 4
+        if validators.ipv6(request.client.host) == True:
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+    

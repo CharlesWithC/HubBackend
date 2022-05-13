@@ -34,7 +34,7 @@
                 success: function (data) {
                     if (data.error == false) {
                         localStorage.setItem("token", token);
-                        if (data.response.extra == "") {
+                        if (data.response.extra == "" || document.referrer.indexOf("discord.com") != -1) {
                             window.location.href = "/";
                             $("#msg").html("You are being redirected to Drivers Hub.");
                         } else if (data.response.extra == "steamauth") {
@@ -44,7 +44,7 @@
 
                             // Format message
                             $("#msg").html(
-                                "We need to check your steam account to ensure: <br><br> - You own the game <br> - To check that you are a truckersMP user."
+                                "We need to check your steam account to: <br><br> - Bind your TruckersMP account <br> - Add you to our Navio company"
                                 );
 
                             // Show steam openID button
