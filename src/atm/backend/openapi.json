@@ -897,6 +897,14 @@
                 },{
                     "required": false,
                     "schema": {
+                        "title": "Speed Limit (km/h)",
+                        "type": "integer"
+                    },
+                    "name": "speedlimit",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
                         "title": "Start Timestamp",
                         "type": "integer"
                     },

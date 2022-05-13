@@ -1,7 +1,7 @@
 function toastFactory(type, title, text, time, showConfirmButton) {
     const Toast = Swal.mixin({
         toast: true,
-        position: 'top-end',
+        position: 'top-start',
         showConfirmButton: showConfirmButton || false,
         timer: time || '3000',
         timerProgressBar: true,

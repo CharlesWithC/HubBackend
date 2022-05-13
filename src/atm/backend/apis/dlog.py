@@ -72,7 +72,7 @@ async def dlotStats():
 
 @app.get("/atm/dlog/leaderboard")
 async def dlotLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
+    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0):
 
     if page <= 0:
         page = 1
@@ -127,10 +127,16 @@ async def dlotLeaderboard(request: Request, response: Response, authorization: s
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    if starttime != -1 and endtime != -1:
+    if starttime != -1 and endtime != -1 or speedlimit != 0:
         if starttime > endtime:
             starttime, endtime = endtime, starttime
-        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime}")
+        if speedlimit != 0 and (starttime == -1 or endtime == -1):
+            starttime = 0
+            endtime = int(time.time())
+        limit = ""
+        if speedlimit != 0:
+            limit = f" AND topspeed <= {int(speedlimit)}"
+        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit}")
         t = cur.fetchall()
         userdistance = {}
         for tt in t:
@@ -327,6 +333,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
     if speedlimit == 0:
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     else:
+        speedlimit = int(speedlimit)
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []

@@ -110,7 +110,7 @@ function loadStats() {
 function toastFactory(type, title, text, time, showConfirmButton) {
     const Toast = Swal.mixin({
         toast: true,
-        position: 'top-end',
+        position: 'top-start',
         showConfirmButton: showConfirmButton || false,
         timer: time || '3000',
         timerProgressBar: true,
@@ -1149,7 +1149,7 @@ function validate() {
                                 points = parseInt(d.distance / 1.6 + d.eventpnt);
                                 rank = point2rank(points);
                                 $("#ranktotpoints").html(TSeparator(points) + " - " + rank);
-                                if($("#role").html() == "Driver")
+                                if ($("#role").html() == "Driver")
                                     $("#role").html(rank);
                             }
                         }
@@ -1179,8 +1179,14 @@ function loadLeaderboard() {
         starttime = +new Date($("#lbstart").val()) / 1000;
         endtime = +new Date($("#lbend").val()) / 1000;
     }
+    speedlimit = parseInt($("#lbspeedlimit").val());
+    if (!isNumber(speedlimit)) {
+        speedlimit = 0;
+    } else {
+        speedlimit *= 1.6;
+    }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1282,8 +1288,14 @@ function loadDelivery() {
         starttime = +new Date($("#dstart").val()) / 1000;
         endtime = +new Date($("#dend").val()) / 1000;
     }
+    speedlimit = parseInt($("#dspeedlimit").val());
+    if (!isNumber(speedlimit)) {
+        speedlimit = 0;
+    } else {
+        speedlimit *= 1.6;
+    }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2038,8 +2050,15 @@ function loadUserDelivery() {
         starttime = +new Date($("#udstart").val()) / 1000;
         endtime = +new Date($("#udend").val()) / 1000;
     }
+    speedlimit = parseInt($("#udspeedlimit").val());
+    if (!isNumber(speedlimit)) {
+        speedlimit = 0;
+    } else {
+        speedlimit *= 1.6;
+    }
+    console.log(speedlimit);
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + speedlimit + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2849,13 +2868,13 @@ $(document).ready(function () {
     $('#searchname').keydown(function (e) {
         if (e.which == 13) loadMembers();
     });
-    $('#dend').keydown(function (e) {
+    $('#dend,#dspeedlimit').keydown(function (e) {
         if (e.which == 13) loadDelivery();
     });
-    $('#udend').keydown(function (e) {
+    $('#udend,#udspeedlimit').keydown(function (e) {
         if (e.which == 13) loadUserDelivery();
     });
-    $('#lbend').keydown(function (e) {
+    $('#lbend,#lbspeedlimit').keydown(function (e) {
         if (e.which == 13) loadLeaderboard();
     });
     $('#memberroleid').keydown(function (e) {
@@ -2989,7 +3008,7 @@ $(document).ready(function () {
                 a = ann[0];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <i>" + a.by + "</i></span><br>" + a
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + a
                     .content.replaceAll("\n", "<br>");
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
@@ -2999,7 +3018,7 @@ $(document).ready(function () {
                 a = ann[i];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10  px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <i>" + a.by + "</i></span><br>" + a
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + a
                     .content.replaceAll("\n", "<br>");
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
@@ -3036,7 +3055,7 @@ $(document).ready(function () {
                     a = ann[i];
                     dt = getDateTime(a.timestamp * 1000);
                     content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                        "</b> by <i>" + a.by + "</i></span><br>" +
+                        "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
                         a
                         .content.replaceAll("\n", "<br>");
                     TYPES = ["info", "info", "warning", "criticle", "resolved"];

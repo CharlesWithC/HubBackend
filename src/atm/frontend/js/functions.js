@@ -24,7 +24,7 @@ function getCookie(cookiename) {
 function genBanner(btype, title, content) {
   if (btype == "info") {
     return `
-        <div class="py-8 px-6">
+        <div class="py-8 px-6" style="width:100%">
           <div class="p-6 bg-gray-50 border-l-4 border-2 border-indigo-500 rounded-r-lg">
             <div class="flex">
               <div class="w-auto">
@@ -47,7 +47,7 @@ function genBanner(btype, title, content) {
         </div>`;
   } else if (btype == "criticle") {
     return `
-        <div class="py-8 px-6">
+        <div class="py-8 px-6" style="width:100%">
           <div class="p-6 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
             <div class="flex">
               <div class="w-auto">
@@ -70,7 +70,7 @@ function genBanner(btype, title, content) {
         </div>`;
   } else if (btype == "resolved") {
     return `
-        <div class="py-8 px-6">
+        <div class="py-8 px-6" style="width:100%">
           <div class="p-6 bg-gray-50 border-l-4 border-2 border-green-500 rounded-r-lg">
             <div class="flex">
               <div class="w-auto">
@@ -92,7 +92,7 @@ function genBanner(btype, title, content) {
           </div>
         </div>`;
   } else if (btype == "warning") {
-    return `<div class="py-8 px-6">
+    return `<div class="py-8 px-6" style="width:100%">
             <div class="p-6 bg-gray-50 border-l-4 border-2 border-orange-500 rounded-r-lg">
             <div class="flex">
                 <div class="w-auto">

@@ -92,7 +92,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]})
+        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "byuserid": tt[4], "timestamp": tt[3]})
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
