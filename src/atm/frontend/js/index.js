@@ -1602,7 +1602,7 @@ function loadMembers() {
                 color = "blue"; // Member
                 if (highestrole < 100) color = "#ff0000"; // Staff
                 if (highestrole <= 9) color = "#770202"; // Leadership
-                if (highestrole > 100) color = "grey"; // External
+                if (highestrole > 100 || highestrole == 99) color = "grey"; // External / LOA
                 highestrole = rolelist[highestrole];
                 if (highestrole == undefined) highestrole = "/";
                 discordid = user.discordid;
@@ -1813,15 +1813,7 @@ function fetchRoles() {
 }
 
 function updateMemberRoles() {
-    userid = $("#memberroleid").val();
-    if (!isNumber(userid)) {
-        toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
-        return;
-    }
-    if (lastfetch != userid) {
-        toastFactory("error", "Error:", "Please fetch the roles first.", 5000, false);
-        return;
-    }
+    userid = lastfetch;
     $("#updateMemberRolesBtn").html("Working...");
     $("#updateMemberRolesBtn").attr("disabled", "disabled");
     d = $('input[name="assignrole"]:checked');
@@ -2090,9 +2082,16 @@ function loadProfile(userid) {
                 d = data.response;
                 roles = d.roles;
                 rtxt = "";
-                for (var i = 0; i < roles.length; i++)
-                    if (rolelist[roles[i]] != undefined) rtxt += rolelist[roles[i]] + ", ";
+                for (var i = 0; i < roles.length; i++){
+                    if(roles[i] == 0) color = "black";
+                    else if(roles[i] < 10) color = "#770202";
+                    else if(roles[i] <= 98) color = "#ff0000";
+                    else if(roles[i] == 99) color = "#4e6f7b";
+                    else if(roles[i] == 100) color = "#b30000";
+                    else if(roles[i] > 100) color = "grey";
+                    if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
                     else rtxt += "Unknown Role (ID " + roles[i] + "), ";
+                }
                 rtxt = rtxt.substring(0, rtxt.length - 2);
                 info += "<h1 style='font-size:40px'>" + d.name + "</h1>";
                 info += "<p><b>User ID:</b> " + d.userid + "</p>"

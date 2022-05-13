@@ -114,7 +114,13 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)})
 
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400}{limit}")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+        
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * 10 - tot,0)}, 10")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")

@@ -17,7 +17,7 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
         20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Lead Developer", 31: "Development Staff", \
             40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
                 60: "Convoy Supervisor", 61: "Convoy Control",\
-                 99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
+                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
 
 @app.get('/atm/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
