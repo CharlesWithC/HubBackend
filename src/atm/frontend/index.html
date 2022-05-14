@@ -21,6 +21,8 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+  <script src="js/ets2map.js"></script>
+  <script src="js/atsmap.js"></script>
   <script src="js/naviolive.js"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -80,7 +82,11 @@
               <a id="MapBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Map', '#MapBtn')">
                 <span class="inline-block mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98 4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z"/> </svg>  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-map"
+                    viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                      d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98 4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z" />
+                  </svg> </span>
                 <span>Map</span>
                 <span class="inline-block ml-auto">
                 </span>
@@ -656,13 +662,20 @@
 
   <section id="Map" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Euro Truck Simulator 2 Map</h3>
         </div>
         <div id="map" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
-        </div>
       </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">American Truck Simulator Map</h3>
+        </div>
+        <div id="amap" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
+      </div>
+    </div>
   </section>
 
   <section id="AnnTab" class="py-8 tabs" style="display:none">

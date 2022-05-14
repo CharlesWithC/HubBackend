@@ -735,11 +735,11 @@ async def memberSteam(request: Request, response: Response, authorization: str =
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT steamid, name FROM user")
+    cur.execute(f"SELECT steamid, name, userid FROM user")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"steamid": str(tt[0]), "name": tt[1]})
+        ret.append({"steamid": str(tt[0]), "name": tt[1], "userid": tt[2]})
     return {"error": False, "response": {"list": ret}}
 
 def point2rank(point):

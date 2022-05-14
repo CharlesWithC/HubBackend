@@ -134,6 +134,7 @@ function ShowTab(tabname, btnname) {
     $(btnname).addClass("bg-indigo-500");
     if(tabname == "#Map"){
         LoadETS2Map();
+        LoadATSMap();
     }
     if (tabname == "#SubmitApp") {
         $("#driverappsel").attr("selected", "selected");
@@ -494,7 +495,7 @@ function UpdateEventAttendees() {
     }
     attendeeid = "";
     $(".attendee").each(function (index, value) {
-        attendeeid = $(value).prop('id').replaceAll("attendeeid-", "") + ",";
+        attendeeid += $(value).prop('id').replaceAll("attendeeid-", "") + ",";
     })
     attendeeid = attendeeid.substring(0, attendeeid.length - 1);
     points = $("#attendeePoints").val();

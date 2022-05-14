@@ -17,6 +17,7 @@
 	transition: border-color .2s ease-in-out;
 	padding: 4px 8px;
 }
+
 .tag {
 	-ms-flex-negative: 0;
 	flex-shrink: 0;
@@ -36,6 +37,7 @@
 	background-color: #4f545c;
 	color: #f6f6f7;
 }
+
 .inputInner {
 	background: none;
 	border: none;
@@ -45,7 +47,36 @@
 	max-width: fit-content;
 	outline: none;
 }
+
 .inputDefault {
 	padding: 10px;
 	height: 40px;
+}
+
+.dot {
+	height: 15px;
+	width: 15px;
+	background-color: skyblue;
+	border: blue solid 2px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.dot-small {
+	height: 10px;
+	width: 10px;
+	background-color: skyblue;
+	border: blue solid 1px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.dot-area {
+	height: 50px;
+	width: 50px;
+	background-color: red;
+	opacity: 50%;
+	border-radius: 50%;
+	display: inline-block;
+
 }
