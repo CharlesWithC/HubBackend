@@ -1398,10 +1398,14 @@ function deliveryDetail(logid) {
                     fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
                     cargo = d.cargo.name;
                     cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
-                    source_company = d.source_company.name;
-                    source_city = d.source_city.name;
-                    destination_company = d.destination_company.name;
-                    destination_city = d.destination_city.name;
+                    source_company = "Unknown company";
+                    source_city = "Unknown city";
+                    destination_company = "Unknown company";
+                    destination_city = "Unknown city";
+                    if(d.source_company != null) source_company = d.source_company.name;
+                    if(d.source_city != null) source_city = d.source_city.name;
+                    if(d.destination_company != null) destination_company = d.destination_company.name;
+                    if(d.destination_city != null) destination_city = d.destination_city.name;
                     truck = d.truck.brand.name + " " + d.truck.name;
                     license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
                     top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);

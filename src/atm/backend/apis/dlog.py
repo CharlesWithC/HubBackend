@@ -330,19 +330,29 @@ async def dlogList(request: Request, response: Response, authorization: str = He
     if starttime != -1 and endtime != -1:
         timelimit = f"AND timestamp >= {starttime} AND timestamp <= {endtime}"
     
-    if speedlimit == 0:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+    if speedlimit != 0:
+        speedlimit = f" AND topspeed <= {int(speedlimit)}"
     else:
-        speedlimit = int(speedlimit)
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} AND topspeed <= {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+        speedlimit = ""
+
+    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+    
     t = cur.fetchall()
     ret = []
     for tt in t:
         data = json.loads(b64d(tt[1]))
-        source_city = data["data"]["object"]["source_city"]["name"]
-        source_company = data["data"]["object"]["source_company"]["name"]
-        destination_city = data["data"]["object"]["destination_city"]["name"]
-        destination_company = data["data"]["object"]["destination_company"]["name"]
+        source_city = "Unknown city"
+        source_company = "Unknown company"
+        destination_city = "Unknown city"
+        destination_company = "Unknown company"
+        if data["data"]["object"]["source_city"] != None:
+            source_city = data["data"]["object"]["source_city"]["name"]
+        if data["data"]["object"]["source_company"] != None:
+            source_company = data["data"]["object"]["source_company"]["name"]
+        if data["data"]["object"]["destination_city"] != None:
+            destination_city = data["data"]["object"]["destination_city"]["name"]
+        if data["data"]["object"]["destination_company"] != None:
+            destination_company = data["data"]["object"]["destination_company"]["name"]
         cargo = data["data"]["object"]["cargo"]["name"]
         cargo_mass = data["data"]["object"]["cargo"]["mass"]
         distance = data["data"]["object"]["driven_distance"]
@@ -364,7 +374,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:

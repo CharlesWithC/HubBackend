@@ -51,8 +51,8 @@ etssocket.addEventListener("open", () => {
         JSON.stringify({
             op: 1,
             data: {
-                "subscribe_to_company": 25,
-                //"subscribe_to_all_drivers": true,
+                //"subscribe_to_company": 25,
+                "subscribe_to_all_drivers": true,
                 "game": "eut2"
             },
         }),
@@ -98,8 +98,8 @@ atssocket.addEventListener("open", () => {
         JSON.stringify({
             op: 1,
             data: {
-                "subscribe_to_company": 25,
-                //"subscribe_to_all_drivers": true,
+                //"subscribe_to_company": 25,
+                "subscribe_to_all_drivers": true,
                 "game": "ats"
             },
         }),
@@ -209,19 +209,20 @@ function PlayerPoint(steamid){
 }
 
 function RenderPoint(mapid, steamid, x, y, scale) {
-    console.log("Render point " + x + ", " + y);
+    // console.log("Render point " + x + ", " + y);
     maph = $("#" + mapid).height();
-    x = parseInt(-maph + x);
-    y = parseInt(y);
+    //x = -maph + x;
     drivername = membersteam[steamid];
+    t = $("#" + mapid).position().top;
+    l = $("#" + mapid).position().left;
     if(scale <= 10){
-        $("#" + mapid).append(`<a style='cursor:pointer;color:skyblue;' onclick="PlayerPoint('${steamid}')";><span class="${mapid}-player""; style='curosr:pointer;position:relative;top:${x-30}px;left:${y-23.5}px;text-align:center'>${drivername}</span></a>`);
-        $("#" + mapid).append(`<a style='cursor:pointer' onclick="PlayerPoint('${steamid}')";><span class="dot ${mapid}-player""; style='curosr:pointer;position:relative;top:${x-7.5}px;left:${y-47.5}px'></span></a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}')";>${drivername}</a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot" style='cursor:pointer;position:absolute;top:${t+x-7.5}px;left:${l+y-7.5}px' onclick="PlayerPoint('${steamid}')";></a>`);
     } else if(scale <= 25){
-        $("#" + mapid).append(`<span class="dot-small ${mapid}-player""; style='curosr:pointer;position:relative;top:${x-47.5}px;left:${y}px'></span>`);
-        $("#" + mapid).append(`<a style='cursor:pointer' onclick="PlayerPoint('${steamid}')";><span class="dot-area ${mapid}-player""; style='curosr:pointer;position:relative;top:${x-27.5}px;left:${y-30}px'></span></a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot-small" style='cursor:pointer;position:absolute;top:${t+x-5}px;left:${l+y-5}px' onclick="PlayerPoint('${steamid}')"></a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}')"></a>`);
     } else {
-        $("#" + mapid).append(`<a style='cursor:pointer' onclick="PlayerPoint('${steamid}')";><span class="dot-area ${mapid}-player""; style='curosr:pointer;position:relative;top:${x-27.5}px;left:${y-27.5}px'></span></a>`);      
+        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}')"></a>`);      
     }
 }
 
@@ -236,6 +237,8 @@ setInterval(function () {
     $(".map-player").remove();
     players = Object.keys(ets2data);
     for (var i = 0; i < players.length; i++) {
+        if(JSON.stringify(players[i]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
+        if(Object.keys(ets2data).indexOf(players[i]) == -1){delete ets2data[players[i]];continue;}
         pos = ets2data[players[i]].truck.position;
         x = pos.x;
         z = -pos.z;
@@ -265,6 +268,8 @@ setInterval(function () {
     $(".amap-player").remove();
     aplayers = Object.keys(atsdata);
     for (var i = 0; i < aplayers.length; i++) {
+        if(JSON.stringify(aplayers[i]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
+        if(Object.keys(atsdata).indexOf(aplayers[i]) == -1){delete atsdata[aplayers[i]];continue;}
         apos = atsdata[aplayers[i]].truck.position;
         ax = apos.x;
         az = -apos.z;
