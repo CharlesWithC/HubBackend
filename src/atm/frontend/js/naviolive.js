@@ -45,21 +45,20 @@ function UpdateSteam() {
 UpdateSteam();
 setInterval(UpdateSteam, 60000);
 
-const etssocket = new WebSocket('wss://gateway.navio.app/');
-etssocket.addEventListener("open", () => {
-    etssocket.send(
+const socket = new WebSocket('wss://gateway.navio.app/');
+socket.addEventListener("open", () => {
+    socket.send(
         JSON.stringify({
             op: 1,
             data: {
-                //"subscribe_to_company": 25,
-                "subscribe_to_all_drivers": true,
-                "game": "eut2"
+                "subscribe_to_company": 25,
+                //"subscribe_to_all_drivers": true
             },
         }),
     );
 });
 
-etssocket.addEventListener("message", ({
+socket.addEventListener("message", ({
     data: message
 }) => {
     let {
@@ -69,7 +68,7 @@ etssocket.addEventListener("message", ({
 
     if (type === "AUTH_ACK") {
         setInterval(() => {
-            etssocket.send(
+            socket.send(
                 JSON.stringify({
                     op: 2,
                 }),
@@ -80,7 +79,8 @@ etssocket.addEventListener("message", ({
     if (type === "TELEMETRY_UPDATE") {
         steamids[data.driver] = +new Date();
         driverdata[data.driver] = data;
-        ets2data[data.driver] = data;
+        if(data.game.id == "eut2") ets2data[data.driver] = data;
+        else if(data.game.id == "ats") atsdata[data.driver] = data;
     }
 
     if (type === "NEW_EVENT") {
@@ -88,53 +88,6 @@ etssocket.addEventListener("message", ({
             drivername = membersteam[data.driver];
             if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
             toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> €" + TSeparator(data.revenue), 30000, false);
-        }
-    }
-});
-
-const atssocket = new WebSocket('wss://gateway.navio.app/');
-atssocket.addEventListener("open", () => {
-    atssocket.send(
-        JSON.stringify({
-            op: 1,
-            data: {
-                //"subscribe_to_company": 25,
-                "subscribe_to_all_drivers": true,
-                "game": "ats"
-            },
-        }),
-    );
-});
-
-atssocket.addEventListener("message", ({
-    data: message
-}) => {
-    let {
-        type,
-        data
-    } = JSON.parse(message)
-
-    if (type === "AUTH_ACK") {
-        setInterval(() => {
-            atssocket.send(
-                JSON.stringify({
-                    op: 2,
-                }),
-            );
-        }, data.heartbeat_interval * 1000);
-    }
-
-    if (type === "TELEMETRY_UPDATE") {
-        steamids[data.driver] = +new Date();
-        driverdata[data.driver] = data;
-        atsdata[data.driver] = data;
-    }
-
-    if (type === "NEW_EVENT") {
-        if (data.type == 1) {
-            drivername = membersteam[data.driver];
-            if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
-            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> $" + TSeparator(data.revenue), 30000, false);
         }
     }
 });
