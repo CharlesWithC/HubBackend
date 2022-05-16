@@ -164,6 +164,20 @@ async def steamBind(request: Request, response: Response, authorization: str = H
 
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     conn.commit()
+
+    r = requests.get(f"https://api.truckyapp.com/v2/truckersmp/player?playerID={steamid}")
+    if r.status_code == 200:
+        d = json.loads(r.text)
+        if not d["response"]["error"]:
+            truckersmpid = d["response"]["response"]["id"]
+            r = requests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
+            if r.status_code == 200:
+                d = json.loads(r.text)
+                if not d["error"]:
+                    tmpsteamid = d["response"]["steamID64"]
+                    if str(tmpsteamid) == str(steamid):
+                        return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid, "skiptmp": True}}
+
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
 
 @app.post("/atm/user/truckersmpbind")

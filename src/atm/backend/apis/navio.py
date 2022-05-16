@@ -12,6 +12,9 @@ from db import newconn
 from functions import *
 
 from random import randint
+from dateutil import parser
+
+import threading
 
 GIFS = ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
     "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
@@ -23,6 +26,25 @@ GIFS = ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
     "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
     "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
     "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"]
+
+def UpdateTelemetry(steamid, userid, logid, endtime):
+    conn = newconn()
+    cur = conn.cursor()
+    
+    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)} LIMIT 1")
+    p = cur.fetchall()
+    if len(p) > 0:
+        jobuuid = p[0][0]
+        cur.execute(f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
+        t = cur.fetchall()
+        data = f"{t[0][3]},{t[0][4]};"
+        for tt in t:
+            data += f"{tt[0]},{tt[1]},{tt[2]},{tt[5]};"
+        conn = newconn()
+        cur = conn.cursor()
+        cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")
+        cur.execute(f"DELETE FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)}")
+        conn.commit()
 
 @app.post("/atm/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
@@ -61,6 +83,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         return {"error": True, "descriptor": "User not found."}
     userid = t[0][0]
     username = t[0][1]
+    navioid = d["data"]["object"]["id"]
+
+    cur.execute(f"SELECT logid FROM dlog WHERE navioid = {navioid}")
+    o = cur.fetchall()
+    if len(o) > 0:
+        return {"error": True, "descriptor": "Already logged"}
+
     driven_distance = float(d["data"]["object"]["driven_distance"])
     fuel_used = d["data"]["object"]["fuel_used"]
     game = d["data"]["object"]["game"]["short_name"]
@@ -80,16 +109,16 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
-    cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
-    
+    endtime = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
     t = cur.fetchall()
     logid = int(t[0][0])
+    threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, endtime, )).start()
+    
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-    conn.commit()
-
+    cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
     cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{b64e(json.dumps(d))}', {top_speed}, {int(time.time())}, \
-        {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance})")
+        {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
     conn.commit()
 
     try:

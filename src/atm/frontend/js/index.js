@@ -1,4 +1,5 @@
 rolelist = {};
+dmapint = -1;
 
 token = localStorage.getItem("token");
 $(".pageinput").val("1");
@@ -128,11 +129,12 @@ function toastFactory(type, title, text, time, showConfirmButton) {
 }
 
 function ShowTab(tabname, btnname) {
+    clearInterval(dmapint);
     $(".tabs").hide();
     $(tabname).show();
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
-    if(tabname == "#Map"){
+    if (tabname == "#Map") {
         LoadETS2Map();
         LoadATSMap();
     }
@@ -1393,6 +1395,10 @@ function deliveryDetail(logid) {
                 d = d.data;
                 if (d.type == "job.delivered") {
                     d = d.data.object;
+                    start_time = +new Date(d.start_time);
+                    stop_time = +new Date(d.stop_time);
+                    duration = "N/A";
+                    if (start_time > 86400 * 1000) duration = String((stop_time - start_time) / 1000).toHHMMSS(); // in case start time is 19700101 and timezone
                     planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
                     fuel_used_org = d.fuel_used;
                     fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
@@ -1402,10 +1408,10 @@ function deliveryDetail(logid) {
                     source_city = "Unknown city";
                     destination_company = "Unknown company";
                     destination_city = "Unknown city";
-                    if(d.source_company != null) source_company = d.source_company.name;
-                    if(d.source_city != null) source_city = d.source_city.name;
-                    if(d.destination_company != null) destination_company = d.destination_company.name;
-                    if(d.destination_city != null) destination_city = d.destination_city.name;
+                    if (d.source_company != null) source_company = d.source_company.name;
+                    if (d.source_city != null) source_city = d.source_city.name;
+                    if (d.destination_company != null) destination_company = d.destination_company.name;
+                    if (d.destination_city != null) destination_city = d.destination_city.name;
                     truck = d.truck.brand.name + " " + d.truck.name;
                     license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
                     top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
@@ -1425,38 +1431,137 @@ function deliveryDetail(logid) {
                     distance = TSeparator(parseInt(meta.distance / 1.6)) + "Mi";
                     auto_park = meta.auto_park;
                     auto_load = meta.auto_load;
-                    avg_fuel = TSeparator(parseInt(fuel_used_org / (distance / 1.6) * 100));
+                    avg_fuel = TSeparator(parseInt(fuel_used_org / (meta.distance / 1.6) * 100));
 
-                    info = "<div style='text-align:left'><p><b>From</b>: " + source_city + "</p>";
-                    info += "<p><b>To</b>: " + destination_city + "</p>";
-                    info += "<p><b>Cargo</b>: " + cargo + "</p>";
-                    info += "<p><b>Weight</b>: " + cargo_mass + "</p>";
-                    info += "<p><b>Initial Company</b>: " + source_company + "</p>";
-                    info += "<p><b>Target Company</b>: " + destination_company + "</p>";
-                    info += "<p><b>Planned Distance</b>: " + planned_distance + "</p>";
-                    info += "<p><b>Driven Distance</b>: " + distance + "</p>";
-                    info += "<p><b>Profit</b>: " + revenue + " " + punit + "</p>";
-                    info += "<p><b>XP</b>: " + earned_xp + "</p>";
-                    info += "<p><b>Damage</b>: " + parseInt(cargo_damage * 100) + "%</p>";
-                    info += "<p><b>Truck</b>: " + truck + "</p>";
-                    info += "<p><b>Truck's License Plate</b>: " + license_plate + "</p>";
-                    info += "<p><b>Trailer's License Plate" + trs + "</b>: " + trailer.slice(0, -3) + "</p>";
-                    info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
-                    info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
-                    info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
+                    $(".ddcol").children().remove();
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">From</td>
+                        <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">To</td>
+                        <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Cargo</td>
+                        <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Weight</td>
+                        <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Initial Company</td>
+                        <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
+                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Target Company</td>
+                        <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Planned Distance</td>
+                        <td class="py-5 px-6 font-medium">${planned_distance}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Driven Distance</td>
+                        <td class="py-5 px-6 font-medium">${distance}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Profit</td>
+                        <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">XP</td>
+                        <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Damage</td>
+                        <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
+                        <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Truck</td>
+                        <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Truck's License Plate</td>
+                        <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
+                        <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Average Consumption</td>
+                        <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Fuel Used</td>
+                        <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
                     extra = "";
                     if (auto_park) extra += "Auto Park | ";
                     if (auto_load) extra += "Auto Load | ";
-                    if (extra != "") info += "<p>" + extra.slice(0, -3) + "</p>";
+                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Tags</td>
+                        <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
+
                     dt = getDateTime(data.response.timestamp * 1000);
-                    info += "<p><b>Time submitted</b>: " + dt + "</p>";
-                    info += "</div>";
-                    Swal.fire({
-                        title: "Delivery Log #" + logid,
-                        html: info,
-                        icon: 'info',
-                        confirmButtonText: 'Close'
-                    })
+
+                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Driver</td>
+                        <td class="py-5 px-6 font-medium">${name}</td></tr>`);
+                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Log ID</td>
+                        <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
+                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Time Spent</td>
+                        <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
+                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                        <td class="py-5 px-6 font-medium">Time submitted</td>
+                        <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
+
+                    tabname = "#DeliveryDetailTab";
+                    $(".tabs").hide();
+                    $(tabname).show();
+
+                    setTimeout(function(){
+                        telemetry = data.response.telemetry.split(";");
+                        basic = telemetry[0].split(",");
+                        game = basic[0];
+                        mods = basic[1];
+                        route = telemetry.slice(1);
+                        dpoints = [];
+                        for (i = 0; i < route.length; i++) {
+                            p = route[i].split(",");
+                            dpoints.push([p[0], p[2]]); // x, z
+                        }
+                        if(mods == "promod" || mods == "coast to coast") return;
+                        $("#dmap").children().remove();
+                        if(game == 1){ // ets2
+                            LoadETS2Map("dmap", true);
+                        } else if(game == 2){ // ats
+                            LoadATSMap("dmap", true);
+                        }
+                        window.dn = {};
+                        if(dmapint != -1) clearInterval(dmapint);
+                        dmapint = setInterval(function () {
+                            if (window.dn == undefined || window.dn.previousExtent_ == undefined) return;
+                            window.dmapRange = {};
+                            dmapRange["top"] = window.dn.previousExtent_[3];
+                            dmapRange["left"] = window.dn.previousExtent_[0];
+                            dmapRange["bottom"] = window.dn.previousExtent_[1];
+                            dmapRange["right"] = window.dn.previousExtent_[2];
+                            $(".dmap-player").remove();
+                            for (var i = 0; i < dpoints.length; i++) {
+                                x = dpoints[i][0];
+                                z = -dpoints[i][1];
+                                dmapxl = dmapRange["left"];
+                                dmapxr = dmapRange["right"];
+                                dmapyt = dmapRange["top"];
+                                dmapyb = dmapRange["bottom"];
+                                dmapw = $("#dmap").width();
+                                dmaph = $("#dmap").height();
+                                dscale = (dmapxr - dmapxl) / $("#dmap").width();
+                                if(dscale >= 150 && i % 300 != 0) continue;
+                                if(dscale >= 30 && i % 100 != 0) continue;
+                                if(dscale >= 20 && i % 50 != 0) continue;
+                                if(dscale >= 10 && i % 10 != 0) continue;
+                                if(i % 5 != 0) continue;
+                                if (x > dmapxl && x < dmapxr && z > dmapyb && z < dmapyt) {
+                                    rx = (x - dmapxl) / (dmapxr - dmapxl) * dmapw;
+                                    rz = (z - dmapyt) / (dmapyb - dmapyt) * dmaph;
+                                    RenderPoint("dmap", 0, rz, rx, 5, nodetail = true);
+                                }
+                            }
+                        }, 500);
+                    }, 500);
                 } else if (d.type == "job.cancelled") {
                     d = d.data.object;
                     planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";

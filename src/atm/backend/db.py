@@ -20,7 +20,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, nam
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
-    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE)")
+    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
     mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT, eventpnt INT)")
 # tmplink = '' -> private convoy | m/dts -> meetup/departure timestamp | img -> multiple link separated with ','
@@ -33,6 +33,9 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, appt
 # status = 0: pending | 1: accepted | 2: declined
 cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
+
+cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid TEXT, game BIGINT, x DOUBLE, y DOUBLE, z DOUBLE, mods TEXT, timestamp BIGINT)")
 conn.commit()
 """
 CREATE INDEX user_userid ON user (userid);
@@ -46,8 +49,12 @@ CREATE INDEX settings_discordid ON settings (discordid);
 CREATE INDEX driver_userid ON driver (userid);
 CREATE INDEX dlog_logid ON dlog (logid);
 CREATE INDEX dlog_userid ON dlog (userid);
+CREATE INDEX dlog_navioid ON dlog (navioid);
 CREATE INDEX dlog_topspeed ON dlog (topspeed);
 CREATE INDEX event_eventid ON event (eventid);
+CREATE INDEX telemetry_logid ON telemetry (logid);
+CREATE INDEX telemetry_userid ON telemetry (userid);
+CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid);
 
 INSERT INTO settings VALUES (0, 'nxtuserid', 0);
 INSERT INTO settings VALUES (0, 'nxtappid', 0);

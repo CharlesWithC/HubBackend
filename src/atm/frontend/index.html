@@ -672,6 +672,14 @@
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Map powered by <a href="https://map.charlws.com"
+              target="_blank">map.charlws.com</a></h3>
+        </div>
+        <p style="margin-left:15px">- You can see Navio Live Map with all players using Navio there.</p>
+      </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Euro Truck Simulator 2 Map</h3>
         </div>
         <div id="map" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
@@ -784,7 +792,7 @@
       </div>
     </div>
   </section>
-  
+
   <section id="AllMembers" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
@@ -1162,6 +1170,37 @@
           <button type="button"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="loadDelivery()">Show</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="DeliveryDetailTab" class="py-8 tabs" style="display:none">
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+        <div style="display:block;height:50vh">
+          <div style="float:left;width:60%">
+            <div id="dmap" style="height: 50vh;width:100%;background-color: #484E66"></div>
+          </div>
+          <table class="table-auto" style="display:inline;float:right;width:40%">
+            <tbody id="ddcol4" class="ddcol">
+            </tbody>
+          </table>
+        </div>
+        <br>
+        <div style="display:block">
+          <table class="table-auto" style="display:inline">
+            <tbody id="ddcol1" class="ddcol">
+            </tbody>
+          </table>
+          <table class="table-auto" style="display:inline">
+            <tbody id="ddcol2" class="ddcol">
+            </tbody>
+          </table>
+          <table class="table-auto" style="display:inline">
+            <tbody id="ddcol3" class="ddcol">
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </section>

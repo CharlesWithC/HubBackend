@@ -1,7 +1,7 @@
 ets2loaded = false;
 
-function LoadETS2Map(){
-    if(ets2loaded) return;
+function LoadETS2Map(mapid = "map", forceload = false){
+    if(ets2loaded && !forceload) return;
     ets2loaded = true;
 ! function (t) {
     var e = {};
@@ -3867,7 +3867,8 @@ function LoadETS2Map(){
                 t.preventDefault();
                 var i, n = t.map,
                     o = t.originalEvent;
-                window.n = n;
+                if(mapid == "map") window.n = n;
+                else window.dn = n;
 
                 if (this.useAnchor_ && (this.lastAnchor_ = t.coordinate), t.type == M.WHEEL ? (i = o.deltaY, K && o.deltaMode === WheelEvent.DOM_DELTA_PIXEL && (i /= B), o.deltaMode === WheelEvent.DOM_DELTA_LINE && (i *= 40)) : t.type == M.MOUSEWHEEL && (i = -o.wheelDeltaY, W && (i /= 3)), 0 === i) return !1;
                 var r = Date.now();
@@ -7272,7 +7273,7 @@ function LoadETS2Map(){
     });
     var ya;
     new Ps({
-        target: "map",
+        target: mapid,
         controls: [new _a({
             coordinateFormat: (ya = 0, function (t) {
                 return function (t, e) {

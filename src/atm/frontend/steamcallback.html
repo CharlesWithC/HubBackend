@@ -24,6 +24,12 @@
                 },
                 success: function(data){
                     if(data.error == false){
+                        if(d.skiptmp == true){
+                            $("#title").html("TruckersMP Bind Skipped");
+                            $("#msg").html("Your TruckersMP account is bound automatically.");
+                            window.location.href = "/";
+                            return;
+                        }
                         $("#title").html("TruckersMP Bind");
                         $("#msg").html("Enter your TruckersMP User ID and we'll check if it's bound to your steam account.");
                         $("#truckersmpbind").show();

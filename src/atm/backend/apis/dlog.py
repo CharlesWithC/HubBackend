@@ -447,4 +447,11 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
     p = cur.fetchall()
     if len(p) > 0:
         name = p[0][0]
-    return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "data": data, "timestamp": t[0][2]}}
+
+    cur.execute(f"SELECT data FROM telemetry WHERE logid = {logid}")
+    p = cur.fetchall()
+    telemetry = ""
+    if len(p) > 0:
+        telemetry = p[0][0]
+
+    return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}

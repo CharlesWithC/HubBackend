@@ -150,6 +150,7 @@ setInterval(function () {
 }, 1000);
 
 function PlayerPoint(steamid){
+    if(steamid == 0 || steamid == "0") return;
     drivername = membersteam[steamid];
     userid = memberuserid[steamid];
     if (drivername == "undefined" || drivername == undefined) drivername = "Unknown";
@@ -163,7 +164,7 @@ function PlayerPoint(steamid){
     toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${userid})'>Show profile</a>`, 5000, false);
 }
 
-function RenderPoint(mapid, steamid, x, y, scale) {
+function RenderPoint(mapid, steamid, x, y, scale, nodetail = false) {
     // console.log("Render point " + x + ", " + y);
     maph = $("#" + mapid).height();
     //x = -maph + x;
@@ -171,7 +172,7 @@ function RenderPoint(mapid, steamid, x, y, scale) {
     t = $("#" + mapid).position().top;
     l = $("#" + mapid).position().left;
     if(scale <= 10){
-        $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}')";>${drivername}</a>`);
+        if(!nodetail)  $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}')";>${drivername}</a>`);
         $("#" + mapid).append(`<a class="${mapid}-player dot" style='cursor:pointer;position:absolute;top:${t+x-7.5}px;left:${l+y-7.5}px' onclick="PlayerPoint('${steamid}')";></a>`);
     } else if(scale <= 25){
         $("#" + mapid).append(`<a class="${mapid}-player dot-small" style='cursor:pointer;position:absolute;top:${t+x-5}px;left:${l+y-5}px' onclick="PlayerPoint('${steamid}')"></a>`);
@@ -192,8 +193,11 @@ setInterval(function () {
     $(".map-player").remove();
     players = Object.keys(ets2data);
     for (var i = 0; i < players.length; i++) {
-        if(JSON.stringify(players[i]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
-        if(Object.keys(ets2data).indexOf(players[i]) == -1){delete ets2data[players[i]];continue;}
+        if (Object.keys(ets2data).indexOf(players[i]) == -1) {
+            delete ets2data[players[i]];
+            continue;
+        }
+        if (JSON.stringify(ets2data[players[i]]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
         pos = ets2data[players[i]].truck.position;
         x = pos.x;
         z = -pos.z;
@@ -223,8 +227,12 @@ setInterval(function () {
     $(".amap-player").remove();
     aplayers = Object.keys(atsdata);
     for (var i = 0; i < aplayers.length; i++) {
-        if(JSON.stringify(aplayers[i]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
-        if(Object.keys(atsdata).indexOf(aplayers[i]) == -1){delete atsdata[aplayers[i]];continue;}
+        if (Object.keys(atsdata).indexOf(players[i]) == -1) {
+            delete atsdata[players[i]];
+            continue;
+        }
+        if (JSON.stringify(atsdata[players[i]]).toLowerCase().indexOf("promod") != -1) continue; // bypass promod on base map
+        if (JSON.stringify(atsdata[players[i]]).toLowerCase().indexOf("coast to coast") != -1) continue; // bypass coast to coast on base map
         apos = atsdata[aplayers[i]].truck.position;
         ax = apos.x;
         az = -apos.z;

@@ -1,7 +1,7 @@
 atsloaded = false;
 
-function LoadATSMap(){
-    if(atsloaded) return;
+function LoadATSMap(mapid = "amap", forceload = false){
+    if(atsloaded && !forceload) return;
     atsloaded = true;
 ! function (t) {
     var e = {};
@@ -3867,7 +3867,8 @@ function LoadATSMap(){
                 t.preventDefault();
                 var i, n = t.map,
                     o = t.originalEvent;
-                window.an = n;
+                if(mapid == "map") window.an = n;
+                else window.dn = n;
 
                 if (this.useAnchor_ && (this.lastAnchor_ = t.coordinate), t.type == M.WHEEL ? (i = o.deltaY, K && o.deltaMode === WheelEvent.DOM_DELTA_PIXEL && (i /= B), o.deltaMode === WheelEvent.DOM_DELTA_LINE && (i *= 40)) : t.type == M.MOUSEWHEEL && (i = -o.wheelDeltaY, W && (i /= 3)), 0 === i) return !1;
                 var r = Date.now();
@@ -7272,7 +7273,7 @@ function LoadATSMap(){
     });
     var ya;
     new Ps({
-        target: "amap",
+        target: mapid,
         controls: [new _a({
             coordinateFormat: (ya = 0, function (t) {
                 return function (t, e) {
