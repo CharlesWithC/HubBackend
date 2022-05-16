@@ -96,6 +96,8 @@ function CountOnlineDriver() {
     drivers = Object.keys(steamids);
     for (var i = 0; i < drivers.length; i++) {
         if (+new Date() - steamids[drivers[i]] > 120000) {
+            if(driverdata[drivers[i]].game.id == "eut2") delete ets2data[drivers[i]];
+            else if(driverdata[drivers[i]].game.id == "ats") delete atsdata[drivers[i]];
             delete steamids[drivers[i]];
             delete driverdata[drivers[i]];
         }
