@@ -331,6 +331,23 @@
         <div class="flex items-center" id="header">
           <div class="hidden lg:block" style="margin-left:auto;margin-right:0">
             <div class="flex">
+              <a id="darkmode" style="cursor:pointer;margin-top:11px" onclick="DarkMode()">
+                <span class="inline-block mr-4">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    id="todarksvg">
+                    <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8V16Z" fill="currentColor" />
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4V8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16V20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                      fill="currentColor" /> </svg>
+                  <svg style="color: white;display:none" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    id="tolightsvg" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8V16Z" fill="white"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4V8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16V20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
+                      fill="white"></path>
+                  </svg>
+                </span>
+              </a>
               <a id="logout" style="cursor: pointer;margin-top:11px">
                 <span class="inline-block mr-4">
                   <svg class="text-gray-600 w-5 h-5" viewbox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -359,7 +376,7 @@
     <div class="px-4 mx-auto">
       <div style="padding:50px">
         <div class="py-8 px-6 pt-4 bg-white shadow rounded">
-          <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6 bg-white shadow rounded mb-6">
+          <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6 shadow rounded mb-6">
             <div class="py-8 px-6 pt-4" style="margin-right:20px;width: calc(100% - 220px);float:left"
               id="userProfileDetail">
             </div>
@@ -401,7 +418,7 @@
                 </tr>
               </thead>
               <tbody id="userDeliveryTable">
-                <tr class="text-xs bg-gray-50">
+                <tr class="text-xs">
                   <td class="py-5 px-6 font-medium">No Data</td>
                   <td class="py-5 px-6 font-medium"></td>
                   <td class="py-5 px-6 font-medium"></td>
@@ -488,7 +505,7 @@
                         fill="#382CDD"></path>
                     </svg> </span>
                   <h3 class="text-sm text-gray-600">Live</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">Now</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">Now</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="livedriver">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -512,7 +529,7 @@
                       <line x1="10" y1="12" x2="3.25" y2="10" />
                       <line x1="14" y1="12" x2="20.75" y2="10" /> </svg> </span>
                   <h3 class="text-sm text-gray-600">Drivers</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="alldriver">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -533,7 +550,7 @@
                         fill="blue"></path>
                     </svg></span>
                   <h3 class="text-sm text-gray-600">Delivered</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="alljob">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -555,7 +572,7 @@
                     </svg>
                   </span>
                   <h3 class="text-sm text-gray-600">Distance</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="alldistance">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -577,7 +594,7 @@
                       <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12z" />
                     </svg> </span>
                   <h3 class="text-sm text-gray-600">Profit</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="allprofit">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -598,7 +615,7 @@
                         fill="#382CDD"></path>
                     </svg> </span>
                   <h3 class="text-sm text-gray-600">Fuel</h3><span
-                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-full">All</span>
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
                 </div>
                 <h2 class="mb-2 text-3xl font-bold" id="allfuel">-</h2>
                 <span class="text-xs text-green-500"><span class="inline-block mr-2">
@@ -612,56 +629,68 @@
           </div>
           <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
             <h2><b>Online Drivers</b></h2>
-            <table class="table-auto w-full" style="margin-top:20px">
-              <thead id="onlinedriverHead" style="display:none">
-                <tr class="text-xs text-gray-500 text-left">
-                  <th class="py-5 px-6 pb-3 font-medium">Name</th>
-                  <th class="py-5 px-6 pb-3 font-medium">Truck</th>
-                  <th class="py-5 px-6 pb-3 font-medium">Cargo</th>
-                  <th class="py-5 px-6 pb-3 font-medium">Speed</th>
-                  <th class="py-5 px-6 pb-3 font-medium">Destination</th>
-                </tr>
-              </thead>
-              <tbody id="onlinedriver">
-                <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">No Data</td>
-                  <td class="py-5 px-6 font-medium"></td>
-                  <td class="py-5 px-6 font-medium"></td>
-                  <td class="py-5 px-6 font-medium"></td>
-                  <td class="py-5 px-6 font-medium"></td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <table class="table-auto w-full" style="margin-top:20px">
+                <thead id="onlinedriverHead" style="display:none">
+                  <tr class="text-xs text-gray-500 text-left">
+                    <th class="py-5 px-6 pb-3 font-medium">Name</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Truck</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Cargo</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Speed</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Destination</th>
+                  </tr>
+                </thead>
+                <tbody id="onlinedriver">
+                  <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium">No Data</td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                    <td class="py-5 px-6 font-medium"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="w-full md:w-1/3 px-4 mb-4 md:mb-0" id="HomeTabRight">
           <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
             <h2><b>Leaderboard</b></h2>
-            <table class="table-auto w-full" style="margin-top:20px">
-              <!-- <thead id="leaderboardHead">
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <table class="table-auto w-full" style="margin-top:20px">
+                <thead id="leaderboardHead">
                   <tr class="text-xs text-gray-500 text-left">
                     <th class="py-5 px-6 pb-3 font-medium">Name</th>
                     <th class="py-5 px-6 pb-3 font-medium">Points</th>
                   </tr>
-                </thead> -->
-              <tbody id="leaderboard">
-                <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">No Data</td>
-                  <td class="py-5 px-6 font-medium"></td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody id="leaderboard">
+                  <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium">No Data</td>
+                    <td class="py-5 px-6 font-medium"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="py-8 px-6 pt-4 bg-white shadow rounded">
             <h2><b>New Drivers</b></h2>
-            <table class="table-auto w-full" style="margin-top:20px">
-              <tbody id="newdriverTable">
-                <tr class="text-xs bg-gray-50">
-                  <td class="py-5 px-6 font-medium">No Data</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <table class="table-auto w-full" style="margin-top:20px">
+                <thead id="newdriverTableHead">
+                  <tr class="text-xs text-gray-500 text-left">
+                    <th class="py-5 px-6 pb-3 font-medium">Name</th>
+                    <th class="py-5 px-6 pb-3 font-medium">Join Date</th>
+                  </tr>
+                </thead>
+                <tbody id="newdriverTable">
+                  <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium">No Data</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -817,7 +846,7 @@
               </tr>
             </thead>
             <tbody id="membersTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -954,7 +983,7 @@
               </tr>
             </thead>
             <tbody id="leaderboardTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -997,35 +1026,35 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Trainee</td>
                 <td class="py-5 px-6 font-medium">0</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Rookie</td>
                 <td class="py-5 px-6 font-medium">2,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Driver</td>
                 <td class="py-5 px-6 font-medium">10,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Experience Driver</td>
                 <td class="py-5 px-6 font-medium">15,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Enthusiast Driver</td>
                 <td class="py-5 px-6 font-medium">25,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Master Driver</td>
                 <td class="py-5 px-6 font-medium">40,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Professional Driver</td>
                 <td class="py-5 px-6 font-medium">50,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Veteran Driver</td>
                 <td class="py-5 px-6 font-medium">75,000</td>
               </tr>
@@ -1039,35 +1068,35 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Elite Driver</td>
                 <td class="py-5 px-6 font-medium">80,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Ultimate Driver</td>
                 <td class="py-5 px-6 font-medium">100,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Cargo Specialist</td>
                 <td class="py-5 px-6 font-medium">150,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Ticketmaster</td>
                 <td class="py-5 px-6 font-medium">200,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Road Expert</td>
                 <td class="py-5 px-6 font-medium">250,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Ambitious Driver</td>
                 <td class="py-5 px-6 font-medium">300,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Long Haul Driver</td>
                 <td class="py-5 px-6 font-medium">350,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Big Rig Driver</td>
                 <td class="py-5 px-6 font-medium">400,000</td>
               </tr>
@@ -1081,31 +1110,31 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Cargo Elite</td>
                 <td class="py-5 px-6 font-medium">450,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Legendary Driver</td>
                 <td class="py-5 px-6 font-medium">500,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">The Boss Driver</td>
                 <td class="py-5 px-6 font-medium">600,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Prestige Driver</td>
                 <td class="py-5 px-6 font-medium">700,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Global Driver</td>
                 <td class="py-5 px-6 font-medium">800,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">King of the Road</td>
                 <td class="py-5 px-6 font-medium">900,000</td>
               </tr>
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">Mile High Driver</td>
                 <td class="py-5 px-6 font-medium">1,000,000</td>
               </tr>
@@ -1149,7 +1178,7 @@
               </tr>
             </thead>
             <tbody id="deliveryTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -1225,7 +1254,7 @@
               </tr>
             </thead>
             <tbody id="eventTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -1371,7 +1400,7 @@
           </div> -->
           <div class="mb-6">
             <label class="block text-sm font-medium mb-2" for="">Members (Hit enter to add multiple members)</label>
-            <div class="inputWrapper" id="attendeeIdWrap">
+            <div class="inputWrapper" id="attendeeIdWrap" style="background-color:rgba(255,255,255,0.2)">
               <input id="attendeeId" class="inputDefault inputInner" name="field-name" rows="5" placeholder=""></input>
             </div>
           </div>
@@ -1402,7 +1431,7 @@
               </tr>
             </thead>
             <tbody id="myappTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -1639,7 +1668,7 @@
               </tr>
             </thead>
             <tbody id="allappTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>
@@ -1733,7 +1762,7 @@
               </tr>
             </thead>
             <tbody id="usersTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
               </tr>
@@ -1808,7 +1837,7 @@
               </tr>
             </thead>
             <tbody id="auditTable">
-              <tr class="text-xs bg-gray-50">
+              <tr class="text-xs">
                 <td class="py-5 px-6 font-medium">No Data</td>
                 <td class="py-5 px-6 font-medium"></td>
                 <td class="py-5 px-6 font-medium"></td>

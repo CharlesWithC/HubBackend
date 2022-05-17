@@ -116,7 +116,7 @@ setInterval(function () {
     if (cnt == 0) {
         $("#onlinedriverHead").hide();
         $("#onlinedriver").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -130,6 +130,7 @@ setInterval(function () {
     for (var i = 0; i < cnt; i++) {
         steamid = Object.keys(steamids)[i];
         drivername = membersteam[steamid];
+        userid = memberuserid[steamid];
         if (drivername == "undefined" || drivername == undefined) drivername = "Unknown";
         d = driverdata[steamid];
         truck = d.truck.brand.name + " " + d.truck.name;
@@ -139,8 +140,8 @@ setInterval(function () {
         speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
         distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
         $("#onlinedriver").append(`
-            <tr class="text-xs bg-gray-50">
-              <td class="py-5 px-6 font-medium">${drivername}</td>
+            <tr class="text-xs">
+              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${userid})'>${drivername}</a></td>
               <td class="py-5 px-6 font-medium">${truck}</td>
               <td class="py-5 px-6 font-medium">${cargo}</td>
               <td class="py-5 px-6 font-medium">${speed}</td>

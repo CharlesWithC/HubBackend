@@ -1,6 +1,38 @@
 rolelist = {};
 dmapint = -1;
 
+isdark = parseInt(localStorage.getItem("darkmode"));
+if(localStorage.getItem("darkmode") == undefined) isdark = 1;
+function DarkMode(){
+    if(!isdark){
+        $("body").css("transition","color 1000ms linear");
+        $("body").css("transition","background-color 1000ms linear");
+        $("body").addClass("bg-gray-800");
+        $("body").css("color","white");
+        $("head").append(`<style id='convertbg'>
+            h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;transition: color 1000ms linear;}
+            svg{transition: color 1000ms linear;}
+            .text-gray-500,.text-gray-600 {color: #ddd;transition: color 1000ms linear;}
+            .bg-white {background-color: rgba(255, 255, 255, 0.2);transition: background-color 1000ms linear;}</style>`);
+        $("#todarksvg").hide();$("#tolightsvg").show();
+    } else {
+        $("body").css("transition","color 1000ms linear");
+        $("body").css("transition","background-color 1000ms linear");
+        $("body").removeClass("bg-gray-800");
+        $("body").css("color","");
+        $("head").append(`<style id='convertbg2'>
+            h1,h2,h3,p,span,text,label,input,textarea,select,tr {transition: color 1000ms linear;}
+            svg{transition: color 1000ms linear;}
+            .text-gray-500,.text-gray-600 {transition: color 1000ms linear;}
+            .bg-white {transition: background-color 1000ms linear;}</style>`);
+        $("#convertbg").remove();
+        setTimeout(function(){$("#convertbg2").remove()}, 1000);
+        $("#todarksvg").show();$("#tolightsvg").hide();
+    }
+    isdark = 1 - isdark;
+    localStorage.setItem("darkmode", isdark);
+}
+
 token = localStorage.getItem("token");
 $(".pageinput").val("1");
 
@@ -64,7 +96,7 @@ function loadStats() {
                 } else {
                     avatar = "/images/atm-black.png";
                 }
-                $("#leaderboard").append(`<tr class="text-xs bg-gray-50">
+                $("#leaderboard").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
               <td class="py-5 px-6">${totalpnt}</td>
@@ -98,7 +130,7 @@ function loadStats() {
                 } else {
                     avatar = "/images/atm-black.png";
                 }
-                $("#newdriverTable").append(`<tr class="text-xs bg-gray-50">
+                $("#newdriverTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
               <td class="py-5 px-6">${joindt}</td>
@@ -1208,7 +1240,7 @@ function loadLeaderboard() {
             if (leaderboard.length == 0) {
                 $("#leaderboardTableHead").hide();
                 $("#leaderboardTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -1234,7 +1266,7 @@ function loadLeaderboard() {
                 } else {
                     avatar = "/images/atm-black.png";
                 }
-                $("#leaderboardTable").append(`<tr class="text-xs bg-gray-50">
+                $("#leaderboardTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
                 <td class="py-5 px-6">${point2rank(user.totalpnt)}</td>
@@ -1317,7 +1349,7 @@ function loadDelivery() {
             if (deliveries.length == 0) {
                 $("#deliveryTableHead").hide();
                 $("#deliveryTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -1333,7 +1365,7 @@ function loadDelivery() {
             for (i = 0; i < deliveries.length; i++) {
                 const delivery = deliveries[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
@@ -1343,7 +1375,7 @@ function loadDelivery() {
                 unittxt = "€";
                 if (delivery.unit == 2) unittxt = "$";
                 profit = TSeparator(delivery.profit);
-                color = "black";
+                color = "";
                 if (delivery.profit < 0) color = "grey";
                 dtl = "";
                 if (localStorage.getItem("token") != "guest") {
@@ -1351,7 +1383,7 @@ function loadDelivery() {
                         `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
                 }
                 $("#deliveryTable").append(`
-            <tr class="text-xs bg-gray-50" style="color:${color}">
+            <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
               <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
@@ -1434,76 +1466,76 @@ function deliveryDetail(logid) {
                     avg_fuel = TSeparator(parseInt(fuel_used_org / (meta.distance / 1.6) * 100));
 
                     $(".ddcol").children().remove();
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">From</td>
                         <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">To</td>
                         <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Cargo</td>
                         <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Weight</td>
                         <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Initial Company</td>
                         <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Target Company</td>
                         <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Planned Distance</td>
                         <td class="py-5 px-6 font-medium">${planned_distance}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Driven Distance</td>
                         <td class="py-5 px-6 font-medium">${distance}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Profit</td>
                         <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">XP</td>
                         <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Damage</td>
                         <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
                         <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Truck</td>
                         <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Truck's License Plate</td>
                         <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
                         <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Average Consumption</td>
                         <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Fuel Used</td>
                         <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
                     extra = "";
                     if (auto_park) extra += "Auto Park | ";
                     if (auto_load) extra += "Auto Load | ";
-                    $("#ddcol3").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Tags</td>
                         <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
 
                     dt = getDateTime(data.response.timestamp * 1000);
 
-                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Driver</td>
                         <td class="py-5 px-6 font-medium">${name}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Log ID</td>
                         <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Time Spent</td>
                         <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs bg-gray-50">
+                    $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Time submitted</td>
                         <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
 
@@ -1657,7 +1689,7 @@ function loadEvent() {
             if (events.length == 0) {
                 $("#eventTableHead").hide();
                 $("#eventTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -1676,7 +1708,7 @@ function loadEvent() {
                 mts = event.mts * 1000;
                 dts = event.dts * 1000;
                 now = +new Date();
-                color = "black";
+                color = "";
                 if (now >= mts - 1000 * 60 * 60 * 6) {
                     color = "blue";
                 }
@@ -1689,7 +1721,7 @@ function loadEvent() {
                 mt = getDateTime(mts);
                 dt = getDateTime(dts);
                 $("#eventTable").append(`
-            <tr class="text-xs bg-gray-50" style="color:${color}">
+            <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${event.eventid}</td>
               <td class="py-5 px-6 font-medium">${event.title}</td>
               <td class="py-5 px-6 font-medium">${event.departure}</td>
@@ -1757,7 +1789,7 @@ function loadMembers() {
             if (users.length == 0) {
                 $("#membersTableHead").hide();
                 $("#membersTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
@@ -1768,7 +1800,7 @@ function loadMembers() {
             for (i = 0; i < users.length; i++) {
                 const user = users[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
@@ -1793,7 +1825,7 @@ function loadMembers() {
                     avatar = "/images/atm-black.png";
                 }
                 $("#membersTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">${user.userid}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">
                 <a style="cursor:pointer;" onclick="loadProfile('${user.userid}')">
@@ -1831,7 +1863,7 @@ function loadAuditLog() {
             if (audits.length == 0) {
                 $("#auditTableHead").hide();
                 $("#auditTable").append(`
-        <tr class="text-xs bg-gray-50">
+        <tr class="text-xs">
           <td class="py-5 px-6 font-medium">No Data</td>
           <td class="py-5 px-6 font-medium"></td>
           <td class="py-5 px-6 font-medium"></td>
@@ -1845,7 +1877,7 @@ function loadAuditLog() {
                 dt = getDateTime(audit.timestamp * 1000);
                 op = parseMarkdown(audit.operation).replace("\n", "<br>");
                 $("#auditTable").append(`
-        <tr class="text-xs bg-gray-50">
+        <tr class="text-xs">
           <td class="py-5 px-6 font-medium">${audit.user}</td>
           <td class="py-5 px-6 font-medium">${op}</td>
           <td class="py-5 px-6 font-medium">${dt}</td>
@@ -2187,7 +2219,7 @@ function loadUserDelivery() {
             if (deliveries.length == 0) {
                 $("#userDeliveryTableHead").hide();
                 $("#userDeliveryTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2202,7 +2234,7 @@ function loadUserDelivery() {
             for (i = 0; i < deliveries.length; i++) {
                 const delivery = deliveries[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
@@ -2212,7 +2244,7 @@ function loadUserDelivery() {
                 unittxt = "€";
                 if (delivery.unit == 2) unittxt = "$";
                 profit = TSeparator(delivery.profit);
-                color = "black";
+                color = "";
                 if (delivery.profit < 0) color = "grey";
                 dtl = "";
                 if (localStorage.getItem("token") != "guest") {
@@ -2220,7 +2252,7 @@ function loadUserDelivery() {
                         `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
                 }
                 $("#userDeliveryTable").append(`
-            <tr class="text-xs bg-gray-50" style="color:${color}">
+            <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${delivery.logid}</td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
@@ -2268,7 +2300,7 @@ function loadProfile(userid) {
                 roles = d.roles;
                 rtxt = "";
                 for (var i = 0; i < roles.length; i++) {
-                    if (roles[i] == 0) color = "black";
+                    if (roles[i] == 0) color = "";
                     else if (roles[i] < 10) color = "#770202";
                     else if (roles[i] <= 98) color = "#ff0000";
                     else if (roles[i] == 99) color = "#4e6f7b";
@@ -2458,7 +2490,7 @@ function loadUsers() {
             if (users.length == 0) {
                 $("#usersTableHead").hide();
                 $("#usersTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
@@ -2469,13 +2501,13 @@ function loadUsers() {
             for (i = 0; i < users.length; i++) {
                 const user = users[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
                 //
                 $("#usersTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">${user.discordid}</td>
               <td class="py-5 px-6 font-medium">${user.name}</td>
               <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
@@ -2649,7 +2681,7 @@ function loadMyApp() {
             if (applications.length == 0) {
                 $("#myappTableHead").hide();
                 $("#myappTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2663,7 +2695,7 @@ function loadMyApp() {
             for (i = 0; i < applications.length; i++) {
                 const application = applications[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
@@ -2682,7 +2714,7 @@ function loadMyApp() {
                 if (application.status == 2) color = "red";
 
                 $("#myappTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="py-5 px-6 font-medium">${apptype}</td>
               <td class="py-5 px-6 font-medium">${creation}</td>
@@ -2765,7 +2797,7 @@ function loadAllApp() {
             if (applications.length == 0) {
                 $("#allappTableHead").hide();
                 $("#allappTable").append(`
-            <tr class="text-xs bg-gray-50">
+            <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2779,7 +2811,7 @@ function loadAllApp() {
             for (i = 0; i < applications.length; i++) {
                 const application = applications[i];
                 // Fill the table using this format: 
-                // <tr class="text-xs bg-gray-50">
+                // <tr class="text-xs">
                 //  <td class="py-5 px-6 font-medium">id here</td>
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
@@ -2798,7 +2830,7 @@ function loadAllApp() {
                 if (application.status == 2) color = "red";
 
                 $("#allappTable").append(`
-            <tr class="text-xs bg-gray-50" id="AllApp${application.applicationid}">
+            <tr class="text-xs" id="AllApp${application.applicationid}">
               <td class="py-5 px-6 font-medium">${application.applicationid}</td>
               <td class="py-5 px-6 font-medium">${application.name}</td>
               <td class="py-5 px-6 font-medium">${apptype}</td>
@@ -2975,6 +3007,15 @@ function updateStaffPosition() {
 }
 
 $(document).ready(function () {
+    if(localStorage.getItem("darkmode") == "1"){
+        $("body").addClass("bg-gray-800");
+        $("body").css("color","white");
+        $("head").append(`<style id='convertbg'>
+            h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;}
+            .text-gray-500,.text-gray-600 {color: #ddd;}
+            .bg-white {background-color: rgba(255, 255, 255, 0.2);}</style>`);
+        $("#todarksvg").hide();$("#tolightsvg").show();
+    }
     loadStats();
     setInterval(loadStats, 60000);
 

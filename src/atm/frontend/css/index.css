@@ -80,3 +80,12 @@
 	display: inline-block;
 
 }
+
+tr {
+	border: solid #888;
+	border-width: 1px 0;
+}
+
+thead > tr {
+	border: none;
+}
