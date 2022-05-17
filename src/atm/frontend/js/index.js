@@ -170,6 +170,7 @@ function ShowTab(tabname, btnname) {
     $(btnname).addClass("bg-indigo-500");
     if (tabname == "#Map") {
         LoadETS2Map();
+        LoadETS2PMap();
         LoadATSMap();
     }
     if (tabname == "#SubmitApp") {
@@ -1556,13 +1557,33 @@ function deliveryDetail(logid) {
                             p = route[i].split(",");
                             dpoints.push([p[0], p[2]]); // x, z
                         }
-                        if(mods == "promod" || mods == "coast to coast") return;
+                        minx = 100000000000000;
+                        for(i = 0; i < dpoints.length; i++) {
+                            if (dpoints[i][0] < minx) minx = dpoints[i][0];
+                        }
                         $("#dmap").children().remove();
-                        if(game == 1){ // ets2
+                        if(game == 1 && (mods == "promod" || JSON.stringify(data.response).toLowerCase().indexOf("promod") != -1)) {
+                            LoadETS2PMap("dmap", true);
+                        } else if(game == 1){ // ets2
                             LoadETS2Map("dmap", true);
                         } else if(game == 2){ // ats
                             LoadATSMap("dmap", true);
                         }
+                        dpoints150 = dpoints.filter(function(el, i) {
+                            return i % 300 == 0;
+                        });
+                        dpoints30 = dpoints.filter(function(el, i) {
+                            return i % 100 == 0;
+                        });
+                        dpoints20 = dpoints.filter(function(el, i) {
+                            return i % 50 == 0;
+                        });
+                        dpoints10 = dpoints.filter(function(el, i) {
+                            return i % 10 == 0;
+                        });
+                        dpoints = dpoints.filter(function(el, i) {
+                            return i % 5 == 0;
+                        });
                         window.dn = {};
                         if(dmapint != -1) clearInterval(dmapint);
                         dmapint = setInterval(function () {
@@ -1573,21 +1594,21 @@ function deliveryDetail(logid) {
                             dmapRange["bottom"] = window.dn.previousExtent_[1];
                             dmapRange["right"] = window.dn.previousExtent_[2];
                             $(".dmap-player").remove();
-                            for (var i = 0; i < dpoints.length; i++) {
-                                x = dpoints[i][0];
-                                z = -dpoints[i][1];
-                                dmapxl = dmapRange["left"];
-                                dmapxr = dmapRange["right"];
-                                dmapyt = dmapRange["top"];
-                                dmapyb = dmapRange["bottom"];
-                                dmapw = $("#dmap").width();
-                                dmaph = $("#dmap").height();
-                                dscale = (dmapxr - dmapxl) / $("#dmap").width();
-                                if(dscale >= 150 && i % 300 != 0) continue;
-                                if(dscale >= 30 && i % 100 != 0) continue;
-                                if(dscale >= 20 && i % 50 != 0) continue;
-                                if(dscale >= 10 && i % 10 != 0) continue;
-                                if(i % 5 != 0) continue;
+                            dmapxl = dmapRange["left"];
+                            dmapxr = dmapRange["right"];
+                            dmapyt = dmapRange["top"];
+                            dmapyb = dmapRange["bottom"];
+                            dmapw = $("#dmap").width();
+                            dmaph = $("#dmap").height();
+                            dscale = (dmapxr - dmapxl) / $("#dmap").width();
+                            ddpoints = dpoints;
+                            if(dscale >= 150 && i % 300 != 0) ddpoints = dpoints150;
+                            else if(dscale >= 30 && i % 100 != 0) ddpoints = dpoints30;
+                            else if(dscale >= 20 && i % 50 != 0) ddpoints = dpoints20;
+                            else if(dscale >= 10 && i % 10 != 0) ddpoints = dpoints10;
+                            for (var i = 0; i < ddpoints.length; i++) {
+                                x = ddpoints[i][0];
+                                z = -ddpoints[i][1];
                                 if (x > dmapxl && x < dmapxr && z > dmapyb && z < dmapyt) {
                                     rx = (x - dmapxl) / (dmapxr - dmapxl) * dmapw;
                                     rz = (z - dmapyt) / (dmapyb - dmapyt) * dmaph;
