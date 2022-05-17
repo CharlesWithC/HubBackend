@@ -40,7 +40,7 @@ $(".pageinput").val("1");
 
 function loadStats() {
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        url: "https://drivershub.charlws.com/gt/dlog/stats",
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -74,7 +74,7 @@ function loadStats() {
         }
     });
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
+        url: "https://drivershub.charlws.com/gt/dlog/leaderboard",
         type: "GET",
         dataType: "json",
         headers: {
@@ -96,7 +96,7 @@ function loadStats() {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/gt-black.png";
                 }
                 $("#leaderboard").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
@@ -107,7 +107,7 @@ function loadStats() {
         }
     });
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
+        url: "https://drivershub.charlws.com/gt/dlog/newdrivers",
         type: "GET",
         dataType: "json",
         headers: {
@@ -130,7 +130,7 @@ function loadStats() {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/gt-black.png";
                 }
                 $("#newdriverTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
@@ -211,7 +211,7 @@ function FetchAnnouncement() {
     $("#fetchAnnouncementBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/announcement?aid=" + aid,
+        url: "https://drivershub.charlws.com/gt/announcement?aid=" + aid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -267,7 +267,7 @@ function NewAnn() {
     if (op == "update") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement",
+            url: "https://drivershub.charlws.com/gt/announcement",
             type: "PATCH",
             dataType: "json",
             headers: {
@@ -324,7 +324,7 @@ function NewAnn() {
         });
     } else if (op == "create") {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement",
+            url: "https://drivershub.charlws.com/gt/announcement",
             type: "POST",
             dataType: "json",
             headers: {
@@ -383,7 +383,7 @@ function NewAnn() {
     } else if (op == "delete") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement?aid=" + annid,
+            url: "https://drivershub.charlws.com/gt/announcement?aid=" + annid,
             type: "DELETE",
             dataType: "json",
             headers: {
@@ -441,7 +441,7 @@ function FetchEvent() {
     $("#fetchEventBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+        url: "https://drivershub.charlws.com/gt/event?eventid=" + eventid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -489,7 +489,7 @@ function FetchEventAttendee() {
     $("#fetchEventAttendeeBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+        url: "https://drivershub.charlws.com/gt/event?eventid=" + eventid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -543,7 +543,7 @@ function UpdateEventAttendees() {
     $("#attendeeBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event/attendee",
+        url: "https://drivershub.charlws.com/gt/event/attendee",
         type: "POST",
         dataType: "json",
         headers: {
@@ -608,7 +608,7 @@ function NewEvent() {
     if (op == "update") {
         eventid = parseInt(eventid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event",
+            url: "https://drivershub.charlws.com/gt/event",
             type: "PATCH",
             dataType: "json",
             headers: {
@@ -670,7 +670,7 @@ function NewEvent() {
         });
     } else if (op == "create") {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event",
+            url: "https://drivershub.charlws.com/gt/event",
             type: "POST",
             dataType: "json",
             headers: {
@@ -734,7 +734,7 @@ function NewEvent() {
     } else if (op == "delete") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+            url: "https://drivershub.charlws.com/gt/event?eventid=" + eventid,
             type: "DELETE",
             dataType: "json",
             headers: {
@@ -898,7 +898,7 @@ function SubmitApp() {
     $("#submitAppBttn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application",
+        url: "https://drivershub.charlws.com/gt/application",
         type: "POST",
         dataType: "json",
         headers: {
@@ -969,7 +969,7 @@ function ShowStaffTabs() {
         else
             $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
     } else {
-        avatar = "/images/atm-black.png";
+        avatar = "/images/gt-black.png";
     }
     $("#newann").hide();
     if (roles != null && roles != undefined) {
@@ -1096,7 +1096,7 @@ function validate() {
     }
     $("#recruitment").show();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/validate",
+        url: "https://drivershub.charlws.com/gt/user/validate",
         type: "GET",
         dataType: "json",
         headers: {
@@ -1119,7 +1119,7 @@ function validate() {
         }
     });
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/info",
+        url: "https://drivershub.charlws.com/gt/user/info",
         type: "GET",
         dataType: "json",
         headers: {
@@ -1153,7 +1153,7 @@ function validate() {
                 else
                     $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
                 $.ajax({
-                    url: "https://drivershub.charlws.com/atm/member/roles",
+                    url: "https://drivershub.charlws.com/gt/member/roles",
                     type: "GET",
                     dataType: "json",
                     success: function (data) {
@@ -1177,7 +1177,7 @@ function validate() {
                 });
                 if (userid != -1) {
                     $.ajax({
-                        url: "https://drivershub.charlws.com/atm/member/info?userid=" + userid,
+                        url: "https://drivershub.charlws.com/gt/member/info?userid=" + userid,
                         type: "GET",
                         dataType: "json",
                         headers: {
@@ -1226,7 +1226,7 @@ function loadLeaderboard() {
         speedlimit *= 1.6;
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/gt/dlog/leaderboard?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1266,7 +1266,7 @@ function loadLeaderboard() {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/gt-black.png";
                 }
                 $("#leaderboardTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
@@ -1293,7 +1293,7 @@ function requestRole() {
     $("#requestRoleBtn").html("Working...");
     $("#requestRoleBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/discordrole",
+        url: "https://drivershub.charlws.com/gt/member/discordrole",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -1335,7 +1335,7 @@ function loadDelivery() {
         speedlimit *= 1.6;
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/gt/dlog/list?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1412,7 +1412,7 @@ function deliveryDetail(logid) {
     $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
     $("#DeliveryInfoBtn" + logid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
+        url: "https://drivershub.charlws.com/gt/dlog/detail?logid=" + String(logid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1677,7 +1677,7 @@ function loadEvent() {
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?page=" + page,
+        url: "https://drivershub.charlws.com/gt/event?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1775,7 +1775,7 @@ function loadMembers() {
     $("#searchMemberBtn").html("...");
     $("#searchMemberBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/list?page=" + page + "&search=" + $("#searchname").val(),
+        url: "https://drivershub.charlws.com/gt/member/list?page=" + page + "&search=" + $("#searchname").val(),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1824,7 +1824,7 @@ function loadMembers() {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/gt-black.png";
                 }
                 $("#membersTable").append(`
             <tr class="text-xs">
@@ -1851,7 +1851,7 @@ function loadAuditLog() {
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/auditlog?page=" + page,
+        url: "https://drivershub.charlws.com/gt/auditlog?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1899,7 +1899,7 @@ function memberDetail(userid) {
     $("#MemberInfoBtn" + userid).attr("disabled", "disabled");
     $("#MemberInfoBtn" + userid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/gt/member/info?userid=" + String(userid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1968,7 +1968,7 @@ function fetchRoles() {
     $("#rolelist").children().children().prop("checked", false);
     $("#memberrolename").html("");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
+        url: "https://drivershub.charlws.com/gt/member/list?page=1&search=" + val,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1984,7 +1984,7 @@ function fetchRoles() {
             userid = d[0].userid;
 
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+                url: "https://drivershub.charlws.com/gt/member/info?userid=" + String(userid),
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -2033,7 +2033,7 @@ function updateMemberRoles() {
         roles.push(d[i].id.replaceAll("role", ""));
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/role",
+        url: "https://drivershub.charlws.com/gt/member/role",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2081,7 +2081,7 @@ function updateMemberPoints() {
     $("#updateMemberPointsBtn").html("Working...");
     $("#updateMemberPointsBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/point",
+        url: "https://drivershub.charlws.com/gt/member/point",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2121,7 +2121,7 @@ function dismissUser() {
         $("#dismissbtn").html("Fetching name...");
         $("#dismissbtn").attr("disabled", "disabled");
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+            url: "https://drivershub.charlws.com/gt/member/info?userid=" + String(userid),
             type: "GET",
             dataType: "json",
             headers: {
@@ -2158,7 +2158,7 @@ function dismissUser() {
     $("#dismissbtn").html("Working...");
     $("#dismissbtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/dismiss?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/gt/member/dismiss?userid=" + String(userid),
         type: "DELETE",
         dataType: "json",
         headers: {
@@ -2207,7 +2207,7 @@ function loadUserDelivery() {
     }
     console.log(speedlimit);
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + speedlimit + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/gt/dlog/list?quserid=" + curprofile + "&speedlimit=" + speedlimit + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2289,7 +2289,7 @@ function loadProfile(userid) {
     $(".tabs").hide();
     $(tabname).show();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/gt/member/info?userid=" + String(userid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -2343,7 +2343,7 @@ function loadProfile(userid) {
                         src = "https://cdn.discordapp.com/avatars/" + d.discordid + "/" + avatar + ".png";
                     $("#UserProfileAvatar").attr("src", src);
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/gt-black.png";
                 }
 
                 $("#userProfileDetail").html(info);
@@ -2374,7 +2374,7 @@ function updateBio() {
     $("#updateBioBtn").html("Updating...");
     $("#updateBioBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/bio",
+        url: "https://drivershub.charlws.com/gt/user/bio",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2409,7 +2409,7 @@ function genNewAppToken() {
     $("#genAppTokenBtn").html("Working...");
     $("#genAppTokenBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/apptoken",
+        url: "https://drivershub.charlws.com/gt/user/apptoken",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2442,7 +2442,7 @@ function resign() {
     $("#resignBtn").html("Working...");
     $("#resignBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/resign",
+        url: "https://drivershub.charlws.com/gt/member/resign",
         type: "DELETE",
         dataType: "json",
         headers: {
@@ -2480,7 +2480,7 @@ function loadUsers() {
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/list?page=" + page,
+        url: "https://drivershub.charlws.com/gt/user/list?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2532,7 +2532,7 @@ function addUser() {
         return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/add",
+        url: "https://drivershub.charlws.com/gt/member/add",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -2562,7 +2562,7 @@ function userDetail(discordid) {
     $("#UserInfoBtn" + discordid).attr("disabled", "disabled");
     $("#UserInfoBtn" + discordid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/info?qdiscordid=" + String(discordid),
+        url: "https://drivershub.charlws.com/gt/user/info?qdiscordid=" + String(discordid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -2611,7 +2611,7 @@ function banUser() {
         return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/ban",
+        url: "https://drivershub.charlws.com/gt/user/ban",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -2642,7 +2642,7 @@ function unbanUser() {
         return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/unban",
+        url: "https://drivershub.charlws.com/gt/user/unban",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -2669,7 +2669,7 @@ function unbanUser() {
 function loadMyApp() {
     page = $("#myapppage").val();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0",
+        url: "https://drivershub.charlws.com/gt/application/list?page=" + page + "&apptype=0",
         type: "GET",
         dataType: "json",
         headers: {
@@ -2748,7 +2748,7 @@ function addAppMessage() {
     $("#addAppMessageBtn").html("Adding...");
     $("#addAppMessageBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application",
+        url: "https://drivershub.charlws.com/gt/application",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -2782,7 +2782,7 @@ function addAppMessage() {
 function loadAllApp() {
     page = $('#allapppage').val();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
+        url: "https://drivershub.charlws.com/gt/application/list?page=" + page + "&apptype=0&showall=1",
         type: "GET",
         dataType: "json",
         headers: {
@@ -2861,7 +2861,7 @@ function appDetail(applicationid) {
     $("#MyAppBtn" + applicationid).attr("disabled", "disabled");
     $("#MyAppBtn" + applicationid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application?applicationid=" + applicationid,
+        url: "https://drivershub.charlws.com/gt/application?applicationid=" + applicationid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2886,7 +2886,7 @@ function appDetail(applicationid) {
             ret += "";
 
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/info?qdiscordid=" + String(discordid),
+                url: "https://drivershub.charlws.com/gt/user/info?qdiscordid=" + String(discordid),
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -2940,7 +2940,7 @@ function updateAppStatus() {
     appstatus = parseInt($("#appstatussel").find(":selected").val());
     message = $("#appmessage").val();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/status",
+        url: "https://drivershub.charlws.com/gt/application/status",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2979,7 +2979,7 @@ function updateStaffPosition() {
     $("#updateStaffPositionBtn").html("Updating...");
     positions = $("#staffposedit").val().replaceAll("\n", ",");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/positions",
+        url: "https://drivershub.charlws.com/gt/application/positions",
         type: "POST",
         dataType: "json",
         headers: {
@@ -3056,7 +3056,7 @@ $(document).ready(function () {
             val = $("#attendeeId").val();
             if (val == "") return;
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
+                url: "https://drivershub.charlws.com/gt/member/list?page=1&search=" + val,
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -3137,7 +3137,7 @@ $(document).ready(function () {
     $("#logout").click(function () {
         token = localStorage.getItem("token")
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/user/revoke",
+            url: "https://drivershub.charlws.com/gt/user/revoke",
             type: "POST",
             dataType: "json",
             headers: {
@@ -3166,7 +3166,7 @@ $(document).ready(function () {
     });
     annpage = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/announcement?page=1",
+        url: "https://drivershub.charlws.com/gt/announcement?page=1",
         type: "GET",
         dataType: "json",
         headers: {
@@ -3197,7 +3197,7 @@ $(document).ready(function () {
         }
     });
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/positions",
+        url: "https://drivershub.charlws.com/gt/application/positions",
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -3213,7 +3213,7 @@ $(document).ready(function () {
     });
     $("#annloadmore").click(function () {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
+            url: "https://drivershub.charlws.com/gt/announcement?page=" + annpage,
             type: "GET",
             dataType: "json",
             headers: {

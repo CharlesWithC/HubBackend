@@ -21,12 +21,12 @@ dhdomain = config.dhdomain
 
 discord_auth = DiscordAuth(client_id, client_secret, callback_url)
 
-@app.get('/atm/user/login', response_class=RedirectResponse)
+@app.get('/gt/user/login', response_class=RedirectResponse)
 async def userLogin(request: Request):
     # login_url = discord_auth.login()
     return RedirectResponse(url=oauth2_url, status_code=302)
     
-@app.get('/atm/user/callback')
+@app.get('/gt/user/callback')
 async def userCallback(code: str, request: Request, response: Response):
     tokens = discord_auth.get_tokens(code)
     if "access_token" in tokens.keys():
@@ -66,7 +66,7 @@ async def userCallback(code: str, request: Request, response: Response):
     response.status_code = 401
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
-@app.get('/atm/user/validate')
+@app.get('/gt/user/validate')
 async def userValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
@@ -96,18 +96,18 @@ async def userValidate(request: Request, response: Response, authorization: str 
         extra = "truckersmp"
     return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
-@app.get("/atm/user/steamauth")
+@app.get("/gt/user/steamauth")
 async def steamOpenid(request: Request, response: Response):
     steamLogin = SteamSignIn()
-    encodedData = steamLogin.ConstructURL('https://drivershub.charlws.com/atm/user/steamcallback')
+    encodedData = steamLogin.ConstructURL('https://drivershub.charlws.com/gt/user/steamcallback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
-@app.get("/atm/user/steamcallback")
+@app.get("/gt/user/steamcallback")
 async def steamCallback(request: Request, response: Response):
     return RedirectResponse(url=f"https://{dhdomain}/steamcallback?{str(request.query_params)}", status_code=302)
 
-@app.post("/atm/user/steambind")
+@app.post("/gt/user/steambind")
 async def steamBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
@@ -182,7 +182,7 @@ async def steamBind(request: Request, response: Response, authorization: str = H
 
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
 
-@app.post("/atm/user/truckersmpbind")
+@app.post("/gt/user/truckersmpbind")
 async def truckersmpBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
@@ -254,7 +254,7 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
     conn.commit()
     return {"error": False, "response": {"message": "TruckersMP account bound.", "truckersmpid": truckersmpid}}
 
-@app.post('/atm/user/revoke')
+@app.post('/gt/user/revoke')
 async def userRevoke(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
@@ -277,7 +277,7 @@ async def userRevoke(request: Request, response: Response, authorization: str = 
     conn.commit()
     return {"error": False, "response": {"message": "Token revoked"}}
 
-@app.post('/atm/user/apptoken')
+@app.post('/gt/user/apptoken')
 async def userBot(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401

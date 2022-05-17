@@ -3,14 +3,14 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Login - At The Mile Logistics</title>
+	<title>Login - Global Trucking</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
 		integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
 		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<link rel="stylesheet" href="css/login.css">
 	<script>
 		function DiscordLogin() {
-			location.href = 'https://drivershub.charlws.com/atm/user/login';
+			location.href = 'https://drivershub.charlws.com/gt/user/login';
 		}
 		function GuestLogin(){
 			localStorage.setItem("token","guest");
@@ -23,7 +23,7 @@
 				return;
 			}
 			$.ajax({
-				url: "https://drivershub.charlws.com/atm/user/validate",
+				url: "https://drivershub.charlws.com/gt/user/validate",
 				type: "GET",
 				dataType: "json",
 				headers: {
@@ -48,12 +48,9 @@
 </head>
 
 <body style="overflow:hidden">
-	<audio autoplay style="display:none">
-		<source src="/music.mp3" type="audio/mpeg">
-	  </audio> 
 	<div id="formContainer">
 		<div class="formLeft">
-			<img src="/images/atm-black.png">
+			<img src="/images/gt-black.png">
 		</div>
 		<div class="formRight">
 			<!-- Login form -->
@@ -74,7 +71,7 @@
 	<div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
 		Copyright &copy 2022 CharlesWithC
 		<br>
-		Licensed to At The Mile Logistics 
+		Licensed to Global Trucking 
 	</div>
 </body>
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Authorization - At The Mile Logistics</title>
+    <title>Authorization - Global Trucking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/js/functions.js"></script>
 	<link rel="stylesheet" href="css/login.css">
@@ -13,7 +13,7 @@
                 sParameterName,
                 i;
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/steambind",
+                url: "https://drivershub.charlws.com/gt/user/steambind",
                 type: "POST",
                 dataType: "json",
                 headers: {
@@ -45,7 +45,7 @@
         }
         function TMPBind(){
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/truckersmpbind",
+                url: "https://drivershub.charlws.com/gt/user/truckersmpbind",
                 type: "POST",
                 dataType: "json",
                 headers: {
@@ -80,7 +80,7 @@
 <body style="overflow:hidden">
 	<div id="formContainer">
 	<div class="formLeft">
-		<img src="/images/atm-black.png">
+		<img src="/images/gt-black.png">
 	</div>
 	<div class="formRight">
 		<!-- Login form -->
@@ -90,7 +90,7 @@
                 <p id="msg">Validating steam authorization...</p>
 			</header>
             <section id="steamauth" style="display:none">
-                <a href="https://drivershub.charlws.com/atm/user/steamauth">
+                <a href="https://drivershub.charlws.com/gt/user/steamauth">
                     <img src="https://community.akamai.steamstatic.com/public/images/signinthroughsteam/sits_01.png">
                 </a>
             </section>
@@ -105,7 +105,7 @@
 	<div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
 		Copyright &copy 2022 CharlesWithC
 		<br>
-		Licensed to At The Mile Logistics 
+		Licensed to Global Trucking 
 	</div>
 </body>
 </html>
