@@ -3019,6 +3019,17 @@ $(document).ready(function () {
     loadStats();
     setInterval(loadStats, 60000);
 
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
+        t = $("div");
+        for(i = 0; i < t.length; i++){
+            st = $(t[i]).attr("style");
+            if(st == undefined) continue;
+            st = st.replaceAll("padding:50px","padding:5px");
+            $(t[i]).attr("style",st);
+        }
+        $("#hometableftcontainer").css("width", "100%");
+    }
+
     $('#searchname').keydown(function (e) {
         if (e.which == 13) loadMembers();
     });
@@ -3166,7 +3177,7 @@ $(document).ready(function () {
                     .content.replaceAll("\n", "<br>");
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
-                $("#HomeTabLeft").append(banner.replaceAll("py-8 ", ""));
+                $("#HomeTabLeft").append(banner.replaceAll("py-8 ", "pb-8 "));
             }
             for (i = 0; i < ann.length; i++) {
                 a = ann[i];
