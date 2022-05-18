@@ -39,7 +39,7 @@ def UpdateTelemetry(steamid, userid, logid, endtime):
         t = cur.fetchall()
         data = f"{t[0][3]},{t[0][4]};"
         for tt in t:
-            data += f"{tt[0]},{tt[1]},{tt[2]},{tt[5]};"
+            data += f"{b62encode(int(tt[0]))},{b62encode(int(tt[2]))};"
         conn = newconn()
         cur = conn.cursor()
         cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")

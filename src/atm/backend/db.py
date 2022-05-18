@@ -35,7 +35,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, 
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid TEXT, game BIGINT, x DOUBLE, y DOUBLE, z DOUBLE, mods TEXT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT)")
 conn.commit()
 """
 CREATE INDEX user_userid ON user (userid);
@@ -54,6 +54,7 @@ CREATE INDEX dlog_topspeed ON dlog (topspeed);
 CREATE INDEX event_eventid ON event (eventid);
 CREATE INDEX telemetry_logid ON telemetry (logid);
 CREATE INDEX telemetry_userid ON telemetry (userid);
+CREATE INDEX temptelemetry_uuidid ON temptelemetry (uuid);
 CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid);
 
 INSERT INTO settings VALUES (0, 'nxtuserid', 0);

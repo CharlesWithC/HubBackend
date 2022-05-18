@@ -25,9 +25,9 @@ async def navio(uri):
                     game = 2
                 else:
                     game = 999
-                x = round(d["truck"]["position"]["x"],2)
-                y = round(d["truck"]["position"]["y"],2)
-                z = round(d["truck"]["position"]["z"],2)
+                x = int(d["truck"]["position"]["x"])
+                y = int(d["truck"]["position"]["y"])
+                z = int(d["truck"]["position"]["z"])
                 mods = ""
                 for mod in d["mods"]:
                     mods += mod["name"]
@@ -44,11 +44,11 @@ async def navio(uri):
                 uuid = d["job"]["uuid"]
                 print(f"Received telemetry update for {steamid} in game {game} regarding job {uuid} at {x}, {y}, {z}")
                 try:
-                    cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, -1, '{uuid}', '{game}', {x}, {y}, {z}, '{mods}', {int(time.time())})")
+                    cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                 except:
                     traceback.print_exc()
                     conn = newconn()
-                    cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, -1, '{uuid}', '{game}', {x}, {y}, {z}, '{mods}', {int(time.time())})")
+                    cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
             if int(time.time()) - lasthandshake >= 30:
                 print("Heartbeat")

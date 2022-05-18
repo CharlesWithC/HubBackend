@@ -452,6 +452,11 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
     p = cur.fetchall()
     telemetry = ""
     if len(p) > 0:
-        telemetry = p[0][0]
+        ver = "v1"
+        telemetry = p[0][0].split(";")
+        t1 = telemetry[1].split(",")
+        if len(t1) == 2:
+            ver = "v2"
+        telemetry = ver + p[0][0]
 
     return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}

@@ -87,7 +87,7 @@ socket.addEventListener("message", ({
         if (data.type == 1) {
             drivername = membersteam[data.driver];
             if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
-            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> €" + TSeparator(data.revenue), 30000, false);
+            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> €" + TSeparator(data.revenue), 10000, false);
         }
     }
 });
@@ -167,24 +167,10 @@ function PlayerPoint(steamid, mapid){
     clearInterval(autocenterint[mapid]);
     autocenterint[mapid] = setInterval(function(){
         d = driverdata[steamid];
+        if(d == undefined) return;
         window.mapcenter[mapid] = [d.truck.position.x, -d.truck.position.z];
     }, 100)
 }
-
-$(document).ready(function(){
-    $("#map > div > canvas").click(function(){
-        clearInterval(autocenterint["map"]);
-        autocenterint["map"] = -1;
-    });
-    $("#amap > div > canvas").children().click(function(){
-        clearInterval(autocenterint["amap"]);
-        autocenterint["amap"] = -1;
-    });
-    $("#pmap > div > canvas").children().click(function(){
-        clearInterval(autocenterint["pmap"]);
-        autocenterint["pmap"] = -1;
-    });
-})
 
 trucksvg = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-truck-delivery" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" color="red" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"/> <circle cx="7" cy="17" r="2" /> <circle cx="17" cy="17" r="2" /> <path d="M5 17h-2v-4m-1 -8h11v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" /> <line x1="3" y1="9" x2="7" y2="9" /> </svg> `;
 

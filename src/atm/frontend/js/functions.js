@@ -248,3 +248,17 @@ String.prototype.toHHMMSS = function () {
   if (seconds < 10) {seconds = "0"+seconds;}
   return hours + ':' + minutes + ':' + seconds;
 }
+
+function b62decode(num62) {
+    flag = 1;
+    if(num62.startsWith("-")) {
+        flag = -1;
+        num62 = num62.slice(1);
+    }
+    ret = 0;
+    l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for(i = 0; i < num62.length; i++) {
+        ret += l.indexOf(num62[i]) * 62 ** (num62.length - i - 1);
+    }
+    return ret * flag;
+}

@@ -180,6 +180,20 @@ function ShowTab(tabname, btnname) {
         LoadETS2Map();
         LoadETS2PMap();
         LoadATSMap();
+        setTimeout(function () {
+            $("#map > div > canvas").click(function () {
+                clearInterval(autocenterint["map"]);
+                autocenterint["map"] = -1;
+            });
+            $("#amap > div > canvas").children().click(function () {
+                clearInterval(autocenterint["amap"]);
+                autocenterint["amap"] = -1;
+            });
+            $("#pmap > div > canvas").children().click(function () {
+                clearInterval(autocenterint["pmap"]);
+                autocenterint["pmap"] = -1;
+            });
+        }, 500);
     }
     if (tabname == "#SubmitApp") {
         $("#driverappsel").attr("selected", "selected");
@@ -1419,7 +1433,9 @@ function loadDelivery() {
 
 deliveryRoute = [];
 rri = 0;
-rrspeed = 1;
+rrspeed = 20;
+rrevents = [];
+punit = "€";
 async function deliveryRoutePlay() {
     clearInterval(dmapint);
     dmapint = -999;
@@ -1428,10 +1444,10 @@ async function deliveryRoutePlay() {
     preh = 0;
     pred = 0;
     pret = 0;
-    for (; rri < deliveryRoute.length; rri ++) {
-        if(rrspeed <= 0) rrspeed = 1;
-        if(rri < 0) rri = 0;
-        if(rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
+    for (; rri < deliveryRoute.length; rri++) {
+        if (rrspeed <= 0) rrspeed = 1;
+        if (rri < 0) rri = 0;
+        if (rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
         $("#rp_speed").html(rrspeed);
         $("#rp_cur").html(rri);
         $("#rp_pct").html(Math.round(rri / deliveryRoute.length * 100));
@@ -1443,24 +1459,23 @@ async function deliveryRoutePlay() {
             $(".dmap-player").remove();
             RenderPoint("dmap", 0, dmaph / 2, dmapw / 2, 5, nodetail = true, truckicon = true);
         }
-        if(rri + 1 < deliveryRoute.length){
-            vx = Math.round((deliveryRoute[rri+1][0] - deliveryRoute[rri][0]) * 100) / 100;
-            vy = Math.round((deliveryRoute[rri+1][1] - deliveryRoute[rri][1]) * 100) / 100;
-            console.log(vx, vy);
+        if (rri + 1 < deliveryRoute.length) {
+            vx = Math.round((deliveryRoute[rri + 1][0] - deliveryRoute[rri][0]) * 100) / 100;
+            vy = Math.round((deliveryRoute[rri + 1][1] - deliveryRoute[rri][1]) * 100) / 100;
             degree = Math.atan(vy / vx) / Math.PI * 180;
-            if(!(vx == 0 && vy == 0)){
+            if (!(vx == 0 && vy == 0)) {
                 $(".dmap-player").css("rotate", parseInt(degree) + "deg");
                 pred = degree;
-                if(deliveryRoute[rri+1][0] - deliveryRoute[rri][0] < 0){
+                if (deliveryRoute[rri + 1][0] - deliveryRoute[rri][0] < 0) {
                     $(".dmap-player").css("transform", "scaleX(-1)");
                     pret = 1;
                 } else {
                     $(".dmap-player").css("transform", "");
                     pret = 0;
                 }
-            } else{
+            } else {
                 $(".dmap-player").css("rotate", parseInt(pred) + "deg");
-                if(pret){
+                if (pret) {
                     $(".dmap-player").css("transform", "scaleX(-1)");
                 } else {
                     $(".dmap-player").css("transform", "");
@@ -1468,7 +1483,7 @@ async function deliveryRoutePlay() {
             }
         } else {
             $(".dmap-player").css("rotate", parseInt(pred) + "deg");
-            if(pret){
+            if (pret) {
                 $(".dmap-player").css("transform", "scaleX(-1)");
             } else {
                 $(".dmap-player").css("transform", "");
@@ -1477,9 +1492,43 @@ async function deliveryRoutePlay() {
 
         window.mapcenter["dmap"] = [deliveryRoute[rri][0], -deliveryRoute[rri][1]];
 
+        x = deliveryRoute[rri][0];
+        z = deliveryRoute[rri][1];
+        for (var i = 0; i < rrevents.length; i++) {
+            ex = rrevents[i].location.x;
+            ez = rrevents[i].location.z;
+            // distance of (x,z) and (ex,ez) <= 50, use euclid distance
+            if (Math.sqrt(Math.pow(x - ex, 2) + Math.pow(z - ez, 2)) <= 50) {
+                mt = $("#dmap").position().top;
+                ml = $("#dmap").position().left;
+                eventmsg = "";
+                if (rrevents[i].type == "tollgate") {
+                    cost = rrevents[i].meta.cost;
+                    eventmsg = "Paid " + punit + TSeparator(cost) + " at toll gate.";
+                } else if (rrevents[i].type == "refuel") {
+                    amount = rrevents[i].meta.amount;
+                    eventmsg = "Refueled " + TSeparator(parseInt(amount)) + "L of fuel.";
+                } else if(rrevents[i].type == "collision") {
+                    eventmsg = "Collision!";
+                } else if(rrevents[i].type == "repair") {
+                    eventmsg = "Truck repaired.";
+                } else if(rrevents[i].type == "teleport") {
+                    eventmsg = "Teleported.";
+                }
+                if (eventmsg != "") {
+                    randomid = Math.random().toString(36).substring(7);
+                    $(".rrevent").hide();
+                    $("#dmap").append(`<a class="rrevent" id="rrevent-${randomid}" style='position:absolute;top:${mt+dmaph/2}px;left:${ml+dmapw/2}px;color:red;'>${eventmsg}</a>`);
+                    setTimeout(function () {
+                        $("#rrevent-" + randomid).fadeOut();
+                    }, 3000);
+                }
+            }
+        }
+
         await sleep(500 / rrspeed);
 
-        while(dmapint != -999){
+        while (dmapint != -999) {
             await sleep(500);
             rri -= 1;
         }
@@ -1487,8 +1536,8 @@ async function deliveryRoutePlay() {
     window.mapcenter["dmap"] = undefined;
 }
 
-function rrplayswitch(){
-    if(dmapint == -999){
+function rrplayswitch() {
+    if (dmapint == -999) {
         dmapint = -2;
         $("#rrplay").html("Play");
     } else {
@@ -1499,10 +1548,12 @@ function rrplayswitch(){
 
 function deliveryDetail(logid) {
     rri = 0;
+    rrspeed = 20;
     $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
     $("#DeliveryInfoBtn" + logid).html("Loading...");
     $("#rp_cur").html("0");
     $("#rp_tot").html("0");
+    $("#rp_pct").html("0");
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
         type: "GET",
@@ -1552,6 +1603,7 @@ function deliveryDetail(logid) {
                 }
                 punit = "€";
                 if (!d.game.short_name.startsWith("e")) punit = "$";
+                rrevents = d.events;
                 meta = d.events[d.events.length - 1].meta;
                 if (tp == "job.delivered") {
                     revenue = TSeparator(meta.revenue);
@@ -1668,13 +1720,18 @@ function deliveryDetail(logid) {
                 setTimeout(function () {
                     telemetry = data.response.telemetry.split(";");
                     basic = telemetry[0].split(",");
+                    tver = 1;
+                    if (basic[0].startsWith("v2")) tver = 2;
+                    basic[0] = basic[0].slice(2);
                     game = basic[0];
                     mods = basic[1];
                     route = telemetry.slice(1);
                     dpoints = [];
                     for (i = 0; i < route.length; i++) {
                         p = route[i].split(",");
-                        dpoints.push([p[0], p[2]]); // x, z
+                        if (p.length < 2) continue;
+                        if (tver == 1) dpoints.push([p[0], p[2]]); // x, z
+                        else dpoints.push([b62decode(p[0]), b62decode(p[1])]);
                     }
                     minx = 100000000000000;
                     for (i = 0; i < dpoints.length; i++) {

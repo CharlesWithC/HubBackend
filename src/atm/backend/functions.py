@@ -40,3 +40,28 @@ async def AuditLog(userid, text):
         embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
         embed.timestamp = datetime.now()
         await webhook.send(embed=embed)
+        
+def b62encode(d):
+    ret = ""
+    l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if d == 0:
+        return l[0]
+    flag = ""
+    if d < 0:
+        flag = "-"
+        d = abs(d)
+    while d:
+        ret += l[d % 62]
+        d //= 62
+    return flag + ret[::-1]
+
+def b62decode(d):
+    flag = 1
+    if d.startswith("-"):
+        flag = -1
+        d = d[1:]
+    ret = 0
+    l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for i in range(len(d)):
+        ret += l.find(d[i]) * 62 ** (len(d) - i - 1)
+    return ret * flag
