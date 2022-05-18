@@ -150,7 +150,8 @@ setInterval(function () {
     }
 }, 1000);
 
-function PlayerPoint(steamid){
+autocenterint = {};
+function PlayerPoint(steamid, mapid){
     if(steamid == 0 || steamid == "0") return;
     drivername = membersteam[steamid];
     userid = memberuserid[steamid];
@@ -163,7 +164,27 @@ function PlayerPoint(steamid){
     speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
     distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
     toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${userid})'>Show profile</a>`, 5000, false);
+    clearInterval(autocenterint[mapid]);
+    autocenterint[mapid] = setInterval(function(){
+        d = driverdata[steamid];
+        window.mapcenter[mapid] = [d.truck.position.x, -d.truck.position.z];
+    }, 100)
 }
+
+$(document).ready(function(){
+    $("#map > div > canvas").click(function(){
+        clearInterval(autocenterint["map"]);
+        autocenterint["map"] = -1;
+    });
+    $("#amap > div > canvas").children().click(function(){
+        clearInterval(autocenterint["amap"]);
+        autocenterint["amap"] = -1;
+    });
+    $("#pmap > div > canvas").children().click(function(){
+        clearInterval(autocenterint["pmap"]);
+        autocenterint["pmap"] = -1;
+    });
+})
 
 trucksvg = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-truck-delivery" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" color="red" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"/> <circle cx="7" cy="17" r="2" /> <circle cx="17" cy="17" r="2" /> <path d="M5 17h-2v-4m-1 -8h11v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" /> <line x1="3" y1="9" x2="7" y2="9" /> </svg> `;
 
@@ -175,17 +196,17 @@ function RenderPoint(mapid, steamid, x, y, scale, nodetail = false, truckicon = 
     t = $("#" + mapid).position().top;
     l = $("#" + mapid).position().left;
     if(truckicon){
-        $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-12}px;left:${l+y-12}px' onclick="PlayerPoint('${steamid}')";>${trucksvg}</a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-12}px;left:${l+y-12}px' onclick="PlayerPoint('${steamid}', '${mapid}')";>${trucksvg}</a>`);
         return;
     }
     if(scale <= 10){
-        if(!nodetail)  $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}')";>${drivername}</a>`);
-        $("#" + mapid).append(`<a class="${mapid}-player dot" style='cursor:pointer;position:absolute;top:${t+x-7.5}px;left:${l+y-7.5}px' onclick="PlayerPoint('${steamid}')";></a>`);
+        if(!nodetail)  $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}', '${mapid}')";>${drivername}</a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot" style='cursor:pointer;position:absolute;top:${t+x-7.5}px;left:${l+y-7.5}px' onclick="PlayerPoint('${steamid}', '${mapid}')";></a>`);
     } else if(scale <= 25){
-        $("#" + mapid).append(`<a class="${mapid}-player dot-small" style='cursor:pointer;position:absolute;top:${t+x-5}px;left:${l+y-5}px' onclick="PlayerPoint('${steamid}')"></a>`);
-        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}')"></a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot-small" style='cursor:pointer;position:absolute;top:${t+x-5}px;left:${l+y-5}px' onclick="PlayerPoint('${steamid}', '${mapid}')"></a>`);
+        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}', '${mapid}')"></a>`);
     } else {
-        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}')"></a>`);      
+        $("#" + mapid).append(`<a class="${mapid}-player dot-area" style='cursor:pointer;position:absolute;top:${t+x-25}px;left:${l+y-25}px' onclick="PlayerPoint('${steamid}', '${mapid}')"></a>`);      
     }
 }
 
@@ -254,6 +275,40 @@ setInterval(function () {
             arx = (ax - amapxl) / (amapxr - amapxl) * amapw;
             arz = (az - amapyt) / (amapyb - amapyt) * amaph;
             RenderPoint("amap", aplayers[i], arz, arx, ascale);
+        }
+    }
+}, 500);
+
+window.pn = {};
+setInterval(function () {
+    if (!ets2ploaded || window.pn == undefined || window.pn.previousExtent_ == undefined) return;
+    window.pmapRange = {};
+    pmapRange["top"] = window.pn.previousExtent_[3];
+    pmapRange["left"] = window.pn.previousExtent_[0];
+    pmapRange["bottom"] = window.pn.previousExtent_[1];
+    pmapRange["right"] = window.pn.previousExtent_[2];
+    $(".pmap-player").remove();
+    players = Object.keys(ets2data);
+    for (var i = 0; i < players.length; i++) {
+        if (Object.keys(ets2data).indexOf(players[i]) == -1) {
+            delete ets2data[players[i]];
+            continue;
+        }
+        if (JSON.stringify(ets2data[players[i]]).toLowerCase().indexOf("promod") == -1) continue;
+        pos = ets2data[players[i]].truck.position;
+        x = pos.x;
+        z = -pos.z;
+        mapxl = pmapRange["left"];
+        mapxr = pmapRange["right"];
+        mapyt = pmapRange["top"];
+        mapyb = pmapRange["bottom"];
+        mapw = $("#pmap").width();
+        maph = $("#pmap").height();
+        scale = (mapxr - mapxl) / $("#pmap").width();
+        if (x > mapxl && x < mapxr && z > mapyb && z < mapyt) {
+            rx = (x - mapxl) / (mapxr - mapxl) * mapw;
+            rz = (z - mapyt) / (mapyb - mapyt) * maph;
+            RenderPoint("pmap", players[i], rz, rx, scale);
         }
     }
 }, 500);
