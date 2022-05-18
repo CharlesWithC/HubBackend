@@ -21,6 +21,10 @@ function getCookie(cookiename) {
   return decodeURIComponent(!!cookiestring ? cookiestring.toString().replace(/^[^=]+./, "") : "");
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function genBanner(btype, title, content) {
   if (btype == "info") {
     return `

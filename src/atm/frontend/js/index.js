@@ -1,26 +1,30 @@
 rolelist = {};
 dmapint = -1;
+window.mapcenter = {}
+window.autofocus = {}
 
 isdark = parseInt(localStorage.getItem("darkmode"));
-if(localStorage.getItem("darkmode") == undefined) isdark = 1;
-function DarkMode(){
-    if(!isdark){
-        $("body").css("transition","color 1000ms linear");
-        $("body").css("transition","background-color 1000ms linear");
+if (localStorage.getItem("darkmode") == undefined) isdark = 1;
+
+function DarkMode() {
+    if (!isdark) {
+        $("body").css("transition", "color 1000ms linear");
+        $("body").css("transition", "background-color 1000ms linear");
         $("body").addClass("bg-gray-800");
-        $("body").css("color","white");
+        $("body").css("color", "white");
         $("head").append(`<style id='convertbg'>
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;transition: color 1000ms linear;}
             svg{transition: color 1000ms linear;}
             .text-gray-500,.text-gray-600 {color: #ddd;transition: color 1000ms linear;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);transition: background-color 1000ms linear;}
             .swal2-popup {background-color: rgb(41 48 57)}</style>`);
-        $("#todarksvg").hide();$("#tolightsvg").show();
+        $("#todarksvg").hide();
+        $("#tolightsvg").show();
     } else {
-        $("body").css("transition","color 1000ms linear");
-        $("body").css("transition","background-color 1000ms linear");
+        $("body").css("transition", "color 1000ms linear");
+        $("body").css("transition", "background-color 1000ms linear");
         $("body").removeClass("bg-gray-800");
-        $("body").css("color","");
+        $("body").css("color", "");
         $("head").append(`<style id='convertbg2'>
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {transition: color 1000ms linear;}
             svg{transition: color 1000ms linear;}
@@ -28,8 +32,11 @@ function DarkMode(){
             .bg-white {transition: background-color 1000ms linear;}
             .swal2-popup {}</style>`);
         $("#convertbg").remove();
-        setTimeout(function(){$("#convertbg2").remove()}, 1000);
-        $("#todarksvg").show();$("#tolightsvg").hide();
+        setTimeout(function () {
+            $("#convertbg2").remove()
+        }, 1000);
+        $("#todarksvg").show();
+        $("#tolightsvg").hide();
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
@@ -164,6 +171,7 @@ function toastFactory(type, title, text, time, showConfirmButton) {
 
 function ShowTab(tabname, btnname) {
     clearInterval(dmapint);
+    dmapint = -1;
     $(".tabs").hide();
     $(tabname).show();
     $(".tabbtns").removeClass("bg-indigo-500");
@@ -1409,9 +1417,92 @@ function loadDelivery() {
     })
 }
 
+deliveryRoute = [];
+rri = 0;
+rrspeed = 1;
+async function deliveryRoutePlay() {
+    clearInterval(dmapint);
+    dmapint = -999;
+    window.mapcenter["dmap"] = [deliveryRoute[0][0], -deliveryRoute[0][1]];
+    prew = 0;
+    preh = 0;
+    pred = 0;
+    pret = 0;
+    for (; rri < deliveryRoute.length; rri ++) {
+        if(rrspeed <= 0) rrspeed = 1;
+        if(rri < 0) rri = 0;
+        if(rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
+        $("#rp_speed").html(rrspeed);
+        $("#rp_cur").html(rri);
+        $("#rp_pct").html(Math.round(rri / deliveryRoute.length * 100));
+        dmapw = $("#dmap").width();
+        dmaph = $("#dmap").height();
+        if (prew != dmapw || preh != dmaph) {
+            prew = dmapw;
+            preh = dmaph;
+            $(".dmap-player").remove();
+            RenderPoint("dmap", 0, dmaph / 2, dmapw / 2, 5, nodetail = true, truckicon = true);
+        }
+        if(rri + 1 < deliveryRoute.length){
+            vx = Math.round((deliveryRoute[rri+1][0] - deliveryRoute[rri][0]) * 100) / 100;
+            vy = Math.round((deliveryRoute[rri+1][1] - deliveryRoute[rri][1]) * 100) / 100;
+            console.log(vx, vy);
+            degree = Math.atan(vy / vx) / Math.PI * 180;
+            if(!(vx == 0 && vy == 0)){
+                $(".dmap-player").css("rotate", parseInt(degree) + "deg");
+                pred = degree;
+                if(deliveryRoute[rri+1][0] - deliveryRoute[rri][0] < 0){
+                    $(".dmap-player").css("transform", "scaleX(-1)");
+                    pret = 1;
+                } else {
+                    $(".dmap-player").css("transform", "");
+                    pret = 0;
+                }
+            } else{
+                $(".dmap-player").css("rotate", parseInt(pred) + "deg");
+                if(pret){
+                    $(".dmap-player").css("transform", "scaleX(-1)");
+                } else {
+                    $(".dmap-player").css("transform", "");
+                }
+            }
+        } else {
+            $(".dmap-player").css("rotate", parseInt(pred) + "deg");
+            if(pret){
+                $(".dmap-player").css("transform", "scaleX(-1)");
+            } else {
+                $(".dmap-player").css("transform", "");
+            }
+        }
+
+        window.mapcenter["dmap"] = [deliveryRoute[rri][0], -deliveryRoute[rri][1]];
+
+        await sleep(500 / rrspeed);
+
+        while(dmapint != -999){
+            await sleep(500);
+            rri -= 1;
+        }
+    }
+    window.mapcenter["dmap"] = undefined;
+}
+
+function rrplayswitch(){
+    if(dmapint == -999){
+        dmapint = -2;
+        $("#rrplay").html("Play");
+    } else {
+        $("#rrplay").html("Pause");
+        deliveryRoutePlay(50);
+    }
+}
+
 function deliveryDetail(logid) {
+    rri = 0;
     $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
     $("#DeliveryInfoBtn" + logid).html("Loading...");
+    $("#rp_cur").html("0");
+    $("#rp_tot").html("0");
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
         type: "GET",
@@ -1420,6 +1511,8 @@ function deliveryDetail(logid) {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+            $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
+            $("#DeliveryInfoBtn" + logid).html("Show Details");
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
                 false);
             info = "";
@@ -1428,38 +1521,39 @@ function deliveryDetail(logid) {
                 userid = d.userid;
                 name = d.name;
                 d = d.data;
-                if (d.type == "job.delivered") {
-                    d = d.data.object;
-                    start_time = +new Date(d.start_time);
-                    stop_time = +new Date(d.stop_time);
-                    duration = "N/A";
-                    if (start_time > 86400 * 1000) duration = String((stop_time - start_time) / 1000).toHHMMSS(); // in case start time is 19700101 and timezone
-                    planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
-                    fuel_used_org = d.fuel_used;
-                    fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
-                    cargo = d.cargo.name;
-                    cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
-                    source_company = "Unknown company";
-                    source_city = "Unknown city";
-                    destination_company = "Unknown company";
-                    destination_city = "Unknown city";
-                    if (d.source_company != null) source_company = d.source_company.name;
-                    if (d.source_city != null) source_city = d.source_city.name;
-                    if (d.destination_company != null) destination_company = d.destination_company.name;
-                    if (d.destination_city != null) destination_city = d.destination_city.name;
-                    truck = d.truck.brand.name + " " + d.truck.name;
-                    license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
-                    top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
-                    trailer = "";
-                    trs = "";
-                    if (d.trailers.length > 1) trs = "s";
-                    for (var i = 0; i < d.trailers.length; i++) {
-                        trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
-                            .license_plate + " | ";
-                    }
-                    punit = "€";
-                    if (!d.game.short_name.startsWith("e")) punit = "$";
-                    meta = d.events[d.events.length - 1].meta;
+                tp = d.type;
+                d = d.data.object;
+                start_time = +new Date(d.start_time);
+                stop_time = +new Date(d.stop_time);
+                duration = "N/A";
+                if (start_time > 86400 * 1000) duration = String((stop_time - start_time) / 1000).toHHMMSS(); // in case start time is 19700101 and timezone
+                planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
+                fuel_used_org = d.fuel_used;
+                fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
+                cargo = d.cargo.name;
+                cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
+                source_company = "Unknown company";
+                source_city = "Unknown city";
+                destination_company = "Unknown company";
+                destination_city = "Unknown city";
+                if (d.source_company != null) source_company = d.source_company.name;
+                if (d.source_city != null) source_city = d.source_city.name;
+                if (d.destination_company != null) destination_company = d.destination_company.name;
+                if (d.destination_city != null) destination_city = d.destination_city.name;
+                truck = d.truck.brand.name + " " + d.truck.name;
+                license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
+                top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
+                trailer = "";
+                trs = "";
+                if (d.trailers.length > 1) trs = "s";
+                for (var i = 0; i < d.trailers.length; i++) {
+                    trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
+                        .license_plate + " | ";
+                }
+                punit = "€";
+                if (!d.game.short_name.startsWith("e")) punit = "$";
+                meta = d.events[d.events.length - 1].meta;
+                if (tp == "job.delivered") {
                     revenue = TSeparator(meta.revenue);
                     earned_xp = meta.earned_xp;
                     cargo_damage = meta.cargo_damage;
@@ -1467,32 +1561,39 @@ function deliveryDetail(logid) {
                     auto_park = meta.auto_park;
                     auto_load = meta.auto_load;
                     avg_fuel = TSeparator(parseInt(fuel_used_org / (meta.distance / 1.6) * 100));
+                } else if (tp == "job.cancelled") {
+                    distance = TSeparator(parseInt(d.driven_distance / 1.6)) + "Mi";
+                    distance_org = d.driven_distance;
+                    penalty = TSeparator(meta.penalty);
+                    avg_fuel = TSeparator(parseInt(fuel_used_org / (distance_org / 1.6) * 100));
+                }
 
-                    $(".ddcol").children().remove();
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $(".ddcol").children().remove();
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">From</td>
                         <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">To</td>
                         <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Cargo</td>
                         <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Weight</td>
                         <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Initial Company</td>
                         <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
-                    $("#ddcol1").append(`<tr class="text-xs">
+                $("#ddcol1").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Target Company</td>
                         <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
+                $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Planned Distance</td>
                         <td class="py-5 px-6 font-medium">${planned_distance}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
+                $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Driven Distance</td>
                         <td class="py-5 px-6 font-medium">${distance}</td></tr>`);
+                if (tp == "job.delivered") {
                     $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Profit</td>
                         <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
@@ -1500,183 +1601,144 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium">XP</td>
                         <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Damage</td>
-                        <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
+                            <td class="py-5 px-6 font-medium">Damage</td>
+                            <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
+                } else if (tp == "job.cancelled") {
                     $("#ddcol2").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">Penalty</td>
+                            <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">XP</td>
+                            <td class="py-5 px-6 font-medium">0</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">Damage</td>
+                            <td class="py-5 px-6 font-medium">${parseInt(data.response.data.data.object.cargo.damage * 100)}%</td></tr>`);
+                }
+                $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
                         <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs">
+                $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Truck</td>
                         <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs">
+                $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Truck's License Plate</td>
                         <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs">
+                $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
                         <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs">
+                $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Average Consumption</td>
                         <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
-                    $("#ddcol3").append(`<tr class="text-xs">
+                $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Fuel Used</td>
                         <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
+                if (tp == "job.delivered") {
                     extra = "";
-                    if (auto_park) extra += "Auto Park | ";
-                    if (auto_load) extra += "Auto Load | ";
+                    if (auto_park == "1") extra += "Auto Park | ";
+                    if (auto_load == "1") extra += "Auto Load | ";
                     $("#ddcol3").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Tags</td>
                         <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
-
-                    dt = getDateTime(data.response.timestamp * 1000);
-
-                    $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Driver</td>
-                        <td class="py-5 px-6 font-medium">${name}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Log ID</td>
-                        <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Time Spent</td>
-                        <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
-                    $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Time submitted</td>
-                        <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
-
-                    tabname = "#DeliveryDetailTab";
-                    $(".tabs").hide();
-                    $(tabname).show();
-
-                    setTimeout(function(){
-                        telemetry = data.response.telemetry.split(";");
-                        basic = telemetry[0].split(",");
-                        game = basic[0];
-                        mods = basic[1];
-                        route = telemetry.slice(1);
-                        dpoints = [];
-                        for (i = 0; i < route.length; i++) {
-                            p = route[i].split(",");
-                            dpoints.push([p[0], p[2]]); // x, z
-                        }
-                        minx = 100000000000000;
-                        for(i = 0; i < dpoints.length; i++) {
-                            if (dpoints[i][0] < minx) minx = dpoints[i][0];
-                        }
-                        $("#dmap").children().remove();
-                        if(game == 1 && (mods == "promod" || JSON.stringify(data.response).toLowerCase().indexOf("promod") != -1)) {
-                            LoadETS2PMap("dmap", true);
-                        } else if(game == 1){ // ets2
-                            LoadETS2Map("dmap", true);
-                        } else if(game == 2){ // ats
-                            LoadATSMap("dmap", true);
-                        }
-                        dpoints150 = dpoints.filter(function(el, i) {
-                            return i % 300 == 0;
-                        });
-                        dpoints30 = dpoints.filter(function(el, i) {
-                            return i % 100 == 0;
-                        });
-                        dpoints20 = dpoints.filter(function(el, i) {
-                            return i % 50 == 0;
-                        });
-                        dpoints10 = dpoints.filter(function(el, i) {
-                            return i % 10 == 0;
-                        });
-                        dpoints = dpoints.filter(function(el, i) {
-                            return i % 5 == 0;
-                        });
-                        window.dn = {};
-                        if(dmapint != -1) clearInterval(dmapint);
-                        dmapint = setInterval(function () {
-                            if (window.dn == undefined || window.dn.previousExtent_ == undefined) return;
-                            window.dmapRange = {};
-                            dmapRange["top"] = window.dn.previousExtent_[3];
-                            dmapRange["left"] = window.dn.previousExtent_[0];
-                            dmapRange["bottom"] = window.dn.previousExtent_[1];
-                            dmapRange["right"] = window.dn.previousExtent_[2];
-                            $(".dmap-player").remove();
-                            dmapxl = dmapRange["left"];
-                            dmapxr = dmapRange["right"];
-                            dmapyt = dmapRange["top"];
-                            dmapyb = dmapRange["bottom"];
-                            dmapw = $("#dmap").width();
-                            dmaph = $("#dmap").height();
-                            dscale = (dmapxr - dmapxl) / $("#dmap").width();
-                            ddpoints = dpoints;
-                            if(dscale >= 150 && i % 300 != 0) ddpoints = dpoints150;
-                            else if(dscale >= 30 && i % 100 != 0) ddpoints = dpoints30;
-                            else if(dscale >= 20 && i % 50 != 0) ddpoints = dpoints20;
-                            else if(dscale >= 10 && i % 10 != 0) ddpoints = dpoints10;
-                            for (var i = 0; i < ddpoints.length; i++) {
-                                x = ddpoints[i][0];
-                                z = -ddpoints[i][1];
-                                if (x > dmapxl && x < dmapxr && z > dmapyb && z < dmapyt) {
-                                    rx = (x - dmapxl) / (dmapxr - dmapxl) * dmapw;
-                                    rz = (z - dmapyt) / (dmapyb - dmapyt) * dmaph;
-                                    RenderPoint("dmap", 0, rz, rx, 5, nodetail = true);
-                                }
-                            }
-                        }, 500);
-                    }, 500);
-                } else if (d.type == "job.cancelled") {
-                    d = d.data.object;
-                    planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
-                    fuel_used_org = d.fuel_used;
-                    fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
-                    driven_distance = TSeparator(parseInt(d.driven_distance / 1.6)) + "Mi";
-                    driven_distance_org = d.driven_distance;
-                    cargo = d.cargo.name;
-                    cargo_damage = d.cargo.damage * 100;
-                    cargo_mass = TSeparator(parseInt(d.cargo.mass)) + "kg";
-                    source_company = d.source_company.name;
-                    source_city = d.source_city.name;
-                    destination_company = d.destination_company.name;
-                    destination_city = d.destination_city.name;
-                    truck = d.truck.brand.name + " " + d.truck.name;
-                    license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
-                    top_speed = parseInt(d.truck.top_speed / 1.6);
-                    trailer = "";
-                    trs = "";
-                    if (d.trailers.length > 1) trs = "s";
-                    for (var i = 0; i < d.trailers.length; i++) {
-                        trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
-                            .license_plate + " | ";
-                    }
-                    punit = "€";
-                    if (!d.game.short_name.startsWith("e")) punit = "$";
-                    meta = d.events[d.events.length - 1].meta;
-                    penalty = TSeparator(meta.penalty);
-                    avg_fuel = TSeparator(parseInt(fuel_used_org / (driven_distance_org / 1.6) * 100));
-
-                    info = "<div style='text-align:left'><p><b>From</b>: " + source_city + "</p>";
-                    info += "<p><b>To</b>: " + destination_city + "</p>";
-                    info += "<p><b>Cargo</b>: " + cargo + "</p>";
-                    info += "<p><b>Weight</b>: " + cargo_mass + "</p>";
-                    info += "<p><b>Initial Company</b>: " + source_company + "</p>";
-                    info += "<p><b>Target Company</b>: " + destination_company + "</p>";
-                    info += "<p><b>Planned Distance</b>: " + planned_distance + "</p>";
-                    info += "<p><b>Driven Distance</b>: " + driven_distance + "</p>";
-                    info += "<p><b>Penalty</b>: " + penalty + " " + punit + "</p>";
-                    info += "<p><b>Damage</b>: " + parseInt(cargo_damage) + "%</p>";
-                    info += "<p><b>Truck</b>: " + truck + "</p>";
-                    info += "<p><b>Truck's License Plate</b>: " + license_plate + "</p>";
-                    info += "<p><b>Trailer's License Plate" + trs + "</b>: " + trailer.slice(0, -3) + "</p>";
-                    info += "<p><b>Average Consumption</b>: " + avg_fuel + "L/100Mi</p>";
-                    info += "<p><b>Fuel Used</b>: " + fuel_used + "</p>";
-                    info += "<p><b>Maximal Reached Speed</b>: " + top_speed + "Mi/h</p>";
-                    dt = getDateTime(data.response.timestamp * 1000);
-                    info += "<p><b>Time submitted</b>: " + dt + "</p>";
-                    info += "</div>";
-                    Swal.fire({
-                        title: "Job Cancelled #" + logid,
-                        html: info,
-                        icon: 'error',
-                        confirmButtonText: 'Close'
-                    })
                 }
 
+                dt = getDateTime(data.response.timestamp * 1000);
+
+                $("#ddcol4").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium">Driver</td>
+                        <td class="py-5 px-6 font-medium">${name}</td></tr>`);
+                $("#ddcol4").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium">Log ID</td>
+                        <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
+                $("#ddcol4").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium">Time Spent</td>
+                        <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
+                $("#ddcol4").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium">Time submitted</td>
+                        <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
+                if (tp == "job.cancelled") {
+                    $("#ddcol4").append(`<tr class="text-xs">
+                                <td class="py-5 px-6 font-medium">Note</td>
+                                <td class="py-5 px-6 font-medium">Job cancelled</td></tr>`);
+                }
+
+                tabname = "#DeliveryDetailTab";
+                $(".tabs").hide();
+                $(tabname).show();
+
+                setTimeout(function () {
+                    telemetry = data.response.telemetry.split(";");
+                    basic = telemetry[0].split(",");
+                    game = basic[0];
+                    mods = basic[1];
+                    route = telemetry.slice(1);
+                    dpoints = [];
+                    for (i = 0; i < route.length; i++) {
+                        p = route[i].split(",");
+                        dpoints.push([p[0], p[2]]); // x, z
+                    }
+                    minx = 100000000000000;
+                    for (i = 0; i < dpoints.length; i++) {
+                        if (dpoints[i][0] < minx) minx = dpoints[i][0];
+                    }
+                    $("#dmap").children().remove();
+                    if (game == 1 && (mods == "promod" || JSON.stringify(data.response).toLowerCase().indexOf("promod") != -1)) {
+                        LoadETS2PMap("dmap", true);
+                    } else if (game == 1) { // ets2
+                        LoadETS2Map("dmap", true);
+                    } else if (game == 2) { // ats
+                        LoadATSMap("dmap", true);
+                    }
+                    deliveryRoute = dpoints;
+                    $("#rp_tot").html(deliveryRoute.length);
+                    dpoints150 = dpoints.filter(function (el, i) {
+                        return i % 300 == 0;
+                    });
+                    dpoints30 = dpoints.filter(function (el, i) {
+                        return i % 100 == 0;
+                    });
+                    dpoints20 = dpoints.filter(function (el, i) {
+                        return i % 50 == 0;
+                    });
+                    dpoints10 = dpoints.filter(function (el, i) {
+                        return i % 10 == 0;
+                    });
+                    dpoints = dpoints.filter(function (el, i) {
+                        return i % 5 == 0;
+                    });
+                    window.dn = {};
+                    if (dmapint != -1) clearInterval(dmapint);
+                    dmapint = setInterval(function () {
+                        if (window.dn == undefined || window.dn.previousExtent_ == undefined) return;
+                        window.dmapRange = {};
+                        dmapRange["top"] = window.dn.previousExtent_[3];
+                        dmapRange["left"] = window.dn.previousExtent_[0];
+                        dmapRange["bottom"] = window.dn.previousExtent_[1];
+                        dmapRange["right"] = window.dn.previousExtent_[2];
+                        $(".dmap-player").remove();
+                        dmapxl = dmapRange["left"];
+                        dmapxr = dmapRange["right"];
+                        dmapyt = dmapRange["top"];
+                        dmapyb = dmapRange["bottom"];
+                        dmapw = $("#dmap").width();
+                        dmaph = $("#dmap").height();
+                        dscale = (dmapxr - dmapxl) / $("#dmap").width();
+                        ddpoints = dpoints;
+                        if (dscale >= 150 && i % 300 != 0) ddpoints = dpoints150;
+                        else if (dscale >= 30 && i % 100 != 0) ddpoints = dpoints30;
+                        else if (dscale >= 20 && i % 50 != 0) ddpoints = dpoints20;
+                        else if (dscale >= 10 && i % 10 != 0) ddpoints = dpoints10;
+                        for (var i = 0; i < ddpoints.length; i++) {
+                            x = ddpoints[i][0];
+                            z = -ddpoints[i][1];
+                            if (x > dmapxl && x < dmapxr && z > dmapyb && z < dmapyt) {
+                                rx = (x - dmapxl) / (dmapxr - dmapxl) * dmapw;
+                                rz = (z - dmapyt) / (dmapyb - dmapyt) * dmaph;
+                                RenderPoint("dmap", 0, rz, rx, 5, nodetail = true);
+                            }
+                        }
+                    }, 500);
+                }, 500);
             }
-            $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
-            $("#DeliveryInfoBtn" + logid).html("Show Details");
         },
         error: function (data) {
             $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
@@ -3032,26 +3094,27 @@ function updateStaffPosition() {
 }
 
 $(document).ready(function () {
-    if(localStorage.getItem("darkmode") == "1"){
+    if (localStorage.getItem("darkmode") == "1") {
         $("body").addClass("bg-gray-800");
-        $("body").css("color","white");
+        $("body").css("color", "white");
         $("head").append(`<style id='convertbg'>
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;}
             .text-gray-500,.text-gray-600 {color: #ddd;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);}
             .swal2-popup {background-color: rgb(41 48 57)}</style>`);
-        $("#todarksvg").hide();$("#tolightsvg").show();
+        $("#todarksvg").hide();
+        $("#tolightsvg").show();
     }
     loadStats();
     setInterval(loadStats, 60000);
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         t = $("div");
-        for(i = 0; i < t.length; i++){
+        for (i = 0; i < t.length; i++) {
             st = $(t[i]).attr("style");
-            if(st == undefined) continue;
-            st = st.replaceAll("padding:50px","padding:5px");
-            $(t[i]).attr("style",st);
+            if (st == undefined) continue;
+            st = st.replaceAll("padding:50px", "padding:5px");
+            $(t[i]).attr("style", st);
         }
         $("#hometableftcontainer").css("width", "100%");
     }

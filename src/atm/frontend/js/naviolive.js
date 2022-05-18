@@ -165,13 +165,19 @@ function PlayerPoint(steamid){
     toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${userid})'>Show profile</a>`, 5000, false);
 }
 
-function RenderPoint(mapid, steamid, x, y, scale, nodetail = false) {
+trucksvg = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-truck-delivery" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" color="red" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"/> <circle cx="7" cy="17" r="2" /> <circle cx="17" cy="17" r="2" /> <path d="M5 17h-2v-4m-1 -8h11v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5" /> <line x1="3" y1="9" x2="7" y2="9" /> </svg> `;
+
+function RenderPoint(mapid, steamid, x, y, scale, nodetail = false, truckicon = false) {
     // console.log("Render point " + x + ", " + y);
     maph = $("#" + mapid).height();
     //x = -maph + x;
     drivername = membersteam[steamid];
     t = $("#" + mapid).position().top;
     l = $("#" + mapid).position().left;
+    if(truckicon){
+        $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-12}px;left:${l+y-12}px' onclick="PlayerPoint('${steamid}')";>${trucksvg}</a>`);
+        return;
+    }
     if(scale <= 10){
         if(!nodetail)  $("#" + mapid).append(`<a class="${mapid}-player" style='cursor:pointer;position:absolute;top:${t+x-30}px;left:${l+y-7.5}px;text-align:center;color:skyblue' onclick="PlayerPoint('${steamid}')";>${drivername}</a>`);
         $("#" + mapid).append(`<a class="${mapid}-player dot" style='cursor:pointer;position:absolute;top:${t+x-7.5}px;left:${l+y-7.5}px' onclick="PlayerPoint('${steamid}')";></a>`);

@@ -5,26 +5,36 @@
   <title>At The Mile Logistics</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
+  <meta name="description" content="At The Mile Logistics Drivers Hub - By CharlesWithC#7777">
+
+  <meta content="At The Mile Hub" property="og:title" />
+  <meta content="At The Mile Logistics Drivers Hub - By CharlesWithC#7777" property="og:description" />
+  <meta content="https://hub.atmvtc.com/" property="og:url" />
+  <meta content="https://hub.atmvtc.com/images/atm-black.png" property="og:image" />
+  <meta content="#B30000" data-react-helmet="true" name="theme-color" />
+  <meta content="https://hub.atmvtc.com/images/bg.jpg" name="twitter:card">
+
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
-  <link rel="stylesheet" href="css/recuritmentcenter.css">
   <link rel="stylesheet" href="css/index.css">
-  <script src="js/main.js"></script>
-  <script src="js/functions.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
     integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="js/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+
+  <script src="js/main.js"></script>
+  <script src="js/functions.js"></script>
+  <script src="js/index.js"></script>
+  <script src="js/bililiteRange.js"></script>
   <script src="js/ets2map.js"></script>
   <script src="js/ets2map_promods.js"></script>
   <script src="js/atsmap.js"></script>
   <script src="js/naviolive.js"></script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
 
@@ -1218,10 +1228,25 @@
           <div style="float:left;width:60%">
             <div id="dmap" style="height: 50vh;width:100%;background-color: #484E66"></div>
           </div>
-          <table class="table-auto" style="display:inline;float:right;width:40%">
-            <tbody id="ddcol4" class="ddcol">
-            </tbody>
-          </table>
+          <div style="display:inline;float:right;width:40%">
+            <table class="table-auto">
+              <tbody id="ddcol4" class="ddcol">
+              </tbody>
+            </table>
+            <div style="padding:20px">
+            <h3>Route replay: <span id="rp_pct">0</span>% (<span id="rp_cur">0</span> / <span id="rp_tot"></span>)</h3>
+            <p><a style="cursor:pointer" onclick="rri-=100">-100</a>
+            <a style="cursor:pointer" onclick="rri-=50">-50</a>
+            <a style="cursor:pointer" onclick="rrplayswitch()" id="rrplay">Play</a>
+            <a style="cursor:pointer" onclick="rri+=50">+50</a>
+            <a style="cursor:pointer" onclick="rri+=100">+100</a></p>
+            <p>Speed: <a style="cursor:pointer" onclick="rrspeed-=2">--</a>
+              <a style="cursor:pointer" onclick="rrspeed-=1">-</a> 
+              <span id="rp_speed">1</span> 
+              <a style="cursor:pointer" onclick="rrspeed+=1">+</a>
+              <a style="cursor:pointer" onclick="rrspeed+=2">++</a></p>
+            </div>
+          </div>
         </div>
         <br>
         <div style="display:block">

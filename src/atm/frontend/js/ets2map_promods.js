@@ -1,4 +1,5 @@
 ets2ploaded = false;
+ets2pautofocus = -1;
 
 function LoadETS2PMap(mapid = "pmap", forceload = false) {
     if (ets2ploaded && !forceload) return;
@@ -2782,8 +2783,19 @@ function LoadETS2PMap(mapid = "pmap", forceload = false) {
                     this.setCenter(i)
                 }
                 this.setRotation(t)
-            }, e.prototype.setCenter = function (t) {
+            }, e.prototype.setCenter = async function (t) {
                 this.set(ye, t), this.getAnimating() && this.cancelAnimations()
+                if(window.autofocus[mapid] == undefined){
+                    window.autofocus[mapid] = 1;
+                    while(1){
+                        t = window.mapcenter[mapid];
+                        if(t!=undefined){
+                            this.set(ye, t), this.getAnimating() && this.cancelAnimations();
+                            window.mapcenter[mapid] = undefined;
+                        }
+                        await sleep(10);
+                    }
+                }
             }, e.prototype.setHint = function (t, e) {
                 return this.hints_[t] += e, this.changed(), this.hints_[t]
             }, e.prototype.setResolution = function (t) {

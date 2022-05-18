@@ -2782,8 +2782,19 @@ function LoadETS2Map(mapid = "map", forceload = false){
                 this.setCenter(i)
             }
             this.setRotation(t)
-        }, e.prototype.setCenter = function (t) {
-            this.set(ye, t), this.getAnimating() && this.cancelAnimations()
+        }, e.prototype.setCenter = async function (t) {
+            this.set(ye, t), this.getAnimating() && this.cancelAnimations();
+            if(window.autofocus[mapid] == undefined){
+                window.autofocus[mapid] = 1;
+                while(1){
+                    t = window.mapcenter[mapid];
+                    if(t!=undefined){
+                        this.set(ye, t), this.getAnimating() && this.cancelAnimations();
+                        window.mapcenter[mapid] = undefined;
+                    }
+                    await sleep(10);
+                }
+            }
         }, e.prototype.setHint = function (t, e) {
             return this.hints_[t] += e, this.changed(), this.hints_[t]
         }, e.prototype.setResolution = function (t) {
@@ -3621,6 +3632,7 @@ function LoadETS2Map(mapid = "map", forceload = false){
                     i = Lo(e);
                 if (e.length == this.lastPointersCount_) {
                     if (this.kinetic_ && this.kinetic_.update(i[0], i[1]), this.lastCentroid) {
+                        // NOTE: Below is code controlling drag
                         var n = this.lastCentroid[0] - i[0],
                             o = i[1] - this.lastCentroid[1],
                             r = t.map.getView(),
