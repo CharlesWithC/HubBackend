@@ -170,6 +170,7 @@ function toastFactory(type, title, text, time, showConfirmButton) {
 }
 
 function ShowTab(tabname, btnname) {
+    curtab = tabname;
     clearInterval(dmapint);
     dmapint = -1;
     $(".tabs").hide();
@@ -177,9 +178,15 @@ function ShowTab(tabname, btnname) {
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
     if (tabname == "#Map") {
-        LoadETS2Map();
-        LoadETS2PMap();
-        LoadATSMap();
+        window.history.pushState("", "", '/map');
+        window.autofocus["map"] = -2;
+        window.autofocus["amap"] = -2;
+        window.autofocus["pmap"] = -2;
+        setTimeout(function(){
+            LoadETS2Map();
+            LoadETS2PMap();
+            LoadATSMap();
+        }, 50);
         setTimeout(function () {
             $("#map > div > canvas").click(function () {
                 clearInterval(autocenterint["map"]);
@@ -195,34 +202,53 @@ function ShowTab(tabname, btnname) {
             });
         }, 500);
     }
+    if (tabname == "#HomeTab") {
+        window.history.pushState("", "", '/');
+    }
+    if (tabname == "#AnnTab") {
+        window.history.pushState("", "", '/announcement');
+    }
+    if (tabname == "#Ranking") {
+        window.history.pushState("", "", '/ranking');
+    }
     if (tabname == "#SubmitApp") {
+        window.history.pushState("", "", '/submitapp');
         $("#driverappsel").attr("selected", "selected");
     }
     if (tabname == "#MyApp") {
+        window.history.pushState("", "", '/myapp');
         loadMyApp();
     }
     if (tabname == "#AllApp") {
+        window.history.pushState("", "", '/allapp');
         loadAllApp();
     }
     if (tabname == "#AllUsers") {
+        window.history.pushState("", "", '/pendinguser');
         loadUsers();
     }
     if (tabname == "#AllMembers") {
+        window.history.pushState("", "", '/member');
         loadMembers();
     }
     if (tabname == "#Delivery") {
+        window.history.pushState("", "", '/delivery');
         loadDelivery();
     }
     if (tabname == "#Event") {
+        window.history.pushState("", "", '/event');
         loadEvent();
     }
     if (tabname == "#ProfileTab") {
+        window.history.pushState("", "", '/member?userid=' + localStorage.getItem("userid"));
         loadProfile(localStorage.getItem("userid"));
     }
     if (tabname == "#AuditLog") {
+        window.history.pushState("", "", '/audit');
         loadAuditLog();
     }
     if (tabname == "#Leaderboard") {
+        window.history.pushState("", "", '/leaderboard');
         loadLeaderboard();
     }
 }
@@ -1231,7 +1257,7 @@ function validate() {
 }
 
 function loadLeaderboard() {
-    page = $("#lpages").val();
+    page = parseInt($("#lpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $("#loadLeaderboardBtn").html("...");
@@ -1271,10 +1297,52 @@ function loadLeaderboard() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#lpages").val(1);
+                loadLeaderboard();
                 return;
             }
             $("#leaderboardTableHead").show();
-            $("#ltotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#lpages").val(1);
+                loadLeaderboard();
+                return;
+            }
+            if (page <= 0) {
+                $("#lpages").val(1);
+                page = 1;
+            }
+            $("#ltotpages").html(totpage);
+            $("#leaderboardTableControl").children().remove();
+            $("#leaderboardTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#lpages').val(1);loadLeaderboard();">1</button>`);
+            if (page > 3) {
+                $("#leaderboardTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#leaderboardTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#lpages').val(${i});loadLeaderboard();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#leaderboardTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#leaderboardTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#lpages').val(${totpage});loadLeaderboard();">${totpage}</button>`);
+            }
+
             for (i = 0; i < leaderboard.length; i++) {
                 user = leaderboard[i];
                 userid = user.userid;
@@ -1340,7 +1408,7 @@ function requestRole() {
 }
 
 function loadDelivery() {
-    page = $("#dpages").val();
+    page = parseInt($("#dpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $("#loadDeliveryBtn").html("...");
@@ -1383,10 +1451,52 @@ function loadDelivery() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#dpages").val(1);
+                loadDelivery();
                 return;
             }
             $("#deliveryTableHead").show();
-            $("#dtotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#dpages").val(1);
+                loadDelivery();
+                return;
+            }
+            if (page <= 0) {
+                $("#dpages").val(1);
+                page = 1;
+            }
+            $("#dtotpages").html(totpage);
+            $("#deliveryTableControl").children().remove();
+            $("#deliveryTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#dpages').val(1);loadDelivery();">1</button>`);
+            if (page > 3) {
+                $("#deliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#deliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#dpages').val(${i});loadDelivery();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#deliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#deliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#dpages').val(${totpage});loadDelivery();">${totpage}</button>`);
+            }
+
             for (i = 0; i < deliveries.length; i++) {
                 const delivery = deliveries[i];
                 // Fill the table using this format: 
@@ -1448,6 +1558,7 @@ async function deliveryRoutePlay() {
         if (rrspeed <= 0) rrspeed = 1;
         if (rri < 0) rri = 0;
         if (rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
+        window.mapcenter["dmap"] = [deliveryRoute[rri][0], -deliveryRoute[rri][1]];
         $("#rp_speed").html(rrspeed);
         $("#rp_cur").html(rri);
         $("#rp_pct").html(Math.round(rri / deliveryRoute.length * 100));
@@ -1490,8 +1601,6 @@ async function deliveryRoutePlay() {
             }
         }
 
-        window.mapcenter["dmap"] = [deliveryRoute[rri][0], -deliveryRoute[rri][1]];
-
         x = deliveryRoute[rri][0];
         z = deliveryRoute[rri][1];
         for (var i = 0; i < rrevents.length; i++) {
@@ -1508,11 +1617,11 @@ async function deliveryRoutePlay() {
                 } else if (rrevents[i].type == "refuel") {
                     amount = rrevents[i].meta.amount;
                     eventmsg = "Refueled " + TSeparator(parseInt(amount)) + "L of fuel.";
-                } else if(rrevents[i].type == "collision") {
+                } else if (rrevents[i].type == "collision") {
                     eventmsg = "Collision!";
-                } else if(rrevents[i].type == "repair") {
+                } else if (rrevents[i].type == "repair") {
                     eventmsg = "Truck repaired.";
-                } else if(rrevents[i].type == "teleport") {
+                } else if (rrevents[i].type == "teleport") {
                     eventmsg = "Teleported.";
                 }
                 if (eventmsg != "") {
@@ -1533,7 +1642,10 @@ async function deliveryRoutePlay() {
             rri -= 1;
         }
     }
-    window.mapcenter["dmap"] = undefined;
+    setTimeout(function(){
+        $(".dmap-player").remove();
+        window.mapcenter["dmap"] = undefined;
+    }, 5000);
 }
 
 function rrplayswitch() {
@@ -1547,6 +1659,9 @@ function rrplayswitch() {
 }
 
 function deliveryDetail(logid) {
+    window.autofocus["dmap"] = -2;
+    $("#routereplydiv").hide();
+    $("#routereplyload").show();
     rri = 0;
     rrspeed = 20;
     $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
@@ -1554,6 +1669,7 @@ function deliveryDetail(logid) {
     $("#rp_cur").html("0");
     $("#rp_tot").html("0");
     $("#rp_pct").html("0");
+    $("#rrplay").html("Play");
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
         type: "GET",
@@ -1568,6 +1684,7 @@ function deliveryDetail(logid) {
                 false);
             info = "";
             if (!data.error) {
+                window.history.pushState("", "", '/delivery?logid=' + logid);
                 d = data.response;
                 userid = d.userid;
                 name = d.name;
@@ -1697,26 +1814,30 @@ function deliveryDetail(logid) {
 
                 $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Driver</td>
-                        <td class="py-5 px-6 font-medium">${name}</td></tr>`);
-                $("#ddcol4").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${userid})'>${name}</a></td></tr>`);
+                if (tp == "job.cancelled") {
+                    $("#ddcol4").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">Log ID</td>
+                            <td class="py-5 px-6 font-medium">${logid} (Cancelled)</td></tr>`);
+                } else {
+                    $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Log ID</td>
                         <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
+                }
                 $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Time Spent</td>
                         <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
                 $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Time submitted</td>
                         <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
-                if (tp == "job.cancelled") {
-                    $("#ddcol4").append(`<tr class="text-xs">
-                                <td class="py-5 px-6 font-medium">Note</td>
-                                <td class="py-5 px-6 font-medium">Job cancelled</td></tr>`);
-                }
 
                 tabname = "#DeliveryDetailTab";
                 $(".tabs").hide();
                 $(tabname).show();
-
+                setTimeout(function(){
+                    $("#routereplyload").hide();
+                    $("#routereplydiv").fadeIn();
+                }, 5000);
                 setTimeout(function () {
                     telemetry = data.response.telemetry.split(";");
                     basic = telemetry[0].split(",");
@@ -1738,12 +1859,13 @@ function deliveryDetail(logid) {
                         if (dpoints[i][0] < minx) minx = dpoints[i][0];
                     }
                     $("#dmap").children().remove();
+                    window.mapcenter["dmap"] = undefined;
                     if (game == 1 && (mods == "promod" || JSON.stringify(data.response).toLowerCase().indexOf("promod") != -1)) {
-                        LoadETS2PMap("dmap", true);
+                        LoadETS2PMap("dmap");
                     } else if (game == 1) { // ets2
-                        LoadETS2Map("dmap", true);
+                        LoadETS2Map("dmap");
                     } else if (game == 2) { // ats
-                        LoadATSMap("dmap", true);
+                        LoadATSMap("dmap");
                     }
                     deliveryRoute = dpoints;
                     $("#rp_tot").html(deliveryRoute.length);
@@ -1813,7 +1935,7 @@ function deliveryDetail(logid) {
 allevents = {};
 
 function loadEvent() {
-    page = $("#epages").val();
+    page = parseInt($("#epages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
@@ -1840,10 +1962,52 @@ function loadEvent() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#epages").val(1);
+                loadEvent();
                 return;
             }
             $("#eventTableHead").show();
-            $("#etotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#epages").val(1);
+                loadEvent();
+                return;
+            }
+            if (page <= 0) {
+                $("#epages").val(1);
+                page = 1;
+            }
+            $("#etotpages").html(totpage);
+            $("#eventTableControl").children().remove();
+            $("#eventTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#epages').val(1);loadEvent();">1</button>`);
+            if (page > 3) {
+                $("#eventTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#eventTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#epages').val(${i});loadEvent();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#eventTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#eventTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#epages').val(${totpage});loadEvent();">${totpage}</button>`);
+            }
+
             for (i = 0; i < events.length; i++) {
                 const event = events[i];
                 allevents[event.eventid] = event;
@@ -1909,7 +2073,7 @@ function eventDetail(eventid) {
 }
 
 function loadMembers() {
-    page = $("#mpages").val();
+    page = parseInt($("#mpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $("#searchMemberBtn").html("...");
@@ -1935,10 +2099,52 @@ function loadMembers() {
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#mpages").val(1);
+                loadMembers();
                 return;
             }
             $("#membersTableHead").show();
-            $("#mtotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#mpages").val(1);
+                loadMembers();
+                return;
+            }
+            if (page <= 0) {
+                $("#mpages").val(1);
+                page = 1;
+            }
+            $("#mtotpages").html(totpage);
+            $("#membersTableControl").children().remove();
+            $("#membersTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#mpages').val(1);loadMembers();">1</button>`);
+            if (page > 3) {
+                $("#membersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#membersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#mpages').val(${i});loadMembers();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#membersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#membersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#mpages').val(${totpage});loadMembers();">${totpage}</button>`);
+            }
+
             for (i = 0; i < users.length; i++) {
                 const user = users[i];
                 // Fill the table using this format: 
@@ -1987,7 +2193,7 @@ function loadMembers() {
 }
 
 function loadAuditLog() {
-    page = $("#auditpages").val();
+    page = parseInt($("#auditpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
@@ -2010,10 +2216,52 @@ function loadAuditLog() {
           <td class="py-5 px-6 font-medium"></td>
           <td class="py-5 px-6 font-medium"></td>
         </tr>`);
+                $("#auditpages").val(1);
+                loadAuditLog();
                 return;
             }
             $("#auditTableHead").show();
-            $("#audittotpages").html(Math.ceil(data.response.tot / 30));
+            totpage = Math.ceil(data.response.tot / 30);
+            if (page > totpage) {
+                $("#auditpages").val(1);
+                loadAuditLog();
+                return;
+            }
+            if (page <= 0) {
+                $("#auditpages").val(1);
+                page = 1;
+            }
+            $("#audittotpages").html(totpage);
+            $("#auditTableControl").children().remove();
+            $("#auditTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#auditpages').val(1);loadAuditLog();">1</button>`);
+            if (page > 3) {
+                $("#auditTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#auditTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#auditpages').val(${i});loadAuditLog();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#auditTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#auditTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#auditpages').val(${totpage});loadAuditLog();">${totpage}</button>`);
+            }
+
             for (i = 0; i < audits.length; i++) {
                 audit = audits[i];
                 dt = getDateTime(audit.timestamp * 1000);
@@ -2328,7 +2576,7 @@ function dismissUser() {
 curprofile = -1;
 
 function loadUserDelivery() {
-    page = $("#udpages").val();
+    page = parseInt($("#udpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $("#loadUserDeliveryBtn").html("...");
@@ -2371,10 +2619,52 @@ function loadUserDelivery() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#udpages").val(1);
+                loadUserDelivery();
                 return;
             }
             $("#userDeliveryTableHead").show();
-            $("#udtotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#udpages").val(1);
+                loadUserDelivery();
+                return;
+            }
+            if (page <= 0) {
+                $("#udpages").val(1);
+                page = 1;
+            }
+            $("#udtotpages").html(totpage);
+            $("#userDeliveryTableControl").children().remove();
+            $("#userDeliveryTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#udpages').val(1);loadUserDelivery();">1</button>`);
+            if (page > 3) {
+                $("#userDeliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#userDeliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#udpages').val(${i});loadUserDelivery();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#userDeliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#userDeliveryTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#udpages').val(${totpage});loadUserDelivery();">${totpage}</button>`);
+            }
+
             for (i = 0; i < deliveries.length; i++) {
                 const delivery = deliveries[i];
                 // Fill the table using this format: 
@@ -2418,7 +2708,7 @@ function loadUserDelivery() {
     })
 }
 
-function loadProfile(userid) {
+async function loadProfile(userid) {
     if (userid < 0) {
         return;
     }
@@ -2428,6 +2718,9 @@ function loadProfile(userid) {
     tabname = "#ProfileTab";
     $(".tabs").hide();
     $(tabname).show();
+    while (Object.keys(rolelist).length == 0) {
+        await sleep(50);
+    }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
         type: "GET",
@@ -2440,6 +2733,7 @@ function loadProfile(userid) {
                 false);
             info = "";
             if (!data.error) {
+                window.history.pushState("", "", '/member?userid=' + userid);
                 d = data.response;
                 roles = d.roles;
                 rtxt = "";
@@ -2616,7 +2910,7 @@ function resign() {
 
 
 function loadUsers() {
-    page = $("#pupages").val();
+    page = parseInt($("#pupages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
@@ -2638,10 +2932,52 @@ function loadUsers() {
               <td class="py-5 px-6 font-medium">No Data</td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#pupages").val(1);
+                loadUsers();
                 return;
             }
             $("#usersTableHead").show();
-            $("#putotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#pupages").val(1);
+                loadUsers();
+                return;
+            }
+            if (page <= 0) {
+                $("#pupages").val(1);
+                page = 1;
+            }
+            $("#putotpages").html(totpage);
+            $("#usersTableControl").children().remove();
+            $("#usersTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#pupages').val(1);loadUsers();">1</button>`);
+            if (page > 3) {
+                $("#usersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#usersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#pupages').val(${i});loadUsers();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#usersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#usersTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#pupages').val(${totpage});loadUsers();">${totpage}</button>`);
+            }
+
             for (i = 0; i < users.length; i++) {
                 const user = users[i];
                 // Fill the table using this format: 
@@ -2807,7 +3143,7 @@ function unbanUser() {
 }
 
 function loadMyApp() {
-    page = $("#myapppage").val();
+    page = parseInt($("#myapppage").val())
     $.ajax({
         url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0",
         type: "GET",
@@ -2832,10 +3168,52 @@ function loadMyApp() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#myapppage").val(1);
+                loadMyApp();
                 return;
             }
             $("#myappTableHead").show();
-            $("#myapptotpages").html(Math.ceil(data.response.tot / 10));
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#myapppage").val(1);
+                loadMyApp();
+                return;
+            }
+            if (page <= 0) {
+                $("#myapppage").val(1);
+                page = 1;
+            }
+            $("#myapptotpages").html(totpage);
+            $("#myAppTableControl").children().remove();
+            $("#myAppTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#myapppage').val(1);loadMyApp();">1</button>`);
+            if (page > 3) {
+                $("#myAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#myAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#myapppage').val(${i});loadMyApp();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#myAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#myAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#myapppage').val(${totpage});loadMyApp();">${totpage}</button>`);
+            }
+
             for (i = 0; i < applications.length; i++) {
                 const application = applications[i];
                 // Fill the table using this format: 
@@ -2920,7 +3298,7 @@ function addAppMessage() {
 }
 
 function loadAllApp() {
-    page = $('#allapppage').val();
+    page = parseInt($('#allapppage').val())
     $.ajax({
         url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
         type: "GET",
@@ -2949,9 +3327,52 @@ function loadAllApp() {
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
+                $("#allapppage").val(1);
+                loadAllApp();
                 return;
             }
             $("#allappTableHead").show();
+            totpage = Math.ceil(data.response.tot / 10);
+            if (page > totpage) {
+                $("#allapppage").val(1);
+                loadAllApp();
+                return;
+            }
+            if (page <= 0) {
+                $("#allapppage").val(1);
+                page = 1;
+            }
+            $("#allapptotpages").html(totpage);
+            $("#allAppTableControl").children().remove();
+            $("#allAppTableControl").append(`
+            <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="$('#allapppage').val(1);loadAllApp();">1</button>`);
+            if (page > 3) {
+                $("#allAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            for (var i = Math.max(page - 1, 2); i <= Math.min(page + 1, totpage - 1); i++) {
+                $("#allAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#allapppage').val(${i});loadAllApp();">${i}</button>`);
+            }
+            if (page < totpage - 2) {
+                $("#allAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                >...</button>`);
+            }
+            if (totpage > 1) {
+                $("#allAppTableControl").append(`
+                <button type="button" style="display:inline"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="$('#allapppage').val(${totpage});loadAllApp();">${totpage}</button>`);
+            }
+
             for (i = 0; i < applications.length; i++) {
                 const application = applications[i];
                 // Fill the table using this format: 
@@ -3150,6 +3571,35 @@ function updateStaffPosition() {
     })
 }
 
+function PathDetect() {
+    p = window.location.pathname;
+    console.log(p);
+    if (p == "/") ShowTab("#HomeTab", "#HomeTabBtn");
+    else if (p == "/announcement") ShowTab("#AnnTab", "#AnnTabBtn");
+    else if (p == "/map") ShowTab("#Map", "#MapBtn");
+    else if (p == "/delivery") {
+        logid = getUrlParameter("logid");
+        ShowTab("#Delivery", "#DeliveryBtn");
+        if (logid) deliveryDetail(logid);
+    } else if (p == "/event") ShowTab("#Event", "#EventBtn");
+    else if (p == "/member") {
+        userid = getUrlParameter("userid");
+        ShowTab("#AllMembers", "#AllMemberBtn");
+        if (userid) loadProfile(userid);
+    } else if (p == "/leaderboard") ShowTab("#Leaderboard", "#LeaderboardBtn");
+    else if (p == "/ranking") ShowTab("#Ranking", "#RankingBtn");
+    else if (p == "/myapp") ShowTab("#MyApp", "#MyAppBtn");
+    else if (p == "/allapp") ShowTab("#AllApp", "#AllAppBtn");
+    else if (p == "/submitapp") ShowTab("#SubmitApp", "#SubmitAppBtn");
+    else if (p == "/pendinguser") ShowTab("#AllUsers", "#AllUserBtn");
+    else if (p == "/audit") ShowTab("#AuditLog", "#AuditLogBtn");
+    else ShowTab("#HomeTab", "#HomeTabBtn");
+}
+
+window.onpopstate = function (event) {
+    PathDetect();
+};
+
 $(document).ready(function () {
     if (localStorage.getItem("darkmode") == "1") {
         $("body").addClass("bg-gray-800");
@@ -3164,6 +3614,7 @@ $(document).ready(function () {
     }
     loadStats();
     setInterval(loadStats, 60000);
+    PathDetect();
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         t = $("div");

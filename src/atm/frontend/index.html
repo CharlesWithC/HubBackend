@@ -397,7 +397,7 @@
           </div>
         </div>
         <br>
-        <div class="py-8 px-6 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+        <div class="py-8 px-6 pt-4 bg-white shadow rounded">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
             <div style="margin-left:auto">
@@ -441,14 +441,24 @@
               </tbody>
             </table>
           </div>
-          <div class="mb-6" style="float:right">
-            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-            <input id="udpages" style="width:50px;display:inline"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
-            <button type="button"
+          <div style="margin-left:auto;width:fit-content">
+            <div style="margin-left:auto;width:fit-content">
+              <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+              <input id="udpages" style="width:50px;display:inline"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+                name="field-name" rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
+              <button type="button"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="loadUserDelivery()">Show</button>
+            </div>
+            <button type="button" style="display:inline"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="loadUserDelivery()">Show</button></div>
+              onclick="tmp=parseInt($('#udpages').val());$('#udpages').val(tmp-1);loadUserDelivery();"><</button> 
+            <div id="userDeliveryTableControl" style="display:inline"></div>
+          <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="tmp=parseInt($('#udpages').val());$('#udpages').val(tmp+1);loadUserDelivery();">></button>
+
         </div>
         <br>
         <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="UpdateAM" style="display:none">
@@ -499,7 +509,7 @@
     </div>
   </section>
 
-  <section id="HomeTab" class="py-8 tabs mx-auto lg:ml-80">
+  <section id="HomeTab" class="py-8 tabs mx-auto lg:ml-80" style="display:none">
     <div class="px-4 mx-auto">
       <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6">
         <div class="md:w-2/3 px-4 mb-4 md:mb-0" id="hometableftcontainer">
@@ -842,7 +852,7 @@
 
   <section id="AllMembers" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Members</h3>
           <div style="margin-left:auto">
@@ -872,106 +882,117 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="mpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="mpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMembers()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadMembers()">Show</button></div>
+            onclick="tmp=parseInt($('#mpages').val());$('#mpages').val(tmp-1);loadMembers();">
+            <</button> <div id="membersTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#mpages').val());$('#mpages').val(tmp+1);loadMembers();">></button>
+      </div>
+    </div>
+    <br>
+    <div id="AllMemberStaff" style="display:none">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Assign roles</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p>Fetch member roles first, this will overwrite all existing roles.</p>
+            <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
+              navio company!</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="">Member Name</label>
+            <input id="memberroleid" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+            <button type="button" id="fetchRolesBtn"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="fetchRoles()">Fetch Existing Roles</button>
+          </div>
+          <span id="memberrolename" style="font-size:30px"></span>
+          <div class="mb-6" id="rolelist">
+
+          </div>
+
+          <button type="button" id="updateMemberRolesBtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="updateMemberRoles()">Update</button>
+        </div>
       </div>
       <br>
-      <div id="AllMemberStaff" style="display:none">
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Assign roles</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p>Fetch member roles first, this will overwrite all existing roles.</p>
-              <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
-                navio company!</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="">Member Name</label>
-              <input id="memberroleid" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-              <button type="button" id="fetchRolesBtn"
-                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-                onclick="fetchRoles()">Fetch Existing Roles</button>
-            </div>
-            <span id="memberrolename" style="font-size:30px"></span>
-            <div class="mb-6" id="rolelist">
-
-            </div>
-
-            <button type="button" id="updateMemberRolesBtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateMemberRoles()">Update</button>
-          </div>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Update member points</h3>
         </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Update member points</h3>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p>Negative numbers work, they deduct the points.</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
+            <input id="memberpntid" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
           </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p>Negative numbers work, they deduct the points.</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
-              <input id="memberpntid" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
-              <input id="memberpntmile" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
-              <input id="memberpntevent" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
+            <input id="memberpntmile" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
+            <input id="memberpntevent" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
 
-            <button type="button" id="updateMemberPointsBtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateMemberPoints()">Update</button>
-          </div>
-        </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Dismiss</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p style="color:red">Dangerous! This will wipe member delivery log and everything, and kick member from
-                navio company!</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="">User ID</label>
-              <input id="dismissUserID" style="width:200px"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-
-            <p><span id="memberdismissname" style="font-size:20px"></span></p>
-
-            <button type="button" style="background-color:red" id="dismissbtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="dismissUser()">Dismiss</button>
-          </div>
+          <button type="button" id="updateMemberPointsBtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="updateMemberPoints()">Update</button>
         </div>
       </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Dismiss</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p style="color:red">Dangerous! This will wipe member delivery log and everything, and kick member from
+              navio company!</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="">User ID</label>
+            <input id="dismissUserID" style="width:200px"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+
+          <p><span id="memberdismissname" style="font-size:20px"></span></p>
+
+          <button type="button" style="background-color:red" id="dismissbtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="dismissUser()">Dismiss</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="Leaderboard" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Leaderboard</h3>
           <div style="margin-left:auto">
@@ -1011,15 +1032,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="lpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="lpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadLeaderboard()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadLeaderboard()">Show</button></div>
+            onclick="tmp=parseInt($('#lpages').val());$('#lpages').val(tmp-1);loadLeaderboard();">
+            <</button> <div id="leaderboardTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#lpages').val());$('#lpages').val(tmp+1);loadLeaderboard();">></button>
       </div>
+    </div>
     </div>
   </section>
 
@@ -1164,7 +1196,7 @@
 
   <section id="Delivery" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
           <div style="margin-left:auto">
@@ -1209,15 +1241,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="dpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="dpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadDelivery()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadDelivery()">Show</button></div>
+            onclick="tmp=parseInt($('#dpages').val());$('#dpages').val(tmp-1);loadDelivery();">
+            <</button> <div id="deliveryTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#dpages').val());$('#dpages').val(tmp+1);loadDelivery();">></button>
       </div>
+    </div>
     </div>
   </section>
 
@@ -1233,18 +1276,22 @@
               <tbody id="ddcol4" class="ddcol">
               </tbody>
             </table>
-            <div style="padding:20px">
-            <h3>Route replay: <span id="rp_pct">0</span>% (<span id="rp_cur">0</span> / <span id="rp_tot"></span>)</h3>
-            <p><a style="cursor:pointer" onclick="rri-=100">-100</a>
-            <a style="cursor:pointer" onclick="rri-=50">-50</a>
-            <a style="cursor:pointer" onclick="rrplayswitch()" id="rrplay">Play</a>
-            <a style="cursor:pointer" onclick="rri+=50">+50</a>
-            <a style="cursor:pointer" onclick="rri+=100">+100</a></p>
-            <p>Speed: <a style="cursor:pointer" onclick="rrspeed-=2">--</a>
-              <a style="cursor:pointer" onclick="rrspeed-=1">-</a> 
-              <span id="rp_speed">20</span> 
-              <a style="cursor:pointer" onclick="rrspeed+=1">+</a>
-              <a style="cursor:pointer" onclick="rrspeed+=2">++</a></p>
+            <div style="padding:20px;" id="routereplyload">
+              <p>Route reply loading...</p>
+            </div>
+            <div style="padding:20px;display:none" id="routereplydiv">
+              <h3>Route replay: <span id="rp_pct">0</span>% (<span id="rp_cur">0</span> / <span id="rp_tot"></span>)
+              </h3>
+              <p><a style="cursor:pointer" onclick="rri-=100">-100</a>
+                <a style="cursor:pointer" onclick="rri-=50">-50</a>
+                <a style="cursor:pointer" onclick="rrplayswitch()" id="rrplay">Play</a>
+                <a style="cursor:pointer" onclick="rri+=50">+50</a>
+                <a style="cursor:pointer" onclick="rri+=100">+100</a></p>
+              <p>Speed: <a style="cursor:pointer" onclick="rrspeed-=2">--</a>
+                <a style="cursor:pointer" onclick="rrspeed-=1">-</a>
+                <span id="rp_speed">20</span>
+                <a style="cursor:pointer" onclick="rrspeed+=1">+</a>
+                <a style="cursor:pointer" onclick="rrspeed+=2">++</a></p>
             </div>
           </div>
         </div>
@@ -1269,7 +1316,7 @@
 
   <section id="Event" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Events</h3>
         </div>
@@ -1299,15 +1346,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="epages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="epages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadEvent()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadEvent()">Show</button></div>
+            onclick="tmp=parseInt($('#epages').val());$('#epages').val(tmp-1);loadEvent();">
+            <</button> <div id="eventTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#epages').val());$('#epages').val(tmp+1);loadEvent();">></button>
       </div>
+    </div>
     </div>
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newevent" style="display:none">
@@ -1447,7 +1505,7 @@
 
   <section id="MyApp" class="py-8 tabs" style="display:none">
     <div style="padding:50px; padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">My Applications</h3>
         </div>
@@ -1475,38 +1533,49 @@
           </table>
         </div>
 
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="myapppage" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
-          <button type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadMyApp()">Show</button></div>
-      </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Add Message to Application</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Application ID</label>
-            <input id="appmsgid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder="Integar ID"></input>
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="myapppage" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMyApp()">Show</button>
           </div>
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Message Content</label>
-            <textarea id="appmsgcontent"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></textarea></div>
-
-          <button type="button" id="addAppMessageBtn"
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="addAppMessage()">Add</button>
+            onclick="tmp=parseInt($('#myapppage').val());$('#myapppage').val(tmp-1);loadMyApp();">
+            <</button> <div id="myAppTableControl" style="display:inline">
         </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#myapppage').val());$('#myapppage').val(tmp+1);loadMyApp();">></button>
       </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Add Message to Application</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+          <input id="appmsgid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder="Integar ID"></input>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Message Content</label>
+          <textarea id="appmsgcontent"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button" id="addAppMessageBtn"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="addAppMessage()">Add</button>
+      </div>
+    </div>
     </div>
   </section>
 
@@ -1684,7 +1753,7 @@
 
   <section id="AllApp" class="py-8 tabs" style="display: none;">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Applications</h3>
         </div>
@@ -1712,77 +1781,89 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="allapppage" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="totpages">-</span>
-          <button type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadAllApp()" id="updateAppStatusBtn">Show</button></div>
-      </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Update Application Status</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Application ID</label>
-            <input id="appstatusid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></input></div>
 
-          <div class="mb-6 relative" style="width:200px">
-            <label class="block text-sm font-medium mb-2 text-left" for="">New Status:</label>
-            <select id="appstatussel"
-              class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-              name="field-name">
-              <option value="0">Pending</option>
-              <option value="1">Accepted</option>
-              <option value="2">Declined</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
-              </svg>
-            </div>
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="allapppage" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="allapptotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadAllApp()">Show</button>
           </div>
-
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Message</label>
-            <textarea id="appmessage"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></textarea></div>
-
-          <button type="button"
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
+            onclick="tmp=parseInt($('#allapppage').val());$('#allapppage').val(tmp-1);loadAllApp();">
+            <</button> <div id="allAppTableControl" style="display:inline">
         </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#allapppage').val());$('#allapppage').val(tmp+1);loadAllApp();">></button>
       </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
-            <textarea id="staffposedit"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></textarea></div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Update Application Status</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+          <input id="appstatusid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input></div>
 
-          <button type="button" id="updateStaffPositionBtn"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+        <div class="mb-6 relative" style="width:200px">
+          <label class="block text-sm font-medium mb-2 text-left" for="">New Status:</label>
+          <select id="appstatussel"
+            class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+            name="field-name">
+            <option value="0">Pending</option>
+            <option value="1">Accepted</option>
+            <option value="2">Declined</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+            </svg>
+          </div>
         </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Message</label>
+          <textarea id="appmessage"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
       </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
+          <textarea id="staffposedit"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button" id="updateStaffPositionBtn"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+      </div>
+    </div>
     </div>
   </section>
 
   <section id="AllUsers" class="py-8 tabs" style="display: none;">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Pending Users</h3>
         </div>
@@ -1802,61 +1883,72 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="pupages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
-          <button type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadUsers()">Show</button></div>
-      </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Add User to Member List</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <p>Only do this when the member is accepted as a driver / staff.</p>
-            <br>
-            <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
-            <input id="adddiscordid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></input>
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="pupages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadUsers()">Show</button>
           </div>
-
-          <button type="button"
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="addUser()">Add</button>
+            onclick="tmp=parseInt($('#pupages').val());$('#pupages').val(tmp-1);loadUsers();">
+            <</button> <div id="usersTableControl" style="display:inline">
         </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#pupages').val());$('#pupages').val(tmp+1);loadUsers();">></button>
       </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Ban / Unban User</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
-            <input id="bandiscordid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></input>
-          </div>
-
-          <button type="button" style="background-color:red"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="banUser()">Ban</button>
-          <button type="button" style="background-color:green"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="unbanUser()">Unban</button>
-        </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Add User to Member List</h3>
       </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <p>Only do this when the member is accepted as a driver / staff.</p>
+          <br>
+          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+          <input id="adddiscordid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+
+        <button type="button"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="addUser()">Add</button>
+      </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Ban / Unban User</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+          <input id="bandiscordid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+
+        <button type="button" style="background-color:red"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="banUser()">Ban</button>
+        <button type="button" style="background-color:green"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="unbanUser()">Unban</button>
+      </div>
+    </div>
   </section>
 
   <section id="AuditLog" class="py-8 tabs" style="display: none;">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Audit Log</h3>
         </div>
@@ -1878,15 +1970,27 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="auditpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
-          <button type="button"
+
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="auditpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadAuditLog()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadAuditLog()">Show</button></div>
+            onclick="tmp=parseInt($('#auditpages').val());$('#auditpages').val(tmp-1);loadAuditLog();">
+            <</button> <div id="auditTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#auditpages').val());$('#auditpages').val(tmp+1);loadAuditLog();">></button>
       </div>
+    </div>
     </div>
   </section>
 </body>

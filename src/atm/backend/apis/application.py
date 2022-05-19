@@ -84,6 +84,14 @@ async def newApplication(request: Request, response: Response, authorization: st
     if userid == -1 and apptype == 3:
         return {"error": True, "descriptor": "You cannot submit a LOA application until you become a member."}
 
+    data = json.loads(form["data"])
+    apptype = int(apptype)
+    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA"}
+    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if t[0][3] == 0 or t[0][4] == 0:
+        return {"error": True, "descriptor": "You must verify your TruckersMP and Steam before submitting an application"}
+
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
     t = cur.fetchall()
     applicationid = int(t[0][0])
@@ -92,14 +100,7 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, {int(time.time())}, 0, 0)")
     conn.commit()
-
-    data = json.loads(form["data"])
-    apptype = int(apptype)
-    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA"}
-    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if t[0][3] == 0 or t[0][4] == 0:
-        return {"error": True, "descriptor": "You must verify your TruckersMP and Steam before submitting an application"}
+    
     userid = t[0][5]
     apptypetxt = "Unknown"
     if apptype in APPTYPE.keys():
@@ -340,6 +341,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     adminid = t[0][0]
     roles = t[0][1].split(",")
     adminname = t[0][2]
+    admindiscord = discordid
     while "" in roles:
         roles.remove("")
     adminhighest = 99999
@@ -399,7 +401,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Application Status Updated",
                 "description": f"[Message] {message}",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": statustxt, "inline": True}, \
-                        {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}, {"name": "Responsible Staff", "value": f"<@{discordid}> (`{discordid}`)", "inline": True}],
+                        {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}, {"name": "Responsible Staff", "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
 

@@ -1,9 +1,4 @@
-atsloaded = false;
-atsautofocus = false;
-
-function LoadATSMap(mapid = "amap", forceload = false){
-    if(atsloaded && !forceload) return;
-    atsloaded = true;
+function LoadATSMap(mapid = "amap"){
 ! function (t) {
     var e = {};
 
@@ -2785,9 +2780,9 @@ function LoadATSMap(mapid = "amap", forceload = false){
             this.setRotation(t)
         }, e.prototype.setCenter = async function (t) {
             this.set(ye, t), this.getAnimating() && this.cancelAnimations()
-            if(window.autofocus[mapid] == undefined){
+            if(window.autofocus[mapid] != 1){
                 window.autofocus[mapid] = 1;
-                while(1){
+                while(window.autofocus[mapid] != -2) {
                     t = window.mapcenter[mapid];
                     if(t!=undefined){
                         this.set(ye, t), this.getAnimating() && this.cancelAnimations();

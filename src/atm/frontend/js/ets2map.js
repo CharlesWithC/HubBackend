@@ -1,8 +1,4 @@
-ets2loaded = false;
-
-function LoadETS2Map(mapid = "map", forceload = false){
-    if(ets2loaded && !forceload) return;
-    ets2loaded = true;
+function LoadETS2Map(mapid = "map"){
 ! function (t) {
     var e = {};
 
@@ -2784,9 +2780,9 @@ function LoadETS2Map(mapid = "map", forceload = false){
             this.setRotation(t)
         }, e.prototype.setCenter = async function (t) {
             this.set(ye, t), this.getAnimating() && this.cancelAnimations();
-            if(window.autofocus[mapid] == undefined){
+            if(window.autofocus[mapid] != 1){
                 window.autofocus[mapid] = 1;
-                while(1){
+                while(window.autofocus[mapid] != -2) {
                     t = window.mapcenter[mapid];
                     if(t!=undefined){
                         this.set(ye, t), this.getAnimating() && this.cancelAnimations();

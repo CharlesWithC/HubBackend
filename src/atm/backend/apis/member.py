@@ -7,6 +7,7 @@ import json, time, math, validators
 import requests
 from discord import Webhook
 from typing import Optional
+from datetime import datetime
 
 from app import app, config
 from db import newconn
@@ -583,7 +584,7 @@ If you have issues about Drivers Hub, open a technical ticket at <#9297617310167
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://images-ext-1.discordapp.net/external/4Nc9EpkQFAk_ajceY5jMfGZ_nqIqy_ZACoSnBDxaUZk/%3Fwidth%3D1024%26height%3D391/https/media.discordapp.net/attachments/929761734036684842/966551723202199572/ATS_2.png"},\
+                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg.jpg"},\
                         "timestamp": str(datetime.now()), "color": 11730944}}))
 
     if 100 in removedroles:
@@ -809,6 +810,19 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     totalpnt = int(t[0][0] / 1.6 + t[0][1])
     
     rank = point2rank(totalpnt)
+
+    try:
+        msg = f"""GG <@{discordid}>! You have ranked up to <@&{rank}>!"""
+
+        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
+        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
+                "footer": {"text": f"Congratulations!", "icon_url": config.gicon},\
+                        "timestamp": str(datetime.now()), "color": 11730944}}))
+    except:
+        import traceback
+        traceback.print_exc()
+        pass
 
     try:
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}

@@ -126,8 +126,19 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         attendee = tt[9].split(",")
         if userid == -1:
             attendee = []
+        while "" in attendee:
+            attendee.remove("")
+        attendeetxt = ""
+        for at in attendee:
+            name = "Unknown"
+            cur.execute(f"SELECT name FROM user WHERE userid = {at}")
+            t = cur.fetchall()
+            if len(t) != 0:
+                name = t[0][0]
+            attendeetxt += f"{name}, "
+        attendeetxt = attendeetxt[:-2]
         ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendee})
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)})
         
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()
