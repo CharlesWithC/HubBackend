@@ -12,7 +12,7 @@ from db import newconn
 from functions import *
 
 @app.get("/atm/dlog/stats")
-async def dlotStats():
+async def dlogStats():
     conn = newconn()
     cur = conn.cursor()
 
@@ -70,8 +70,53 @@ async def dlotStats():
         "neweuroprofit": neweuroprofit, "newdollarprofit": newdollarprofit, \
             "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
 
+@app.get("/atm/dlog/chart")
+async def dlogChart(scale: int):
+    # scale = 1: 24h / 2: 7d / 3: 30d
+    conn = newconn()
+    cur = conn.cursor()
+    ret = []
+    timerange = []
+    if scale == 1:
+        for i in range(24):
+            starttime = int(time.time()) - ((i+1)*3600)
+            endtime = starttime + 3600
+            timerange.append((starttime, endtime))
+    elif scale == 2:
+        for i in range(7):
+            starttime = int(time.time()) - ((i+1)*86400)
+            endtime = starttime + 86400
+            timerange.append((starttime, endtime))
+    elif scale == 3:
+        for i in range(30):
+            starttime = int(time.time()) - ((i+1)*86400)
+            endtime = starttime + 86400
+            timerange.append((starttime, endtime))
+
+    for (starttime, endtime) in timerange:
+        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime}")
+        t = cur.fetchall()
+        distance = 0
+        fuel = 0
+        if len(t) > 0 and t[0][0] != None:
+            distance = int(t[0][0])
+            fuel = int(t[0][1])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime} AND unit = 1")
+        t = cur.fetchall()
+        euro = 0
+        if len(t) > 0 and t[0][0] != None:
+            euro = int(t[0][0])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime} AND unit = 2")
+        t = cur.fetchall()
+        dollar = 0
+        if len(t) > 0 and t[0][0] != None:
+            dollar = int(t[0][0])
+        ret.append({"starttime": starttime, "endtime": endtime, "distance": distance, "fuel": fuel, "euro": euro, "dollar": dollar})
+    
+    return {"error": False, "response": ret}
+
 @app.get("/atm/dlog/leaderboard")
-async def dlotLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
+async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0):
 
     if page <= 0:
@@ -202,7 +247,7 @@ async def dlotLeaderboard(request: Request, response: Response, authorization: s
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
 @app.get("/atm/dlog/newdrivers")
-async def dlotNewDriver(request: Request, response: Response, authorization: str = Header(None)):
+async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}

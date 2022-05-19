@@ -5,7 +5,7 @@
         "version": "0.1.0"
     },
     "paths": {
-        "/gt/user/login": {
+        "/atm/user/login": {
             "get": {
                 "summary": "Discord Login",
                 "tags": ["auth"],
@@ -17,7 +17,7 @@
                 }
             }
         },
-        "/gt/user/callback": {
+        "/atm/user/callback": {
             "get": {
                 "summary": "Discord Login Callback",
                 "tags": ["auth"],
@@ -53,7 +53,7 @@
                 }
             }
         },
-        "/gt/user/info": {
+        "/atm/user/info": {
             "get": {
                 "summary": "Get User Information",
                 "tags": ["user"],
@@ -92,7 +92,7 @@
                 }
             }
         },
-        "/gt/user/bio": {
+        "/atm/user/bio": {
             "post": {
                 "summary": "Update User Bio",
                 "tags": ["user"],
@@ -139,7 +139,7 @@
                 }
             }
         },
-        "/gt/user/apptoken": {
+        "/atm/user/apptoken": {
             "post": {
                 "summary": "Generate New Application Token",
                 "tags": ["user"],
@@ -169,7 +169,7 @@
                 }
             }
         },
-        "/gt/user/validate": {
+        "/atm/user/validate": {
             "get": {
                 "summary": "Validate Token",
                 "tags": ["user"],
@@ -199,7 +199,7 @@
                 }
             }
         },
-        "/gt/user/revoke": {
+        "/atm/user/revoke": {
             "post": {
                 "summary": "Revoke Token",
                 "tags": ["user"],
@@ -229,7 +229,7 @@
                 }
             }
         },
-        "/gt/user/list": {
+        "/atm/user/list": {
             "get": {
                 "summary": "Get User List (Not registered members)",
                 "tags": ["user"],
@@ -268,7 +268,7 @@
                 }]
             }
         },
-        "/gt/user/ban": {
+        "/atm/user/ban": {
             "post": {
                 "summary": "Ban User",
                 "tags": ["user", "manage"],
@@ -315,7 +315,7 @@
                 }
             }
         },
-        "/gt/user/unban": {
+        "/atm/user/unban": {
             "post": {
                 "summary": "Unban User",
                 "tags": ["user", "manage"],
@@ -362,7 +362,7 @@
                 }
             }
         },
-        "/gt/user/steamauth": {
+        "/atm/user/steamauth": {
             "get": {
                 "summary": "Steam Authentication",
                 "tags": ["auth"],
@@ -379,7 +379,7 @@
                 }
             }
         },
-        "/gt/user/steamcallback": {
+        "/atm/user/steamcallback": {
             "get": {
                 "summary": "Steam Authentication Callback",
                 "tags": ["auth"],
@@ -396,7 +396,7 @@
                 }
             }
         },
-        "/gt/user/steambind": {
+        "/atm/user/steambind": {
             "post": {
                 "summary": "Bind Steam Account",
                 "tags": ["auth"],
@@ -426,7 +426,7 @@
                 }
             }
         },
-        "/gt/user/truckersmpbind": {
+        "/atm/user/truckersmpbind": {
             "post": {
                 "summary": "Bind TruckersMP Account",
                 "tags": ["auth"],
@@ -456,7 +456,7 @@
                 }
             }
         },
-        "/gt/member/list": {
+        "/atm/member/list": {
             "get": {
                 "summary": "Get Member List",
                 "tags": ["member"],
@@ -503,7 +503,7 @@
                 }
             }
         },
-        "/gt/member/steam": {
+        "/atm/member/steam": {
             "get": {
                 "summary": "Get Full Member Name - SteamID List (For live data)",
                 "tags": ["member"],
@@ -533,7 +533,7 @@
                 }
             }
         },
-        "/gt/member/info": {
+        "/atm/member/info": {
             "get": {
                 "summary": "Get Member Information",
                 "tags": ["member"],
@@ -572,7 +572,7 @@
                 }
             }
         },
-        "/gt/member/add": {
+        "/atm/member/add": {
             "post": {
                 "summary": "Add Member",
                 "tags": ["member", "manage"],
@@ -619,7 +619,7 @@
                 }
             }
         },
-        "/gt/member/discordrole": {
+        "/atm/member/discordrole": {
             "patch": {
                 "summary": "Update Discord Rank Role",
                 "tags": ["member"],
@@ -649,7 +649,7 @@
                 }
             }
         },
-        "/gt/member/resign": {
+        "/atm/member/resign": {
             "delete": {
                 "summary": "Member Resign (self-operation)",
                 "tags": ["member", "manage"],
@@ -679,7 +679,7 @@
                 }
             }
         },
-        "/gt/member/dismiss": {
+        "/atm/member/dismiss": {
             "delete": {
                 "summary": "Dismiss Member (staff-operation)",
                 "tags": ["member", "manage"],
@@ -718,7 +718,7 @@
                 }
             }
         },
-        "/gt/member/role": {
+        "/atm/member/role": {
             "post": {
                 "summary": "Set Member Roles",
                 "tags": ["member", "manage"],
@@ -769,7 +769,7 @@
                 }
             }
         },
-        "/gt/member/point": {
+        "/atm/member/point": {
             "post": {
                 "summary": "Add Member Points",
                 "tags": ["member", "manage"],
@@ -824,7 +824,7 @@
                 }
             }
         },
-        "/gt/member/roles": {
+        "/atm/member/roles": {
             "get": {
                 "summary": "Get All Roles",
                 "tags": ["member"],
@@ -851,7 +851,7 @@
                 }
             }
         },
-        "/gt/dlog/stats": {
+        "/atm/dlog/stats": {
             "get": {
                 "summary": "Get Company Statistics",
                 "tags": ["dlog"],
@@ -878,7 +878,43 @@
                 }
             }
         },
-        "/gt/dlog/leaderboard": {
+        "/atm/dlog/chart": {
+            "get": {
+                "summary": "Get Delivery Statistics for creating chart",
+                "tags": ["dlog"],
+                "operationId": "getDlogChart",
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Scale (1: 24h / 2: 7d / 3: 30d)",
+                        "type": "integer"
+                    },
+                    "name": "scale",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/dlog/leaderboard": {
             "get": {
                 "summary": "Get Distance Leaderboard",
                 "tags": ["dlog"],
@@ -941,7 +977,7 @@
                 }
             }
         },
-        "/gt/dlog/newdrivers": {
+        "/atm/dlog/newdrivers": {
             "get": {
                 "summary": "Get New Drivers",
                 "tags": ["dlog"],
@@ -971,7 +1007,7 @@
                 }
             }
         },
-        "/gt/dlog/list": {
+        "/atm/dlog/list": {
             "get": {
                 "summary": "Get Delivery Log List",
                 "tags": ["dlog"],
@@ -1042,7 +1078,7 @@
                 }
             }
         },
-        "/gt/dlog/detail": {
+        "/atm/dlog/detail": {
             "get": {
                 "summary": "Get Delivery Log Detail",
                 "tags": ["dlog"],
@@ -1081,7 +1117,7 @@
                 }
             }
         },
-        "/gt/announcement": {
+        "/atm/announcement": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -1291,7 +1327,7 @@
                 }
             }
         },
-        "/gt/event": {
+        "/atm/event": {
             "get": {
                 "summary": "Get Event",
                 "tags": ["event"],
@@ -1610,7 +1646,7 @@
                     }
                 }
             },
-            "/gt/event/attendee": {
+            "/atm/event/attendee": {
                 "post": {
                     "summary": "Update Event Attendees (Overwrite)",
                     "tags": ["event", "manage"],
@@ -1665,7 +1701,7 @@
                     }
                 }
             },
-        "/gt/application": {
+        "/atm/application": {
             "get": {
                 "summary": "Get Application Detail",
                 "tags": ["application"],
@@ -1802,7 +1838,7 @@
                 }
             }
         },
-        "/gt/application/status": {
+        "/atm/application/status": {
             "post": {
                 "summary": "Update Application Status",
                 "tags": ["application", "manage"],
@@ -1857,7 +1893,7 @@
                 }
             }
         },
-        "/gt/application/list": {
+        "/atm/application/list": {
             "get": {
                 "summary": "Get Application List",
                 "tags": ["application", "manage"],
@@ -1912,7 +1948,7 @@
                 }
             }
         },
-        "/gt/application/positions": {
+        "/atm/application/positions": {
             "get": {
                 "summary": "Get Staff Application Positions",
                 "tags": ["application"],
@@ -1984,7 +2020,7 @@
                 }
             }
         },
-        "/gt/info": {
+        "/atm/info": {
             "get": {
                 "summary": "Get Drivers Hub Information",
                 "tags": ["info"],
@@ -2001,7 +2037,7 @@
                 }
             }
         },
-        "/gt/info/version": {
+        "/atm/info/version": {
             "get": {
                 "summary": "Get Drivers Hub API Version",
                 "tags": ["info"],
@@ -2018,7 +2054,7 @@
                 }
             }
         },
-        "/gt/info/ip": {
+        "/atm/info/ip": {
             "get": {
                 "summary": "Get Your IP",
                 "tags": ["info"],
@@ -2035,7 +2071,7 @@
                 }
             }
         },
-        "/gt/auditlog": {
+        "/atm/auditlog": {
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["manage"],

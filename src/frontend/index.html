@@ -2,28 +2,40 @@
 <html lang="en">
 
 <head>
-  <title>Global Trucking</title>
+  <title>At The Mile Logistics</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
+  <meta name="description" content="At The Mile Logistics Drivers Hub - By CharlesWithC#7777">
+
+  <meta content="At The Mile Hub" property="og:title" />
+  <meta content="At The Mile Logistics Drivers Hub - By CharlesWithC#7777" property="og:description" />
+  <meta content="https://hub.atmvtc.com/" property="og:url" />
+  <meta content="https://hub.atmvtc.com/images/atm-black.png" property="og:image" />
+  <meta content="#B30000" data-react-helmet="true" name="theme-color" />
+  <meta content="https://hub.atmvtc.com/images/bg.jpg" name="twitter:card">
+
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
-  <link rel="stylesheet" href="css/recuritmentcenter.css">
   <link rel="stylesheet" href="css/index.css">
-  <script src="js/main.js"></script>
-  <script src="js/functions.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
     integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="js/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+  <script src="js/main.js"></script>
+  <script src="js/functions.js"></script>
+  <script src="js/index.js"></script>
+  <script src="js/bililiteRange.js"></script>
   <script src="js/ets2map.js"></script>
+  <script src="js/ets2map_promods.js"></script>
   <script src="js/atsmap.js"></script>
   <script src="js/naviolive.js"></script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
 
@@ -58,7 +70,7 @@
             onclick="ShowTab('#HomeTab', '#HomeTabBtn')"><img src="images/banner.png" alt="" width="100%"></a>
         </div>
         <div class="px-4 pb-6">
-          <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Global Trucking</h3>
+          <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">At The Mile</h3>
           <ul class="text-sm font-medium">
             <li>
               <a id="HomeTabBtn"
@@ -223,9 +235,68 @@
           </ul>
         </div>
 
+        <div class="px-4 pb-6" id="recruitment" style="display:none">
+          <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Applications</h3>
+          <ul class="text-sm font-medium">
+            <li>
+              <a id="MyAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#MyApp', '#MyAppBtn')">
+                <span class="inline-block mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    class="bi bi-archive" viewBox="0 0 16 16">
+                    <path
+                      d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
+                  </svg>
+                </span>
+                <span id="MyAppSpan">My Applications</span>
+                <span class="inline-block ml-auto">
+                </span>
+              </a>
+            </li>
+
+            </li>
+            <li>
+              <a id="SubmitAppBtn"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#SubmitApp', '#SubmitAppBtn')">
+                <span class="inline-block mr-3">
+                  <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12H5M8 12H5M5 12V9M5 12V15" stroke="currentColor" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path
+                      d="M6.25 6L6.49485 5.72018C7.29167 4.80952 8.70833 4.80952 9.50515 5.72017L13.8476 10.683C14.5074 11.437 14.5074 12.563 13.8476 13.317L9.50515 18.2798C8.70833 19.1905 7.29167 19.1905 6.49485 18.2798L6.25 18"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M13 19L17.8844 13.3016C18.5263 12.5526 18.5263 11.4474 17.8844 10.6984L13 5"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M17 19L21.8844 13.3016C22.5263 12.5526 22.5263 11.4474 21.8844 10.6984L17 5"
+                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /> </svg> </span>
+                <span>Submit Application</span>
+                <span class="inline-block ml-auto">
+                  <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                    xmlns="http://www.w3.org/2000/svg"></svg></span>
+              </a>
+          </ul>
+        </div>
         <div class="px-4 pb-6" id="stafftabs" style="display:none">
           <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Staff</h3>
           <ul class="mb-8 text-sm font-medium">
+            <li>
+              <a id="AllAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#AllApp', '#AllAppBtn')">
+                <span class="inline-block mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    class="bi bi-archive" viewBox="0 0 16 16">
+                    <path
+                      d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
+                  </svg>
+                </span>
+                <span>Applications</span>
+                <span class="inline-block ml-auto">
+                  <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                    xmlns="http://www.w3.org/2000/svg"></svg></span>
+              </a>
+            </li>
             <li>
               <a id="AllUserBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AllUsers', '#AllUserBtn')">
@@ -263,7 +334,7 @@
         </div>
         <div class="px-4 pb-6" style="color:white;margin-top:auto">
           <p>Copyright &copy 2022 CharlesWithC</p>
-          <p>Licensed to Global Trucking </p>
+          <p>Licensed to At The Mile Logistics </p>
         </div>
       </nav>
     </div>
@@ -327,7 +398,7 @@
           </div>
         </div>
         <br>
-        <div class="py-8 px-6 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+        <div class="py-8 px-6 pt-4 bg-white shadow rounded">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
             <div style="margin-left:auto">
@@ -371,14 +442,25 @@
               </tbody>
             </table>
           </div>
-          <div class="mb-6" style="float:right">
-            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-            <input id="udpages" style="width:50px;display:inline"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
-            <button type="button"
+          <div style="margin-left:auto;width:fit-content">
+            <div style="margin-left:auto;width:fit-content">
+              <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+              <input id="udpages" style="width:50px;display:inline"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+                name="field-name" rows="5" placeholder="" value="1"></input> / <span id="udtotpages">-</span>
+              <button type="button"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="loadUserDelivery()">Show</button>
+            </div>
+            <button type="button" style="display:inline"
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="loadUserDelivery()">Show</button></div>
+              onclick="tmp=parseInt($('#udpages').val());$('#udpages').val(tmp-1);loadUserDelivery();">
+              <</button> <div id="userDeliveryTableControl" style="display:inline">
+          </div>
+          <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="tmp=parseInt($('#udpages').val());$('#udpages').val(tmp+1);loadUserDelivery();">></button>
+
         </div>
         <br>
         <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="UpdateAM" style="display:none">
@@ -429,7 +511,7 @@
     </div>
   </section>
 
-  <section id="HomeTab" class="py-8 tabs mx-auto lg:ml-80">
+  <section id="HomeTab" class="py-8 tabs mx-auto lg:ml-80" style="display:none">
     <div class="px-4 mx-auto">
       <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6">
         <div class="md:w-2/3 px-4 mb-4 md:mb-0" id="hometableftcontainer">
@@ -569,6 +651,19 @@
             </div>
           </div>
           <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
+            <h2><b>Statistics</b>
+              <a onclick='chartscale=1;loadStats()' style='cursor:pointer'><span
+                id="cs1" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span></a>
+              <a onclick='chartscale=2;loadStats()' style='cursor:pointer'><span
+                id="cs2" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">7d</span></a>
+              <a onclick='chartscale=3;loadStats()' style='cursor:pointer'><span
+                id="cs3" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">30d</span></a>
+            </h2>
+            <div class="p-4 overflow-x-auto" style="display: block;">
+              <canvas id="statisticsChart" width="100%" height="300px"></canvas>
+            </div>
+          </div>
+          <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
             <h2><b>Online Drivers</b></h2>
             <div class="p-4 overflow-x-auto" style="display: block;">
               <table class="table-auto w-full" style="margin-top:20px">
@@ -653,6 +748,13 @@
           <h3 class="text-xl font-bold">Euro Truck Simulator 2 Map</h3>
         </div>
         <div id="map" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
+      </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Euro Truck Simulator 2 Map - ProMods</h3>
+        </div>
+        <div id="pmap" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
       </div>
       <br>
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
@@ -765,7 +867,7 @@
 
   <section id="AllMembers" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Members</h3>
           <div style="margin-left:auto">
@@ -795,106 +897,117 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="mpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="mpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="mtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMembers()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadMembers()">Show</button></div>
+            onclick="tmp=parseInt($('#mpages').val());$('#mpages').val(tmp-1);loadMembers();">
+            <</button> <div id="membersTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#mpages').val());$('#mpages').val(tmp+1);loadMembers();">></button>
+      </div>
+    </div>
+    <br>
+    <div id="AllMemberStaff" style="display:none">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Assign roles</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p>Fetch member roles first, this will overwrite all existing roles.</p>
+            <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
+              navio company!</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="">Member Name</label>
+            <input id="memberroleid" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+            <button type="button" id="fetchRolesBtn"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="fetchRoles()">Fetch Existing Roles</button>
+          </div>
+          <span id="memberrolename" style="font-size:30px"></span>
+          <div class="mb-6" id="rolelist">
+
+          </div>
+
+          <button type="button" id="updateMemberRolesBtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="updateMemberRoles()">Update</button>
+        </div>
       </div>
       <br>
-      <div id="AllMemberStaff" style="display:none">
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Assign roles</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p>Fetch member roles first, this will overwrite all existing roles.</p>
-              <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
-                navio company!</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="">Member Name</label>
-              <input id="memberroleid" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-              <button type="button" id="fetchRolesBtn"
-                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-                onclick="fetchRoles()">Fetch Existing Roles</button>
-            </div>
-            <span id="memberrolename" style="font-size:30px"></span>
-            <div class="mb-6" id="rolelist">
-
-            </div>
-
-            <button type="button" id="updateMemberRolesBtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateMemberRoles()">Update</button>
-          </div>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Update member points</h3>
         </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Update member points</h3>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p>Negative numbers work, they deduct the points.</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
+            <input id="memberpntid" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
           </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p>Negative numbers work, they deduct the points.</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">User ID</label>
-              <input id="memberpntid" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
-              <input id="memberpntmile" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
-              <input id="memberpntevent" style="width:200px;display:inline"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
+            <input id="memberpntmile" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
+            <input id="memberpntevent" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
 
-            <button type="button" id="updateMemberPointsBtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateMemberPoints()">Update</button>
-          </div>
-        </div>
-        <br>
-        <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Dismiss</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <div class="mb-6">
-              <p style="color:red">Dangerous! This will wipe member delivery log and everything, and kick member from
-                navio company!</p>
-              <br>
-              <label class="block text-sm font-medium mb-2" for="">User ID</label>
-              <input id="dismissUserID" style="width:200px"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></input>
-            </div>
-
-            <p><span id="memberdismissname" style="font-size:20px"></span></p>
-
-            <button type="button" style="background-color:red" id="dismissbtn"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="dismissUser()">Dismiss</button>
-          </div>
+          <button type="button" id="updateMemberPointsBtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="updateMemberPoints()">Update</button>
         </div>
       </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Dismiss</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div class="mb-6">
+            <p style="color:red">Dangerous! This will wipe member delivery log and everything, and kick member from
+              navio company!</p>
+            <br>
+            <label class="block text-sm font-medium mb-2" for="">User ID</label>
+            <input id="dismissUserID" style="width:200px"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+
+          <p><span id="memberdismissname" style="font-size:20px"></span></p>
+
+          <button type="button" style="background-color:red" id="dismissbtn"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="dismissUser()">Dismiss</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="Leaderboard" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Leaderboard</h3>
           <div style="margin-left:auto">
@@ -934,15 +1047,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="lpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="lpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="ltotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadLeaderboard()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadLeaderboard()">Show</button></div>
+            onclick="tmp=parseInt($('#lpages').val());$('#lpages').val(tmp-1);loadLeaderboard();">
+            <</button> <div id="leaderboardTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#lpages').val());$('#lpages').val(tmp+1);loadLeaderboard();">></button>
       </div>
+    </div>
     </div>
   </section>
 
@@ -1087,7 +1211,7 @@
 
   <section id="Delivery" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
           <div style="margin-left:auto">
@@ -1132,15 +1256,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="dpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="dpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="dtotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadDelivery()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadDelivery()">Show</button></div>
+            onclick="tmp=parseInt($('#dpages').val());$('#dpages').val(tmp-1);loadDelivery();">
+            <</button> <div id="deliveryTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#dpages').val());$('#dpages').val(tmp+1);loadDelivery();">></button>
       </div>
+    </div>
     </div>
   </section>
 
@@ -1151,10 +1286,29 @@
           <div style="float:left;width:60%">
             <div id="dmap" style="height: 50vh;width:100%;background-color: #484E66"></div>
           </div>
-          <table class="table-auto" style="display:inline;float:right;width:40%">
-            <tbody id="ddcol4" class="ddcol">
-            </tbody>
-          </table>
+          <div style="display:inline;float:right;width:40%">
+            <table class="table-auto">
+              <tbody id="ddcol4" class="ddcol">
+              </tbody>
+            </table>
+            <div style="padding:20px;" id="routereplyload">
+              <p>Route replay loading...</p>
+            </div>
+            <div style="padding:20px;display:none" id="routereplydiv">
+              <h3>Route replay: <span id="rp_pct">0</span>% (<span id="rp_cur">0</span> / <span id="rp_tot"></span>)
+              </h3>
+              <p><a style="cursor:pointer" onclick="rri-=100">-100</a>
+                <a style="cursor:pointer" onclick="rri-=50">-50</a>
+                <a style="cursor:pointer" onclick="rrplayswitch()" id="rrplay">Play</a>
+                <a style="cursor:pointer" onclick="rri+=50">+50</a>
+                <a style="cursor:pointer" onclick="rri+=100">+100</a></p>
+              <p>Speed: <a style="cursor:pointer" onclick="rrspeed-=2">--</a>
+                <a style="cursor:pointer" onclick="rrspeed-=1">-</a>
+                <span id="rp_speed">20</span>
+                <a style="cursor:pointer" onclick="rrspeed+=1">+</a>
+                <a style="cursor:pointer" onclick="rrspeed+=2">++</a></p>
+            </div>
+          </div>
         </div>
         <br>
         <div style="display:block">
@@ -1177,7 +1331,7 @@
 
   <section id="Event" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Events</h3>
         </div>
@@ -1207,15 +1361,26 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="epages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
-          <button type="button"
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="epages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="etotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadEvent()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadEvent()">Show</button></div>
+            onclick="tmp=parseInt($('#epages').val());$('#epages').val(tmp-1);loadEvent();">
+            <</button> <div id="eventTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#epages').val());$('#epages').val(tmp+1);loadEvent();">></button>
       </div>
+    </div>
     </div>
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newevent" style="display:none">
@@ -1353,9 +1518,367 @@
       </div>
   </section>
 
+  <section id="MyApp" class="py-8 tabs" style="display:none">
+    <div style="padding:50px; padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">My Applications</h3>
+        </div>
+
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <table class="table-auto w-full">
+            <thead id="myappTableHead" style="display:none">
+              <tr class="text-xs text-gray-500 text-left">
+                <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                <th class="py-5 px-6 pb-3 font-medium">Type</th>
+                <th class="py-5 px-6 pb-3 font-medium">Submitted At</th>
+                <th class="py-5 px-6 pb-3 font-medium">Status</th>
+                <th class="py-5 px-6 pb-3 font-medium">Last Staff Reply</th>
+              </tr>
+            </thead>
+            <tbody id="myappTable">
+              <tr class="text-xs">
+                <td class="py-5 px-6 font-medium">No Data</td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="myapppage" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="myapptotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadMyApp()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="tmp=parseInt($('#myapppage').val());$('#myapppage').val(tmp-1);loadMyApp();">
+            <</button> <div id="myAppTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#myapppage').val());$('#myapppage').val(tmp+1);loadMyApp();">></button>
+      </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Add Message to Application</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+          <input id="appmsgid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder="Integar ID"></input>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Message Content</label>
+          <textarea id="appmsgcontent"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button" id="addAppMessageBtn"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="addAppMessage()">Add</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section id="SubmitApp" class="py-8 tabs" style="display: none;">
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <form>
+          <h1 class="mb-2 text-2xl font-bold font-heading text-left">1. Choose Application</h1>
+
+          <div class="mb-6">
+            <div class="container px-4 mx-auto">
+              <label class="block text-sm font-medium mb-2 text-left" for="">Are you applying for driver or staff? Or
+                just requesting a LOA?<br>Please select an application:</label>
+              <div class="relative" style="width:200px">
+                <select id="appselect"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                  <option value="driver" id="driverappsel">Driver</option>
+                  <option value="staff">Staff</option>
+                  <option value="loa">LOA</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h1 class="mb-2 text-2xl font-bold font-heading text-left">2. Fill Application</h1>
+
+          <div class="container px-4 mx-auto apptabs" id="DriverApp">
+            <div class="mb-6" style="width:350px">
+              <label class="block text-sm font-medium mb-2" for="">What is your birthdate?</label>
+              <input id="da-q1" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="date" name="" placeholder="MM/DD/YYYY"></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">How did you find us?</label>
+              <textarea id="da-q2"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="Enter a short answer"></textarea></div>
+
+
+            <div class="mb-6">
+              <div class="mb-1">
+                <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Are you currenty in
+                  another VTC?</label>
+                <label>
+                  <input type="radio" name="in-another-vtc" value="yes" id="in-another-vtc">
+                  <span class="ml-2">Yes</span>
+                </label>
+              </div>
+              <div>
+                <label>
+                  <input type="radio" name="in-another-vtc" value="yes" checked>
+                  <span class="ml-2">No</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">What are your interests?</label>
+              <textarea id="da-q3"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="Tell us a little bit about yourself."></textarea></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Why do you want to be a part our VTC?</label>
+              <textarea id="da-q4"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5"
+                placeholder="Why would you like to join us? This doesn't need to be complicated."></textarea></div>
+
+            <div class="mb-6">
+              <label>
+                <input type="checkbox" name="field-name" value="example value" id="da-agree">
+                <span class="ml-2">By joining At The Mile VTC you agree to follow both discord and VTC rules at all
+                  times? Do you agree to our terms?</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="container px-4 mx-auto apptabs" id="StaffApp" style="display:none">
+            <div class="mb-6" style="width:350px">
+              <label class="block text-sm font-medium mb-2" for="">What is your birthdate?</label>
+              <input id="sa-q1" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="date" name="" placeholder="MM/DD/YYYY"></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">What country do you live in? Also include your Time
+                Zone </label>
+              <textarea id="sa-q2"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="US, Canada, UK, etc"></textarea></div>
+
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Which position are you
+                applying for?</label>
+              <div class="relative" style="width:500px">
+                <select id="sa-select"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Please provide a summary about yourself. </label>
+              <textarea id="sa-q3"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5"
+                placeholder="You may include hobbies, work positions, or any unique facts about yourself!"></textarea>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Why are you interested in joining the position you
+                are applying for? What do you want to achieve?</label>
+              <textarea id="sa-q4"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5"
+                placeholder="Explain why does that position interest you and what do you want to achieve."></textarea>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Do you have a lot of time to dedicate to this
+                position?</label>
+              <textarea id="sa-q5"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="Explain your time availability."></textarea>
+            </div>
+
+            <div class="mb-6">
+              <label>
+                <input id="sa-agree" type="checkbox" name="field-name" value="example value">
+                <span class="ml-2">By joining At The Mile Logistics, you agree to our rules and terms of service. As a
+                  Internal or External Staff, you also agree to work without financial compensation. Do you agree to
+                  these terms?</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="container px-4 mx-auto apptabs" id="LOAApp" style="display:none">
+            <div class="mb-6" style="width:350px">
+              <label class="block text-sm font-medium mb-2" for="">Start Date</label>
+              <input id="la-q1" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="date" name="" placeholder="MM/DD/YYYY"></div>
+
+            <div class="mb-6" style="width:350px">
+              <label class="block text-sm font-medium mb-2" for="">End Date</label>
+              <input id="la-q2" class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                type="date" name="" placeholder="MM/DD/YYYY"></div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="">Reason for LOA </label>
+              <textarea id="la-q3"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                name="field-name" rows="5" placeholder="Your answer"></textarea></div>
+          </div>
+
+          <button type="button"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="SubmitApp()" id="submitAppBttn">Submit</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section id="AllApp" class="py-8 tabs" style="display: none;">
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Applications</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <table class="table-auto w-full">
+            <thead id="allappTableHead" style="display:none">
+              <tr class="text-xs text-gray-500 text-left">
+                <th class="py-5 px-6 pb-3 font-medium">ID</th>
+                <th class="py-5 px-6 pb-3 font-medium">Applicant</th>
+                <th class="py-5 px-6 pb-3 font-medium">Type</th>
+                <th class="py-5 px-6 pb-3 font-medium">Submitted At</th>
+                <th class="py-5 px-6 pb-3 font-medium">Status</th>
+                <th class="py-5 px-6 pb-3 font-medium">Last Staff Reply</th>
+              </tr>
+            </thead>
+            <tbody id="allappTable">
+              <tr class="text-xs">
+                <td class="py-5 px-6 font-medium">No Data</td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="allapppage" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="allapptotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadAllApp()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="tmp=parseInt($('#allapppage').val());$('#allapppage').val(tmp-1);loadAllApp();">
+            <</button> <div id="allAppTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#allapppage').val());$('#allapppage').val(tmp+1);loadAllApp();">></button>
+      </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Update Application Status</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+          <input id="appstatusid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input></div>
+
+        <div class="mb-6 relative" style="width:200px">
+          <label class="block text-sm font-medium mb-2 text-left" for="">New Status:</label>
+          <select id="appstatussel"
+            class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+            name="field-name">
+            <option value="0">Pending</option>
+            <option value="1">Accepted</option>
+            <option value="2">Declined</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Message</label>
+          <textarea id="appmessage"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
+      </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Update Open Staff Positions</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Staff Positions, one position per row</label>
+          <textarea id="staffposedit"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></textarea></div>
+
+        <button type="button" id="updateStaffPositionBtn"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="updateStaffPosition()" id="updateAppStatusBtn">Update</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
   <section id="AllUsers" class="py-8 tabs" style="display: none;">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Pending Users</h3>
         </div>
@@ -1375,61 +1898,72 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="pupages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
-          <button type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadUsers()">Show</button></div>
-      </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Add User to Member List</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <p>Only do this when the member is accepted as a driver / staff.</p>
-            <br>
-            <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
-            <input id="adddiscordid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></input>
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="pupages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="putotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadUsers()">Show</button>
           </div>
-
-          <button type="button"
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="addUser()">Add</button>
+            onclick="tmp=parseInt($('#pupages').val());$('#pupages').val(tmp-1);loadUsers();">
+            <</button> <div id="usersTableControl" style="display:inline">
         </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#pupages').val());$('#pupages').val(tmp+1);loadUsers();">></button>
       </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Ban / Unban User</h3>
-        </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
-            <input id="bandiscordid" style="width:200px"
-              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-              rows="5" placeholder=""></input>
-          </div>
-
-          <button type="button" style="background-color:red"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="banUser()">Ban</button>
-          <button type="button" style="background-color:green"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="unbanUser()">Unban</button>
-        </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Add User to Member List</h3>
       </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <p>Only do this when the member is accepted as a driver / staff.</p>
+          <br>
+          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+          <input id="adddiscordid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+
+        <button type="button"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="addUser()">Add</button>
+      </div>
+    </div>
+    <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Ban / Unban User</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+          <input id="bandiscordid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+
+        <button type="button" style="background-color:red"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="banUser()">Ban</button>
+        <button type="button" style="background-color:green"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="unbanUser()">Unban</button>
+      </div>
+    </div>
   </section>
 
   <section id="AuditLog" class="py-8 tabs" style="display: none;">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Audit Log</h3>
         </div>
@@ -1451,15 +1985,27 @@
             </tbody>
           </table>
         </div>
-        <div class="mb-6" style="float:right">
-          <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
-          <input id="auditpages" style="width:50px;display:inline"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
-            name="field-name" rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
-          <button type="button"
+
+        <div style="margin-left:auto;width:fit-content">
+          <div style="margin-left:auto;width:fit-content">
+            <label class="text-sm font-medium mb-2" display="display:inline" for="">Page</label>
+            <input id="auditpages" style="width:50px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded pageinput"
+              name="field-name" rows="5" placeholder="" value="1"></input> / <span id="audittotpages">-</span>
+            <button type="button"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="loadAuditLog()">Show</button>
+          </div>
+          <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-            onclick="loadAuditLog()">Show</button></div>
+            onclick="tmp=parseInt($('#auditpages').val());$('#auditpages').val(tmp-1);loadAuditLog();">
+            <</button> <div id="auditTableControl" style="display:inline">
+        </div>
+        <button type="button" style="display:inline"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="tmp=parseInt($('#auditpages').val());$('#auditpages').val(tmp+1);loadAuditLog();">></button>
       </div>
+    </div>
     </div>
   </section>
 </body>

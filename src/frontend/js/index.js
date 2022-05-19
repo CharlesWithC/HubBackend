@@ -17,9 +17,11 @@ function DarkMode() {
             svg{transition: color 1000ms linear;}
             .text-gray-500,.text-gray-600 {color: #ddd;transition: color 1000ms linear;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);transition: background-color 1000ms linear;}
-            .swal2-popup {background-color: rgb(41 48 57)}</style>`);
+            .swal2-popup {background-color: rgb(41 48 57)}
+            .rounded-full {background-color: #888;transition: background-color 1000ms linear;}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
+        Chart.defaults.color = "white";
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -29,23 +31,30 @@ function DarkMode() {
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {transition: color 1000ms linear;}
             svg{transition: color 1000ms linear;}
             .text-gray-500,.text-gray-600 {transition: color 1000ms linear;}
-            .bg-white {transition: background-color 1000ms linear;}
-            .swal2-popup {}</style>`);
-        $("#convertbg").remove();
-        setTimeout(function () {
-            $("#convertbg2").remove()
+            .bg-white {background-color: white;transition: background-color 1000ms linear;}
+            .swal2-popup {background-color: white;}
+            .rounded-full {background-color: #ddd;transition: background-color 1000ms linear;}</style>`);
+        setTimeout(function(){
+            $("#convertbg2").remove();
         }, 1000);
+        $("#convertbg").remove();
         $("#todarksvg").show();
         $("#tolightsvg").hide();
+        Chart.defaults.color = "black";
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
+    loadStats();
 }
 
 token = localStorage.getItem("token");
 $(".pageinput").val("1");
+sc = undefined;
+chartscale = 2;
 
 function loadStats() {
+    $(".cs").css("background-color","");
+    $("#cs" + chartscale).css("background-color","lightblue");
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/stats",
         type: "GET",
@@ -78,6 +87,111 @@ function loadStats() {
             $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
             $("#allfuel").html(fuel);
             $("#newfuel").html(newfuel);
+        }
+    });
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/chart?scale=" + chartscale,
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            d = data.response;
+            const ctx = document.getElementById('statisticsChart').getContext('2d');
+            labels = [];
+            d = d.reverse();
+            distance = [];
+            fuel = [];
+            euro = [];
+            dollar = [];
+            for (i = 0; i < d.length; i++) {
+                ts = d[i].starttime;
+                ts = new Date(ts * 1000);
+                if (chartscale == 1) { // 24h
+                    ts = pad(ts.getHours(), 2) + ":" + pad(ts.getMinutes(), 2);
+                } else if (chartscale >= 2) { // 7 d / 30 d
+                    ts = pad(ts.getDate(), 2) + "/" + pad((ts.getMonth() + 1), 2);
+                }
+                labels.push(ts);
+                if (d[i].distance == 0) {
+                    distance.push(NaN);
+                    fuel.push(NaN);
+                    euro.push(NaN);
+                    dollar.push(NaN);
+                    continue;
+                }
+                distance.push(parseInt(d[i].distance / 1.6));
+                fuel.push(d[i].fuel);
+                euro.push(parseInt(d[i].euro));
+                dollar.push(parseInt(d[i].dollar));
+            }
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Distance (Mi)',
+                        data: distance,
+                        borderColor: "lightgreen",
+                        cubicInterpolationMode: 'monotone',
+                        spanGaps: true,
+                        xAxisID: 'x',
+                        yAxisID: 'y',
+                        type: 'line'
+                    }, {
+                        label: 'Fuel (L)',
+                        data: fuel,
+                        borderColor: "orange",
+                        cubicInterpolationMode: 'monotone',
+                        spanGaps: true,
+                        xAxisID: 'x',
+                        yAxisID: 'y',
+                        type: 'line'
+                    }, {
+                        label: 'Profit (€)',
+                        data: euro,
+                        backgroundColor: "lightblue",
+                        xAxisID: 'x1',
+                        yAxisID: 'y1'
+                    }, {
+                        label: 'Profit ($)',
+                        data: dollar,
+                        backgroundColor: "pink",
+                        xAxisID: 'x1',
+                        yAxisID: 'y1'
+                    }, ]
+                },
+                showTooltips: true,
+                options: {
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false
+                    },
+                    radius: 0,
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                        },
+                        x1: {
+                            stacked: true,
+                        },
+                        y1: {
+                            display: true,
+                            position: 'right',
+                            stacked: true,
+
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                    }
+                }
+            };
+            if (sc != undefined) sc.destroy();
+            sc = new Chart(ctx, config);
         }
     });
     $.ajax({
@@ -174,7 +288,7 @@ function ShowTab(tabname, btnname) {
     clearInterval(dmapint);
     dmapint = -1;
     $(".tabs").hide();
-    $(tabname).show();
+    $(tabname).fadeIn();
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
     if (tabname == "#Map") {
@@ -182,7 +296,7 @@ function ShowTab(tabname, btnname) {
         window.autofocus["map"] = -2;
         window.autofocus["amap"] = -2;
         window.autofocus["pmap"] = -2;
-        setTimeout(function(){
+        setTimeout(function () {
             LoadETS2Map();
             LoadETS2PMap();
             LoadATSMap();
@@ -1560,7 +1674,7 @@ async function deliveryRoutePlay() {
         if (rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
         window.mapcenter["dmap"] = [deliveryRoute[rri][0], -deliveryRoute[rri][1]];
         $("#rp_speed").html(rrspeed);
-        $("#rp_cur").html(rri);
+        $("#rp_cur").html(rri + 1);
         $("#rp_pct").html(Math.round(rri / deliveryRoute.length * 100));
         dmapw = $("#dmap").width();
         dmaph = $("#dmap").height();
@@ -1642,7 +1756,7 @@ async function deliveryRoutePlay() {
             rri -= 1;
         }
     }
-    setTimeout(function(){
+    setTimeout(function () {
         $(".dmap-player").remove();
         window.mapcenter["dmap"] = undefined;
     }, 5000);
@@ -1834,7 +1948,7 @@ function deliveryDetail(logid) {
                 tabname = "#DeliveryDetailTab";
                 $(".tabs").hide();
                 $(tabname).show();
-                setTimeout(function(){
+                setTimeout(function () {
                     $("#routereplyload").hide();
                     $("#routereplydiv").fadeIn();
                 }, 5000);
@@ -3608,9 +3722,14 @@ $(document).ready(function () {
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;}
             .text-gray-500,.text-gray-600 {color: #ddd;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);}
-            .swal2-popup {background-color: rgb(41 48 57)}</style>`);
+            .swal2-popup {background-color: rgb(41 48 57)}
+            .rounded-full {background-color: #888}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
+        Chart.defaults.color = "white";
+    } else {
+        $("head").append(`<style>
+            .rounded-full {background-color: #ddd}</style>`);
     }
     loadStats();
     setInterval(loadStats, 60000);
