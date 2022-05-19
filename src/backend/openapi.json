@@ -169,6 +169,36 @@
                 }
             }
         },
+        "/atm/user/refresh": {
+            "get": {
+                "summary": "Refresh Token",
+                "tags": ["user"],
+                "operationId": "userRefreshToken",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/user/validate": {
             "get": {
                 "summary": "Validate Token",
@@ -286,10 +316,18 @@
                                     "discordid": {
                                         "description": "Discord ID",
                                         "type": "integer"
+                                    },
+                                    "expire": {
+                                        "description": "Expire Timestamp (-1 = forever)",
+                                        "type": "integer"
+                                    },
+                                    "reason": {
+                                        "description": "Reason",
+                                        "type": "string"
                                     }
                                 }
                             },
-                            "required": ["discordid"]
+                            "required": ["discordid", "expire", "reason"]
                         }
                     }
                 },

@@ -1919,12 +1919,46 @@
       </div>
     </div>
     <br>
+    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="BanUserDiv">
+      <div class="flex px-6 pb-4 border-b">
+        <h3 class="text-xl font-bold">Ban / Unban User</h3>
+      </div>
+      <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
+          <input id="bandiscordid" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Expire Date (Leave empty to ban forever)</label>
+          <input id="banexpire" type="date" style="width:200px"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder=""></input>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2" for="">Reason</label>
+          <textarea id="banreason"
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+            name="field-name" rows="5" placeholder="Needed only when banning an user."></textarea>
+        </div>
+
+        <button type="button" style="background-color:red"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="banUser()">Ban</button>
+        <button type="button" style="background-color:lightgreen"
+          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+          onclick="unbanUser()">Unban</button>
+      </div>
+    </div>
+    <br>
     <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
       <div class="flex px-6 pb-4 border-b">
         <h3 class="text-xl font-bold">Add User to Member List</h3>
       </div>
       <div class="p-4 overflow-x-auto" style="display: block;">
         <div class="mb-6">
+          <p>If you failed to find the user on the list above, use this function to directly add member with Discord ID.</p>
           <p>Only do this when the member is accepted as a driver / staff.</p>
           <br>
           <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
@@ -1936,27 +1970,6 @@
         <button type="button"
           class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
           onclick="addUser()">Add</button>
-      </div>
-    </div>
-    <br>
-    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-      <div class="flex px-6 pb-4 border-b">
-        <h3 class="text-xl font-bold">Ban / Unban User</h3>
-      </div>
-      <div class="p-4 overflow-x-auto" style="display: block;">
-        <div class="mb-6">
-          <label class="block text-sm font-medium mb-2" for="">Discord ID</label>
-          <input id="bandiscordid" style="width:200px"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-            rows="5" placeholder=""></input>
-        </div>
-
-        <button type="button" style="background-color:red"
-          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-          onclick="banUser()">Ban</button>
-        <button type="button" style="background-color:green"
-          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-          onclick="unbanUser()">Unban</button>
       </div>
     </div>
   </section>

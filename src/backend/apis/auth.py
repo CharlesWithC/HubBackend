@@ -34,11 +34,16 @@ async def userCallback(code: str, request: Request, response: Response):
         tokens = {**tokens, **user_data}
         conn = newconn()
         cur = conn.cursor()
+        cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 7}")
+        cur.execute(f"DELETE FROM banned WHERE expire < {int(time.time())}")
         stoken = str(uuid4())
-        cur.execute(f"SELECT * FROM banned WHERE discordid = '{user_data['id']}'")
+        cur.execute(f"SELECT reason, expire FROM banned WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         if len(t) > 0:
-            return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are banned.", status_code=302)
+            reason = t[0][0]
+            expire = t[0][1]
+            expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are banned for {reason} until {expire} UTC", status_code=302)
 
         r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bottoken}"})
         if r.status_code != 200:
@@ -66,6 +71,50 @@ async def userCallback(code: str, request: Request, response: Response):
     response.status_code = 401
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
+@app.get("/atm/user/refresh")
+async def userRefreshToken(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    ip = t[0][1]
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+
+    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+    stoken = str(uuid4())
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    conn.commit()
+    return {"error": False, "response": {"token": stoken}}
+
 @app.get('/atm/user/validate')
 async def userValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
@@ -76,15 +125,34 @@ async def userValidate(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
+        response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
+
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+
     cur.execute(f"SELECT steamid, truckersmpid FROM user WHERE discordid = '{t[0][0]}'")
     t = cur.fetchall()
     steamid = t[0][0]

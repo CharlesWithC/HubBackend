@@ -27,7 +27,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink
 # unit = 1: euro | 2: dollar
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, data TEXT,\
      status INT, submitTimestamp BIGINT, closedBy BIGINT, closedTimestamp BIGINT)")
 # status = 0: pending | 1: accepted | 2: declined

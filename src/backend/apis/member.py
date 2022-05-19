@@ -258,7 +258,12 @@ async def addMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     
     form = await request.form()
-    discordid = form["discordid"]
+    discordid = int(form["discordid"])
+
+    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) > 0:
+        return {"error": True, "descriptor": "Banned user cannot be accepted as member."}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
     t = cur.fetchall()
@@ -490,7 +495,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             adminhighest = int(i)
 
     form = await request.form()
-    userid = form["userid"]
+    userid = int(form["userid"])
     roles = form["roles"].split(",")
     while "" in roles:
         roles.remove("")
@@ -663,7 +668,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "401: Unauthroized"}
     
     form = await request.form()
-    userid = form["userid"]
+    userid = int(form["userid"])
     distance = int(int(form["mile"])*1.6)
     eventpnt = form["eventpnt"]
 

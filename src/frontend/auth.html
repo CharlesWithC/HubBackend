@@ -33,7 +33,7 @@
             }
             token = getUrlParameter("token");
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/validate",
+                url: "https://drivershub.charlws.com/atm/user/refresh",
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -41,7 +41,8 @@
                 },
                 success: function (data) {
                     if (data.error == false) {
-                        localStorage.setItem("token", token);
+                        newtoken = data.response.token;
+                        localStorage.setItem("token", newtoken);
                         if (data.response.extra == "" || document.referrer.indexOf("discord.com") != -1) {
                             window.location.href = "/";
                             $("#msg").html("You are being redirected to Drivers Hub.");

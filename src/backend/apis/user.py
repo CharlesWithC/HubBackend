@@ -65,15 +65,20 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         return {"error": True, "descriptor": "401: Unauthroized"}
     
     form = await request.form()
-    discordid = form["discordid"]
+    discordid = int(form["discordid"])
+    expire = int(form["expire"])
+    if expire == -1:
+        expire = 9999999999999999
+    reason = form["reason"].replace("'","''")
     try:
         discordid = int(discordid)
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Invalid discordid."}
 
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
+    username = "Unknown User"
     if len(t) > 0:
         roles = t[0][1]
         userroles = roles.split(",")
@@ -86,19 +91,22 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         if userhighest <= adminhighest:
             # response.status_code = 401
             return {"error": True, "descriptor": "User has higher / equal role."}
-    userid = t[0][0]
+        userid = t[0][0]
+        username = t[0][2]
 
-    if userid != -1:
-        return {"error": True, "descriptor": "Dismiss member before banning."}
+        if userid != -1:
+            return {"error": True, "descriptor": "Dismiss member before banning."}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        cur.execute(f"INSERT INTO banned VALUES ({discordid})")
-        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+        cur.execute(f"INSERT INTO banned VALUES ({discordid}, {expire}, '{reason}')")
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
         conn.commit()
-        await AuditLog(adminid, f"Banned user with Discord ID `{discordid}`")
+        duration = "forever"
+        if expire != 9999999999999999:
+            duration = f'until {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))} UTC'
+        await AuditLog(adminid, f"Banned **{username}** (Discord ID `{discordid}`) for `{reason}` **{duration}**.")
         return {"error": False, "response": {"message": "User banned.", "discordid": discordid}}
     else:
         return {"error": True, "descriptor": "User already banned."}
@@ -158,7 +166,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "401: Unauthroized"}
     
     form = await request.form()
-    discordid = form["discordid"]
+    discordid = int(form["discordid"])
     try:
         discordid = int(discordid)
     except:
@@ -223,11 +231,19 @@ async def userList(page:int, request: Request, response: Response, authorization
         response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"name": tt[1], "discordid": f"{tt[2]}"})
+        cur.execute(f"SELECT reason FROM banned WHERE discordid = {tt[2]}")
+        p = cur.fetchall()
+        banned = False
+        banreason = ""
+        if len(p) > 0:
+            banned = True
+            banreason = p[0][0]
+        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": banned, "banreason": banreason})
+    ret = ret[(page-1)*10:page*10]
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
     t = cur.fetchall()
     tot = 0

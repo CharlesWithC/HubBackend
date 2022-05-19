@@ -34,7 +34,7 @@ function DarkMode() {
             .bg-white {background-color: white;transition: background-color 1000ms linear;}
             .swal2-popup {background-color: white;}
             .rounded-full {background-color: #ddd;transition: background-color 1000ms linear;}</style>`);
-        setTimeout(function(){
+        setTimeout(function () {
             $("#convertbg2").remove();
         }, 1000);
         $("#convertbg").remove();
@@ -53,8 +53,8 @@ sc = undefined;
 chartscale = 2;
 
 function loadStats() {
-    $(".cs").css("background-color","");
-    $("#cs" + chartscale).css("background-color","lightblue");
+    $(".cs").css("background-color", "");
+    $("#cs" + chartscale).css("background-color", "lightblue");
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/stats",
         type: "GET",
@@ -1156,7 +1156,7 @@ function ShowStaffTabs() {
                         if (isNumber(annid)) {
                             if (title != "" || content != "") {
                                 $("#newAnnBtn").html("Update Announcement");
-                                $("#newAnnBtn").css("background-color", "green");
+                                $("#newAnnBtn").css("background-color", "lightgreen");
                             } else {
                                 $("#newAnnBtn").html("Delete Announcement");
                                 $("#newAnnBtn").css("background-color", "red");
@@ -1177,7 +1177,7 @@ function ShowStaffTabs() {
                         if (isNumber(eventid)) {
                             if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
                                 $("#newEventBtn").html("Update Event");
-                                $("#newEventBtn").css("background-color", "green");
+                                $("#newEventBtn").css("background-color", "lightgreen");
                             } else {
                                 $("#newEventBtn").html("Delete Event");
                                 $("#newEventBtn").css("background-color", "red");
@@ -1211,7 +1211,7 @@ function ShowStaffTabs() {
                 if (isNumber(annid)) {
                     if (title != "" || content != "") {
                         $("#newAnnBtn").html("Update Announcement");
-                        $("#newAnnBtn").css("background-color", "green");
+                        $("#newAnnBtn").css("background-color", "lightgreen");
                     } else {
                         $("#newAnnBtn").html("Delete Announcement");
                         $("#newAnnBtn").css("background-color", "red");
@@ -1232,7 +1232,7 @@ function ShowStaffTabs() {
                 if (isNumber(eventid)) {
                     if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
                         $("#newEventBtn").html("Update Event");
-                        $("#newEventBtn").css("background-color", "green");
+                        $("#newEventBtn").css("background-color", "lightgreen");
                     } else {
                         $("#newEventBtn").html("Delete Event");
                         $("#newEventBtn").css("background-color", "red");
@@ -2133,7 +2133,7 @@ function loadEvent() {
                     color = "blue";
                 }
                 if (now >= mts && now <= dts + 1000 * 60 * 30) {
-                    color = "green"
+                    color = "lightgreen"
                 }
                 if (now > dts + 1000 * 60 * 30) {
                     color = "grey";
@@ -3022,6 +3022,7 @@ function resign() {
     });
 }
 
+bannedUser = {};
 
 function loadUsers() {
     page = parseInt($("#pupages").val())
@@ -3100,10 +3101,18 @@ function loadUsers() {
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
                 //
+                bantxt = "Ban";
+                bantxt2 = "";
+                color = "";
+                accept = `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey">Accept as member</td>`;;
+                if (user.banned) color = "grey", bantxt = "Unban", bantxt2 = "(Banned)", bannedUser[user.discordid] = user.banreason;
+                else accept = `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:lightgreen" id="UserAddBtn${user.discordid}" onclick="addUser('${user.discordid}')">Accept as member</td>`;
                 $("#usersTable").append(`
             <tr class="text-xs">
-              <td class="py-5 px-6 font-medium">${user.discordid}</td>
-              <td class="py-5 px-6 font-medium">${user.name}</td>
+              <td class="py-5 px-6 font-medium" style='color:${color}'>${user.discordid}</td>
+              <td class="py-5 px-6 font-medium" style='color:${color}'>${user.name} ${bantxt2}</td>
+              ${accept}
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:red" onclick="banGo('${user.discordid}')">${bantxt}</td>
               <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
             </tr>`)
             }
@@ -3116,10 +3125,23 @@ function loadUsers() {
     })
 }
 
-function addUser() {
-    discordid = $("#adddiscordid").val();
-    if (!isNumber(discordid)) {
-        return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
+function banGo(discordid) {
+    $("#bandiscordid").val(discordid);
+    document.getElementById("BanUserDiv").scrollIntoView();
+}
+
+function addUser(discordid = -1) {
+    if (discordid == -1) {
+        discordid = $("#adddiscordid").val();
+        if (!isNumber(discordid)) {
+            return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
+        }
+    } else {
+        if ($("#UserAddBtn" + discordid).html() != "Confirm?") {
+            $("#UserAddBtn" + discordid).html("Confirm?");
+            $("#UserAddBtn" + discordid).css("color", "orange");
+            return;
+        }
     }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/member/add",
@@ -3173,13 +3195,25 @@ function userDetail(discordid) {
                 info +=
                     "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
                     d.steamid + "'>" + d.steamid + "</a></p><br>";
+                if (Object.keys(bannedUser).indexOf(discordid) != -1) info += "<p style='text-align:left'><b>Ban Reason:</b> " + bannedUser[discordid] + "</p>";
             }
-            Swal.fire({
-                title: d.name,
-                html: info,
-                icon: 'info',
-                confirmButtonText: 'Close'
-            })
+            bantxt = "";
+            if (Object.keys(bannedUser).indexOf(discordid) != -1) bantxt = " (Banned)";
+            if (bantxt == "") {
+                Swal.fire({
+                    title: d.name + bantxt,
+                    html: info,
+                    icon: 'info',
+                    confirmButtonText: 'Close'
+                })
+            } else {
+                Swal.fire({
+                    title: d.name + bantxt,
+                    html: info,
+                    icon: 'error',
+                    confirmButtonText: 'Close'
+                })
+            }
             $("#UserInfoBtn" + discordid).removeAttr("disabled");
             $("#UserInfoBtn" + discordid).html("Show Details");
         },
@@ -3200,6 +3234,11 @@ function banUser() {
     if (!isNumber(discordid)) {
         return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
     }
+    expire = -1;
+    if ($("#banexpire").val() != "") {
+        expire = +new Date($("#banexpire").val()) / 1000;
+    }
+    reason = $("#banreason").val();
     $.ajax({
         url: "https://drivershub.charlws.com/atm/user/ban",
         type: "POSt",
@@ -3208,7 +3247,9 @@ function banUser() {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         data: {
-            discordid: discordid
+            discordid: discordid,
+            expire: expire,
+            reason: reason
         },
         success: function (data) {
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
@@ -3346,7 +3387,7 @@ function loadMyApp() {
                 status = STATUS[application.status];
 
                 color = "blue";
-                if (application.status == 1) color = "green";
+                if (application.status == 1) color = "lightgreen";
                 if (application.status == 2) color = "red";
 
                 $("#myappTable").append(`
@@ -3505,7 +3546,7 @@ function loadAllApp() {
                 status = STATUS[application.status];
 
                 color = "blue";
-                if (application.status == 1) color = "green";
+                if (application.status == 1) color = "lightgreen";
                 if (application.status == 2) color = "red";
 
                 $("#allappTable").append(`
