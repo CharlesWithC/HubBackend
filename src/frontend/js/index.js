@@ -51,53 +51,31 @@ token = localStorage.getItem("token");
 $(".pageinput").val("1");
 sc = undefined;
 chartscale = 2;
+addup = 0;
 
-function loadStats() {
-    $(".cs").css("background-color", "");
-    $("#cs" + chartscale).css("background-color", "lightblue");
+function loadChart(userid = -1) {
+    if (userid != -1) {
+        $(".ucs").css("background-color", "");
+        $("#ucs" + chartscale).css("background-color", "lightblue");
+        $("#uaddup" + addup).css("background-color", "lightblue");
+    } else {
+        $(".cs").css("background-color", "");
+        $("#cs" + chartscale).css("background-color", "lightblue");
+        $("#addup" + addup).css("background-color", "lightblue");
+    }
+    pref = "s";
+    if (userid != -1) pref = "userS";
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        url: "https://drivershub.charlws.com/atm/dlog/chart?scale=" + chartscale + "&addup=" + addup + "&quserid=" + userid,
         type: "GET",
         dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
         success: function (data) {
             d = data.response;
-            drivers = sigfig(parseInt(d.drivers));
-            newdrivers = sigfig(parseInt(d.newdrivers));
-            drivers = drivers.split(".")[0];
-            newdrivers = newdrivers.split(".")[0];
-            jobs = sigfig(parseInt(d.jobs));
-            newjobs = sigfig(parseInt(d.newjobs));
-            jobs = jobs.split(".")[0];
-            newjobs = newjobs.split(".")[0];
-            distance = sigfig(d.distance / 1.6) + "Mi";
-            newdistance = sigfig(d.newdistance / 1.6) + "Mi";
-            europrofit = "€" + sigfig(d.europrofit);
-            neweuroprofit = "€" + sigfig(d.neweuroprofit);
-            dollarprofit = "$" + sigfig(d.dollarprofit);
-            newdollarprofit = "$" + sigfig(d.newdollarprofit);
-            fuel = sigfig(d.fuel) + "L";
-            newfuel = sigfig(d.newfuel) + "L";
-            $("#alldriver").html(drivers);
-            $("#newdriver").html(newdrivers);
-            $("#alldistance").html(distance);
-            $("#newdistance").html(newdistance);
-            $("#alljob").html(jobs);
-            $("#newjob").html(newjobs);
-            $("#allprofit").html(europrofit + " + " + dollarprofit);
-            $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
-            $("#allfuel").html(fuel);
-            $("#newfuel").html(newfuel);
-        }
-    });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/chart?scale=" + chartscale,
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            d = data.response;
-            const ctx = document.getElementById('statisticsChart').getContext('2d');
+            const ctx = document.getElementById(pref + 'tatisticsChart').getContext('2d');
             labels = [];
-            d = d.reverse();
             distance = [];
             fuel = [];
             euro = [];
@@ -194,6 +172,44 @@ function loadStats() {
             sc = new Chart(ctx, config);
         }
     });
+}
+
+function loadStats() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            d = data.response;
+            drivers = sigfig(parseInt(d.drivers));
+            newdrivers = sigfig(parseInt(d.newdrivers));
+            drivers = drivers.split(".")[0];
+            newdrivers = newdrivers.split(".")[0];
+            jobs = sigfig(parseInt(d.jobs));
+            newjobs = sigfig(parseInt(d.newjobs));
+            jobs = jobs.split(".")[0];
+            newjobs = newjobs.split(".")[0];
+            distance = sigfig(d.distance / 1.6) + "Mi";
+            newdistance = sigfig(d.newdistance / 1.6) + "Mi";
+            europrofit = "€" + sigfig(d.europrofit);
+            neweuroprofit = "€" + sigfig(d.neweuroprofit);
+            dollarprofit = "$" + sigfig(d.dollarprofit);
+            newdollarprofit = "$" + sigfig(d.newdollarprofit);
+            fuel = sigfig(d.fuel) + "L";
+            newfuel = sigfig(d.newfuel) + "L";
+            $("#alldriver").html(drivers);
+            $("#newdriver").html(newdrivers);
+            $("#alldistance").html(distance);
+            $("#newdistance").html(newdistance);
+            $("#alljob").html(jobs);
+            $("#newjob").html(newjobs);
+            $("#allprofit").html(europrofit + " + " + dollarprofit);
+            $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
+            $("#allfuel").html(fuel);
+            $("#newfuel").html(newfuel);
+        }
+    });
+    loadChart();
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
         type: "GET",
@@ -260,26 +276,6 @@ function loadStats() {
             </tr>`);
             }
         }
-    });
-}
-
-function toastFactory(type, title, text, time, showConfirmButton) {
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-start',
-        showConfirmButton: showConfirmButton || false,
-        timer: time || '3000',
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer);
-            toast.addEventListener('mouseleave', Swal.resumeTimer);
-        },
-    });
-
-    Toast.fire({
-        icon: type,
-        title: '<strong>' + title + '</strong>',
-        html: text,
     });
 }
 
@@ -1272,12 +1268,10 @@ function validate() {
             }
             if (data.response.extra == "steamauth") {
                 $("#header").prepend(
-                    "<p style='color:orange'>Steam not bound! You must bind it to become a member! <a style='color:grey' href='/auth?token=" +
-                    token + "'>Click here to bind it</a></p>");
+                    "<p style='color:orange'>Steam not bound! You must bind it to become a member! <a style='color:grey' href='/auth'>Click here to bind it</a></p>");
             } else if (data.response.extra == "truckersmp") {
                 $("#header").prepend(
-                    "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth?token=" +
-                    token + "'>Click here to bind it</a></p>");
+                    "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth'>Click here to bind it</a></p>");
             }
         }
     });
@@ -2826,6 +2820,12 @@ async function loadProfile(userid) {
     if (userid < 0) {
         return;
     }
+    console.log("Load Profile " + userid);
+    $("#aucs1").attr("onclick",`chartscale=1;loadChart(${userid});`);
+    $("#aucs2").attr("onclick",`chartscale=2;loadChart(${userid});`);
+    $("#aucs3").attr("onclick",`chartscale=3;loadChart(${userid});`);
+    $("#aaddup1").attr("onclick",`addup=1-addup;loadChart(${userid});`);
+    loadChart(userid);
     $("#udpages").val("1");
     curprofile = userid;
     loadUserDelivery(userid);

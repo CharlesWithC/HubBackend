@@ -929,6 +929,22 @@
                     },
                     "name": "scale",
                     "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Add Up (Calculate Sum)",
+                        "type": "bool"
+                    },
+                    "name": "addup",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Query User ID",
+                        "type": "integer"
+                    },
+                    "name": "quserid",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {

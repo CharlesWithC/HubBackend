@@ -399,6 +399,25 @@
         </div>
         <br>
         <div class="py-8 px-6 pt-4 bg-white shadow rounded">
+          <h2><b>Statistics</b>
+            <div style="margin-left:auto;width:fit-content">
+              <a id="aucs1" onclick='chartscale=1;loadChart()' style='cursor:pointer'><span id="ucs1"
+                  class="ucs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span></a>
+              <a id="aucs2" onclick='chartscale=2;loadChart()' style='cursor:pointer'><span id="ucs2"
+                  class="ucs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">7d</span></a>
+              <a id="aucs3" onclick='chartscale=3;loadChart()' style='cursor:pointer'><span id="ucs3"
+                  class="ucs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">30d</span></a>
+              |
+              <a id="aaddup1" onclick='addup=1-addup;loadChart()' style='cursor:pointer'><span id="uaddup1"
+                  class="ucs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">Add Up</span></a>
+            </div>
+          </h2>
+          <div class="p-4 overflow-x-auto" style="display: block;">
+            <canvas id="userStatisticsChart" width="100%" height="300px"></canvas>
+          </div>
+        </div>
+        <br>
+        <div class="py-8 px-6 pt-4 bg-white shadow rounded">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
             <div style="margin-left:auto">
@@ -460,54 +479,54 @@
           <button type="button" style="display:inline"
             class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
             onclick="tmp=parseInt($('#udpages').val());$('#udpages').val(tmp+1);loadUserDelivery();">></button>
-
-        </div>
-        <br>
-        <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="UpdateAM" style="display:none">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Update About Me (Markdown)</h3>
-          </div>
-          <div class="p-4 overflow-x-auto" style="display: block;">
-
-            <div class="mb-6">
-              <label class="block text-sm font-medium mb-2" for="">Content</label>
-              <textarea id="biocontent"
-                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                name="field-name" rows="5" placeholder=""></textarea>
-            </div>
-
-            <button type="button"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="updateBio()" id="updateBioBtn">Update</button>
-          </div>
-        </div>
-        <br>
-        <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="Security" style="display:none">
-          <div class="flex px-6 pb-4 border-b">
-            <h3 class="text-xl font-bold">Security</h3>
-          </div>
-
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <label class="block text-sm font-medium mb-2" for="">Application Token: <span
-                id="userAppToken"></span></label>
-            <label class="block text-sm font-medium mb-2" for=""><i>For security purposes, tokens can only be viewed
-                once, when created. If you forgot or lost access to your token, please regenerate a new one.</i></label>
-            <button type="button"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="genNewAppToken()" id="genAppTokenBtn">Reset Token</button>
-          </div>
-
-          <hr>
-
-          <div class="p-4 overflow-x-auto" style="display: block;">
-            <label class="block text-sm font-medium mb-2" for="" style="color:red">Dangerous! Think again before
-              resigning! This will clear your delivery log and remove you from navio company!</label>
-            <button type="button" style="background-color:red"
-              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-              onclick="resign()" id="resignBtn">Resign</button>
-          </div>
         </div>
       </div>
+      <br>
+      <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="UpdateAM" style="display:none">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Update About Me (Markdown)</h3>
+        </div>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="">Content</label>
+            <textarea id="biocontent"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></textarea>
+          </div>
+
+          <button type="button"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="updateBio()" id="updateBioBtn">Update</button>
+        </div>
+      </div>
+      <br>
+      <div class="py-8 px-6 pt-4 bg-white shadow rounded" id="Security" style="display:none">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Security</h3>
+        </div>
+
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <label class="block text-sm font-medium mb-2" for="">Application Token: <span
+              id="userAppToken"></span></label>
+          <label class="block text-sm font-medium mb-2" for=""><i>For security purposes, tokens can only be viewed
+              once, when created. If you forgot or lost access to your token, please regenerate a new one.</i></label>
+          <button type="button"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="genNewAppToken()" id="genAppTokenBtn">Reset Token</button>
+        </div>
+
+        <hr>
+
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <label class="block text-sm font-medium mb-2" for="" style="color:red">Dangerous! Think again before
+            resigning! This will clear your delivery log and remove you from navio company!</label>
+          <button type="button" style="background-color:red"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="resign()" id="resignBtn">Resign</button>
+        </div>
+      </div>
+    </div>
     </div>
   </section>
 
@@ -652,12 +671,17 @@
           </div>
           <div class="py-8 px-6 pt-4 bg-white shadow rounded mb-6">
             <h2><b>Statistics</b>
-              <a onclick='chartscale=1;loadStats()' style='cursor:pointer'><span
-                id="cs1" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span></a>
-              <a onclick='chartscale=2;loadStats()' style='cursor:pointer'><span
-                id="cs2" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">7d</span></a>
-              <a onclick='chartscale=3;loadStats()' style='cursor:pointer'><span
-                id="cs3" class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">30d</span></a>
+              <div style="margin-left:auto;width:fit-content">
+                <a onclick='chartscale=1;loadChart()' style='cursor:pointer'><span id="cs1"
+                    class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span></a>
+                <a onclick='chartscale=2;loadChart()' style='cursor:pointer'><span id="cs2"
+                    class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">7d</span></a>
+                <a onclick='chartscale=3;loadChart()' style='cursor:pointer'><span id="cs3"
+                    class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">30d</span></a>
+                |
+                <a onclick='addup=1-addup;loadChart()' style='cursor:pointer'><span id="addup1"
+                    class="cs inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">Add Up</span></a>
+              </div>
             </h2>
             <div class="p-4 overflow-x-auto" style="display: block;">
               <canvas id="statisticsChart" width="100%" height="300px"></canvas>
@@ -1939,8 +1963,8 @@
         <div class="mb-6">
           <label class="block text-sm font-medium mb-2" for="">Reason</label>
           <textarea id="banreason"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-            name="field-name" rows="5" placeholder="Needed only when banning an user."></textarea>
+            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+            rows="5" placeholder="Needed only when banning an user."></textarea>
         </div>
 
         <button type="button" style="background-color:red"
@@ -1958,7 +1982,8 @@
       </div>
       <div class="p-4 overflow-x-auto" style="display: block;">
         <div class="mb-6">
-          <p>If you failed to find the user on the list above, use this function to directly add member with Discord ID.</p>
+          <p>If you failed to find the user on the list above, use this function to directly add member with Discord ID.
+          </p>
           <p>Only do this when the member is accepted as a driver / staff.</p>
           <br>
           <label class="block text-sm font-medium mb-2" for="">Discord ID</label>

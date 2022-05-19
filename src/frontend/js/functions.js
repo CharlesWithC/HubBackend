@@ -14,6 +14,26 @@ function getUrlParameter(sParam) {
   return false;
 };
 
+function toastFactory(type, title, text, time, showConfirmButton) {
+  const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-start',
+      showConfirmButton: showConfirmButton || false,
+      timer: time || '3000',
+      timerProgressBar: true,
+      didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer);
+          toast.addEventListener('mouseleave', Swal.resumeTimer);
+      },
+  });
+
+  Toast.fire({
+      icon: type,
+      title: '<strong>' + title + '</strong>',
+      html: text,
+  });
+}
+
 function getCookie(cookiename) {
   // Get name followed by anything except a semicolon
   var cookiestring = RegExp(cookiename + "=[^;]+").exec(document.cookie);

@@ -71,10 +71,54 @@ async def dlogStats():
             "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
 
 @app.get("/atm/dlog/chart")
-async def dlogChart(scale: int):
-    # scale = 1: 24h / 2: 7d / 3: 30d
+async def dlogChart(request: Request, response: Response,
+    scale: Optional[int] = 2, addup: Optional[bool] = False, quserid: Optional[int] = -1,
+    authorization: Optional[str] = Header(None)):
     conn = newconn()
     cur = conn.cursor()
+    if authorization is None:
+        quserid = -1
+    else:
+        if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
+            quserid = -1
+        stoken = authorization.split(" ")[1]
+        if not stoken.replace("-","").isalnum():
+            quserid = -1
+
+        isapptoken = False
+        cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+            t = cur.fetchall()
+            if len(t) == 0:
+                quserid = -1
+            isapptoken = True
+        discordid = t[0][0]
+        if not isapptoken:
+            ip = t[0][1]
+            orgiptype = 4
+            if validators.ipv6(ip) == True:
+                orgiptype = 6
+            curiptype = 4
+            if validators.ipv6(request.client.host) == True:
+                curiptype = 6
+            if orgiptype != curiptype:
+                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+                conn.commit()
+            else:
+                if ip != request.client.host:
+                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                    conn.commit()
+                    quserid = -1
+        cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            quserid = -1
+        userid = t[0][0]
+        if userid == -1:
+            quserid = -1
+
     ret = []
     timerange = []
     if scale == 1:
@@ -92,27 +136,58 @@ async def dlogChart(scale: int):
             starttime = int(time.time()) - ((i+1)*86400)
             endtime = starttime + 86400
             timerange.append((starttime, endtime))
+    timerange = timerange[::-1]
+
+    limit = ""
+    if quserid != -1:
+        limit = f"userid = {quserid} AND"
+
+    basedistance = 0
+    basefuel = 0
+    baseeuro = 0
+    basedollar = 0
+    if addup:
+        endtime = timerange[0][0]
+        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {endtime}")
+        t = cur.fetchall()
+        if len(t) > 0 and t[0][0] != None:
+            basedistance = int(t[0][0])
+            basefuel = int(t[0][1])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {endtime} AND unit = 1")
+        t = cur.fetchall()
+        if len(t) > 0 and t[0][0] != None:
+            baseeuro = int(t[0][0])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {endtime} AND unit = 2")
+        t = cur.fetchall()
+        if len(t) > 0 and t[0][0] != None:
+            basedollar = int(t[0][0])
 
     for (starttime, endtime) in timerange:
-        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime}")
+        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= {starttime} AND timestamp < {endtime}")
         t = cur.fetchall()
-        distance = 0
-        fuel = 0
+        distance = basedistance
+        fuel = basefuel
         if len(t) > 0 and t[0][0] != None:
-            distance = int(t[0][0])
-            fuel = int(t[0][1])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime} AND unit = 1")
+            distance += int(t[0][0])
+            fuel += int(t[0][1])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {starttime} AND timestamp < {endtime} AND unit = 1")
         t = cur.fetchall()
-        euro = 0
+        euro = baseeuro
         if len(t) > 0 and t[0][0] != None:
-            euro = int(t[0][0])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE timestamp >= {starttime} AND timestamp < {endtime} AND unit = 2")
+            euro += int(t[0][0])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {starttime} AND timestamp < {endtime} AND unit = 2")
         t = cur.fetchall()
-        dollar = 0
+        dollar = basedollar
         if len(t) > 0 and t[0][0] != None:
-            dollar = int(t[0][0])
+            dollar += int(t[0][0])
         ret.append({"starttime": starttime, "endtime": endtime, "distance": distance, "fuel": fuel, "euro": euro, "dollar": dollar})
     
+        if addup:
+            basedistance = distance
+            basefuel = fuel
+            baseeuro = euro
+            basedollar = dollar
+
     return {"error": False, "response": ret}
 
 @app.get("/atm/dlog/leaderboard")

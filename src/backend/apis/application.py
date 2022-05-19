@@ -84,13 +84,16 @@ async def newApplication(request: Request, response: Response, authorization: st
     if userid == -1 and apptype == 3:
         return {"error": True, "descriptor": "You cannot submit a LOA application until you become a member."}
 
-    data = json.loads(form["data"])
-    apptype = int(apptype)
-    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA"}
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if t[0][3] == 0 or t[0][4] == 0:
         return {"error": True, "descriptor": "You must verify your TruckersMP and Steam before submitting an application"}
+    userid = t[0][5]
+
+    form = await request.form()
+    apptype = form["apptype"]
+    data = json.loads(form["data"])
+    data = b64e(json.dumps(data))
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
     t = cur.fetchall()
@@ -100,8 +103,10 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, {int(time.time())}, 0, 0)")
     conn.commit()
-    
-    userid = t[0][5]
+
+    data = json.loads(form["data"])
+    apptype = int(apptype)
+    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA"}
     apptypetxt = "Unknown"
     if apptype in APPTYPE.keys():
         apptypetxt = APPTYPE[apptype]
@@ -136,6 +141,8 @@ async def newApplication(request: Request, response: Response, authorization: st
     except:
         pass
 
+    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
