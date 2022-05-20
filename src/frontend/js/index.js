@@ -5,6 +5,26 @@ window.autofocus = {}
 
 isdark = parseInt(localStorage.getItem("darkmode"));
 if (localStorage.getItem("darkmode") == undefined) isdark = 1;
+rolelist = localStorage.getItem("rolelist");
+if (rolelist != undefined && rolelist != null) {
+    rolelist = JSON.parse(rolelist);
+} else {
+    rolelist = [];
+}
+
+positions = localStorage.getItem("positions");
+if (positions != undefined && positions != null) {
+    positions = JSON.parse(positions);
+    positionstxt = "";
+    for (var i = 0; i < positions.length; i++) {
+        positionstxt += positions[i] + "\n";
+        $("#sa-select").append("<option>" + positions[i] + "</option>");
+    }
+    positionstxt = positionstxt.slice(0, -1);
+    $("#staffposedit").val(positionstxt);
+} else {
+    positions = [];
+}
 
 function DarkMode() {
     if (!isdark) {
@@ -55,7 +75,7 @@ sc = undefined;
 chartscale = 2;
 addup = 0;
 
-function loadChart(userid = -1) {
+async function loadChart(userid = -1) {
     if (userid != -1) {
         $(".ucs").css("background-color", "");
         $("#ucs" + chartscale).css("background-color", "lightblue");
@@ -179,7 +199,10 @@ function loadChart(userid = -1) {
                     }
                 }
             };
-            if (sc != undefined) sc.destroy();
+            if (sc != undefined) {
+                sc.destroy();
+                $(pref + 'tatisticsChart').remove();
+            }
             sc = new Chart(ctx, config);
         }
     });
@@ -187,8 +210,9 @@ function loadChart(userid = -1) {
 
 deliveryStatsChart = undefined;
 
-function loadStats() {
-    if (curtab != "#HomeTab") return;
+function loadStats(basic = false) {
+    if (curtab != "#HomeTab" && curtab != "#Delivery") return;
+    loadChart();
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/stats",
         type: "GET",
@@ -269,100 +293,103 @@ function loadStats() {
             deliveryStatsChart = new Chart(ctx, config);
         }
     });
-    loadChart();
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
-        type: "GET",
-        dataType: "json",
-        headers: {
-            "Authorization": "Bearer " + token
-        },
-        success: function (data) {
-            users = data.response.list;
-            $("#leaderboard").empty();
-            for (var i = 0; i < 5; i++) {
-                user = users[i];
-                userid = user.userid;
-                name = user.name;
-                discordid = user.discordid;
-                avatar = user.avatar;
-                totalpnt = TSeparator(parseInt(user.totalpnt));
-                if (avatar != null) {
-                    if (avatar.startsWith("a_"))
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
-                    else
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
-                } else {
-                    avatar = "/images/atm-black.png";
-                }
-                $("#leaderboard").append(`<tr class="text-xs">
+    if (!basic) {
+        $.ajax({
+            url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
+            type: "GET",
+            dataType: "json",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            success: function (data) {
+                users = data.response.list;
+                $("#leaderboard").empty();
+                for (var i = 0; i < 5; i++) {
+                    user = users[i];
+                    userid = user.userid;
+                    name = user.name;
+                    discordid = user.discordid;
+                    avatar = user.avatar;
+                    totalpnt = TSeparator(parseInt(user.totalpnt));
+                    if (avatar != null) {
+                        if (avatar.startsWith("a_"))
+                            src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                        else
+                            src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+                    } else {
+                        avatar = "/images/atm-black.png";
+                    }
+                    $("#leaderboard").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
-            }
-        }
-    });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
-        type: "GET",
-        dataType: "json",
-        headers: {
-            "Authorization": "Bearer " + token
-        },
-        success: function (data) {
-            users = data.response.list;
-            $("#newdriverTable").empty();
-            for (var i = 0; i < 5; i++) {
-                user = users[i];
-                userid = user.userid;
-                name = user.name;
-                discordid = user.discordid;
-                avatar = user.avatar;
-                dt = new Date(user.joints * 1000);
-                joindt = pad(dt.getDate(), 2) + "/" + pad(dt.getMonth() + 1, 2);
-                if (avatar != null) {
-                    if (avatar.startsWith("a_"))
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
-                    else
-                        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
-                } else {
-                    avatar = "/images/atm-black.png";
                 }
-                $("#newdriverTable").append(`<tr class="text-xs">
+            }
+        });
+        $.ajax({
+            url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
+            type: "GET",
+            dataType: "json",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            success: function (data) {
+                users = data.response.list;
+                $("#newdriverTable").empty();
+                for (var i = 0; i < 5; i++) {
+                    user = users[i];
+                    userid = user.userid;
+                    name = user.name;
+                    discordid = user.discordid;
+                    avatar = user.avatar;
+                    dt = new Date(user.joints * 1000);
+                    joindt = pad(dt.getDate(), 2) + "/" + pad(dt.getMonth() + 1, 2);
+                    if (avatar != null) {
+                        if (avatar.startsWith("a_"))
+                            src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                        else
+                            src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+                    } else {
+                        avatar = "/images/atm-black.png";
+                    }
+                    $("#newdriverTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
               <td class="py-5 px-6">${joindt}</td>
             </tr>`);
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 eventsCalendar = undefined;
 curtab = "#HomeTab";
 
 async function ShowTab(tabname, btnname) {
-    if(tabname != "#Event"){
+    if (tabname != "#Event") {
         eventsCalendar = undefined;
         $("#eventsCalendar").children().remove();
-        $("#eventsCalendar").attr("class","");
+        $("#eventsCalendar").attr("class", "");
     }
-    $("html, body").animate({ scrollTop: 0 }, "slow");
+    $("html, body").animate({
+        scrollTop: 0
+    }, "slow");
     curtab = tabname;
     clearInterval(dmapint);
     dmapint = -1;
     $("#map,#dmap,#pmap,#amap").children().remove();
-    setTimeout(async function(){
-        if(isdark) $("#loading").css("border", "solid lightgreen 1px");
+    setTimeout(async function () {
+        if (isdark) $("#loading").css("border", "solid lightgreen 1px");
         else $("#loading").css("border", "solid green 1px");
-        $("#loading").css("width", "50%");  
+        $("#loading").css("width", "50%");
         maxajax = 0;
         lastw = 0;
-        while($.active > 0){
+        while ($.active > 0) {
             maxajax = Math.max($.active + 1, maxajax);
             neww = parseInt(100 - $.active / maxajax * 100);
-            while(neww > lastw){
+            while (neww > lastw) {
                 lastw += 1;
                 $("#loading").css("width", `${lastw}%`);
                 await sleep(5);
@@ -370,7 +397,7 @@ async function ShowTab(tabname, btnname) {
             await sleep(10);
         }
         neww = 100;
-        while(neww > lastw){
+        while (neww > lastw) {
             lastw += 1;
             $("#loading").css("width", `${lastw}%`);
             await sleep(5);
@@ -378,7 +405,7 @@ async function ShowTab(tabname, btnname) {
         $(".tabs").hide();
         $(tabname).show();
         neww = 1;
-        while(neww < lastw){
+        while (neww < lastw) {
             lastw -= 5;
             $("#loading").css("width", `${lastw}%`);
             await sleep(1);
@@ -392,7 +419,8 @@ async function ShowTab(tabname, btnname) {
         window.autofocus["map"] = -2;
         window.autofocus["amap"] = -2;
         window.autofocus["pmap"] = -2;
-        setTimeout(function () {
+        setTimeout(async function () {
+            while ($("#loading").width() != 0) await sleep(50);
             LoadETS2Map();
             LoadETS2PMap();
             LoadATSMap();
@@ -414,12 +442,13 @@ async function ShowTab(tabname, btnname) {
     }
     if (tabname == "#HomeTab") {
         window.history.pushState("", "", '/');
+        loadStats();
     }
     if (tabname == "#AnnTab") {
         window.history.pushState("", "", '/announcement');
         ch = $("#anns").children();
         ch.hide();
-        for(var i = 0; i < ch.length; i++){
+        for (var i = 0; i < ch.length; i++) {
             $(ch[i]).fadeIn();
             await sleep(200);
         }
@@ -456,6 +485,7 @@ async function ShowTab(tabname, btnname) {
     }
     if (tabname == "#Delivery") {
         window.history.pushState("", "", '/delivery');
+        loadStats(true);
         loadDelivery();
     }
     if (tabname == "#Event") {
@@ -467,8 +497,10 @@ async function ShowTab(tabname, btnname) {
         loadEvent();
     }
     if (tabname == "#ProfileTab") {
-        window.history.pushState("", "", '/member?userid=' + localStorage.getItem("userid"));
-        loadProfile(localStorage.getItem("userid"));
+        if (isNumber(btnname)) userid = btnname;
+        else userid = localStorage.getItem("userid");
+        window.history.pushState("", "", '/member?userid=' + userid);
+        loadProfile(userid);
     }
     if (tabname == "#AuditLog") {
         window.history.pushState("", "", '/audit');
@@ -1433,29 +1465,35 @@ function validate() {
                     $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif");
                 else
                     $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
-                $.ajax({
-                    url: "https://drivershub.charlws.com/atm/member/roles",
-                    type: "GET",
-                    dataType: "json",
-                    success: function (data) {
-                        rolelist = data.response;
-                        hrole = data.response[highestrole];
-                        localStorage.setItem("highestrole", hrole);
-                        if (hrole == undefined || hrole == "undefined") hrole = "Loner";
-                        $("#role").html(hrole);
-                        roleids = Object.keys(rolelist);
-                        for (var i = 0; i < roleids.length; i++) {
-                            if (roleids[i] <= highestrole)
-                                $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
-                                    `" name="assignrole" value="role` + roleids[i] + `">
-  <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
-                            else
-                                $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
-                                    `" name="assignrole" value="role` + roleids[i] + `">
-  <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+
+                rolesLastUpdate = localStorage.getItem("rolesLastUpdate");
+                if (rolesLastUpdate == null || rolesLastUpdate == undefined || parseInt(rolesLastUpdate) < (+new Date() - 86400)) {
+                    $.ajax({
+                        url: "https://drivershub.charlws.com/atm/member/roles",
+                        type: "GET",
+                        dataType: "json",
+                        success: function (data) {
+                            rolelist = data.response;
+                            hrole = data.response[highestrole];
+                            localStorage.setItem("highestrole", hrole);
+                            localStorage.setItem("rolelist", JSON.stringify(rolelist));
+                            localStorage.setItem("rolesLastUpdate", (+new Date()).toString());
+                            if (hrole == undefined || hrole == "undefined") hrole = "Loner";
+                            $("#role").html(hrole);
+                            roleids = Object.keys(rolelist);
+                            for (var i = 0; i < roleids.length; i++) {
+                                if (roleids[i] <= highestrole)
+                                    $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                        `" name="assignrole" value="role` + roleids[i] + `">
+    <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                                else
+                                    $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                        `" name="assignrole" value="role` + roleids[i] + `">
+    <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 if (userid != -1) {
                     $.ajax({
                         url: "https://drivershub.charlws.com/atm/member/info?userid=" + userid,
@@ -1476,14 +1514,7 @@ function validate() {
                         }
                     });
                 }
-            } else {
-                localStorage.removeItem("token");
-                window.location.href = "/login";
             }
-        },
-        error: function (data) {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
         }
     });
 }
@@ -2152,6 +2183,7 @@ function deliveryDetail(logid) {
             }
         },
         error: function (data) {
+            ShowTab("#HomeTab", "#HomeTabBtn");
             $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
             $("#DeliveryInfoBtn" + logid).html("Show Details");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000,
@@ -2191,11 +2223,9 @@ function loadEvent() {
                         "start": new Date(d[i].mts * 1000 - offset).toISOString().substring(0, 10)
                     })
                 }
-                
-                while($.active > 0){
-                    await sleep(50);
-                }
-                setTimeout(function(){
+
+                setTimeout(async function () {
+                    while ($("#loading").width() != 0) await sleep(50);
                     var eventsCalendarEl = document.getElementById('eventsCalendar');
                     var eventsCalendar = new FullCalendar.Calendar(eventsCalendarEl, {
                         initialView: 'dayGridMonth',
@@ -2208,7 +2238,7 @@ function loadEvent() {
                     });
                     eventsCalendar.render();
                     $("th > .fc-scrollgrid-sync-innergrid-event").removeClass("fc-daygrid-event");
-                }, 200);
+                }, 50);
             },
             error: function (data) {
                 toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
@@ -3018,11 +3048,10 @@ function loadUserDelivery() {
     })
 }
 
-async function loadProfile(userid) {
+function loadProfile(userid) {
     if (userid < 0) {
         return;
     }
-    console.log("Load Profile " + userid);
     $("#aucs1").attr("onclick", `chartscale=1;loadChart(${userid});`);
     $("#aucs2").attr("onclick", `chartscale=2;loadChart(${userid});`);
     $("#aucs3").attr("onclick", `chartscale=3;loadChart(${userid});`);
@@ -3031,9 +3060,10 @@ async function loadProfile(userid) {
     $("#udpages").val("1");
     curprofile = userid;
     loadUserDelivery(userid);
-    tabname = "#ProfileTab";
-    $(".tabs").hide();
-    $(tabname).show();
+    if (curtab != "#ProfileTab") {
+        ShowTab("#ProfileTab", userid);
+        return;
+    }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
         type: "GET",
@@ -3041,9 +3071,11 @@ async function loadProfile(userid) {
         headers: {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
-        success: function (data) {
-            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
-                false);
+        success: async function (data) {
+            if (data.error) {
+                ShowTab("#HomeTab", "#HomeTabBtn");
+                return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            }
             info = "";
             if (!data.error) {
                 window.history.pushState("", "", '/member?userid=' + userid);
@@ -3082,26 +3114,21 @@ async function loadProfile(userid) {
 
                 $("#userProfileDetail").html(info);
                 roles = d.roles;
-                setTimeout(async function () {
-                    rtxt = "";
-                    while (Object.keys(rolelist).length == 0) {
-                        await sleep(50);
-                    }
-                    for (var i = 0; i < roles.length; i++) {
-                        if (roles[i] == 0) color = "rgba(127,127,127,0.4)";
-                        else if (roles[i] < 10) color = "#770202";
-                        else if (roles[i] <= 98) color = "#ff0000";
-                        else if (roles[i] == 99) color = "#4e6f7b";
-                        else if (roles[i] == 100) color = "#b30000";
-                        else if (roles[i] > 100) color = "grey";
-                        if (roles[i] == 223 || roles[i] == 224) color = "#ffff77;color:black;";
-                        if (roles[i] == 1000) color = "#9146ff";
-                        if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
-                        else rtxt += "Unknown Role (ID " + roles[i] + "), ";
-                    }
-                    rtxt = rtxt.substring(0, rtxt.length - 2);
-                    $("#profileRoles").html(rtxt);
-                }, 100);
+                rtxt = "";
+                for (var i = 0; i < roles.length; i++) {
+                    if (roles[i] == 0) color = "rgba(127,127,127,0.4)";
+                    else if (roles[i] < 10) color = "#770202";
+                    else if (roles[i] <= 98) color = "#ff0000";
+                    else if (roles[i] == 99) color = "#4e6f7b";
+                    else if (roles[i] == 100) color = "#b30000";
+                    else if (roles[i] > 100) color = "grey";
+                    if (roles[i] == 223 || roles[i] == 224) color = "#ffff77;color:black;";
+                    if (roles[i] == 1000) color = "#9146ff";
+                    if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
+                    else rtxt += "Unknown Role (ID " + roles[i] + "), ";
+                }
+                rtxt = rtxt.substring(0, rtxt.length - 2);
+                $("#profileRoles").html(rtxt);
 
                 if (d.userid == localStorage.getItem("userid")) {
                     $("#UpdateAM").show();
@@ -3114,7 +3141,7 @@ async function loadProfile(userid) {
             }
         },
         error: function (data) {
-            $("#HomeTabBtn").click();
+            ShowTab("#HomeTab", "#HomeTabBtn");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000,
                 false);
             console.warn(
@@ -3942,16 +3969,17 @@ function PathDetect() {
     else if (p == "/map") ShowTab("#Map", "#MapBtn");
     else if (p == "/delivery") {
         logid = getUrlParameter("logid");
-        ShowTab("#Delivery", "#DeliveryBtn");
         if (logid) deliveryDetail(logid);
+        else ShowTab("#Delivery", "#DeliveryBtn");
     } else if (p == "/event") ShowTab("#Event", "#EventBtn");
     else if (p == "/staffevent") ShowTab("#StaffEvent", "#StaffEventBtn");
     else if (p == "/member") {
         userid = getUrlParameter("userid");
-        ShowTab("#AllMembers", "#AllMemberBtn");
-        if (userid) loadProfile(userid);
-    } else if (p == "/staffmember") { ShowTab("#StaffMembers", "#StaffMemberBtn");}
-    else if (p == "/leaderboard") ShowTab("#Leaderboard", "#LeaderboardBtn");
+        if (userid) loadProfile(parseInt(userid));
+        else ShowTab("#AllMembers", "#AllMemberBtn");
+    } else if (p == "/staffmember") {
+        ShowTab("#StaffMembers", "#StaffMemberBtn");
+    } else if (p == "/leaderboard") ShowTab("#Leaderboard", "#LeaderboardBtn");
     else if (p == "/ranking") ShowTab("#Ranking", "#RankingBtn");
     else if (p == "/myapp") ShowTab("#MyApp", "#MyAppBtn");
     else if (p == "/allapp") ShowTab("#AllApp", "#AllAppBtn");
@@ -3984,15 +4012,15 @@ $(document).ready(function () {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);
     }
-    loadStats();
+    validate();
     PathDetect();
     var date = new Date();
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     offset = (+new Date().getTimezoneOffset()) * 60 * 1000;
-    firstDay = new Date(+ firstDay - offset);
+    firstDay = new Date(+firstDay - offset);
     date = new Date(+date - offset);
-    $("#lbstart").val(firstDay.toISOString().substring(0,10));
-    $("#lbend").val(date.toISOString().substring(0,10));
+    $("#lbstart").val(firstDay.toISOString().substring(0, 10));
+    $("#lbend").val(date.toISOString().substring(0, 10));
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         t = $("div");
@@ -4078,15 +4106,13 @@ $(document).ready(function () {
             }, 800 * i);
         }
     }
-    devwarn();
+    //devwarn();
     $("body").keydown(function (e) {
         var keyCode = e.keyCode || e.which;
         if (keyCode == 123) {
             devwarn();
         }
     });
-
-    validate();
 
     setInterval(function () {
         if ($("#HomeTab").width() / 3 <= 300) {
@@ -4166,24 +4192,31 @@ $(document).ready(function () {
             }
         }
     });
-    $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/positions",
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-            positions = data.response;
-            positionstxt = "";
-            for (var i = 0; i < positions.length; i++) {
-                positionstxt += positions[i] + "\n";
-                $("#sa-select").append("<option>" + positions[i] + "</option>");
+    lastPositionsUpdate = parseInt(localStorage.getItem("positionsLastUpdate"));
+    if (lastPositionsUpdate == undefined || lastPositionsUpdate == null) {
+        lastPositionsUpdate = 0;
+    }
+    if (+new Date() - lastPositionsUpdate > 86400) {
+        $.ajax({
+            url: "https://drivershub.charlws.com/atm/application/positions",
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                positions = data.response;
+                positionstxt = "";
+                for (var i = 0; i < positions.length; i++) {
+                    positionstxt += positions[i] + "\n";
+                    $("#sa-select").append("<option>" + positions[i] + "</option>");
+                }
+                positionstxt = positionstxt.slice(0, -1);
+                $("#staffposedit").val(positionstxt);
+                localStorage.setItem("positionsLastUpdate", +new Date());
+                localStorage.setItem("positions", JSON.stringify(positions));
             }
-            positionstxt = positionstxt.slice(0, -1);
-            $("#staffposedit").val(positionstxt);
-        }
-
-    });
-    window.onscroll = function(ev) {
-        if(curtab != "#AnnTab") return;
+        });
+    }
+    window.onscroll = function (ev) {
+        if (curtab != "#AnnTab") return;
         if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
             $.ajax({
                 url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,

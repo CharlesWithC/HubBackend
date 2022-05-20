@@ -24,6 +24,7 @@ ets2data = {};
 atsdata = {};
 membersteam = {};
 memberuserid = {};
+curtab = "#HomeTab";
 
 function UpdateSteam() {
     $.ajax({
@@ -43,7 +44,7 @@ function UpdateSteam() {
     });
 }
 UpdateSteam();
-setInterval(UpdateSteam, 60000);
+setInterval(UpdateSteam, 600*1000);
 
 const socket = new WebSocket('wss://gateway.navio.app/');
 socket.addEventListener("open", () => {
