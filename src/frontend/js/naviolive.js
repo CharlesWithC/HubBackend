@@ -108,6 +108,7 @@ function CountOnlineDriver() {
 setInterval(function () {
     cnt = CountOnlineDriver()
     $("#livedriver").html(cnt);
+    $("#livedriver2").html(cnt);
     dt = new Date();
     t = pad(dt.getHours(), 2) + ":" + pad(dt.getMinutes(), 2) + ":" + pad(dt.getSeconds(), 2);
     $("#livedriverdt").html(t);

@@ -107,43 +107,33 @@ async def dlogChart(request: Request, response: Response,
     else:
         if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
             quserid = -1
-        stoken = authorization.split(" ")[1]
-        if not stoken.replace("-","").isalnum():
-            quserid = -1
-
-        isapptoken = False
-        cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-            t = cur.fetchall()
-            if len(t) == 0:
+        else:
+            stoken = authorization.split(" ")[1]
+            if not stoken.replace("-","").isalnum() or stoken == "guest":
                 quserid = -1
-            isapptoken = True
-        discordid = t[0][0]
-        if not isapptoken:
-            ip = t[0][1]
-            orgiptype = 4
-            if validators.ipv6(ip) == True:
-                orgiptype = 6
-            curiptype = 4
-            if validators.ipv6(request.client.host) == True:
-                curiptype = 6
-            if orgiptype != curiptype:
-                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-                conn.commit()
             else:
-                if ip != request.client.host:
-                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                    conn.commit()
-                    quserid = -1
-        cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            quserid = -1
-        userid = t[0][0]
-        if userid == -1:
-            quserid = -1
+                conn = newconn()
+                cur = conn.cursor()
+
+                isapptoken = False
+                cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+                t = cur.fetchall()
+                if len(t) == 0:
+                    cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+                    t = cur.fetchall()
+                    if len(t) == 0:
+                        quserid = -1
+                    isapptoken = True
+                else:
+                    discordid = t[0][0]
+                    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+                    t = cur.fetchall()
+                    if len(t) == 0:
+                        quserid = -1
+                    else:
+                        userid = t[0][0]
+                        if userid == -1:
+                            quserid = -1
 
     ret = []
     timerange = []

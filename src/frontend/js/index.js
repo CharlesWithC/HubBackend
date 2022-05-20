@@ -22,7 +22,7 @@ function DarkMode() {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("#382CDD", "skyblue"));
+        $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -42,7 +42,7 @@ function DarkMode() {
         $("#todarksvg").show();
         $("#tolightsvg").hide();
         Chart.defaults.color = "black";
-        $("body").html($("body").html().replaceAll("skyblue", "#382CDD"));
+        $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("lightgreen", "green"));
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
@@ -343,13 +343,48 @@ eventsCalendar = undefined;
 curtab = "#HomeTab";
 
 async function ShowTab(tabname, btnname) {
+    if(tabname != "#Event"){
+        eventsCalendar = undefined;
+        $("#eventsCalendar").children().remove();
+        $("#eventsCalendar").attr("class","");
+    }
     $("html, body").animate({ scrollTop: 0 }, "slow");
     curtab = tabname;
     clearInterval(dmapint);
     dmapint = -1;
     $("#map,#dmap,#pmap,#amap").children().remove();
-    $(".tabs").hide();
-    $(tabname).fadeIn();
+    setTimeout(async function(){
+        if(isdark) $("#loading").css("border", "solid lightgreen 1px");
+        else $("#loading").css("border", "solid green 1px");
+        $("#loading").css("width", "50%");  
+        maxajax = 0;
+        lastw = 0;
+        while($.active > 0){
+            maxajax = Math.max($.active + 1, maxajax);
+            neww = parseInt(100 - $.active / maxajax * 100);
+            while(neww > lastw){
+                lastw += 1;
+                $("#loading").css("width", `${lastw}%`);
+                await sleep(5);
+            }
+            await sleep(10);
+        }
+        neww = 100;
+        while(neww > lastw){
+            lastw += 1;
+            $("#loading").css("width", `${lastw}%`);
+            await sleep(5);
+        }
+        $(".tabs").hide();
+        $(tabname).show();
+        neww = 1;
+        while(neww < lastw){
+            lastw -= 5;
+            $("#loading").css("width", `${lastw}%`);
+            await sleep(1);
+        }
+        $("#loading").css("border", "solid transparent 1px");
+    }, 10);
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
     if (tabname == "#Map") {
@@ -379,7 +414,6 @@ async function ShowTab(tabname, btnname) {
     }
     if (tabname == "#HomeTab") {
         window.history.pushState("", "", '/');
-        loadStats();
     }
     if (tabname == "#AnnTab") {
         window.history.pushState("", "", '/announcement');
@@ -1355,6 +1389,13 @@ function validate() {
             } else if (data.response.extra == "truckersmp") {
                 $("#header").prepend(
                     "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth'>Click here to bind it</a></p>");
+            } else {
+                $("#header").prepend(`<p style="color:lightgreen"><svg style="color:lightgreen;display:inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                fill="currentColor" class="bi bi-activity" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M6 2a.5.5 0 0 1 .47.33L10 12.036l1.53-4.208A.5.5 0 0 1 12 7.5h3.5a.5.5 0 0 1 0 1h-3.15l-1.88 5.17a.5.5 0 0 1-.94 0L6 3.964 4.47 8.171A.5.5 0 0 1 4 8.5H.5a.5.5 0 0 1 0-1h3.15l1.88-5.17A.5.5 0 0 1 6 2Z"
+                  fill="lightgreen"></path>
+              </svg>&nbsp;&nbsp;<span id="livedriver2">-</span> drivers trucking</p>`);
             }
         }
     });
@@ -2138,30 +2179,36 @@ function loadEvent() {
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("token")
             },
-            success: function (data) {
+            success: async function (data) {
                 if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                 const d = data.response.list;
-                events = [];
+                var eventlist = [];
                 offset = (+new Date().getTimezoneOffset()) * 60 * 1000;
                 for (var i = 0; i < d.length; i++) {
-                    events.push({
+                    eventlist.push({
                         "title": d[i].title,
                         "url": "/event?eventid=" + d[i].eventid,
                         "start": new Date(d[i].mts * 1000 - offset).toISOString().substring(0, 10)
                     })
                 }
-
-                var eventsCalendarEl = document.getElementById('eventsCalendar');
-                var eventsCalendar = new FullCalendar.Calendar(eventsCalendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title'
-                    },
-                    events: events
-                });
-                eventsCalendar.render();
-                $(".fc-daygrid-event").removeClass("fc-daygrid-event");
+                
+                while($.active > 0){
+                    await sleep(50);
+                }
+                setTimeout(function(){
+                    var eventsCalendarEl = document.getElementById('eventsCalendar');
+                    var eventsCalendar = new FullCalendar.Calendar(eventsCalendarEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title'
+                        },
+                        events: eventlist,
+                        height: 'auto'
+                    });
+                    eventsCalendar.render();
+                    $("th > .fc-scrollgrid-sync-innergrid-event").removeClass("fc-daygrid-event");
+                }, 200);
             },
             error: function (data) {
                 toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
@@ -3927,17 +3974,17 @@ $(document).ready(function () {
             .text-gray-500,.text-gray-600 {color: #ddd;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);}
             .swal2-popup {background-color: rgb(41 48 57)}
-            .rounded-full {background-color: #888}</style>`);
+            .rounded-full {background-color: #888}
+            th > .fc-scrollgrid-sync-inner {background-color: #444}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("#382CDD", "skyblue"));
+        $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
     } else {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);
     }
     loadStats();
-    setInterval(loadStats, 60000);
     PathDetect();
     var date = new Date();
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
