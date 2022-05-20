@@ -71,16 +71,20 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         page = 1
 
     if eventid != -1:
-        cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee FROM event WHERE eventid = {eventid} {limit}")
+        cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote FROM event WHERE eventid = {eventid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
             return {"error": True, "descriptor": "Event not found"}
         tt = t[0]
         attendee = tt[9].split(",")
+        vote = tt[10].split(",")
         if userid == -1:
             attendee = []
+            vote = []
         while "" in attendee:
             attendee.remove("")
+        while "" in vote:
+            vote.remove("")
         attendeetxt = ""
         for at in attendee:
             name = "Unknown"
@@ -90,18 +94,31 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             attendeetxt += f"{name}, "
         attendeetxt = attendeetxt[:-2]
+        votetxt = ""
+        for vt in vote:
+            name = "Unknown"
+            cur.execute(f"SELECT name FROM user WHERE userid = {vt}")
+            t = cur.fetchall()
+            if len(t) != 0:
+                name = t[0][0]
+            votetxt += f"{name}, "
+        votetxt = votetxt[:-2]
         return {"error": False, "response": {"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)}}
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)}}
 
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
         attendee = tt[9].split(",")
+        vote = tt[10].split(",")
         if userid == -1:
             attendee = []
+            vote = []
         while "" in attendee:
             attendee.remove("")
+        while "" in vote:
+            vote.remove("")
         attendeetxt = ""
         for at in attendee:
             name = "Unknown"
@@ -111,23 +128,36 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             attendeetxt += f"{name}, "
         attendeetxt = attendeetxt[:-2]
+        votetxt = ""
+        for vt in vote:
+            name = "Unknown"
+            cur.execute(f"SELECT name FROM user WHERE userid = {vt}")
+            t = cur.fetchall()
+            if len(t) != 0:
+                name = t[0][0]
+            votetxt += f"{name}, "
+        votetxt = votetxt[:-2]
         ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)})
-
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
+    
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * 10 - tot,0)}, 10")
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * 10 - tot,0)}, 10")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")
+        vote = tt[10].split(",")
         if userid == -1:
             attendee = []
+            vote = []
         while "" in attendee:
             attendee.remove("")
+        while "" in vote:
+            vote.remove("")
         attendeetxt = ""
         for at in attendee:
             name = "Unknown"
@@ -137,9 +167,18 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             attendeetxt += f"{name}, "
         attendeetxt = attendeetxt[:-2]
+        votetxt = ""
+        for vt in vote:
+            name = "Unknown"
+            cur.execute(f"SELECT name FROM user WHERE userid = {vt}")
+            t = cur.fetchall()
+            if len(t) != 0:
+                name = t[0][0]
+            votetxt += f"{name}, "
+        votetxt = votetxt[:-2]
         ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee)})
-        
+            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
+    
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()
     tot = 0
@@ -211,6 +250,67 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
         ret.append({"eventid": tt[0], "title": b64d(tt[1]), "mts": tt[2]})
 
     return {"error": False, "response": {"list": ret}}
+
+@app.post("/atm/event/vote")
+async def eventVote(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    discordid = t[0][0]
+    ip = t[0][1]
+    orgiptype = 4
+    if validators.ipv6(ip) == True:
+        orgiptype = 6
+    curiptype = 4
+    if validators.ipv6(request.client.host) == True:
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    userid = t[0][0]
+
+    form = await request.form()
+    eventid = int(form["eventid"])
+    cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": True, "descriptor": "Event not found"}
+    vote = t[0][0].split(",")
+    if str(userid) in vote:
+        vote.remove(str(userid))
+        cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
+        conn.commit()
+        return {"error": False, "response": "Vote removed"}
+    else:
+        vote.append(str(userid))
+        cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
+        conn.commit()
+        return {"error": False, "response": "Vote added"}
 
 @app.post("/atm/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
@@ -293,7 +393,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     if form["pvt"] == "true":
         pvt = 1
 
-    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{tmplink}', '{departure}', '{destination}', '{distance}', {mts}, {dts}, '{img}', {pvt}, '{title}', '', 0)")
+    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{tmplink}', '{departure}', '{destination}', '{distance}', {mts}, {dts}, '{img}', {pvt}, '{title}', '', 0, '')")
     await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 

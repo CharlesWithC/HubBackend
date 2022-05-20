@@ -367,6 +367,37 @@ function loadStats(basic = false) {
 eventsCalendar = undefined;
 curtab = "#HomeTab";
 
+async function GeneralLoad() {
+    if (isdark) $("#loading").css("border", "solid lightgreen 1px");
+    else $("#loading").css("border", "solid green 1px");
+    $("#loading").css("width", "50%");
+    maxajax = 0;
+    lastw = 0;
+    while ($.active > 0) {
+        maxajax = Math.max($.active + 1, maxajax);
+        neww = parseInt(100 - $.active / maxajax * 100);
+        while (neww > lastw) {
+            lastw += 1;
+            $("#loading").css("width", `${lastw}%`);
+            await sleep(5);
+        }
+        await sleep(10);
+    }
+    neww = 100;
+    while (neww > lastw) {
+        lastw += 1;
+        $("#loading").css("width", `${lastw}%`);
+        await sleep(5);
+    }
+    neww = 1;
+    while (neww < lastw) {
+        lastw -= 5;
+        $("#loading").css("width", `${lastw}%`);
+        await sleep(1);
+    }
+    $("#loading").css("border", "solid transparent 1px");
+}
+
 async function ShowTab(tabname, btnname) {
     if (tabname != "#Event") {
         eventsCalendar = undefined;
@@ -515,6 +546,7 @@ async function ShowTab(tabname, btnname) {
 function FetchAnnouncement() {
     aid = $("#annid").val();
 
+    GeneralLoad();
     $("#fetchAnnouncementBtn").html("Working...");
     $("#fetchAnnouncementBtn").attr("disabled", "disabled");
 
@@ -560,6 +592,7 @@ function NewAnn() {
         return;
     }
 
+    GeneralLoad();
     $("#newAnnBtn").html("Working...");
     $("#newAnnBtn").attr("disabled", "disabled");
 
@@ -739,12 +772,13 @@ function NewAnn() {
     }
 }
 
-function FetchEvent() {
+function FetchEvent(showdetail = -1) {
     eventid = $("#eventid").val();
     if (!isNumber(eventid)) {
         return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
     }
 
+    GeneralLoad();
     $("#fetchEventBtn").html("Working...");
     $("#fetchEventBtn").attr("disabled", "disabled");
 
@@ -762,6 +796,7 @@ function FetchEvent() {
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
 
             const event = data.response;
+            allevents[event.eventid] = event;
             $("#eventtitle").val(event.title);
             $("#eventtmplink").val(event.tmplink);
             $("#eventfrom").val(event.departure);
@@ -775,6 +810,8 @@ function FetchEvent() {
                 imgs += event.img[i] + "\n";
             }
             $("#eventimgs").val(imgs);
+
+            if(showdetail != -1) eventDetail(showdetail);
         },
         error: function (data) {
             $("#fetchEventBtn").html("Fetch Data");
@@ -793,6 +830,7 @@ function FetchEventAttendee() {
         return toastFactory("error", "Error", "Event ID must be in integar!", 5000, false);
     }
 
+    GeneralLoad();
     $("#fetchEventAttendeeBtn").html("Working...");
     $("#fetchEventAttendeeBtn").attr("disabled", "disabled");
 
@@ -847,6 +885,7 @@ function UpdateEventAttendees() {
         return toastFactory("error", "Error", "Points must be in integar!", 5000, false);
     }
 
+    GeneralLoad();
     $("#attendeeBtn").html("Working...");
     $("#attendeeBtn").attr("disabled", "disabled");
 
@@ -901,6 +940,7 @@ function NewEvent() {
     pvt = $("#eventpvt-1").prop("checked");
     img = $("#eventimgs").val().replaceAll("\n", ",");
 
+    GeneralLoad();
     $("#newEventBtn").html("Working...");
     $("#newEventBtn").attr("disabled", "disabled");
 
@@ -1523,6 +1563,7 @@ function loadLeaderboard() {
     page = parseInt($("#lpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    GeneralLoad();
     $("#loadLeaderboardBtn").html("...");
     $("#loadLeaderboardBtn").attr("disabled", "disabled");
     starttime = -1;
@@ -1644,6 +1685,7 @@ function loadLeaderboard() {
 }
 
 function requestRole() {
+    GeneralLoad();
     $("#requestRoleBtn").html("Working...");
     $("#requestRoleBtn").attr("disabled", "disabled");
     $.ajax({
@@ -1674,6 +1716,7 @@ function loadDelivery() {
     page = parseInt($("#dpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    GeneralLoad();
     $("#loadDeliveryBtn").html("...");
     $("#loadDeliveryBtn").attr("disabled", "disabled");
     starttime = -1;
@@ -2233,11 +2276,16 @@ function loadEvent() {
                             left: 'prev,next today',
                             center: 'title'
                         },
+                        eventClick: function (info) {
+                            info.jsEvent.preventDefault();
+                            eventid = parseInt(info.event.url.split("=")[1]);
+                            eventDetail(eventid);
+                        },
                         events: eventlist,
                         height: 'auto'
                     });
                     eventsCalendar.render();
-                    $("th > .fc-scrollgrid-sync-innergrid-event").removeClass("fc-daygrid-event");
+                    $(".fc-daygrid-event").removeClass("fc-daygrid-event");
                 }, 50);
             },
             error: function (data) {
@@ -2260,12 +2308,12 @@ function loadEvent() {
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             $("#eventTable").empty();
             const events = data.response.list;
-
             if (events.length == 0) {
                 $("#eventTableHead").hide();
                 $("#eventTable").append(`
             <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -2337,6 +2385,11 @@ function loadEvent() {
                 }
                 mt = getDateTime(mts);
                 dt = getDateTime(dts);
+                voteids = event.voteid.split(",");
+                voteids = voteids.filter(function (el) {
+                    return el != "";
+                });
+                votecnt = voteids.length;
                 $("#eventTable").append(`
             <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${event.eventid}</td>
@@ -2346,6 +2399,7 @@ function loadEvent() {
               <td class="py-5 px-6 font-medium">${event.distance}</td>
               <td class="py-5 px-6 font-medium">${mt}</td>
               <td class="py-5 px-6 font-medium">${dt}</td>
+              <td class="py-5 px-6 font-medium">${votecnt}</td>
               <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="EventInfoBtn${event.eventid}" onclick="eventDetail('${event.eventid}')">Show Details</td>
             </tr>`);
             }
@@ -2359,10 +2413,59 @@ function loadEvent() {
     })
 }
 
-function eventDetail(eventid) {
+function eventvote(eventid){
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/event/vote",
+        type: "POST",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+            "eventid": eventid
+        },
+        success: function (data) {
+            if(data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            $("#eventid").val(eventid);
+            FetchEvent(eventid, showdetail = eventid);
+            return toastFactory("success", "Success:", data.response, 5000, false);
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000,
+                false);
+            console.warn(
+                `Failed to vote / unvote for event. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    });
+}
+
+async function eventDetail(eventid) {
     keys = Object.keys(allevents);
-    if (keys.indexOf(eventid) == -1) return toastFactory("error", "Error:", "Event not found.", 5000, false);
+    if (keys.indexOf(String(eventid)) == -1) {
+        $("#eventid").val(eventid);
+        GeneralLoad();
+        FetchEvent();
+        while ($.active > 0) {
+            await sleep(50);
+        }
+        keys = Object.keys(allevents);
+        if (keys.indexOf(String(eventid)) == -1) {
+            return toastFactory("error", "Error:", "Event not found.", 5000, false);
+        }
+    }
     event = allevents[eventid];
+    voteop = `<a style="cursor:pointer;color:grey" onclick="eventvote(${eventid})">(Vote)</a>`;
+    console.log(event);
+    voteids = event.voteid.split(",");
+    voteids = voteids.filter(function (el) {
+        return el != "";
+    });
+    userid = localStorage.getItem("userid");
+    if(voteids.indexOf(String(userid)) != -1){
+        voteop = `<a style="cursor:pointer;color:grey" onclick="eventvote(${eventid})">(Unvote)</a>`;
+    }
+    votecnt = voteids.length;
     info = `<div style="text-align:left">`;
     info += "<p><b>Event ID</b>: " + event.eventid + "</p>";
     info += "<p><b>From</b>: " + event.departure + "</p>";
@@ -2370,6 +2473,7 @@ function eventDetail(eventid) {
     info += "<p><b>Distance</b>: " + event.distance + "</p>";
     info += "<p><b>Start Time</b>: " + getDateTime(event.mts * 1000) + "</p>";
     info += "<p><b>End Time</b>: " + getDateTime(event.dts * 1000) + "</p>";
+    info += "<p><b>Voted ("+votecnt+")</b>: " + voteop + " " + event.vote + "</p>";
     info += "<p><b>Attendees</b>: " + event.attendee + "</p>";
     for (var i = 0; i < event.img.length; i++) {
         info += "<img src='" + event.img[i] + "' style='width:100%'/>";
@@ -2387,6 +2491,7 @@ function loadMembers() {
     page = parseInt($("#mpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    GeneralLoad();
     $("#searchMemberBtn").html("...");
     $("#searchMemberBtn").attr("disabled", "disabled");
     $.ajax({
@@ -2691,6 +2796,7 @@ lastfetch = -1;
 
 function fetchRoles() {
     val = $("#memberroleid").val();
+    GeneralLoad();
     $("#fetchRolesBtn").html("Working...");
     $("#fetchRolesBtn").attr("disabled", "disabled");
     $("#rolelist").children().children().prop("checked", false);
@@ -2753,6 +2859,7 @@ function fetchRoles() {
 
 function updateMemberRoles() {
     userid = lastfetch;
+    GeneralLoad();
     $("#updateMemberRolesBtn").html("Working...");
     $("#updateMemberRolesBtn").attr("disabled", "disabled");
     d = $('input[name="assignrole"]:checked');
@@ -2806,6 +2913,7 @@ function updateMemberPoints() {
     if (!isNumber(eventpnt)) {
         eventpnt = 0;
     }
+    GeneralLoad();
     $("#updateMemberPointsBtn").html("Working...");
     $("#updateMemberPointsBtn").attr("disabled", "disabled");
     $.ajax({
@@ -2883,6 +2991,7 @@ function dismissUser() {
         });
         return;
     }
+    GeneralLoad();
     $("#dismissbtn").html("Working...");
     $("#dismissbtn").attr("disabled", "disabled");
     $.ajax({
@@ -2919,6 +3028,7 @@ function loadUserDelivery() {
     page = parseInt($("#udpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+    GeneralLoad();
     $("#loadUserDeliveryBtn").html("...");
     $("#loadUserDeliveryBtn").attr("disabled", "disabled");
     starttime = -1;
@@ -3188,6 +3298,7 @@ function updateBio() {
 }
 
 function genNewAppToken() {
+    GeneralLoad();
     $("#genAppTokenBtn").html("Working...");
     $("#genAppTokenBtn").attr("disabled", "disabled");
     $.ajax({
@@ -3221,6 +3332,7 @@ function resign() {
         $("#resignBtn").html("Confirm?");
         return;
     }
+    GeneralLoad();
     $("#resignBtn").html("Working...");
     $("#resignBtn").attr("disabled", "disabled");
     $.ajax({
@@ -4217,7 +4329,7 @@ $(document).ready(function () {
     }
     window.onscroll = function (ev) {
         if (curtab != "#AnnTab") return;
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        if ((window.innerHeight + window.scrollY + 100) >= document.body.offsetHeight) {
             $.ajax({
                 url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
                 type: "GET",
