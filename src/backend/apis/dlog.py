@@ -320,8 +320,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
         ret = []
         for userid in rank:
-            cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {userid}")
+            cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {userid} AND userid >= 0")
             p = cur.fetchall()
+            if len(p) == 0:
+                continue
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
                 "distance": userdistance[userid], "eventpnt": userevent[userid], "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid]})
 
@@ -337,6 +339,8 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     for tt in t:
         cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
         p = cur.fetchall()
+        if len(p) == 0:
+            continue
         ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "totalpnt": tt[1]})
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0)")

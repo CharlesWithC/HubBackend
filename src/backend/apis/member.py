@@ -18,7 +18,8 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
         20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Lead Developer", 31: "Development Staff", \
             40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
                 60: "Convoy Supervisor", 61: "Convoy Control",\
-                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 1000: "Partner", 10000: "External Staff"}
+                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 223: "Staff of the Month", 224: "Driver of the Month",
+                 1000: "Partner", 10000: "External Staff"}
 
 RANKING = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
 
@@ -98,7 +99,21 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%223%'") # Staff of the month
+    t = cur.fetchall()
+    staff_of_the_month = {}
+    if len(t) > 0:
+        tt = t[0]
+        staff_of_the_month = {"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[3]}
+
+    cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%224%'") # Driver of the month
+    t = cur.fetchall()
+    driver_of_the_month = {}
+    if len(t) > 0:
+        tt = t[0]
+        driver_of_the_month = {"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[3]}    
+
+    return {"error": False, "response": {"list": ret, "page": page, "tot": tot, "staff_of_the_month": staff_of_the_month, "driver_of_the_month": driver_of_the_month}}
 
 @app.get('/atm/member/info')
 async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
@@ -523,12 +538,10 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 
     for add in addedroles:
         if add <= adminhighest:
-            response.status_code = 401
             return {"error": True, "descriptor": "Member role to add higher / equal."}
     
     for remove in removedroles:
         if remove <= adminhighest:
-            response.status_code = 401
             return {"error": True, "descriptor": "Member role to remove higher / equal."}
 
     if len(addedroles) + len(removedroles) == 0:
@@ -589,7 +602,7 @@ If you have issues about Drivers Hub, open a technical ticket at <#9297617310167
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg-crop.jpg"},\
+                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg.jpg"},\
                         "timestamp": str(datetime.now()), "color": 11730944}}))
 
     if 100 in removedroles:

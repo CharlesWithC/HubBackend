@@ -22,7 +22,7 @@ function DarkMode() {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("#382CDD","skyblue"));
+        $("body").html($("body").html().replaceAll("#382CDD", "skyblue"));
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -42,7 +42,7 @@ function DarkMode() {
         $("#todarksvg").show();
         $("#tolightsvg").hide();
         Chart.defaults.color = "black";
-        $("body").html($("body").html().replaceAll("skyblue","#382CDD"));
+        $("body").html($("body").html().replaceAll("skyblue", "#382CDD"));
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
@@ -239,7 +239,7 @@ function loadStats() {
             $("#dotddistance").html(`Driven ${distance} Miles`);
 
             $("#dalljob").html(newjobs);
-            $("#dtotdistance").html(newdistance);
+            $("#dtotdistance").html(newdistance.replaceAll("Mi", " Miles"));
 
             const ctx = document.getElementById('deliveryStatsChart').getContext('2d');
             const config = {
@@ -342,7 +342,8 @@ function loadStats() {
 eventsCalendar = undefined;
 curtab = "#HomeTab";
 
-function ShowTab(tabname, btnname) {
+async function ShowTab(tabname, btnname) {
+    $("html, body").animate({ scrollTop: 0 }, "slow");
     curtab = tabname;
     clearInterval(dmapint);
     dmapint = -1;
@@ -382,6 +383,15 @@ function ShowTab(tabname, btnname) {
     }
     if (tabname == "#AnnTab") {
         window.history.pushState("", "", '/announcement');
+        ch = $("#anns").children();
+        ch.hide();
+        for(var i = 0; i < ch.length; i++){
+            $(ch[i]).fadeIn();
+            await sleep(200);
+        }
+    }
+    if (tabname == "#StaffAnnTab") {
+        window.history.pushState("", "", '/staffannouncement');
     }
     if (tabname == "#Ranking") {
         window.history.pushState("", "", '/ranking');
@@ -406,12 +416,20 @@ function ShowTab(tabname, btnname) {
         window.history.pushState("", "", '/member');
         loadMembers();
     }
+    if (tabname == "#StaffMembers") {
+        window.history.pushState("", "", '/staffmember');
+        loadMembers();
+    }
     if (tabname == "#Delivery") {
         window.history.pushState("", "", '/delivery');
         loadDelivery();
     }
     if (tabname == "#Event") {
         window.history.pushState("", "", '/event');
+        loadEvent();
+    }
+    if (tabname == "#StaffEvent") {
+        window.history.pushState("", "", '/staffevent');
         loadEvent();
     }
     if (tabname == "#ProfileTab") {
@@ -1195,15 +1213,15 @@ function ShowStaffTabs() {
     } else {
         avatar = "/images/atm-black.png";
     }
-    $("#newann").hide();
+    $("#StaffAnnTabBtn").hide();
     if (roles != null && roles != undefined) {
         highestrole = 99999;
         for (i = 0; i < roles.length; i++) {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
                 if (roles[i] == 40 || roles[i] == 41) {
-                    $("#newann").show(); // event staff
-                    $("#newevent").show(); // event staff
+                    $("#StaffAnnTabBtn").show(); // event staff
+                    $("#StaffEventBtn").show(); // event staff
                     $("#eventattendee").show();
                     if (roles[i] == 40) {
                         $("#annrole").html("Event Manager");
@@ -1255,15 +1273,15 @@ function ShowStaffTabs() {
             $("#stafftabs").show();
             if (highestrole >= 30) {
                 $("#AllAppBtn").hide();
-                $("#AllMemberStaff").hide();
+                $("#StaffMembersBtn").hide();
             } else {
-                $("#AllMemberStaff").show();
+                $("#StaffMembersBtn").show();
                 $("#AllAppBtn").show();
             }
         }
         if (highestrole <= 10) {
-            $("#newann").show();
-            $("#newevent").show(); // event staff
+            $("#StaffAnnTabBtn").show();
+            $("#StaffEventBtn").show(); // event staff
             $("#eventattendee").show();
             setInterval(function () {
                 title = $("#anntitle").val();
@@ -2395,8 +2413,37 @@ function loadMembers() {
                 <a style="cursor:pointer;" onclick="loadProfile('${user.userid}')">
                 <img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${user.name}</a></td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${highestrole}</td>
-            </tr>`)
+            </tr>`);
             }
+
+            user = data.response.staff_of_the_month;
+            discordid = user.discordid;
+            avatar = user.avatar;
+            src = "";
+            if (avatar != null) {
+                if (avatar.startsWith("a_"))
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                else
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+            } else {
+                avatar = "/images/atm-black.png";
+            }
+            $("#sotm").html(`<a style='cursor:pointer' onclick='loadProfile("${user.userid}")'>${user.name}</a>`);
+            $("#sotma").attr("src", src);
+
+            user = data.response.driver_of_the_month;
+            discordid = user.discordid;
+            avatar = user.avatar;
+            src = "";
+            if (avatar != null) {
+                if (avatar.startsWith("a_"))
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                else
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+            }
+            $("#dotm").html(`<a style='cursor:pointer' onclick='loadProfile("${user.userid}")'>${user.name}</a>`);
+            $("#dotma").attr("src", src);
+
         },
         error: function (data) {
             $("#searchMemberBtn").html("Go");
@@ -2940,9 +2987,6 @@ async function loadProfile(userid) {
     tabname = "#ProfileTab";
     $(".tabs").hide();
     $(tabname).show();
-    while (Object.keys(rolelist).length == 0) {
-        await sleep(50);
-    }
     $.ajax({
         url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
         type: "GET",
@@ -2957,22 +3001,9 @@ async function loadProfile(userid) {
             if (!data.error) {
                 window.history.pushState("", "", '/member?userid=' + userid);
                 d = data.response;
-                roles = d.roles;
-                rtxt = "";
-                for (var i = 0; i < roles.length; i++) {
-                    if (roles[i] == 0) color = "";
-                    else if (roles[i] < 10) color = "#770202";
-                    else if (roles[i] <= 98) color = "#ff0000";
-                    else if (roles[i] == 99) color = "#4e6f7b";
-                    else if (roles[i] == 100) color = "#b30000";
-                    else if (roles[i] > 100) color = "grey";
-                    if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
-                    else rtxt += "Unknown Role (ID " + roles[i] + "), ";
-                }
-                rtxt = rtxt.substring(0, rtxt.length - 2);
                 info += "<h1 style='font-size:40px'>" + d.name + "</h1>";
                 info += "<p><b>User ID:</b> " + d.userid + "</p>"
-                info += "<p><b>Roles:</b> " + rtxt + "</p>";
+                info += "<p><b>Roles:</b> <span id='profileRoles'></span></p>";
                 if (d.email != undefined) info += "<p><b>Email:</b> " + d.email + "</p>";
                 info += "<p><b>Discord ID:</b> " + d.discordid + "</p>";
                 info +=
@@ -3003,6 +3034,27 @@ async function loadProfile(userid) {
                 }
 
                 $("#userProfileDetail").html(info);
+                roles = d.roles;
+                setTimeout(async function () {
+                    rtxt = "";
+                    while (Object.keys(rolelist).length == 0) {
+                        await sleep(50);
+                    }
+                    for (var i = 0; i < roles.length; i++) {
+                        if (roles[i] == 0) color = "rgba(127,127,127,0.4)";
+                        else if (roles[i] < 10) color = "#770202";
+                        else if (roles[i] <= 98) color = "#ff0000";
+                        else if (roles[i] == 99) color = "#4e6f7b";
+                        else if (roles[i] == 100) color = "#b30000";
+                        else if (roles[i] > 100) color = "grey";
+                        if (roles[i] == 223 || roles[i] == 224) color = "#ffff77;color:black;";
+                        if (roles[i] == 1000) color = "#9146ff";
+                        if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
+                        else rtxt += "Unknown Role (ID " + roles[i] + "), ";
+                    }
+                    rtxt = rtxt.substring(0, rtxt.length - 2);
+                    $("#profileRoles").html(rtxt);
+                }, 100);
 
                 if (d.userid == localStorage.getItem("userid")) {
                     $("#UpdateAM").show();
@@ -3839,17 +3891,20 @@ function PathDetect() {
     console.log(p);
     if (p == "/") ShowTab("#HomeTab", "#HomeTabBtn");
     else if (p == "/announcement") ShowTab("#AnnTab", "#AnnTabBtn");
+    else if (p == "/staffannouncement") ShowTab("#StaffAnnTab", "#StaffAnnTabBtn");
     else if (p == "/map") ShowTab("#Map", "#MapBtn");
     else if (p == "/delivery") {
         logid = getUrlParameter("logid");
         ShowTab("#Delivery", "#DeliveryBtn");
         if (logid) deliveryDetail(logid);
     } else if (p == "/event") ShowTab("#Event", "#EventBtn");
-    else if (p.startsWith("/member")) {
+    else if (p == "/staffevent") ShowTab("#StaffEvent", "#StaffEventBtn");
+    else if (p == "/member") {
         userid = getUrlParameter("userid");
         ShowTab("#AllMembers", "#AllMemberBtn");
         if (userid) loadProfile(userid);
-    } else if (p == "/leaderboard") ShowTab("#Leaderboard", "#LeaderboardBtn");
+    } else if (p == "/staffmember") { ShowTab("#StaffMembers", "#StaffMemberBtn");}
+    else if (p == "/leaderboard") ShowTab("#Leaderboard", "#LeaderboardBtn");
     else if (p == "/ranking") ShowTab("#Ranking", "#RankingBtn");
     else if (p == "/myapp") ShowTab("#MyApp", "#MyAppBtn");
     else if (p == "/allapp") ShowTab("#AllApp", "#AllAppBtn");
@@ -3876,7 +3931,7 @@ $(document).ready(function () {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("#382CDD","skyblue"));
+        $("body").html($("body").html().replaceAll("#382CDD", "skyblue"));
     } else {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);
@@ -3884,6 +3939,13 @@ $(document).ready(function () {
     loadStats();
     setInterval(loadStats, 60000);
     PathDetect();
+    var date = new Date();
+    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    offset = (+new Date().getTimezoneOffset()) * 60 * 1000;
+    firstDay = new Date(+ firstDay - offset);
+    date = new Date(+date - offset);
+    $("#lbstart").val(firstDay.toISOString().substring(0,10));
+    $("#lbend").val(date.toISOString().substring(0,10));
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         t = $("div");
@@ -4071,34 +4133,42 @@ $(document).ready(function () {
             positionstxt = positionstxt.slice(0, -1);
             $("#staffposedit").val(positionstxt);
         }
+
     });
-    $("#annloadmore").click(function () {
-        $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
-            type: "GET",
-            dataType: "json",
-            headers: {
-                "Authorization": "Bearer " + token
-            },
-            success: function (data) {
-                ann = data.response.list;
-                for (i = 0; i < ann.length; i++) {
-                    a = ann[i];
-                    dt = getDateTime(a.timestamp * 1000);
-                    content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                        "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
-                        a
-                        .content.replaceAll("\n", "<br>");
-                    TYPES = ["info", "info", "warning", "criticle", "resolved"];
-                    banner = genBanner(TYPES[a.atype], a.title, content);
-                    $("#anns").append(banner);
+    window.onscroll = function(ev) {
+        if(curtab != "#AnnTab") return;
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            $.ajax({
+                url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
+                type: "GET",
+                dataType: "json",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
+                success: async function (data) {
+                    annpage += 1;
+                    ann = data.response.list;
+                    for (i = 0; i < ann.length; i++) {
+                        a = ann[i];
+                        dt = getDateTime(a.timestamp * 1000);
+                        content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
+                            "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
+                            a
+                            .content.replaceAll("\n", "<br>");
+                        TYPES = ["info", "info", "warning", "criticle", "resolved"];
+                        banner = genBanner(TYPES[a.atype], a.title, content);
+                        $("#anns").append(banner);
+                        $($("#anns").children()[$("#anns").children().length - 1]).hide();
+                        $($("#anns").children()[$("#anns").children().length - 1]).fadeIn();
+                        await sleep(200);
+                    }
+                    if (ann.length == 0) {
+                        toastFactory("info", "No more announcements", "You have reached the end of the list", 5000,
+                            false);
+                        $("#annloadmore").attr("disabled", "disabled");
+                    }
                 }
-                if (ann.length == 0) {
-                    toastFactory("info", "No more announcements", "You have reached the end of the list", 5000,
-                        false);
-                    $("#annloadmore").attr("disabled", "disabled");
-                }
-            }
-        });
-    });
+            });
+        }
+    };
 });

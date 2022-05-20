@@ -288,6 +288,63 @@
           <h3 class="mb-2 text-xs uppercase text-gray-500 font-medium">Staff</h3>
           <ul class="mb-8 text-sm font-medium">
             <li>
+              <a id="StaffAnnTabBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 rounded hover:bg-gray-900 tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#StaffAnnTab', '#StaffAnnTabBtn')">
+                <span class="inline-block mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    class="bi bi-newspaper" viewBox="0 0 16 16">
+                    <path
+                      d="M0 2.5A1.5 1.5 0 0 1 1.5 1h11A1.5 1.5 0 0 1 14 2.5v10.528c0 .3-.05.654-.238.972h.738a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 1 1 0v9a1.5 1.5 0 0 1-1.5 1.5H1.497A1.497 1.497 0 0 1 0 13.5v-11zM12 14c.37 0 .654-.211.853-.441.092-.106.147-.279.147-.531V2.5a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11c0 .278.223.5.497.5H12z" />
+                    <path
+                      d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z" />
+                  </svg> </span>
+                <span>Announcements</span>
+                <span class="inline-block ml-auto">
+                </span>
+              </a>
+            </li>
+
+            <li>
+              <a id="StaffEventBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#StaffEvent', '#StaffEventBtn')">
+                <span class="inline-block mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    class="bi bi-card-checklist" viewBox="0 0 16 16">
+                    <path
+                      d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
+                    <path
+                      d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z" />
+                  </svg> </span>
+                <span>Events</span>
+                <span class="inline-block ml-auto">
+                  <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                    xmlns="http://www.w3.org/2000/svg"></svg></span>
+              </a>
+            </li>
+
+            <li>
+              <a id="StaffMemberBtn"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                style="cursor: pointer" onclick="ShowTab('#StaffMembers', '#StaffMemberBtn')">
+                <span class="inline-block mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="feather feather-users">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg> </span>
+                <span>Members</span>
+                <span class="inline-block ml-auto">
+                  <svg class="text-gray-400 w-3 h-3" viewbox="0 0 10 6" fill="none"
+                    xmlns="http://www.w3.org/2000/svg"></svg></span>
+              </a>
+            </li>
+
+            <hr>
+
+            <li>
               <a id="AllAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AllApp', '#AllAppBtn')">
                 <span class="inline-block mr-3">
@@ -318,6 +375,7 @@
                     xmlns="http://www.w3.org/2000/svg"></svg></span>
               </a>
             </li>
+            <hr>
             <li>
               <a id="AuditLogBtn"
                 class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
@@ -399,7 +457,7 @@
               id="userProfileDetail">
             </div>
             <div class="py-8 px-6 pt-4 mb-6" style="width:170px;padding:10px;float:right">
-              <img id="UserProfileAvatar" src="" style="border-radius: 100%;width:150px;border:solid #770202 5px;">
+              <img id="UserProfileAvatar" src="/images/atm-black.png" style="border-radius: 100%;width:150px;border:solid #770202 5px;">
             </div>
           </div>
         </div>
@@ -802,7 +860,17 @@
 
   <section id="AnnTab" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newann" style="display:none">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4">
+        <div id="anns">
+
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section id="StaffAnnTab" class="py-8 tabs" style="display:none">
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newann">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Manage Announcements</h3>
         </div>
@@ -883,22 +951,37 @@
         </div>
       </div>
     </div>
-
-    <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" style="padding-bottom:80px">
-        <div id="anns">
-
-        </div>
-        <div style="position: relative; left: calc( 100% - 200px );width:200px">
-          <button id="annloadmore" type="button"
-            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200">Load
-            More</button>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section id="AllMembers" class="py-8 tabs" style="display:none">
+    <div class="px-4 mx-auto mx-auto lg:ml-80">
+      <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 pb-6 px-6">
+        <div class="px-4 mb-4 md:mb-0" style="width:100%">
+          <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 px-6">
+            <div class="md:w-1/2 lg:w-1/4 p-4" style="width:50%;padding-top:0">
+              <div class="p-6 rounded bg-white" style="text-align:center">
+                <img src="https://cdn.discordapp.com/emojis/930128573111623751.webp?size=128&quality=lossless" id="sotma" style="height:60px;margin:auto;border-radius:100%;border:solid #770202 5px;">
+                <h2 class="mb-2 text-3xl font-bold" id="sotm" style="font-size:22px">-</h2>
+                <div class="mb-2">
+                    <img src="https://cdn.discordapp.com/emojis/930128573111623751.webp?size=128&quality=lossless" style="height:18px;display:inline">
+                  <h3 class="text-sm text-gray-600" style="display:inline">Staff of the Month</h3>
+                </div>
+              </div>
+            </div>
+            <div class="md:w-1/2 lg:w-1/4 p-4" style="width:50%;padding-top:0">
+              <div class="p-6 rounded bg-white" style="text-align:center">
+                <img src="https://cdn.discordapp.com/emojis/930128573589749780.webp?size=128&quality=lossless" id="dotma" style="height:60px;margin:auto;border-radius:100%;border:solid #770202 5px;">
+                <h2 class="mb-2 text-3xl font-bold" id="dotm" style="font-size:22px;">-</h2>
+                <div class="mb-2">
+                  <img src="https://cdn.discordapp.com/emojis/930128573589749780.webp?size=128&quality=lossless" style="height:18px;display:inline">
+                  <h3 class="text-sm text-gray-600" style="display:inline">Driver of the Month</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
@@ -950,13 +1033,15 @@
           onclick="tmp=parseInt($('#mpages').val());$('#mpages').val(tmp+1);loadMembers();">></button>
       </div>
     </div>
-    <br>
-    <div id="AllMemberStaff" style="display:none">
+  </section>
+
+  <section id="StaffMembers" class="py-8 tabs" style="display:none">
+    <div class="px-4 mx-auto" style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Assign roles</h3>
         </div>
-        <div class="p-4 overflow-x-auto" style="display: block;">
+        <div class="p-4 overflow-x-auto" style="display: block;padding:20px">
           <div class="mb-6">
             <p>Fetch member roles first, this will overwrite all existing roles.</p>
             <p style="color:red">Warning! Removing Driver role will wipe member delivery log, and kick member from
@@ -1245,10 +1330,10 @@
 
   <section id="Delivery" class="py-8 tabs" style="display:none">
     <div class="px-4 mx-auto mx-auto lg:ml-80">
-      <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6">
+      <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 pb-6 px-6">
         <div class="px-4 mb-4 md:mb-0" style="width:100%">
           <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 px-6">
-            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard" style="padding-top:0">
               <div class="p-6 rounded bg-white">
                 <div class="flex mb-2"><span class="inline-block mr-2">
                     <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="18"
@@ -1271,7 +1356,7 @@
                   </span><span><span id="dotddistance"></span></span></span>
               </div>
             </div>
-            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard" style="padding-top:0">
               <div class="p-6 rounded bg-white">
                 <div class="flex mb-2"><span class="inline-block mr-2">
                     <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
@@ -1293,10 +1378,10 @@
                         d="M10.5 20.4l-6.9 -6.9c-.781 -.781 -.781 -2.219 0 -3l6.9 -6.9c.781 -.781 2.219 -.781 3 0l6.9 6.9c.781 .781 .781 2.219 0 3l-6.9 6.9c-.781 .781 -2.219 .781 -3 0z" />
                       <path d="M9 14v-2c0 -.59 .414 -1 1 -1h5" />
                       <path d="M13 9l2 2l-2 2" /> </svg>
-                  </span><span><span id="dtotdistance">-</span> Miles</span></span>
+                  </span><span><span id="dtotdistance">-</span></span></span>
               </div>
             </div>
-            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard" style="padding-top:0">
               <div class="p-6 rounded bg-white">
                 <div class="flex mb-2"><span class="inline-block mr-2">
                     <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
@@ -1506,9 +1591,11 @@
           onclick="tmp=parseInt($('#epages').val());$('#epages').val(tmp+1);loadEvent();">></button>
       </div>
     </div>
-    </div>
+  </section>
+
+  <section id="StaffEvent" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded" id="newevent" style="display:none">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="container px-4">
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold">Manage Events</h3>

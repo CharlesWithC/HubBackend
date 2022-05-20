@@ -198,6 +198,7 @@ function RenderPoint(mapid, steamid, x, y, scale, nodetail = false, truckicon = 
 
 window.n = {};
 setInterval(function () {
+    if(curtab != "#Map"){$(".map-player").remove();return;}
     if (window.n == undefined || window.n.previousExtent_ == undefined) return;
     window.mapRange = {};
     mapRange["top"] = window.n.previousExtent_[3];
@@ -232,6 +233,7 @@ setInterval(function () {
 
 window.an = {};
 setInterval(function () {
+    if(curtab != "#Map"){$(".amap-player").remove();return;}
     if(window.an == undefined || window.an.previousExtent_ == undefined) return;
     window.amapRange = {};
     amapRange["top"] = window.an.previousExtent_[3];
@@ -267,6 +269,7 @@ setInterval(function () {
 
 window.pn = {};
 setInterval(function () {
+    if(curtab != "#Map"){$(".pmap-player").remove();return;}
     if (window.pn == undefined || window.pn.previousExtent_ == undefined) return;
     window.pmapRange = {};
     pmapRange["top"] = window.pn.previousExtent_[3];
