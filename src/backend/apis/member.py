@@ -589,7 +589,7 @@ If you have issues about Drivers Hub, open a technical ticket at <#9297617310167
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg.jpg"},\
+                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg-crop.jpg"},\
                         "timestamp": str(datetime.now()), "color": 11730944}}))
 
     if 100 in removedroles:

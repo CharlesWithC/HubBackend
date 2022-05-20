@@ -510,7 +510,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Member name to search for",
@@ -929,7 +929,7 @@
                     },
                     "name": "scale",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Add Up (Calculate Sum)",
@@ -937,7 +937,7 @@
                     },
                     "name": "addup",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Query User ID",
@@ -984,7 +984,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Speed Limit (km/h)",
@@ -992,7 +992,7 @@
                     },
                     "name": "speedlimit",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Start Timestamp",
@@ -1000,7 +1000,7 @@
                     },
                     "name": "starttime",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "End Timestamp",
@@ -1077,7 +1077,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Speed Limit (km/h)",
@@ -1085,7 +1085,7 @@
                     },
                     "name": "speedlimit",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Query User ID",
@@ -1093,7 +1093,7 @@
                     },
                     "name": "quserid",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Start Timestamp",
@@ -1101,7 +1101,7 @@
                     },
                     "name": "starttime",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "End Timestamp",
@@ -1187,7 +1187,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Announcement ID (for specific announcement)",
@@ -1397,7 +1397,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Event ID (for specific event)",
@@ -1623,10 +1623,41 @@
                 }
             }
         },
-            "post": {
-                "summary": "Create Event",
+        "/atm/event/full": {
+            "get": {
+                "summary": "Get Full Event List (Only ID, Title, Meetup Timestamp)",
                 "tags": ["event"],
-                "operationId": "postEvent",
+                "operationId": "getEventFull",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/event/attendee": {
+            "post": {
+                "summary": "Update Event Attendees (Overwrite)",
+                "tags": ["event", "manage"],
+                "operationId": "updateEventAttendees",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1637,45 +1668,21 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "title": {
-                                        "description": "Title",
-                                        "type": "string"
-                                    },
-                                    "tmplink": {
-                                        "description": "TruckersMP Event Link",
-                                        "type": "string"
-                                    },
-                                    "departure": {
-                                        "description": "Depature Location",
-                                        "type": "string"
-                                    },
-                                    "destination": {
-                                        "description": "Destination Location",
-                                        "type": "string"
-                                    },
-                                    "distance": {
-                                        "description": "Distance (Add units)",
-                                        "type": "string"
-                                    },
-                                    "mts": {
-                                        "description": "Meetup Timestamp",
+                                    "eventid": {
+                                        "description": "Event ID",
                                         "type": "integer"
                                     },
-                                    "dts": {
-                                        "description": "Departure Timestamp",
+                                    "points": {
+                                        "description": "Event Points",
                                         "type": "integer"
                                     },
-                                    "img": {
-                                        "description": "Image Link (e.g. route, slots) | Separate with ','",
+                                    "attendees": {
+                                        "description": "Attendees, separate with ','",
                                         "type": "string"
-                                    },
-                                    "pvt": {
-                                        "description": "Is Private?",
-                                        "type": "boolean"
                                     }
                                 }
                             },
-                            "required": ["tmplink", "title", "departure", "destination", "distance", "mts", "dts", "img", "pvt"]
+                            "required": ["eventid", "attendees"]
                         }
                     }
                 },
@@ -1699,62 +1706,8 @@
                         }
                     }
                 }
-            },
-            "/atm/event/attendee": {
-                "post": {
-                    "summary": "Update Event Attendees (Overwrite)",
-                    "tags": ["event", "manage"],
-                    "operationId": "updateEventAttendees",
-                    "security": [{
-                        "bearerAuth": []
-                    }],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/x-www-form-urlencoded": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "eventid": {
-                                            "description": "Event ID",
-                                            "type": "integer"
-                                        },
-                                        "points": {
-                                            "description": "Event Points",
-                                            "type": "integer"
-                                        },
-                                        "attendees": {
-                                            "description": "Attendees, separate with ','",
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "required": ["eventid", "attendees"]
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Successful Response",
-                            "content": {
-                                "application/json": {
-                                    "schema": {}
-                                }
-                            }
-                        },
-                        "422": {
-                            "description": "Validation Error",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/HTTPValidationError"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+            }
+        },
         "/atm/application": {
             "get": {
                 "summary": "Get Application Detail",
@@ -1963,7 +1916,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": true,
                     "schema": {
                         "title": "Application Type (0 - All, 1 - Driver, 2 - Staff, 3 - LOA)",
@@ -1971,7 +1924,7 @@
                     },
                     "name": "apptype",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Show all (Leadership / HR only)",
@@ -2168,28 +2121,28 @@
     "tags": [{
         "name": "user",
         "description": "User"
-    },{
+    }, {
         "name": "auth",
         "description": "Third-Party Authentication"
-    },{
+    }, {
         "name": "member",
         "description": "Members who have joined At The Mile Logistics"
-    },{
+    }, {
         "name": "dlog",
         "description": "Delivery Log"
-    },{
+    }, {
         "name": "announcement",
         "description": "Announcements"
-    },{
+    }, {
         "name": "event",
         "description": "Events"
-    },{
+    }, {
         "name": "application",
         "description": "Applications"
-    },{
+    }, {
         "name": "manage",
         "description": "Management"
-    },{
+    }, {
         "name": "info",
         "description": "Drivers Hub Information"
     }],

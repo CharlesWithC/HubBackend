@@ -22,6 +22,7 @@ function DarkMode() {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
+        $("body").html($("body").html().replaceAll("#382CDD","skyblue"));
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -41,6 +42,7 @@ function DarkMode() {
         $("#todarksvg").show();
         $("#tolightsvg").hide();
         Chart.defaults.color = "black";
+        $("body").html($("body").html().replaceAll("skyblue","#382CDD"));
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
@@ -101,6 +103,7 @@ function loadChart(userid = -1) {
                 euro.push(parseInt(d[i].euro));
                 dollar.push(parseInt(d[i].dollar));
             }
+            const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
             const config = {
                 type: 'bar',
                 data: {
@@ -110,6 +113,10 @@ function loadChart(userid = -1) {
                         data: distance,
                         borderColor: "lightgreen",
                         cubicInterpolationMode: 'monotone',
+                        segment: {
+                            borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)'),
+                            borderDash: ctx => skipped(ctx, [6, 6]),
+                        },
                         spanGaps: true,
                         xAxisID: 'x',
                         yAxisID: 'y',
@@ -119,6 +126,10 @@ function loadChart(userid = -1) {
                         data: fuel,
                         borderColor: "orange",
                         cubicInterpolationMode: 'monotone',
+                        segment: {
+                            borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)'),
+                            borderDash: ctx => skipped(ctx, [6, 6]),
+                        },
                         spanGaps: true,
                         xAxisID: 'x',
                         yAxisID: 'y',
@@ -174,7 +185,10 @@ function loadChart(userid = -1) {
     });
 }
 
+deliveryStatsChart = undefined;
+
 function loadStats() {
+    if (curtab != "#HomeTab") return;
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/stats",
         type: "GET",
@@ -205,8 +219,54 @@ function loadStats() {
             $("#newjob").html(newjobs);
             $("#allprofit").html(europrofit + " + " + dollarprofit);
             $("#newprofit").html(neweuroprofit + " + " + newdollarprofit);
+            $("#dprofit").html(neweuroprofit + " + " + newdollarprofit);
             $("#allfuel").html(fuel);
             $("#newfuel").html(newfuel);
+
+            driver_of_the_day = d.driver_of_the_day;
+            discordid = driver_of_the_day.discordid;
+            avatar = driver_of_the_day.avatar;
+            if (avatar != null) {
+                if (avatar.startsWith("a_"))
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif";
+                else
+                    src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
+            } else {
+                avatar = "/images/atm-black.png";
+            }
+            distance = TSeparator(parseInt(driver_of_the_day.distance / 1.6));
+            $("#dotd").html(`<img src="${src}" style="width:20px;border-radius:100%;display:inline"> <b>${driver_of_the_day.name}</b>`);
+            $("#dotddistance").html(`Driven ${distance} Miles`);
+
+            $("#dalljob").html(newjobs);
+            $("#dtotdistance").html(newdistance);
+
+            const ctx = document.getElementById('deliveryStatsChart').getContext('2d');
+            const config = {
+                type: 'pie',
+                data: {
+                    labels: ['Euro Truck Simulator 2', 'American Truck Simulator'],
+                    datasets: [{
+                        label: 'Game Preference',
+                        data: [d.ets2jobs, d.atsjobs],
+                        backgroundColor: ["lightblue", "pink"],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Game Preference'
+                        }
+                    }
+                },
+            };
+            if (deliveryStatsChart != undefined) deliveryStatsChart.destroy();
+            deliveryStatsChart = new Chart(ctx, config);
         }
     });
     loadChart();
@@ -279,10 +339,14 @@ function loadStats() {
     });
 }
 
+eventsCalendar = undefined;
+curtab = "#HomeTab";
+
 function ShowTab(tabname, btnname) {
     curtab = tabname;
     clearInterval(dmapint);
     dmapint = -1;
+    $("#map,#dmap,#pmap,#amap").children().remove();
     $(".tabs").hide();
     $(tabname).fadeIn();
     $(".tabbtns").removeClass("bg-indigo-500");
@@ -314,6 +378,7 @@ function ShowTab(tabname, btnname) {
     }
     if (tabname == "#HomeTab") {
         window.history.pushState("", "", '/');
+        loadStats();
     }
     if (tabname == "#AnnTab") {
         window.history.pushState("", "", '/announcement');
@@ -1383,7 +1448,7 @@ function loadLeaderboard() {
         speedlimit *= 1.6;
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1534,7 +1599,7 @@ function loadDelivery() {
         speedlimit *= 1.6;
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + speedlimit + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2046,6 +2111,49 @@ function loadEvent() {
     page = parseInt($("#epages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
+
+    if (eventsCalendar == undefined) {
+        $.ajax({
+            url: "https://drivershub.charlws.com/atm/event/full",
+            type: "GET",
+            dataType: "json",
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            success: function (data) {
+                if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+                const d = data.response.list;
+                events = [];
+                offset = (+new Date().getTimezoneOffset()) * 60 * 1000;
+                for (var i = 0; i < d.length; i++) {
+                    events.push({
+                        "title": d[i].title,
+                        "url": "/event?eventid=" + d[i].eventid,
+                        "start": new Date(d[i].mts * 1000 - offset).toISOString().substring(0, 10)
+                    })
+                }
+
+                var eventsCalendarEl = document.getElementById('eventsCalendar');
+                var eventsCalendar = new FullCalendar.Calendar(eventsCalendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title'
+                    },
+                    events: events
+                });
+                eventsCalendar.render();
+                $(".fc-daygrid-event").removeClass("fc-daygrid-event");
+            },
+            error: function (data) {
+                toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+                console.warn(
+                    `Failed to load events. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+                console.log(data);
+            }
+        })
+    }
+
     $.ajax({
         url: "https://drivershub.charlws.com/atm/event?page=" + page,
         type: "GET",
@@ -2703,7 +2811,7 @@ function loadUserDelivery() {
     }
     console.log(speedlimit);
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + speedlimit + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2821,10 +2929,10 @@ async function loadProfile(userid) {
         return;
     }
     console.log("Load Profile " + userid);
-    $("#aucs1").attr("onclick",`chartscale=1;loadChart(${userid});`);
-    $("#aucs2").attr("onclick",`chartscale=2;loadChart(${userid});`);
-    $("#aucs3").attr("onclick",`chartscale=3;loadChart(${userid});`);
-    $("#aaddup1").attr("onclick",`addup=1-addup;loadChart(${userid});`);
+    $("#aucs1").attr("onclick", `chartscale=1;loadChart(${userid});`);
+    $("#aucs2").attr("onclick", `chartscale=2;loadChart(${userid});`);
+    $("#aucs3").attr("onclick", `chartscale=3;loadChart(${userid});`);
+    $("#aaddup1").attr("onclick", `addup=1-addup;loadChart(${userid});`);
     loadChart(userid);
     $("#udpages").val("1");
     curprofile = userid;
@@ -3737,7 +3845,7 @@ function PathDetect() {
         ShowTab("#Delivery", "#DeliveryBtn");
         if (logid) deliveryDetail(logid);
     } else if (p == "/event") ShowTab("#Event", "#EventBtn");
-    else if (p == "/member") {
+    else if (p.startsWith("/member")) {
         userid = getUrlParameter("userid");
         ShowTab("#AllMembers", "#AllMemberBtn");
         if (userid) loadProfile(userid);
@@ -3768,6 +3876,7 @@ $(document).ready(function () {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
+        $("body").html($("body").html().replaceAll("#382CDD","skyblue"));
     } else {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);

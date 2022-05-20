@@ -65,10 +65,36 @@ async def dlogStats():
     if newdistance is None:
         newdistance = 0
 
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE unit = 1")
+    ets2jobs = cur.fetchone()[0]
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE unit = 2")
+    atsjobs = cur.fetchone()[0]
+    
+    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE timestamp >= {int(time.time())-86400} AND userid >= 0 GROUP BY userid ORDER BY SUM(distance) DESC LIMIT 1")
+    t = cur.fetchall()
+    username = "/"
+    avatar = ""
+    userid = ""
+    distance = 0
+    dotdiscordid = 0
+    if len(t) > 0:
+        userid = t[0][0]
+        distance = t[0][1]
+        cur.execute(f"SELECT name, avatar, discordid FROM user WHERE userid = {userid}")
+        p = cur.fetchall()
+        if len(p) > 0:
+            username = p[0][0]
+            avatar = p[0][1]
+            dotdiscordid = p[0][2]
+        else:
+            username = "Unknown Driver"
+
     return {"error": False, "response": {"drivers": drivers, "newdrivers": newdrivers, \
-        "jobs": jobs, "newjobs": newjobs, "europrofit": europrofit, "dollarprofit": dollarprofit, \
+        "jobs": jobs, "newjobs": newjobs, "ets2jobs": ets2jobs, "atsjobs": atsjobs, \
+        "europrofit": europrofit, "dollarprofit": dollarprofit, \
         "neweuroprofit": neweuroprofit, "newdollarprofit": newdollarprofit, \
-            "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance}}
+            "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance, 
+                "driver_of_the_day": {"userid": userid, "discordid": str(dotdiscordid), "name": username, "avatar": avatar, "distance": int(distance)}}}
 
 @app.get("/atm/dlog/chart")
 async def dlogChart(request: Request, response: Response,

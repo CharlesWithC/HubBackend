@@ -148,6 +148,70 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     return {"error": False, "response": {"list": ret[:10], "page": page, "tot": tot}}
 
+@app.get("/atm/event/full")
+async def getFullEvent(request: Request, response: Response, authorization: str = Header(None)):
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": "No authorization header"}
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid authorization header"}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    conn = newconn()
+    cur = conn.cursor()
+
+    userid = -1
+    if stoken != "guest":
+        isapptoken = False
+        cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+            t = cur.fetchall()
+            if len(t) == 0:
+                response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+            isapptoken = True
+        discordid = t[0][0]
+        if not isapptoken:
+            ip = t[0][1]
+            orgiptype = 4
+            if validators.ipv6(ip) == True:
+                orgiptype = 6
+            curiptype = 4
+            if validators.ipv6(request.client.host) == True:
+                curiptype = 6
+            if orgiptype != curiptype:
+                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+                conn.commit()
+            else:
+                if ip != request.client.host:
+                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                    conn.commit()
+                    response.status_code = 401
+                    return {"error": True, "descriptor": "401: Unauthroized"}
+        cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
+        userid = t[0][0]
+        roles = t[0][1].split(",")
+    limit = ""
+    if userid == -1 or "10000" in roles: # external staff / not registered
+        limit = "AND pvt = 0"
+
+    cur.execute(f"SELECT eventid, title, mts FROM event WHERE eventid >= 0 ORDER BY mts")
+    t = cur.fetchall()
+    ret = []
+    for tt in t:
+        ret.append({"eventid": tt[0], "title": b64d(tt[1]), "mts": tt[2]})
+
+    return {"error": False, "response": {"list": ret}}
+
 @app.post("/atm/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:

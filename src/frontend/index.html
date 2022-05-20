@@ -19,12 +19,14 @@
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
     integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
 
   <script src="js/main.js"></script>
   <script src="js/functions.js"></script>
@@ -34,7 +36,11 @@
   <script src="js/ets2map_promods.js"></script>
   <script src="js/atsmap.js"></script>
   <script src="js/naviolive.js"></script>
-
+  <style>
+    .rounded-full {
+      transition: background-color 1000ms linear;
+    }
+  </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -589,7 +595,7 @@
                       fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
                       <path
                         d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
-                        fill="blue"></path>
+                        fill="#382CDD"></path>
                     </svg></span>
                   <h3 class="text-sm text-gray-600">Delivered</h3><span
                     class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">All</span>
@@ -650,8 +656,8 @@
             <div class="md:w-1/2 lg:w-1/4 p-4 statscard mb-6">
               <div class="p-6 rounded bg-white">
                 <div class="flex mb-2"><span class="inline-block mr-2">
-                    <svg style="color: #382CDD" version="1.1" id="fuel" xmlns="http://www.w3.org/2000/svg" width="15"
-                      height="15" viewBox="0 0 18 18">
+                    <svg style="color: #382CDD;position:relative;top:4px" version="1.1" id="fuel"
+                      xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 18 18">
                       <path
                         d="M13,6L13,6v5.5c0,0.2761-0.2239,0.5-0.5,0.5S12,11.7761,12,11.5v-2C12,8.6716,11.3284,8,10.5,8H9V2c0-0.5523-0.4477-1-1-1H2 C1.4477,1,1,1.4477,1,2v11c0,0.5523,0.4477,1,1,1h6c0.5523,0,1-0.4477,1-1V9h1.5C10.7761,9,11,9.2239,11,9.5v2 c0,0.8284,0.6716,1.5,1.5,1.5s1.5-0.6716,1.5-1.5V5c0-0.5523-0.4477-1-1-1l0,0V2.49C12.9946,2.2178,12.7723,1.9999,12.5,2 c-0.2816,0.0047-0.5062,0.2367-0.5015,0.5184C11.9987,2.5289,11.9992,2.5395,12,2.55V5C12,5.5523,12.4477,6,13,6s1-0.4477,1-1 s-0.4477-1-1-1 M8,6.5C8,6.7761,7.7761,7,7.5,7h-5C2.2239,7,2,6.7761,2,6.5v-3C2,3.2239,2.2239,3,2.5,3h5C7.7761,3,8,3.2239,8,3.5 V6.5z"
                         fill="#382CDD"></path>
@@ -734,7 +740,11 @@
             </div>
           </div>
 
-          <div class="py-8 px-6 pt-4 bg-white shadow rounded">
+          <div class="py-8 px-6 pt-4 bg-white shadow rounded  mb-6">
+            <canvas id="deliveryStatsChart" width="100%" height="100%"></canvas>
+          </div>
+
+          <div class="py-8 px-6 pt-4 bg-white shadow rounded  mb-6">
             <h2><b>New Drivers</b></h2>
             <div class="p-4 overflow-x-auto" style="display: block;">
               <table class="table-auto w-full" style="margin-top:20px">
@@ -761,14 +771,6 @@
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Map powered by <a href="https://map.charlws.com"
-              target="_blank">map.charlws.com</a></h3>
-        </div>
-        <p style="margin-left:15px">- You can see Navio Live Map with all players using Navio there.</p>
-      </div>
-      <br>
-      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-        <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold">Euro Truck Simulator 2 Map</h3>
         </div>
         <div id="map" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
@@ -786,6 +788,14 @@
           <h3 class="text-xl font-bold">American Truck Simulator Map</h3>
         </div>
         <div id="amap" style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;"></div>
+      </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Map powered by <a href="https://map.charlws.com"
+              target="_blank">map.charlws.com</a></h3>
+        </div>
+        <p style="margin-left:15px">- You can see Navio Live Map with all players using Navio there.</p>
       </div>
     </div>
   </section>
@@ -870,7 +880,6 @@
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="NewAnn()" id="newAnnBtn">Create Announcement</button>
           </div>
-          <hr>
         </div>
       </div>
     </div>
@@ -1233,7 +1242,89 @@
       </div>
   </section>
 
+
   <section id="Delivery" class="py-8 tabs" style="display:none">
+    <div class="px-4 mx-auto mx-auto lg:ml-80">
+      <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 py-8 px-6">
+        <div class="px-4 mb-4 md:mb-0" style="width:100%">
+          <div class="flex flex-wrap -mx-4 -mb-4 md:mb-0 px-6">
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+              <div class="p-6 rounded bg-white">
+                <div class="flex mb-2"><span class="inline-block mr-2">
+                    <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="18"
+                      height="18">
+                      <path fill="#382CDD"
+                        d="M576 136c0 22.09-17.91 40-40 40c-.248 0-.4551-.1266-.7031-.1305l-50.52 277.9C482 468.9 468.8 480 453.3 480H122.7c-15.46 0-28.72-11.06-31.48-26.27L40.71 175.9C40.46 175.9 40.25 176 39.1 176c-22.09 0-40-17.91-40-40S17.91 96 39.1 96s40 17.91 40 40c0 8.998-3.521 16.89-8.537 23.57l89.63 71.7c15.91 12.73 39.5 7.544 48.61-10.68l57.6-115.2C255.1 98.34 247.1 86.34 247.1 72C247.1 49.91 265.9 32 288 32s39.1 17.91 39.1 40c0 14.34-7.963 26.34-19.3 33.4l57.6 115.2c9.111 18.22 32.71 23.4 48.61 10.68l89.63-71.7C499.5 152.9 496 144.1 496 136C496 113.9 513.9 96 536 96S576 113.9 576 136z" />
+                    </svg> </span>
+                  <h3 class="text-sm text-gray-600">Driver of the Day</h3>
+                </div>
+                <h2 class="mb-2 text-3xl font-bold" id="dotd" style="font-size:22px">-</h2>
+                <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                    <svg style="position:relative;top:4px" xmlns="http://www.w3.org/2000/svg"
+                      class="icon icon-tabler icon-tabler-road-sign" width="18" height="18" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M10.5 20.4l-6.9 -6.9c-.781 -.781 -.781 -2.219 0 -3l6.9 -6.9c.781 -.781 2.219 -.781 3 0l6.9 6.9c.781 .781 .781 2.219 0 3l-6.9 6.9c-.781 .781 -2.219 .781 -3 0z" />
+                      <path d="M9 14v-2c0 -.59 .414 -1 1 -1h5" />
+                      <path d="M13 9l2 2l-2 2" /> </svg>
+                  </span><span><span id="dotddistance"></span></span></span>
+              </div>
+            </div>
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+              <div class="p-6 rounded bg-white">
+                <div class="flex mb-2"><span class="inline-block mr-2">
+                    <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                      <path
+                        d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
+                        fill="#382CDD"></path>
+                    </svg></span>
+                  <h3 class="text-sm text-gray-600">Delivered</h3><span
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span>
+                </div>
+                <h2 class="mb-2 text-3xl font-bold" id="dalljob" style="font-size:22px">-</h2>
+                <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                    <svg style="position:relative;top:4px" xmlns="http://www.w3.org/2000/svg"
+                      class="icon icon-tabler icon-tabler-road-sign" width="18" height="18" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M10.5 20.4l-6.9 -6.9c-.781 -.781 -.781 -2.219 0 -3l6.9 -6.9c.781 -.781 2.219 -.781 3 0l6.9 6.9c.781 .781 .781 2.219 0 3l-6.9 6.9c-.781 .781 -2.219 .781 -3 0z" />
+                      <path d="M9 14v-2c0 -.59 .414 -1 1 -1h5" />
+                      <path d="M13 9l2 2l-2 2" /> </svg>
+                  </span><span><span id="dtotdistance">-</span> Miles</span></span>
+              </div>
+            </div>
+            <div class="md:w-1/2 lg:w-1/4 p-4 statscard">
+              <div class="p-6 rounded bg-white">
+                <div class="flex mb-2"><span class="inline-block mr-2">
+                    <svg style="color: #382CDD" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                      <path
+                        d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7zm1.294 7.456A1.999 1.999 0 0 1 4.732 11h5.536a2.01 2.01 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456zM12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12v4zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"
+                        fill="#382CDD"></path>
+                    </svg></span>
+                  <h3 class="text-sm text-gray-600">Profit</h3><span
+                    class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">24h</span>
+                </div>
+                <h2 class="mb-2 text-3xl font-bold" id="dprofit" style="font-size:22px">-</h2>
+                <span class="text-xs text-green-500"><span class="inline-block mr-2">
+                    <svg style="position:relative;top:4px" xmlns="http://www.w3.org/2000/svg"
+                      class="icon icon-tabler icon-tabler-road-sign" width="18" height="18" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M10.5 20.4l-6.9 -6.9c-.781 -.781 -.781 -2.219 0 -3l6.9 -6.9c.781 -.781 2.219 -.781 3 0l6.9 6.9c.781 .781 .781 2.219 0 3l-6.9 6.9c-.781 .781 -2.219 .781 -3 0z" />
+                      <path d="M9 14v-2c0 -.59 .414 -1 1 -1h5" />
+                      <path d="M13 9l2 2l-2 2" /> </svg>
+                  </span><span>At The Mile Logistics</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
@@ -1357,7 +1448,17 @@
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
         <div class="flex px-6 pb-4 border-b">
-          <h3 class="text-xl font-bold">Events</h3>
+          <h3 class="text-xl font-bold">Events Calendar</h3>
+        </div>
+        <br>
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <div id='eventsCalendar'></div>
+        </div>
+      </div>
+      <br>
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div class="flex px-6 pb-4 border-b">
+          <h3 class="text-xl font-bold">Events List</h3>
         </div>
         <div class="p-4 overflow-x-auto" style="display: block;">
           <table class="table-auto w-full">
@@ -1497,7 +1598,6 @@
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="NewEvent()" id="newEventBtn">Create Event</button>
           </div>
-          <hr>
         </div>
       </div>
     </div>
@@ -1540,6 +1640,16 @@
             onclick="UpdateEventAttendees()">Update</button>
         </div>
       </div>
+  </section>
+
+  <section id="EventDetailTab" class="py-8 tabs" style="display:none">
+    <div style="padding:50px;padding-top:0;">
+      <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
+        <div style="display:block">
+
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="MyApp" class="py-8 tabs" style="display:none">
