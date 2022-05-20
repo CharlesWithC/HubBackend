@@ -1852,7 +1852,9 @@ rri = 0;
 rrspeed = 20;
 rrevents = [];
 punit = "€";
+curlogid = -1;
 async function deliveryRoutePlay() {
+    if(window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
     clearInterval(dmapint);
     dmapint = -999;
     window.mapcenter["dmap"] = [deliveryRoute[0][0], -deliveryRoute[0][1]];
@@ -1860,7 +1862,7 @@ async function deliveryRoutePlay() {
     preh = 0;
     pred = 0;
     pret = 0;
-    for (; rri < deliveryRoute.length; rri++) {
+    for (; rri < deliveryRoute.length; rri+=Math.max(rrspeed - 50, 1)) {
         if (rrspeed <= 0) rrspeed = 1;
         if (rri < 0) rri = 0;
         if (rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
@@ -1948,6 +1950,7 @@ async function deliveryRoutePlay() {
             rri -= 1;
         }
     }
+    $("#rrplay").html("Replay");
     setTimeout(function () {
         $(".dmap-player").remove();
         window.mapcenter["dmap"] = undefined;
@@ -1955,6 +1958,8 @@ async function deliveryRoutePlay() {
 }
 
 function rrplayswitch() {
+    if($("#rrplay").html() == "Replay") deliveryDetail(curlogid);
+    if(window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
     if (dmapint == -999) {
         dmapint = -2;
         $("#rrplay").html("Play");
@@ -1965,9 +1970,10 @@ function rrplayswitch() {
 }
 
 function deliveryDetail(logid) {
+    curlogid = logid;
     window.autofocus["dmap"] = -2;
-    $("#routereplydiv").hide();
-    $("#routereplyload").show();
+    $("#routereplaydiv").hide();
+    $("#routereplayload").show();
     rri = 0;
     rrspeed = 20;
     $("#DeliveryInfoBtn" + logid).attr("disabled", "disabled");
@@ -2137,13 +2143,11 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium">Time submitted</td>
                         <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
 
+                $("#routereplayload").html("Route replay loading...");
+
                 tabname = "#DeliveryDetailTab";
                 $(".tabs").hide();
                 $(tabname).show();
-                setTimeout(function () {
-                    $("#routereplyload").hide();
-                    $("#routereplydiv").fadeIn();
-                }, 5000);
                 setTimeout(function () {
                     telemetry = data.response.telemetry.split(";");
                     basic = telemetry[0].split(",");
@@ -2165,6 +2169,7 @@ function deliveryDetail(logid) {
                         if (dpoints[i][0] < minx) minx = dpoints[i][0];
                     }
                     $("#dmap").children().remove();
+                    window.dn = {};
                     window.mapcenter["dmap"] = undefined;
                     if (game == 1 && (mods == "promod" || JSON.stringify(data.response).toLowerCase().indexOf("promod") != -1)) {
                         LoadETS2PMap("dmap");
@@ -2172,7 +2177,14 @@ function deliveryDetail(logid) {
                         LoadETS2Map("dmap");
                     } else if (game == 2) { // ats
                         LoadATSMap("dmap");
+                    } else {
+                        $("#routereplayload").html("Route replay not available.");
+                        return;
                     }
+                    setTimeout(function () {
+                        $("#routereplayload").hide();
+                        $("#routereplaydiv").fadeIn();
+                    }, 2000);
                     deliveryRoute = dpoints;
                     $("#rp_tot").html(deliveryRoute.length);
                     dpoints150 = dpoints.filter(function (el, i) {
@@ -4081,7 +4093,11 @@ function PathDetect() {
     else if (p == "/map") ShowTab("#Map", "#MapBtn");
     else if (p == "/delivery") {
         logid = getUrlParameter("logid");
-        if (logid) deliveryDetail(logid);
+        if (logid){
+            $(".tabbtns").removeClass("bg-indigo-500");
+            $("#DeliveryBtn").addClass("bg-indigo-500");   
+            deliveryDetail(logid);
+        }
         else ShowTab("#Delivery", "#DeliveryBtn");
     } else if (p == "/event") ShowTab("#Event", "#EventBtn");
     else if (p == "/staffevent") ShowTab("#StaffEvent", "#StaffEventBtn");
