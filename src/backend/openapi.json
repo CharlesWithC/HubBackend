@@ -1653,6 +1653,53 @@
                 }
             }
         },
+        "/atm/event/vote": {
+            "post": {
+                "summary": "Vote / Unvote an event",
+                "tags": ["event"],
+                "operationId": "voteEvent",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "eventid": {
+                                        "description": "Event ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["eventid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/event/attendee": {
             "post": {
                 "summary": "Update Event Attendees (Overwrite)",

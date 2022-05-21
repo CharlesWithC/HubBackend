@@ -42,9 +42,9 @@ function DarkMode() {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("text-green","text-temp"));
+        $("body").html($("body").html().replaceAll("text-green", "text-temp"));
         $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
-        $("body").html($("body").html().replaceAll("text-temp","text-green"));
+        $("body").html($("body").html().replaceAll("text-temp", "text-green"));
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -371,7 +371,7 @@ curtab = "#HomeTab";
 
 loadworking = false;
 async function GeneralLoad() {
-    if(loadworking) return;
+    if (loadworking) return;
     loadworking = true;
     if (isdark) $("#loading").css("border", "solid lightgreen 1px");
     else $("#loading").css("border", "solid green 1px");
@@ -819,7 +819,7 @@ function FetchEvent(showdetail = -1) {
             }
             $("#eventimgs").val(imgs);
 
-            if(showdetail != -1) eventDetail(showdetail);
+            if (showdetail != -1) eventDetail(showdetail);
         },
         error: function (data) {
             $("#fetchEventBtn").html("Fetch Data");
@@ -1471,7 +1471,7 @@ function validate() {
                     "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth'>Click here to bind it</a></p>");
             } else {
                 color = "green";
-                if(isdark) color = "lightgreen";
+                if (isdark) color = "lightgreen";
                 $("#header").prepend(`<p style="color:${color}"><svg style="color:${color};display:inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                 fill="currentColor" class="bi bi-activity" viewBox="0 0 16 16">
                 <path fill-rule="evenodd"
@@ -1543,6 +1543,24 @@ function validate() {
                             }
                         }
                     });
+                } else {
+                    hrole = data.response[highestrole];
+                    localStorage.setItem("highestrole", hrole);
+                    localStorage.setItem("rolelist", JSON.stringify(rolelist));
+                    localStorage.setItem("rolesLastUpdate", (+new Date()).toString());
+                    if (hrole == undefined || hrole == "undefined") hrole = "Loner";
+                    $("#role").html(hrole);
+                    roleids = Object.keys(rolelist);
+                    for (var i = 0; i < roleids.length; i++) {
+                        if (roleids[i] <= highestrole)
+                            $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                `" name="assignrole" value="role` + roleids[i] + `">
+<label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                        else
+                            $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                `" name="assignrole" value="role` + roleids[i] + `">
+<label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                    }
                 }
                 if (userid != -1) {
                     $.ajax({
@@ -1673,10 +1691,11 @@ function loadLeaderboard() {
                 } else {
                     avatar = "/images/atm-black.png";
                 }
+                console.log(user.totnolimit);
                 $("#leaderboardTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
                 <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
-                <td class="py-5 px-6">${point2rank(user.totalpnt)}</td>
+                <td class="py-5 px-6">${point2rank(user.totnolimit)}</td>
                 <td class="py-5 px-6">${distance}</td>
                 <td class="py-5 px-6">${user.eventpnt}</td>
               <td class="py-5 px-6">${totalpnt}</td>
@@ -1864,7 +1883,7 @@ rrevents = [];
 punit = "€";
 curlogid = -1;
 async function deliveryRoutePlay() {
-    if(window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
+    if (window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
     clearInterval(dmapint);
     dmapint = -999;
     window.mapcenter["dmap"] = [deliveryRoute[0][0], -deliveryRoute[0][1]];
@@ -1872,7 +1891,7 @@ async function deliveryRoutePlay() {
     preh = 0;
     pred = 0;
     pret = 0;
-    for (; rri < deliveryRoute.length; rri+=Math.max(rrspeed - 50, 1)) {
+    for (; rri < deliveryRoute.length; rri += Math.max(rrspeed - 50, 1)) {
         if (rrspeed <= 0) rrspeed = 1;
         if (rri < 0) rri = 0;
         if (rri >= deliveryRoute.length) rri = deliveryRoute.length - 1;
@@ -1941,19 +1960,19 @@ async function deliveryRoutePlay() {
                     eventmsg = "Truck repaired.";
                 } else if (rrevents[i].type == "teleport") {
                     eventmsg = "Teleported.";
-                } else if(rrevents[i].type == "fine"){
+                } else if (rrevents[i].type == "fine") {
                     meta = rrevents[i].meta;
                     console.log(rrevents[i]);
                     finetype = meta.offence;
-                    if(finetype == "speeding_camera"){
+                    if (finetype == "speeding_camera") {
                         curspeed = TSeparator(parseInt(meta.speed / 1.6));
                         speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
                         eventmsg = `Captured by speeding camera ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
-                    } else if(finetype == "speeding"){
+                    } else if (finetype == "speeding") {
                         curspeed = TSeparator(parseInt(meta.speed / 1.6));
                         speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
                         eventmsg = `Caught by police car ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
-                    } else if(finetype == "crash"){
+                    } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     }
                 }
@@ -1983,8 +2002,8 @@ async function deliveryRoutePlay() {
 }
 
 function rrplayswitch() {
-    if($("#rrplay").html() == "Replay") deliveryDetail(curlogid);
-    if(window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
+    if ($("#rrplay").html() == "Replay") deliveryDetail(curlogid);
+    if (window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
     if (dmapint == -999) {
         dmapint = -2;
         $("#rrplay").html("Play");
@@ -2450,7 +2469,7 @@ function loadEvent() {
     })
 }
 
-function eventvote(eventid){
+function eventvote(eventid) {
     $.ajax({
         url: "https://drivershub.charlws.com/atm/event/vote",
         type: "POST",
@@ -2462,7 +2481,7 @@ function eventvote(eventid){
             "eventid": eventid
         },
         success: function (data) {
-            if(data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             $("#eventid").val(eventid);
             FetchEvent(eventid, showdetail = eventid);
             return toastFactory("success", "Success:", data.response, 5000, false);
@@ -2499,7 +2518,7 @@ async function eventDetail(eventid) {
         return el != "";
     });
     userid = localStorage.getItem("userid");
-    if(voteids.indexOf(String(userid)) != -1){
+    if (voteids.indexOf(String(userid)) != -1) {
         voteop = `<a style="cursor:pointer;color:grey" onclick="eventvote(${eventid})">(Unvote)</a>`;
     }
     votecnt = voteids.length;
@@ -2510,7 +2529,7 @@ async function eventDetail(eventid) {
     info += "<p><b>Distance</b>: " + event.distance + "</p>";
     info += "<p><b>Meetup Time</b>: " + getDateTime(event.mts * 1000) + "</p>";
     info += "<p><b>Departure Time</b>: " + getDateTime(event.dts * 1000) + "</p>";
-    info += "<p><b>Voted ("+votecnt+")</b>: " + voteop + " " + event.vote + "</p>";
+    info += "<p><b>Voted (" + votecnt + ")</b>: " + voteop + " " + event.vote + "</p>";
     info += "<p><b>Attendees</b>: " + event.attendee + "</p>";
     for (var i = 0; i < event.img.length; i++) {
         info += "<img src='" + event.img[i] + "' style='width:100%'/>";
@@ -4118,12 +4137,11 @@ function PathDetect() {
     else if (p == "/map") ShowTab("#Map", "#MapBtn");
     else if (p == "/delivery") {
         logid = getUrlParameter("logid");
-        if (logid){
+        if (logid) {
             $(".tabbtns").removeClass("bg-indigo-500");
-            $("#DeliveryBtn").addClass("bg-indigo-500");   
+            $("#DeliveryBtn").addClass("bg-indigo-500");
             deliveryDetail(logid);
-        }
-        else ShowTab("#Delivery", "#DeliveryBtn");
+        } else ShowTab("#Delivery", "#DeliveryBtn");
     } else if (p == "/event") ShowTab("#Event", "#EventBtn");
     else if (p == "/staffevent") ShowTab("#StaffEvent", "#StaffEventBtn");
     else if (p == "/member") {
@@ -4160,15 +4178,13 @@ $(document).ready(function () {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
-        $("body").html($("body").html().replaceAll("text-green","text-temp"));
+        $("body").html($("body").html().replaceAll("text-green", "text-temp"));
         $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
-        $("body").html($("body").html().replaceAll("text-temp","text-green"));
+        $("body").html($("body").html().replaceAll("text-temp", "text-green"));
     } else {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);
     }
-    validate();
-    PathDetect();
     var date = new Date();
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     offset = (+new Date().getTimezoneOffset()) * 60 * 1000;
@@ -4176,6 +4192,8 @@ $(document).ready(function () {
     date = new Date(+date - offset);
     $("#lbstart").val(firstDay.toISOString().substring(0, 10));
     $("#lbend").val(date.toISOString().substring(0, 10));
+    validate();
+    PathDetect();
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         t = $("div");

@@ -567,7 +567,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             webhook = Webhook.from_url("https://discordapp.com/api/webhooks/938826735053594685/jKO8djrHZbzafVOb9ooQVNosHrcDP9Wu5WtA39MuLChW1NQiAnVXrwCyagL-tn3ruanA", session=session)
             embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **At The Mile Logistics** as a **Driver**. Welcome to the family <:atmlove:931247295201149038>", color = 0x770202)
             embed.set_footer(text = f"At The Mile | Team Update", icon_url = config.gicon)
-            embed.set_image(url = "https://images-ext-2.discordapp.net/external/15IxWrNDPD_4ThKYDuctEfFfccn_MYjXo-XzbWJUbEs/https/media.discordapp.net/attachments/931964061669801994/971510588960309298/Team_Update_2022.png")
+            embed.set_image(url = "https://hub.atmvtc.com/images/TeamUpdate.png")
             embed.timestamp = datetime.now()
             await webhook.send(content = usermention, embed=embed)
         

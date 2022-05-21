@@ -314,8 +314,13 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             p = cur.fetchall()
             if len(p) == 0:
                 continue
+            cur.execute(f"SELECT distance / 1.6 + eventpnt FROM driver WHERE userid = {userid}")
+            o = cur.fetchall()
+            totnolimit = 0
+            if len(o) > 0:
+                totnolimit = o[0][0]
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": userdistance[userid], "eventpnt": userevent[userid], "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid]})
+                "distance": userdistance[userid], "eventpnt": userevent[userid], "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid], "totnolimit": totnolimit})
 
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
@@ -331,7 +336,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         p = cur.fetchall()
         if len(p) == 0:
             continue
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "totalpnt": tt[1]})
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "totalpnt": tt[1], "totnolimit": tt[1]})
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0)")
     t = cur.fetchall()
