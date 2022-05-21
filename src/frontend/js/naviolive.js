@@ -172,6 +172,18 @@ function PlayerPoint(steamid, mapid){
         d = driverdata[steamid];
         if(d == undefined) return;
         window.mapcenter[mapid] = [d.truck.position.x, -d.truck.position.z];
+        $("#map > div > canvas").click(function () {
+            clearInterval(autocenterint["map"]);
+            autocenterint["map"] = -1;
+        });
+        $("#amap > div > canvas").children().click(function () {
+            clearInterval(autocenterint["amap"]);
+            autocenterint["amap"] = -1;
+        });
+        $("#pmap > div > canvas").children().click(function () {
+            clearInterval(autocenterint["pmap"]);
+            autocenterint["pmap"] = -1;
+        });
     }, 100)
 }
 

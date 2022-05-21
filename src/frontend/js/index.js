@@ -464,20 +464,6 @@ async function ShowTab(tabname, btnname) {
             LoadETS2PMap();
             LoadATSMap();
         }, 50);
-        setTimeout(function () {
-            $("#map > div > canvas").click(function () {
-                clearInterval(autocenterint["map"]);
-                autocenterint["map"] = -1;
-            });
-            $("#amap > div > canvas").children().click(function () {
-                clearInterval(autocenterint["amap"]);
-                autocenterint["amap"] = -1;
-            });
-            $("#pmap > div > canvas").children().click(function () {
-                clearInterval(autocenterint["pmap"]);
-                autocenterint["pmap"] = -1;
-            });
-        }, 500);
     }
     if (tabname == "#HomeTab") {
         window.history.pushState("", "", '/');
