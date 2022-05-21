@@ -830,19 +830,6 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     rank = point2rank(totalpnt)
 
     try:
-        msg = f"""GG <@{discordid}>! You have ranked up to <@&{rank}>!"""
-
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
-        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
-                "footer": {"text": f"Congratulations!", "icon_url": config.gicon},\
-                        "timestamp": str(datetime.now()), "color": 11730944}}))
-    except:
-        import traceback
-        traceback.print_exc()
-        pass
-
-    try:
         headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
         r=requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}", headers=headers, timeout = 3)
         d = json.loads(r.text)
@@ -858,6 +845,19 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
                 requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
                 for role in curroles:
                     requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                try:
+                    msg = f"""GG <@{discordid}>! You have ranked up to <@&{rank}>!"""
+
+                    headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+                    ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
+                    r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
+                            "footer": {"text": f"Congratulations!", "icon_url": config.gicon},\
+                                    "timestamp": str(datetime.now()), "color": 11730944}}))
+                                    
+                except:
+                    import traceback
+                    traceback.print_exc()
+                    pass
                 return {"error": False, "response": "You have been given the role."}
         else:
             return {"error": True, "descriptor": "Member not in Discord Server"}
