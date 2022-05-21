@@ -109,7 +109,8 @@ function CountOnlineDriver() {
 setInterval(function () {
     cnt = CountOnlineDriver()
     $("#livedriver").html(cnt);
-    $("#livedriver2").html(cnt);
+    if(cnt <= 1) $("#livedriver2").html(cnt + " driver trucking");
+    else $("#livedriver2").html(cnt + " drivers trucking");
     dt = new Date();
     t = pad(dt.getHours(), 2) + ":" + pad(dt.getMinutes(), 2) + ":" + pad(dt.getSeconds(), 2);
     $("#livedriverdt").html(t);

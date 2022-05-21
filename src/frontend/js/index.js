@@ -42,7 +42,9 @@ function DarkMode() {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
+        $("body").html($("body").html().replaceAll("text-green","text-temp"));
         $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
+        $("body").html($("body").html().replaceAll("text-temp","text-green"));
     } else {
         $("body").css("transition", "color 1000ms linear");
         $("body").css("transition", "background-color 1000ms linear");
@@ -367,7 +369,10 @@ function loadStats(basic = false) {
 eventsCalendar = undefined;
 curtab = "#HomeTab";
 
+loadworking = false;
 async function GeneralLoad() {
+    if(loadworking) return;
+    loadworking = true;
     if (isdark) $("#loading").css("border", "solid lightgreen 1px");
     else $("#loading").css("border", "solid green 1px");
     $("#loading").css("width", "50%");
@@ -396,14 +401,11 @@ async function GeneralLoad() {
         await sleep(1);
     }
     $("#loading").css("border", "solid transparent 1px");
+    loadworking = false;
 }
 
 async function ShowTab(tabname, btnname) {
-    if (tabname != "#Event") {
-        eventsCalendar = undefined;
-        $("#eventsCalendar").children().remove();
-        $("#eventsCalendar").attr("class", "");
-    }
+    loadworking = true;
     $("html, body").animate({
         scrollTop: 0
     }, "slow");
@@ -441,7 +443,13 @@ async function ShowTab(tabname, btnname) {
             $("#loading").css("width", `${lastw}%`);
             await sleep(1);
         }
+        if (tabname != "#Event") {
+            eventsCalendar = undefined;
+            $("#eventsCalendar").children().remove();
+            $("#eventsCalendar").attr("class", "");
+        }
         $("#loading").css("border", "solid transparent 1px");
+        loadworking = false;
     }, 10);
     $(".tabbtns").removeClass("bg-indigo-500");
     $(btnname).addClass("bg-indigo-500");
@@ -1462,12 +1470,14 @@ function validate() {
                 $("#header").prepend(
                     "<p style='color:orange'>TruckersMP not bound! You must bind it to become a member! <a style='color:grey' href='/auth'>Click here to bind it</a></p>");
             } else {
-                $("#header").prepend(`<p style="color:lightgreen"><svg style="color:lightgreen;display:inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                color = "green";
+                if(isdark) color = "lightgreen";
+                $("#header").prepend(`<p style="color:${color}"><svg style="color:${color};display:inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                 fill="currentColor" class="bi bi-activity" viewBox="0 0 16 16">
                 <path fill-rule="evenodd"
                   d="M6 2a.5.5 0 0 1 .47.33L10 12.036l1.53-4.208A.5.5 0 0 1 12 7.5h3.5a.5.5 0 0 1 0 1h-3.15l-1.88 5.17a.5.5 0 0 1-.94 0L6 3.964 4.47 8.171A.5.5 0 0 1 4 8.5H.5a.5.5 0 0 1 0-1h3.15l1.88-5.17A.5.5 0 0 1 6 2Z"
-                  fill="lightgreen"></path>
-              </svg>&nbsp;&nbsp;<span id="livedriver2">-</span> drivers trucking</p>`);
+                  fill="${color}"></path>
+              </svg>&nbsp;&nbsp;<span id="livedriver2" style="color:${color}"></span></p>`);
             }
         }
     });
@@ -1931,6 +1941,21 @@ async function deliveryRoutePlay() {
                     eventmsg = "Truck repaired.";
                 } else if (rrevents[i].type == "teleport") {
                     eventmsg = "Teleported.";
+                } else if(rrevents[i].type == "fine"){
+                    meta = rrevents[i].meta;
+                    console.log(rrevents[i]);
+                    finetype = meta.offence;
+                    if(finetype == "speeding_camera"){
+                        curspeed = TSeparator(parseInt(meta.speed / 1.6));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
+                        eventmsg = `Captured by speeding camera ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                    } else if(finetype == "speeding"){
+                        curspeed = TSeparator(parseInt(meta.speed / 1.6));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
+                        eventmsg = `Caught by police car ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                    } else if(finetype == "crash"){
+                        eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
+                    }
                 }
                 if (eventmsg != "") {
                     randomid = Math.random().toString(36).substring(7);
@@ -2483,8 +2508,8 @@ async function eventDetail(eventid) {
     info += "<p><b>From</b>: " + event.departure + "</p>";
     info += "<p><b>To</b>: " + event.destination + "</p>";
     info += "<p><b>Distance</b>: " + event.distance + "</p>";
-    info += "<p><b>Start Time</b>: " + getDateTime(event.mts * 1000) + "</p>";
-    info += "<p><b>End Time</b>: " + getDateTime(event.dts * 1000) + "</p>";
+    info += "<p><b>Meetup Time</b>: " + getDateTime(event.mts * 1000) + "</p>";
+    info += "<p><b>Departure Time</b>: " + getDateTime(event.dts * 1000) + "</p>";
     info += "<p><b>Voted ("+votecnt+")</b>: " + voteop + " " + event.vote + "</p>";
     info += "<p><b>Attendees</b>: " + event.attendee + "</p>";
     for (var i = 0; i < event.img.length; i++) {
@@ -4135,7 +4160,9 @@ $(document).ready(function () {
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
+        $("body").html($("body").html().replaceAll("text-green","text-temp"));
         $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("green", "lightgreen"));
+        $("body").html($("body").html().replaceAll("text-temp","text-green"));
     } else {
         $("head").append(`<style>
             .rounded-full {background-color: #ddd}</style>`);
