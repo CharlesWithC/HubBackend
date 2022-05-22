@@ -295,6 +295,7 @@ function loadStats(basic = false) {
             deliveryStatsChart = new Chart(ctx, config);
         }
     });
+    if(token.length != 36) return; // guest / invalid
     if (!basic) {
         $.ajax({
             url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
@@ -304,6 +305,7 @@ function loadStats(basic = false) {
                 "Authorization": "Bearer " + token
             },
             success: function (data) {
+                if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                 users = data.response.list;
                 $("#leaderboard").empty();
                 for (var i = 0; i < 5; i++) {
@@ -337,6 +339,7 @@ function loadStats(basic = false) {
                 "Authorization": "Bearer " + token
             },
             success: function (data) {
+                if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                 users = data.response.list;
                 $("#newdriverTable").empty();
                 for (var i = 0; i < 5; i++) {
@@ -1433,7 +1436,7 @@ function validate() {
             "<p style='color:orange'>Guest Mode - <a style='color:grey' href='/login'>Login</a></p>");
         return;
     }
-    if (userid != -1) {
+    if (userid != -1 && isNumber(userid)) {
         $("#memberOnlyTabs").show();
     }
     $("#recruitment").show();

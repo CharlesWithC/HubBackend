@@ -14,14 +14,14 @@ from functions import *
 @app.get("/atm/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -35,7 +35,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
             t = cur.fetchall()
             if len(t) == 0:
-                response.status_code = 401
+                # response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
             isapptoken = True
         discordid = t[0][0]
@@ -54,12 +54,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
                 if ip != request.client.host:
                     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                     conn.commit()
-                    response.status_code = 401
+                    # response.status_code = 401
                     return {"error": True, "descriptor": "401: Unauthroized"}
         cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
         userid = t[0][0]
         roles = t[0][1].split(",")
@@ -105,21 +105,21 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 @app.post("/atm/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
@@ -136,12 +136,12 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -158,7 +158,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         ok = True
     
     if not ok:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
@@ -204,14 +204,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 @app.patch("/atm/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -219,7 +219,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
@@ -236,12 +236,12 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -258,7 +258,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         ok = True
     
     if not ok:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
@@ -304,14 +304,14 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 @app.delete("/atm/announcement")
 async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -319,7 +319,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     discordid = t[0][0]
     ip = t[0][1]
@@ -336,12 +336,12 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -357,7 +357,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         ok = True
     
     if not ok:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     cur.execute(f"SELECT * FROM announcement WHERE aid = {aid}")

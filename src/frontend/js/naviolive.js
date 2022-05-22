@@ -35,6 +35,7 @@ function UpdateSteam() {
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
         success: function (data) {
+            if (data.error) return;
             l = data.response.list;
             for (var i = 0; i < l.length; i++) {
                 membersteam[l[i].steamid] = l[i].name;

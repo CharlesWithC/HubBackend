@@ -213,14 +213,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     if page <= 0:
         page = 1
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -232,7 +232,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
         isapptoken = True
     discordid = t[0][0]
@@ -251,16 +251,16 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                response.status_code = 401
+                # response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     userid = t[0][0]
     if userid == -1:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     if starttime != -1 and endtime != -1 or speedlimit != 0:
@@ -349,14 +349,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 @app.get("/atm/dlog/newdrivers")
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -368,7 +368,7 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
         isapptoken = True
     discordid = t[0][0]
@@ -387,16 +387,16 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                response.status_code = 401
+                # response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     userid = t[0][0]
     if userid == -1:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     conn = newconn()
@@ -415,14 +415,14 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
 async def dlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -454,7 +454,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
                 if ip != request.client.host:
                     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                     conn.commit()
-                    response.status_code = 401
+                    # response.status_code = 401
                     return {"error": True, "descriptor": "401: Unauthroized"}
         cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
@@ -530,14 +530,14 @@ async def dlogList(request: Request, response: Response, authorization: str = He
 @app.get("/atm/dlog/detail")
 async def dlogDetail(logid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "Invalid authorization header"}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     conn = newconn()
     cur = conn.cursor()
@@ -549,7 +549,7 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 401
+            # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
         isapptoken = True
     discordid = t[0][0]
@@ -568,16 +568,16 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                response.status_code = 401
+                # response.status_code = 401
                 return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     userid = t[0][0]
     if userid == -1:
-        response.status_code = 401
+        # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     conn = newconn()
