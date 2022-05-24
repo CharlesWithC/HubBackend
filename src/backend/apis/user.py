@@ -460,6 +460,8 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
         name = "Unknown"
         if len(p) > 0:
             name = p[0][0]
+        if tt[0] == -999:
+            name = "System"
         ret.append({"timestamp": tt[2], "user": name, "operation": tt[1]})
 
     cur.execute(f"SELECT COUNT(*) FROM auditlog")

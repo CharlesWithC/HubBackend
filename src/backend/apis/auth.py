@@ -60,7 +60,7 @@ async def userCallback(code: str, request: Request, response: Response):
         email = email.replace("'", "''")
         if len(t) == 0:
             cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{user_data['avatar']}', '',\
-                '{email}', 0, 0, '', {int(time.time())})")
+                '{email}', -1, -1, '', {int(time.time())})")
             await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)\nUser must be added to member list by staff manually.")
         else:
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
@@ -148,15 +148,21 @@ async def userValidate(request: Request, response: Response, authorization: str 
             conn.commit()
             return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT steamid, truckersmpid FROM user WHERE discordid = '{t[0][0]}'")
+    cur.execute(f"SELECT steamid, truckersmpid, joints FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     steamid = t[0][0]
     truckersmpid = t[0][1]
+    joints = t[0][2]
     extra = ""
-    if steamid == 0:
-        extra = "steamauth"
-    elif truckersmpid == 0:
+    if truckersmpid <= 0:
         extra = "truckersmp"
+        cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
+    if steamid <= 0:
+        extra = "steamauth"
+        cur.execute(f"UPDATE user SET steamid = 0 WHERE discordid = '{discordid}'")
+    conn.commit()
+    if steamid == -1 or truckersmpid == -1:
+        extra = ""
     return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
 @app.get("/atm/user/steamauth")

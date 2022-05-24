@@ -295,7 +295,7 @@ function loadStats(basic = false) {
             deliveryStatsChart = new Chart(ctx, config);
         }
     });
-    if (token.length != 36) return; // guest / invalid
+    if (token.length != 36 || !isNumber(localStorage.getItem("userid")) || localStorage.getItem("userid") == -1) return; // guest / invalid
     if (!basic) {
         $.ajax({
             url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
