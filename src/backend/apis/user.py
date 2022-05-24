@@ -230,6 +230,23 @@ async def userList(page:int, request: Request, response: Response, authorization
     if userid == -1:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
+    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    adminid = t[0][0]
+    roles = t[0][1].split(",")
+    while "" in roles:
+        roles.remove("")
+    adminhighest = 99999
+    for i in roles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+    
+    if adminhighest >= 30:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
     
     cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC")
     t = cur.fetchall()
@@ -308,17 +325,10 @@ async def userInfo(request: Request, response: Response, authorization: str = He
     for i in roles:
         if int(i) < adminhighest:
             adminhighest = int(i)
-            
-    if discordid != qdiscordid and qdiscordid != 0:
-        if adminhighest >= 30:
-            # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
-        discordid = qdiscordid
-        
-        cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {qdiscordid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            return {"error": True, "descriptor": "User not found"}
+    
+    if adminhighest >= 30:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     roles = t[0][3].split(",")
     while "" in roles:

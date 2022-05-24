@@ -508,9 +508,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
+    if adminhighest >= 30:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     userid = int(form["userid"])
+    if userid < 0:
+        return {"error": True, "descriptor": "Invalid userid"}
     roles = form["roles"].split(",")
     while "" in roles:
         roles.remove("")

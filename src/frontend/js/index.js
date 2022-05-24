@@ -562,6 +562,8 @@ function FetchAnnouncement() {
             const announcement = data.response;
             $("#anntitle").val(announcement.title);
             $("#anncontent").val(announcement.content);
+            if(announcement.private) $("#annpvt-1").prop("checked", true);
+            else $("#annpvt-0").prop("checked", true);
             $('#annselect option:eq(' + announcement.atype + ')').prop('selected', true);
         },
         error: function (data) {
@@ -806,6 +808,8 @@ function FetchEvent(showdetail = -1) {
             for (let i = 0; i < event.img.length; i++) {
                 imgs += event.img[i] + "\n";
             }
+            if(event.private) $("#eventpvt-1").prop("checked", true);
+            else $("#eventpvt-0").prop("checked", true);
             $("#eventimgs").val(imgs);
 
             if (showdetail != -1) eventDetail(showdetail);
@@ -1382,6 +1386,7 @@ function ShowStaffTabs() {
             }
         }
         if (highestrole <= 10) {
+            $("#updateStaffPos").show();
             $("#StaffAnnTabBtn").show();
             $("#StaffEventBtn").show(); // event staff
             $("#eventattendee").show();
@@ -2342,7 +2347,7 @@ function loadEvent() {
                         height: 'auto'
                     });
                     eventsCalendar.render();
-                    $(".fc-daygrid-event").removeClass("fc-daygrid-event");
+                    setInterval(function(){$(".fc-daygrid-event").removeClass("fc-daygrid-event");},500);
                 }, 50);
             },
             error: function (data) {
@@ -2447,10 +2452,12 @@ function loadEvent() {
                     return el != "";
                 });
                 votecnt = voteids.length;
+                pvt = "";
+                if(event.private) pvt = "<span style='color:red'>(Private)</span> ";
                 $("#eventTable").append(`
             <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${event.eventid}</td>
-              <td class="py-5 px-6 font-medium">${event.title}</td>
+              <td class="py-5 px-6 font-medium">${pvt} ${event.title}</td>
               <td class="py-5 px-6 font-medium">${event.departure}</td>
               <td class="py-5 px-6 font-medium">${event.destination}</td>
               <td class="py-5 px-6 font-medium">${event.distance}</td>

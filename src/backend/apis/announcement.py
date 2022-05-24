@@ -68,7 +68,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         limit = "AND pvt = 0"
 
     if aid != -1:
-        cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid = {aid} {limit}")
+        cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
             return {"error": True, "descriptor": "Announcement not found"}
@@ -78,12 +78,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        return {"error": False, "response": {"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3]}}
+        return {"error": False, "response": {"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3], "private": tt[6]}}
 
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -92,7 +92,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "byuserid": tt[4], "timestamp": tt[3]})
+        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "byuserid": tt[4], "timestamp": tt[3], "private": tt[6]})
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
@@ -181,6 +181,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     channelid = form["channelid"]
     if not channelid.isdigit():
         channleid = 0
+    pingroles = form["pingroles"].split()
 
     cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp}, {pvt})")
     await AuditLog(adminid, f"Created announcement #{aid}")
