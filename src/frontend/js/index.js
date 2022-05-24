@@ -1980,6 +1980,8 @@ async function deliveryRoutePlay() {
                         eventmsg = `Caught by police car ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
+                    } else if (finetype == "red_signal"){
+                        eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
                     }
                 }
                 if (eventmsg != "") {

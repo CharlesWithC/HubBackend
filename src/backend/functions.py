@@ -28,10 +28,13 @@ async def AuditLog(userid, text):
     conn = newconn()
     cur = conn.cursor()
     name = "Unknown User"
-    cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
-    if len(t) > 0:
-        name = t[0][0]
+    if userid != -999:
+        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        if len(t) > 0:
+            name = t[0][0]
+    else:
+        name = "System"
     cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{text}', {int(time.time())})")
     conn.commit()
     async with aiohttp.ClientSession() as session:
