@@ -325,8 +325,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
 
-        ret = ret[(page - 1) * 10 : page * 10]
-        return {"error": False, "response": {"list": ret, "page": page, "tot": len(ret)}}
+        return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": len(ret)}}
 
     cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0) ORDER BY distance / 1.6 + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()

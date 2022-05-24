@@ -295,7 +295,7 @@ function loadStats(basic = false) {
             deliveryStatsChart = new Chart(ctx, config);
         }
     });
-    if(token.length != 36) return; // guest / invalid
+    if (token.length != 36) return; // guest / invalid
     if (!basic) {
         $.ajax({
             url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
@@ -1221,6 +1221,7 @@ function SubmitApp() {
         q1 = $("#la-q1").val();
         q2 = $("#la-q2").val();
         q3 = $("#la-q3").val();
+        q4 = $("#la-leave").find(":selected").text();
 
         // Check if any of the fields are empty
         if (q1 == "" || q2 == "" || q3 == "") {
@@ -1231,7 +1232,8 @@ function SubmitApp() {
         data = {
             "Start Date": q1,
             "End Date": q2,
-            "Reason": q3
+            "Reason": q3,
+            "Will they leave position or leave VTC?": q4
         }
     }
     data = JSON.stringify(data);
@@ -1316,60 +1318,57 @@ function ShowStaffTabs() {
     } else {
         avatar = "/images/atm-black.png";
     }
+    isEM = false;
     $("#StaffAnnTabBtn").hide();
     if (roles != null && roles != undefined) {
         highestrole = 99999;
         for (i = 0; i < roles.length; i++) {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
-                if (roles[i] == 40 || roles[i] == 41) {
-                    $("#StaffAnnTabBtn").show(); // event staff
-                    $("#StaffEventBtn").show(); // event staff
-                    $("#eventattendee").show();
-                    if (roles[i] == 40) {
-                        $("#annrole").html("Event Manager");
+            }
+            if (roles[i] == 40 || roles[i] == 41) {
+                if(roles[i] == 40) isEM = true;
+                $("#StaffAnnTabBtn").show(); // event staff
+                $("#StaffEventBtn").show(); // event staff
+                $("#eventattendee").show();
+                setInterval(function () {
+                    title = $("#anntitle").val();
+                    content = $("#anncontent").val();
+                    annid = $("#annid").val();
+                    if (isNumber(annid)) {
+                        if (title != "" || content != "") {
+                            $("#newAnnBtn").html("Update Announcement");
+                            $("#newAnnBtn").css("background-color", "lightgreen");
+                        } else {
+                            $("#newAnnBtn").html("Delete Announcement");
+                            $("#newAnnBtn").css("background-color", "red");
+                        }
                     } else {
-                        $("#annrole").html("Event Staff");
+                        $("#newAnnBtn").html("Create Announcement");
+                        $("#newAnnBtn").css("background-color", "blue");
                     }
-                    setInterval(function () {
-                        title = $("#anntitle").val();
-                        content = $("#anncontent").val();
-                        annid = $("#annid").val();
-                        if (isNumber(annid)) {
-                            if (title != "" || content != "") {
-                                $("#newAnnBtn").html("Update Announcement");
-                                $("#newAnnBtn").css("background-color", "lightgreen");
-                            } else {
-                                $("#newAnnBtn").html("Delete Announcement");
-                                $("#newAnnBtn").css("background-color", "red");
-                            }
+                });
+                setInterval(function () {
+                    title = $("#eventtitle").val();
+                    from = $("#eventfrom").val();
+                    to = $("#eventto").val();
+                    distance = $("#eventdistance").val();
+                    mts = $("#eventmts").val();
+                    dts = $("#eventdts").val();
+                    eventid = $("#eventid").val();
+                    if (isNumber(eventid)) {
+                        if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
+                            $("#newEventBtn").html("Update Event");
+                            $("#newEventBtn").css("background-color", "lightgreen");
                         } else {
-                            $("#newAnnBtn").html("Create Announcement");
-                            $("#newAnnBtn").css("background-color", "blue");
+                            $("#newEventBtn").html("Delete Event");
+                            $("#newEventBtn").css("background-color", "red");
                         }
-                    });
-                    setInterval(function () {
-                        title = $("#eventtitle").val();
-                        from = $("#eventfrom").val();
-                        to = $("#eventto").val();
-                        distance = $("#eventdistance").val();
-                        mts = $("#eventmts").val();
-                        dts = $("#eventdts").val();
-                        eventid = $("#eventid").val();
-                        if (isNumber(eventid)) {
-                            if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
-                                $("#newEventBtn").html("Update Event");
-                                $("#newEventBtn").css("background-color", "lightgreen");
-                            } else {
-                                $("#newEventBtn").html("Delete Event");
-                                $("#newEventBtn").css("background-color", "red");
-                            }
-                        } else {
-                            $("#newEventBtn").html("Create Event");
-                            $("#newEventBtn").css("background-color", "blue");
-                        }
-                    });
-                }
+                    } else {
+                        $("#newEventBtn").html("Create Event");
+                        $("#newEventBtn").css("background-color", "blue");
+                    }
+                });
             }
         }
         if (highestrole < 100) {
@@ -1488,13 +1487,8 @@ function validate() {
                 if (data.response.userid != -1) {
                     $("#AllMemberBtn").show();
                 }
-                roles = data.response.roles;
-                highestrole = 99999;
-                for (i = 0; i < roles.length; i++) {
-                    if (roles[i] < highestrole) {
-                        highestrole = roles[i];
-                    }
-                }
+                roles = data.response.roles.sort().reverse();
+                highestrole = roles[0];
                 ShowStaffTabs();
                 name = data.response.name;
                 avatar = data.response.avatar;
@@ -1513,7 +1507,17 @@ function validate() {
                         dataType: "json",
                         success: function (data) {
                             rolelist = data.response;
-                            hrole = data.response[highestrole];
+                            rolestxt = [];
+                            for(i = 0 ; i < roles.length ; i++){
+                                rolestxt.push(rolelist[roles[i]]);
+                            }
+                            hrole = rolestxt[0];
+                            for(i = 0 ; i < rolestxt.length && highestrole >= 10; i++){
+                                if(rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1){
+                                    hrole = rolestxt[i];
+                                    break;
+                                }
+                            }
                             localStorage.setItem("highestrole", hrole);
                             localStorage.setItem("rolelist", JSON.stringify(rolelist));
                             localStorage.setItem("rolesLastUpdate", (+new Date()).toString());
@@ -1533,10 +1537,18 @@ function validate() {
                         }
                     });
                 } else {
-                    hrole = data.response[highestrole];
+                    rolestxt = [];
+                    for(i = 0 ; i < roles.length ; i++){
+                        rolestxt.push(rolelist[roles[i]]);
+                    }
+                    hrole = rolestxt[0];
+                    for(i = 0 ; i < rolestxt.length && highestrole >= 10; i++){
+                        if(rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1){
+                            hrole = rolestxt[i];
+                            break;
+                        }
+                    }
                     localStorage.setItem("highestrole", hrole);
-                    localStorage.setItem("rolelist", JSON.stringify(rolelist));
-                    localStorage.setItem("rolesLastUpdate", (+new Date()).toString());
                     if (hrole == undefined || hrole == "undefined") hrole = "Loner";
                     $("#role").html(hrole);
                     roleids = Object.keys(rolelist);
@@ -4355,7 +4367,7 @@ $(document).ready(function () {
         }
     });
     lastPositionsUpdate = parseInt(localStorage.getItem("positionsLastUpdate"));
-    if (lastPositionsUpdate == undefined || lastPositionsUpdate == null) {
+    if (!isNumber(lastPositionsUpdate)) {
         lastPositionsUpdate = 0;
     }
     if (+new Date() - lastPositionsUpdate > 86400) {
