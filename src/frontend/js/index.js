@@ -308,7 +308,7 @@ function loadStats(basic = false) {
                 if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                 users = data.response.list;
                 $("#leaderboard").empty();
-                for (var i = 0; i < 5; i++) {
+                for (var i = 0; i < Math.min(users.length, 5); i++) {
                     user = users[i];
                     userid = user.userid;
                     name = user.name;
@@ -342,7 +342,7 @@ function loadStats(basic = false) {
                 if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                 users = data.response.list;
                 $("#newdriverTable").empty();
-                for (var i = 0; i < 5; i++) {
+                for (var i = 0; i < Math.min(users.length, 5); i++) {
                     user = users[i];
                     userid = user.userid;
                     name = user.name;
@@ -1593,7 +1593,7 @@ function validate() {
     });
 }
 
-function loadLeaderboard() {
+function loadLeaderboard(recurse = true) {
     page = parseInt($("#lpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -1636,14 +1636,14 @@ function loadLeaderboard() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#lpages").val(1);
-                loadLeaderboard();
+                if(recurse) loadLeaderboard(recurse = false);
                 return;
             }
             $("#leaderboardTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#lpages").val(1);
-                loadLeaderboard();
+                if(recurse) loadLeaderboard(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -1747,7 +1747,7 @@ function requestRole() {
     })
 }
 
-function loadDelivery() {
+function loadDelivery(recurse = true) {
     page = parseInt($("#dpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -1793,14 +1793,14 @@ function loadDelivery() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#dpages").val(1);
-                loadDelivery();
+                if(recurse) loadDelivery(recurse = false);
                 return;
             }
             $("#deliveryTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#dpages").val(1);
-                loadDelivery();
+                if(recurse) loadDelivery(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -2305,7 +2305,7 @@ function deliveryDetail(logid) {
 
 allevents = {};
 
-function loadEvent() {
+function loadEvent(recurse = true) {
     page = parseInt($("#epages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -2386,14 +2386,14 @@ function loadEvent() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#epages").val(1);
-                loadEvent();
+                if(recurse) loadEvent(recurse = false);
                 return;
             }
             $("#eventTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#epages").val(1);
-                loadEvent();
+                if(recurse) loadEvent(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -2553,7 +2553,7 @@ async function eventDetail(eventid) {
     });
 }
 
-function loadMembers() {
+function loadMembers(recurse = true) {
     page = parseInt($("#mpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -2582,14 +2582,14 @@ function loadMembers() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#mpages").val(1);
-                loadMembers();
+                if(recurse) loadMembers(recurse = false);
                 return;
             }
             $("#membersTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#mpages").val(1);
-                loadMembers();
+                if(recurse) loadMembers(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -2703,7 +2703,7 @@ function loadMembers() {
     })
 }
 
-function loadAuditLog() {
+function loadAuditLog(recurse = true) {
     page = parseInt($("#auditpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -2728,14 +2728,14 @@ function loadAuditLog() {
           <td class="py-5 px-6 font-medium"></td>
         </tr>`);
                 $("#auditpages").val(1);
-                loadAuditLog();
+                if(recurse) loadAuditLog(recurse = false);
                 return;
             }
             $("#auditTableHead").show();
             totpage = Math.ceil(data.response.tot / 30);
             if (page > totpage) {
                 $("#auditpages").val(1);
-                loadAuditLog();
+                if(recurse) loadAuditLog(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3090,7 +3090,7 @@ function dismissUser() {
 
 curprofile = -1;
 
-function loadUserDelivery() {
+function loadUserDelivery(recurse = true) {
     page = parseInt($("#udpages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -3136,14 +3136,14 @@ function loadUserDelivery() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#udpages").val(1);
-                loadUserDelivery();
+                if(recurse) loadUserDelivery(recurse = false);
                 return;
             }
             $("#userDeliveryTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#udpages").val(1);
-                loadUserDelivery();
+                if(recurse) loadUserDelivery(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3436,7 +3436,7 @@ function resign() {
 
 bannedUser = {};
 
-function loadUsers() {
+function loadUsers(recurse = true) {
     page = parseInt($("#pupages").val())
     if (page == "") page = 1;
     if (page == undefined) page = 1;
@@ -3460,14 +3460,14 @@ function loadUsers() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#pupages").val(1);
-                loadUsers();
+                if(recurse) loadUsers(recurse = false);
                 return;
             }
             $("#usersTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#pupages").val(1);
-                loadUsers();
+                if(recurse) loadUsers(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3709,7 +3709,7 @@ function unbanUser() {
     })
 }
 
-function loadMyApp() {
+function loadMyApp(recurse = true) {
     page = parseInt($("#myapppage").val())
     $.ajax({
         url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0",
@@ -3736,14 +3736,14 @@ function loadMyApp() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#myapppage").val(1);
-                loadMyApp();
+                if(recurse) loadMyApp(recurse = false);
                 return;
             }
             $("#myappTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#myapppage").val(1);
-                loadMyApp();
+                if(recurse) loadMyApp(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3864,7 +3864,7 @@ function addAppMessage() {
     });
 }
 
-function loadAllApp() {
+function loadAllApp(recurse = true) {
     page = parseInt($('#allapppage').val())
     $.ajax({
         url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
@@ -3895,14 +3895,14 @@ function loadAllApp() {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#allapppage").val(1);
-                loadAllApp();
+                if(recurse) loadAllApp(recurse = false);
                 return;
             }
             $("#allappTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#allapppage").val(1);
-                loadAllApp();
+                if(recurse) loadAllApp(recurse = false);
                 return;
             }
             if (page <= 0) {

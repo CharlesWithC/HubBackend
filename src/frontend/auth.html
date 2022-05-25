@@ -19,6 +19,26 @@
     <script src="/js/functions.js"></script>
     <link rel="stylesheet" href="css/login.css">
     <script>
+        function toastFactory(type, title, text, time, showConfirmButton) {
+          const Toast = Swal.mixin({
+              toast: true,
+              position: 'top-start',
+              showConfirmButton: showConfirmButton || false,
+              timer: time || '3000',
+              timerProgressBar: true,
+              didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer);
+                  toast.addEventListener('mouseleave', Swal.resumeTimer);
+              },
+          });
+        
+          Toast.fire({
+              icon: type,
+              title: '<strong>' + title + '</strong>',
+              html: text,
+          });
+        }
+        
         function DiscordLogin() {
             location.href = 'https://drivershub.charlws.com/atm/user/login';
         }
