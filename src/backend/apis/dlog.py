@@ -500,6 +500,8 @@ async def dlogList(request: Request, response: Response, authorization: str = He
         cargo = data["data"]["object"]["cargo"]["name"]
         cargo_mass = data["data"]["object"]["cargo"]["mass"]
         distance = data["data"]["object"]["driven_distance"]
+        if distance < 0:
+            distance = 0
 
         profit = tt[4]
         unit = tt[5]
@@ -581,11 +583,12 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
 
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT userid, data, timestamp FROM dlog WHERE userid >= 0 AND logid = {logid}")
+    cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "response": "Log not found"}
     data = json.loads(b64d(t[0][1]))
+    distance = t[0][3]
     name = "Unknown Driver"
     cur.execute(f"SELECT name FROM user WHERE userid = {t[0][0]}")
     p = cur.fetchall()
@@ -603,4 +606,4 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
             ver = "v2"
         telemetry = ver + p[0][0]
 
-    return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}
+    return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "loggeddistance": distance, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}

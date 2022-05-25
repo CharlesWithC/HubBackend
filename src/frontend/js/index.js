@@ -2189,8 +2189,8 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
                 }
                 $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Time Spent</td>
-                        <td class="py-5 px-6 font-medium">${duration}</td></tr>`);
+                        <td class="py-5 px-6 font-medium">Logged Distance</td>
+                        <td class="py-5 px-6 font-medium">${parseInt(data.response.loggeddistance/1.6)}Mi</td></tr>`);
                 $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Time submitted</td>
                         <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
