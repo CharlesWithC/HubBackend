@@ -1946,11 +1946,13 @@ async function deliveryRoutePlay() {
 
         x = deliveryRoute[rri][0];
         z = deliveryRoute[rri][1];
-        for (var i = 0; i < rrevents.length; i++) {
+        lastevent = 0;
+        for (var i = lastevent; i < rrevents.length; i++) {
             ex = rrevents[i].location.x;
             ez = rrevents[i].location.z;
             // distance of (x,z) and (ex,ez) <= 50, use euclid distance
             if (Math.sqrt(Math.pow(x - ex, 2) + Math.pow(z - ez, 2)) <= 50) {
+                lastevent = i + 1;
                 mt = $("#dmap").position().top;
                 ml = $("#dmap").position().left;
                 eventmsg = "";
@@ -1971,18 +1973,23 @@ async function deliveryRoutePlay() {
                     console.log(rrevents[i]);
                     finetype = meta.offence;
                     if (finetype == "speeding_camera") {
-                        curspeed = TSeparator(parseInt(meta.speed / 1.6));
-                        speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
-                        eventmsg = `Captured by speeding camera +${curspeed}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                        curspeed = TSeparator(parseInt(meta.speed * 3.6 / 1.6));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 / 1.6));
+                        eventmsg = `Captured by speeding camera<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "speeding") {
-                        curspeed = TSeparator(parseInt(meta.speed / 1.6));
-                        speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
-                        eventmsg = `Caught by police car +${curspeed}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                        curspeed = TSeparator(parseInt(meta.speed * 3.6 / 1.6));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 / 1.6));
+                        eventmsg = `Caught by police car for speeding<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "red_signal") {
                         eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
                     }
+                } else if(rrevents[i].type == "speeding"){
+                    meta = rrevents[i].meta;
+                    curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 / 1.6));
+                    speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 / 1.6));
+                    eventmsg = `Speeding (No Fine)<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)`;
                 }
                 if (eventmsg != "") {
                     randomid = Math.random().toString(36).substring(7);
