@@ -1973,11 +1973,11 @@ async function deliveryRoutePlay() {
                     if (finetype == "speeding_camera") {
                         curspeed = TSeparator(parseInt(meta.speed / 1.6));
                         speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
-                        eventmsg = `Captured by speeding camera ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                        eventmsg = `Captured by speeding camera +${curspeed}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "speeding") {
                         curspeed = TSeparator(parseInt(meta.speed / 1.6));
                         speedlimit = TSeparator(parseInt(meta.speed_limit / 1.6));
-                        eventmsg = `Caught by police car ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
+                        eventmsg = `Caught by police car +${curspeed}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "red_signal") {
@@ -2136,7 +2136,7 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Offence</td>
-                        <td class="py-5 px-6 font-medium">${offence} ${punit}</td></tr>`);
+                        <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">XP</td>
                         <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
@@ -2149,7 +2149,7 @@ function deliveryDetail(logid) {
                             <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                             <td class="py-5 px-6 font-medium">Offence</td>
-                            <td class="py-5 px-6 font-medium">${offence} ${punit}</td></tr>`);
+                            <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                             <td class="py-5 px-6 font-medium">XP</td>
                             <td class="py-5 px-6 font-medium">0</td></tr>`);
@@ -2179,9 +2179,11 @@ function deliveryDetail(logid) {
                     extra = "";
                     if (auto_park == "1") extra += "Auto Park | ";
                     if (auto_load == "1") extra += "Auto Load | ";
-                    $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Tags</td>
-                        <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
+                    if (extra != "") {
+                        $("#ddcol3").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">Tags</td>
+                            <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
+                    }
                 }
 
                 dt = getDateTime(data.response.timestamp * 1000);

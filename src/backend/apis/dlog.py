@@ -608,7 +608,7 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         if len(basic) == 3:
             if basic[2] == "v3":
                 ver = "v3"
-            elif baseic[2] == "v4":
+            elif basic[2] == "v4":
                 ver = "v4"
         telemetry = ver + p[0][0]
 
