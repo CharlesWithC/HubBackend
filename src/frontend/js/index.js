@@ -2922,10 +2922,10 @@ function fetchRoles() {
             if (d.length == 0) {
                 return toastFactory("error", "Error:", "No member with name " + val + " found.", 5000, false);
             }
-            userid = d[0].userid;
+            lastfetch = d[0].userid;
 
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+                url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(lastfetch),
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -2937,7 +2937,7 @@ function fetchRoles() {
                     if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
                     info = "";
                     if (!data.error) {
-                        lastfetch = userid;
+                        userid = lastfetch;
                         d = data.response;
                         roles = d.roles;
                         rtxt = "";

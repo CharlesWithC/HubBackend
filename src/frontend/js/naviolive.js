@@ -134,7 +134,7 @@ setInterval(function () {
     for (var i = 0; i < cnt; i++) {
         steamid = Object.keys(steamids)[i];
         drivername = membersteam[steamid];
-        userid = memberuserid[steamid];
+        nuserid = memberuserid[steamid];
         if (drivername == "undefined" || drivername == undefined) drivername = "Unknown";
         d = driverdata[steamid];
         truck = d.truck.brand.name + " " + d.truck.name;
@@ -145,7 +145,7 @@ setInterval(function () {
         distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
         $("#onlinedriver").append(`
             <tr class="text-xs">
-              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${userid})'>${drivername}</a></td>
+              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${nuserid})'>${drivername}</a></td>
               <td class="py-5 px-6 font-medium">${truck}</td>
               <td class="py-5 px-6 font-medium">${cargo}</td>
               <td class="py-5 px-6 font-medium">${speed}</td>
@@ -158,7 +158,7 @@ autocenterint = {};
 function PlayerPoint(steamid, mapid){
     if(steamid == 0 || steamid == "0") return;
     drivername = membersteam[steamid];
-    userid = memberuserid[steamid];
+    nuserid = memberuserid[steamid];
     if (drivername == "undefined" || drivername == undefined) drivername = "Unknown";
     d = driverdata[steamid];
     truck = d.truck.brand.name + " " + d.truck.name;
@@ -167,7 +167,7 @@ function PlayerPoint(steamid, mapid){
         cargo = d.job.cargo.name;
     speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
     distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
-    toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${userid})'>Show profile</a>`, 5000, false);
+    toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${nuserid})'>Show profile</a>`, 5000, false);
     clearInterval(autocenterint[mapid]);
     autocenterint[mapid] = setInterval(function(){
         d = driverdata[steamid];
