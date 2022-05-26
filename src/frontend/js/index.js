@@ -562,7 +562,7 @@ function FetchAnnouncement() {
             const announcement = data.response;
             $("#anntitle").val(announcement.title);
             $("#anncontent").val(announcement.content);
-            if(announcement.private) $("#annpvt-1").prop("checked", true);
+            if (announcement.private) $("#annpvt-1").prop("checked", true);
             else $("#annpvt-0").prop("checked", true);
             $('#annselect option:eq(' + announcement.atype + ')').prop('selected', true);
         },
@@ -808,7 +808,7 @@ function FetchEvent(showdetail = -1) {
             for (let i = 0; i < event.img.length; i++) {
                 imgs += event.img[i] + "\n";
             }
-            if(event.private) $("#eventpvt-1").prop("checked", true);
+            if (event.private) $("#eventpvt-1").prop("checked", true);
             else $("#eventpvt-0").prop("checked", true);
             $("#eventimgs").val(imgs);
 
@@ -1331,7 +1331,7 @@ function ShowStaffTabs() {
                 highestrole = roles[i];
             }
             if (roles[i] == 40 || roles[i] == 41) {
-                if(roles[i] == 40) isEM = true;
+                if (roles[i] == 40) isEM = true;
                 $("#StaffAnnTabBtn").show(); // event staff
                 $("#StaffEventBtn").show(); // event staff
                 $("#eventattendee").show();
@@ -1513,12 +1513,12 @@ function validate() {
                         success: function (data) {
                             rolelist = data.response;
                             rolestxt = [];
-                            for(i = 0 ; i < roles.length ; i++){
+                            for (i = 0; i < roles.length; i++) {
                                 rolestxt.push(rolelist[roles[i]]);
                             }
                             hrole = rolestxt[0];
-                            for(i = 0 ; i < rolestxt.length && highestrole >= 10; i++){
-                                if(rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1){
+                            for (i = 0; i < rolestxt.length && highestrole >= 10; i++) {
+                                if (rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1) {
                                     hrole = rolestxt[i];
                                     break;
                                 }
@@ -1543,12 +1543,12 @@ function validate() {
                     });
                 } else {
                     rolestxt = [];
-                    for(i = 0 ; i < roles.length ; i++){
+                    for (i = 0; i < roles.length; i++) {
                         rolestxt.push(rolelist[roles[i]]);
                     }
                     hrole = rolestxt[0];
-                    for(i = 0 ; i < rolestxt.length && highestrole >= 10; i++){
-                        if(rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1){
+                    for (i = 0; i < rolestxt.length && highestrole >= 10; i++) {
+                        if (rolestxt[i].indexOf("Manager") != -1 || rolestxt[i].indexOf("Lead") != -1) {
                             hrole = rolestxt[i];
                             break;
                         }
@@ -1636,14 +1636,14 @@ function loadLeaderboard(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#lpages").val(1);
-                if(recurse) loadLeaderboard(recurse = false);
+                if (recurse) loadLeaderboard(recurse = false);
                 return;
             }
             $("#leaderboardTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#lpages").val(1);
-                if(recurse) loadLeaderboard(recurse = false);
+                if (recurse) loadLeaderboard(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -1793,14 +1793,14 @@ function loadDelivery(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#dpages").val(1);
-                if(recurse) loadDelivery(recurse = false);
+                if (recurse) loadDelivery(recurse = false);
                 return;
             }
             $("#deliveryTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#dpages").val(1);
-                if(recurse) loadDelivery(recurse = false);
+                if (recurse) loadDelivery(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -1980,7 +1980,7 @@ async function deliveryRoutePlay() {
                         eventmsg = `Caught by police car ${curspeed}/${speedlimit}Mi/h<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
-                    } else if (finetype == "red_signal"){
+                    } else if (finetype == "red_signal") {
                         eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
                     }
                 }
@@ -2121,15 +2121,22 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium">Target Company</td>
                         <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
                 $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Planned Distance</td>
-                        <td class="py-5 px-6 font-medium">${planned_distance}</td></tr>`);
-                $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Driven Distance</td>
-                        <td class="py-5 px-6 font-medium">${distance}</td></tr>`);
+                        <td class="py-5 px-6 font-medium">Driven / Planned Distance</td>
+                        <td class="py-5 px-6 font-medium">${distance} / ${planned_distance}</td></tr>`);
+                offence = 0;
+                for (var i = 0; i < rrevents.length; i++) {
+                    if (rrevents[i].type == "fine") {
+                        offence += parseInt(rrevents[i].meta.amount);
+                    }
+                }
+                offence = TSeparator(offence);
                 if (tp == "job.delivered") {
                     $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Profit</td>
                         <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs">
+                        <td class="py-5 px-6 font-medium">Offence</td>
+                        <td class="py-5 px-6 font-medium">${offence} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">XP</td>
                         <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
@@ -2140,6 +2147,9 @@ function deliveryDetail(logid) {
                     $("#ddcol2").append(`<tr class="text-xs">
                             <td class="py-5 px-6 font-medium">Penalty</td>
                             <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
+                    $("#ddcol2").append(`<tr class="text-xs">
+                            <td class="py-5 px-6 font-medium">Offence</td>
+                            <td class="py-5 px-6 font-medium">${offence} ${punit}</td></tr>`);
                     $("#ddcol2").append(`<tr class="text-xs">
                             <td class="py-5 px-6 font-medium">XP</td>
                             <td class="py-5 px-6 font-medium">0</td></tr>`);
@@ -2205,16 +2215,36 @@ function deliveryDetail(logid) {
                     basic = telemetry[0].split(",");
                     tver = 1;
                     if (basic[0].startsWith("v2")) tver = 2;
+                    if (basic[0].startsWith("v3")) tver = 3;
+                    if (basic[0].startsWith("v4")) tver = 4;
                     basic[0] = basic[0].slice(2);
                     game = basic[0];
                     mods = basic[1];
                     route = telemetry.slice(1);
                     dpoints = [];
+                    lastx = 0;
+                    lastz = 0;
                     for (i = 0; i < route.length; i++) {
+                        if (tver == 4) {
+                            if (route[i].split(",") == 1 && route[i].startsWith("idle")) {
+                                idlecnt = parseInt(route[i].split("e")[1]);
+                                for (var j = 0; j < idlecnt; j++) {
+                                    dpoints.push([lastx, lastz]);
+                                }
+                                continue;
+                            }
+                        }
                         p = route[i].split(",");
                         if (p.length < 2) continue;
                         if (tver == 1) dpoints.push([p[0], p[2]]); // x, z
-                        else dpoints.push([b62decode(p[0]), b62decode(p[1])]);
+                        else if (tver == 2) dpoints.push([b62decode(p[0]), b62decode(p[1])]);
+                        else if (tver >= 3) {
+                            relx = b62decode(p[0]);
+                            relz = b62decode(p[1]);
+                            dpoints.push([lastx + relx, lastz + relz]);
+                            lastx = lastx + relx;
+                            lastz = lastz + relz;
+                        }
                     }
                     minx = 100000000000000;
                     for (i = 0; i < dpoints.length; i++) {
@@ -2349,7 +2379,9 @@ function loadEvent(recurse = true) {
                         height: 'auto'
                     });
                     eventsCalendar.render();
-                    setInterval(function(){$(".fc-daygrid-event").removeClass("fc-daygrid-event");},500);
+                    setInterval(function () {
+                        $(".fc-daygrid-event").removeClass("fc-daygrid-event");
+                    }, 500);
                 }, 50);
             },
             error: function (data) {
@@ -2386,14 +2418,14 @@ function loadEvent(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#epages").val(1);
-                if(recurse) loadEvent(recurse = false);
+                if (recurse) loadEvent(recurse = false);
                 return;
             }
             $("#eventTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#epages").val(1);
-                if(recurse) loadEvent(recurse = false);
+                if (recurse) loadEvent(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -2455,7 +2487,7 @@ function loadEvent(recurse = true) {
                 });
                 votecnt = voteids.length;
                 pvt = "";
-                if(event.private) pvt = "<span style='color:red'>(Private)</span> ";
+                if (event.private) pvt = "<span style='color:red'>(Private)</span> ";
                 $("#eventTable").append(`
             <tr class="text-xs" style="color:${color}">
               <td class="py-5 px-6 font-medium">${event.eventid}</td>
@@ -2582,14 +2614,14 @@ function loadMembers(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#mpages").val(1);
-                if(recurse) loadMembers(recurse = false);
+                if (recurse) loadMembers(recurse = false);
                 return;
             }
             $("#membersTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#mpages").val(1);
-                if(recurse) loadMembers(recurse = false);
+                if (recurse) loadMembers(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -2728,14 +2760,14 @@ function loadAuditLog(recurse = true) {
           <td class="py-5 px-6 font-medium"></td>
         </tr>`);
                 $("#auditpages").val(1);
-                if(recurse) loadAuditLog(recurse = false);
+                if (recurse) loadAuditLog(recurse = false);
                 return;
             }
             $("#auditTableHead").show();
             totpage = Math.ceil(data.response.tot / 30);
             if (page > totpage) {
                 $("#auditpages").val(1);
-                if(recurse) loadAuditLog(recurse = false);
+                if (recurse) loadAuditLog(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3136,14 +3168,14 @@ function loadUserDelivery(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#udpages").val(1);
-                if(recurse) loadUserDelivery(recurse = false);
+                if (recurse) loadUserDelivery(recurse = false);
                 return;
             }
             $("#userDeliveryTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#udpages").val(1);
-                if(recurse) loadUserDelivery(recurse = false);
+                if (recurse) loadUserDelivery(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3460,14 +3492,14 @@ function loadUsers(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#pupages").val(1);
-                if(recurse) loadUsers(recurse = false);
+                if (recurse) loadUsers(recurse = false);
                 return;
             }
             $("#usersTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#pupages").val(1);
-                if(recurse) loadUsers(recurse = false);
+                if (recurse) loadUsers(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3736,14 +3768,14 @@ function loadMyApp(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#myapppage").val(1);
-                if(recurse) loadMyApp(recurse = false);
+                if (recurse) loadMyApp(recurse = false);
                 return;
             }
             $("#myappTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#myapppage").val(1);
-                if(recurse) loadMyApp(recurse = false);
+                if (recurse) loadMyApp(recurse = false);
                 return;
             }
             if (page <= 0) {
@@ -3895,14 +3927,14 @@ function loadAllApp(recurse = true) {
               <td class="py-5 px-6 font-medium"></td>
             </tr>`);
                 $("#allapppage").val(1);
-                if(recurse) loadAllApp(recurse = false);
+                if (recurse) loadAllApp(recurse = false);
                 return;
             }
             $("#allappTableHead").show();
             totpage = Math.ceil(data.response.tot / 10);
             if (page > totpage) {
                 $("#allapppage").val(1);
-                if(recurse) loadAllApp(recurse = false);
+                if (recurse) loadAllApp(recurse = false);
                 return;
             }
             if (page <= 0) {

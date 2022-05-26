@@ -181,7 +181,6 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     channelid = form["channelid"]
     if not channelid.isdigit():
         channleid = 0
-    pingroles = form["pingroles"].split()
 
     cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp}, {pvt})")
     await AuditLog(adminid, f"Created announcement #{aid}")

@@ -37,12 +37,27 @@ def UpdateTelemetry(steamid, userid, logid, endtime):
         jobuuid = p[0][0]
         cur.execute(f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
         t = cur.fetchall()
-        data = f"{t[0][3]},{t[0][4]};"
+        data = f"{t[0][3]},{t[0][4]},v4;"
+        lastx = 0
+        lastz = 0
+        idle = 0
         for tt in t:
-            data += f"{b62encode(int(tt[0]))},{b62encode(int(tt[2]))};"
+            if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
+                idle += 1
+                continue
+            else:
+                if idle > 0:
+                    data += f"idle{idle};"
+                    idle = 0
+            data += f"{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
+            lastx = round(tt[0])
+            lastz = round(tt[2])
         conn = newconn()
         cur = conn.cursor()
         cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")
+        conn.commit()
+        conn = newconn()
+        cur = conn.cursor()
         cur.execute(f"DELETE FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)}")
         conn.commit()
 
@@ -99,6 +114,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     revenue = 0
     xp = 0
     isdelivered = 0
+    offence = 0
     if e == "job.delivered":
         revenue = d["data"]["object"]["events"][-1]["meta"]["revenue"]
         isdelivered = 1
@@ -107,6 +123,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             # driven_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
     else:
         revenue = -float(d["data"]["object"]["events"][-1]["meta"]["penalty"])
+
+    allevents = d["data"]["object"]["events"]
+    for eve in allevents:
+        if eve["type"] == "fine":
+            offence += int(eve["meta"]["amount"])
+    revenue -= offence
+    
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h

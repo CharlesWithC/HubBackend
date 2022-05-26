@@ -604,6 +604,12 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         t1 = telemetry[1].split(",")
         if len(t1) == 2:
             ver = "v2"
+        basic = telemetry[0].split(",")
+        if len(basic) == 3:
+            if basic[2] == "v3":
+                ver = "v3"
+            elif baseic[2] == "v4":
+                ver = "v4"
         telemetry = ver + p[0][0]
 
     return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "loggeddistance": distance, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}
