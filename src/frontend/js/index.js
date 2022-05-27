@@ -1985,7 +1985,7 @@ async function deliveryRoutePlay() {
                     } else if (finetype == "red_signal") {
                         eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
                     }
-                } else if(rrevents[i].type == "speeding"){
+                } else if (rrevents[i].type == "speeding") {
                     meta = rrevents[i].meta;
                     curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 / 1.6));
                     speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 / 1.6));
@@ -4010,7 +4010,7 @@ function loadAllApp(recurse = true) {
               <td class="py-5 px-6 font-medium">${creation}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
               <td class="py-5 px-6 font-medium">${closedat}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
+              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid}, true)">Show Details</td>
             </tr>`);
             }
         },
@@ -4024,7 +4024,7 @@ function loadAllApp(recurse = true) {
     })
 }
 
-function appDetail(applicationid) {
+function appDetail(applicationid, staffmode = false) {
     $("#AllAppBtn" + applicationid).attr("disabled", "disabled");
     $("#AllAppBtn" + applicationid).html("Loading...");
     $("#MyAppBtn" + applicationid).attr("disabled", "disabled");
@@ -4074,11 +4074,67 @@ function appDetail(applicationid) {
                         info +=
                             "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
                             d.steamid + "'>" + d.steamid + "</a></p><br>";
+                        info += ret.replaceAll("\n", "<br>");
+                        if (!staffmode) {
+                            info += `
+                            <hr>
+                            <h3 class="text-xl font-bold" style="text-align:left;margin:5px">New message</h3>
+                            <div class="mb-6" style="display:none">
+                                <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+                                <input id="appmsgid" style="width:200px"
+                                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+                                rows="5" placeholder="Integar ID" value="${applicationid}"></input>
+                            </div>
+                                <textarea id="appmsgcontent"
+                                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+                                rows="5" placeholder=""></textarea>
+                    
+                            <button type="button" id="addAppMessageBtn" style="float:right"
+                                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                                onclick="addAppMessage()">Add</button>`;
+                        } else {
+                            info += `
+                            <hr>
+                            <h3 class="text-xl font-bold" style="text-align:left;margin:5px">New message</h3>
+                            <div class="mb-6" style="display:none">
+                                <label class="block text-sm font-medium mb-2" for="">Application ID</label>
+                                <input id="appstatusid" style="width:200px"
+                                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+                                rows="5" placeholder="" value="${applicationid}"></input></div>
+                    
+                            <div class="mb-6">
+                                <textarea id="appmessage"
+                                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+                                rows="5" placeholder=""></textarea></div>
+                    
+                            <div class="mb-6 relative" style="width:200px">
+                            <h3 class="text-xl font-bold" style="text-align:left;margin:5px">New Status</h3>
+                                <select id="appstatussel"
+                                class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                                name="field-name">
+                                <option value="0">Pending</option>
+                                <option value="1">Accepted</option>
+                                <option value="2">Declined</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                                </svg>
+                                </div>
+                            </div>
+                    
+                            <button type="button" style="float:right"
+                                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                                onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
+                            </div>
+                        </div>`;
+                        }
                     }
                     Swal.fire({
                         title: apptype + ' Application #' + applicationid,
-                        html: info + ret.replaceAll("\n", "<br>"),
+                        html: info,
                         icon: 'info',
+                        showConfirmButton: false,
                         confirmButtonText: 'Close'
                     })
                     $("#AllAppBtn" + applicationid).removeAttr("disabled");

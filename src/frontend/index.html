@@ -1829,29 +1829,6 @@
           onclick="tmp=parseInt($('#myapppage').val());$('#myapppage').val(tmp+1);loadMyApp();">></button>
       </div>
     </div>
-    <br>
-    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-      <div class="flex px-6 pb-4 border-b">
-        <h3 class="text-xl font-bold">Add Message to Application</h3>
-      </div>
-      <div class="p-4 overflow-x-auto" style="display: block;">
-        <div class="mb-6">
-          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
-          <input id="appmsgid" style="width:200px"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-            rows="5" placeholder="Integar ID"></input>
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-medium mb-2" for="">Message Content</label>
-          <textarea id="appmsgcontent"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-            rows="5" placeholder=""></textarea></div>
-
-        <button type="button" id="addAppMessageBtn"
-          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-          onclick="addAppMessage()">Add</button>
-      </div>
-    </div>
     </div>
   </section>
 
@@ -2023,22 +2000,23 @@
                 class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
                 name="field-name" rows="5" placeholder="Your answer"></textarea></div>
 
-                <div class="mb-6">
-                  <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Will you leave your position or leave At The Mile Logistics?</label>
-                  <div class="relative" style="width:500px">
-                    <select id="la-leave"
-                      class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-                      name="field-name">
-                      <option>No</option>
-                      <option>Yes</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                      <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
-                      </svg>
-                    </div>
-                  </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Will you leave your
+                position or leave At The Mile Logistics?</label>
+              <div class="relative" style="width:500px">
+                <select id="la-leave"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                  <option>No</option>
+                  <option>Yes</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                  </svg>
                 </div>
+              </div>
+            </div>
           </div>
 
           <button type="button"
@@ -2098,45 +2076,6 @@
         <button type="button" style="display:inline"
           class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
           onclick="tmp=parseInt($('#allapppage').val());$('#allapppage').val(tmp+1);loadAllApp();">></button>
-      </div>
-    </div>
-    <br>
-    <div class="py-8 px-6 mx-auto lg:ml-80 pt-4 bg-white shadow rounded">
-      <div class="flex px-6 pb-4 border-b">
-        <h3 class="text-xl font-bold">Update Application Status</h3>
-      </div>
-      <div class="p-4 overflow-x-auto" style="display: block;">
-        <div class="mb-6">
-          <label class="block text-sm font-medium mb-2" for="">Application ID</label>
-          <input id="appstatusid" style="width:200px"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-            rows="5" placeholder=""></input></div>
-
-        <div class="mb-6 relative" style="width:200px">
-          <label class="block text-sm font-medium mb-2 text-left" for="">New Status:</label>
-          <select id="appstatussel"
-            class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
-            name="field-name">
-            <option value="0">Pending</option>
-            <option value="1">Accepted</option>
-            <option value="2">Declined</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
-            </svg>
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium mb-2" for="">Message</label>
-          <textarea id="appmessage"
-            class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
-            rows="5" placeholder=""></textarea></div>
-
-        <button type="button"
-          class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-          onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
       </div>
     </div>
     <br>
