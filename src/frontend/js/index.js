@@ -2080,14 +2080,13 @@ function deliveryDetail(logid) {
                 if (d.destination_company != null) destination_company = d.destination_company.name;
                 if (d.destination_city != null) destination_city = d.destination_city.name;
                 truck = d.truck.brand.name + " " + d.truck.name;
-                license_plate = d.truck.license_plate_country.unique_id.toUpperCase() + " " + d.truck.license_plate;
+                license_plate = d.truck.license_plate;
                 top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
                 trailer = "";
                 trs = "";
                 if (d.trailers.length > 1) trs = "s";
                 for (var i = 0; i < d.trailers.length; i++) {
-                    trailer += d.trailers[i].license_plate_country.unique_id.toUpperCase() + " " + d.trailers[i]
-                        .license_plate + " | ";
+                    trailer += d.trailers[i].license_plate + " | ";
                 }
                 punit = "€";
                 if (!d.game.short_name.startsWith("e")) punit = "$";

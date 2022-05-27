@@ -27,11 +27,11 @@ GIFS = ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
     "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
     "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"]
 
-def UpdateTelemetry(steamid, userid, logid, endtime):
+def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
     conn = newconn()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)} LIMIT 1")
+    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(starttime)} AND timestamp < {int(endtime)} LIMIT 1")
     p = cur.fetchall()
     if len(p) > 0:
         jobuuid = p[0][0]
@@ -133,11 +133,12 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
+    starttime = parser.parse(d["data"]["object"]["start_time"]).timestamp()
     endtime = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
     t = cur.fetchall()
     logid = int(t[0][0])
-    threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, endtime, )).start()
+    threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
     cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
