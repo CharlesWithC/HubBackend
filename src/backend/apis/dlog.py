@@ -208,7 +208,7 @@ async def dlogChart(request: Request, response: Response,
 
 @app.get("/atm/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0):
+    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, noevent: Optional[bool] = False):
 
     if page <= 0:
         page = 1
@@ -263,16 +263,19 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    if starttime != -1 and endtime != -1 or speedlimit != 0:
+    if starttime != -1 and endtime != -1 or speedlimit != 0 or game != 0 or noevent:
         if starttime > endtime:
             starttime, endtime = endtime, starttime
-        if speedlimit != 0 and (starttime == -1 or endtime == -1):
+        if (starttime == -1 or endtime == -1):
             starttime = 0
             endtime = int(time.time())
         limit = ""
         if speedlimit != 0:
             limit = f" AND topspeed <= {int(speedlimit)}"
-        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit}")
+        gamelimit = ""
+        if game == 1 or game == 2:
+            gamelimit = f" AND unit = {game}"
+        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit} {gamelimit}")
         t = cur.fetchall()
         userdistance = {}
         for tt in t:
@@ -280,19 +283,20 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 userdistance[tt[0]] = tt[1]
             else:
                 userdistance[tt[0]] += tt[1]
-        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
-        t = cur.fetchall()
         userevent = {}
-        for tt in t:
-            attendees = tt[0].split(",")
-            while "" in attendees:
-                attendees.remove("")
-            for ttt in attendees:
-                attendee = int(ttt)
-                if not attendee in userevent.keys():
-                    userevent[attendee] = tt[1]
-                else:
-                    userevent[attendee] += tt[1]
+        if not noevent:
+            cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
+            t = cur.fetchall()
+            for tt in t:
+                attendees = tt[0].split(",")
+                while "" in attendees:
+                    attendees.remove("")
+                for ttt in attendees:
+                    attendee = int(ttt)
+                    if not attendee in userevent.keys():
+                        userevent[attendee] = tt[1]
+                    else:
+                        userevent[attendee] += tt[1]
         rank = {}
         for k in userdistance.keys():
             if k in userevent.keys():
@@ -314,7 +318,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             p = cur.fetchall()
             if len(p) == 0:
                 continue
-            cur.execute(f"SELECT distance / 1.6 + eventpnt FROM driver WHERE userid = {userid}")
+            if not noevent:
+                cur.execute(f"SELECT distance / 1.6 + eventpnt FROM driver WHERE userid = {userid}")
+            else:
+                cur.execute(f"SELECT distance / 1.6 FROM driver WHERE userid = {userid}")
             o = cur.fetchall()
             totnolimit = 0
             if len(o) > 0:
@@ -412,7 +419,7 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
 
 @app.get("/atm/dlog/list")
 async def dlogList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
+    page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
     if authorization is None:
         # response.status_code = 401
         return {"error": True, "descriptor": "No authorization header"}
@@ -479,7 +486,11 @@ async def dlogList(request: Request, response: Response, authorization: str = He
     else:
         speedlimit = ""
 
-    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+    gamelimit = ""
+    if game == 1 or game == 2:
+        gamelimit = f" AND unit = {game}"
+
+    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     
     t = cur.fetchall()
     ret = []
@@ -520,7 +531,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:

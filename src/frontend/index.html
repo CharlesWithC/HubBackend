@@ -36,10 +36,6 @@
   <script src="js/atsmap.js"></script>
   <script src="js/naviolive.js"></script>
   <style>
-    .rounded-full {
-      transition: background-color 1000ms linear;
-    }
-
     .fc-scrollgrid-sync-inner {
       background-color: transparent;
     }
@@ -57,6 +53,12 @@
 </head>
 
 <body class="antialiased bg-body text-body font-body" style="overflow-x:hidden">
+  <style>
+    .rounded-full {
+      transition: background-color 1000ms linear;
+      color: #555;
+    }
+  </style>
   <div>
     <nav class="lg:hidden py-6 px-6 bg-gray-800">
       <div class="flex items-center justify-between">
@@ -497,6 +499,10 @@
           <div class="flex px-6 pb-4 border-b">
             <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
             <div style="margin-left:auto">
+              <a onclick='dets2=1-dets2;loadUserDelivery();' style='cursor:pointer'><span
+                  class="dgame dgame1 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ETS2</span></a>
+              <a onclick='dats=1-dats;loadUserDelivery();' style='cursor:pointer'><span
+                  class="dgame dgame2 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ATS</span></a>
               <input id="udspeedlimit"
                 class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="number"
                 name="" style="width:150px;display:inline" placeholder="Speed Limit"> Mi/h
@@ -1145,6 +1151,13 @@
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Leaderboard</h3>
           <div style="margin-left:auto">
+            <a onclick='dets2=1-dets2;loadLeaderboard();' style='cursor:pointer'><span
+                class="dgame dgame1 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ETS2</span></a>
+            <a onclick='dats=1-dats;loadLeaderboard();' style='cursor:pointer'><span
+                class="dgame dgame2 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ATS</span></a>
+              <a onclick='levent=1-levent;loadLeaderboard();' style='cursor:pointer'><span id="levent"
+                  class="inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">Count Event</span></a>
+
             <input id="lbspeedlimit"
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="number"
               name="" style="width:150px;display:inline" placeholder="Speed Limit"> Mi/h
@@ -1431,6 +1444,10 @@
         <div class="flex px-6 pb-4 border-b">
           <h3 class="text-xl font-bold" style="margin-top:8px">Delivery Log</h3>
           <div style="margin-left:auto">
+            <a onclick='dets2=1-dets2;loadDelivery();' style='cursor:pointer'><span
+                class="dgame dgame1 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ETS2</span></a>
+            <a onclick='dats=1-dats;loadDelivery();' style='cursor:pointer'><span
+                class="dgame dgame2 inline-block ml-auto px-2 py-1 text-xs text-gray-500 rounded-full">ATS</span></a>
             <input id="dspeedlimit"
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="number"
               name="" style="width:150px;display:inline" placeholder="Speed Limit"> Mi/h

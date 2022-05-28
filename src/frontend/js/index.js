@@ -38,7 +38,7 @@ function DarkMode() {
             .text-gray-500,.text-gray-600 {color: #ddd;transition: color 1000ms linear;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);transition: background-color 1000ms linear;}
             .swal2-popup {background-color: rgb(41 48 57)}
-            .rounded-full {background-color: #888;transition: background-color 1000ms linear;}</style>`);
+            .rounded-full {background-color: #888;}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
@@ -56,7 +56,7 @@ function DarkMode() {
             .text-gray-500,.text-gray-600 {transition: color 1000ms linear;}
             .bg-white {background-color: white;transition: background-color 1000ms linear;}
             .swal2-popup {background-color: white;}
-            .rounded-full {background-color: #ddd;transition: background-color 1000ms linear;}</style>`);
+            .rounded-full {background-color: #ddd;}</style>`);
         setTimeout(function () {
             $("#convertbg2").remove();
         }, 1000);
@@ -80,12 +80,12 @@ addup = 0;
 async function loadChart(userid = -1) {
     if (userid != -1) {
         $(".ucs").css("background-color", "");
-        $("#ucs" + chartscale).css("background-color", "lightblue");
-        $("#uaddup" + addup).css("background-color", "lightblue");
+        $("#ucs" + chartscale).css("background-color", "skyblue");
+        $("#uaddup" + addup).css("background-color", "skyblue");
     } else {
         $(".cs").css("background-color", "");
-        $("#cs" + chartscale).css("background-color", "lightblue");
-        $("#addup" + addup).css("background-color", "lightblue");
+        $("#cs" + chartscale).css("background-color", "skyblue");
+        $("#addup" + addup).css("background-color", "skyblue");
     }
     pref = "s";
     if (userid != -1) pref = "userS";
@@ -159,7 +159,7 @@ async function loadChart(userid = -1) {
                     }, {
                         label: 'Profit (€)',
                         data: euro,
-                        backgroundColor: "lightblue",
+                        backgroundColor: "skyblue",
                         xAxisID: 'x1',
                         yAxisID: 'y1'
                     }, {
@@ -275,7 +275,7 @@ function loadStats(basic = false) {
                     datasets: [{
                         label: 'Game Preference',
                         data: [d.ets2jobs, d.atsjobs],
-                        backgroundColor: ["lightblue", "pink"],
+                        backgroundColor: ["skyblue", "pink"],
                     }]
                 },
                 options: {
@@ -1593,6 +1593,7 @@ function validate() {
     });
 }
 
+levent = 1;
 function loadLeaderboard(recurse = true) {
     page = parseInt($("#lpages").val())
     if (page == "") page = 1;
@@ -1612,8 +1613,18 @@ function loadLeaderboard(recurse = true) {
     } else {
         speedlimit *= 1.6;
     }
+    game = 0;
+    if(dets2 && !dats) game = 1;
+    else if(!dets2 && dats) game = 2;
+    else if(!dets2 && !dats) game = -1;
+    $(".dgame").css("background-color", "");
+    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    else $(".dgame" + game).css("background-color", "skyblue");
+    if(!dets2 && !dats) starttime = 1, endtime = 2;
+    if(levent) $("#levent").css("background-color", "skyblue");
+    else $("#levent").css("background-color", "");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game="+game + "&noevent=" + (1-levent),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1747,6 +1758,8 @@ function requestRole() {
     })
 }
 
+dets2 = 1;
+dats = 1;
 function loadDelivery(recurse = true) {
     page = parseInt($("#dpages").val())
     if (page == "") page = 1;
@@ -1766,8 +1779,16 @@ function loadDelivery(recurse = true) {
     } else {
         speedlimit *= 1.6;
     }
+    game = 0;
+    if(dets2 && !dats) game = 1;
+    else if(!dets2 && dats) game = 2;
+    else if(!dets2 && !dats) game = -1;
+    $(".dgame").css("background-color", "");
+    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    else $(".dgame" + game).css("background-color", "skyblue");
+    if(!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game="+game,
         type: "GET",
         dataType: "json",
         headers: {
@@ -3149,9 +3170,16 @@ function loadUserDelivery(recurse = true) {
     } else {
         speedlimit *= 1.6;
     }
-    console.log(speedlimit);
+    game = 0;
+    if(dets2 && !dats) game = 1;
+    else if(!dets2 && dats) game = 2;
+    else if(!dets2 && !dats) game = -1;
+    $(".dgame").css("background-color", "");
+    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    else $(".dgame" + game).css("background-color", "skyblue");
+    if(!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime,
+        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
         type: "GET",
         dataType: "json",
         headers: {

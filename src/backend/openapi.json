@@ -970,7 +970,7 @@
         },
         "/atm/dlog/leaderboard": {
             "get": {
-                "summary": "Get Distance Leaderboard",
+                "summary": "Get Leaderboard",
                 "tags": ["dlog"],
                 "operationId": "getDlogLeaderboard",
                 "security": [{
@@ -991,6 +991,22 @@
                         "type": "integer"
                     },
                     "name": "speedlimit",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Game (0: ETS2 & ATS | 1: ETS2 | 2: ATS)",
+                        "type": "integer"
+                    },
+                    "name": "game",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "No counting event point",
+                        "type": "boolean"
+                    },
+                    "name": "noevent",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1084,6 +1100,14 @@
                         "type": "integer"
                     },
                     "name": "speedlimit",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Game (0: ETS2 & ATS | 1: ETS2 | 2: ATS)",
+                        "type": "integer"
+                    },
+                    "name": "game",
                     "in": "query"
                 }, {
                     "required": false,
