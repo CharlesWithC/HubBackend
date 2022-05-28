@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, math, validators
+import json, time, math
 from datetime import datetime
 import requests
 
@@ -42,10 +42,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         if not isapptoken:
             ip = t[0][1]
             orgiptype = 4
-            if validators.ipv6(ip) == True:
+            if iptype(ip) == "ipv6":
                 orgiptype = 6
             curiptype = 4
-            if validators.ipv6(request.client.host) == True:
+            if iptype(request.client.host) == "ipv6":
                 curiptype = 6
             if orgiptype != curiptype:
                 cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -218,10 +218,10 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
         if not isapptoken:
             ip = t[0][1]
             orgiptype = 4
-            if validators.ipv6(ip) == True:
+            if iptype(ip) == "ipv6":
                 orgiptype = 6
             curiptype = 4
-            if validators.ipv6(request.client.host) == True:
+            if iptype(request.client.host) == "ipv6":
                 curiptype = 6
             if orgiptype != curiptype:
                 cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -273,10 +273,10 @@ async def eventVote(request: Request, response: Response, authorization: str = H
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -334,10 +334,10 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -422,10 +422,10 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -510,10 +510,10 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -581,10 +581,10 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")

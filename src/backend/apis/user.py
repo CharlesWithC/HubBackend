@@ -4,7 +4,7 @@
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
 from typing import Optional
-import json, time, requests, math, validators
+import json, time, requests, math
 
 from app import app, config
 from db import newconn
@@ -33,10 +33,10 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -134,10 +134,10 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -207,10 +207,10 @@ async def userList(page:int, request: Request, response: Response, authorization
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -297,10 +297,10 @@ async def userInfo(request: Request, response: Response, authorization: str = He
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -377,10 +377,10 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -428,10 +428,10 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")

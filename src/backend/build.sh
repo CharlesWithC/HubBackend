@@ -1,0 +1,1 @@
+nuitka3 main.py --follow-imports --include-package=websockets --show-progress --remove-output

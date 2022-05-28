@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from uuid import uuid4
-import json, time, math, validators
+import json, time, math
 import requests
 from discord import Webhook
 from typing import Optional
@@ -54,10 +54,10 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -144,10 +144,10 @@ async def member(request: Request, response: Response, userid: int, authorizatio
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -240,10 +240,10 @@ async def addMember(request: Request, response: Response, authorization: str = H
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -344,10 +344,10 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -400,10 +400,10 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -481,10 +481,10 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -653,10 +653,10 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -735,10 +735,10 @@ async def memberSteam(request: Request, response: Response, authorization: str =
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -802,10 +802,10 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")

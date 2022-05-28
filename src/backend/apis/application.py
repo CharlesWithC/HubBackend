@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, math, validators
+import json, time, math
 from datetime import datetime
 import discord
 from discord import Webhook
@@ -42,10 +42,10 @@ async def newApplication(request: Request, response: Response, authorization: st
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -204,10 +204,10 @@ async def updateApplication(request: Request, response: Response, authorization:
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -329,10 +329,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -448,10 +448,10 @@ async def getApplication(request: Request, response: Response, applicationid: in
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -519,10 +519,10 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -622,10 +622,10 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
-    if validators.ipv6(ip) == True:
+    if iptype(ip) == "ipv6":
         orgiptype = 6
     curiptype = 4
-    if validators.ipv6(request.client.host) == True:
+    if iptype(request.client.host) == "ipv6":
         curiptype = 6
     if orgiptype != curiptype:
         cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")

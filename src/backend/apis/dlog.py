@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-import json, time, math, validators
+import json, time, math
 from typing import Optional
 from datetime import datetime
 import requests
@@ -239,10 +239,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -374,10 +374,10 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -441,10 +441,10 @@ async def dlogList(request: Request, response: Response, authorization: str = He
         if not isapptoken:
             ip = t[0][1]
             orgiptype = 4
-            if validators.ipv6(ip) == True:
+            if iptype(ip) == "ipv6":
                 orgiptype = 6
             curiptype = 4
-            if validators.ipv6(request.client.host) == True:
+            if iptype(request.client.host) == "ipv6":
                 curiptype = 6
             if orgiptype != curiptype:
                 cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -557,10 +557,10 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
     if not isapptoken:
         ip = t[0][1]
         orgiptype = 4
-        if validators.ipv6(ip) == True:
+        if iptype(ip) == "ipv6":
             orgiptype = 6
         curiptype = 4
-        if validators.ipv6(request.client.host) == True:
+        if iptype(request.client.host) == "ipv6":
             curiptype = 6
         if orgiptype != curiptype:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
