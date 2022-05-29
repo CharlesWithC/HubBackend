@@ -490,7 +490,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
 
-    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
     
     t = cur.fetchall()
     ret = []
@@ -510,7 +510,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
             destination_company = data["data"]["object"]["destination_company"]["name"]
         cargo = data["data"]["object"]["cargo"]["name"]
         cargo_mass = data["data"]["object"]["cargo"]["mass"]
-        distance = data["data"]["object"]["driven_distance"]
+        distance = tt[6]
         if distance < 0:
             distance = 0
 
