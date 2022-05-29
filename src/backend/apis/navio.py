@@ -119,10 +119,12 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         revenue = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
         isdelivered = 1
         xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
-        # if driven_distance < 0: # use navio data to prevent save edits, if negative, then driving backward and block
-            # driven_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
+        meta_distance = int(d["data"]["object"]["events"][-1]["meta"]["distance"])
+        if driven_distance < meta_distance * 0.8 or driven_distance > meta_distance * 1.2:
+            driven_distance = 0
     else:
         revenue = -float(d["data"]["object"]["events"][-1]["meta"]["penalty"])
+        driven_distance = 0
 
     allevents = d["data"]["object"]["events"]
     for eve in allevents:
