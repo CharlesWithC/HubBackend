@@ -18,8 +18,10 @@ ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operat
         20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Lead Developer", 31: "Development Staff", \
             40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
                 60: "Convoy Supervisor", 61: "Convoy Control",\
-                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver", 223: "Staff of the Month", 224: "Driver of the Month",
-                 1000: "Partner", 10000: "External Staff"}
+                 71: "Division Manager", 72: "Division Supervisor",\
+                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver",  223: "Staff of the Month", 224: "Driver of the Month",\
+                 251: "Construction Division", 252: "Chilled Division", 253:" ADR Division",\
+                    1000: "Partner", 10000: "External Staff"}
 
 RANKING = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
 
@@ -199,9 +201,14 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         while "" in roles:
             roles.remove("")
         roles = [int(i) for i in roles]
+        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+        o = cur.fetchall()
+        divisionpnt = 0
+        if len(o) > 0:
+            divisionpnt = o[0][0] * 500
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "discordid": t[0][0], "avatar": t[0][2], \
             "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-                "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt}}
+                "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -212,10 +219,15 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         while "" in roles:
             roles.remove("")
         roles = [int(i) for i in roles]
+        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+        o = cur.fetchall()
+        divisionpnt = 0
+        if len(o) > 0:
+            divisionpnt = o[0][0] * 500
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], \
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
-                    "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt}}
+                    "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
 
 @app.post('/atm/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):

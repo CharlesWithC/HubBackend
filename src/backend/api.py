@@ -13,6 +13,7 @@ from functions import *
 import apis.announcement
 import apis.application
 import apis.auth
+import apis.division
 import apis.dlog
 import apis.event
 import apis.member

@@ -1,3 +1,5 @@
+VERIFIED = `<svg style="display:inline;position:relative;top:-1.5px" width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M10.5213 2.62368C11.3147 1.75255 12.6853 1.75255 13.4787 2.62368L14.4989 3.74391C14.8998 4.18418 15.4761 4.42288 16.071 4.39508L17.5845 4.32435C18.7614 4.26934 19.7307 5.23857 19.6757 6.41554L19.6049 7.92905C19.5771 8.52388 19.8158 9.10016 20.2561 9.50111L21.3763 10.5213C22.2475 11.3147 22.2475 12.6853 21.3763 13.4787L20.2561 14.4989C19.8158 14.8998 19.5771 15.4761 19.6049 16.071L19.6757 17.5845C19.7307 18.7614 18.7614 19.7307 17.5845 19.6757L16.071 19.6049C15.4761 19.5771 14.8998 19.8158 14.4989 20.2561L13.4787 21.3763C12.6853 22.2475 11.3147 22.2475 10.5213 21.3763L9.50111 20.2561C9.10016 19.8158 8.52388 19.5771 7.92905 19.6049L6.41553 19.6757C5.23857 19.7307 4.26934 18.7614 4.32435 17.5845L4.39508 16.071C4.42288 15.4761 4.18418 14.8998 3.74391 14.4989L2.62368 13.4787C1.75255 12.6853 1.75255 11.3147 2.62368 10.5213L3.74391 9.50111C4.18418 9.10016 4.42288 8.52388 4.39508 7.92905L4.32435 6.41553C4.26934 5.23857 5.23857 4.26934 6.41554 4.32435L7.92905 4.39508C8.52388 4.42288 9.10016 4.18418 9.50111 3.74391L10.5213 2.62368Z" stroke="currentColor" stroke-width="1.5"/> <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/> </svg> `;
+
 rolelist = {};
 dmapint = -1;
 window.mapcenter = {}
@@ -515,6 +517,14 @@ async function ShowTab(tabname, btnname) {
         window.history.pushState("", "", '/delivery');
         loadStats(true);
         loadDelivery();
+    }
+    if (tabname == "#Division") {
+        window.history.pushState("", "", '/division');
+        loadDivision();
+    }
+    if (tabname == "#StaffDivision") {
+        window.history.pushState("", "", '/staffdivision');
+        loadStaffDivision();
     }
     if (tabname == "#Event") {
         window.history.pushState("", "", '/event');
@@ -1326,14 +1336,15 @@ function ShowStaffTabs() {
     $("#StaffAnnTabBtn").hide();
     if (roles != null && roles != undefined) {
         highestrole = 99999;
+        isES = false; // event staff
+        isDS = false; // division supervisor
         for (i = 0; i < roles.length; i++) {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
             }
             if (roles[i] == 40 || roles[i] == 41) {
+                isES = true;
                 if (roles[i] == 40) isEM = true;
-                $("#StaffAnnTabBtn").show(); // event staff
-                $("#StaffEventBtn").show(); // event staff
                 $("#eventattendee").show();
                 setInterval(function () {
                     title = $("#anntitle").val();
@@ -1373,7 +1384,19 @@ function ShowStaffTabs() {
                         $("#newEventBtn").css("background-color", "blue");
                     }
                 });
+            } if(roles[i] == 71 || roles[i]==72){
+                isDS = true;
             }
+        }
+        if(!isES && highestrole >= 10){
+            $("#StaffEventBtn").hide();
+        } if(!isDS && highestrole >= 10){
+            $("#StaffDivisionBtn").hide();
+        } if(!isES && highestrole >= 10){
+            $("#StaffAnnTabBtn").hide();
+        } if(highestrole >= 30){
+            $("#StaffMemberBtn").hide();
+            $("#AllAppBtn").hide();
         }
         if (highestrole < 100) {
             $("#stafftabs").show();
@@ -1442,6 +1465,7 @@ function validate() {
     }
     if (userid != -1 && isNumber(userid)) {
         $("#memberOnlyTabs").show();
+        $("#DivisionBtn").show();
     }
     $("#recruitment").show();
     $.ajax({
@@ -1594,6 +1618,8 @@ function validate() {
 }
 
 levent = 1;
+ldivision = 1;
+
 function loadLeaderboard(recurse = true) {
     page = parseInt($("#lpages").val())
     if (page == "") page = 1;
@@ -1614,17 +1640,19 @@ function loadLeaderboard(recurse = true) {
         speedlimit *= 1.6;
     }
     game = 0;
-    if(dets2 && !dats) game = 1;
-    else if(!dets2 && dats) game = 2;
-    else if(!dets2 && !dats) game = -1;
+    if (dets2 && !dats) game = 1;
+    else if (!dets2 && dats) game = 2;
+    else if (!dets2 && !dats) game = -1;
     $(".dgame").css("background-color", "");
-    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    if (game == 0) $(".dgame").css("background-color", "skyblue");
     else $(".dgame" + game).css("background-color", "skyblue");
-    if(!dets2 && !dats) starttime = 1, endtime = 2;
-    if(levent) $("#levent").css("background-color", "skyblue");
+    if (!dets2 && !dats) starttime = 1, endtime = 2;
+    if (levent) $("#levent").css("background-color", "skyblue");
     else $("#levent").css("background-color", "");
+    if (ldivision) $("#ldivision").css("background-color", "skyblue");
+    else $("#ldivision").css("background-color", "");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game="+game + "&noevent=" + (1-levent),
+        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game + "&noevent=" + (1 - levent) + "&nodivision=" + (1 - ldivision),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1642,6 +1670,8 @@ function loadLeaderboard(recurse = true) {
                 $("#leaderboardTable").append(`
             <tr class="text-xs">
               <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+              <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
               <td class="py-5 px-6 font-medium"></td>
@@ -1715,6 +1745,7 @@ function loadLeaderboard(recurse = true) {
                 <td class="py-5 px-6">${point2rank(user.totnolimit)}</td>
                 <td class="py-5 px-6">${distance}</td>
                 <td class="py-5 px-6">${user.eventpnt}</td>
+                <td class="py-5 px-6">${user.divisionpnt}</td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
             }
@@ -1760,6 +1791,7 @@ function requestRole() {
 
 dets2 = 1;
 dats = 1;
+
 function loadDelivery(recurse = true) {
     page = parseInt($("#dpages").val())
     if (page == "") page = 1;
@@ -1780,15 +1812,15 @@ function loadDelivery(recurse = true) {
         speedlimit *= 1.6;
     }
     game = 0;
-    if(dets2 && !dats) game = 1;
-    else if(!dets2 && dats) game = 2;
-    else if(!dets2 && !dats) game = -1;
+    if (dets2 && !dats) game = 1;
+    else if (!dets2 && dats) game = 2;
+    else if (!dets2 && !dats) game = -1;
     $(".dgame").css("background-color", "");
-    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    if (game == 0) $(".dgame").css("background-color", "skyblue");
     else $(".dgame" + game).css("background-color", "skyblue");
-    if(!dets2 && !dats) starttime = 1, endtime = 2;
+    if (!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game="+game,
+        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
         type: "GET",
         dataType: "json",
         headers: {
@@ -1877,11 +1909,16 @@ function loadDelivery(recurse = true) {
                 dtl = "";
                 if (localStorage.getItem("token") != "guest") {
                     dtl =
-                        `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
+                        `<td class="py-5 px-6 font-medium">
+                        <button type="button" style="display:inline;padding:5px" id="DeliveryInfoBtn${delivery.logid}" 
+                        class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                        onclick="deliveryDetail('${delivery.logid}')">Details</button></td>`;
                 }
+                dextra = "";
+                if (delivery.isdivision == true) dextra = "<span title='Validated Division Delivery'>" + VERIFIED + "</span>";
                 $("#deliveryTable").append(`
             <tr class="text-xs" style="color:${color}">
-              <td class="py-5 px-6 font-medium">${delivery.logid}</td>
+            <td class="py-5 px-6 font-medium">${delivery.logid} ${dextra}</td>
               <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
@@ -1898,6 +1935,177 @@ function loadDelivery(recurse = true) {
             toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
             console.warn(
                 `Failed to load delivery log. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
+function loadDivision() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/division/info",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            const d = data.response;
+            $("#constructionTable").empty();
+            $("#chilledTable").empty();
+            $("#ADRTable").empty();
+            if (d.construction.length == 0) {
+                $("#constructionTableHead").hide();
+                $("#constructionTable").append(`
+            <tr class="text-xs">
+              <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            } else {
+                $("#constructionTableHead").show();
+                for (i = 0; i < d.construction.length; i++) {
+                    $("#constructionTable").append(`
+                    <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.construction[i].userid});">${d.construction[i].name}</a></td>
+                    <td class="py-5 px-6 font-medium">${d.construction[i].points}</td>
+                    </tr>`);
+                }
+            }
+            if (d.chilled.length == 0) {
+                $("#chilledTableHead").hide();
+                $("#chilledTable").append(`
+            <tr class="text-xs">
+              <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            } else {
+                $("#chilledTableHead").show();
+                for (i = 0; i < d.chilled.length; i++) {
+                    $("#chilledTable").append(`
+                    <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.chilled[i].userid});">${d.construction[i].name}</a></td>
+                    <td class="py-5 px-6 font-medium">${d.chilled[i].points}</td>
+                    </tr>`);
+                }
+            }
+            if (d.adr.length == 0) {
+                $("#ADRTableHead").hide();
+                $("#ADRTable").append(`
+            <tr class="text-xs">
+              <td class="py-5 px-6 font-medium">No Data</td>
+              <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            } else {
+                $("#ADRTableHead").show();
+                for (i = 0; i < d.adr.length; i++) {
+                    $("#ADRTable").append(`
+                    <tr class="text-xs">
+                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.adr[i].userid});">${d.construction[i].name}</a></td>
+                    <td class="py-5 px-6 font-medium">${d.adr[i].points}</td>
+                    </tr>`);
+                }
+            }
+
+            $("#divisionDeliveryTable").empty();
+            if (d.deliveries.length == 0) {
+                $("#divisionDeliveryTableHead").hide();
+                $("#divisionDeliveryTable").append(`
+            <tr class="text-xs">
+                <td class="py-5 px-6 font-medium">No Data</td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            } else {
+                $("#divisionDeliveryTableHead").show();
+                for (i = 0; i < d.deliveries.length; i++) {
+                    const delivery = d.deliveries[i];
+                    distance = TSeparator(parseInt(delivery.distance / 1.6));
+                    cargo_mass = parseInt(delivery.cargo_mass / 1000);
+                    unittxt = "€";
+                    if (delivery.unit == 2) unittxt = "$";
+                    profit = TSeparator(delivery.profit);
+                    color = "";
+                    if (delivery.profit < 0) color = "grey";
+                    dtl =
+                        `<td class="py-5 px-6 font-medium">
+                    <button type="button" style="display:inline;padding:5px" id="DeliveryInfoBtn${delivery.logid}" 
+                    class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                    onclick="deliveryDetail('${delivery.logid}')">Details</button></td>`;
+                    dextra = "<span title='Validated Division Delivery'>" + VERIFIED + "</span>";
+                    $("#divisionDeliveryTable").append(`
+            <tr class="text-xs" style="color:${color}">
+            <td class="py-5 px-6 font-medium">${delivery.logid} ${dextra}</td>
+              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
+              <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
+              <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
+              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
+              <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
+              ${dtl}
+            </tr>`);
+                }
+            }
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load division. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
+function loadStaffDivision() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/division/validate",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            DIVISION = {
+                1: "Construction",
+                2: "Chilled",
+                3: "ADR"
+            };
+            $("#staffDisivionTable").empty();
+            d = data.response;
+            if (d.length == 0) {
+                $("#staffDisivionTableHead").hide();
+                $("#staffDisivionTable").append(`
+            <tr class="text-xs">
+                <td class="py-5 px-6 font-medium">No Data</td>
+                <td class="py-5 px-6 font-medium"></td>
+                <td class="py-5 px-6 font-medium"></td>
+            </tr>`);
+            } else {
+                $("#staffDisivionTableHead").show();
+                for (i = 0; i < d.length; i++) {
+                    const delivery = d[i];
+                    $("#staffDisivionTable").append(`
+            <tr class="text-xs">
+            <td class="py-5 px-6 font-medium"><a onclick="deliveryDetail(${delivery.logid})" style="cursor:pointer">${delivery.logid}</a></td>
+              <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
+              <td class="py-5 px-6 font-medium">${DIVISION[delivery.divisionid]}</td>
+              <td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px" id="DeliveryInfoBtn${delivery.logid}" 
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="deliveryDetail('${delivery.logid}')">Details</button></td>
+            </tr>`);
+                }
+            }
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load division. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
             console.log(data);
         }
     })
@@ -2220,12 +2428,16 @@ function deliveryDetail(logid) {
                         <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${userid})'>${name}</a></td></tr>`);
                 if (tp == "job.cancelled") {
                     $("#ddcol4").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Log ID</td>
+                            <td class="py-5 px-6 font-medium">Delivery ID</td>
                             <td class="py-5 px-6 font-medium">${logid} (Cancelled)</td></tr>`);
                 } else {
                     $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Log ID</td>
-                        <td class="py-5 px-6 font-medium">${logid}</td></tr>`);
+                        <td class="py-5 px-6 font-medium">Delivery ID</td>
+                        <td class="py-5 px-6 font-medium">${logid}
+                        <button type="button" style="display:inline;padding:5px" id="divisioninfobtn"
+                  class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                  onclick="divisionInfo(${logid})">Division</button>
+                  </td></tr>`);
                 }
                 $("#ddcol4").append(`<tr class="text-xs">
                         <td class="py-5 px-6 font-medium">Logged Distance</td>
@@ -2357,6 +2569,205 @@ function deliveryDetail(logid) {
             console.warn(
                 `Failed to load delivery log details. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`
             );
+            console.log(data);
+        }
+    });
+}
+
+function divisionInfo(logid) {
+    $("#divisioninfobtn").html("Loading...");
+    $("#divisioninfobtn").attr("disabled", "disabled");
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/division/info?logid=" + logid,
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: async function (data) {
+            $("#divisioninfobtn").html("Division");
+            $("#divisioninfobtn").removeAttr("disabled");
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            info = `<div style="text-align:left">`;
+            if (data.response.requestSubmitted == false) {
+                info += `
+                <h3 class="text-xl font-bold" style="text-align:left;margin:5px">Division: </h3>
+                <select id="divisionSelect"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                  <option value="construction">Construction</option>
+                  <option value="chilled">Chilled</option>
+                  <option value="adr">ADR</option>
+                </select>`;
+                info += `<button type="button" style="float:right" id="divisionRequestBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="requestDivision(${logid})">Request Division Validation</button>`;
+                info += "</div>";
+                Swal.fire({
+                    title: `Division Delivery #` + logid,
+                    html: info,
+                    icon: 'info',
+                    showConfirmButton: false,
+                    confirmButtonText: 'Close'
+                });
+            } else if (data.response.isstaff == true && data.response.status == 0) {
+                info += `
+                <p>This delivery is pending division validation.</p>
+                <p>The division is selected by driver and changeable.</p>
+                <p>A short reason should be provided if you'd reject it.</p>
+                <h3 class="text-xl font-bold" style="text-align:left;margin:5px">Division: </h3>
+                <select id="divisionSelect"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                  <option value="construction" id="division1">Construction</option>
+                  <option value="chilled" id="division2">Chilled</option>
+                  <option value="adr" id="division3">ADR</option>
+                </select>
+                <h3 class="text-xl font-bold" style="text-align:left;margin:5px">Reason: </h3>
+                <textarea id="divisionReason"
+                class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+                rows="5" placeholder=""></textarea>
+                `;
+                info += `<button type="button" style="float:right;background-color:green;margin:5px" id="divisionAcceptBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="updateDivision(${logid}, 1)">Accept</button>`;
+                info += `<button type="button" style="float:right;background-color:red;margin:5px" id="divisionRejectBtn"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="updateDivision(${logid}, 2)">Deny</button>`;
+                info += "</div>";
+                Swal.fire({
+                    title: `Division Delivery #` + logid,
+                    html: info,
+                    icon: 'info',
+                    showConfirmButton: false,
+                    confirmButtonText: 'Close'
+                });
+                $("#division" + data.response.divisionid).prop("selected", true);
+            } else {
+                DIVISION = {
+                    1: "Construction",
+                    2: "Chilled",
+                    3: "ADR"
+                };
+                if (data.response.reason == undefined) {
+                    info += "<p><b>Division</b>: " + DIVISION[data.response.divisionid] + "</p><br>";
+                    info += "<p>Validated at " + getDateTime(data.response.updatets * 1000) +
+                        " by <a onclick='loadProfile(" + data.response.staffid + ");'>" + data.response.staffname + "</a></p>";
+                } else {
+                    info += "<p><b>Division</b>: " + DIVISION[data.response.divisionid] + "</p><br>";
+                    info += "<p>Validation requested at " + getDateTime(data.response.requestts * 1000) + "</p>";
+                    if (data.response.status == 0) info += "<p>- Pending Validation</p>";
+                    else if (data.response.status == 1)
+                        info += "<p>Validated at " + getDateTime(data.response.updatets * 1000) +
+                        " by <a onclick='loadProfile(" + data.response.staffid + ");'>" + data.response.staffname + "</a></p>";
+                    else if (data.response.status == 2)
+                        info += "<p>Denied at " + getDateTime(data.response.updatets * 1000) +
+                        " by <a onclick='loadProfile(" + data.response.staffid + ");'>" + data.response.staffname + "</a></p>";
+                    if (data.response.reason != "")
+                        info += "<p> - For reason " + data.response.reason + "</p>";
+                }
+                if (data.response.isstaff == true) {
+                    info += `<button type="button" style="float:right;background-color:grey;margin:5px" id="divisionAcceptBtn"
+                    class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                    onclick="updateDivision(${logid}, 0)">Revalidate</button>`;
+                }
+                info += "</div>";
+                Swal.fire({
+                    title: `Division Delivery #` + logid,
+                    html: info,
+                    icon: 'info',
+                    confirmButtonText: 'Close'
+                });
+            }
+        },
+        error: function (data) {
+            $("#divisioninfobtn").html("Division");
+            $("#divisioninfobtn").removeAttr("disabled");
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load division information. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    });
+}
+
+function requestDivision(logid) {
+    $("#divisionRequestBtn").html("Loading...");
+    $("#divisionRequestBtn").attr("disabled", "disabled");
+    division = $("#divisionSelect").val();
+    divisionid = 0;
+    if (division == "construction") divisionid = 1;
+    else if (division == "chilled") divisionid = 2;
+    else if (division == "adr") divisionid = 3;
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/division/validate",
+        type: "POST",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+            logid: logid,
+            divisionid: divisionid
+        },
+        success: async function (data) {
+            $("#divisionRequestBtn").removeAttr("disabled");
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            toastFactory("success", "Success", data.response, 5000, false);
+        },
+        error: function (data) {
+            $("#divisionRequestBtn").removeAttr("disabled");
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load division information. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    });
+}
+
+function updateDivision(logid, status) {
+    if (status <= 1) {
+        $("#divisionAcceptBtn").html("Working...");
+        $("#divisionAcceptBtn").attr("disabled", "disabled");
+        $("#divisionRejectBtn").attr("disabled", "disabled");
+    } else if (status == 2) {
+        $("#divisionRejectBtn").html("Working...");
+        $("#divisionAcceptBtn").attr("disabled", "disabled");
+        $("#divisionRejectBtn").attr("disabled", "disabled");
+    }
+    division = $("#divisionSelect").val();
+    divisionid = 0;
+    if (division == "construction") divisionid = 1;
+    else if (division == "chilled") divisionid = 2;
+    else if (division == "adr") divisionid = 3;
+    reason = $("#divisionReason").val();
+    if (reason == undefined || reason == null) reason = "";
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/division/validate",
+        type: "PATCH",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+            logid: logid,
+            divisionid: divisionid,
+            status: status,
+            reason: reason
+        },
+        success: function (data) {
+            $("#divisionAcceptBtn").removeAttr("disabled");
+            $("#divisionRejectBtn").removeAttr("disabled");
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            toastFactory("success", "Success", data.response, 5000, false);
+            divisionInfo(logid);
+        },
+        error: function (data) {
+            $("#divisionAcceptBtn").removeAttr("disabled");
+            $("#divisionRejectBtn").removeAttr("disabled");
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to load division information. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
             console.log(data);
         }
     });
@@ -2527,7 +2938,10 @@ function loadEvent(recurse = true) {
               <td class="py-5 px-6 font-medium">${mt}</td>
               <td class="py-5 px-6 font-medium">${dt}</td>
               <td class="py-5 px-6 font-medium">${votecnt}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="EventInfoBtn${event.eventid}" onclick="eventDetail('${event.eventid}')">Show Details</td>
+              <td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px"
+                class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+                onclick="eventDetail('${event.eventid}')">Details</button></td>
             </tr>`);
             }
         },
@@ -2894,7 +3308,8 @@ function memberDetail(userid) {
                 info += "<p style='text-align:left'><b>Fuel Consumed:</b> " + parseInt(d.fuel) + "L</p>";
                 info += "<p style='text-align:left'><b>XP Earned:</b> " + d.xp + "</p>";
                 info += "<p style='text-align:left'><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
-                info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt) +
+                info += "<p style='text-align:left'><b>Division Points:</b> " + parseInt(d.divisionpnt) + "</p>";
+                info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt + d.divisionpnt) +
                     "</p>";
 
             }
@@ -3171,13 +3586,13 @@ function loadUserDelivery(recurse = true) {
         speedlimit *= 1.6;
     }
     game = 0;
-    if(dets2 && !dats) game = 1;
-    else if(!dets2 && dats) game = 2;
-    else if(!dets2 && !dats) game = -1;
+    if (dets2 && !dats) game = 1;
+    else if (!dets2 && dats) game = 2;
+    else if (!dets2 && !dats) game = -1;
     $(".dgame").css("background-color", "");
-    if(game == 0) $(".dgame").css("background-color", "skyblue");
+    if (game == 0) $(".dgame").css("background-color", "skyblue");
     else $(".dgame" + game).css("background-color", "skyblue");
-    if(!dets2 && !dats) starttime = 1, endtime = 2;
+    if (!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
         url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
         type: "GET",
@@ -3267,11 +3682,16 @@ function loadUserDelivery(recurse = true) {
                 dtl = "";
                 if (localStorage.getItem("token") != "guest") {
                     dtl =
-                        `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="DeliveryInfoBtn${delivery.logid}" onclick="deliveryDetail('${delivery.logid}')">Show Details</td>`;
+                        `<td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px" id="DeliveryInfoBtn${delivery.logid}" 
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="deliveryDetail('${delivery.logid}')">Details</button></td>`;
                 }
+                dextra = "";
+                if (delivery.isdivision == true) dextra = "<span title='Validated Division Delivery'>" + VERIFIED + "</span>";
                 $("#userDeliveryTable").append(`
             <tr class="text-xs" style="color:${color}">
-              <td class="py-5 px-6 font-medium">${delivery.logid}</td>
+            <td class="py-5 px-6 font-medium">${delivery.logid} ${dextra}</td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
               <td class="py-5 px-6 font-medium">${distance}Mi</td>
@@ -3341,7 +3761,8 @@ function loadProfile(userid) {
                 info += "<p><b>Fuel Consumed:</b> " + parseInt(d.fuel) + "L</p>";
                 info += "<p><b>XP Earned:</b> " + d.xp + "</p>";
                 info += "<p><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
-                info += "<p><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt) +
+                info += "<p style='text-align:left'><b>Division Points:</b> " + parseInt(d.divisionpnt) + "</p>";
+                info += "<p><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt + d.divisionpnt) +
                     "</p>";
                 info += "<br><b>About Me:</b><br>" + parseMarkdown(d.bio) + "<br><br>";
 
@@ -3368,7 +3789,7 @@ function loadProfile(userid) {
                     else if (roles[i] > 100) color = "grey";
                     if (roles[i] == 223 || roles[i] == 224) color = "#ffff77;color:black;";
                     if (roles[i] == 1000) color = "#9146ff";
-                    if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' style='max-width:fit-content;display:inline;background-color:${color}'>` + rolelist[roles[i]] + "</span> ";
+                    if (rolelist[roles[i]] != undefined) rtxt += `<span class='tag' title="${rolelist[roles[i]]}" style='max-width:fit-content;margin-bottom:15px;display:inline;background-color:${color};white-space:nowrap;'>` + rolelist[roles[i]] + "</span> ";
                     else rtxt += "Unknown Role (ID " + roles[i] + "), ";
                 }
                 rtxt = rtxt.substring(0, rtxt.length - 2);
@@ -3593,7 +4014,10 @@ function loadUsers(recurse = true) {
               <td class="py-5 px-6 font-medium" style='color:${color}'>${user.name} ${bantxt2}</td>
               ${accept}
               <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:red" onclick="banGo('${user.discordid}')">${bantxt}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="UserInfoBtn${user.discordid}" onclick="userDetail('${user.discordid}')">Show Details</td>
+              <td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px" id="UserInfoBtn${user.discordid}" 
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="userDetail('${user.discordid}')">Details</button></td>
             </tr>`)
             }
         },
@@ -3877,7 +4301,10 @@ function loadMyApp(recurse = true) {
               <td class="py-5 px-6 font-medium">${creation}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
               <td class="py-5 px-6 font-medium">${closedat}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="MyAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid})">Show Details</td>
+              <td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px" id="MyAppBtn${application.applicationid}" 
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="appDetail(${application.applicationid})">Details</button></td>
             </tr>`);
             }
         },
@@ -4037,7 +4464,10 @@ function loadAllApp(recurse = true) {
               <td class="py-5 px-6 font-medium">${creation}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${status}</td>
               <td class="py-5 px-6 font-medium">${closedat}</td>
-              <td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey" id="AllAppBtn${application.applicationid}" onclick="appDetail(${application.applicationid}, true)">Show Details</td>
+              <td class="py-5 px-6 font-medium">
+              <button type="button" style="display:inline;padding:5px" id="AllAppBtn${application.applicationid}" 
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="appDetail(${application.applicationid}, true)">Details</button></td>
             </tr>`);
             }
         },
@@ -4276,7 +4706,9 @@ function PathDetect() {
             $("#DeliveryBtn").addClass("bg-indigo-500");
             deliveryDetail(logid);
         } else ShowTab("#Delivery", "#DeliveryBtn");
-    } else if (p == "/event") ShowTab("#Event", "#EventBtn");
+    } else if (p == "/division") ShowTab("#Division", "#DivisionBtn");
+    else if (p == "/staffdivision") ShowTab("#StaffDivision", "#StaffDivisionBtn");
+    else if (p == "/event") ShowTab("#Event", "#EventBtn");
     else if (p == "/staffevent") ShowTab("#StaffEvent", "#StaffEventBtn");
     else if (p == "/member") {
         userid = getUrlParameter("userid");

@@ -208,7 +208,8 @@ async def dlogChart(request: Request, response: Response,
 
 @app.get("/atm/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, noevent: Optional[bool] = False):
+    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
+        noevent: Optional[bool] = False, nodivision: Optional[bool] = False):
 
     if page <= 0:
         page = 1
@@ -263,7 +264,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    if starttime != -1 and endtime != -1 or speedlimit != 0 or game != 0 or noevent:
+    if starttime != -1 and endtime != -1 or speedlimit != 0 or game != 0 or noevent or nodivision:
         if starttime > endtime:
             starttime, endtime = endtime, starttime
         if (starttime == -1 or endtime == -1):
@@ -326,8 +327,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             totnolimit = 0
             if len(o) > 0:
                 totnolimit = o[0][0]
+            divisionpnt = 0
+            if not nodivision:
+                cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+                o = cur.fetchall()
+                if len(o) > 0:
+                    divisionpnt = o[0][0] * 500
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": userdistance[userid], "eventpnt": userevent[userid], "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid], "totnolimit": totnolimit})
+                "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
 
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
@@ -342,7 +349,12 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         p = cur.fetchall()
         if len(p) == 0:
             continue
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "totalpnt": tt[1], "totnolimit": tt[1]})
+        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+        o = cur.fetchall()
+        divisionpnt = 0
+        if len(o) > 0:
+            divisionpnt = o[0][0] * 500
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": tt[1], "totnolimit": tt[1] + divisionpnt})
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0)")
     t = cur.fetchall()
@@ -444,29 +456,30 @@ async def dlogList(request: Request, response: Response, authorization: str = He
             if len(t) == 0:
                 userid = -1
             isapptoken = True
-        discordid = t[0][0]
-        if not isapptoken:
-            ip = t[0][1]
-            orgiptype = 4
-            if iptype(ip) == "ipv6":
-                orgiptype = 6
-            curiptype = 4
-            if iptype(request.client.host) == "ipv6":
-                curiptype = 6
-            if orgiptype != curiptype:
-                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-                conn.commit()
-            else:
-                if ip != request.client.host:
-                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+        else:
+            discordid = t[0][0]
+            if not isapptoken:
+                ip = t[0][1]
+                orgiptype = 4
+                if iptype(ip) == "ipv6":
+                    orgiptype = 6
+                curiptype = 4
+                if iptype(request.client.host) == "ipv6":
+                    curiptype = 6
+                if orgiptype != curiptype:
+                    cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
                     conn.commit()
-                    # response.status_code = 401
-                    return {"error": True, "descriptor": "401: Unauthroized"}
-        cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            userid = -1
-        userid = t[0][0]
+                else:
+                    if ip != request.client.host:
+                        cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                        conn.commit()
+                        # response.status_code = 401
+                        return {"error": True, "descriptor": "401: Unauthroized"}
+            cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+            t = cur.fetchall()
+            if len(t) == 0:
+                userid = -1
+            userid = t[0][0]
 
     conn = newconn()
     cur = conn.cursor()
@@ -526,10 +539,15 @@ async def dlogList(request: Request, response: Response, authorization: str = He
         if userid == -1:
             name = "Anonymous"
 
+        isdivision = False
+        cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1")
+        p = cur.fetchall()
+        if len(p) > 0:
+            isdivision = True
         ret.append({"logid": tt[3], "userid": tt[0], "name": name, "distance": distance, \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
+                    "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "isdivision": isdivision, "timestamp": tt[2]})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit}")
     t = cur.fetchall()

@@ -21,6 +21,8 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, nam
 cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, requestts BIGINT, status INT, updatets BIGINT, staffid INT, reason TEXT)")
+# status = 0: pending | 1: validated | 2: denied
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
     mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT, eventpnt INT, vote TEXT)")
 # tmplink = '' -> private convoy | m/dts -> meetup/departure timestamp | img -> multiple link separated with ','
@@ -51,6 +53,8 @@ CREATE INDEX dlog_logid ON dlog (logid);
 CREATE INDEX dlog_userid ON dlog (userid);
 CREATE INDEX dlog_navioid ON dlog (navioid);
 CREATE INDEX dlog_topspeed ON dlog (topspeed);
+CREATE INDEX division_logid ON division (logid);
+CREATE INDEX division_divisionid ON division (divisionid);
 CREATE INDEX event_eventid ON event (eventid);
 CREATE INDEX telemetry_logid ON telemetry (logid);
 CREATE INDEX telemetry_userid ON telemetry (userid);

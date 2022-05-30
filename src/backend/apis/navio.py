@@ -171,6 +171,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         if e == "job.delivered":
             k = randint(0, len(GIFS)-1)
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
+                    "url": f"https://{config.dhdomain}/delivery?logid={logid}",
                     "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
                                {"name": "Distance", "value": f"{int(driven_distance/1.6)} miles", "inline": True},

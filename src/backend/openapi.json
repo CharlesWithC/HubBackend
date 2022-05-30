@@ -1167,7 +1167,179 @@
                 "parameters": [{
                     "required": true,
                     "schema": {
-                        "title": "Log ID",
+                        "title": "Delivery ID",
+                        "type": "integer"
+                    },
+                    "name": "logid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/division/validate": {
+            "get": {
+                "summary": "Get Pending Delivery Division Validation Request",
+                "tags": ["division"],
+                "operationId": "getDivisionPendingList",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Request Delivery Division Validation",
+                "tags": ["division"],
+                "operationId": "divisionRequest",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logid": {
+                                        "description": "Delivery ID",
+                                        "type": "integar"
+                                    },
+                                    "divisionid": {
+                                        "description": "Division ID (1: Construction | 2: Chilled | 3: ADR)",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": ["logid", "divisionid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update Delivery Division Validation Request",
+                "tags": ["division"],
+                "operationId": "divisionRequestUpdate",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logid": {
+                                        "description": "Delivery ID",
+                                        "type": "integar"
+                                    },
+                                    "divisionid": {
+                                        "description": "Division ID (1: Construction | 2: Chilled | 3: ADR)",
+                                        "type": "integar"
+                                    },
+                                    "status": {
+                                        "description": "Status (0: Pending | 1: Accepted | 2: Denied)",
+                                        "type": "integar"
+                                    },
+                                    "reason": {
+                                        "description": "Reason",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["logid", "divisionid", "status", "reason"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/division/info": {
+            "get": {
+                "summary": "Get Division Information",
+                "tags": ["division"],
+                "operationId": "getDivisionInformation",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Delivery ID",
                         "type": "integer"
                     },
                     "name": "logid",
@@ -2201,6 +2373,9 @@
     }, {
         "name": "dlog",
         "description": "Delivery Log"
+    }, {
+        "name": "division",
+        "description": "Divisions"
     }, {
         "name": "announcement",
         "description": "Announcements"
