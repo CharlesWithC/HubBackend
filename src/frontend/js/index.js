@@ -1385,17 +1385,21 @@ function ShowStaffTabs() {
                         $("#newEventBtn").css("background-color", "blue");
                     }
                 });
-            } if(roles[i] == 71 || roles[i]==72){
+            }
+            if (roles[i] == 71 || roles[i] == 72) {
                 isDS = true;
             }
         }
-        if(!isES && highestrole >= 10){
+        if (!isES && highestrole >= 10) {
             $("#StaffEventBtn").hide();
-        } if(!isDS && highestrole >= 10){
+        }
+        if (!isDS && highestrole >= 10) {
             $("#StaffDivisionBtn").hide();
-        } if(!isES && highestrole >= 10){
+        }
+        if (!isES && highestrole >= 10) {
             $("#StaffAnnTabBtn").hide();
-        } if(highestrole >= 30){
+        }
+        if (highestrole >= 30) {
             $("#StaffMemberBtn").hide();
             $("#AllAppBtn").hide();
         }
@@ -2305,11 +2309,14 @@ function deliveryDetail(logid) {
                 source_city = "Unknown city";
                 destination_company = "Unknown company";
                 destination_city = "Unknown city";
-                if (d.source_company != null) source_company = d.source_company.name;
+                source_company_id = "";
+                destination_company_id = "";
+                if (d.source_company != null) source_company = d.source_company.name,source_company_id = d.source_company.unique_id;
                 if (d.source_city != null) source_city = d.source_city.name;
-                if (d.destination_company != null) destination_company = d.destination_company.name;
+                if (d.destination_company != null) destination_company = d.destination_company.name,destination_company_id = d.destination_company.unique_id;
                 if (d.destination_city != null) destination_city = d.destination_city.name;
                 truck = d.truck.brand.name + " " + d.truck.name;
+                truck_brand_id = d.truck.brand.unique_id;
                 license_plate = d.truck.license_plate;
                 top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
                 trailer = "";
@@ -2338,27 +2345,36 @@ function deliveryDetail(logid) {
                 }
 
                 $(".ddcol").children().remove();
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">From</td>
-                        <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">To</td>
-                        <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Cargo</td>
-                        <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Weight</td>
-                        <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Initial Company</td>
-                        <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
-                $("#ddcol1").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Target Company</td>
-                        <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
-                $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Driven / Planned Distance</td>
-                        <td class="py-5 px-6 font-medium">${distance} / ${planned_distance}</td></tr>`);
+                $(".ddcol").children().remove();
+                $("#ddcol1t>img,#ddcol2t>img,#ddcol3t>img").remove();
+                $("#ddcol1t").append(`<img style="display:inline" onerror="this.onerror=null; $(this).hide();" src="https://map.charlws.com/overlays/${source_company_id}.png">`);
+                $("#ddcol2t").append(`<img style="display:inline" onerror="this.onerror=null; $(this).hide();" src="https://map.charlws.com/overlays/${destination_company_id}.png">`);
+                $("#ddcol1").append(`<p><b>${source_company}</b>, ${source_city}</p>`);
+                $("#ddcol1").append(`<p><b>${cargo}</b> <i>(${cargo_mass})</i></p>`);
+                $("#ddcol1").append(`<p>Planned <b>${planned_distance}</b></p>`);
+                $("#ddcol2").append(`<p><b>${destination_company}</b>, ${destination_city}</p>`);
+                $("#ddcol2").append(`<p>Driven <b>${distance}</b></p>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">From</td>
+                //         <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">To</td>
+                //         <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Cargo</td>
+                //         <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Weight</td>
+                //         <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Initial Company</td>
+                //         <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
+                // $("#ddcol1").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Target Company</td>
+                //         <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
+                // $("#ddcol2").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Driven / Planned Distance</td>
+                //         <td class="py-5 px-6 font-medium">${distance} / ${planned_distance}</td></tr>`);
                 offence = 0;
                 for (var i = 0; i < rrevents.length; i++) {
                     if (rrevents[i].type == "fine") {
@@ -2366,86 +2382,86 @@ function deliveryDetail(logid) {
                     }
                 }
                 offence = TSeparator(offence);
+                offence = -offence;
                 if (tp == "job.delivered") {
-                    $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Profit</td>
-                        <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Offence</td>
-                        <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">XP</td>
-                        <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Damage</td>
-                            <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
+                    $("#ddcol2").append(`<p>Damage </b>${parseInt(cargo_damage * 100)}%</b> / XP <b>${earned_xp}</b></p>`);
+                    $("#ddcol2").append(`<p>Profit </b>${revenue} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //     <td class="py-5 px-6 font-medium">Profit</td>
+                    //     <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //     <td class="py-5 px-6 font-medium">Offence</td>
+                    //     <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //     <td class="py-5 px-6 font-medium">XP</td>
+                    //     <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //         <td class="py-5 px-6 font-medium">Damage</td>
+                    //         <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
                 } else if (tp == "job.cancelled") {
-                    $("#ddcol2").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Penalty</td>
-                            <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Offence</td>
-                            <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">XP</td>
-                            <td class="py-5 px-6 font-medium">0</td></tr>`);
-                    $("#ddcol2").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Damage</td>
-                            <td class="py-5 px-6 font-medium">${parseInt(data.response.data.data.object.cargo.damage * 100)}%</td></tr>`);
+                    $("#ddcol2").append(`<p>Damage <b>${parseInt(data.response.data.data.object.cargo.damage * 100)}%</b></p>`);
+                    $("#ddcol2").append(`<p>Penalty <b>${penalty} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //         <td class="py-5 px-6 font-medium">Penalty</td>
+                    //         <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //         <td class="py-5 px-6 font-medium">Offence</td>
+                    //         <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //         <td class="py-5 px-6 font-medium">XP</td>
+                    //         <td class="py-5 px-6 font-medium">0</td></tr>`);
+                    // $("#ddcol2").append(`<tr class="text-xs">
+                    //         <td class="py-5 px-6 font-medium">Damage</td>
+                    //         <td class="py-5 px-6 font-medium">${parseInt(data.response.data.data.object.cargo.damage * 100)}%</td></tr>`);
                 }
-                $("#ddcol2").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
-                        <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
-                $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Truck</td>
-                        <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
-                $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Truck's License Plate</td>
-                        <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
-                $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
-                        <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
-                $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Average Consumption</td>
-                        <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
-                $("#ddcol3").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Fuel Used</td>
-                        <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
+                $("#ddcol3").append(`<p>Max Speed <b>${top_speed} Mi/h</p>`);
+                $("#ddcol3").append(`<p>Fuel Avg <b>${avg_fuel}L/100Mi</b> / Tot <b>${fuel_used}</b></p>`);
+                $("#ddcol3").append(`<p>Truck <b>${truck}</b> (<i>${license_plate})</i></p>`);
+                $("#ddcol3").append(`<p>Trailer <i>${trailer.slice(0,-3)}</i></p>`);
+                // $("#ddcol2").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
+                //         <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
+                // $("#ddcol3").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Truck</td>
+                //         <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
+                // $("#ddcol3").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Truck's License Plate</td>
+                //         <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
+                // $("#ddcol3").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
+                //         <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
+                // $("#ddcol3").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Average Consumption</td>
+                //         <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
+                // $("#ddcol3").append(`<tr class="text-xs">
+                //         <td class="py-5 px-6 font-medium">Fuel Used</td>
+                //         <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
+
+                dt = getDateTime(data.response.timestamp * 1000);
+
+                $("#dlogdriver").html(`<a style='cursor:pointer' onclick='loadProfile(${userid})'>${name}</a>`);
+                if (tp == "job.cancelled") {
+                    $("#dlogid").html(`${logid} (Cancelled)`);
+                } else {
+                    $("#dlogid").html(`${logid}
+                    <button type="button" style="display:inline;padding:5px" id="divisioninfobtn"
+              class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+              onclick="divisionInfo(${logid})">Division</button>`);
+                }
+                $("#dlogdistance").html(parseInt(data.response.loggeddistance / 1.6));
+                $("#dlogtime").html(dt);
                 if (tp == "job.delivered") {
                     extra = "";
                     if (auto_park == "1") extra += "Auto Park | ";
                     if (auto_load == "1") extra += "Auto Load | ";
                     if (extra != "") {
-                        $("#ddcol3").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Tags</td>
-                            <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
+                        $("#dlogextra").remove();
+                        $("#dlogbasic").append(`<p id="dlogextra"><b>${extra.slice(0, -3)}</b></p>`);
+                        // $("#dlogbasic").append(`<tr class="text-xs">
+                        //     <td class="py-5 px-6 font-medium">Tags</td>
+                        //     <td class="py-5 px-6 font-medium">${extra.slice(0, -3)}</td></tr>`);
                     }
                 }
-
-                dt = getDateTime(data.response.timestamp * 1000);
-
-                $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Driver</td>
-                        <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${userid})'>${name}</a></td></tr>`);
-                if (tp == "job.cancelled") {
-                    $("#ddcol4").append(`<tr class="text-xs">
-                            <td class="py-5 px-6 font-medium">Delivery ID</td>
-                            <td class="py-5 px-6 font-medium">${logid} (Cancelled)</td></tr>`);
-                } else {
-                    $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Delivery ID</td>
-                        <td class="py-5 px-6 font-medium">${logid}
-                        <button type="button" style="display:inline;padding:5px" id="divisioninfobtn"
-                  class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
-                  onclick="divisionInfo(${logid})">Division</button>
-                  </td></tr>`);
-                }
-                $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Logged Distance</td>
-                        <td class="py-5 px-6 font-medium">${parseInt(data.response.loggeddistance/1.6)}Mi</td></tr>`);
-                $("#ddcol4").append(`<tr class="text-xs">
-                        <td class="py-5 px-6 font-medium">Time submitted</td>
-                        <td class="py-5 px-6 font-medium">${dt}</td></tr>`);
 
                 $("#routereplayload").html("Route replay loading...");
 
