@@ -349,7 +349,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         p = cur.fetchall()
         if len(p) == 0:
             continue
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1")
         o = cur.fetchall()
         divisionpnt = 0
         if len(o) > 0:

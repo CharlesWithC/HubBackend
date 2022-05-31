@@ -843,6 +843,12 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     if len(t) == 0:
         return {"error": True, "descriptor": "Member not driver"}
     totalpnt = int(t[0][0] / 1.6 + t[0][1])
+    cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+    o = cur.fetchall()
+    divisionpnt = 0
+    if len(o) > 0:
+        divisionpnt = o[0][0] * 500
+    totalpnt += divisionpnt
     
     rank = point2rank(totalpnt)
 
