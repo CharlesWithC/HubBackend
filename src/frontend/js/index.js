@@ -2197,7 +2197,10 @@ async function deliveryRoutePlay() {
                     amount = rrevents[i].meta.amount;
                     eventmsg = "Refueled " + TSeparator(parseInt(amount)) + "L of fuel.";
                 } else if (rrevents[i].type == "collision") {
+                    meta = rrevents[i].meta;
+                    pct = parseFloat(meta.wear_engine) + parseFloat(meta.wear_chassis) + parseFloat(meta.wear_transmission) + parseFloat(meta.wear_cabin) + parseFloat(meta.wear_wheels);
                     eventmsg = "Collision!";
+                    if(pct != NaN) eventmsg += " Damage: " + Math.round(pct * 1000) / 10 + "%";
                 } else if (rrevents[i].type == "repair") {
                     eventmsg = "Truck repaired.";
                 } else if (rrevents[i].type == "teleport") {
@@ -2218,12 +2221,17 @@ async function deliveryRoutePlay() {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "red_signal") {
                         eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
+                    } else if(finetype == "wrong_way"){
+                        eventmsg = `Wrong Way<br>Fined ` + punit + TSeparator(meta.amount);
                     }
                 } else if (rrevents[i].type == "speeding") {
                     meta = rrevents[i].meta;
                     curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 / 1.6));
                     speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 / 1.6));
                     eventmsg = `Speeding (No Fine)<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)`;
+                } else if (rrevents[i].type == "ferry"){
+                    meta = rrevents[i].meta;
+                    eventmsg = `Ferry from ${meta.source_name} to ${meta.target_name}<br>Cost ${punit}${TSeparator(meta.cost)}`;
                 }
                 if (eventmsg != "") {
                     randomid = Math.random().toString(36).substring(7);
@@ -2381,8 +2389,8 @@ function deliveryDetail(logid) {
                         offence += parseInt(rrevents[i].meta.amount);
                     }
                 }
-                offence = TSeparator(offence);
                 offence = -offence;
+                offence = TSeparator(offence);
                 if (tp == "job.delivered") {
                     $("#ddcol2").append(`<p>Damage </b>${parseInt(cargo_damage * 100)}%</b> / XP <b>${earned_xp}</b></p>`);
                     $("#ddcol2").append(`<p>Profit </b>${revenue} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
