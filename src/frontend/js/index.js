@@ -441,15 +441,17 @@ async function ShowTab(tabname, btnname) {
             $("#loading").css("width", `${lastw}%`);
             await sleep(5);
         }
-        $(".tabs").hide();
-        $(tabname).show();
+        if(tabname == curtab){ // in case user switch tab too fast
+            $(".tabs").hide();
+            $(tabname).show();
+        }
         neww = 1;
         while (neww < lastw) {
             lastw -= 5;
             $("#loading").css("width", `${lastw}%`);
             await sleep(1);
         }
-        if (tabname != "#Event") {
+        if (curtab != "#Event") {
             eventsCalendar = undefined;
             $("#eventsCalendar").children().remove();
             $("#eventsCalendar").attr("class", "");
@@ -2292,7 +2294,7 @@ function deliveryDetail(logid) {
         },
         success: function (data) {
             $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
-            $("#DeliveryInfoBtn" + logid).html("Show Details");
+            $("#DeliveryInfoBtn" + logid).html("Details");
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000,
                 false);
             info = "";
@@ -2588,7 +2590,7 @@ function deliveryDetail(logid) {
         error: function (data) {
             ShowTab("#HomeTab", "#HomeTabBtn");
             $("#DeliveryInfoBtn" + logid).removeAttr("disabled");
-            $("#DeliveryInfoBtn" + logid).html("Show Details");
+            $("#DeliveryInfoBtn" + logid).html("Details");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000,
                 false);
             console.warn(
@@ -3345,11 +3347,11 @@ function memberDetail(userid) {
                 confirmButtonText: 'Close'
             })
             $("#MemberInfoBtn" + userid).removeAttr("disabled");
-            $("#MemberInfoBtn" + userid).html("Show Details");
+            $("#MemberInfoBtn" + userid).html("Details");
         },
         error: function (data) {
             $("#MemberInfoBtn" + userid).removeAttr("disabled");
-            $("#MemberInfoBtn" + userid).html("Show Details");
+            $("#MemberInfoBtn" + userid).html("Details");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000,
                 false);
             console.warn(
@@ -4144,7 +4146,7 @@ function userDetail(discordid) {
                 })
             }
             $("#UserInfoBtn" + discordid).removeAttr("disabled");
-            $("#UserInfoBtn" + discordid).html("Show Details");
+            $("#UserInfoBtn" + discordid).html("Details");
         },
         error: function (data) {
             $("#UserInfoBtn" + discordid).attr("disabled", "disabled");
@@ -4620,17 +4622,17 @@ function appDetail(applicationid, staffmode = false) {
                         confirmButtonText: 'Close'
                     })
                     $("#AllAppBtn" + applicationid).removeAttr("disabled");
-                    $("#AllAppBtn" + applicationid).html("Show Details");
+                    $("#AllAppBtn" + applicationid).html("Details");
                     $("#MyAppBtn" + applicationid).removeAttr("disabled");
-                    $("#MyAppBtn" + applicationid).html("Show Details");
+                    $("#MyAppBtn" + applicationid).html("Details");
                 }
             });
         },
         error: function (data) {
             $("#AllAppBtn" + applicationid).removeAttr("disabled");
-            $("#AllAppBtn" + applicationid).html("Show Details");
+            $("#AllAppBtn" + applicationid).html("Details");
             $("#MyAppBtn" + applicationid).removeAttr("disabled");
-            $("#MyAppBtn" + applicationid).html("Show Details");
+            $("#MyAppBtn" + applicationid).html("Details");
             toastFactory("error", "Error:", "Please check the console for more info.", 5000,
                 false);
             console.warn(
