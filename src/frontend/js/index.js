@@ -67,7 +67,7 @@ function DarkMode() {
         $("#todarksvg").show();
         $("#tolightsvg").hide();
         Chart.defaults.color = "black";
-        $("body").html($("body").html().replaceAll("#382CDD", "skyblue").replaceAll("lightgreen", "green"));
+        $("body").html($("body").html().replaceAll("skyblue", "#382CDD").replaceAll("lightgreen", "green"));
     }
     isdark = 1 - isdark;
     localStorage.setItem("darkmode", isdark);
@@ -441,7 +441,7 @@ async function ShowTab(tabname, btnname) {
             $("#loading").css("width", `${lastw}%`);
             await sleep(5);
         }
-        if(tabname == curtab){ // in case user switch tab too fast
+        if (tabname == curtab) { // in case user switch tab too fast
             $(".tabs").hide();
             $(tabname).show();
         }
@@ -1472,7 +1472,8 @@ function validate() {
     }
     if (userid != -1 && isNumber(userid)) {
         $("#memberOnlyTabs").show();
-        $("#DivisionBtn").show();
+    } else {
+        $("#DivisionBtn").hide();
     }
     $("#recruitment").show();
     $.ajax({
@@ -2202,7 +2203,7 @@ async function deliveryRoutePlay() {
                     meta = rrevents[i].meta;
                     pct = parseFloat(meta.wear_engine) + parseFloat(meta.wear_chassis) + parseFloat(meta.wear_transmission) + parseFloat(meta.wear_cabin) + parseFloat(meta.wear_wheels);
                     eventmsg = "Collision!";
-                    if(pct != NaN) eventmsg += " Damage: " + Math.round(pct * 1000) / 10 + "%";
+                    if (pct != NaN) eventmsg += " Damage: " + Math.round(pct * 1000) / 10 + "%";
                 } else if (rrevents[i].type == "repair") {
                     eventmsg = "Truck repaired.";
                 } else if (rrevents[i].type == "teleport") {
@@ -2223,7 +2224,7 @@ async function deliveryRoutePlay() {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "red_signal") {
                         eventmsg = `Red Signal Offence<br>Fined ` + punit + TSeparator(meta.amount);
-                    } else if(finetype == "wrong_way"){
+                    } else if (finetype == "wrong_way") {
                         eventmsg = `Wrong Way<br>Fined ` + punit + TSeparator(meta.amount);
                     }
                 } else if (rrevents[i].type == "speeding") {
@@ -2231,7 +2232,7 @@ async function deliveryRoutePlay() {
                     curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 / 1.6));
                     speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 / 1.6));
                     eventmsg = `Speeding (No Fine)<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)`;
-                } else if (rrevents[i].type == "ferry"){
+                } else if (rrevents[i].type == "ferry") {
                     meta = rrevents[i].meta;
                     eventmsg = `Ferry from ${meta.source_name} to ${meta.target_name}<br>Cost ${punit}${TSeparator(meta.cost)}`;
                 }
@@ -2321,9 +2322,9 @@ function deliveryDetail(logid) {
                 destination_city = "Unknown city";
                 source_company_id = "";
                 destination_company_id = "";
-                if (d.source_company != null) source_company = d.source_company.name,source_company_id = d.source_company.unique_id;
+                if (d.source_company != null) source_company = d.source_company.name, source_company_id = d.source_company.unique_id;
                 if (d.source_city != null) source_city = d.source_city.name;
-                if (d.destination_company != null) destination_company = d.destination_company.name,destination_company_id = d.destination_company.unique_id;
+                if (d.destination_company != null) destination_company = d.destination_company.name, destination_company_id = d.destination_company.unique_id;
                 if (d.destination_city != null) destination_city = d.destination_city.name;
                 truck = d.truck.brand.name + " " + d.truck.name;
                 truck_brand_id = d.truck.brand.unique_id;
@@ -4785,7 +4786,13 @@ $(document).ready(function () {
     date = new Date(+date - offset);
     $("#lbstart").val(firstDay.toISOString().substring(0, 10));
     $("#lbend").val(date.toISOString().substring(0, 10));
+
+    if(String(localStorage.getItem("token")).length != 36){
+        if(window.location.pathname != "/") localStorage.setItem("token", "guest");
+        $("#DivisionBtn").hide();
+    }
     validate();
+    if(window.location.pathname == "/overview") window.history.pushState("", "", '/');
     PathDetect();
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
