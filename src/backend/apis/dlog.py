@@ -313,7 +313,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         rank = dict(sorted(rank.items(),key=lambda x:x[1]))
         rank = list(rank.keys())[::-1]
 
+        cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} ORDER BY logid ASC")
+        t = cur.fetchall()
+        firstlogid = 0
+        if len(t) > 0:
+            firstlogid = t[0][0]
+
         ret = []
+        users = []
         for userid in rank:
             cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {userid} AND userid >= 0")
             p = cur.fetchall()
@@ -329,19 +336,40 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 totnolimit = o[0][0]
             divisionpnt = 0
             if not nodivision:
-                cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+                cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= {firstlogid}")
                 o = cur.fetchall()
                 if len(o) > 0:
                     divisionpnt = o[0][0] * 500
+            users.append(userid)
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
                 "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
+
+        cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
+        t = cur.fetchall()
+        for tt in t:
+            userid = tt[0]
+            if not userid in users:
+                cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE userid = {userid}")
+                p = cur.fetchall()
+                userid = p[0][0]
+                name = p[0][1]
+                discordid = p[0][2]
+                avatar = p[0][3]
+                divisionpnt = 0
+                if not nodivision:
+                    cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+                    o = cur.fetchall()
+                    if len(o) > 0:
+                        divisionpnt = o[0][0] * 500
+                ret.append({"userid": userid, "name": name, "discordid": discordid, "avatar": avatar, \
+                    "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": tt[1] + divisionpnt})
 
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
 
         return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": len(ret)}}
 
-    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0) ORDER BY distance / 1.6 + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
+    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0  ORDER BY distance / 1.6 + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -356,7 +384,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             divisionpnt = o[0][0] * 500
         ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": tt[1], "totnolimit": tt[1] + divisionpnt})
 
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND (distance > 0 OR eventpnt > 0)")
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
