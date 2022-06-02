@@ -295,8 +295,6 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
     t = cur.fetchall()
     userid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    conn.commit()
     
     cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -311,6 +309,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": "User must have verified their TruckersMP and Steam account."}
     name = t[0][3]
     cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
+    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
     conn.commit()
 
