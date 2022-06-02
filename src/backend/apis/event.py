@@ -243,7 +243,7 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
     if userid == -1 or "10000" in roles: # external staff / not registered
         limit = "AND pvt = 0"
 
-    cur.execute(f"SELECT eventid, title, mts FROM event WHERE eventid >= 0 ORDER BY mts")
+    cur.execute(f"SELECT eventid, title, mts FROM event WHERE eventid >= 0 {limit} ORDER BY mts")
     t = cur.fetchall()
     ret = []
     for tt in t:
