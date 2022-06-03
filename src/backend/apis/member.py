@@ -369,7 +369,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
             conn.commit()
             # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
-    cur.execute(f"SELECT userid, steamid FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, steamid, name, discordid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
@@ -385,7 +385,10 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
     
-    await AuditLog(userid, f'Member resigned')
+    name = t[0][2].replace("'", "''")
+    discordid = t[0][3]
+
+    await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
     return {"error": False, "response": {"message": "Member resigned"}}
 
 @app.delete("/atm/member/dismiss")

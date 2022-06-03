@@ -3933,7 +3933,7 @@ function resign() {
                 localStorage.clear();
                 Swal.fire({
                     title: "Resigned",
-                    html: "Sorry to see you leave, good luck with your futuer career!",
+                    html: "Sorry to see you leave, good luck with your future career!",
                     icon: 'info',
                     confirmButtonText: 'Close'
                 })

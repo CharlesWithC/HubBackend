@@ -76,12 +76,14 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        cur.execute(f"SELECT userid FROM user WHERE steamid = '{steamid}'")
+        cur.execute(f"SELECT userid, name, discordid FROM user WHERE steamid = '{steamid}'")
         t = cur.fetchall()
         if len(t) == 0:
             return {"error": True, "descriptor": "User not found."}
         userid = t[0][0]
-        await AuditLog(userid, "Member resigned from Navio")
+        name = t[0][1].replace("'", "''")
+        discordid = t[0][2]
+        await AuditLog(-999, f"Member resigned from Navio: **{name}** (`{discordid}`)")
         cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
