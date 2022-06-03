@@ -361,7 +361,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     o = cur.fetchall()
                     if len(o) > 0:
                         divisionpnt = o[0][0] * 500
-                ret.append({"userid": userid, "name": name, "discordid": discordid, "avatar": avatar, \
+                ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
                     "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": tt[1] + divisionpnt})
 
         if (page - 1) * 10 >= len(ret):
