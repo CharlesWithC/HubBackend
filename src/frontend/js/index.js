@@ -5,6 +5,7 @@ rolelist = {};
 dmapint = -1;
 window.mapcenter = {}
 window.autofocus = {}
+highestrole = 99999;
 
 isdark = parseInt(localStorage.getItem("darkmode"));
 if (localStorage.getItem("darkmode") == undefined) isdark = 1;
@@ -41,7 +42,8 @@ function DarkMode() {
             .text-gray-500,.text-gray-600 {color: #ddd;transition: color 1000ms linear;}
             .bg-white {background-color: rgba(255, 255, 255, 0.2);transition: background-color 1000ms linear;}
             .swal2-popup {background-color: rgb(41 48 57)}
-            .rounded-full {background-color: #888;}</style>`);
+            .rounded-full {background-color: #888;}
+            a:hover {color: white}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
@@ -59,7 +61,8 @@ function DarkMode() {
             .text-gray-500,.text-gray-600 {transition: color 1000ms linear;}
             .bg-white {background-color: white;transition: background-color 1000ms linear;}
             .swal2-popup {background-color: white;}
-            .rounded-full {background-color: #ddd;}</style>`);
+            .rounded-full {background-color: #ddd;}
+            a:hover {color: black}</style>`);
         setTimeout(function () {
             $("#convertbg2").remove();
         }, 1000);
@@ -264,7 +267,7 @@ function loadStats(basic = false) {
                 avatar = "/images/atm-black.png";
             }
             distance = TSeparator(parseInt(driver_of_the_day.distance / 1.6));
-            $("#dotd").html(`<img src="${src}" style="width:20px;border-radius:100%;display:inline"> <b>${driver_of_the_day.name}</b>`);
+            $("#dotd").html(`<img src="${src}" style="width:20px;border-radius:100%;display:inline" onerror="$(this).attr('src','/images/atm-black.png');"> <b>${driver_of_the_day.name}</b>`);
             $("#dotddistance").html(`Driven ${distance} Miles`);
 
             $("#dalljob").html(newjobs);
@@ -328,7 +331,7 @@ function loadStats(basic = false) {
                     }
                     $("#leaderboard").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
                 }
@@ -363,7 +366,7 @@ function loadStats(basic = false) {
                     }
                     $("#newdriverTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
               <td class="py-5 px-6">${joindt}</td>
             </tr>`);
                 }
@@ -489,6 +492,10 @@ async function ShowTab(tabname, btnname) {
     if (tabname == "#StaffAnnTab") {
         window.history.pushState("", "", '/staffannouncement');
     }
+    if (tabname == "#DownloadsTab") {
+        window.history.pushState("", "", '/downloads');
+        loadDownloads();
+    }
     if (tabname == "#Ranking") {
         window.history.pushState("", "", '/ranking');
     }
@@ -553,6 +560,60 @@ async function ShowTab(tabname, btnname) {
     }
 }
 
+function loadDownloads() {
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/downloads",
+        type: "GET",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        success: function (data) {
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            $("#downloads").html(parseMarkdown(data.response));
+            $("#downloadscontent").val(data.response);
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to fetch downloads. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
+function toggleUpdateDownloads() {
+    $("#downloadsedit").toggle();
+    $("#downloads").toggle();
+}
+
+lastdownloadsupd = 0;
+function UpdateDownloads(){
+    if(+ new Date() - lastdownloadsupd < 2000) return;
+    lastdownloadsupd = + new Date();
+    $.ajax({
+        url: "https://drivershub.charlws.com/atm/downloads",
+        type: "PATCH",
+        dataType: "json",
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        data: {
+            "data": $("#downloadscontent").val()
+        },
+        success: function (data) {
+            if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
+            $("#downloads").html(parseMarkdown($("#downloadscontent").val()));
+        },
+        error: function (data) {
+            toastFactory("error", "Error:", "Please check the console for more info.", 5000, false);
+            console.warn(
+                `Failed to update downloads. Error: ${data.descriptor ? data.descriptor : 'Unknown Error'}`);
+            console.log(data);
+        }
+    })
+}
+
 function FetchAnnouncement() {
     aid = $("#annid").val();
 
@@ -588,7 +649,6 @@ function FetchAnnouncement() {
             console.log(data);
         }
     })
-
 }
 
 function NewAnn() {
@@ -1224,7 +1284,7 @@ function SubmitApp() {
             return;
         }
 
-        if(pos == ""){
+        if (pos == "") {
             toastFactory("warning", "Error", "Please select a position! (If you've already selected, try clicking it again)", 5000, false);
             return;
         }
@@ -1382,8 +1442,9 @@ function ShowStaffTabs() {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
             }
-            if (roles[i] == 71 || roles[i] == 72){
+            if (roles[i] == 71 || roles[i] == 72) {
                 $("#StaffMembersBtn").show();
+                $("#AllAppBtn").show();
             }
             if (roles[i] == 40 || roles[i] == 41) {
                 isES = true;
@@ -1393,19 +1454,23 @@ function ShowStaffTabs() {
                     title = $("#anntitle").val();
                     content = $("#anncontent").val();
                     annid = $("#annid").val();
-                    if (isNumber(annid)) {
-                        if (title != "" || content != "") {
-                            $("#newAnnBtn").html("Update Announcement");
-                            $("#newAnnBtn").css("background-color", "lightgreen");
+                    if (!$("#newAnnBtn").prop("disabled")) {
+                        if (isNumber(annid)) {
+                            if (title != "" || content != "") {
+                                $("#newAnnBtn").html("Update Announcement");
+                                $("#newAnnBtn").css("background-color", "lightgreen");
+                            } else {
+                                $("#newAnnBtn").html("Delete Announcement");
+                                $("#newAnnBtn").css("background-color", "red");
+                            }
                         } else {
-                            $("#newAnnBtn").html("Delete Announcement");
-                            $("#newAnnBtn").css("background-color", "red");
+                            $("#newAnnBtn").html("Create Announcement");
+                            $("#newAnnBtn").css("background-color", "blue");
                         }
                     } else {
-                        $("#newAnnBtn").html("Create Announcement");
-                        $("#newAnnBtn").css("background-color", "blue");
+                        $("#newAnnBtn").html("Working...");
                     }
-                });
+                }, 100);
                 setInterval(function () {
                     title = $("#eventtitle").val();
                     from = $("#eventfrom").val();
@@ -1414,19 +1479,23 @@ function ShowStaffTabs() {
                     mts = $("#eventmts").val();
                     dts = $("#eventdts").val();
                     eventid = $("#eventid").val();
-                    if (isNumber(eventid)) {
-                        if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
-                            $("#newEventBtn").html("Update Event");
-                            $("#newEventBtn").css("background-color", "lightgreen");
+                    if (!$("#newEventBtn").prop("disabled")) {
+                        if (isNumber(eventid)) {
+                            if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
+                                $("#newEventBtn").html("Update Event");
+                                $("#newEventBtn").css("background-color", "lightgreen");
+                            } else {
+                                $("#newEventBtn").html("Delete Event");
+                                $("#newEventBtn").css("background-color", "red");
+                            }
                         } else {
-                            $("#newEventBtn").html("Delete Event");
-                            $("#newEventBtn").css("background-color", "red");
+                            $("#newEventBtn").html("Create Event");
+                            $("#newEventBtn").css("background-color", "blue");
                         }
                     } else {
-                        $("#newEventBtn").html("Create Event");
-                        $("#newEventBtn").css("background-color", "blue");
+                        $("#newEventBtn").html("Working...");
                     }
-                });
+                }, 100);
             }
             if (roles[i] == 71 || roles[i] == 72) {
                 isDS = true;
@@ -1443,6 +1512,7 @@ function ShowStaffTabs() {
         }
         if (highestrole >= 30) {
             $("#StaffMemberBtn").hide();
+            $("#AllUserBtn").hide();
             $("#AllAppBtn").hide();
         }
         if (highestrole < 100) {
@@ -1456,6 +1526,7 @@ function ShowStaffTabs() {
             }
         }
         if (highestrole <= 10) {
+            $("#downloadseditbtn").show();
             $("#updateStaffPos").show();
             $("#StaffAnnTabBtn").show();
             $("#StaffEventBtn").show(); // event staff
@@ -1464,19 +1535,23 @@ function ShowStaffTabs() {
                 title = $("#anntitle").val();
                 content = $("#anncontent").val();
                 annid = $("#annid").val();
-                if (isNumber(annid)) {
-                    if (title != "" || content != "") {
-                        $("#newAnnBtn").html("Update Announcement");
-                        $("#newAnnBtn").css("background-color", "lightgreen");
+                if (!$("#newAnnBtn").prop("disabled")) {
+                    if (isNumber(annid)) {
+                        if (title != "" || content != "") {
+                            $("#newAnnBtn").html("Update Announcement");
+                            $("#newAnnBtn").css("background-color", "lightgreen");
+                        } else {
+                            $("#newAnnBtn").html("Delete Announcement");
+                            $("#newAnnBtn").css("background-color", "red");
+                        }
                     } else {
-                        $("#newAnnBtn").html("Delete Announcement");
-                        $("#newAnnBtn").css("background-color", "red");
+                        $("#newAnnBtn").html("Create Announcement");
+                        $("#newAnnBtn").css("background-color", "blue");
                     }
                 } else {
-                    $("#newAnnBtn").html("Create Announcement");
-                    $("#newAnnBtn").css("background-color", "blue");
+                    $("#newAnnBtn").html("Working...");
                 }
-            });
+            }, 100);
             setInterval(function () {
                 title = $("#eventtitle").val();
                 from = $("#eventfrom").val();
@@ -1485,19 +1560,23 @@ function ShowStaffTabs() {
                 mts = $("#eventmts").val();
                 dts = $("#eventdts").val();
                 eventid = $("#eventid").val();
-                if (isNumber(eventid)) {
-                    if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
-                        $("#newEventBtn").html("Update Event");
-                        $("#newEventBtn").css("background-color", "lightgreen");
+                if (!$("#newEventBtn").prop("disabled")) {
+                    if (isNumber(eventid)) {
+                        if (title != "" || from != "" || to != "" || distance != "" || mts != "" || dts != "") {
+                            $("#newEventBtn").html("Update Event");
+                            $("#newEventBtn").css("background-color", "lightgreen");
+                        } else {
+                            $("#newEventBtn").html("Delete Event");
+                            $("#newEventBtn").css("background-color", "red");
+                        }
                     } else {
-                        $("#newEventBtn").html("Delete Event");
-                        $("#newEventBtn").css("background-color", "red");
+                        $("#newEventBtn").html("Create Event");
+                        $("#newEventBtn").css("background-color", "blue");
                     }
                 } else {
-                    $("#newEventBtn").html("Create Event");
-                    $("#newEventBtn").css("background-color", "blue");
+                    $("#newEventBtn").html("Working...");
                 }
-            });
+            }, 100);
         }
     }
 }
@@ -1514,6 +1593,7 @@ function validate() {
         $("#memberOnlyTabs").show();
     } else {
         $("#DivisionBtn").hide();
+        $("#DownloadsTabBtn").hide();
     }
     $("#recruitment").show();
     $.ajax({
@@ -1789,7 +1869,7 @@ function loadLeaderboard(recurse = true) {
                 console.log(user.totnolimit);
                 $("#leaderboardTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
                 <td class="py-5 px-6">${point2rank(user.totnolimit)}</td>
                 <td class="py-5 px-6">${distance}</td>
                 <td class="py-5 px-6">${user.eventpnt}</td>
@@ -2398,8 +2478,8 @@ function deliveryDetail(logid) {
                 $(".ddcol").children().remove();
                 $(".ddcol").children().remove();
                 $("#ddcol1t>img,#ddcol2t>img,#ddcol3t>img").remove();
-                $("#ddcol1t").append(`<img style="display:inline" onerror="this.onerror=null; $(this).hide();" src="https://map.charlws.com/overlays/${source_company_id}.png">`);
-                $("#ddcol2t").append(`<img style="display:inline" onerror="this.onerror=null; $(this).hide();" src="https://map.charlws.com/overlays/${destination_company_id}.png">`);
+                $("#ddcol1t").append(`<img style="display:inline" onerror="$(this).hide();" src="https://map.charlws.com/overlays/${source_company_id}.png">`);
+                $("#ddcol2t").append(`<img style="display:inline" onerror="$(this).hide();" src="https://map.charlws.com/overlays/${destination_company_id}.png">`);
                 $("#ddcol1").append(`<p><b>${source_company}</b>, ${source_city}</p>`);
                 $("#ddcol1").append(`<p><b>${cargo}</b> <i>(${cargo_mass})</i></p>`);
                 $("#ddcol1").append(`<p>Planned <b>${planned_distance}</b></p>`);
@@ -2435,8 +2515,8 @@ function deliveryDetail(logid) {
                 offence = -offence;
                 offence = TSeparator(offence);
                 if (tp == "job.delivered") {
-                    $("#ddcol2").append(`<p>Damage </b>${parseInt(cargo_damage * 100)}%</b> / XP <b>${earned_xp}</b></p>`);
-                    $("#ddcol2").append(`<p>Profit </b>${revenue} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
+                    $("#ddcol2").append(`<p>Damage <b>${parseInt(cargo_damage * 100)}%</b> / XP <b>${earned_xp}</b></p>`);
+                    $("#ddcol2").append(`<p>Profit <b>${revenue} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
                     // $("#ddcol2").append(`<tr class="text-xs">
                     //     <td class="py-5 px-6 font-medium">Profit</td>
                     //     <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
@@ -3202,7 +3282,7 @@ function loadMembers(recurse = true) {
               <td class="py-5 px-6 font-medium">${user.userid}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">
                 <a style="cursor:pointer;" onclick="loadProfile('${user.userid}')">
-                <img src='${src}' width="20px" style="display:inline;border-radius:100%"> ${user.name}</a></td>
+                <img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${user.name}</a></td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${highestrole}</td>
             </tr>`);
             }
@@ -4073,7 +4153,7 @@ function loadUsers(recurse = true) {
                 bantxt = "Ban";
                 bantxt2 = "";
                 color = "";
-                accept = `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey">Accept as member</td>`;;
+                accept = `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:grey">Accept as member</td>`;
                 if (user.banned) color = "grey", bantxt = "Unban", bantxt2 = "(Banned)", bannedUser[user.discordid] = user.banreason;
                 else accept = `<td class="py-5 px-6 font-medium"><a style="cursor:pointer;color:lightgreen" id="UserAddBtn${user.discordid}" onclick="addUser('${user.discordid}')">Accept as member</td>`;
                 $("#usersTable").append(`
@@ -4766,6 +4846,7 @@ function PathDetect() {
     if (p == "/") ShowTab("#HomeTab", "#HomeTabBtn");
     else if (p == "/announcement") ShowTab("#AnnTab", "#AnnTabBtn");
     else if (p == "/staffannouncement") ShowTab("#StaffAnnTab", "#StaffAnnTabBtn");
+    else if (p == "/downloads") ShowTab("#DownloadsTab", "#DownloadsTabBtn");
     else if (p == "/map") ShowTab("#Map", "#MapBtn");
     else if (p == "/delivery") {
         logid = getUrlParameter("logid");
@@ -4805,10 +4886,11 @@ $(document).ready(function () {
         $("head").append(`<style id='convertbg'>
             h1,h2,h3,p,span,text,label,input,textarea,select,tr {color: white;}
             .text-gray-500,.text-gray-600 {color: #ddd;}
-            .bg-white {background-color: rgba(255, 255, 255, 0.2);}
+            .bg-white {background-color: rgba(255, 255, 255, 0.1);}
             .swal2-popup {background-color: rgb(41 48 57)}
             .rounded-full {background-color: #888}
-            th > .fc-scrollgrid-sync-inner {background-color: #444}</style>`);
+            th > .fc-scrollgrid-sync-inner {background-color: #444}
+            a:hover {color: white}</style>`);
         $("#todarksvg").hide();
         $("#tolightsvg").show();
         Chart.defaults.color = "white";
@@ -4827,12 +4909,13 @@ $(document).ready(function () {
     $("#lbstart").val(firstDay.toISOString().substring(0, 10));
     $("#lbend").val(date.toISOString().substring(0, 10));
 
-    if(String(localStorage.getItem("token")).length != 36){
-        if(window.location.pathname != "/") localStorage.setItem("token", "guest");
+    if (String(localStorage.getItem("token")).length != 36) {
+        if (window.location.pathname != "/") localStorage.setItem("token", "guest");
         $("#DivisionBtn").hide();
+        $("#DownloadsTabBtn").hide();
     }
     validate();
-    if(window.location.pathname == "/overview") window.history.pushState("", "", '/');
+    if (window.location.pathname == "/overview") window.history.pushState("", "", '/');
     PathDetect();
 
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
@@ -4962,6 +5045,9 @@ $(document).ready(function () {
             }
         });
     });
+    $('#downloadscontent').on('input', function () {
+        UpdateDownloads();
+    });
     $('#appselect').on('change', function () {
         var value = $(this).val();
         $(".apptabs").hide();
@@ -4971,7 +5057,7 @@ $(document).ready(function () {
             $("#StaffApp").show();
         } else if (value == "loa") {
             $("#LOAApp").show();
-        } else if(value == "division") {
+        } else if (value == "division") {
             $("#DivisionApp").show();
             $("#submitAppBttn").hide();
         }
@@ -5008,8 +5094,8 @@ $(document).ready(function () {
                 a = ann[0];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + a
-                    .content.replaceAll("\n", "<br>");
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + 
+                    parseMarkdown(a.content.replaceAll("\n", "<br>"));
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
                 $("#HomeTabLeft").append(banner.replaceAll("py-8 ", "pb-8 "));
@@ -5018,8 +5104,8 @@ $(document).ready(function () {
                 a = ann[i];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10  px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + a
-                    .content.replaceAll("\n", "<br>");
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + 
+                    parseMarkdown(a.content.replaceAll("\n", "<br>"));
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
                 $("#anns").append(banner);
@@ -5067,8 +5153,7 @@ $(document).ready(function () {
                         dt = getDateTime(a.timestamp * 1000);
                         content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
                             "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
-                            a
-                            .content.replaceAll("\n", "<br>");
+                            parseMarkdown(a.content.replaceAll("\n", "<br>"));
                         TYPES = ["info", "info", "warning", "criticle", "resolved"];
                         banner = genBanner(TYPES[a.atype], a.title, content);
                         $("#anns").append(banner);

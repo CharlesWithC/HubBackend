@@ -35,6 +35,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, appt
 # status = 0: pending | 1: accepted | 2: declined
 cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT)")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT)")

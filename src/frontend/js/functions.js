@@ -216,8 +216,9 @@ function parseMarkdown(markdownText) {
 		.replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
 		.replace(/\*(.*)\*/gim, '<i>$1</i>')
 		.replace(/!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' />")
-		.replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2'>$1</a>")
-		.replace(/\n$/gim, '<br />')
+		.replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2' style='text-decoration:underline' target='_blank'>$1</a>")
+		.replace(/\n$/gim, '<br>')
+    .replace(/  /gim, '<br>')
 
 	return htmlText.trim()
 }

@@ -15,6 +15,7 @@ import apis.application
 import apis.auth
 import apis.division
 import apis.dlog
+import apis.downloads
 import apis.event
 import apis.member
 import apis.navio
