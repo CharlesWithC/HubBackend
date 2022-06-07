@@ -518,11 +518,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
+    ds = False
     adminhighest = 99999
     for i in adminroles:
+        if int(i) == 71 or int(i) == 72:
+            ds = True
         if int(i) < adminhighest:
             adminhighest = int(i)
-    if adminhighest >= 30:
+    if adminhighest >= 30 and not ds:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -566,6 +569,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if len(addedroles) + len(removedroles) == 0:
         return {"error": False, "response": {"message": "Role not updated: Member already have those roles.", "roles": roles}}
         
+    if adminhighest >= 30 and ds:
+        for add in addedroles:
+            if add not in [251, 252, 253]:
+                return {"error": True, "descriptor": "401: Unauthroized"}
+        for remove in removedroles:
+            if remove not in [251, 252, 253]:
+                return {"error": True, "descriptor": "401: Unauthroized"}
+
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
 

@@ -1224,6 +1224,10 @@ function SubmitApp() {
             return;
         }
 
+        if(pos == ""){
+            toastFactory("warning", "Error", "Please select a position! (If you've already selected, try clicking it again)", 5000, false);
+            return;
+        }
 
         data = {
             "Applying For": pos,
@@ -1251,6 +1255,39 @@ function SubmitApp() {
             "End Date": q2,
             "Reason": q3,
             "Will they leave position or leave VTC?": q4
+        }
+    } else if (apptype == "Division") {
+        apptype = 4;
+        q1 = $("#dca-q1").val();
+        q2 = $("#dca-q2").val();
+        q3 = $("#dca-q3").val();
+        q4 = $("#dca-q4").val();
+        q5 = $("#dca-q5").val();
+
+        // Check if any of the fields are empty
+        if (q1 == "" || q2 == "" || q3 == "" || q4 == "" || q5 == "") {
+            toastFactory("warning", "Error", "You must fill in all the fields!", 5000, false);
+            return;
+        }
+
+        if (!$("#construction-read").prop("checked")) {
+            toastFactory("warning", "Error", "You must first read the handbook!", 5000, false);
+            return;
+        }
+
+        if (!$("#construction-agree").prop("checked")) {
+            toastFactory("warning", "Error", "You can't join the division if you can't meet the monthly requirement!", 5000, false);
+            return;
+        }
+
+        data = {
+            "Why do you want to join the construction division?": q1,
+            "Have you read over the full division handbook?": "Yes",
+            "What is the biggest difference between hauling construction division loads compared to normal loads?": q2,
+            "What is a flatbed trailer designed to haul?": q3,
+            "After the first 50 miles, how often should you stop and check your load?": q4,
+            "What is the only time when it is appropriate to stop on the shoulder of the road?": q5,
+            "In the construction division, you are required to complete 3 deliveries with construction loads per month. Do you agree to meet the monthly requirement?": "Yes"
         }
     }
     data = JSON.stringify(data);
@@ -1344,6 +1381,9 @@ function ShowStaffTabs() {
         for (i = 0; i < roles.length; i++) {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
+            }
+            if (roles[i] == 71 || roles[i] == 72){
+                $("#StaffMembersBtn").show();
             }
             if (roles[i] == 40 || roles[i] == 41) {
                 isES = true;
@@ -4243,7 +4283,7 @@ function loadMyApp(recurse = true) {
                 false);
             $("#myappTable").empty();
             const applications = data.response.list;
-            APPTYPE = ["", "Driver", "Staff", "LOA"];
+            APPTYPE = ["", "Driver", "Staff", "LOA", "Division"];
             STATUS = ["Pending", "Accepted", "Declined"]
             if (applications.length == 0) {
                 $("#myappTableHead").hide();
@@ -4404,7 +4444,7 @@ function loadAllApp(recurse = true) {
             $("#totpages").html(Math.ceil(data.response.tot / 10));
             $("#allapppage").val(data.response.page);
             const applications = data.response.list;
-            APPTYPE = ["", "Driver", "Staff", "LOA"];
+            APPTYPE = ["", "Driver", "Staff", "LOA", "Division"];
             STATUS = ["Pending", "Accepted", "Declined"];
             if (applications.length == 0) {
                 $("#allappTableHead").hide();
@@ -4531,7 +4571,7 @@ function appDetail(applicationid, staffmode = false) {
                 return toastFactory("error", "Error:", "Application has no data", 5000,
                     false);
             }
-            APPTYPE = ["", "Driver", "Staff", "LOA"];
+            APPTYPE = ["", "Driver", "Staff", "LOA", "Division"];
             apptype = APPTYPE[data.response.apptype];
             ret = "";
             for (i = 0; i < keys.length; i++) {
@@ -4931,6 +4971,27 @@ $(document).ready(function () {
             $("#StaffApp").show();
         } else if (value == "loa") {
             $("#LOAApp").show();
+        } else if(value == "division") {
+            $("#DivisionApp").show();
+            $("#submitAppBttn").hide();
+        }
+    });
+    $('#divisionappselect').on('change', function () {
+        var value = $(this).val();
+        $(".divisiontabs").hide();
+        if (value == "construction") {
+            $("#ConstructionApp").show();
+            $("#submitAppBttn").show();
+        } else if (value == "chilled") {
+            $("#submitAppBttn").hide();
+            toastFactory("warning", "Error", "Division recruitment has not started yet!", 5000,
+                false);
+        } else if (value == "adr") {
+            $("#submitAppBttn").hide();
+            toastFactory("warning", "Error", "Division recruitment has not started yet!", 5000,
+                false);
+        } else {
+            $("#submitAppBttn").hide();
         }
     });
     annpage = 2;

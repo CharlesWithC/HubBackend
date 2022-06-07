@@ -71,11 +71,16 @@ async def newApplication(request: Request, response: Response, authorization: st
         p = cur.fetchall()
         if len(p) > 0:
             return {"error": True, "descriptor": "You are already a driver!"}
-        cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND discordid = {discordid}")
+        cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND discordid = {discordid} AND status = 0")
         p = cur.fetchall()
         if len(p) > 0:
             return {"error": True, "descriptor": "You have already made a driver application! Use 'Add Message' instead of creating new application!"}
-    
+    if apptype == 4:
+        cur.execute(f"SELECT * FROM application WHERE apptype = 4 AND discordid = {discordid} AND status = 0")
+        p = cur.fetchall()
+        if len(p) > 0:
+            return {"error": True, "descriptor": "You have already made a division application! Use 'Add Message' instead of creating new application!"}
+
     cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submitTimestamp >= {int(time.time()) - 7200}")
     p = cur.fetchall()
     if len(p) > 0:
@@ -106,7 +111,7 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     data = json.loads(form["data"])
     apptype = int(apptype)
-    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA"}
+    APPTYPE = {0: "Unknown", 1: "Driver", 2: "Staff", 3: "LOA", 4: "Division"}
     apptypetxt = "Unknown"
     if apptype in APPTYPE.keys():
         apptypetxt = APPTYPE[apptype]
@@ -133,7 +138,7 @@ async def newApplication(request: Request, response: Response, authorization: st
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"{apptypetxt} Application Received",
-                "description": f"One of our staff will get back to you shortly. If you want to update your application, please refer to `My Applications` in Drivers Hub.",
+                "description": f"One of our staff will get back to you shortly. If you want to update it, please go to `My Applications` in Drivers Hub, click `Details` button, scroll down and you can add message.",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
                     "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
                          "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
@@ -147,9 +152,14 @@ async def newApplication(request: Request, response: Response, authorization: st
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
 
+    pingroles = "<@&941544363878670366> <@&941544365950644224>"
+    webhookurl = config.appwebhook
+    if apptype == 4:
+        pingroles = "<@&943736126491987999> <@&943735031954821141>"
+        webhookurl = config.divisionwebhook
     try:
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(config.appwebhook, session=session)
+            webhook = Webhook.from_url(webhookurl, session=session)
 
             embed = discord.Embed(title = f"New {apptypetxt} Application", description = msg, color = 0x770202)
             if t[0][1].startswith("a_"):
@@ -158,11 +168,11 @@ async def newApplication(request: Request, response: Response, authorization: st
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
             embed.set_footer(text = f"Application ID: {applicationid} ")
             embed.timestamp = datetime.now()
-            await webhook.send(content = "<@&941544363878670366> <@&941544365950644224>", embed = embed)
+            await webhook.send(content = pingroles, embed = embed)
 
     except:
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(config.appwebhook, session=session)
+            webhook = Webhook.from_url(webhookurl, session=session)
 
             embed = discord.Embed(title = f"Application #{applicationid} Updated", description = "*Message too long, please view application on website.*", color = 0x770202)
             if t[0][1].startswith("a_"):
@@ -171,7 +181,7 @@ async def newApplication(request: Request, response: Response, authorization: st
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
             embed.set_footer(text = f"Application ID: {applicationid} ")
             embed.timestamp = datetime.now()
-            await webhook.send(content = "<@&941544363878670366> <@&941544365950644224>", embed = embed)
+            await webhook.send(content = pingroles, embed = embed)
 
     return {"error": False, "response": {"message": "Application added", "applicationid": applicationid}}
 
@@ -227,7 +237,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     applicationid = form["applicationid"]
     message = form["message"]
 
-    cur.execute(f"SELECT discordid, data, status FROM application WHERE applicationid = {applicationid}")
+    cur.execute(f"SELECT discordid, data, status, apptype FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if discordid != t[0][0]:
         # # response.status_code = 401
@@ -243,6 +253,7 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     discordid = t[0][0]
     data = json.loads(b64d(t[0][1]))
+    apptype = t[0][3]
     i = 1
     while 1:
         if not f"[Message] {name} #{i}" in data.keys():
@@ -278,9 +289,14 @@ async def updateApplication(request: Request, response: Response, authorization:
     except:
         pass
 
+    pingroles = "<@&941544363878670366> <@&941544365950644224>"
+    webhookurl = config.appwebhook
+    if apptype == 4:
+        pingroles = "<@&943736126491987999> <@&943735031954821141>"
+        webhookurl = config.divisionwebhook
     try:
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(config.appwebhook, session=session)
+            webhook = Webhook.from_url(webhookurl, session=session)
 
             embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = msg, color = 0x770202)
             if t[0][1].startswith("a_"):
@@ -289,11 +305,11 @@ async def updateApplication(request: Request, response: Response, authorization:
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
             embed.set_footer(text = f"Application ID: {applicationid} ")
             embed.timestamp = datetime.now()
-            await webhook.send(content = "<@&941544363878670366> <@&941544365950644224>", embed = embed)
+            await webhook.send(content = pingroles, embed = embed)
 
     except:
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url(config.appwebhook, session=session)
+            webhook = Webhook.from_url(webhookurl, session=session)
 
             embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = 0x770202)
             if t[0][1].startswith("a_"):
@@ -302,7 +318,7 @@ async def updateApplication(request: Request, response: Response, authorization:
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
             embed.set_footer(text = f"Application ID: {applicationid} ")
             embed.timestamp = datetime.now()
-            await webhook.send(content = "<@&941544363878670366> <@&941544365950644224>", embed = embed)
+            await webhook.send(content = pingroles, embed = embed)
 
     return {"error": False, "response": {"message": "Message added", "applicationid": applicationid}}
 
@@ -351,11 +367,14 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     admindiscord = discordid
     while "" in roles:
         roles.remove("")
+    ds = False
     adminhighest = 99999
     for i in roles:
+        if int(i) == 71 or int(i) == 72:
+            ds = True
         if int(i) < adminhighest:
             adminhighest = int(i)
-    if adminhighest >= 30:
+    if adminhighest >= 30 and not ds:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -373,6 +392,13 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if len(t) == 0:
         # response.status_code = 404
         return {"error": True, "descriptor": "404: Not found"}
+    
+    apptype = t[0][1]
+
+    if adminhighest >= 30 and ds:
+        if apptype != 4:
+            # response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
 
     discordid = t[0][2]
     data = json.loads(b64d(t[0][3]))
@@ -392,6 +418,9 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {closedts}, data = '{data}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application {applicationid} status to {statustxt}")
     conn.commit()
+
+    if message == "":
+        message = "*No message*"
 
     try:
         STATUS = {0: "Pending", 1: "Accepted", 2: "Declined"}
@@ -538,6 +567,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
+    ds = False
     adminhighest = 99999
     if len(t) > 0:
         adminid = t[0][0]
@@ -545,6 +575,8 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         while "" in roles:
             roles.remove("")
         for i in roles:
+            if int(i) == 71 or int(i) == 72:
+                ds = True
             if int(i) < adminhighest:
                 adminhighest = int(i)
 
@@ -563,16 +595,26 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         if len(t) > 0:
             tot = p[0][0]
     else:
-        limit = ""
-        if apptype != 0:
-            limit = f" WHERE apptype = {apptype}"
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
-        t = cur.fetchall()
-        
-        cur.execute(f"SELECT COUNT(*) FROM application")
-        p = cur.fetchall()
-        if len(t) > 0:
-            tot = p[0][0]
+        if adminhighest < 30:
+            limit = ""
+            if apptype != 0:
+                limit = f" WHERE apptype = {apptype}"
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            t = cur.fetchall()
+            
+            cur.execute(f"SELECT COUNT(*) FROM application")
+            p = cur.fetchall()
+            if len(t) > 0:
+                tot = p[0][0]
+        elif ds:
+            limit = " WHERE apptype = 4"
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            t = cur.fetchall()
+            
+            cur.execute(f"SELECT COUNT(*) FROM application")
+            p = cur.fetchall()
+            if len(t) > 0:
+                tot = p[0][0]
 
     ret = []
     for tt in t:

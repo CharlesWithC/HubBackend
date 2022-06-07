@@ -40,7 +40,8 @@
       background-color: transparent;
     }
 
-    div.rounded,.tabbtns {
+    div.rounded,
+    .tabbtns {
       border-radius: 15px;
     }
   </style>
@@ -901,7 +902,8 @@
   <section id="Map" class="py-8 tabs" style="display:none">
     <div style="padding:50px;padding-top:0;">
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4">
-        <h2 style="position:relative;display:inline;top:30px;left:10px;z-index:1000;color:white">Euro Truck Simulator 2</h2>
+        <h2 style="position:relative;display:inline;top:30px;left:10px;z-index:1000;color:white">Euro Truck Simulator 2
+        </h2>
         <div id="map"
           style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;border-radius:15px">
         </div>
@@ -914,7 +916,8 @@
       </div>
       <br>
       <div class="py-8 px-6 mx-auto lg:ml-80 pt-4">
-        <h2 style="position:relative;display:inline;top:30px;left:10px;z-index:1000;color:white">American Truck Simulator</h2>
+        <h2 style="position:relative;display:inline;top:30px;left:10px;z-index:1000;color:white">American Truck
+          Simulator</h2>
         <div id="amap"
           style="height: 80vh;width: 100%;margin:auto;display:block;background-color: #484E66;border-radius:15px"></div>
       </div>
@@ -1783,7 +1786,7 @@
           </div>
           <div class="md:w-1/2 lg:w-1/4 p-4 statscard" style="padding-top:0;float:left">
             <div class="p-6 rounded bg-white">
-              <h2 style="font-size:20px" id="ddcol3t">Vehicle</h2>    
+              <h2 style="font-size:20px" id="ddcol3t">Vehicle</h2>
               <div class="mb-2 ddcol" id="ddcol3">
               </div>
             </div>
@@ -2097,8 +2100,9 @@
 
           <div class="mb-6">
             <div class="container px-4 mx-auto">
-              <label class="block text-sm font-medium mb-2 text-left" for="">Are you applying for driver or staff? Or
-                just requesting a LOA?<br>Please select an application:</label>
+              <label class="block text-sm font-medium mb-2 text-left" for="">Are you applying for driver or staff, or
+                for joining a division?
+                Or just requesting a LOA?<br>Please select an application:</label>
               <div class="relative" style="width:200px">
                 <select id="appselect"
                   class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
@@ -2106,6 +2110,7 @@
                   <option value="driver" id="driverappsel">Driver</option>
                   <option value="staff">Staff</option>
                   <option value="loa">LOA</option>
+                  <option value="division">Division</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                   <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
@@ -2267,6 +2272,100 @@
                   <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
                   </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="container px-4 mx-auto apptabs" id="DivisionApp">
+            <div class="container px-4 mx-auto">
+              <label class="block text-sm font-medium mb-2 text-left" for="">Select Division:</label>
+              <div class="relative" style="width:200px">
+                <select id="divisionappselect"
+                  class="appearance-none block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name">
+                  <option value="seldivplaceholder">Select Division</option>
+                  <option value="construction">Construction</option>
+                  <option value="chilled">Chilled (Not available)</option>
+                  <option value="adr">ADR (Not available)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="divisiontabs" id="ConstructionApp" style="display:none">
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">Why do you want to join the construction
+                  division?</label>
+                <textarea id="dca-q1"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded"
+                  name="field-name" rows="5" placeholder=""></textarea></div>
+
+              <div class="mb-6">
+                <div class="mb-1">
+                  <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">Have you read over the
+                    full division handbook?</label>
+                  <label>
+                    <input type="radio" name="construction-read" value="yes" id="construction-read">
+                    <span class="ml-2">Yes</span>
+                  </label>
+                </div>
+                <div>
+                  <label>
+                    <input type="radio" name="construction-read" value="yes" checked>
+                    <span class="ml-2">No</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">What is the biggest difference between hauling
+                  construction division loads compared to normal loads?</label>
+                <input id="dca-q2"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder=""></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">What is a flatbed trailer designed to haul?
+                </label>
+                <input id="dca-q3"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder=""></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">After the first 50 miles, how often should you stop
+                  and check your load? </label>
+                <input id="dca-q4"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder=""></div>
+
+              <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" for="">What is the only time when it is appropriate to
+                  stop
+                  on the shoulder of the road? </label>
+                <input id="dca-q5"
+                  class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" type="text"
+                  name="" placeholder=""></div>
+
+              <div class="mb-6">
+                <div class="mb-1">
+                  <label class="block text-sm font-medium mb-2" for="" style="text-align: left;">In the construction
+                    division, you are required to complete 3 deliveries with construction loads per month. Do you agree
+                    to
+                    meet the monthly requirement?</label>
+                  <label>
+                    <input type="radio" name="construction-agree" value="yes" id="construction-agree">
+                    <span class="ml-2">Yes</span>
+                  </label>
+                </div>
+                <div>
+                  <label>
+                    <input type="radio" name="construction-agree" value="yes" checked>
+                    <span class="ml-2">No</span>
+                  </label>
                 </div>
               </div>
             </div>
