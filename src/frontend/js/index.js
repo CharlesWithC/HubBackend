@@ -5085,10 +5085,13 @@ $(document).ready(function () {
         $(".apptabs").hide();
         if (value == "driver") {
             $("#DriverApp").show();
+            $("#submitAppBttn").show();
         } else if (value == "staff") {
             $("#StaffApp").show();
+            $("#submitAppBttn").show();
         } else if (value == "loa") {
             $("#LOAApp").show();
+            $("#submitAppBttn").show();
         } else if (value == "division") {
             $("#DivisionApp").show();
             $("#submitAppBttn").hide();
