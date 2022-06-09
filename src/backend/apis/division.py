@@ -76,7 +76,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     if userid != luserid:
         return {"error": True, "descriptor": "You can only request division validation for your own deliveries."}
 
-    cur.execute(f"SELECT status FROM division WHERE logid = {logid}")
+    cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) > 0:
         status = t[0][0]
@@ -204,7 +204,7 @@ async def divisionValidateList(request: Request, response: Response, authorizati
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0")
+    cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0 AND logid >= 0")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -286,7 +286,7 @@ async def divisionValidate(request: Request, response: Response, authorization: 
     reason = form["reason"]
     status = int(form["status"])
     
-    cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid}")
+    cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "descriptor": f"Validation request not found for delivery #{logid}"}
@@ -380,7 +380,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     if logid != -1:
-        cur.execute(f"SELECT divisionid, userid, requestts, status, updatets, staffid, reason FROM division WHERE logid = {logid}")
+        cur.execute(f"SELECT divisionid, userid, requestts, status, updatets, staffid, reason FROM division WHERE logid = {logid} AND logid >= 0")
         t = cur.fetchall()
         if len(t) == 0:
             cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
@@ -465,7 +465,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         adr.append({"userid": tt[1], "name": tt[0], "points": cnt * 500})
     
     delivery = []
-    cur.execute(f"SELECT logid FROM division WHERE status = 1 ORDER BY updatets DESC LIMIT 10")
+    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
     p = cur.fetchall()
     for pp in p:
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")

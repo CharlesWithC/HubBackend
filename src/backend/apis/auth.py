@@ -231,6 +231,23 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     if len(t) > 0:
         return {"error": True, "descriptor": "Steam account already bound to another user."}
 
+    cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    roles = t[0][0].split(",")
+    orgsteamid = t[0][1]
+    userid = t[0][2]
+    if orgsteamid != 0 and userid >= 0:
+        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Steam ID updated from%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
+        p = cur.fetchall()
+        if len(p) > 0:
+            return {"error": True, "descriptor": "Update rejected:<br>Last update within 7 days."}
+
+        for role in roles:
+            if role == "100":
+                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
+                await AuditLog(userid, f"Steam ID updated from `{orgsteamid}` to `{steamid}`")
+
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     conn.commit()
 
@@ -249,6 +266,10 @@ async def steamBind(request: Request, response: Response, authorization: str = H
                         conn.commit()
                         return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid, "skiptmp": True}}
 
+    # in case user changed steam
+    cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
+    conn.commit()
+    
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
 
 @app.post("/atm/user/truckersmpbind")

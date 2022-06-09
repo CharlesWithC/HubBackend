@@ -382,6 +382,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         divisionpnt = 0
         if len(o) > 0:
             divisionpnt = o[0][0] * 500
+        cur.execute(f"SELECT status FROM division WHERE userid = {tt[0]} AND logid = -1")
+        o = cur.fetchall()
+        if len(o) > 0:
+            divisionpnt += o[0][0]
         ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": tt[1], "totnolimit": tt[1] + divisionpnt})
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
@@ -568,7 +572,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
             name = "Anonymous"
 
         isdivision = False
-        cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1")
+        cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
         p = cur.fetchall()
         if len(p) > 0:
             isdivision = True

@@ -206,6 +206,10 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         divisionpnt = 0
         if len(o) > 0:
             divisionpnt = o[0][0] * 500
+        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
+        o = cur.fetchall()
+        if len(o) > 0:
+            divisionpnt += o[0][0]
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "discordid": t[0][0], "avatar": t[0][2], \
             "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
                 "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
@@ -224,6 +228,10 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         divisionpnt = 0
         if len(o) > 0:
             divisionpnt = o[0][0] * 500
+        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
+        o = cur.fetchall()
+        if len(o) > 0:
+            divisionpnt += o[0][0]
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], \
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
@@ -446,13 +454,15 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    cur.execute(f"SELECT userid, steamid, roles FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "descriptor": "User not found"}
     userid = t[0][0]
     steamid = t[0][1]
-    roles = t[0][2].split(",")
+    name = t[0][2]
+    roles = t[0][3].split(",")
+    udiscordid = t[0][4]
     while "" in roles:
         roles.remove("")
     highest = 99999
@@ -469,7 +479,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
     
-    await AuditLog(adminid, f'Dismissed member {userid}')
+    await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
     return {"error": False, "response": {"message": "Member dismissed"}}
 
 @app.post('/atm/member/role')
@@ -713,9 +723,21 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     form = await request.form()
     userid = int(form["userid"])
     distance = int(int(form["mile"])*1.6)
-    eventpnt = form["eventpnt"]
+    eventpnt = int(form["eventpnt"])
+    divisionpnt = int(form["divisionpnt"])
 
     cur.execute(f"UPDATE driver SET distance = distance + {distance}, eventpnt = eventpnt + {eventpnt} WHERE userid = {userid}")
+    
+    divisionorg = 0
+    cur.execute(f"SELECT status FROM division WHERE logid = -1 AND userid = {userid}")
+    p = cur.fetchall()
+    if len(p) > 0:
+        divisionorg = p[0][0]
+        cur.execute(f"DELETE FROM division WHERE logid = -1 AND userid = {userid}")
+    divisionpnt += divisionorg
+    if divisionpnt > 0:
+        cur.execute(f"INSERT INTO division VALUES (-1, -1, {userid}, 0, {divisionpnt}, 0, 0, 0)")
+
     conn.commit()
 
     cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
@@ -727,7 +749,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if int(eventpnt) > 0:
         eventpnt = "+" + str(eventpnt)
 
-    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} Miles\n{eventpnt} Event Points")
+    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} Miles\n{eventpnt} Event Points\n{divisionpnt} Division Points")
 
     return {"error": False, "response": {"message": "Points updated."}}
 
@@ -861,6 +883,10 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     divisionpnt = 0
     if len(o) > 0:
         divisionpnt = o[0][0] * 500
+    cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
+    o = cur.fetchall()
+    if len(o) > 0:
+        divisionpnt += o[0][0]
     totalpnt += divisionpnt
     
     rank = point2rank(totalpnt)

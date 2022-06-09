@@ -48,6 +48,9 @@
     a {
       color: #888;
     }
+    a:hover {
+      color: black;
+    }
   </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
   <script>
@@ -667,6 +670,18 @@
         </div>
 
         <div class="p-4 overflow-x-auto" style="display: block;">
+          <h3>Update Steam Account</h3>
+          <label class="block text-sm font-medium mb-2" for=""><i>To prevent abuse, you can only update it once within last 7 days.</i></label>
+          <label class="block text-sm font-medium mb-2" for=""><i>If you are a driver, you have to start game from new account or your jobs will not be logged.</i></label>
+          <button type="button"
+            class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
+            onclick="window.location.href='/auth?steamupdate=1'">Update</button>
+        </div>
+
+        <hr>
+
+        <div class="p-4 overflow-x-auto" style="display: block;">
+          <h3>External Application Authorization</h3>
           <label class="block text-sm font-medium mb-2" for="">Application Token: <span
               id="userAppToken"></span></label>
           <label class="block text-sm font-medium mb-2" for=""><i>For security purposes, tokens can only be viewed
@@ -679,6 +694,7 @@
         <hr>
 
         <div class="p-4 overflow-x-auto" style="display: block;">
+          <h3>Leave Company</h3>
           <label class="block text-sm font-medium mb-2" for="" style="color:red">Dangerous! Think again before
             resigning! This will clear your delivery log and remove you from navio company!</label>
           <button type="button" style="background-color:red"
@@ -1200,7 +1216,7 @@
               rows="5" placeholder=""></input>
           </div>
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Miles</label>
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Distance</label>
             <input id="memberpntmile" style="width:200px;display:inline"
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
               rows="5" placeholder=""></input>
@@ -1208,6 +1224,12 @@
           <div class="mb-6">
             <label class="block text-sm font-medium mb-2" for="" style="display:inline">Event Points</label>
             <input id="memberpntevent" style="width:200px;display:inline"
+              class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
+              rows="5" placeholder=""></input>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2" for="" style="display:inline">Division Points</label>
+            <input id="memberpntdivision" style="width:200px;display:inline"
               class="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded" name="field-name"
               rows="5" placeholder=""></input>
           </div>

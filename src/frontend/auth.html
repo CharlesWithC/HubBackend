@@ -20,25 +20,25 @@
     <link rel="stylesheet" href="css/login.css">
     <script>
         function toastFactory(type, title, text, time, showConfirmButton) {
-          const Toast = Swal.mixin({
-              toast: true,
-              position: 'top-start',
-              showConfirmButton: showConfirmButton || false,
-              timer: time || '3000',
-              timerProgressBar: true,
-              didOpen: (toast) => {
-                  toast.addEventListener('mouseenter', Swal.stopTimer);
-                  toast.addEventListener('mouseleave', Swal.resumeTimer);
-              },
-          });
-        
-          Toast.fire({
-              icon: type,
-              title: '<strong>' + title + '</strong>',
-              html: text,
-          });
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-start',
+                showConfirmButton: showConfirmButton || false,
+                timer: time || '3000',
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                },
+            });
+
+            Toast.fire({
+                icon: type,
+                title: '<strong>' + title + '</strong>',
+                html: text,
+            });
         }
-        
+
         function DiscordLogin() {
             location.href = 'https://drivershub.charlws.com/atm/user/login';
         }
@@ -95,7 +95,7 @@
                                 $("#msg").html("You are being redirected to Drivers Hub.");
                             } else if (data.response.extra == "steamauth") {
                                 // Format title
-                                $("#title").html("Steam Authorization Needed <br>");
+                                $("#title").html("Steam Authorization<br>");
                                 $("#title").css("font-size", "1.5em");
 
                                 // Format message
@@ -157,9 +157,27 @@
             });
         }
         $(document).ready(function () {
+            steamupdate = getUrlParameter("steamupdate");
+            if (steamupdate == "1") {
+                // Format title
+                $("#title").html("Steam Authorization<br>");
+                $("#title").css("font-size", "1.5em");
+
+                // Format message
+                $("#msg").html(
+                    "We need to check your steam account to: <br><br> - Bind your TruckersMP account <br> - Add you to our Navio company"
+                );
+
+                // Show steam openID button
+                $("#steamauth").show();
+
+                console.log("steam auth");
+                return;
+            }
+            console.log("skip");
             validate();
             $('#truckersmpid').keypress(function (e) {
-                if (e.which == 13){
+                if (e.which == 13) {
                     e.preventDefault();
                     TMPBind();
                 }
@@ -202,11 +220,14 @@
     <div style="position: fixed;bottom: 10px;color: lightgrey;text-align: center;">
         Copyright &copy 2022 At The Mile Logistics
         <br>
-        Made by <a href="https://charlws.com" target="_blank" style="text-decoration:none;color:lightgrey">CharlesWithC#7777</a>
+        Made by <a href="https://charlws.com" target="_blank"
+            style="text-decoration:none;color:lightgrey">CharlesWithC#7777</a>
         <br>
-        API: <a href="https://drivershub.charlws.com" target="_blank" style="text-decoration:none;color:lightgrey">drivershub.charlws.com</a>
+        API: <a href="https://drivershub.charlws.com" target="_blank"
+            style="text-decoration:none;color:lightgrey">drivershub.charlws.com</a>
         |
-        Map: <a href="https://map.charlws.com" target="_blank" style="text-decoration:none;color:lightgrey">map.charlws.com</a>
+        Map: <a href="https://map.charlws.com" target="_blank"
+            style="text-decoration:none;color:lightgrey">map.charlws.com</a>
     </div>
 </body>
 

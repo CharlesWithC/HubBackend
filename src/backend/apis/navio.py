@@ -52,10 +52,19 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
             data += f"{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
             lastx = round(tt[0])
             lastz = round(tt[2])
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")
-        conn.commit()
+        for _ in range(3):
+            try:
+                conn = newconn()
+                cur = conn.cursor()
+                cur.execute(f"SELECT logid FROM telemetry WHERE logid = {logid}")
+                p = cur.fetchall()
+                if len(p) > 0:
+                    break
+                cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")
+                conn.commit()
+                break
+            except:
+                continue
         conn = newconn()
         cur = conn.cursor()
         cur.execute(f"DELETE FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)}")

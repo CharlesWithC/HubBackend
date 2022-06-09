@@ -3630,11 +3630,15 @@ function updateMemberPoints() {
     }
     miles = $("#memberpntmile").val();
     eventpnt = $("#memberpntevent").val();
+    divisionpnt = $("#memberpntdivision").val();
     if (!isNumber(miles)) {
         miles = 0;
     }
     if (!isNumber(eventpnt)) {
         eventpnt = 0;
+    }
+    if (!isNumber(divisionpnt)) {
+        divisionpnt = 0;
     }
     GeneralLoad();
     $("#updateMemberPointsBtn").html("Working...");
@@ -3649,7 +3653,8 @@ function updateMemberPoints() {
         data: {
             "userid": userid,
             "mile": miles,
-            "eventpnt": eventpnt
+            "eventpnt": eventpnt,
+            "divisionpnt": divisionpnt
         },
         success: function (data) {
             $("#updateMemberPointsBtn").html("Update");
