@@ -494,6 +494,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     adminhighest = 99999
+    isDS = False
     if len(t) > 0:
         adminid = t[0][0]
         roles = t[0][1].split(",")
@@ -502,6 +503,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
         for i in roles:
             if int(i) < adminhighest:
                 adminhighest = int(i)
+            if int(i) == 71 or int(i) == 72:
+                isDS = True
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
@@ -509,7 +512,10 @@ async def getApplication(request: Request, response: Response, applicationid: in
         # response.status_code = 404
         return {"error": True, "descriptor": "404: Not found"}
     
-    if adminhighest >= 30 and discordid != t[0][1]:
+    if adminhighest >= 30 and discordid != t[0][1] and not isDS:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
+    if adminhighest >= 30 and isDS and t[0][1] != 4:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -582,7 +588,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
 
     t = None
     tot = 0
-    if adminhighest >= 30 or showall == False:
+    if showall == False:
         limit = ""
         if apptype != 0:
             limit = f" AND apptype = {apptype}"
@@ -602,19 +608,24 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
             cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
             t = cur.fetchall()
             
-            cur.execute(f"SELECT COUNT(*) FROM application")
+            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
             p = cur.fetchall()
             if len(t) > 0:
                 tot = p[0][0]
+                
         elif ds:
             limit = " WHERE apptype = 4"
             cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
             t = cur.fetchall()
             
-            cur.execute(f"SELECT COUNT(*) FROM application")
+            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
             p = cur.fetchall()
             if len(t) > 0:
                 tot = p[0][0]
+        
+        else:
+            # response.status_code = 401
+            return {"error": True, "descriptor": "401: Unauthroized"}
 
     ret = []
     for tt in t:

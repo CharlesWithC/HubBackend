@@ -588,9 +588,10 @@ function toggleUpdateDownloads() {
 }
 
 lastdownloadsupd = 0;
-function UpdateDownloads(){
-    if(+ new Date() - lastdownloadsupd < 2000) return;
-    lastdownloadsupd = + new Date();
+
+function UpdateDownloads() {
+    if (+new Date() - lastdownloadsupd < 2000) return;
+    lastdownloadsupd = +new Date();
     $.ajax({
         url: "https://drivershub.charlws.com/atm/downloads",
         type: "PATCH",
@@ -1347,7 +1348,7 @@ function SubmitApp() {
             "What is a flatbed trailer designed to haul?": q3,
             "After the first 50 miles, how often should you stop and check your load?": q4,
             "What is the only time when it is appropriate to stop on the shoulder of the road?": q5,
-            "In the construction division, you are required to complete 3 deliveries with construction loads per month. Do you agree to meet the monthly requirement?": "Yes"
+            "In the construction division, you are required to complete 5 deliveries of 95+ miles with construction loads per month. Do you agree to meet the monthly requirement?": "Yes"
         }
     }
     data = JSON.stringify(data);
@@ -1442,10 +1443,6 @@ function ShowStaffTabs() {
             if (roles[i] < highestrole) {
                 highestrole = roles[i];
             }
-            if (roles[i] == 71 || roles[i] == 72) {
-                $("#StaffMembersBtn").show();
-                $("#AllAppBtn").show();
-            }
             if (roles[i] == 40 || roles[i] == 41) {
                 isES = true;
                 if (roles[i] == 40) isEM = true;
@@ -1519,11 +1516,15 @@ function ShowStaffTabs() {
             $("#stafftabs").show();
             if (highestrole >= 30) {
                 $("#AllAppBtn").hide();
-                $("#StaffMembersBtn").hide();
+                $("#StaffMemberBtn").hide();
             } else {
-                $("#StaffMembersBtn").show();
+                $("#StaffMemberBtn").show();
                 $("#AllAppBtn").show();
             }
+        }
+        if (isDS) {
+            $("#StaffMemberBtn").show();
+            $("#AllAppBtn").show();
         }
         if (highestrole <= 10) {
             $("#downloadseditbtn").show();
@@ -1682,14 +1683,30 @@ function validate() {
                             $("#role").html(hrole);
                             roleids = Object.keys(rolelist);
                             for (var i = 0; i < roleids.length; i++) {
-                                if (roleids[i] <= highestrole)
-                                    $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
-                                        `" name="assignrole" value="role` + roleids[i] + `">
+                                roleids[i] = parseInt(roleids[i]);
+                            }
+                            if (highestrole >= 30) {
+                                for (var i = 0; i < roleids.length; i++) {
+                                    if (roleids[i] < 251 || roleids[i] > 253)
+                                        $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                            `" name="assignrole" value="role` + roleids[i] + `">
+        <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                                    else
+                                        $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                            `" name="assignrole" value="role` + roleids[i] + `">
+        <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                                }
+                            } else {
+                                for (var i = 0; i < roleids.length; i++) {
+                                    if (roleids[i] <= highestrole)
+                                        $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                            `" name="assignrole" value="role` + roleids[i] + `">
     <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
-                                else
-                                    $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
-                                        `" name="assignrole" value="role` + roleids[i] + `">
+                                    else
+                                        $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                            `" name="assignrole" value="role` + roleids[i] + `">
     <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                                }
                             }
                         }
                     });
@@ -1710,14 +1727,30 @@ function validate() {
                     $("#role").html(hrole);
                     roleids = Object.keys(rolelist);
                     for (var i = 0; i < roleids.length; i++) {
-                        if (roleids[i] <= highestrole)
-                            $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
-                                `" name="assignrole" value="role` + roleids[i] + `">
+                        roleids[i] = parseInt(roleids[i]);
+                    }
+                    if (highestrole >= 30) {
+                        for (var i = 0; i < roleids.length; i++) {
+                            if (roleids[i] < 251 || roleids[i] > 253)
+                                $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                    `" name="assignrole" value="role` + roleids[i] + `">
 <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
-                        else
-                            $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
-                                `" name="assignrole" value="role` + roleids[i] + `">
+                            else
+                                $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                    `" name="assignrole" value="role` + roleids[i] + `">
 <label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                        }
+                    } else {
+                        for (var i = 0; i < roleids.length; i++) {
+                            if (roleids[i] <= highestrole)
+                                $("#rolelist").append(`<li><input disabled type="checkbox" id="role` + roleids[i] +
+                                    `" name="assignrole" value="role` + roleids[i] + `">
+<label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                            else
+                                $("#rolelist").append(`<li><input type="checkbox" id="role` + roleids[i] +
+                                    `" name="assignrole" value="role` + roleids[i] + `">
+<label for="role` + roleids[i] + `">` + rolelist[roleids[i]] + `</label></li>`);
+                        }
                     }
                 }
                 if (userid != -1) {
@@ -4842,7 +4875,6 @@ function updateStaffPosition() {
 
 function PathDetect() {
     p = window.location.pathname;
-    console.log(p);
     if (p == "/") ShowTab("#HomeTab", "#HomeTabBtn");
     else if (p == "/announcement") ShowTab("#AnnTab", "#AnnTabBtn");
     else if (p == "/staffannouncement") ShowTab("#StaffAnnTab", "#StaffAnnTabBtn");
@@ -5094,7 +5126,7 @@ $(document).ready(function () {
                 a = ann[0];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + 
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
                     parseMarkdown(a.content.replaceAll("\n", "<br>"));
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
@@ -5104,7 +5136,7 @@ $(document).ready(function () {
                 a = ann[i];
                 dt = getDateTime(a.timestamp * 1000);
                 content = "<span style='font-size:10  px;color:grey'><b>#" + a.aid + "</b> | <b>" + dt +
-                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" + 
+                    "</b> by <a style='cursor:pointer' onclick='loadProfile(" + a.byuserid + ")'><i>" + a.by + "</i></a></span><br>" +
                     parseMarkdown(a.content.replaceAll("\n", "<br>"));
                 TYPES = ["info", "info", "warning", "criticle", "resolved"];
                 banner = genBanner(TYPES[a.atype], a.title, content);
