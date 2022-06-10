@@ -51,11 +51,17 @@ async def navio(uri):
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
             if int(time.time()) - lasthandshake >= 30:
+                print("Commit")
+                conn.commit() # less commit
+                conn = newconn()
+                cur = conn.cursor()
                 print("Heartbeat")
                 await websocket.send(json.dumps({"op": 2}))
                 lasthandshake = int(time.time())
-                cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 7)}") # cache for one week
-                conn.commit() # less commit
+                try:
+                    cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 7)}") # cache for one week
+                except:
+                    traceback.print_exc()
             await asyncio.sleep(0.01)
 
 while 1:
