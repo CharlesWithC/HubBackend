@@ -2282,6 +2282,7 @@ async function deliveryRoutePlay() {
     if (window.dn == undefined || window.dn.previousExtent_ == undefined) return toastFactory("error", "Error:", "Please zoom & drag the map to activate it.", 5000, false);
     clearInterval(dmapint);
     dmapint = -999;
+    lastevent = 0;
     window.mapcenter["dmap"] = [deliveryRoute[0][0], -deliveryRoute[0][1]];
     prew = 0;
     preh = 0;
@@ -2336,7 +2337,6 @@ async function deliveryRoutePlay() {
 
         x = deliveryRoute[rri][0];
         z = deliveryRoute[rri][1];
-        lastevent = 0;
         for (var i = lastevent; i < rrevents.length; i++) {
             ex = rrevents[i].location.x;
             ez = rrevents[i].location.z;

@@ -14,10 +14,10 @@
   <meta content="#B30000" data-react-helmet="true" name="theme-color" />
   <meta content="https://hub.atmvtc.com/images/bg.jpg" name="twitter:card">
 
+  <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
   <link rel="stylesheet" href="css/tailwind/tailwind.min.css">
-  <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/4.5.0/ol-debug.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" />
 
@@ -53,6 +53,14 @@
     }
     .tabbtns:hover {
       color: #fff;
+    }
+
+    .bg-indigo-500 {
+      background-color: #B30000;
+    }
+
+    .bg-indigo-500:hover {
+      background-color: #770202;
     }
   </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7EDVTC3J2E"></script>
@@ -187,7 +195,7 @@
 
             <li>
               <a id="DeliveryBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Delivery', '#DeliveryBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-truck"
@@ -206,7 +214,7 @@
 
             <li>
               <a id="DivisionBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Division', '#DivisionBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
@@ -223,7 +231,7 @@
             </li>
 
             <li>
-              <a id="EventBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+              <a id="EventBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Event', '#EventBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
@@ -247,7 +255,7 @@
           <ul class="text-sm font-medium">
             <li>
               <a id="AllMemberBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AllMembers', '#AllMemberBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -267,7 +275,7 @@
 
             <li>
               <a id="LeaderboardBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Leaderboard', '#LeaderboardBtn')">
                 <span class="inline-block mr-3">
                   <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
@@ -291,7 +299,7 @@
             </li>
 
             <li>
-              <a id="RankingBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+              <a id="RankingBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#Ranking', '#RankingBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-steering-wheel" width="18"
@@ -334,7 +342,7 @@
             </li>
             <li>
               <a id="SubmitAppBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#SubmitApp', '#SubmitAppBtn')">
                 <span class="inline-block mr-3">
                   <svg width="18" height="18" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
@@ -378,7 +386,7 @@
 
             <li>
               <a id="StaffDivisionBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#StaffDivision', '#StaffDivisionBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
@@ -396,7 +404,7 @@
 
             <li>
               <a id="StaffEventBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#StaffEvent', '#StaffEventBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
@@ -415,7 +423,7 @@
 
             <li>
               <a id="StaffMemberBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#StaffMembers', '#StaffMemberBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -436,7 +444,7 @@
             <li>
               <hr>
 
-              <a id="AllAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+              <a id="AllAppBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AllApp', '#AllAppBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
@@ -452,7 +460,7 @@
               </a>
             </li>
             <li>
-              <a id="AllUserBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+              <a id="AllUserBtn" class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AllUsers', '#AllUserBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -469,7 +477,7 @@
             <hr>
             <li>
               <a id="AuditLogBtn"
-                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 rounded tabbtns"
+                class="flex items-center pl-3 py-3 pr-4 text-gray-50 hover:bg-gray-900 tabbtns"
                 style="cursor: pointer" onclick="ShowTab('#AuditLog', '#AuditLogBtn')">
                 <span class="inline-block mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
