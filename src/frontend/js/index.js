@@ -280,6 +280,7 @@ function loadStats(basic = false) {
             $("#dotddistance").html(`Driven ${distance}${distance_unit_txt}`);
 
             $("#dalljob").html(newjobs);
+            $("#dtotdistance").html(newdistance);
 
             const ctx = document.getElementById('deliveryStatsChart').getContext('2d');
             const config = {
