@@ -177,6 +177,8 @@ function isNumber(n) {
 
 // Calculates significant figures with suffixes K/M/B/T, e.g. 1234 = 1.23K
 function sigfig(num, sigfigs_opt) {
+  flag = ""
+  if(num < 0) flag = "-", num=-num;
   // Set default sigfigs to 3
   sigfigs_opt = (typeof sigfigs_opt === "undefined") ? 3 : sigfigs_opt;
   // Only assigns sig figs and suffixes for numbers > 1
@@ -194,7 +196,7 @@ function sigfig(num, sigfigs_opt) {
   var suffixPower10 = Math.pow(10, suffixNum * 3);
   var base = num / suffixPower10;
   var baseRound = base.toPrecision(sigfigs_opt);
-  return baseRound + suffix;
+  return flag + baseRound + suffix;
 }
 
 function log10(num) {
