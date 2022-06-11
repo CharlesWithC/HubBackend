@@ -4,6 +4,7 @@
 from fastapi import FastAPI
 import os
 import json
+import discord
 
 class Dict2Obj(object):
     def __init__(self, d):
@@ -17,16 +18,14 @@ class Dict2Obj(object):
 config = None
 if os.path.exists("./config.json"):
     config_txt = open("./config.json","r").read()
-    config = Dict2Obj(json.loads(config_txt))
+    config = json.loads(config_txt)
+    hexcolor = config["hexcolor"]
+    rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
+    config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
+    config = Dict2Obj(config)
     
 app = FastAPI(openapi_url=f"/{config.vtcprefix}/openapi.json", docs_url=f"/{config.vtcprefix}/doc", redoc_url=None)
 def openapi():
     with open("openapi.json", "r") as openapi:
         return json.load(openapi)
 app.openapi = openapi
-
-# import discord
-# from discord.ext import commands,tasks
-
-# intents = discord.Intents().all()
-# bot = commands.Bot(command_prefix='dh?', intents=intents)

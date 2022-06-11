@@ -63,8 +63,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             return {"error": True, "descriptor": "401: Unauthroized"}
         userid = t[0][0]
         roles = t[0][1].split(",")
+
     limit = ""
-    if userid == -1 or "10000" in roles: # external staff / not registered
+    if userid == -1 or not str(config.perms.driver[0]) in roles:
         limit = "AND pvt = 0"
 
     if aid != -1:
@@ -148,20 +149,20 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-
+    
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
-    if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
+    if not isAdmin and atype == 1:
         return {"error": True, "descriptor": "Event staff can only post event announcements."}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
@@ -248,14 +249,14 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
 
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
@@ -279,7 +280,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         # response.status_code = 404
         return {"error": True, "descriptor": "Announcement not found!"}
     creator = t[0][0]
-    if creator != adminid and adminhighest >= 10:
+    if creator != adminid and not isAdmin:
         return {"error": True, "descriptor": "Only announcement creator can edit it."}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
@@ -347,14 +348,14 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
 
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
@@ -366,7 +367,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         # response.status_code = 404
         return {"error": True, "descriptor": "Announcement not found!"}
     creator = t[0][0]
-    if creator != adminid and adminhighest >= 10: # creator or leadership
+    if creator != adminid and not isAdmin: # creator or leadership
         return {"error": True, "descriptor": "Only announcement creator can delete it."}
     
     cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")

@@ -162,7 +162,7 @@ async def newApplication(request: Request, response: Response, authorization: st
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
 
-            embed = discord.Embed(title = f"New {apptypetxt} Application", description = msg, color = 0x770202)
+            embed = discord.Embed(title = f"New {apptypetxt} Application", description = msg, color = config.rgbcolor)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -175,7 +175,7 @@ async def newApplication(request: Request, response: Response, authorization: st
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
 
-            embed = discord.Embed(title = f"Application #{applicationid} Updated", description = "*Message too long, please view application on website.*", color = 0x770202)
+            embed = discord.Embed(title = f"Application #{applicationid} Updated", description = "*Message too long, please view application on website.*", color = config.rgbcolor)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -299,7 +299,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
 
-            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = msg, color = 0x770202)
+            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = msg, color = config.rgbcolor)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -312,7 +312,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
 
-            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = 0x770202)
+            embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = config.rgbcolor)
             if t[0][1].startswith("a_"):
                 embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
             else:
@@ -368,16 +368,20 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     admindiscord = discordid
     while "" in roles:
         roles.remove("")
-    ds = False
-    adminhighest = 99999
+
+    ok = False
+    isAdmin = False
+    isHR = False
+    isDS = False
     for i in roles:
-        if int(i) == 71 or int(i) == 72:
-            ds = True
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 30 and not ds:
-        # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.hr:
+            isHR = True
+        if int(i) in config.perms.division:
+            isDS = True
+        if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
+            ok = True
 
     form = await request.form()
     applicationid = form["applicationid"]
@@ -396,10 +400,15 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     
     apptype = t[0][1]
 
-    if adminhighest >= 30 and ds:
-        if apptype != 4:
-            # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+    if not isAdmin:
+        if apptype == 4:
+            if not isDS:
+                # response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+        else:
+            if not isHR:
+                # response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
 
     discordid = t[0][2]
     data = json.loads(b64d(t[0][3]))
@@ -494,18 +503,22 @@ async def getApplication(request: Request, response: Response, applicationid: in
                 return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
-    adminhighest = 99999
+    userid = t[0][0]
+    roles = t[0][1].split(",")
+    ok = False
+    isAdmin = False
+    isHR = False
     isDS = False
     if len(t) > 0:
-        adminid = t[0][0]
-        roles = t[0][1].split(",")
-        while "" in roles:
-            roles.remove("")
         for i in roles:
-            if int(i) < adminhighest:
-                adminhighest = int(i)
-            if int(i) == 71 or int(i) == 72:
+            if int(i) in config.perms.admin:
+                isAdmin = True
+            if int(i) in config.perms.hr:
+                isHR = True
+            if int(i) in config.perms.division:
                 isDS = True
+            if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
+                ok = True
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
@@ -513,12 +526,15 @@ async def getApplication(request: Request, response: Response, applicationid: in
         # response.status_code = 404
         return {"error": True, "descriptor": "404: Not found"}
     
-    if adminhighest >= 30 and discordid != t[0][1] and not isDS:
-        # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
-    if adminhighest >= 30 and isDS and t[0][1] != 4:
-        # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+    if not isAdmin and discordid != t[0][2]:
+        if t[0][1] == 4:
+            if not isDS:
+                # response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+        else:
+            if not isHR:
+                # response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
 
     return {"error": False, "response": {"message": "Application found", "applicationid": t[0][0], "apptype": t[0][1],\
         "discordid": str(t[0][2]), "data": json.loads(b64d(t[0][3])), "status": t[0][4], "submitTimestamp": t[0][5], \
@@ -574,18 +590,22 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         return {"error": True, "descriptor": "401: Unauthroized"}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
-    ds = False
-    adminhighest = 99999
+    userid = t[0][0]
+    roles = t[0][1].split(",")
+    ok = False
+    isAdmin = False
+    isHR = False
+    isDS = False
     if len(t) > 0:
-        adminid = t[0][0]
-        roles = t[0][1].split(",")
-        while "" in roles:
-            roles.remove("")
         for i in roles:
-            if int(i) == 71 or int(i) == 72:
-                ds = True
-            if int(i) < adminhighest:
-                adminhighest = int(i)
+            if int(i) in config.perms.admin:
+                isAdmin = True
+            if int(i) in config.perms.hr:
+                isHR = True
+            if int(i) in config.perms.division:
+                isDS = True
+            if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
+                ok = True
 
     t = None
     tot = 0
@@ -602,7 +622,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
         if len(t) > 0:
             tot = p[0][0]
     else:
-        if adminhighest < 30:
+        if isAdmin or isHR and isDS:
             limit = ""
             if apptype != 0:
                 limit = f" WHERE apptype = {apptype}"
@@ -613,9 +633,27 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
             p = cur.fetchall()
             if len(t) > 0:
                 tot = p[0][0]
+            
+        elif isHR and not isDS:
+            if apptype == 4:
+                # response.status_code = 401
+                return {"error": True, "descriptor": "401: Unauthroized"}
+
+            limit = " WHERE apptype != 4"
+            if apptype != 0:
+                limit = f" WHERE apptype = {apptype}"
+
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            t = cur.fetchall()
+            
+            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
+            p = cur.fetchall()
+            if len(t) > 0:
+                tot = p[0][0]
                 
-        elif ds:
+        elif not isHR and isDS:
             limit = " WHERE apptype = 4"
+
             cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
             t = cur.fetchall()
             
@@ -696,11 +734,13 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
     roles = t[0][1].split(",")
     while "" in roles:
         roles.remove("")
-    adminhighest = 99999
+
+    isAdmin = False
     for i in roles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 10:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+
+    if not isAdmin:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 

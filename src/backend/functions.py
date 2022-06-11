@@ -39,7 +39,7 @@ async def AuditLog(userid, text):
     conn.commit()
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(config.webhook_audit, session=session)
-        embed = discord.Embed(description = text, color = 0x770202)
+        embed = discord.Embed(description = text, color = config.rgbcolor)
         if userid != -999:
             embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
         else:

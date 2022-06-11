@@ -34,6 +34,11 @@ for key in srankname:
     RANKNAME[int(key)] = srankname[key]
 RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
 
+divisions = config.divisions
+divisionroles = []
+for division in divisions:
+    divisionroles.append(division["roleid"])
+
 @app.get(f'/{config.vtcprefix}/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
     if page <= 0:
@@ -178,10 +183,14 @@ async def member(request: Request, response: Response, userid: int, authorizatio
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
+
+    isAdmin = False
+    isHR = False
     for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.hr:
+            isHR = True
 
     distance = 0
     totjobs = 0
@@ -200,7 +209,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
     if userid < 0:
         return {"error": True, "descriptor": "Not a member"}
 
-    if adminhighest >= 30: # non hr or upper
+    if not isAdmin and not isHR:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
@@ -292,12 +301,13 @@ async def addMember(request: Request, response: Response, authorization: str = H
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
+        
+    ok = False
     for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
 
-    if adminhighest >= 30: # not hr level or upper
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
@@ -454,12 +464,13 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
 
-    if adminhighest >= 30:
+    ok = False
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
+
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -537,14 +548,24 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    ds = False
     adminhighest = 99999
     for i in adminroles:
-        if int(i) == 71 or int(i) == 72:
-            ds = True
         if int(i) < adminhighest:
             adminhighest = int(i)
-    if adminhighest >= 30 and not ds:
+    ok = False
+    isAdmin = False
+    isHR = False
+    isDS = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.hr:
+            isHR = True
+        if int(i) in config.perms.division:
+            isDS = True
+        if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
+            ok = True
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -588,18 +609,18 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if len(addedroles) + len(removedroles) == 0:
         return {"error": False, "response": {"message": "Role not updated: Member already have those roles.", "roles": roles}}
         
-    if adminhighest >= 30 and ds:
+    if not isAdmin and not isHR and isDS:
         for add in addedroles:
-            if add not in [251, 252, 253]:
+            if add not in divisionroles:
                 return {"error": True, "descriptor": "401: Unauthroized"}
         for remove in removedroles:
-            if remove not in [251, 252, 253]:
+            if remove not in divisionroles:
                 return {"error": True, "descriptor": "401: Unauthroized"}
 
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
 
-    if 100 in addedroles:
+    if config.perms.driver[0] in addedroles:
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
         p = cur.fetchall()
         if len(p) == 0:
@@ -614,49 +635,50 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
-            embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **{config.vtcname}** as a **Driver**. Welcome to the family!", color = 0x770202)
+            embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **{config.vtcname}** as a **Driver**. Welcome to the family!", color = config.rgbcolor)
             embed.set_footer(text = f"{config.vtcname} | Team Update", icon_url = config.vtclogo)
             embed.set_image(url = "https://{config.dhdomain}/images/TeamUpdate.png")
             embed.timestamp = datetime.now()
             await webhook.send(content = usermention, embed=embed)
         
-        # At The Mile Logistics Exclusive Function (Role updating)
-        try:
-            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/929761730450567194', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
-        except:
-            pass
-        try:
-            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/942478809175830588', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
-        except:
-            pass
-        try:
-            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548239776272454', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
-        except:
-            pass
-        try:
-            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548241126834206', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
-        except:
-            pass
-        
-        # At The Mile Logistics Exclusive Function (Welcome message)
-        msg = f"""Welcome <@{userdiscordid}> to the family! Please make yourself at home and check around for what you will need.
- 
-Please do not forget to register with us in [TruckersMP](https://truckersmp.com/vtc/49940) <:TMP:929962995109462086>
+        if config.vtcprefix == "atm":
+            # At The Mile Logistics Exclusive Function (Role updating)
+            try:
+                requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/929761730450567194', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
+            except:
+                pass
+            try:
+                requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/942478809175830588', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
+            except:
+                pass
+            try:
+                requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548239776272454', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
+            except:
+                pass
+            try:
+                requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548241126834206', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
+            except:
+                pass
+            
+            # At The Mile Logistics Exclusive Function (Welcome message)
+            msg = f"""Welcome <@{userdiscordid}> to the family! Please make yourself at home and check around for what you will need.
+    
+    Please do not forget to register with us in [TruckersMP](https://truckersmp.com/vtc/49940) <:TMP:929962995109462086>
 
-Download our tracker **Navio** by [clicking here](https://navio.app/download)
+    Download our tracker **Navio** by [clicking here](https://navio.app/download)
 
-If you need any help please ask us in <#941554016087834644> or create a Human Resources Ticket in <#929761731016786030> 
+    If you need any help please ask us in <#941554016087834644> or create a Human Resources Ticket in <#929761731016786030> 
 
-If you have issues about Drivers Hub, open a technical ticket at <#929761731016786030> """
+    If you have issues about Drivers Hub, open a technical ticket at <#929761731016786030> """
 
-        
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
-        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": "https://{config.dhdomain}/images/bg.jpg"},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor}}))
+            
+            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+            ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
+                    "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": "https://{config.dhdomain}/images/bg.jpg"},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}))
 
-    if 100 in removedroles:
+    if config.perms.driver[0] in removedroles:
         cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_token})
@@ -726,12 +748,13 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
+        
+    ok = False
     for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
 
-    if adminhighest >= 30: # not hr level or upper
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 

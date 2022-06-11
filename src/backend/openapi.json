@@ -1222,6 +1222,33 @@
                 }
             }
         },
+        "/atm/division/list": {
+            "get": {
+                "summary": "Get Division List",
+                "tags": ["division"],
+                "operationId": "getDivision",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/atm/division/validate": {
             "get": {
                 "summary": "Get Pending Delivery Division Validation Request",

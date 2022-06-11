@@ -64,7 +64,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         userid = t[0][0]
         roles = t[0][1].split(",")
     limit = ""
-    if userid == -1 or "10000" in roles: # external staff / not registered
+    if userid == -1 or not str(config.perms.driver[0]) in roles:
         limit = "AND pvt = 0"
 
     if page <= 0:
@@ -240,7 +240,7 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
         userid = t[0][0]
         roles = t[0][1].split(",")
     limit = ""
-    if userid == -1 or "10000" in roles: # external staff / not registered
+    if userid == -1 or not str(config.perms.driver[0]) in roles:
         limit = "AND pvt = 0"
 
     cur.execute(f"SELECT eventid, title, mts FROM event WHERE eventid >= 0 {limit} ORDER BY mts")
@@ -293,6 +293,16 @@ async def eventVote(request: Request, response: Response, authorization: str = H
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     userid = t[0][0]
+    roles = t[0][1]
+    
+    ok = False
+    for i in roles:
+        if int(i) in config.perms.driver:
+            ok = True
+
+    if not ok:
+        # response.status_code = 401
+        return {"error": True, "descriptor": "401: Unauthroized"}
 
     form = await request.form()
     eventid = int(form["eventid"])
@@ -358,21 +368,15 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-
+        
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
-
-    if adminhighest >= 10 and not "40" in adminroles and not "41" in adminroles:
-        return {"error": True, "descriptor": "Event staff can only create events."}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
     t = cur.fetchall()
@@ -446,14 +450,11 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
 
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
@@ -531,16 +532,11 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
         return {"error": True, "descriptor": "401: Unauthroized"}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
 
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401
@@ -604,14 +600,11 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-
+        
     ok = False
-    if adminhighest <= 10 or "40" in adminroles or "41" in adminroles: # Leadership + Event Staff
-        ok = True
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.event:
+            ok = True
     
     if not ok:
         # response.status_code = 401

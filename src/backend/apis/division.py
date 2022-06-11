@@ -11,7 +11,16 @@ from app import app, config
 from db import newconn
 from functions import *
 
-divisiontxt = {1: "Construction", 2: "Chilled", 3: "ADR"}
+divisions = config.divisions
+divisionroles = []
+divisiontxt = {}
+for division in divisions:
+    divisionroles.append(division["roleid"])
+    divisiontxt[division["id"]] = division["name"]
+
+@app.get(f"/{config.vtcprefix}/division/list")
+async def getRanks(request: Request, response: Response):
+    return {"error": False, "response": divisions}
 
 @app.post(f"/{config.vtcprefix}/division/validate")
 async def divisionValidateRequest(request: Request, response: Response, authorization: str = Header(None)):
@@ -59,8 +68,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
 
     form = await request.form()
     logid = int(form["logid"])
-    divisionid = int(form["divisionid"]) 
-    # 1: Construction / 2: Chilled / 3: ADR
+    divisionid = int(form["divisionid"])
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -90,15 +98,13 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     cur.execute(f"SELECT roles FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     roles = t[0][0].split(",")
-    divisions = []
+    udivisions = []
     for role in roles:
-        if role == "251":
-            divisions.append(1)
-        elif role == "252":
-            divisions.append(2)
-        elif role == "253":
-            divisions.append(3)
-    if not divisionid in divisions:
+        if int(role) in divisionroles:
+            for division in divisions:
+                if division["roleid"] == int(role):
+                    udivisions.append(division["id"])
+    if not divisionid in udivisions:
         return {"error": True, "descriptor": "You are not a driver for the division."}
     
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
@@ -130,14 +136,14 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(config.webhook_division, session=session)
 
-        embed = discord.Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = 0x770202)
+        embed = discord.Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = config.rgbcolor)
         if t[0][1].startswith("a_"):
             embed.set_author(name = tt[1], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif")
         else:
             embed.set_author(name = tt[1], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png")
         embed.set_footer(text = f"Delivery ID: {logid} ")
         embed.timestamp = datetime.now()
-        await webhook.send(content = "<@&943736126491987999> <@&943735031954821141>", embed = embed)
+        await webhook.send(content = config.division_manager_role, embed = embed)
 
     return {"error": False, "response": "Request submitted."}
 
@@ -193,14 +199,13 @@ async def divisionValidateList(request: Request, response: Response, authorizati
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
-    divisionstaff = False
+
+    ok = False
     for i in adminroles:
-        if int(i) == 71 or int(i) == 72:
-            divisionstaff = True
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 10 and not divisionstaff:
+        if int(i) in config.perms.admin or int(i) in config.perms.division:
+            ok = True
+
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -270,13 +275,13 @@ async def divisionValidate(request: Request, response: Response, authorization: 
     while "" in adminroles:
         adminroles.remove("")
     adminhighest = 99999
-    divisionstaff = False
+    
+    ok = False
     for i in adminroles:
-        if int(i) == 71 or int(i) == 72:
-            divisionstaff = True
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 10 and not divisionstaff:
+        if int(i) in config.perms.admin or int(i) in config.perms.division:
+            ok = True
+
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -406,19 +411,16 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         adminroles = t[0][0].split(",")
         while "" in adminroles:
             adminroles.remove("")
-        adminhighest = 99999
-        divisionstaff = False
+
+        ok = False
         for i in adminroles:
-            if int(i) == 71 or int(i) == 72:
-                divisionstaff = True
-            if int(i) < adminhighest:
-                adminhighest = int(i)
-        if adminhighest >= 10 and not divisionstaff:
+            if int(i) in config.perms.admin or int(i) in config.perms.division:
+                ok = True
+
+        if not ok:
             if userid != duserid and status != 1:
                 return {"error": True, "descriptor": f"This delivery is not validated as a division delivery!"}
-        isstaff = False
-        if adminhighest < 10 or divisionstaff:
-            isstaff = True
+
         staffname = "/"
         if staffid != -1:
             cur.execute(f"SELECT name FROM user WHERE userid = {staffid}")
@@ -426,43 +428,30 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             staffname = t[0][0]
         if userid == duserid:
             return {"error": False, "response": {"divisionid": divisionid, "requestts": requestts, "status": status, \
-                "updatets": updatets, "staffid": staffid, "staffname": staffname, "reason": reason, "isstaff": isstaff}}
+                "updatets": updatets, "staffid": staffid, "staffname": staffname, "reason": reason, "isstaff": ok}}
         else:
             return {"error": False, "response": {"divisionid": divisionid, "status": status, \
-                "updatets": updatets, "staffid": staffid, "staffname": staffname, "isstaff": isstaff}}
+                "updatets": updatets, "staffid": staffid, "staffname": staffname, "isstaff": ok}}
 
-    construction = []
-    cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%251%'")
-    t = cur.fetchall()
-    for tt in t:
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[1]} AND divisionid = 1 AND status = 1 ORDER BY COUNT(*) DESC")
-        p = cur.fetchall()
-        cnt = 0
-        if len(p) > 0:
-            cnt = p[0][0]
-        construction.append({"userid": tt[1], "name": tt[0], "points": cnt * 500})
-
-    chilled = []
-    cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%252%'")
-    t = cur.fetchall()
-    for tt in t:
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[1]} AND divisionid = 2 AND status = 1 ORDER BY COUNT(*) DESC")
-        p = cur.fetchall()
-        cnt = 0
-        if len(p) > 0:
-            cnt = p[0][0]
-        chilled.append({"userid": tt[1], "name": tt[0], "points": cnt * 500})
-
-    adr = []
-    cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%253%'")
-    t = cur.fetchall()
-    for tt in t:
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[1]} AND divisionid = 3 AND status = 1 ORDER BY COUNT(*) DESC")
-        p = cur.fetchall()
-        cnt = 0
-        if len(p) > 0:
-            cnt = p[0][0]
-        adr.append({"userid": tt[1], "name": tt[0], "points": cnt * 500})
+    stats = []
+    for division in config.divisions:
+        tstats = []
+        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%{division['roleid']}%'")
+        t = cur.fetchall()
+        userpnt = {}
+        username = {}
+        for tt in t:
+            cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[1]} AND divisionid = {division['id']} AND status = 1")
+            p = cur.fetchall()
+            cnt = 0
+            if len(p) > 0:
+                cnt = p[0][0]
+            username[tt[1]] = tt[0]
+            userpnt[tt[1]] = cnt * 500
+        userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
+        for uid in userpnt.keys():
+            tstats.append({"userid": uid, "name": username[uid], "points": userpnt[uid]})
+        stats.append({"id": division['id'], "name": division['name'], "stats": tstats[::-1]})
     
     delivery = []
     cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
@@ -504,4 +493,4 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
     
-    return {"error": False, "response": {"construction": construction, "chilled": chilled, "adr": adr, "deliveries": delivery}}
+    return {"error": False, "response": {"info": stats, "deliveries": delivery}}

@@ -6,6 +6,7 @@ dmapint = -1;
 window.mapcenter = {}
 window.autofocus = {}
 highestrole = 99999;
+vtcprefix = "atm";
 
 company_distance_unit = "imperial";
 distance_unit = localStorage.getItem("distance_unit");
@@ -99,7 +100,7 @@ async function loadChart(userid = -1) {
     pref = "s";
     if (userid != -1) pref = "userS";
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/chart?scale=" + chartscale + "&addup=" + addup + "&quserid=" + userid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/chart?scale=" + chartscale + "&addup=" + addup + "&quserid=" + userid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -225,7 +226,7 @@ function loadStats(basic = false) {
     if (curtab != "#HomeTab" && curtab != "#Delivery") return;
     loadChart();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/stats",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/stats",
         type: "GET",
         dataType: "json",
         success: function (data) {
@@ -311,7 +312,7 @@ function loadStats(basic = false) {
     if (token.length != 36 || !isNumber(localStorage.getItem("userid")) || localStorage.getItem("userid") == -1) return; // guest / invalid
     if (!basic) {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/dlog/leaderboard",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/leaderboard",
             type: "GET",
             dataType: "json",
             headers: {
@@ -345,7 +346,7 @@ function loadStats(basic = false) {
             }
         });
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/dlog/newdrivers",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/newdrivers",
             type: "GET",
             dataType: "json",
             headers: {
@@ -569,7 +570,7 @@ async function ShowTab(tabname, btnname) {
 
 function loadDownloads() {
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/downloads",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/downloads",
         type: "GET",
         dataType: "json",
         headers: {
@@ -597,10 +598,10 @@ function toggleUpdateDownloads() {
 lastdownloadsupd = 0;
 
 function UpdateDownloads() {
-    if (+new Date() - lastdownloadsupd < 2000) return;
+    if (+new Date() - lastdownloadsupd < 50) return;
     lastdownloadsupd = +new Date();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/downloads",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/downloads",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -630,7 +631,7 @@ function FetchAnnouncement() {
     $("#fetchAnnouncementBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/announcement?aid=" + aid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement?aid=" + aid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -688,7 +689,7 @@ function NewAnn() {
     if (op == "update") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement",
             type: "PATCH",
             dataType: "json",
             headers: {
@@ -745,7 +746,7 @@ function NewAnn() {
         });
     } else if (op == "create") {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement",
             type: "POST",
             dataType: "json",
             headers: {
@@ -804,7 +805,7 @@ function NewAnn() {
     } else if (op == "delete") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/announcement?aid=" + annid,
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement?aid=" + annid,
             type: "DELETE",
             dataType: "json",
             headers: {
@@ -863,7 +864,7 @@ function FetchEvent(showdetail = -1) {
     $("#fetchEventBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/event?eventid=" + eventid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -917,7 +918,7 @@ function FetchEventAttendee() {
     $("#fetchEventAttendeeBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/event?eventid=" + eventid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -972,7 +973,7 @@ function UpdateEventAttendees() {
     $("#attendeeBtn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event/attendee",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/event/attendee",
         type: "POST",
         dataType: "json",
         headers: {
@@ -1038,7 +1039,7 @@ function NewEvent() {
     if (op == "update") {
         eventid = parseInt(eventid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/event",
             type: "PATCH",
             dataType: "json",
             headers: {
@@ -1100,7 +1101,7 @@ function NewEvent() {
         });
     } else if (op == "create") {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/event",
             type: "POST",
             dataType: "json",
             headers: {
@@ -1164,7 +1165,7 @@ function NewEvent() {
     } else if (op == "delete") {
         annid = parseInt(annid);
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event?eventid=" + eventid,
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/event?eventid=" + eventid,
             type: "DELETE",
             dataType: "json",
             headers: {
@@ -1367,7 +1368,7 @@ function SubmitApp() {
     $("#submitAppBttn").attr("disabled", "disabled");
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application",
         type: "POST",
         dataType: "json",
         headers: {
@@ -1605,7 +1606,7 @@ function validate() {
     }
     $("#recruitment").show();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/validate",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/validate",
         type: "GET",
         dataType: "json",
         headers: {
@@ -1635,7 +1636,7 @@ function validate() {
         }
     });
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/info",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/info",
         type: "GET",
         dataType: "json",
         headers: {
@@ -1667,7 +1668,7 @@ function validate() {
                 rolesLastUpdate = localStorage.getItem("rolesLastUpdate");
                 if (rolesLastUpdate == null || rolesLastUpdate == undefined || parseInt(rolesLastUpdate) < (+new Date() - 86400)) {
                     $.ajax({
-                        url: "https://drivershub.charlws.com/atm/member/roles",
+                        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/roles",
                         type: "GET",
                         dataType: "json",
                         success: function (data) {
@@ -1762,7 +1763,7 @@ function validate() {
                 }
                 if (userid != -1) {
                     $.ajax({
-                        url: "https://drivershub.charlws.com/atm/member/info?userid=" + userid,
+                        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/info?userid=" + userid,
                         type: "GET",
                         dataType: "json",
                         headers: {
@@ -1821,7 +1822,7 @@ function loadLeaderboard(recurse = true) {
     if (ldivision) $("#ldivision").css("background-color", "skyblue");
     else $("#ldivision").css("background-color", "");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game + "&noevent=" + (1 - levent) + "&nodivision=" + (1 - ldivision),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/leaderboard?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game + "&noevent=" + (1 - levent) + "&nodivision=" + (1 - ldivision),
         type: "GET",
         dataType: "json",
         headers: {
@@ -1935,7 +1936,7 @@ function requestRole() {
     $("#requestRoleBtn").html("Working...");
     $("#requestRoleBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/discordrole",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/discordrole",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -1990,7 +1991,7 @@ function loadDelivery(recurse = true) {
     else $(".dgame" + game).css("background-color", "skyblue");
     if (!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/list?page=" + page + "&speedlimit=" + parseInt(speedlimit) + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2112,7 +2113,7 @@ function loadDelivery(recurse = true) {
 
 function loadDivision() {
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/division/info",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/division/info",
         type: "GET",
         dataType: "json",
         headers: {
@@ -2121,58 +2122,27 @@ function loadDivision() {
         success: function (data) {
             if (data.error) return toastFactory("error", "Error:", data.descriptor, 5000, false);
             const d = data.response;
-            $("#constructionTable").empty();
-            $("#chilledTable").empty();
-            $("#ADRTable").empty();
-            if (d.construction.length == 0) {
-                $("#constructionTableHead").hide();
-                $("#constructionTable").append(`
-            <tr class="text-xs">
-              <td class="py-5 px-6 font-medium">No Data</td>
-              <td class="py-5 px-6 font-medium"></td>
-            </tr>`);
-            } else {
-                $("#constructionTableHead").show();
-                for (i = 0; i < d.construction.length; i++) {
-                    $("#constructionTable").append(`
-                    <tr class="text-xs">
-                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.construction[i].userid});">${d.construction[i].name}</a></td>
-                    <td class="py-5 px-6 font-medium">${d.construction[i].points}</td>
-                    </tr>`);
-                }
-            }
-            if (d.chilled.length == 0) {
-                $("#chilledTableHead").hide();
-                $("#chilledTable").append(`
-            <tr class="text-xs">
-              <td class="py-5 px-6 font-medium">No Data</td>
-              <td class="py-5 px-6 font-medium"></td>
-            </tr>`);
-            } else {
-                $("#chilledTableHead").show();
-                for (i = 0; i < d.chilled.length; i++) {
-                    $("#chilledTable").append(`
-                    <tr class="text-xs">
-                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.chilled[i].userid});">${d.construction[i].name}</a></td>
-                    <td class="py-5 px-6 font-medium">${d.chilled[i].points}</td>
-                    </tr>`);
-                }
-            }
-            if (d.adr.length == 0) {
-                $("#ADRTableHead").hide();
-                $("#ADRTable").append(`
-            <tr class="text-xs">
-              <td class="py-5 px-6 font-medium">No Data</td>
-              <td class="py-5 px-6 font-medium"></td>
-            </tr>`);
-            } else {
-                $("#ADRTableHead").show();
-                for (i = 0; i < d.adr.length; i++) {
-                    $("#ADRTable").append(`
-                    <tr class="text-xs">
-                    <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${d.adr[i].userid});">${d.construction[i].name}</a></td>
-                    <td class="py-5 px-6 font-medium">${d.adr[i].points}</td>
-                    </tr>`);
+            info = d.info;
+            for (var i = 0; i < info.length; i++) {
+                divisionid = info[i].id;
+                divisionname = info[i].name;
+                stats = info[i].stats;
+                tablename = "#divisionTable" + divisionid;
+                $(tablename).empty();
+                if (stats.length == 0) {
+                    $(tablename).append(`
+                <tr class="text-xs">
+                  <td class="py-5 px-6 font-medium">No Data</td>
+                  <td class="py-5 px-6 font-medium"></td>
+                </tr>`);
+                } else {
+                    for (j = 0; j < stats.length; j++) {
+                        $(tablename).append(`
+                        <tr class="text-xs">
+                        <td class="py-5 px-6 font-medium"><a style="cursor:pointer" onclick="loadProfile(${stats[j].userid});">${stats[j].name}</a></td>
+                        <td class="py-5 px-6 font-medium">${stats[j].points}</td>
+                        </tr>`);
+                    }
                 }
             }
 
@@ -2232,7 +2202,7 @@ function loadDivision() {
 
 function loadStaffDivision() {
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/division/validate",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/division/validate",
         type: "GET",
         dataType: "json",
         headers: {
@@ -2449,7 +2419,7 @@ function deliveryDetail(logid) {
     $("#rp_pct").html("0");
     $("#rrplay").html("Play");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/detail?logid=" + String(logid),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/detail?logid=" + String(logid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -2717,7 +2687,7 @@ function divisionInfo(logid) {
     $("#divisioninfobtn").html("Loading...");
     $("#divisioninfobtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/division/info?logid=" + logid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/division/info?logid=" + logid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -2839,7 +2809,7 @@ function requestDivision(logid) {
     else if (division == "chilled") divisionid = 2;
     else if (division == "adr") divisionid = 3;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/division/validate",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/division/validate",
         type: "POST",
         dataType: "json",
         headers: {
@@ -2882,7 +2852,7 @@ function updateDivision(logid, status) {
     reason = $("#divisionReason").val();
     if (reason == undefined || reason == null) reason = "";
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/division/validate",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/division/validate",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -2921,7 +2891,7 @@ function loadEvent(recurse = true) {
 
     if (eventsCalendar == undefined) {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/event/full",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/event/full",
             type: "GET",
             dataType: "json",
             headers: {
@@ -2973,7 +2943,7 @@ function loadEvent(recurse = true) {
     }
 
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event?page=" + page,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/event?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -3095,7 +3065,7 @@ function loadEvent(recurse = true) {
 
 function eventvote(eventid) {
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/event/vote",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/event/vote",
         type: "POST",
         dataType: "json",
         headers: {
@@ -3175,7 +3145,7 @@ function loadMembers(recurse = true) {
     $("#searchMemberBtn").html("...");
     $("#searchMemberBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/list?page=" + page + "&search=" + $("#searchname").val(),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/list?page=" + page + "&search=" + $("#searchname").val(),
         type: "GET",
         dataType: "json",
         headers: {
@@ -3322,7 +3292,7 @@ function loadAuditLog(recurse = true) {
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/auditlog?page=" + page,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/auditlog?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -3412,7 +3382,7 @@ function memberDetail(userid) {
     $("#MemberInfoBtn" + userid).attr("disabled", "disabled");
     $("#MemberInfoBtn" + userid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/info?userid=" + String(userid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -3492,7 +3462,7 @@ function fetchRoles() {
     $("#rolelist").children().children().prop("checked", false);
     $("#memberrolename").html("");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/list?page=1&search=" + val,
         type: "GET",
         dataType: "json",
         headers: {
@@ -3508,7 +3478,7 @@ function fetchRoles() {
             lastfetch = d[0].userid;
 
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(lastfetch),
+                url: "https://drivershub.charlws.com/" + vtcprefix + "/member/info?userid=" + String(lastfetch),
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -3558,7 +3528,7 @@ function updateMemberRoles() {
         roles.push(d[i].id.replaceAll("role", ""));
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/role",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/role",
         type: "POST",
         dataType: "json",
         headers: {
@@ -3598,8 +3568,8 @@ function updateMemberPoints() {
     distance = $("#memberpntdistance").val();
     eventpnt = $("#memberpntevent").val();
     divisionpnt = $("#memberpntdivision").val();
-    if (!isNumber(miles)) {
-        miles = 0;
+    if (!isNumber(distance)) {
+        distance = 0;
     }
     if (!isNumber(eventpnt)) {
         eventpnt = 0;
@@ -3611,7 +3581,7 @@ function updateMemberPoints() {
     $("#updateMemberPointsBtn").html("Working...");
     $("#updateMemberPointsBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/point",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/point",
         type: "POST",
         dataType: "json",
         headers: {
@@ -3652,7 +3622,7 @@ function dismissUser() {
         $("#dismissbtn").html("Fetching name...");
         $("#dismissbtn").attr("disabled", "disabled");
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/member/info?userid=" + String(userid),
             type: "GET",
             dataType: "json",
             headers: {
@@ -3690,7 +3660,7 @@ function dismissUser() {
     $("#dismissbtn").html("Working...");
     $("#dismissbtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/dismiss?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/dismiss?userid=" + String(userid),
         type: "DELETE",
         dataType: "json",
         headers: {
@@ -3748,7 +3718,7 @@ function loadUserDelivery(recurse = true) {
     else $(".dgame" + game).css("background-color", "skyblue");
     if (!dets2 && !dats) starttime = 1, endtime = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/dlog/list?quserid=" + curprofile + "&speedlimit=" + parseInt(speedlimit) + "&page=" + page + "&starttime=" + starttime + "&endtime=" + endtime + "&game=" + game,
         type: "GET",
         dataType: "json",
         headers: {
@@ -3883,7 +3853,7 @@ function loadProfile(userid) {
         return;
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/info?userid=" + String(userid),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/info?userid=" + String(userid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -3979,7 +3949,7 @@ function updateBio() {
     $("#updateBioBtn").html("Updating...");
     $("#updateBioBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/bio",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/bio",
         type: "POST",
         dataType: "json",
         headers: {
@@ -4015,7 +3985,7 @@ function genNewAppToken() {
     $("#genAppTokenBtn").html("Working...");
     $("#genAppTokenBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/apptoken",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/apptoken",
         type: "POST",
         dataType: "json",
         headers: {
@@ -4049,7 +4019,7 @@ function resign() {
     $("#resignBtn").html("Working...");
     $("#resignBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/resign",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/resign",
         type: "DELETE",
         dataType: "json",
         headers: {
@@ -4088,7 +4058,7 @@ function loadUsers(recurse = true) {
     if (page == "") page = 1;
     if (page == undefined) page = 1;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/list?page=" + page,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/list?page=" + page,
         type: "GET",
         dataType: "json",
         headers: {
@@ -4206,7 +4176,7 @@ function addUser(discordid = -1) {
         }
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/member/add",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/member/add",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -4236,7 +4206,7 @@ function userDetail(discordid) {
     $("#UserInfoBtn" + discordid).attr("disabled", "disabled");
     $("#UserInfoBtn" + discordid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/info?qdiscordid=" + String(discordid),
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/info?qdiscordid=" + String(discordid),
         type: "GET",
         dataType: "json",
         headers: {
@@ -4302,7 +4272,7 @@ function banUser() {
     }
     reason = $("#banreason").val();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/ban",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/ban",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -4335,7 +4305,7 @@ function unbanUser() {
         return toastFactory("error", "Error:", "Please enter a valid discord id.", 5000, false);
     }
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/user/unban",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/user/unban",
         type: "POSt",
         dataType: "json",
         headers: {
@@ -4362,7 +4332,7 @@ function unbanUser() {
 function loadMyApp(recurse = true) {
     page = parseInt($("#myapppage").val())
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application/list?page=" + page + "&apptype=0",
         type: "GET",
         dataType: "json",
         headers: {
@@ -4486,7 +4456,7 @@ function addAppMessage() {
     $("#addAppMessageBtn").html("Adding...");
     $("#addAppMessageBtn").attr("disabled", "disabled");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application",
         type: "PATCH",
         dataType: "json",
         headers: {
@@ -4520,7 +4490,7 @@ function addAppMessage() {
 function loadAllApp(recurse = true) {
     page = parseInt($('#allapppage').val())
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/list?page=" + page + "&apptype=0&showall=1",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application/list?page=" + page + "&apptype=0&showall=1",
         type: "GET",
         dataType: "json",
         headers: {
@@ -4645,7 +4615,7 @@ function appDetail(applicationid, staffmode = false) {
     $("#MyAppBtn" + applicationid).attr("disabled", "disabled");
     $("#MyAppBtn" + applicationid).html("Loading...");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application?applicationid=" + applicationid,
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application?applicationid=" + applicationid,
         type: "GET",
         dataType: "json",
         headers: {
@@ -4670,7 +4640,7 @@ function appDetail(applicationid, staffmode = false) {
             ret += "";
 
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/user/info?qdiscordid=" + String(discordid),
+                url: "https://drivershub.charlws.com/" + vtcprefix + "/user/info?qdiscordid=" + String(discordid),
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -4689,9 +4659,10 @@ function appDetail(applicationid, staffmode = false) {
                         info +=
                             "<p style='text-align:left'><b>Steam ID:</b> <a href='https://steamcommunity.com/profiles/" +
                             d.steamid + "'>" + d.steamid + "</a></p><br>";
-                        info += ret.replaceAll("\n", "<br>");
-                        if (!staffmode) {
-                            info += `
+                    }
+                    info += ret.replaceAll("\n", "<br>");
+                    if (!staffmode) {
+                        info += `
                             <hr>
                             <h3 class="text-xl font-bold" style="text-align:left;margin:5px">New message</h3>
                             <div class="mb-6" style="display:none">
@@ -4707,8 +4678,8 @@ function appDetail(applicationid, staffmode = false) {
                             <button type="button" id="addAppMessageBtn" style="float:right"
                                 class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
                                 onclick="addAppMessage()">Add</button>`;
-                        } else {
-                            info += `
+                    } else {
+                        info += `
                             <hr>
                             <h3 class="text-xl font-bold" style="text-align:left;margin:5px">New message</h3>
                             <div class="mb-6" style="display:none">
@@ -4743,7 +4714,6 @@ function appDetail(applicationid, staffmode = false) {
                                 onclick="updateAppStatus()" id="updateAppStatusBtn">Update</button>
                             </div>
                         </div>`;
-                        }
                     }
                     Swal.fire({
                         title: apptype + ' Application #' + applicationid,
@@ -4780,7 +4750,7 @@ function updateAppStatus() {
     appstatus = parseInt($("#appstatussel").find(":selected").val());
     message = $("#appmessage").val();
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/status",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application/status",
         type: "POST",
         dataType: "json",
         headers: {
@@ -4819,7 +4789,7 @@ function updateStaffPosition() {
     $("#updateStaffPositionBtn").html("Updating...");
     positions = $("#staffposedit").val().replaceAll("\n", ",");
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/application/positions",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/application/positions",
         type: "POST",
         dataType: "json",
         headers: {
@@ -4888,7 +4858,7 @@ window.onpopstate = function (event) {
     PathDetect();
 };
 
-function loadDistanceUnit(){
+function loadDistanceUnit() {
     distance_unit = localStorage.getItem("distance_unit");
     if (distance_unit == "imperial") {
         $(".distance_unit").html("mi");
@@ -4978,7 +4948,7 @@ $(document).ready(function () {
             val = $("#attendeeId").val();
             if (val == "") return;
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/member/list?page=1&search=" + val,
+                url: "https://drivershub.charlws.com/" + vtcprefix + "/member/list?page=1&search=" + val,
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -5057,7 +5027,7 @@ $(document).ready(function () {
     $("#logout").click(function () {
         token = localStorage.getItem("token")
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/user/revoke",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/user/revoke",
             type: "POST",
             dataType: "json",
             headers: {
@@ -5113,7 +5083,7 @@ $(document).ready(function () {
     });
     annpage = 2;
     $.ajax({
-        url: "https://drivershub.charlws.com/atm/announcement?page=1",
+        url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement?page=1",
         type: "GET",
         dataType: "json",
         headers: {
@@ -5149,7 +5119,7 @@ $(document).ready(function () {
     }
     if (+new Date() - lastPositionsUpdate > 86400) {
         $.ajax({
-            url: "https://drivershub.charlws.com/atm/application/positions",
+            url: "https://drivershub.charlws.com/" + vtcprefix + "/application/positions",
             type: "GET",
             dataType: "json",
             success: function (data) {
@@ -5170,7 +5140,7 @@ $(document).ready(function () {
         if (curtab != "#AnnTab") return;
         if ((window.innerHeight + window.scrollY + 100) >= document.body.offsetHeight) {
             $.ajax({
-                url: "https://drivershub.charlws.com/atm/announcement?page=" + annpage,
+                url: "https://drivershub.charlws.com/" + vtcprefix + "/announcement?page=" + annpage,
                 type: "GET",
                 dataType: "json",
                 headers: {
@@ -5201,9 +5171,9 @@ $(document).ready(function () {
             });
         }
     };
-    if(RANKING != []){
+    if (RANKING != []) {
         rankpnt = Object.keys(RANKING);
-        for(var i = 0 ; i < Math.ceil(rankpnt.length / 8) ; i++){
+        for (var i = 0; i < Math.ceil(rankpnt.length / 8); i++) {
             ranktable = `<table class="table-auto" style="display:inline">
             <thead>
               <tr class="text-xs text-gray-500 text-left">
@@ -5212,8 +5182,8 @@ $(document).ready(function () {
               </tr>
             </thead>
             <tbody>`;
-            for(var j = 0 ; j < 8 ; j++){
-                if(rankpnt[i*8+j] == undefined) break;
+            for (var j = 0; j < 8; j++) {
+                if (rankpnt[i * 8 + j] == undefined) break;
                 ranktable += `<tr class="text-xs">
                 <td class="py-5 px-6 font-medium">${RANKING[rankpnt[i * 8 + j]]}</td>
                 <td class="py-5 px-6 font-medium">${rankpnt[i * 8 + j]}</td>
@@ -5222,7 +5192,7 @@ $(document).ready(function () {
             ranktable += `
             </tbody>
           </table>`;
-          $("#ranktable").append(ranktable);
+            $("#ranktable").append(ranktable);
         }
     }
 });

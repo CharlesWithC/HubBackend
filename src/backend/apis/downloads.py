@@ -56,12 +56,13 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     name = t[0][2]
     while "" in roles:
         roles.remove("")
-    isdriver = False
+
+    ok = False
     for i in roles:
-        if int(i) == 100:
-            isdriver = True
+        if int(i) in config.perms.driver:
+            ok = True
     
-    if not isdriver:
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
@@ -119,12 +120,13 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
+
+    isAdmin = False
     for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin:
+            isAdmin = True
     
-    if adminhighest >= 10:
+    if not isAdmin:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     

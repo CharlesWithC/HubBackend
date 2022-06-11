@@ -60,7 +60,11 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
-    if adminhighest >= 30:
+    ok = False
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
@@ -157,11 +161,11 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
+    ok = False
     for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-    if adminhighest >= 30:
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
@@ -239,12 +243,12 @@ async def userList(page:int, request: Request, response: Response, authorization
     roles = t[0][1].split(",")
     while "" in roles:
         roles.remove("")
-    adminhighest = 99999
+    ok = False
     for i in roles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
     
-    if adminhighest >= 30:
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
@@ -321,16 +325,16 @@ async def userInfo(request: Request, response: Response, authorization: str = He
     roles = t[0][3].split(",")
     while "" in roles:
         roles.remove("")
-    adminhighest = 99999
+    ok = False
     for i in roles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
+        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+            ok = True
 
     if qdiscordid == 0:
         qdiscordid = discordid
     
     if discordid != qdiscordid:
-        if adminhighest >= 30:
+        if not ok:
             # response.status_code = 401
             return {"error": True, "descriptor": "401: Unauthroized"}
 
@@ -456,7 +460,7 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
         if int(i) < adminhighest:
             adminhighest = int(i)
 
-    if adminhighest >= 100: # any staff
+    if adminhighest >= config.perms.driver[0]: # any staff
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
