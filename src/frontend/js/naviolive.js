@@ -25,6 +25,15 @@ atsdata = {};
 membersteam = {};
 memberuserid = {};
 curtab = "#HomeTab";
+distance_unit = localStorage.getItem("distance_unit");
+if(distance_unit == "imperial"){
+    distance_unit_txt = "mi";
+    distance_ratio = 0.621371;
+} else {
+    distance_unit = "metric";
+    distance_ratio = 1;
+    distance_unit_txt = "km";
+}
 
 function UpdateSteam() {
     $.ajax({
@@ -89,7 +98,7 @@ socket.addEventListener("message", ({
         if (data.type == 1) {
             drivername = membersteam[data.driver];
             if (drivername == "undefined" || drivername == undefined) drivername = "Unknown Driver";
-            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance / 1.6)) + "Mi<br><b>Revenue:</b> €" + TSeparator(data.revenue), 10000, false);
+            toastFactory("success", "Job Delivery", "<b>" + drivername + "</b><br><b>Distance:</b> " + TSeparator(parseInt(data.distance * distance_ratio)) + distance_unit_txt + "<br><b>Revenue:</b> €" + TSeparator(data.revenue), 10000, false);
         }
     }
 });
@@ -141,8 +150,8 @@ setInterval(function () {
         cargo = "<i>Free roaming</i>";
         if (d.job != null)
             cargo = d.job.cargo.name;
-        speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
-        distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
+        speed = parseInt(d.truck.speed * 3.6 * distance_ratio) + distance_unit_txt + "/h";
+        distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 * distance_ratio)) + "." + String(parseInt(d.truck.navigation.distance * distance_ratio) % 1000).substring(0, 1) + distance_unit_txt;
         $("#onlinedriver").append(`
             <tr class="text-xs">
               <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${nuserid})'>${drivername}</a></td>
@@ -165,8 +174,8 @@ function PlayerPoint(steamid, mapid){
     cargo = "<i>Free roaming</i>";
     if (d.job != null)
         cargo = d.job.cargo.name;
-    speed = parseInt(d.truck.speed * 3.6 / 1.6) + "Mi/h";
-    distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 / 1.6)) + "." + String(parseInt(d.truck.navigation.distance / 1.6) % 1000).substring(0, 1) + "Mi";
+    speed = parseInt(d.truck.speed * 3.6 * distance_ratio) + distance_unit_txt + "/h";
+    distance = TSeparator(parseInt(d.truck.navigation.distance / 1000 * distance_ratio)) + "." + String(parseInt(d.truck.navigation.distance * distance_ratio) % 1000).substring(0, 1) + distance_unit_txt;
     toastFactory("info", drivername, `<b>Truck: </b>${truck}<br><b>Cargo: </b>${cargo}<br><b>Speed: </b>${speed}<br><a style='cursor:pointer' onclick='loadProfile(${nuserid})'>Show profile</a>`, 5000, false);
     clearInterval(autocenterint[mapid]);
     autocenterint[mapid] = setInterval(function(){

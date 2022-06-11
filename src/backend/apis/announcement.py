@@ -11,7 +11,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.get("/atm/announcement")
+@app.get(f"/{config.vtcprefix}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
     if authorization is None:
         # response.status_code = 401
@@ -102,7 +102,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
-@app.post("/atm/announcement")
+@app.post(f"/{config.vtcprefix}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -188,20 +188,20 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     if channelid != 0:
         try:
-            role = "<@&929761730089877634>"
+            role = config.public_news_role
             if pvt == 1:
-                role = "<@&941548239776272454>"
-            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+                role = config.private_news_role
+            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now()), "color": 11730944, "color": 11730944}}))
+                    "footer": {"text": f"By {adminname}", "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
         except:
             pass
 
     return {"error": False, "response": {"message": "Announcement created.", "aid": aid}}
 
-@app.patch("/atm/announcement")
+@app.patch(f"/{config.vtcprefix}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -288,20 +288,20 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     if channelid != 0:
         try:
-            role = "<@&929761730089877634>"
+            role = config.public_news_role
             if pvt == 1:
-                role = "<@&941548239776272454>"
-            headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+                role = config.private_news_role
+            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                            "timestamp": str(datetime.now()), "color": 11730944}}))
+                    "footer": {"text": f"By {adminname}", "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}))
         except:
             pass
 
     return {"error": False, "response": {"message": "Announcement updated.", "aid": aid}}
 
-@app.delete("/atm/announcement")
+@app.delete(f"/{config.vtcprefix}/announcement")
 async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

@@ -21,14 +21,14 @@ import apis.member
 import apis.navio
 import apis.user
 
-@app.get('/atm/info')
+@app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response":{"message": "At The Mile Logistics DriversHub.\nBackend by CharlesWithC#7777."}}
+    return {"error": False, "response":{"message": f"{config.vtcname} DriversHub."}}
 
-@app.get("/atm/info/version")
+@app.get(f"/{config.vtcprefix}/info/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response":{"version": "v1.0"}}
+    return {"error": False, "response":{"version": config.version}}
 
-@app.get("/atm/info/ip")
+@app.get(f"/{config.vtcprefix}/info/ip")
 async def apiGetIP(request: Request):
     return {"error": False, "response":{"ip": request.client.host}}

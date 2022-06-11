@@ -21,12 +21,12 @@ dhdomain = config.dhdomain
 
 discord_auth = DiscordAuth(client_id, client_secret, callback_url)
 
-@app.get('/atm/user/login', response_class=RedirectResponse)
+@app.get(f'/{config.vtcprefix}/user/login', response_class=RedirectResponse)
 async def userLogin(request: Request):
     # login_url = discord_auth.login()
     return RedirectResponse(url=oauth2_url, status_code=302)
     
-@app.get('/atm/user/callback')
+@app.get(f'/{config.vtcprefix}/user/callback')
 async def userCallback(code: str, request: Request, response: Response):
     tokens = discord_auth.get_tokens(code)
     if "access_token" in tokens.keys():
@@ -45,7 +45,7 @@ async def userCallback(code: str, request: Request, response: Response):
             expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
             return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are banned for {reason} until {expire} UTC", status_code=302)
 
-        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bottoken}"})
+        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
         if r.status_code != 200:
             return RedirectResponse(url=f"https://{dhdomain}/auth?message=Failed to check if you are in discord.", status_code=302)
         d = json.loads(r.text)
@@ -71,7 +71,7 @@ async def userCallback(code: str, request: Request, response: Response):
     # response.status_code = 401
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
-@app.get("/atm/user/refresh")
+@app.get(f"/{config.vtcprefix}/user/refresh")
 async def userRefreshToken(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -115,7 +115,7 @@ async def userRefreshToken(request: Request, response: Response, authorization: 
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
 
-@app.get('/atm/user/validate')
+@app.get(f'/{config.vtcprefix}/user/validate')
 async def userValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         return {"error": True, "descriptor": "No authorization header"}
@@ -165,18 +165,18 @@ async def userValidate(request: Request, response: Response, authorization: str 
         extra = ""
     return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
-@app.get("/atm/user/steamauth")
+@app.get(f"/{config.vtcprefix}/user/steamauth")
 async def steamOpenid(request: Request, response: Response):
     steamLogin = SteamSignIn()
     encodedData = steamLogin.ConstructURL('https://drivershub.charlws.com/atm/user/steamcallback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
-@app.get("/atm/user/steamcallback")
+@app.get(f"/{config.vtcprefix}/user/steamcallback")
 async def steamCallback(request: Request, response: Response):
     return RedirectResponse(url=f"https://{dhdomain}/steamcallback?{str(request.query_params)}", status_code=302)
 
-@app.post("/atm/user/steambind")
+@app.post(f"/{config.vtcprefix}/user/steambind")
 async def steamBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -244,8 +244,8 @@ async def steamBind(request: Request, response: Response, authorization: str = H
 
         for role in roles:
             if role == "100":
-                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
-                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
+                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_token})
+                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_token})
                 await AuditLog(userid, f"Steam ID updated from `{orgsteamid}` to `{steamid}`")
 
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
@@ -272,7 +272,7 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     
     return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
 
-@app.post("/atm/user/truckersmpbind")
+@app.post(f"/{config.vtcprefix}/user/truckersmpbind")
 async def truckersmpBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -344,7 +344,7 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
     conn.commit()
     return {"error": False, "response": {"message": "TruckersMP account bound.", "truckersmpid": truckersmpid}}
 
-@app.post('/atm/user/revoke')
+@app.post(f'/{config.vtcprefix}/user/revoke')
 async def userRevoke(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -367,7 +367,7 @@ async def userRevoke(request: Request, response: Response, authorization: str = 
     conn.commit()
     return {"error": False, "response": {"message": "Token revoked"}}
 
-@app.post('/atm/user/apptoken')
+@app.post(f'/{config.vtcprefix}/user/apptoken')
 async def userBot(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

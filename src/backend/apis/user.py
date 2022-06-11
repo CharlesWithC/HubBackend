@@ -10,7 +10,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.post('/atm/user/ban')
+@app.post(f'/{config.vtcprefix}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -111,7 +111,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     else:
         return {"error": True, "descriptor": "User already banned."}
 
-@app.post('/atm/user/unban')
+@app.post(f'/{config.vtcprefix}/user/unban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -182,7 +182,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         await AuditLog(adminid, f"Unbanned user with Discord ID `{discordid}`")
         return {"error": False, "response": {"message": "User unbanned.", "discordid": discordid}}
 
-@app.get("/atm/user/list")
+@app.get(f"/{config.vtcprefix}/user/list")
 async def userList(page:int, request: Request, response: Response, authorization: str = Header(None)):
     if page <= 0:
         page = 1
@@ -268,7 +268,7 @@ async def userList(page:int, request: Request, response: Response, authorization
         tot = t[0][0]
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
-@app.get('/atm/user/info')
+@app.get(f'/{config.vtcprefix}/user/info')
 async def userInfo(request: Request, response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
     if authorization is None:
         # response.status_code = 401
@@ -348,7 +348,7 @@ async def userInfo(request: Request, response: Response, authorization: str = He
         email = None
     return {"error": False, "response": {"userid": t[0][0], "name": t[0][1], "email": email, "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
 
-@app.post('/atm/user/bio')
+@app.post(f'/{config.vtcprefix}/user/bio')
 async def updateUserBio(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -403,7 +403,7 @@ async def updateUserBio(request: Request, response: Response, authorization: str
 
     return {"error": False, "response": {"message": "Bio updated.", "bio": bio}}
 
-@app.get("/atm/auditlog")
+@app.get(f"/{config.vtcprefix}/auditlog")
 async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None)):
     if page <= 0:
         page = 1

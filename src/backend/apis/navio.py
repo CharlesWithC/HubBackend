@@ -70,7 +70,7 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
         cur.execute(f"DELETE FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)}")
         conn.commit()
 
-@app.post("/atm/navio")
+@app.post(f"/{config.vtcprefix}/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()
@@ -174,25 +174,37 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             destination_company = ""
         cargo = d["data"]["object"]["cargo"]["name"]
         cargo_mass = d["data"]["object"]["cargo"]["mass"]
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/942178734025371758/messages"
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
         munit = "€"
         if not game.startswith("e"):
             munit = "$"
         if e == "job.delivered":
             k = randint(0, len(GIFS)-1)
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
-                    "url": f"https://{config.dhdomain}/delivery?logid={logid}",
-                    "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
-                               {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                               {"name": "Distance", "value": f"{int(driven_distance/1.6)} miles", "inline": True},
-                               {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": False},
-                               {"name": "Fuel Cost", "value": f"{int(fuel_used)}L", "inline": True},
-                               {"name": "Revenue", "value": f"{munit}{revenue}", "inline": True},
-                               {"name": "XP Earned", "value": f"{xp}", "inline": True}],
-                    "footer": {"text": username}, "color": 11730944,\
-                        "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": 11730944}}), timeout=3)
-
+            if config.distance_unit == "imperial":
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
+                        "url": f"https://{config.dhdomain}/delivery?logid={logid}",
+                        "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
+                                {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
+                                {"name": "Distance", "value": f"{int(driven_distance * 0.621371)} mile", "inline": True},
+                                {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": False},
+                                {"name": "Fuel Cost", "value": f"{int(fuel_used * 0.26417205)} gallon", "inline": True},
+                                {"name": "Revenue", "value": f"{munit}{revenue}", "inline": True},
+                                {"name": "XP Earned", "value": f"{xp}", "inline": True}],
+                        "footer": {"text": username}, "color": config.intcolor,\
+                            "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+            elif config.distance_unit == "metric":
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Job Completed - #{logid}", 
+                        "url": f"https://{config.dhdomain}/delivery?logid={logid}",
+                        "fields": [{"name": "From", "value": source_company + ", " + source_city, "inline": True},
+                                {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
+                                {"name": "Distance", "value": f"{int(driven_distance)} kilometre", "inline": True},
+                                {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": False},
+                                {"name": "Fuel Cost", "value": f"{int(fuel_used)} litre", "inline": True},
+                                {"name": "Revenue", "value": f"{munit}{revenue}", "inline": True},
+                                {"name": "XP Earned", "value": f"{xp}", "inline": True}],
+                        "footer": {"text": username}, "color": config.intcolor,\
+                            "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
             cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
             p = cur.fetchall()
             udiscordid = p[0][0]

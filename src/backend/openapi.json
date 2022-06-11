@@ -826,8 +826,8 @@
                                         "description": "User ID",
                                         "type": "integer"
                                     },
-                                    "mile": {
-                                        "description": "Miles",
+                                    "distance": {
+                                        "description": "Distance (km)",
                                         "type": "string"
                                     },
                                     "eventpnt": {
@@ -836,7 +836,7 @@
                                     }
                                 }
                             },
-                            "required": ["userid", "mile", "eventpnt"]
+                            "required": ["userid", "distance", "eventpnt"]
                         }
                     }
                 },
@@ -867,6 +867,33 @@
                 "summary": "Get All Roles",
                 "tags": ["member"],
                 "operationId": "getAllRoles",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/atm/member/ranks": {
+            "get": {
+                "summary": "Get All Ranks",
+                "tags": ["member"],
+                "operationId": "getAllRanks",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -2444,7 +2471,7 @@
         "description": "Third-Party Authentication"
     }, {
         "name": "member",
-        "description": "Members who have joined At The Mile Logistics"
+        "description": "Members who have joined VTC"
     }, {
         "name": "dlog",
         "description": "Delivery Log"

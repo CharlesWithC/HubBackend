@@ -11,7 +11,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.get("/atm/dlog/stats")
+@app.get(f"/{config.vtcprefix}/dlog/stats")
 async def dlogStats():
     conn = newconn()
     cur = conn.cursor()
@@ -96,7 +96,7 @@ async def dlogStats():
             "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance, 
                 "driver_of_the_day": {"userid": userid, "discordid": str(dotdiscordid), "name": username, "avatar": avatar, "distance": int(distance)}}}
 
-@app.get("/atm/dlog/chart")
+@app.get(f"/{config.vtcprefix}/dlog/chart")
 async def dlogChart(request: Request, response: Response,
     scale: Optional[int] = 2, addup: Optional[bool] = False, quserid: Optional[int] = -1,
     authorization: Optional[str] = Header(None)):
@@ -206,7 +206,7 @@ async def dlogChart(request: Request, response: Response,
 
     return {"error": False, "response": ret}
 
-@app.get("/atm/dlog/leaderboard")
+@app.get(f"/{config.vtcprefix}/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
         noevent: Optional[bool] = False, nodivision: Optional[bool] = False):
@@ -264,6 +264,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
+    ratio = 1
+    if config.distance_unit == "imperial":
+        ratio = 0.621371
+
     if starttime != -1 and endtime != -1 or speedlimit != 0 or game != 0 or noevent or nodivision:
         if starttime > endtime:
             starttime, endtime = endtime, starttime
@@ -301,10 +305,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         rank = {}
         for k in userdistance.keys():
             if k in userevent.keys():
-                rank[k] = round(userdistance[k]/1.6) + userevent[k]
+                rank[k] = round(userdistance[k] * ratio) + userevent[k]
             else:
                 userevent[k] = 0
-                rank[k] = round(userdistance[k]/1.6)
+                rank[k] = round(userdistance[k] * ratio)
         for k in userevent.keys():
             if not k in rank.keys():
                 rank[k] = userevent[k]
@@ -327,13 +331,13 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             if len(p) == 0:
                 continue
             if not noevent:
-                cur.execute(f"SELECT distance / 1.6 + eventpnt FROM driver WHERE userid = {userid}")
+                cur.execute(f"SELECT distance * {ratio} + eventpnt FROM driver WHERE userid = {userid}")
             else:
-                cur.execute(f"SELECT distance / 1.6 FROM driver WHERE userid = {userid}")
+                cur.execute(f"SELECT distance * {ratio} FROM driver WHERE userid = {userid}")
             o = cur.fetchall()
             totnolimit = 0
             if len(o) > 0:
-                totnolimit = o[0][0]
+                totnolimit = int(o[0][0])
             divisionpnt = 0
             if not nodivision:
                 cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= {firstlogid}")
@@ -342,9 +346,9 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     divisionpnt = o[0][0] * 500
             users.append(userid)
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] / 1.6) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
+                "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
 
-        cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
+        cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
         t = cur.fetchall()
         for tt in t:
             userid = tt[0]
@@ -362,14 +366,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     if len(o) > 0:
                         divisionpnt = o[0][0] * 500
                 ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
-                    "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": tt[1] + divisionpnt})
+                    "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": int(tt[1]) + divisionpnt})
 
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
 
         return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": len(ret)}}
 
-    cur.execute(f"SELECT userid, distance / 1.6 + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0  ORDER BY distance / 1.6 + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
+    cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0  ORDER BY distance * {ratio} + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -386,7 +390,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         o = cur.fetchall()
         if len(o) > 0:
             divisionpnt += o[0][0]
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": tt[1], "totnolimit": tt[1] + divisionpnt})
+        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": int(tt[1]), "totnolimit": int(tt[1]) + divisionpnt})
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
     t = cur.fetchall()
@@ -396,7 +400,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
-@app.get("/atm/dlog/newdrivers")
+@app.get(f"/{config.vtcprefix}/dlog/newdrivers")
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -461,7 +465,7 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
 
     return {"error": False, "response": {"list": ret, "page": 1, "tot": 10}}
 
-@app.get("/atm/dlog/list")
+@app.get(f"/{config.vtcprefix}/dlog/list")
 async def dlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
     if authorization is None:
@@ -589,7 +593,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
-@app.get("/atm/dlog/detail")
+@app.get(f"/{config.vtcprefix}/dlog/detail")
 async def dlogDetail(logid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

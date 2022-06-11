@@ -13,7 +13,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.post("/atm/application")
+@app.post(f"/{config.vtcprefix}/application")
 async def newApplication(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -116,21 +116,22 @@ async def newApplication(request: Request, response: Response, authorization: st
     if apptype in APPTYPE.keys():
         apptypetxt = APPTYPE[apptype]
 
-    durl = ""
-    if apptype == 1:
-        durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.applicant}'
-    elif apptype == 2:
-        durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.staffapplicant}'
-    elif apptype == 3:
-        durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.loarequest}'
-    if durl != "":
-        try:
-            requests.put(durl, headers = {"Authorization": f"Bot {config.bottoken}"})
-        except:
-            pass
+    if config.assign_application_role:
+        durl = ""
+        if apptype == 1:
+            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.applicant_driver}'
+        elif apptype == 2:
+            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.applicant_staff}'
+        elif apptype == 3:
+            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.loa_request}'
+        if durl != "":
+            try:
+                requests.put(durl, headers = {"Authorization": f"Bot {config.bot_token}"})
+            except:
+                pass
 
     try:
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -140,8 +141,8 @@ async def newApplication(request: Request, response: Response, authorization: st
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"{apptypetxt} Application Received",
                 "description": f"One of our staff will get back to you shortly. If you want to update it, please go to `My Applications` in Drivers Hub, click `Details` button, scroll down and you can add message.",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
         pass
@@ -152,11 +153,11 @@ async def newApplication(request: Request, response: Response, authorization: st
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
 
-    pingroles = "<@&941544363878670366> <@&941544365950644224>"
-    webhookurl = config.appwebhook
+    pingroles = config.human_resources_role
+    webhookurl = config.webhook_application
     if apptype == 4:
-        pingroles = "<@&943736126491987999> <@&943735031954821141>"
-        webhookurl = config.divisionwebhook
+        pingroles = config.division_manager_role
+        webhookurl = config.webhook_division
     try:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
@@ -185,7 +186,7 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     return {"error": False, "response": {"message": "Application added", "applicationid": applicationid}}
 
-@app.patch("/atm/application")
+@app.patch(f"/{config.vtcprefix}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -273,7 +274,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     msg += f"**New message**: {message}\n\n"
 
     try:
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -283,17 +284,17 @@ async def updateApplication(request: Request, response: Response, authorization:
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Application Updated",
                 "description": f"This is a reminder that your message has been recorded.",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
         pass
 
-    pingroles = "<@&941544363878670366> <@&941544365950644224>"
-    webhookurl = config.appwebhook
+    pingroles = config.human_resources_role
+    webhookurl = config.webhook_application
     if apptype == 4:
-        pingroles = "<@&943736126491987999> <@&943735031954821141>"
-        webhookurl = config.divisionwebhook
+        pingroles = config.division_manager_role
+        webhookurl = config.webhook_division
     try:
         async with aiohttp.ClientSession() as session:
             webhook = Webhook.from_url(webhookurl, session=session)
@@ -322,7 +323,7 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     return {"error": False, "response": {"message": "Message added", "applicationid": applicationid}}
 
-@app.post("/atm/application/status")
+@app.post(f"/{config.vtcprefix}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -427,7 +428,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         statustxt = f"Unknown Status ({status})"
         if int(status) in STATUS.keys():
             statustxt = STATUS[int(status)]
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -438,8 +439,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                 "description": f"[Message] {message}",
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": statustxt, "inline": True}, \
                         {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}, {"name": "Responsible Staff", "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                        "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                        "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
         import traceback
@@ -448,7 +449,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     return {"error": False, "response": {"message": "Application status updated", "applicationid": applicationid, "status": status}}
 
-@app.get("/atm/application")
+@app.get(f"/{config.vtcprefix}/application")
 async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -523,7 +524,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
         "discordid": str(t[0][2]), "data": json.loads(b64d(t[0][3])), "status": t[0][4], "submitTimestamp": t[0][5], \
             "closedTimestamp": t[0][7], "closedBy": t[0][6]}}
 
-@app.get("/atm/application/list")
+@app.get(f"/{config.vtcprefix}/application/list")
 async def getApplicationList(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), showall: Optional[bool] = False):
     if page <= 0:
         page = 1
@@ -638,7 +639,7 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
 
-@app.get("/atm/application/positions")
+@app.get(f"/{config.vtcprefix}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
     conn = newconn()
     cur = conn.cursor()
@@ -652,7 +653,7 @@ async def getApplicationPositions(request: Request, response: Response):
             ret.append(tt)
         return {"error": False, "response": ret}
 
-@app.post("/atm/application/positions")
+@app.post(f"/{config.vtcprefix}/application/positions")
 async def setApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

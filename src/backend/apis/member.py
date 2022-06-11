@@ -8,24 +8,33 @@ import requests
 from discord import Webhook
 from typing import Optional
 from datetime import datetime
+import collections
 
 from app import app, config
 from db import newconn
 from functions import *
 
-ROLES = {0: "root", 1: "Founder", 2: "Chief Executive Officer", 3: "Chief Operating Officer", \
-    4: "Chief Administrative Officer", 5: "Chief Technology Officier", 9: "Leadership", \
-        20: "Human Resources Manager", 21: "Human Resources Staff", 30: "Lead Developer", 31: "Development Staff", \
-            40: "Event Manager", 41: "Event Staff", 50: "Media Manager", 51: "Official Streamer", 52: "Media Team",\
-                60: "Convoy Supervisor", 61: "Convoy Control",\
-                 71: "Division Manager", 72: "Division Supervisor",\
-                 98: "Trial Staff", 99: "Leave of absence", 100: "Driver",  223: "Staff of the Month", 224: "Driver of the Month",\
-                 251: "Construction Division", 252: "Chilled Division", 253:" ADR Division",\
-                    1000: "Partner", 10000: "External Staff"}
+config_txt = open("./config.json","r").read()
+tconfig = json.loads(config_txt)
+sroles = tconfig["roles"]
+ROLES = {}
+for key in sroles:
+    ROLES[int(key)] = sroles[key]
+ROLES = dict(collections.OrderedDict(sorted(ROLES.items())))
 
-RANKING = {0: 941548241126834206, 2000: 941544375790489660, 10000: 941544368928596008, 15000: 969678264832503828, 25000: 941544370467901480, 40000: 969727939686039572, 50000: 941544372669907045, 75000: 969678270398341220, 80000: 969727945075732570, 100000: 941544373710094456, 150000: 969727950016643122, 200000: 969727954433245234, 250000: 969678280112353340, 300000: 969727958749155348, 350000: 969727962905735178, 400000: 969727966999379988, 450000: 969727971428536440, 500000: 941734703210311740, 600000: 969727975358607380, 700000: 969727979368370188, 800000: 969728350564282398, 900000: 969678286332518460, 1000000: 941734710470651964}
+sranking = tconfig["ranking"]
+RANKING = {}
+for key in sranking:
+    RANKING[int(key)] = sranking[key]
+RANKING = dict(collections.OrderedDict(sorted(RANKING.items())))
 
-@app.get('/atm/member/list')
+srankname = tconfig["rankname"]
+RANKNAME = {}
+for key in srankname:
+    RANKNAME[int(key)] = srankname[key]
+RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
+
+@app.get(f'/{config.vtcprefix}/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
     if page <= 0:
         page = 1
@@ -117,7 +126,7 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot, "staff_of_the_month": staff_of_the_month, "driver_of_the_month": driver_of_the_month}}
 
-@app.get('/atm/member/info')
+@app.get(f'/{config.vtcprefix}/member/info')
 async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -237,7 +246,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
                     "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
 
-@app.post('/atm/member/add')
+@app.post(f'/{config.vtcprefix}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -322,7 +331,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     conn.commit()
 
     try:
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -330,17 +339,17 @@ async def addMember(request: Request, response: Response, authorization: str = H
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Member Update",
-                "description": f"You are now a member of At The Mile Logistics!",
+                "description": f"You are now a member of {config.vtcname}!",
                     "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
         pass
 
     return {"error": False, "response": {"message": "Member added", "userid": userid}}    
 
-@app.delete("/atm/member/resign")
+@app.delete(f"/{config.vtcprefix}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -391,7 +400,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_token})
     
     name = t[0][2].replace("'", "''")
     discordid = t[0][3]
@@ -399,7 +408,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
     return {"error": False, "response": {"message": "Member resigned"}}
 
-@app.delete("/atm/member/dismiss")
+@app.delete(f"/{config.vtcprefix}/member/dismiss")
 async def dismissMember(userid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -477,12 +486,12 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_token})
     
     await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
     return {"error": False, "response": {"message": "Member dismissed"}}
 
-@app.post('/atm/member/role')
+@app.post(f'/{config.vtcprefix}/member/role')
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -596,7 +605,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         if len(p) == 0:
             cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0, 0, {int(time.time())})")
             conn.commit()
-        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.naviotoken})
+        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_token})
         
         cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -604,30 +613,32 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         usermention = f"<@{userdiscordid}>"
 
         async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url("https://discordapp.com/api/webhooks/938826735053594685/jKO8djrHZbzafVOb9ooQVNosHrcDP9Wu5WtA39MuLChW1NQiAnVXrwCyagL-tn3ruanA", session=session)
-            embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **At The Mile Logistics** as a **Driver**. Welcome to the family <:atmlove:931247295201149038>", color = 0x770202)
-            embed.set_footer(text = f"At The Mile | Team Update", icon_url = config.gicon)
-            embed.set_image(url = "https://hub.atmvtc.com/images/TeamUpdate.png")
+            webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
+            embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **{config.vtcname}** as a **Driver**. Welcome to the family!", color = 0x770202)
+            embed.set_footer(text = f"{config.vtcname} | Team Update", icon_url = config.vtclogo)
+            embed.set_image(url = "https://{config.dhdomain}/images/TeamUpdate.png")
             embed.timestamp = datetime.now()
             await webhook.send(content = usermention, embed=embed)
         
+        # At The Mile Logistics Exclusive Function (Role updating)
         try:
-            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/929761730450567194', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/929761730450567194', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
         except:
             pass
         try:
-            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/942478809175830588', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+            requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/942478809175830588', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
         except:
             pass
         try:
-            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548239776272454', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548239776272454', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
         except:
             pass
         try:
-            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548241126834206', headers = {"Authorization": f"Bot {config.bottoken}"}, timeout = 3)
+            requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/941548241126834206', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 3)
         except:
             pass
         
+        # At The Mile Logistics Exclusive Function (Welcome message)
         msg = f"""Welcome <@{userdiscordid}> to the family! Please make yourself at home and check around for what you will need.
  
 Please do not forget to register with us in [TruckersMP](https://truckersmp.com/vtc/49940) <:TMP:929962995109462086>
@@ -639,16 +650,16 @@ If you need any help please ask us in <#941554016087834644> or create a Human Re
 If you have issues about Drivers Hub, open a technical ticket at <#929761731016786030> """
 
         
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.gicon}, "image": {"url": "https://hub.atmvtc.com/images/bg.jpg"},\
-                        "timestamp": str(datetime.now()), "color": 11730944}}))
+                "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": "https://{config.dhdomain}/images/bg.jpg"},\
+                        "timestamp": str(datetime.now()), "color": config.intcolor}}))
 
     if 100 in removedroles:
         cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
-        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.naviotoken})
+        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_token})
     
     audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
     for add in addedroles:
@@ -661,11 +672,15 @@ If you have issues about Drivers Hub, open a technical ticket at <#9297617310167
 
     return {"error": False, "response": {"message": "Roles updated.", "roles": roles}}
 
-@app.get("/atm/member/roles")
+@app.get(f"/{config.vtcprefix}/member/roles")
 async def getRoles(request: Request, response: Response):
     return {"error": False, "response": ROLES}
 
-@app.post("/atm/member/point")
+@app.get(f"/{config.vtcprefix}/member/ranks")
+async def getRanks(request: Request, response: Response):
+    return {"error": False, "response": RANKNAME}
+
+@app.post(f"/{config.vtcprefix}/member/point")
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -719,10 +734,10 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if adminhighest >= 30: # not hr level or upper
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
-    
+
     form = await request.form()
     userid = int(form["userid"])
-    distance = int(int(form["mile"])*1.6)
+    distance = int(int(form["distance"]))
     eventpnt = int(form["eventpnt"])
     divisionpnt = int(form["divisionpnt"])
 
@@ -749,11 +764,11 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if int(eventpnt) > 0:
         eventpnt = "+" + str(eventpnt)
 
-    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} Miles\n{eventpnt} Event Points\n{divisionpnt} Division Points")
+    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} km\n{eventpnt} Event Points\n{divisionpnt} Division Points")
 
     return {"error": False, "response": {"message": "Points updated."}}
 
-@app.get("/atm/member/steam")
+@app.get(f"/{config.vtcprefix}/member/steam")
 async def memberSteam(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -820,7 +835,7 @@ def point2rank(point):
             return RANKING[keys[i-1]]
     return RANKING[1000000]
 
-@app.patch("/atm/member/discordrole")
+@app.patch(f"/{config.vtcprefix}/member/discordrole")
 async def memberDiscordrole(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -873,11 +888,15 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
     
+    ratio = 1
+    if config.distance_unit == "imperial":
+        ratio = 0.621371
+
     cur.execute(f"SELECT distance, eventpnt FROM driver WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         return {"error": True, "descriptor": "Member not driver"}
-    totalpnt = int(t[0][0] / 1.6 + t[0][1])
+    totalpnt = int(t[0][0] * ratio + t[0][1])
     cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
     o = cur.fetchall()
     divisionpnt = 0
@@ -892,7 +911,7 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     rank = point2rank(totalpnt)
 
     try:
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         r=requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}", headers=headers, timeout = 3)
         d = json.loads(r.text)
         if "roles" in d:
@@ -910,11 +929,11 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
                 try:
                     msg = f"""GG <@{discordid}>! You have ranked up to <@&{rank}>!"""
 
-                    headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+                    headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
                     ddurl = f"https://discord.com/api/v9/channels/941537154360823870/messages"
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
-                            "footer": {"text": f"Congratulations!", "icon_url": config.gicon},\
-                                    "timestamp": str(datetime.now()), "color": 11730944}}))
+                            "footer": {"text": f"Congratulations!", "icon_url": config.vtclogo},\
+                                    "timestamp": str(datetime.now()), "color": config.intcolor}}))
                                     
                 except:
                     import traceback

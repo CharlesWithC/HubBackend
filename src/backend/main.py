@@ -17,5 +17,5 @@ from db import newconn
 import api
 
 if __name__ == "__main__":
-    print("DriversHub For At The Mile Logistics v1.0 by Charles")
+    print(f"{config.vtcname} Drivers Hub")
     uvicorn.run("app:app", host=config.server_ip, port=config.server_port, log_level="info", workers = 5)

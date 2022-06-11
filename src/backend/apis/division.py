@@ -13,7 +13,7 @@ from functions import *
 
 divisiontxt = {1: "Construction", 2: "Chilled", 3: "ADR"}
 
-@app.post("/atm/division/validate")
+@app.post(f"/{config.vtcprefix}/division/validate")
 async def divisionValidateRequest(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -105,7 +105,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     conn.commit()
     
     try:
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -115,8 +115,8 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
                 "description": f"Division supervisor will check your request and you will receive an update soon.",
                     "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
     except:
         pass
 
@@ -128,7 +128,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     avatar = tt[2]
 
     async with aiohttp.ClientSession() as session:
-        webhook = Webhook.from_url(config.divisionwebhook, session=session)
+        webhook = Webhook.from_url(config.webhook_division, session=session)
 
         embed = discord.Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = 0x770202)
         if t[0][1].startswith("a_"):
@@ -141,7 +141,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
 
     return {"error": False, "response": "Request submitted."}
 
-@app.get("/atm/division/validate")
+@app.get(f"/{config.vtcprefix}/division/validate")
 async def divisionValidateList(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -217,7 +217,7 @@ async def divisionValidateList(request: Request, response: Response, authorizati
     
     return {"error": False, "response": ret}
 
-@app.patch("/atm/division/validate")
+@app.patch(f"/{config.vtcprefix}/division/validate")
 async def divisionValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -311,7 +311,7 @@ async def divisionValidate(request: Request, response: Response, authorization: 
 
     try:
         STATUS = {0: "Pending", 1: "Validated", 2: "Denied"}
-        headers = {"Authorization": f"Bot {config.bottoken}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -322,14 +322,14 @@ async def divisionValidate(request: Request, response: Response, authorization: 
                 "description": reason,
                     "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
                         {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
-                    "footer": {"text": f"At The Mile Logistics", "icon_url": config.gicon}, "thumbnail": {"url": config.gicon},\
-                         "timestamp": str(datetime.now()), "color": 11730944}}), timeout=3)
+                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
     except:
         pass
 
     return {"error": False, "response": "Status updated"}
 
-@app.get("/atm/division/info")
+@app.get(f"/{config.vtcprefix}/division/info")
 async def divisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
     if authorization is None:
         # response.status_code = 401

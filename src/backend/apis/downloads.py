@@ -10,7 +10,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.get("/atm/downloads")
+@app.get(f"/{config.vtcprefix}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -73,7 +73,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         
     return {"error": False, "response": data}
 
-@app.patch("/atm/downloads")
+@app.patch(f"/{config.vtcprefix}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

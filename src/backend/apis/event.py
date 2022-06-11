@@ -11,7 +11,7 @@ from app import app, config
 from db import newconn
 from functions import *
 
-@app.get("/atm/event")
+@app.get(f"/{config.vtcprefix}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), page: Optional[int] = 1, eventid: Optional[int] = -1):
     if authorization is None:
         # response.status_code = 401
@@ -187,7 +187,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     return {"error": False, "response": {"list": ret[:10], "page": page, "tot": tot}}
 
-@app.get("/atm/event/full")
+@app.get(f"/{config.vtcprefix}/event/full")
 async def getFullEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -251,7 +251,7 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
 
     return {"error": False, "response": {"list": ret}}
 
-@app.post("/atm/event/vote")
+@app.post(f"/{config.vtcprefix}/event/vote")
 async def eventVote(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -312,7 +312,7 @@ async def eventVote(request: Request, response: Response, authorization: str = H
         conn.commit()
         return {"error": False, "response": "Vote added"}
 
-@app.post("/atm/event")
+@app.post(f"/{config.vtcprefix}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -399,7 +399,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
     return {"error": False, "response": {"message": "Event created.", "eventid": nxteventid}}
 
-@app.patch("/atm/event")
+@app.patch(f"/{config.vtcprefix}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -487,7 +487,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
     return {"error": False, "response": {"message": "Event updated.", "eventid": eventid}}
 
-@app.delete("/atm/event")
+@app.delete(f"/{config.vtcprefix}/event")
 async def deleteEvent(eventid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
@@ -558,7 +558,7 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
 
     return {"error": False, "response": {"message": "Event deleted."}}
 
-@app.post("/atm/event/attendee")
+@app.post(f"/{config.vtcprefix}/event/attendee")
 async def updateEventAttendee(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401

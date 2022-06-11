@@ -7,6 +7,9 @@ window.mapcenter = {}
 window.autofocus = {}
 highestrole = 99999;
 
+company_distance_unit = "imperial";
+distance_unit = localStorage.getItem("distance_unit");
+
 isdark = parseInt(localStorage.getItem("darkmode"));
 if (localStorage.getItem("darkmode") == undefined) isdark = 1;
 rolelist = localStorage.getItem("rolelist");
@@ -126,7 +129,7 @@ async function loadChart(userid = -1) {
                     dollar.push(NaN);
                     continue;
                 }
-                distance.push(parseInt(d[i].distance / 1.6));
+                distance.push(parseInt(d[i].distance * distance_ratio));
                 fuel.push(d[i].fuel);
                 euro.push(parseInt(d[i].euro));
                 dollar.push(parseInt(d[i].dollar));
@@ -137,7 +140,7 @@ async function loadChart(userid = -1) {
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Distance (Mi)',
+                        label: 'Distance (' + distance_unit_txt + ')',
                         data: distance,
                         borderColor: "lightgreen",
                         cubicInterpolationMode: 'monotone',
@@ -235,8 +238,13 @@ function loadStats(basic = false) {
             newjobs = sigfig(parseInt(d.newjobs));
             jobs = jobs.split(".")[0];
             newjobs = newjobs.split(".")[0];
-            distance = sigfig(d.distance / 1.6) + "Mi";
-            newdistance = sigfig(d.newdistance / 1.6) + "Mi";
+            if (distance_unit == "metric") {
+                distance = sigfig(d.distance) + "km";
+                newdistance = sigfig(d.newdistance) + "km";
+            } else if (distance_unit == "imperial") {
+                distance = sigfig(parseInt(d.distance * distance_ratio)) + "mi";
+                newdistance = sigfig(parseInt(d.newdistance * distance_ratio)) + "mi";
+            }
             europrofit = "€" + sigfig(d.europrofit);
             neweuroprofit = "€" + sigfig(d.neweuroprofit);
             dollarprofit = "$" + sigfig(d.dollarprofit);
@@ -264,14 +272,13 @@ function loadStats(basic = false) {
                 else
                     src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
             } else {
-                avatar = "/images/atm-black.png";
+                avatar = "/images/logo.png";
             }
-            distance = TSeparator(parseInt(driver_of_the_day.distance / 1.6));
-            $("#dotd").html(`<img src="${src}" style="width:20px;border-radius:100%;display:inline" onerror="$(this).attr('src','/images/atm-black.png');"> <b>${driver_of_the_day.name}</b>`);
-            $("#dotddistance").html(`Driven ${distance} Miles`);
+            distance = TSeparator(parseInt(driver_of_the_day.distance * distance_ratio));
+            $("#dotd").html(`<img src="${src}" style="width:20px;border-radius:100%;display:inline" onerror="$(this).attr('src','/images/logo.png');"> <b>${driver_of_the_day.name}</b>`);
+            $("#dotddistance").html(`Driven ${distance}${distance_unit_txt}`);
 
             $("#dalljob").html(newjobs);
-            $("#dtotdistance").html(newdistance.replaceAll("Mi", " Miles"));
 
             const ctx = document.getElementById('deliveryStatsChart').getContext('2d');
             const config = {
@@ -327,11 +334,11 @@ function loadStats(basic = false) {
                         else
                             src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                     } else {
-                        avatar = "/images/atm-black.png";
+                        avatar = "/images/logo.png";
                     }
                     $("#leaderboard").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/logo.png');"> ${name}</a></td>
               <td class="py-5 px-6">${totalpnt}</td>
             </tr>`);
                 }
@@ -362,11 +369,11 @@ function loadStats(basic = false) {
                         else
                             src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                     } else {
-                        avatar = "/images/atm-black.png";
+                        avatar = "/images/logo.png";
                     }
                     $("#newdriverTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/logo.png');"> ${name}</a></td>
               <td class="py-5 px-6">${joindt}</td>
             </tr>`);
                 }
@@ -1431,7 +1438,7 @@ function ShowStaffTabs() {
         else
             $("#avatar").attr("src", "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png");
     } else {
-        avatar = "/images/atm-black.png";
+        avatar = "/images/logo.png";
     }
     isEM = false;
     $("#StaffAnnTabBtn").hide();
@@ -1764,7 +1771,7 @@ function validate() {
                         success: function (data) {
                             if (data.error == false) {
                                 d = data.response;
-                                points = parseInt(d.distance / 1.6 + d.eventpnt);
+                                points = parseInt(d.distance * distance_ratio + d.eventpnt);
                                 rank = point2rank(points);
                                 $("#ranktotpoints").html(TSeparator(points) + " - " + rank);
                                 if ($("#role").html() == "Driver")
@@ -1798,7 +1805,8 @@ function loadLeaderboard(recurse = true) {
     if (!isNumber(speedlimit)) {
         speedlimit = 0;
     } else {
-        speedlimit *= 1.6;
+        if (distance_unit == "imperial")
+            speedlimit /= distance_ratio;
     }
     game = 0;
     if (dets2 && !dats) game = 1;
@@ -1887,7 +1895,7 @@ function loadLeaderboard(recurse = true) {
                 user = leaderboard[i];
                 userid = user.userid;
                 name = user.name;
-                distance = TSeparator(parseInt(user.distance / 1.6));
+                distance = TSeparator(parseInt(user.distance * distance_ratio));
                 discordid = user.discordid;
                 avatar = user.avatar;
                 totalpnt = TSeparator(parseInt(user.totalpnt));
@@ -1897,12 +1905,12 @@ function loadLeaderboard(recurse = true) {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/logo.png";
                 }
                 console.log(user.totnolimit);
                 $("#leaderboardTable").append(`<tr class="text-xs">
               <td class="py-5 px-6 font-medium">
-                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${name}</a></td>
+                <a style="cursor: pointer" onclick="loadProfile(${userid})"><img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/logo.png');"> ${name}</a></td>
                 <td class="py-5 px-6">${point2rank(user.totnolimit)}</td>
                 <td class="py-5 px-6">${distance}</td>
                 <td class="py-5 px-6">${user.eventpnt}</td>
@@ -1970,7 +1978,8 @@ function loadDelivery(recurse = true) {
     if (!isNumber(speedlimit)) {
         speedlimit = 0;
     } else {
-        speedlimit *= 1.6;
+        if (distance_unit == "imperial")
+            speedlimit /= distance_ratio;
     }
     game = 0;
     if (dets2 && !dats) game = 1;
@@ -2060,7 +2069,7 @@ function loadDelivery(recurse = true) {
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
                 //
-                distance = TSeparator(parseInt(delivery.distance / 1.6));
+                distance = TSeparator(parseInt(delivery.distance * distance_ratio));
                 cargo_mass = parseInt(delivery.cargo_mass / 1000);
                 unittxt = "€";
                 if (delivery.unit == 2) unittxt = "$";
@@ -2083,7 +2092,7 @@ function loadDelivery(recurse = true) {
               <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
-              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${distance}${distance_unit_txt}</td>
               <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
               <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
               ${dtl}
@@ -2185,7 +2194,7 @@ function loadDivision() {
                 $("#divisionDeliveryTableHead").show();
                 for (i = 0; i < d.deliveries.length; i++) {
                     const delivery = d.deliveries[i];
-                    distance = TSeparator(parseInt(delivery.distance / 1.6));
+                    distance = TSeparator(parseInt(delivery.distance * distance_ratio));
                     cargo_mass = parseInt(delivery.cargo_mass / 1000);
                     unittxt = "€";
                     if (delivery.unit == 2) unittxt = "$";
@@ -2204,7 +2213,7 @@ function loadDivision() {
               <td class="py-5 px-6 font-medium"><a style='cursor:pointer' onclick='loadProfile(${delivery.userid})'>${delivery.name}</a></td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
-              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${distance}${distance_unit_txt}</td>
               <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
               <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
               ${dtl}
@@ -2366,13 +2375,13 @@ async function deliveryRoutePlay() {
                     console.log(rrevents[i]);
                     finetype = meta.offence;
                     if (finetype == "speeding_camera") {
-                        curspeed = TSeparator(parseInt(meta.speed * 3.6 / 1.6));
-                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 / 1.6));
-                        eventmsg = `Captured by speeding camera<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)<br>Fined ` + punit + TSeparator(meta.amount);
+                        curspeed = TSeparator(parseInt(meta.speed * 3.6 * distance_ratio));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 * distance_ratio));
+                        eventmsg = `Captured by speeding camera<br>${curspeed}${distance_unit_txt}/h (Speed Limit ${speedlimit}${distance_unit_txt}/h)<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "speeding") {
-                        curspeed = TSeparator(parseInt(meta.speed * 3.6 / 1.6));
-                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 / 1.6));
-                        eventmsg = `Caught by police car for speeding<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)<br>Fined ` + punit + TSeparator(meta.amount);
+                        curspeed = TSeparator(parseInt(meta.speed * 3.6 * distance_ratio));
+                        speedlimit = TSeparator(parseInt(meta.speed_limit * 3.6 * distance_ratio));
+                        eventmsg = `Caught by police car for speeding<br>${curspeed}${distance_unit_txt}/h (Speed Limit ${speedlimit}${distance_unit_txt}/h)<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "crash") {
                         eventmsg = `Crash<br>Fined ` + punit + TSeparator(meta.amount);
                     } else if (finetype == "red_signal") {
@@ -2382,9 +2391,9 @@ async function deliveryRoutePlay() {
                     }
                 } else if (rrevents[i].type == "speeding") {
                     meta = rrevents[i].meta;
-                    curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 / 1.6));
-                    speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 / 1.6));
-                    eventmsg = `Speeding (No Fine)<br>${curspeed}Mi/h (Speed Limit ${speedlimit}Mi/h)`;
+                    curspeed = TSeparator(parseInt(parseInt(meta.max_speed) * 3.6 * distance_ratio));
+                    speedlimit = TSeparator(parseInt(parseInt(meta.speed_limit) * 3.6 * distance_ratio));
+                    eventmsg = `Speeding (No Fine)<br>${curspeed}${distance_unit_txt}/h (Speed Limit ${speedlimit}${distance_unit_txt}/h)`;
                 } else if (rrevents[i].type == "ferry") {
                     meta = rrevents[i].meta;
                     eventmsg = `Ferry from ${meta.source_name} to ${meta.target_name}<br>Cost ${punit}${TSeparator(meta.cost)}`;
@@ -2464,7 +2473,11 @@ function deliveryDetail(logid) {
                 stop_time = +new Date(d.stop_time);
                 duration = "N/A";
                 if (start_time > 86400 * 1000) duration = String((stop_time - start_time) / 1000).toHHMMSS(); // in case start time is 19700101 and timezone
-                planned_distance = TSeparator(parseInt(d.planned_distance / 1.6)) + "Mi";
+                if (distance_unit == "metric") {
+                    planned_distance = TSeparator(parseInt(d.planned_distance)) + "km";
+                } else if (distance_unit == "imperial") {
+                    planned_distance = TSeparator(parseInt(d.planned_distance * distance_ratio)) + "mi";
+                }
                 fuel_used_org = d.fuel_used;
                 fuel_used = TSeparator(parseInt(d.fuel_used)) + "L";
                 cargo = d.cargo.name;
@@ -2482,7 +2495,7 @@ function deliveryDetail(logid) {
                 truck = d.truck.brand.name + " " + d.truck.name;
                 truck_brand_id = d.truck.brand.unique_id;
                 license_plate = d.truck.license_plate;
-                top_speed = parseInt(d.truck.top_speed * 3.6 / 1.6);
+                top_speed = parseInt(d.truck.top_speed * 3.6 * distance_ratio);
                 trailer = "";
                 trs = "";
                 if (d.trailers.length > 1) trs = "s";
@@ -2497,15 +2510,23 @@ function deliveryDetail(logid) {
                     revenue = TSeparator(meta.revenue);
                     earned_xp = meta.earned_xp;
                     cargo_damage = meta.cargo_damage;
-                    distance = TSeparator(parseInt(meta.distance / 1.6)) + "Mi";
+                    if (distance_unit == "metric") {
+                        distance = TSeparator(parseInt(meta.distance)) + "km";
+                    } else if (distance_unit == "imperial") {
+                        distance = TSeparator(parseInt(meta.distance * distance_ratio)) + "mi";
+                    }
                     auto_park = meta.auto_park;
                     auto_load = meta.auto_load;
-                    avg_fuel = TSeparator(parseInt(fuel_used_org / (meta.distance / 1.6) * 100));
+                    avg_fuel = TSeparator(parseInt(fuel_used_org / (meta.distance * distance_ratio) * 100));
                 } else if (tp == "job.cancelled") {
-                    distance = TSeparator(parseInt(d.driven_distance / 1.6)) + "Mi";
+                    if (distance_unit == "metric") {
+                        distance = TSeparator(parseInt(d.driven_distance)) + "km";
+                    } else if (distance_unit == "imperial") {
+                        distance = TSeparator(parseInt(d.driven_distance * distance_ratio)) + "mi";
+                    }
                     distance_org = d.driven_distance;
                     penalty = TSeparator(meta.penalty);
-                    avg_fuel = TSeparator(parseInt(fuel_used_org / (distance_org / 1.6) * 100));
+                    avg_fuel = TSeparator(parseInt(fuel_used_org / (distance_org * distance_ratio) * 100));
                 }
 
                 $(".ddcol").children().remove();
@@ -2518,27 +2539,6 @@ function deliveryDetail(logid) {
                 $("#ddcol1").append(`<p>Planned <b>${planned_distance}</b></p>`);
                 $("#ddcol2").append(`<p><b>${destination_company}</b>, ${destination_city}</p>`);
                 $("#ddcol2").append(`<p>Driven <b>${distance}</b></p>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">From</td>
-                //         <td class="py-5 px-6 font-medium">${source_city}</td></tr>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">To</td>
-                //         <td class="py-5 px-6 font-medium">${destination_city}</td></tr>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Cargo</td>
-                //         <td class="py-5 px-6 font-medium">${cargo}</td></tr>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Weight</td>
-                //         <td class="py-5 px-6 font-medium">${cargo_mass}</td></tr>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Initial Company</td>
-                //         <td class="py-5 px-6 font-medium">${source_company}</td></tr>`);
-                // $("#ddcol1").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Target Company</td>
-                //         <td class="py-5 px-6 font-medium">${destination_company}</td></tr>`);
-                // $("#ddcol2").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Driven / Planned Distance</td>
-                //         <td class="py-5 px-6 font-medium">${distance} / ${planned_distance}</td></tr>`);
                 offence = 0;
                 for (var i = 0; i < rrevents.length; i++) {
                     if (rrevents[i].type == "fine") {
@@ -2550,56 +2550,14 @@ function deliveryDetail(logid) {
                 if (tp == "job.delivered") {
                     $("#ddcol2").append(`<p>Damage <b>${parseInt(cargo_damage * 100)}%</b> / XP <b>${earned_xp}</b></p>`);
                     $("#ddcol2").append(`<p>Profit <b>${revenue} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //     <td class="py-5 px-6 font-medium">Profit</td>
-                    //     <td class="py-5 px-6 font-medium">${revenue} ${punit}</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //     <td class="py-5 px-6 font-medium">Offence</td>
-                    //     <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //     <td class="py-5 px-6 font-medium">XP</td>
-                    //     <td class="py-5 px-6 font-medium">${earned_xp}</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //         <td class="py-5 px-6 font-medium">Damage</td>
-                    //         <td class="py-5 px-6 font-medium">${parseInt(cargo_damage * 100)}%</td></tr>`);
                 } else if (tp == "job.cancelled") {
                     $("#ddcol2").append(`<p>Damage <b>${parseInt(data.response.data.data.object.cargo.damage * 100)}%</b></p>`);
                     $("#ddcol2").append(`<p>Penalty <b>${penalty} ${punit}</b> / Offence <b>${offence} ${punit}</b></p>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //         <td class="py-5 px-6 font-medium">Penalty</td>
-                    //         <td class="py-5 px-6 font-medium">${penalty} ${punit}</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //         <td class="py-5 px-6 font-medium">Offence</td>
-                    //         <td class="py-5 px-6 font-medium">-${offence} ${punit}</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //         <td class="py-5 px-6 font-medium">XP</td>
-                    //         <td class="py-5 px-6 font-medium">0</td></tr>`);
-                    // $("#ddcol2").append(`<tr class="text-xs">
-                    //         <td class="py-5 px-6 font-medium">Damage</td>
-                    //         <td class="py-5 px-6 font-medium">${parseInt(data.response.data.data.object.cargo.damage * 100)}%</td></tr>`);
                 }
-                $("#ddcol3").append(`<p>Max Speed <b>${top_speed} Mi/h</p>`);
-                $("#ddcol3").append(`<p>Fuel Avg <b>${avg_fuel}L/100Mi</b> / Tot <b>${fuel_used}</b></p>`);
+                $("#ddcol3").append(`<p>Max Speed <b>${top_speed} ${distance_unit_txt}/h</p>`);
+                $("#ddcol3").append(`<p>Fuel Avg <b>${avg_fuel}L/100${distance_unit_txt}</b> / Tot <b>${fuel_used}</b></p>`);
                 $("#ddcol3").append(`<p>Truck <b>${truck}</b> (<i>${license_plate})</i></p>`);
                 $("#ddcol3").append(`<p>Trailer <i>${trailer.slice(0,-3)}</i></p>`);
-                // $("#ddcol2").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Maximal Reached Speed</td>
-                //         <td class="py-5 px-6 font-medium">${top_speed} Mi/h</td></tr>`);
-                // $("#ddcol3").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Truck</td>
-                //         <td class="py-5 px-6 font-medium">${truck}</td></tr>`);
-                // $("#ddcol3").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Truck's License Plate</td>
-                //         <td class="py-5 px-6 font-medium">${license_plate}</td></tr>`);
-                // $("#ddcol3").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Trailer's License Plate${trs}</td>
-                //         <td class="py-5 px-6 font-medium">${trailer.slice(0,-3)}</td></tr>`);
-                // $("#ddcol3").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Average Consumption</td>
-                //         <td class="py-5 px-6 font-medium">${avg_fuel}L/100Mi</td></tr>`);
-                // $("#ddcol3").append(`<tr class="text-xs">
-                //         <td class="py-5 px-6 font-medium">Fuel Used</td>
-                //         <td class="py-5 px-6 font-medium">${fuel_used}</td></tr>`);
 
                 dt = getDateTime(data.response.timestamp * 1000);
 
@@ -2612,7 +2570,7 @@ function deliveryDetail(logid) {
               class="w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200"
               onclick="divisionInfo(${logid})">Division</button>`);
                 }
-                $("#dlogdistance").html(parseInt(data.response.loggeddistance / 1.6));
+                $("#dlogdistance").html(parseInt(data.response.loggeddistance * distance_ratio));
                 $("#dlogtime").html(dt);
                 if (tp == "job.delivered") {
                     extra = "";
@@ -3308,14 +3266,14 @@ function loadMembers(recurse = true) {
                     else
                         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/logo.png";
                 }
                 $("#membersTable").append(`
             <tr class="text-xs">
               <td class="py-5 px-6 font-medium">${user.userid}</td>
               <td class="py-5 px-6 font-medium" style="color:${color}">
                 <a style="cursor:pointer;" onclick="loadProfile('${user.userid}')">
-                <img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/atm-black.png');"> ${user.name}</a></td>
+                <img src='${src}' width="20px" style="display:inline;border-radius:100%" onerror="$(this).attr('src','/images/logo.png');"> ${user.name}</a></td>
               <td class="py-5 px-6 font-medium" style="color:${color}">${highestrole}</td>
             </tr>`);
             }
@@ -3330,7 +3288,7 @@ function loadMembers(recurse = true) {
                 else
                     src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png";
             } else {
-                avatar = "/images/atm-black.png";
+                avatar = "/images/logo.png";
             }
             $("#sotm").html(`<a style='cursor:pointer' onclick='loadProfile("${user.userid}")'>${user.name}</a>`);
             $("#sotma").attr("src", src);
@@ -3485,13 +3443,22 @@ function memberDetail(userid) {
                     d.steamid + "'>" + d.steamid + "</a></p>";
                 info += "<br><p style='text-align:left'><b>Join:</b> " + getDateTime(d.join * 1000) + "</p>";
                 info += "<p style='text-align:left'><b>Total Jobs:</b> " + d.totjobs + "</p>";
-                info += "<p style='text-align:left'><b>Distance Driven:</b> " + parseInt(d.distance / 1.6) + "Mi</p>";
+                if (distance_unit == "metric") {
+                    info += "<p style='text-align:left'><b>Distance Driven:</b> " + parseInt(d.distance) + "mi</p>";
+                } else if (distance_unit == "imperial") {
+                    info += "<p style='text-align:left'><b>Distance Driven:</b> " + parseInt(d.distance * distance_ratio) + "km</p>";
+                }
                 info += "<p style='text-align:left'><b>Fuel Consumed:</b> " + parseInt(d.fuel) + "L</p>";
                 info += "<p style='text-align:left'><b>XP Earned:</b> " + d.xp + "</p>";
                 info += "<p style='text-align:left'><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
                 info += "<p style='text-align:left'><b>Division Points:</b> " + parseInt(d.divisionpnt) + "</p>";
-                info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt + d.divisionpnt) +
-                    "</p>";
+                if (company_distance_unit == "metric") {
+                    info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance + d.eventpnt + d.divisionpnt) +
+                        "</p>";
+                } else if (company_distance_unit == "imperial") {
+                    info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance * 0.621371 + d.eventpnt + d.divisionpnt) +
+                        "</p>";
+                }
 
             }
             Swal.fire({
@@ -3628,7 +3595,7 @@ function updateMemberPoints() {
         toastFactory("error", "Error:", "Please enter a valid user ID.", 5000, false);
         return;
     }
-    miles = $("#memberpntmile").val();
+    distance = $("#memberpntdistance").val();
     eventpnt = $("#memberpntevent").val();
     divisionpnt = $("#memberpntdivision").val();
     if (!isNumber(miles)) {
@@ -3652,7 +3619,7 @@ function updateMemberPoints() {
         },
         data: {
             "userid": userid,
-            "mile": miles,
+            "distance": distance,
             "eventpnt": eventpnt,
             "divisionpnt": divisionpnt
         },
@@ -3769,7 +3736,8 @@ function loadUserDelivery(recurse = true) {
     if (!isNumber(speedlimit)) {
         speedlimit = 0;
     } else {
-        speedlimit *= 1.6;
+        if (distance_unit == "imperial")
+            speedlimit /= distance_ratio;
     }
     game = 0;
     if (dets2 && !dats) game = 1;
@@ -3858,7 +3826,7 @@ function loadUserDelivery(recurse = true) {
                 //    <td class="py-5 px-6 font-medium">name here</td>
                 //  </tr>
                 //
-                distance = TSeparator(parseInt(delivery.distance / 1.6));
+                distance = TSeparator(parseInt(delivery.distance * distance_ratio));
                 cargo_mass = parseInt(delivery.cargo_mass / 1000);
                 unittxt = "€";
                 if (delivery.unit == 2) unittxt = "$";
@@ -3880,7 +3848,7 @@ function loadUserDelivery(recurse = true) {
             <td class="py-5 px-6 font-medium">${delivery.logid} ${dextra}</td>
               <td class="py-5 px-6 font-medium">${delivery.source_company}, ${delivery.source_city}</td>
               <td class="py-5 px-6 font-medium">${delivery.destination_company}, ${delivery.destination_city}</td>
-              <td class="py-5 px-6 font-medium">${distance}Mi</td>
+              <td class="py-5 px-6 font-medium">${distance}${distance_unit_txt}</td>
               <td class="py-5 px-6 font-medium">${delivery.cargo} (${cargo_mass}t)</td>
               <td class="py-5 px-6 font-medium">${unittxt}${profit}</td>
               ${dtl}
@@ -3943,12 +3911,16 @@ function loadProfile(userid) {
                     d.steamid + "'>" + d.steamid + "</a></p>";
                 info += "<br><p><b>Join:</b> " + getDateTime(d.join * 1000) + "</p>";
                 info += "<p><b>Total Jobs:</b> " + d.totjobs + "</p>";
-                info += "<p><b>Distance Driven:</b> " + parseInt(d.distance / 1.6) + "Mi</p>";
+                if (distance_unit == "metric") {
+                    info += "<p><b>Distance Driven:</b> " + parseInt(d.distance) + "km</p>";
+                } else if (distance_unit == "imperial") {
+                    info += "<p><b>Distance Driven:</b> " + parseInt(d.distance * distance_ratio) + "mi</p>";
+                }
                 info += "<p><b>Fuel Consumed:</b> " + parseInt(d.fuel) + "L</p>";
                 info += "<p><b>XP Earned:</b> " + d.xp + "</p>";
                 info += "<p><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
                 info += "<p style='text-align:left'><b>Division Points:</b> " + parseInt(d.divisionpnt) + "</p>";
-                info += "<p><b>Total Points:</b> " + parseInt(d.distance / 1.6 + d.eventpnt + d.divisionpnt) +
+                info += "<p><b>Total Points:</b> " + parseInt(d.distance * distance_ratio + d.eventpnt + d.divisionpnt) +
                     "</p>";
                 info += "<br><b>About Me:</b><br>" + parseMarkdown(d.bio) + "<br><br>";
 
@@ -3960,7 +3932,7 @@ function loadProfile(userid) {
                         src = "https://cdn.discordapp.com/avatars/" + d.discordid + "/" + avatar + ".png";
                     $("#UserProfileAvatar").attr("src", src);
                 } else {
-                    avatar = "/images/atm-black.png";
+                    avatar = "/images/logo.png";
                 }
 
                 $("#userProfileDetail").html(info);
@@ -4916,7 +4888,26 @@ window.onpopstate = function (event) {
     PathDetect();
 };
 
+function loadDistanceUnit(){
+    distance_unit = localStorage.getItem("distance_unit");
+    if (distance_unit == "imperial") {
+        $(".distance_unit").html("mi");
+        distance_unit_txt = "mi";
+        distance_ratio = 0.621371;
+        $("#imperialbtn").css("background-color", "none");
+        $("#metricbtn").css("background-color", "#293039");
+    } else {
+        $(".distance_unit").html("km");
+        distance_unit = "metric";
+        distance_ratio = 1;
+        distance_unit_txt = "km";
+        $("#metricbtn").css("background-color", "none");
+        $("#imperialbtn").css("background-color", "#293039");
+    }
+}
+
 $(document).ready(function () {
+    loadDistanceUnit();
     if (localStorage.getItem("darkmode") == "1") {
         $("body").addClass("bg-gray-800");
         $("body").css("color", "white");
@@ -5210,4 +5201,28 @@ $(document).ready(function () {
             });
         }
     };
+    if(RANKING != []){
+        rankpnt = Object.keys(RANKING);
+        for(var i = 0 ; i < Math.ceil(rankpnt.length / 8) ; i++){
+            ranktable = `<table class="table-auto" style="display:inline">
+            <thead>
+              <tr class="text-xs text-gray-500 text-left">
+                <th class="py-5 px-6 pb-3 font-medium">Rank</th>
+                <th class="py-5 px-6 pb-3 font-medium">Points</th>
+              </tr>
+            </thead>
+            <tbody>`;
+            for(var j = 0 ; j < 8 ; j++){
+                if(rankpnt[i*8+j] == undefined) break;
+                ranktable += `<tr class="text-xs">
+                <td class="py-5 px-6 font-medium">${RANKING[rankpnt[i * 8 + j]]}</td>
+                <td class="py-5 px-6 font-medium">${rankpnt[i * 8 + j]}</td>
+              </tr>`;
+            }
+            ranktable += `
+            </tbody>
+          </table>`;
+          $("#ranktable").append(ranktable);
+        }
+    }
 });
