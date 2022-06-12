@@ -637,7 +637,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
             embed = discord.Embed(title = "Team Update", description = f"{usermention} has joined **{config.vtcname}** as a **Driver**. Welcome to the family!", color = config.rgbcolor)
             embed.set_footer(text = f"{config.vtcname} | Team Update", icon_url = config.vtclogo)
-            embed.set_image(url = "https://{config.dhdomain}/images/TeamUpdate.png")
+            embed.set_image(url = f"https://{config.dhdomain}/images/TeamUpdate.png")
             embed.timestamp = datetime.now()
             await webhook.send(content = usermention, embed=embed)
         
@@ -675,7 +675,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": msg, 
-                    "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": "https://{config.dhdomain}/images/bg.jpg"},\
+                    "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": f"https://{config.dhdomain}/images/bg.jpg"},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
 
     if config.perms.driver[0] in removedroles:
