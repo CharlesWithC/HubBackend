@@ -8,7 +8,7 @@ window.autofocus = {}
 highestrole = 99999;
 vtcprefix = "atm";
 
-company_distance_unit = "imperial";
+company_distance_unit = "metric";
 distance_unit = localStorage.getItem("distance_unit");
 
 isdark = parseInt(localStorage.getItem("darkmode"));
