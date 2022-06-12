@@ -1773,7 +1773,10 @@ function validate() {
                         success: function (data) {
                             if (data.error == false) {
                                 d = data.response;
-                                points = parseInt(d.distance * distance_ratio + d.eventpnt);
+                                if(company_distance_unit == "imperial")
+                                    points = parseInt(d.distance * 0.621371 + d.eventpnt + + d.divisionpnt);
+                                else
+                                    points = parseInt(d.distance + d.eventpnt + + d.divisionpnt);
                                 rank = point2rank(points);
                                 $("#ranktotpoints").html(TSeparator(points) + " - " + rank);
                                 if ($("#role").html() == "Driver")
@@ -3891,8 +3894,13 @@ function loadProfile(userid) {
                 info += "<p><b>XP Earned:</b> " + d.xp + "</p>";
                 info += "<p><b>Event Points:</b> " + parseInt(d.eventpnt) + "</p>";
                 info += "<p style='text-align:left'><b>Division Points:</b> " + parseInt(d.divisionpnt) + "</p>";
-                info += "<p><b>Total Points:</b> " + parseInt(d.distance * distance_ratio + d.eventpnt + d.divisionpnt) +
-                    "</p>";
+                if (company_distance_unit == "metric") {
+                    info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance + d.eventpnt + d.divisionpnt) +
+                        "</p>";
+                } else if (company_distance_unit == "imperial") {
+                    info += "<p style='text-align:left'><b>Total Points:</b> " + parseInt(d.distance * 0.621371 + d.eventpnt + d.divisionpnt) +
+                        "</p>";
+                }
                 info += "<br><b>About Me:</b><br>" + parseMarkdown(d.bio) + "<br><br>";
 
                 avatar = d.avatar;
