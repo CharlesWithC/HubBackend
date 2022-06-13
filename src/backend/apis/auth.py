@@ -168,7 +168,7 @@ async def userValidate(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.vtcprefix}/user/steamauth")
 async def steamOpenid(request: Request, response: Response):
     steamLogin = SteamSignIn()
-    encodedData = steamLogin.ConstructURL('https://drivershub.charlws.com/atm/user/steamcallback')
+    encodedData = steamLogin.ConstructURL(f'https://{config.domain}/{config.vtcprefix}/user/steamcallback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
