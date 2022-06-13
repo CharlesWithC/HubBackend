@@ -248,7 +248,7 @@ function point2rank(point){
       return RANKING[keys[i-1]];
     }
   }
-  return RANKING[1000000];
+  return RANKING[keys[keys.length - 1]];
 }
 
 String.prototype.toHHMMSS = function () {
