@@ -1,0 +1,92 @@
+{
+    "vtcprefix": "Charles Drivers Hub",
+    "vtcname": "charlws",
+    "vtclogo": "https://hub.charlws.com/images/logo.png",
+    "teamupdate": "https://hub.charlws.com/images/TeamUpdate.png",
+    "intcolor": 16777215,
+    "hexcolor": "FFFFFF",
+    "distance_unit": "metric",
+
+    "version": "v1.7.2",
+    "apidoc": "./apidoc.json",
+
+    "domain": "drivershub.charlws.com",
+    "dhdomain": "hub.charlws.com",
+    "server_ip": "127.0.0.1",
+    "server_port": 7777,
+
+    "database": "mysql",
+    "mysql_host": "localhost",
+    "mysql_user": "charlws",
+    "mysql_passwd": "Not_12345678",
+    "mysql_db": "charlws_drivershub",
+
+    "enabled_plugins": ["announcement", "application", "division", "downloads", "event"],
+    "external_plugins": ["rework_member"],
+    "delivery_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+        "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
+        "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
+        "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",
+        "https://c.tenor.com/jEW-3JELMG4AAAAM/skidding-white-pick-up.gif",
+        "https://c.tenor.com/JGw-jxHDAGoAAAAC/truck-lol.gif",
+        "https://c.tenor.com/2B9tkbj7CVEAAAAM/explode-truck.gif",
+        "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
+        "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
+        "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
+
+    "navio_token": "",
+    "navio_company_id": 0,
+
+    "guild": 0,
+    "driver_channel_id": 0,
+    "delivery_log_channel_id": 0,
+
+    "assign_application_role": false,
+    "applicant_driver": 0,
+    "applicant_staff": 0,
+    "loa_request": 0,
+
+    "human_resources_role": "<@&0>",
+    "division_manager_role": "",
+    "public_news_role": "",
+    "private_news_role": "",
+
+    "webhook_teamupdate": "",
+    "webhook_audit": "",
+    "webhook_division": "",
+    "webhook_application": "",
+
+    "discord_client_id": "",
+    "discord_client_secret": "",
+    "discord_oauth2_url": "",
+    "discord_callback_url": "https://drivershub.charlws.com/charlws/user/callback",
+    "bot_token": "",
+
+    "perms": {
+        "admin": [0],
+        "hr": [],
+        "event": [],
+        "division": [],
+        "external": [10000],
+        "driver": [100]
+    },
+
+    "divisions": [
+        {"id": 1, "name": "Construction", "roleid": 251}
+    ],
+
+    "roles": {
+        "0": "root",
+        "100": "Driver",
+        "251": "Construction Division",
+        "10000": "External Staff"
+    },
+
+    "ranking": {
+        "0": 0
+    },
+
+    "rankname": {
+        "0": "New Driver"
+    }
+}
