@@ -16,10 +16,10 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart="""+hubbase+"""/run hub main {}
+ExecStart="""+hubbase+"""/launcher hub main {}
 
 [Install]
-WantedBy=multi-user.target"""
+WantedBy=default.target"""
 
 traconf = """[Unit]
 Description={} Tracker
@@ -30,10 +30,10 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart="""+hubbase+"""/run tracker main {}
+ExecStart="""+hubbase+"""/launcher tracker main {}
 
 [Install]
-WantedBy=multi-user.target"""
+WantedBy=default.target"""
 
 serdir = userbase + "/.local/share/systemd/user/"
 pfi = hubbase + "/main.py"
@@ -45,7 +45,7 @@ cf = hubbase + "/configs"
 args = sys.argv[1:]
 
 if len(args) != 3:
-    print("Usage: python3 run.py <hub|tracker> <operation> <config>")
+    print("Usage: launcher <hub|tracker> <operation> <config>")
     sys.exit(1)
     
 app = args[0]
