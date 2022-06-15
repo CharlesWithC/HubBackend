@@ -326,9 +326,16 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         ret = []
         users = []
         for userid in rank:
-            cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {userid} AND userid >= 0")
+            cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
             p = cur.fetchall()
             if len(p) == 0:
+                continue
+            roles = p[0][3].split(",")
+            ok = False
+            for i in roles:
+                if int(i) in config.perms.driver:
+                    ok = True
+            if not ok:
                 continue
             if not noevent:
                 cur.execute(f"SELECT distance * {ratio} + eventpnt FROM driver WHERE userid = {userid}")
@@ -353,8 +360,15 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         for tt in t:
             userid = tt[0]
             if not userid in users:
-                cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE userid = {userid}")
+                cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid = {userid}")
                 p = cur.fetchall()
+                roles = p[0][4].split(",")
+                ok = False
+                for i in roles:
+                    if int(i) in config.perms.driver:
+                        ok = True
+                if not ok:
+                    continue
                 userid = p[0][0]
                 name = p[0][1]
                 discordid = p[0][2]
@@ -373,13 +387,20 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
         return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": len(ret)}}
 
-    cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0  ORDER BY distance * {ratio} + eventpnt DESC LIMIT {(page - 1) * 10}, 10")
+    cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 ORDER BY distance * {ratio} + eventpnt DESC")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
+        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {tt[0]} AND userid >= 0")
         p = cur.fetchall()
         if len(p) == 0:
+            continue
+        roles = p[0][3].split(",")
+        ok = False
+        for i in roles:
+            if int(i) in config.perms.driver:
+                ok = True
+        if not ok:
             continue
         cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1")
         o = cur.fetchall()
@@ -392,13 +413,16 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             divisionpnt += o[0][0]
         ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": int(tt[1]), "totnolimit": int(tt[1]) + divisionpnt})
 
+    if (page - 1) * 10 >= len(ret):
+        return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
+
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": tot}}
 
 @app.get(f"/{config.vtcprefix}/dlog/newdrivers")
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):

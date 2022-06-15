@@ -7,7 +7,6 @@
     "hexcolor": "FFFFFF",
     "distance_unit": "metric",
 
-    "version": "v1.7.2",
     "apidoc": "./apidoc.json",
 
     "domain": "drivershub.charlws.com",
@@ -67,6 +66,7 @@
         "hr": [],
         "event": [],
         "division": [],
+        "audit": [],
         "external": [10000],
         "driver": [100]
     },

@@ -45,7 +45,7 @@ async def home():
 
 @app.get(f"/{config.vtcprefix}/info/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response":{"version": config.version}}
+    return {"error": False, "response":{"backend": "v1.7.3"}}
 
 @app.get(f"/{config.vtcprefix}/info/ip")
 async def apiGetIP(request: Request):
@@ -108,7 +108,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": "401: Unauthroized"}
 
     tconfig = json.loads(config_txt)
-    toremove = ["vtcprefix", "version", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
+    toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", \
             "enabled_plugins", "external_plugins", "navio_token", "discord_client_secret", "bot_token"]
     # vtcprefix will affect nginx settings, so it's not allowed to be changed
@@ -189,7 +189,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     form = await request.form()
     newconfig = json.loads(form["config"])
 
-    toremove = ["vtcprefix", "version", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
+    toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "enabled_plugins", "external_plugins"]
     musthave = ["vtcname", "vtclogo", "intcolor", "hexcolor", \
         "navio_token", "navio_company_id", "guild", \

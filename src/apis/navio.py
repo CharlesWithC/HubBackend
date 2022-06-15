@@ -58,7 +58,7 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
                 continue
         conn = newconn()
         cur = conn.cursor()
-        cur.execute(f"DELETE FROM temptelemetry WHERE steamid = {steamid} AND timestamp < {int(endtime)}")
+        cur.execute(f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
         conn.commit()
 
 @app.post(f"/{config.vtcprefix}/navio")

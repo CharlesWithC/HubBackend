@@ -459,8 +459,12 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
+    ok = False
+    for i in adminroles:
+        if int(i) in config.perms.admin or int(i) in config.perms.audit:
+            ok = True
 
-    if adminhighest >= config.perms.driver[0]: # not staff
+    if not ok:
         # response.status_code = 401
         return {"error": True, "descriptor": "401: Unauthroized"}
 
