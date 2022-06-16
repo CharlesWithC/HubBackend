@@ -36,8 +36,9 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, 
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT)")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT)")
+# NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
+cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT) DATA DIRECTORY = '{config['telemetry_innodb_dir']}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config['telemetry_innodb_dir']}'")
 conn.commit()
 """
 CREATE INDEX user_userid ON user (userid);

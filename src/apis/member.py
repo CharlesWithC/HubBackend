@@ -463,6 +463,10 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
 
     ok = False
     for i in adminroles:

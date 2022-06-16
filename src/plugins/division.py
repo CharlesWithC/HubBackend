@@ -278,7 +278,6 @@ async def divisionValidate(request: Request, response: Response, authorization: 
     adminroles = t[0][1].split(",")
     while "" in adminroles:
         adminroles.remove("")
-    adminhighest = 99999
     
     ok = False
     for i in adminroles:

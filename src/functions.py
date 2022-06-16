@@ -35,6 +35,7 @@ async def AuditLog(userid, text):
             name = t[0][0]
     else:
         name = "System"
+    text = text.replace("''","'").replace("'","''")
     cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{text}', {int(time.time())})")
     conn.commit()
     if config.webhook_audit != "":

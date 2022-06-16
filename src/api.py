@@ -45,7 +45,7 @@ async def home():
 
 @app.get(f"/{config.vtcprefix}/info/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response":{"backend": "v1.7.3"}}
+    return {"error": False, "response":{"backend": "v1.7.4"}}
 
 @app.get(f"/{config.vtcprefix}/info/ip")
 async def apiGetIP(request: Request):

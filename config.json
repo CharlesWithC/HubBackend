@@ -19,6 +19,7 @@
     "mysql_user": "charlws",
     "mysql_passwd": "Not_12345678",
     "mysql_db": "charlws_drivershub",
+    "telemetry_innodb_dir": "/var/lib/mysql/",
 
     "enabled_plugins": ["announcement", "application", "division", "downloads", "event"],
     "external_plugins": ["rework_member"],

@@ -1,4 +1,4 @@
-# Drivers Hub: Backend (v1.7.2)
+# Drivers Hub: Backend
 
 This is the backend for Drivers Hub made by Charles.  
 External plugins supported, add files to [external_plugins](/src/external_plugins/) and edit config, then they'll be loaded without the need to compile again!
