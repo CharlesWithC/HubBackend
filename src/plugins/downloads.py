@@ -9,26 +9,27 @@ import requests
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
 
 @app.get(f"/{config.vtcprefix}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -45,12 +46,12 @@ async def getDownloads(request: Request, response: Response, authorization: str 
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     roles = t[0][1].split(",")
     name = t[0][2]
@@ -64,7 +65,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     cur.execute(f"SELECT data FROM downloads")
     t = cur.fetchall()
@@ -78,21 +79,21 @@ async def getDownloads(request: Request, response: Response, authorization: str 
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -109,12 +110,12 @@ async def patchDownloads(request: Request, response: Response, authorization: st
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     adminname = t[0][2]
@@ -128,7 +129,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     
     if not isAdmin:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     form = await request.form()
     data = b64e(form["data"])
@@ -137,4 +138,4 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     cur.execute(f"INSERT INTO downloads VALUES ('{data}')")
     conn.commit()
 
-    return {"error": False, "response": "Downloads updated"}
+    return {"error": False}

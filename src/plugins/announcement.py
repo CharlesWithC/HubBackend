@@ -10,19 +10,20 @@ import requests
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
 
 @app.get(f"/{config.vtcprefix}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -36,7 +37,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             t = cur.fetchall()
             if len(t) == 0:
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             isapptoken = True
         discordid = t[0][0]
         if not isapptoken:
@@ -55,12 +56,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
                     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                     conn.commit()
                     # response.status_code = 401
-                    return {"error": True, "descriptor": "401: Unauthroized"}
+                    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
 
@@ -76,7 +77,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
-            return {"error": True, "descriptor": "Announcement not found"}
+            return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
         tt = t[0]
         cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
         n = cur.fetchall()
@@ -111,21 +112,21 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -142,12 +143,12 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     adminname = t[0][2]
@@ -164,10 +165,10 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     if not isAdmin and atype == 1:
-        return {"error": True, "descriptor": "Event staff can only post event announcements."}
+        return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
     t = cur.fetchall()
@@ -204,20 +205,20 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         except:
             pass
 
-    return {"error": False, "response": {"message": "Announcement created.", "aid": aid}}
+    return {"error": False, "response": {"aid": aid}}
 
 @app.patch(f"/{config.vtcprefix}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -225,7 +226,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -242,12 +243,12 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     adminname = t[0][2]
@@ -264,7 +265,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     aid = int(form["aid"])
@@ -282,10 +283,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Announcement not found!"}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin:
-        return {"error": True, "descriptor": "Only announcement creator can edit it."}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
     await AuditLog(adminid, f"Updated announcement #{aid}")
@@ -304,20 +305,20 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         except:
             pass
 
-    return {"error": False, "response": {"message": "Announcement updated.", "aid": aid}}
+    return {"error": False, "response": {"aid": aid}}
 
 @app.delete(f"/{config.vtcprefix}/announcement")
 async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -325,7 +326,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -342,12 +343,12 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     while "" in adminroles:
@@ -363,19 +364,19 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT * FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Announcement not found!"}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin: # creator or leadership
-        return {"error": True, "descriptor": "Only announcement creator can delete it."}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
     
     cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")
     await AuditLog(adminid, f"Deleted announcement #{aid}")
     conn.commit()
 
-    return {"error": False, "response": {"message": "Announcement deleted."}}
+    return {"error": False}

@@ -10,6 +10,7 @@ from datetime import datetime
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
 
 from random import randint
 from dateutil import parser

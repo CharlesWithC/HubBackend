@@ -10,19 +10,20 @@ import requests
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
 
 @app.get(f"/{config.vtcprefix}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), page: Optional[int] = 1, eventid: Optional[int] = -1):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -36,7 +37,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             t = cur.fetchall()
             if len(t) == 0:
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             isapptoken = True
         discordid = t[0][0]
         if not isapptoken:
@@ -55,12 +56,12 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                     conn.commit()
                     # response.status_code = 401
-                    return {"error": True, "descriptor": "401: Unauthroized"}
+                    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
     limit = ""
@@ -195,14 +196,14 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 async def getFullEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -216,7 +217,7 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
             t = cur.fetchall()
             if len(t) == 0:
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             isapptoken = True
         discordid = t[0][0]
         if not isapptoken:
@@ -235,12 +236,12 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
                     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                     conn.commit()
                     # response.status_code = 401
-                    return {"error": True, "descriptor": "401: Unauthroized"}
+                    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
     limit = ""
@@ -263,21 +264,21 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
 async def eventVote(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -294,12 +295,12 @@ async def eventVote(request: Request, response: Response, authorization: str = H
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     roles = t[0][1].split(",")
     
@@ -310,45 +311,45 @@ async def eventVote(request: Request, response: Response, authorization: str = H
 
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     eventid = int(form["eventid"])
     cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
-        return {"error": True, "descriptor": "Event not found"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     vote = t[0][0].split(",")
     if str(userid) in vote:
         vote.remove(str(userid))
         cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
         conn.commit()
-        return {"error": False, "response": "Vote removed"}
+        return {"error": False}
     else:
         vote.append(str(userid))
         cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
         conn.commit()
-        return {"error": False, "response": "Vote added"}
+        return {"error": False}
 
 @app.post(f"/{config.vtcprefix}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -365,12 +366,12 @@ async def postEvent(request: Request, response: Response, authorization: str = H
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     adminname = t[0][2]
@@ -384,7 +385,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
     t = cur.fetchall()
@@ -409,20 +410,20 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 
-    return {"error": False, "response": {"message": "Event created.", "eventid": nxteventid}}
+    return {"error": False, "response": {"eventid": nxteventid}}
 
 @app.patch(f"/{config.vtcprefix}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -430,7 +431,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -447,12 +448,12 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     adminname = t[0][2]
@@ -466,7 +467,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     eventid = int(form["eventid"])
@@ -486,7 +487,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Event not found!"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     creator = t[0][0]
     
     cur.execute(f"UPDATE event SET title = '{title}', tmplink = '{tmplink}', departure = '{departure}', destination = '{destination}', \
@@ -494,20 +495,20 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     await AuditLog(adminid, f"Updated event #{eventid}")
     conn.commit()
 
-    return {"error": False, "response": {"message": "Event updated.", "eventid": eventid}}
+    return {"error": False, "response": {"eventid": eventid}}
 
 @app.delete(f"/{config.vtcprefix}/event")
 async def deleteEvent(eventid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -515,7 +516,7 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -532,12 +533,12 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
 
@@ -548,32 +549,32 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Event not found!"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     
     cur.execute(f"UPDATE event SET eventid = -eventid WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Deleted event #{eventid}")
     conn.commit()
 
-    return {"error": False, "response": {"message": "Event deleted."}}
+    return {"error": False}
 
 @app.post(f"/{config.vtcprefix}/event/attendee")
 async def updateEventAttendee(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -581,7 +582,7 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -598,12 +599,12 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
     while "" in adminroles:
@@ -616,7 +617,7 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     
     if not ok:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     eventid = int(form["eventid"])
@@ -629,7 +630,7 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 404
-        return {"error": True, "descriptor": "Event not found!"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     orgattendees = t[0][0].split(",")
     while "" in orgattendees:
         orgattendees.remove("")

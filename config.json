@@ -13,6 +13,7 @@
     "dhdomain": "hub.charlws.com",
     "server_ip": "127.0.0.1",
     "server_port": 7777,
+    "language_dir": "./languages",
 
     "database": "mysql",
     "mysql_host": "localhost",
@@ -69,11 +70,13 @@
         "division": [],
         "audit": [],
         "external": [10000],
-        "driver": [100]
+        "driver": [100],
+        "staff_of_the_month": [],
+        "driver_of_the_month": []
     },
 
     "divisions": [
-        {"id": 1, "name": "Construction", "roleid": 251}
+        {"id": 1, "name": "Construction", "roleid": 251, "point": 500}
     ],
 
     "roles": {

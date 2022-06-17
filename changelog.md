@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.8.1**  
+1.Supported multiple language  
+2.Improved division to support certain point for each division  
+3.Removed remaining VTC-specific functions  
+
 **v1.7.4**  
 1.Added telemetry_innodb_dir config option to store telemetry table on external storage  
 2.Bug fixes  

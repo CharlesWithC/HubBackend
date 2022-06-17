@@ -12,6 +12,7 @@ import json, time, requests
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
 
 client_id = config.discord_client_id
 client_secret = config.discord_client_secret
@@ -43,15 +44,15 @@ async def userCallback(code: str, request: Request, response: Response):
             reason = t[0][0]
             expire = t[0][1]
             expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
-            return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are banned for {reason} until {expire} UTC", status_code=302)
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire}), status_code=302)
 
         if config.guild != 0:
             r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
             if r.status_code != 200:
-                return RedirectResponse(url=f"https://{dhdomain}/auth?message=Failed to check if you are in discord.", status_code=302)
+                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
             d = json.loads(r.text)
             if not "user" in d.keys():
-                return RedirectResponse(url=f"https://{dhdomain}/auth?message=You are not in our discord server.", status_code=302)
+                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "not_in_discord_server"), status_code=302)
 
         cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
@@ -76,14 +77,14 @@ async def userCallback(code: str, request: Request, response: Response):
 async def userRefreshToken(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -91,7 +92,7 @@ async def userRefreshToken(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -108,7 +109,7 @@ async def userRefreshToken(request: Request, response: Response, authorization: 
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     stoken = str(uuid4())
@@ -119,19 +120,19 @@ async def userRefreshToken(request: Request, response: Response, authorization: 
 @app.get(f'/{config.vtcprefix}/user/validate')
 async def userValidate(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -147,7 +148,7 @@ async def userValidate(request: Request, response: Response, authorization: str 
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT steamid, truckersmpid, joints FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -164,7 +165,7 @@ async def userValidate(request: Request, response: Response, authorization: str 
     conn.commit()
     if steamid == -1 or truckersmpid == -1:
         extra = ""
-    return {"error": False, "response": {"message": "Validated", "discordid": f"{discordid}", "ip": ip, "extra": extra}}
+    return {"error": False, "response": {"discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
 @app.get(f"/{config.vtcprefix}/user/steamauth")
 async def steamOpenid(request: Request, response: Response):
@@ -181,14 +182,14 @@ async def steamCallback(request: Request, response: Response):
 async def steamBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -196,7 +197,7 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -213,24 +214,24 @@ async def steamBind(request: Request, response: Response, authorization: str = H
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
         # response.status_code = 503
-        return {"error": True, "descriptor": "503: Steam servers are down"}
+        return {"error": True, "descriptor": ml.tr(request, "steam_api_error")}
     if r.text.find("is_valid:true") == -1:
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid steam authentication."}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_steam_auth")}
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
     cur.execute(f"SELECT * FROM user WHERE discordid != '{discordid}' AND steamid = {steamid}")
     t = cur.fetchall()
     if len(t) > 0:
-        return {"error": True, "descriptor": "Steam account already bound to another user."}
+        return {"error": True, "descriptor": ml.tr(request, "steam_bound_to_other_account")}
 
     cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -241,7 +242,7 @@ async def steamBind(request: Request, response: Response, authorization: str = H
         cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Steam ID updated from%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
         p = cur.fetchall()
         if len(p) > 0:
-            return {"error": True, "descriptor": "Update rejected:<br>Last update within 7 days."}
+            return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_7d")}
 
         for role in roles:
             if role == "100":
@@ -265,26 +266,26 @@ async def steamBind(request: Request, response: Response, authorization: str = H
                     if str(tmpsteamid) == str(steamid):
                         cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
                         conn.commit()
-                        return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid, "skiptmp": True}}
+                        return {"error": False, "response": {"steamid": steamid, "skiptmp": True}}
 
     # in case user changed steam
     cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
     conn.commit()
     
-    return {"error": False, "response": {"message": "Steam account bound.", "steamid": steamid}}
+    return {"error": False, "response": {"steamid": steamid}}
 
 @app.post(f"/{config.vtcprefix}/user/truckersmpbind")
 async def truckersmpBind(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -292,7 +293,7 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
     orgiptype = 4
@@ -309,7 +310,7 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     truckersmpid = form["truckersmpid"]
@@ -317,79 +318,78 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
         truckersmpid = int(truckersmpid)
     except:
         # response.status_code = 400
-        return {"error": True, "descriptor": "Invalid TruckersMP ID."}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
 
     r = requests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
     if r.status_code != 200:
-        # response.status_code = 503
-        return {"error": True, "descriptor": "503: TruckersMP servers are down"}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error")}
     d = json.loads(r.text)
     if d["error"]:
         # response.status_code = 400
-        return {"error": True, "descriptor": "Invalid TruckersMP ID."}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 400
-        return {"error": True, "descriptor": "Steam account not bound."}
+        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]
     tmpname = d["response"]["name"]
     if tmpsteamid != steamid:
         # response.status_code = 400
-        return {"error": True, "descriptor": f"Steam account bound to TruckersMP User {tmpname} ({truckersmpid}) does not match your steam account."}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"tmpname": tmpname, "truckersmpid": truckersmpid})}
 
     cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
     conn.commit()
-    return {"error": False, "response": {"message": "TruckersMP account bound.", "truckersmpid": truckersmpid}}
+    return {"error": False, "response": {"truckersmpid": truckersmpid}}
 
 @app.post(f'/{config.vtcprefix}/user/revoke')
 async def userRevoke(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     conn.commit()
-    return {"error": False, "response": {"message": "Token revoked"}}
+    return {"error": False}
 
 @app.post(f'/{config.vtcprefix}/user/apptoken')
 async def userBot(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     stoken = str(uuid4())
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     cur.execute(f"INSERT INTO appsession VALUES ('{stoken}', {discordid}, {int(time.time())})")
     conn.commit()
-    return {"error": False, "response": {"message": "Application token updated", "token": stoken}}
+    return {"error": False, "response": {"token": stoken}}

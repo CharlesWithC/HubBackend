@@ -10,6 +10,11 @@ import requests
 from app import app, config
 from db import newconn
 from functions import *
+import multilang as ml
+
+DIVISIONPNT = {}
+for division in config.divisions:
+    DIVISIONPNT[division["id"]] = division["point"]
 
 @app.get(f"/{config.vtcprefix}/dlog/stats")
 async def dlogStats():
@@ -215,14 +220,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         page = 1
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -234,7 +239,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
     if not isapptoken:
@@ -253,16 +258,16 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     ratio = 1
     if config.distance_unit == "imperial":
@@ -347,10 +352,11 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 totnolimit = int(o[0][0])
             divisionpnt = 0
             if not nodivision:
-                cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= {firstlogid}")
+                cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= {firstlogid} GROUP BY divisionid")
                 o = cur.fetchall()
-                if len(o) > 0:
-                    divisionpnt = o[0][0] * 500
+                for oo in o:
+                    if o[0][0] in DIVISIONPNT.keys():
+                        divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
             users.append(userid)
             ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
                 "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
@@ -375,10 +381,11 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 avatar = p[0][3]
                 divisionpnt = 0
                 if not nodivision:
-                    cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {userid} AND status = 1")
+                    cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
                     o = cur.fetchall()
-                    if len(o) > 0:
-                        divisionpnt = o[0][0] * 500
+                    for oo in o:
+                        if o[0][0] in DIVISIONPNT.keys():
+                            divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
                 ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
                     "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": int(tt[1]) + divisionpnt})
 
@@ -402,11 +409,12 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 ok = True
         if not ok:
             continue
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1")
-        o = cur.fetchall()
         divisionpnt = 0
-        if len(o) > 0:
-            divisionpnt = o[0][0] * 500
+        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1 AND logid >= 0 GROUP BY divisionid")
+        o = cur.fetchall()
+        for oo in o:
+            if o[0][0] in DIVISIONPNT.keys():
+                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
         cur.execute(f"SELECT status FROM division WHERE userid = {tt[0]} AND logid = -1")
         o = cur.fetchall()
         if len(o) > 0:
@@ -428,14 +436,14 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -447,7 +455,7 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
     if not isapptoken:
@@ -466,16 +474,16 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     conn = newconn()
     cur = conn.cursor()
@@ -494,14 +502,14 @@ async def dlogList(request: Request, response: Response, authorization: str = He
     page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -534,7 +542,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
                         cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                         conn.commit()
                         # response.status_code = 401
-                        return {"error": True, "descriptor": "401: Unauthroized"}
+                        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
             t = cur.fetchall()
             if len(t) == 0:
@@ -621,14 +629,14 @@ async def dlogList(request: Request, response: Response, authorization: str = He
 async def dlogDetail(logid: int, request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
-        return {"error": True, "descriptor": "No authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         # response.status_code = 401
-        return {"error": True, "descriptor": "Invalid authorization header"}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
 
@@ -640,7 +648,7 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         t = cur.fetchall()
         if len(t) == 0:
             # response.status_code = 401
-            return {"error": True, "descriptor": "401: Unauthroized"}
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
     if not isapptoken:
@@ -659,23 +667,23 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
                 # response.status_code = 401
-                return {"error": True, "descriptor": "401: Unauthroized"}
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
         # response.status_code = 401
-        return {"error": True, "descriptor": "401: Unauthroized"}
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
-        return {"error": True, "response": "Log not found"}
+        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     data = json.loads(b64d(t[0][1]))
     distance = t[0][3]
     name = "Unknown Driver"

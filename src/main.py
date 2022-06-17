@@ -40,6 +40,7 @@ print(f"Environment variable HUB_CONFIG_FILE set to {config_path}")
 from app import app, config
 from db import newconn
 import api
+import multilang
 
 if __name__ == "__main__":
     print(f"{config.vtcname} Drivers Hub")
