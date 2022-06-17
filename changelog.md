@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.8.2**  
+1.Fixed bug allowing user to edit `telemetry_innodb_dir` and `language_dir` from API  
+2.Added Spanish and French translation  
+
 **v1.8.1**  
 1.Supported multiple language  
 2.Improved division to support certain point for each division  

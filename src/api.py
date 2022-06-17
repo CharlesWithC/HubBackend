@@ -42,11 +42,11 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.1 | Copyright (C) 2022 CharlesWithC"}
+    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.2 | Copyright (C) 2022 CharlesWithC"}
 
 @app.get(f"/{config.vtcprefix}/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response": "v1.8.1"}
+    return {"error": False, "response": "v1.8.2"}
 
 @app.get(f"/{config.vtcprefix}/ip")
 async def apiGetIP(request: Request):
@@ -110,7 +110,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     tconfig = json.loads(config_txt)
     toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", \
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "telemetry_innodb_dir", "language_dir", \
             "enabled_plugins", "external_plugins", "navio_token", "discord_client_secret", "bot_token"]
     # vtcprefix will affect nginx settings, so it's not allowed to be changed
     # enabled_plugins are paid functions, so it's only changeable by developer
@@ -191,7 +191,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     newconfig = json.loads(form["config"])
 
     toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "enabled_plugins", "external_plugins"]
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "telemetry_innodb_dir", "language_dir", \
+            "enabled_plugins", "external_plugins"]
     musthave = ["vtcname", "vtclogo", "intcolor", "hexcolor", \
         "navio_token", "navio_company_id", "guild", \
         "discord_client_id", "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "bot_token"]
