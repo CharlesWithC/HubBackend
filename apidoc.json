@@ -468,10 +468,27 @@
             "post": {
                 "summary": "Bind TruckersMP Account",
                 "tags": ["auth"],
-                "operationId": "truckersmpBind_vtc_user_truckersmpbind_post",
+                "operationId": "truckersmpBind_atm_user_truckersmpbind_post",
                 "security": [{
                     "bearerAuth": []
                 }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "truckersmpid": {
+                                        "description": "TruckersMP ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["truckersmpid"]
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",

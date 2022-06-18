@@ -165,6 +165,8 @@ async def userValidate(request: Request, response: Response, authorization: str 
     conn.commit()
     if steamid == -1 or truckersmpid == -1:
         extra = ""
+    if steamid > 0 and not config.truckersmp_bind:
+        extra = ""
     return {"error": False, "response": {"discordid": f"{discordid}", "ip": ip, "extra": extra}}
 
 @app.get(f"/{config.vtcprefix}/user/steamauth")
@@ -332,7 +334,7 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
+        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound_before_truckersmp")}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]

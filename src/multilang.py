@@ -23,7 +23,7 @@ def translate(request: Request, key: str, var: Optional[dict] = {}):
     if key in langdata:
         ret = langdata[key]
         for vkey in var.keys():
-            ret = ret.replace("{" + vkey + "}", var[vkey])
+            ret = ret.replace("{" + vkey + "}", str(var[vkey]))
         return ret
     else: # no translation for key
         if lang != "en": # try english
@@ -31,7 +31,7 @@ def translate(request: Request, key: str, var: Optional[dict] = {}):
             if key in langdata:
                 ret = langdata[key]
                 for vkey in var.keys():
-                    ret = ret.replace("{" + vkey + "}", var[vkey])
+                    ret = ret.replace("{" + vkey + "}", str(var[vkey]))
                 return ret
             else: # invalid key
                 return ""

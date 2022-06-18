@@ -28,6 +28,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     cur = conn.cursor()
 
     userid = -1
+    roles = []
     if stoken != "guest":
         isapptoken = False
         cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
@@ -64,6 +65,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
+        for r in roles:
+            if r == "":
+                roles.remove(r)
 
     limit = ""
     ok = False

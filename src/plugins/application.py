@@ -92,8 +92,10 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
-    if t[0][3] == 0 or t[0][4] == 0:
-        return {"error": True, "descriptor": ml.tr(request, "must_verify_steam_truckersmp")}
+    if t[0][4] <= 0:
+        return {"error": True, "descriptor": ml.tr(request, "must_verify_steam")}
+    if t[0][3] <= 0 and config.truckersmp_bind:
+        return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp")}
     userid = t[0][5]
 
     form = await request.form()

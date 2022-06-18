@@ -340,9 +340,13 @@ async def addMember(request: Request, response: Response, authorization: str = H
     if t[0][0] != -1:
         # response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "member_registered")}
-    if t[0][1] == 0 or t[0][2] == 0:
+    if t[0][2] <= 0:
         # response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_not_bound")}
+        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
+    if t[0][1] <= 0 and config.truckersmp_bind:
+        # response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
+
     name = t[0][3]
     cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
     cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")

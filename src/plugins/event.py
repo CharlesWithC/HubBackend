@@ -28,6 +28,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     cur = conn.cursor()
 
     userid = -1
+    roles = []
     if stoken != "guest":
         isapptoken = False
         cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
@@ -64,6 +65,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
+        for r in roles:
+            if r == "":
+                roles.remove(r)
     limit = ""
     ok = False
     for i in roles:
@@ -208,6 +212,7 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
     cur = conn.cursor()
 
     userid = -1
+    roles = []
     if stoken != "guest":
         isapptoken = False
         cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
@@ -244,6 +249,9 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
+        for r in roles:
+            if r == "":
+                roles.remove(r)
     limit = ""
     ok = False
     for i in roles:

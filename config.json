@@ -6,6 +6,7 @@
     "intcolor": 16777215,
     "hexcolor": "FFFFFF",
     "distance_unit": "metric",
+    "truckersmp_bind": true,
 
     "apidoc": "./apidoc.json",
 
