@@ -81,5 +81,9 @@
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated as a division delivery!",
 
-    "event_not_found": "Event not found"
+    "event_not_found": "Event not found",
+
+    "invalid_distance_unit": "Invalid distance unit. Only 'metric' and 'imperial' is accepted.",
+    "invalid_value": "Invalid value for {key}",
+    "admin_cannot_be_changed": "Roles with admin permission cannot be changed, please contact development team."
 }

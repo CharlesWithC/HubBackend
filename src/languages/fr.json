@@ -81,5 +81,9 @@
     "division_validation_not_found": "Demande de validation de division de livraison introuvable.",
     "division_not_validated": "Cette livraison n'est pas validée comme une livraison en division !",
 
-    "event_not_found": "Evénement introuvable"
+    "event_not_found": "Evénement introuvable",
+
+    "invalid_distance_unit": "Unité de distance invalide. Seuls « metric » et « imperial » sont acceptés.",
+    "invalid_value": "Valeur invalide pour {key}",
+    "admin_cannot_be_changed": "Les rôles avec autorisation d'administrateur ne peuvent pas être modifiés, veuillez contacter l'équipe de développement."
 }

@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.8.3**  
+Fixed bugs of config editing  
+
 **v1.8.2**  
 1.Fixed bug allowing user to edit `telemetry_innodb_dir` and `language_dir` from API  
 2.Added Spanish and French translation  

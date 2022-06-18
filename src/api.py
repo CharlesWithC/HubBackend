@@ -42,11 +42,11 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.2 | Copyright (C) 2022 CharlesWithC"}
+    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.3 | Copyright (C) 2022 CharlesWithC"}
 
 @app.get(f"/{config.vtcprefix}/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response": "v1.8.2"}
+    return {"error": False, "response": "v1.8.3"}
 
 @app.get(f"/{config.vtcprefix}/ip")
 async def apiGetIP(request: Request):
@@ -111,7 +111,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     tconfig = json.loads(config_txt)
     toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "telemetry_innodb_dir", "language_dir", \
-            "enabled_plugins", "external_plugins", "navio_token", "discord_client_secret", "bot_token"]
+            "enabled_plugins", "external_plugins"]
     # vtcprefix will affect nginx settings, so it's not allowed to be changed
     # enabled_plugins are paid functions, so it's only changeable by developer
     # navio_token, discord_client_secret, bot_token are sensitive data, so it's only editable but not viewable
@@ -119,6 +119,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if not "division" in tconfig["enabled_plugins"]:
         del tconfig["divisions"]
 
+    tconfig["navio_token"] = ""
+    tconfig["discord_client_secret"] = ""
+    tconfig["bot_token"] = ""
     for i in toremove:
         if i in tconfig:
             del tconfig[i]
@@ -127,7 +130,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 def reload():
     time.sleep(5)
-    os.system(f"./run hub restart atm &")
+    os.system(f"./launcher hub restart atm &")
 
 @app.patch(f"/{config.vtcprefix}/config")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
@@ -206,15 +209,15 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if i in tconfig:
             if i == "distance_unit":
                 if not newconfig[i] in ["metric", "imperial"]:
-                    return {"error": True, "descriptor": "Invalid distance unit"}
+                    return {"error": True, "descriptor": ml.tr(request, "invalid_distance_unit")}
             
             if i in musthave:
                 if newconfig[i] == "" or newconfig[i] == 0:
-                    return {"error": True, "descriptor": "Invalid value for " + i}
+                    return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": i})}
             
             if i == "perms":
                 if newconfig[i]["admin"] != tconfig[i]["admin"]:
-                    return {"error": True, "descriptor": "Roles with admin permission cannot be changed, please contact development team."}
+                    return {"error": True, "descriptor": ml.tr(request, "admin_cannot_be_changed")}
 
             tconfig[i] = newconfig[i]
 
@@ -222,7 +225,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     threading.Thread(target=reload).start()
 
-    return {"error": False, "response": "Config updated. Service will reload in a short time."}
+    return {"error": False}
 
 @app.post(f"/{config.vtcprefix}/reload")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
@@ -282,4 +285,4 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     threading.Thread(target=reload).start()
 
-    return {"error": False, "response": "Service will reload in a short time."}
+    return {"error": False}

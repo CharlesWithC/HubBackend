@@ -81,5 +81,9 @@
     "division_validation_not_found": "Solicitud de validación de división de entrega no encontrada.",
     "division_not_validated": "Esta entrega no está validada como entrega de división!",
 
-    "event_not_found": "Evento no encontrado"
+    "event_not_found": "Evento no encontrado",
+
+    "invalid_distance_unit": "Unidad de distancia no válida. Solo se acepta 'metric' e 'imperial'.",
+    "invalid_value": "Valor no válido para {key}",
+    "admin_cannot_be_changed": "Los roles con permiso de administrador no se pueden cambiar, comuníquese con el equipo de desarrollo."
 }
