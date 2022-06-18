@@ -153,18 +153,26 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
 
     if config.delivery_log_channel_id != 0:
         try:
-            source_city = d["data"]["object"]["source_city"]["name"]
-            source_company = d["data"]["object"]["source_company"]["name"]
-            destination_city = d["data"]["object"]["destination_city"]["name"]
-            destination_company = d["data"]["object"]["destination_company"]["name"]
+            source_city = d["data"]["object"]["source_city"]
+            source_company = d["data"]["object"]["source_company"]
+            destination_city = d["data"]["object"]["destination_city"]
+            destination_company = d["data"]["object"]["destination_company"]
             if source_city is None:
                 source_city = ""
+            else:
+                source_city = source_city["name"]
             if source_company is None:
                 source_company = ""
+            else:
+                source_company = source_company["name"]
             if destination_city is None:
                 destination_city = ""
+            else:
+                destination_city = destination_city["name"]
             if destination_company is None:
                 destination_company = ""
+            else:
+                destination_company = destination_company["name"]
             cargo = d["data"]["object"]["cargo"]["name"]
             cargo_mass = d["data"]["object"]["cargo"]["mass"]
             headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}

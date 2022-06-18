@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.8.4**  
+1.Fixed bugs of config editing and improved data check  
+2.Fixed bugs that delivery embed cannot be posted when *.name is none  
+
 **v1.8.3**  
 Fixed bugs of config editing  
 

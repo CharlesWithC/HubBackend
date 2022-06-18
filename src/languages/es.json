@@ -85,5 +85,6 @@
 
     "invalid_distance_unit": "Unidad de distancia no válida. Solo se acepta 'metric' e 'imperial'.",
     "invalid_value": "Valor no válido para {key}",
-    "admin_cannot_be_changed": "Los roles con permiso de administrador no se pueden cambiar, comuníquese con el equipo de desarrollo."
+    "admin_cannot_be_changed": "Los roles con permiso de administrador no se pueden cambiar, comuníquese con el equipo de desarrollo.",
+    "config_data_type_mismatch": "El tipo de datos de una o más claves no coincide con el tipo de datos original."
 }

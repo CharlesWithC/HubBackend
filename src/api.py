@@ -42,16 +42,24 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.3 | Copyright (C) 2022 CharlesWithC"}
+    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.4 | Copyright (C) 2022 CharlesWithC"}
 
 @app.get(f"/{config.vtcprefix}/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response": "v1.8.3"}
+    return {"error": False, "response": "v1.8.4"}
 
 @app.get(f"/{config.vtcprefix}/ip")
 async def apiGetIP(request: Request):
     return {"error": False, "response": request.client.host}
-    
+
+def ChangeAllIntToStr(tconfig):
+    for key, value in tconfig.items():
+        if type(tconfig[key]) == dict:
+            tconfig[key] = ChangeAllIntToStr(value)
+        elif type(tconfig[key]) == int:
+            tconfig[key] = str(value)
+    return tconfig
+
 @app.get(f"/{config.vtcprefix}/config")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
@@ -125,6 +133,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     for i in toremove:
         if i in tconfig:
             del tconfig[i]
+    
+    tconfig = ChangeAllIntToStr(tconfig)
     
     return {"error": False, "response": {"config": tconfig}}
 
@@ -205,6 +215,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if i in newconfig:
             del newconfig[i]
     
+    orgconfig = json.loads(config_txt)
+
     for i in newconfig:
         if i in tconfig:
             if i == "distance_unit":
@@ -220,6 +232,43 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
                     return {"error": True, "descriptor": ml.tr(request, "admin_cannot_be_changed")}
 
             tconfig[i] = newconfig[i]
+            
+    try:
+        for t in ["intcolor", "navio_company_id"]:
+            tconfig[t] = int(tconfig[t])
+
+        if len(tconfig["hexcolor"]) != 6:
+            return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": "hexcolor"})}
+        
+        for t in tconfig.keys():
+            if type(orgconfig[t]) == int:
+                tconfig[t] = int(tconfig[t])
+            if type(tconfig[t]) != type(orgconfig[t]):
+                return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
+        
+        for perm in tconfig["perms"].keys():
+            for i in range(len(tconfig["perms"][perm])):
+                tconfig["perms"][perm][i] = int(tconfig["perms"][perm][i])
+        
+        if "divisions" in tconfig.keys():
+            for i in range(0,len(tconfig["divisions"])):
+                tconfig["divisions"][i]["id"] = int(tconfig["divisions"][i]["id"])
+                tconfig["divisions"][i]["roleid"] = int(tconfig["divisions"][i]["roleid"])
+                tconfig["divisions"][i]["point"] = int(tconfig["divisions"][i]["point"])
+        
+        for role in tconfig["roles"].keys():
+            tconfig["roles"][role] = str(tconfig["roles"][role])
+        
+        for ranking in tconfig["ranking"].keys():
+            tconfig["ranking"][ranking] = int(tconfig["ranking"][ranking])
+        
+        for rankname in tconfig["rankname"].keys():
+            tconfig["rankname"][rankname] = str(tconfig["rankname"][rankname])
+    
+    except:
+        import traceback
+        traceback.print_exc()
+        return {"error": True, "descriptor": ml.tr(request, "config_data_type_mismatch")}
 
     open(config_path, "w").write(json.dumps(tconfig))
 

@@ -46,7 +46,7 @@ async def userCallback(code: str, request: Request, response: Response):
             expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
             return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire}), status_code=302)
 
-        if config.guild != 0:
+        if config.guild != "" and config.guild != "0":
             r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
             if r.status_code != 200:
                 return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
