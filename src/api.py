@@ -42,11 +42,11 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.6 | Copyright (C) 2022 CharlesWithC"}
+    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.7 | Copyright (C) 2022 CharlesWithC"}
 
 @app.get(f"/{config.vtcprefix}/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response": "v1.8.6"}
+    return {"error": False, "response": "v1.8.7"}
 
 @app.get(f"/{config.vtcprefix}/ip")
 async def apiGetIP(request: Request):
@@ -126,6 +126,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     
     if not "division" in tconfig["enabled_plugins"]:
         del tconfig["divisions"]
+        
+    for i in range(len(tconfig["welcome_roles"])):
+        tconfig["welcome_roles"][i] = str(tconfig["welcome_roles"][i])
 
     tconfig["navio_token"] = ""
     tconfig["discord_client_secret"] = ""
@@ -226,7 +229,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             if i in musthave:
                 if newconfig[i] == "" or newconfig[i] == 0:
                     return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": i})}
-            
+
             if i == "perms":
                 if newconfig[i]["admin"] != tconfig[i]["admin"]:
                     return {"error": True, "descriptor": ml.tr(request, "admin_cannot_be_changed")}
@@ -249,6 +252,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         for perm in tconfig["perms"].keys():
             for i in range(len(tconfig["perms"][perm])):
                 tconfig["perms"][perm][i] = int(tconfig["perms"][perm][i])
+        
+        for i in range(len(tconfig["welcome_roles"])):
+            tconfig["welcome_roles"][i] = int(tconfig["welcome_roles"][i])
         
         if "divisions" in tconfig.keys():
             for i in range(0,len(tconfig["divisions"])):

@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.8.7**  
+1.Fixed [apis/navio](/src/apis/navio.py) `config.external_plugins` mistaked for `external_plugins`  
+2.Fixed [apis/member](/src/apis/member.py) to use `distance` instead of `mile` for `/member/point` endpoint  
+3.Added custom driver rank up message  
+4.Added option to give / remove Discord roles for new members  
+
 **v1.8.6**  
 1.Added custom team update message, accept `{mention}` `{vtcname}` variable  
 2.Added custom welcome message to be sent in drivers channel  

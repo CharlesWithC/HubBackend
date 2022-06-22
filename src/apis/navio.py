@@ -144,7 +144,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     t = cur.fetchall()
     logid = int(t[0][0])
 
-    if "tracker" in enabled_plugins:
+    if "tracker" in config.enabled_plugins:
         threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")

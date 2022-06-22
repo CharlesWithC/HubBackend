@@ -663,12 +663,34 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             except:
                 pass
         
+        actioncnt = 0
         if config.welcome_message != "":
             headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": config.welcome_message.replace("{mention}", usermention).replace("{vtcname}", config.vtcname), 
                     "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": config.welcome_image},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
+            if r.status_code == 200:
+                actioncnt += 1
+        
+        if config.welcome_roles != []:
+            for role in config.welcome_roles:
+                if actioncnt >= 5:
+                    break # rate limit
+                if int(role) < 0:
+                    try:
+                        r = requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
+                        if r.status_code == 200:
+                            actioncnt += 1
+                    except:
+                        pass
+                elif int(role) > 0:
+                    try:
+                        r = requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
+                        if r.status_code == 200:
+                            actioncnt += 1
+                    except:
+                        pass
 
     if config.perms.driver[0] in removedroles:
         cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
@@ -779,7 +801,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     udiscordid = p[0][0]
 
     if int(distance) > 0:
-        distance = "+" + form["mile"]
+        distance = "+" + form["distance"]
     if int(eventpnt) > 0:
         eventpnt = "+" + str(eventpnt)
 
@@ -946,6 +968,21 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
                 requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
                 for role in curroles:
                     requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                
+                if int(config.rank_up_channel_id) != 0 and config.rank_up_message != "":
+                    try:
+                        usermention = f"<@{discordid}>"
+                        rankmention = f"<@&{rank}>"
+                        msg = config.rank_up_message.replace("{mention}", usermention).replace("{rank}", rankmention)
+
+                        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+                        ddurl = f"https://discord.com/api/v9/channels/{config.rank_up_channel_id}/messages"
+                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
+                                "footer": {"text": f"Congratulations!", "icon_url": config.vtclogo},\
+                                        "timestamp": str(datetime.now()), "color": config.intcolor}}))                       
+                    except:
+                        pass
+
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             return {"error": True, "descriptor": ml.tr(request, "not_in_discord_server")}

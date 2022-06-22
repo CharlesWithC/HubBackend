@@ -46,6 +46,8 @@
     "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**. Welcome to the family!",
     "welcome_message": "",
     "welcome_image": "https://hub.xxxvtc.com/images/bg.jpg",
+    "welcome_roles": [1237912873213, -43953495734],
+    "rank_up_message": "GG {mention}! You have ranked up to {rank}!",
 
     "assign_application_role": false,
     "applicant_driver": 0,
