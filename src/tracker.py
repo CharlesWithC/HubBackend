@@ -94,6 +94,11 @@ async def navio(uri):
                     traceback.print_exc()
             await asyncio.sleep(0.01)
 
+if not "tracker" in config.enabled_plugins:
+    print(f"Tracker not enabled for {config.vtcname}")
+    print("To enable, add 'tracker' in config.enabled_plugins")
+    exit(1)
+
 while 1:
     try:
         asyncio.run(navio("wss://gateway.navio.app"))

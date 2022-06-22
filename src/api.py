@@ -42,11 +42,11 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}/info')
 async def home():
-    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.5 | Copyright (C) 2022 CharlesWithC"}
+    return {"error": False, "response": f"{config.vtcname} Drivers Hub API v1.8.6 | Copyright (C) 2022 CharlesWithC"}
 
 @app.get(f"/{config.vtcprefix}/version")
 async def apiGetVersion(request: Request):
-    return {"error": False, "response": "v1.8.5"}
+    return {"error": False, "response": "v1.8.6"}
 
 @app.get(f"/{config.vtcprefix}/ip")
 async def apiGetIP(request: Request):

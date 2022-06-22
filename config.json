@@ -1,6 +1,6 @@
 {
-    "vtcprefix": "Charles Drivers Hub",
-    "vtcname": "charlws",
+    "vtcprefix": "charlws",
+    "vtcname": "Charles Drivers Hub",
     "vtclogo": "https://hub.charlws.com/images/logo.png",
     "teamupdate": "https://hub.charlws.com/images/TeamUpdate.png",
     "intcolor": 16777215,
@@ -23,7 +23,7 @@
     "mysql_db": "charlws_drivershub",
     "telemetry_innodb_dir": "/var/lib/mysql/",
 
-    "enabled_plugins": ["announcement", "application", "division", "downloads", "event"],
+    "enabled_plugins": ["announcement", "application", "division", "downloads", "event", "tracker"],
     "external_plugins": ["rework_member"],
     "delivery_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
@@ -38,10 +38,14 @@
 
     "navio_token": "",
     "navio_company_id": 0,
-
+    
+    "in_guild_check": true,
     "guild": 0,
     "driver_channel_id": 0,
     "delivery_log_channel_id": 0,
+    "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**. Welcome to the family!",
+    "welcome_message": "",
+    "welcome_image": "https://hub.xxxvtc.com/images/bg.jpg",
 
     "assign_application_role": false,
     "applicant_driver": 0,

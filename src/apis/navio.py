@@ -68,7 +68,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     cur = conn.cursor()
 
     if request.client.host != "185.233.107.244":
-        await AuditLog(0, f"Detected suspicious navio webhook post from {request.client.host} - REJECTED")
+        await AuditLog(-999, f"Detected suspicious navio webhook post from {request.client.host} - REJECTED")
         return {"error": True, "descriptor": "Validation failed"}
     
     d = await request.json()
@@ -143,7 +143,9 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
     t = cur.fetchall()
     logid = int(t[0][0])
-    threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
+
+    if "tracker" in enabled_plugins:
+        threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
     cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")

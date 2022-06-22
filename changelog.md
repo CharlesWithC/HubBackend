@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.8.6**  
+1.Added custom team update message, accept `{mention}` `{vtcname}` variable  
+2.Added custom welcome message to be sent in drivers channel  
+3.Added option to disable user in guild check  
+4.Changed navio reject webhook responsible user to system  
+5.Automated database settings nxt***id record creation  
+
 **v1.8.5**  
 1.Added option to remove TruckersMP Account requirement  
 2.Fixed bug that translate function does not work with non-string variable  

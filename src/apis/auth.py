@@ -46,14 +46,6 @@ async def userCallback(code: str, request: Request, response: Response):
             expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
             return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire}), status_code=302)
 
-        if config.guild != "" and config.guild != "0":
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
-            if r.status_code != 200:
-                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
-            d = json.loads(r.text)
-            if not "user" in d.keys():
-                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "not_in_discord_server"), status_code=302)
-
         cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         username = user_data['username']
@@ -66,6 +58,15 @@ async def userCallback(code: str, request: Request, response: Response):
             await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)\nUser must be added to member list by staff manually.")
         else:
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
+        
+        if config.in_guild_check:
+            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
+            if r.status_code != 200:
+                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
+            d = json.loads(r.text)
+            if not "user" in d.keys():
+                return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "not_in_discord_server"), status_code=302)
+
         cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
         conn.commit()
         user_data["token"] = stoken
