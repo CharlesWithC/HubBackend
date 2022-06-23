@@ -269,13 +269,13 @@ async def steamBind(request: Request, response: Response, authorization: str = H
                     if str(tmpsteamid) == str(steamid):
                         cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
                         conn.commit()
-                        return {"error": False, "response": {"steamid": steamid, "skiptmp": True}}
+                        return {"error": False, "response": {"steamid": str(steamid), "skiptmp": True}}
 
     # in case user changed steam
     cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
     conn.commit()
     
-    return {"error": False, "response": {"steamid": steamid}}
+    return {"error": False, "response": {"steamid": str(steamid)}}
 
 @app.post(f"/{config.vtcprefix}/user/truckersmpbind")
 async def truckersmpBind(request: Request, response: Response, authorization: str = Header(None)):
@@ -342,11 +342,11 @@ async def truckersmpBind(request: Request, response: Response, authorization: st
     tmpname = d["response"]["name"]
     if tmpsteamid != steamid:
         # response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"tmpname": tmpname, "truckersmpid": truckersmpid})}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"tmpname": tmpname, "truckersmpid": str(truckersmpid)})}
 
     cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
     conn.commit()
-    return {"error": False, "response": {"truckersmpid": truckersmpid}}
+    return {"error": False, "response": {"truckersmpid": str(truckersmpid)}}
 
 @app.post(f'/{config.vtcprefix}/user/revoke')
 async def userRevoke(request: Request, response: Response, authorization: str = Header(None)):

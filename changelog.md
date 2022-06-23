@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.8.8**  
+Fixed Discord and Steam ID JSON precision lose  
+
 **v1.8.7**  
 1.Fixed [apis/navio](/src/apis/navio.py) `config.external_plugins` mistaked for `external_plugins`  
 2.Fixed [apis/member](/src/apis/member.py) to use `distance` instead of `mile` for `/member/point` endpoint  

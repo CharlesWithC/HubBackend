@@ -112,7 +112,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         if expire != 9999999999999999:
             duration = f'until {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))} UTC'
         await AuditLog(adminid, f"Banned **{username}** (Discord ID `{discordid}`) for `{reason}` **{duration}**.")
-        return {"error": False, "response": {"discordid": discordid}}
+        return {"error": False, "response": {"discordid": str(discordid)}}
     else:
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
@@ -185,7 +185,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
         conn.commit()
         await AuditLog(adminid, f"Unbanned user with Discord ID `{discordid}`")
-        return {"error": False, "response": {"discordid": discordid}}
+        return {"error": False, "response": {"discordid": str(discordid)}}
 
 @app.get(f"/{config.vtcprefix}/user/list")
 async def userList(page:int, request: Request, response: Response, authorization: str = Header(None)):
