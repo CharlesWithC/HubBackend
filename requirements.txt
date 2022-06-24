@@ -1,0 +1,7 @@
+fastapi==0.78.0
+uvicorn==0.17.6
+py-cord==2.0.0b7
+discord_oauth2==0.2
+steamsignin==1.0.1
+python-dateutil==2.8.2
+python-multipart==0.0.5

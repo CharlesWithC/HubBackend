@@ -407,11 +407,9 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     conn.commit()
 
     return {"error": False, "response": {"bio": bio}}
-
-@app.get(f"/{config.vtcprefix}/auditlog")
-async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None)):
-    if page <= 0:
-        page = 1
+    
+@app.patch(f"/{config.vtcprefix}/user/discord")
+async def adminUpdateDiscord(request: Request, response: Response, authorization: str = Header(None)):
     if authorization is None:
         # response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
@@ -424,7 +422,6 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
-
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
@@ -447,39 +444,51 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
             conn.commit()
             # response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         # response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
+    adminname = t[0][2]
     while "" in adminroles:
         adminroles.remove("")
-    ok = False
-    for i in adminroles:
-        if int(i) in config.perms.admin or int(i) in config.perms.audit:
-            ok = True
 
-    if not ok:
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+    
+    if not isAdmin:
         # response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    
+    form = await request.form()
+    old_discord_id = int(form["old_discord_id"])
+    new_discord_id = int(form["new_discord_id"])
 
-    cur.execute(f"SELECT * FROM auditlog ORDER BY timestamp DESC LIMIT {(page - 1) * 30}, 30")
+    cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()
-    ret = []
-    for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
-        p = cur.fetchall()
-        name = "Unknown"
-        if len(p) > 0:
-            name = p[0][0]
-        if tt[0] == -999:
-            name = "System"
-        ret.append({"timestamp": tt[2], "user": name, "operation": tt[1]})
+    if len(t) == 0:
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
-    cur.execute(f"SELECT COUNT(*) FROM auditlog")
+    cur.execute(f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
     t = cur.fetchall()
-    tot = t[0][0]
+    if len(t) == 0:
+        return {"error": True, "descriptor": ml.tr(request, "user_must_register_first")}
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    cur.execute(f"SELECT userid FROM user WHERE discordid = {new_discord_id}")
+    t = cur.fetchall()
+    if len(t) > 0 and t[0][0] != -1:
+        return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member")}
+
+    cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM session WHERE discordid = {old_discord_id}")
+    cur.execute(f"DELETE FROM session WHERE discordid = {new_discord_id}")
+    cur.execute(f"UPDATE user SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    conn.commit()
+
+    await AuditLog(adminid, f"Updated user Discord ID from `{old_discord_id}` to `{new_discord_id}`")
+
+    return {"error": False, "response": {"discordid": str(new_discord_id)}}

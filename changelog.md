@@ -1,5 +1,17 @@
 # Changelog
 
+**v1.8.9**  
+**API**  
+1.Removed `intcolor` from `config.json` and calculate it with `hexcolor` on start  
+2.Removed `/version` endpoint and improved `/info` endpoint  
+3.Added admin endpoint to change user Discord ID (`/user/discord`)  
+4.Added adminid (responsible user) & opquery (operation) filter for `/auditlog`  
+5.Added profit for member profile  
+6.Combined `europrofit` and `dollarprofit` to `profit` (dict) for `/dlog/stats` and `/dlog/chart`  
+7.Improved `/dlog/stats` response data format  
+**Launcher**  
+Changed `RestartSec` to `60` when registering service  
+
 **v1.8.8**  
 Fixed Discord and Steam ID JSON precision lose  
 

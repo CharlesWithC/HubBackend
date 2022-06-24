@@ -400,6 +400,57 @@
                 }
             }
         },
+        "/vtc/user/discord": {
+            "patch": {
+                "summary": "Update User Dicsord",
+                "tags": ["admin"],
+                "operationId": "updateUserDiscord",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "old_discord_id": {
+                                        "description": "Old Discord ID",
+                                        "type": "integer"
+                                    },
+                                    "new_discord_id": {
+                                        "description": "New Discord ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["old_discord_id", "new_discord_id"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/user/steamauth": {
             "get": {
                 "summary": "Steam Authentication",
@@ -2518,23 +2569,6 @@
                 }
             }
         },
-        "/vtc/info/version": {
-            "get": {
-                "summary": "Get Drivers Hub API Version",
-                "tags": ["info"],
-                "operationId": "apiGetVersion_vtc_info_version_get",
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/vtc/info/ip": {
             "get": {
                 "summary": "Get Your IP",
@@ -2555,7 +2589,7 @@
         "/vtc/auditlog": {
             "get": {
                 "summary": "Get Audit Log",
-                "tags": ["manage"],
+                "tags": ["admin"],
                 "operationId": "getAuditLog",
                 "security": [{
                     "bearerAuth": []
@@ -2567,6 +2601,22 @@
                         "type": "integer"
                     },
                     "name": "page",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Responsible User ID",
+                        "type": "integar"
+                    },
+                    "name": "userid",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Operation",
+                        "type": "string"
+                    },
+                    "name": "operation",
                     "in": "query"
                 }],
                 "responses": {

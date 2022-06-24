@@ -3,8 +3,6 @@
     "vtcname": "Charles Drivers Hub",
     "vtclogo": "https://hub.charlws.com/images/logo.png",
     "teamupdate": "https://hub.charlws.com/images/TeamUpdate.png",
-    "intcolor": 16777215,
-    "hexcolor": "FFFFFF",
     "distance_unit": "metric",
     "truckersmp_bind": true,
 
@@ -59,10 +57,11 @@
     "public_news_role": "",
     "private_news_role": "",
 
-    "webhook_teamupdate": "",
     "webhook_audit": "",
-    "webhook_division": "",
     "webhook_application": "",
+    "webhook_division": "",
+    "webhook_teamupdate": "",
+    "webhook_tracker": "",
 
     "discord_client_id": "",
     "discord_client_secret": "",

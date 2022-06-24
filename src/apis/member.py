@@ -212,6 +212,22 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         fuel = t[0][3]
         xp = t[0][4]
         eventpnt = t[0][5]
+
+    europrofit = 0
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
+    t = cur.fetchall()
+    if len(t) > 0:
+        europrofit = t[0][0]
+    if europrofit is None:
+        europrofit = 0
+    dollarprofit = 0
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
+    t = cur.fetchall()
+    if len(t) > 0:
+        dollarprofit = t[0][0]
+    if dollarprofit is None:
+        dollarprofit = 0
+    profit = {"euro": europrofit, "dollar": dollarprofit}
     
     if userid < 0:
         return {"error": True, "descriptor": ml.tr(request, "not_a_member")}
@@ -238,7 +254,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
             divisionpnt += o[0][0]
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "discordid": str(t[0][0]), "avatar": t[0][2], \
             "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-                "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
+                "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "profit": profit, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -262,7 +278,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         return {"error": False, "response": {"userid": userid, "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64d(t[0][7]), "roles": roles, "join": t[0][4], \
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
-                    "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
+                    "distance": distance, "totjobs": totjobs, "fuel": fuel, "xp": xp, "profit": profit, "eventpnt": eventpnt, "divisionpnt": divisionpnt}}
 
 @app.post(f'/{config.vtcprefix}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):

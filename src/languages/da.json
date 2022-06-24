@@ -26,6 +26,8 @@
     "member_not_found": "Medlemet blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Den bannede bruger kan ikke blive medlem.",
     "user_not_found": "Bruger ikke fundet",
+    "user_must_register_first": "Brugeren skal først registrere sig med en ny Discord-konto.",
+    "user_must_not_be_member": "Bruger med ny Discord-konto må ikke være medlem.",
     "member_registered": "Medlem er allerede registerret.",
     "steam_not_bound": "Brugern skal have registreret deres Steam konto",
     "truckersmp_not_bound": "Brugern skal have registreret deres TruckersMP konto",

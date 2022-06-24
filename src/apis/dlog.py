@@ -52,6 +52,9 @@ async def dlogStats():
     if newdollarprofit is None:
         newdollarprofit = 0
 
+    profit = {"euro": europrofit, "dollar": dollarprofit}
+    newprofit = {"euro": neweuroprofit, "dollar": newdollarprofit}
+
     cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0")
     fuel = cur.fetchone()[0]
     cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0 AND timestamp >= {int(time.time())-86400}")
@@ -94,11 +97,10 @@ async def dlogStats():
         else:
             username = "Unknown Driver"
 
-    return {"error": False, "response": {"drivers": drivers, "newdrivers": newdrivers, \
-        "jobs": jobs, "newjobs": newjobs, "ets2jobs": ets2jobs, "atsjobs": atsjobs, \
-        "europrofit": europrofit, "dollarprofit": dollarprofit, \
-        "neweuroprofit": neweuroprofit, "newdollarprofit": newdollarprofit, \
-            "fuel": fuel, "newfuel": newfuel, "distance": distance, "newdistance": newdistance, 
+    return {"error": False, "response": {"drivers": {"all": drivers, "new": newdrivers}, \
+        "jobs": {"all": jobs, "new": newjobs, "ets2": ets2jobs, "ats": atsjobs}, \
+        "profit": {"all": profit, "new": newprofit}, \
+            "fuel": {"all": fuel, "new": newfuel}, "distance": {"all": distance, "new": newdistance}, 
                 "driver_of_the_day": {"userid": userid, "discordid": str(dotdiscordid), "name": username, "avatar": avatar, "distance": int(distance)}}}
 
 @app.get(f"/{config.vtcprefix}/dlog/chart")
@@ -201,7 +203,8 @@ async def dlogChart(request: Request, response: Response,
         dollar = basedollar
         if len(t) > 0 and t[0][0] != None:
             dollar += int(t[0][0])
-        ret.append({"starttime": starttime, "endtime": endtime, "distance": distance, "fuel": fuel, "euro": euro, "dollar": dollar})
+        profit = {"euro": euro, "dollar": dollar}
+        ret.append({"starttime": starttime, "endtime": endtime, "distance": distance, "fuel": fuel, "profit": profit})
     
         if addup:
             basedistance = distance

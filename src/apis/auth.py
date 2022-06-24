@@ -58,6 +58,7 @@ async def userCallback(code: str, request: Request, response: Response):
             await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)\nUser must be added to member list by staff manually.")
         else:
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
+        conn.commit()
         
         if config.in_guild_check:
             r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})

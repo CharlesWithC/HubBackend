@@ -15,7 +15,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=always
-RestartSec=1
+RestartSec=60
 ExecStart="""+hubbase+"""/launcher hub main {}
 
 [Install]
@@ -29,7 +29,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=always
-RestartSec=1
+RestartSec=60
 ExecStart="""+hubbase+"""/launcher tracker main {}
 
 [Install]

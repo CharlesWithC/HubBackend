@@ -26,6 +26,8 @@
     "member_not_found": "Membre introuvable.",
     "banned_user_cannot_be_accepted": "L'utilisateur banni ne peut pas être accepté comme membre.",
     "user_not_found": "Utilisateur non trouvé",
+    "user_must_register_first": "L'utilisateur doit d'abord s'inscrire avec un nouveau compte Discord.",
+    "user_must_not_be_member": "L'utilisateur avec un nouveau compte Discord ne doit pas être membre.",
     "member_registered": "Membre déjà inscrit.",
     "steam_not_bound": "L'utilisateur doit avoir vérifié son compte Steam.",
     "truckersmp_not_bound": "L'utilisateur doit avoir vérifié son compte TruckersMP.",
