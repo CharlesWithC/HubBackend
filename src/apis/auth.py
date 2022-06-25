@@ -28,7 +28,14 @@ async def userLogin(request: Request):
     return RedirectResponse(url=oauth2_url, status_code=302)
     
 @app.get(f'/{config.vtcprefix}/user/callback')
-async def userCallback(code: str, request: Request, response: Response):
+async def userCallback(request: Request, response: Response, code: Optional[str] = "", error: Optional[str] = "", error_description: Optional[str] = ""):
+    referer = request.headers.get("Referer")
+    if referer != "https://discord.com/":
+        return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
+    
+    if code == "":
+        return RedirectResponse(url=f"https://{dhdomain}/auth?message={error_description}", status_code=302)
+
     tokens = discord_auth.get_tokens(code)
     if "access_token" in tokens.keys():
         user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
@@ -72,7 +79,7 @@ async def userCallback(code: str, request: Request, response: Response):
         conn.commit()
         user_data["token"] = stoken
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
-    # response.status_code = 401
+        
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
 @app.get(f"/{config.vtcprefix}/user/refresh")

@@ -36,10 +36,6 @@ if "downloads" in config.enabled_plugins:
 if "event" in config.enabled_plugins:
     import plugins.event
 
-@app.get(f'/{config.vtcprefix}/info')
+@app.get(f'/{config.vtcprefix}')
 async def home():
-    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.8.9", "copyright": "Copyright (C) 2022 CharlesWithC"}}
-
-@app.get(f"/{config.vtcprefix}/ip")
-async def apiGetIP(request: Request):
-    return {"error": False, "response": request.client.host}
+    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.8.10", "copyright": "Copyright (C) 2022 CharlesWithC"}}

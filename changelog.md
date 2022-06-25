@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.8.10**  
+1.Improved Discord OAuth2 Login  
+2.Removed `/ip` endpoint  
+3.Changed `/info` endpoint path to `/`  
+
 **v1.8.9**  
 **API**  
 1.Removed `intcolor` from `config.json` and calculate it with `hexcolor` on start  

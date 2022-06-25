@@ -4,6 +4,7 @@
     "vtclogo": "https://hub.charlws.com/images/logo.png",
     "teamupdate": "https://hub.charlws.com/images/TeamUpdate.png",
     "distance_unit": "metric",
+    "hexcolor": "FFFFFF",
     "truckersmp_bind": true,
 
     "apidoc": "./apidoc.json",
