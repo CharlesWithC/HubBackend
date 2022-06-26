@@ -38,4 +38,4 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}')
 async def home():
-    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.8.10", "copyright": "Copyright (C) 2022 CharlesWithC"}}
+    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.8.11", "copyright": "Copyright (C) 2022 CharlesWithC"}}

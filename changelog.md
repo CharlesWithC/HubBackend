@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.8.11**  
+Fixed bug of `welcome_roles` failing to remove roles  
+
 **v1.8.10**  
 1.Improved Discord OAuth2 Login  
 2.Removed `/ip` endpoint  

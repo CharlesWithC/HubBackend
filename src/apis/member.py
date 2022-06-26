@@ -679,34 +679,19 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             except:
                 pass
         
-        actioncnt = 0
         if config.welcome_message != "":
             headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{config.driver_channel_id}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": config.welcome_message.replace("{mention}", usermention).replace("{vtcname}", config.vtcname), 
+            requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": config.welcome_message.replace("{mention}", usermention).replace("{vtcname}", config.vtcname), 
                     "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtclogo}, "image": {"url": config.welcome_image},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
-            if r.status_code == 200:
-                actioncnt += 1
         
         if config.welcome_roles != []:
             for role in config.welcome_roles:
-                if actioncnt >= 5:
-                    break # rate limit
                 if int(role) < 0:
-                    try:
-                        r = requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
-                        if r.status_code == 200:
-                            actioncnt += 1
-                    except:
-                        pass
+                    requests.delete(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
                 elif int(role) > 0:
-                    try:
-                        r = requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
-                        if r.status_code == 200:
-                            actioncnt += 1
-                    except:
-                        pass
+                    requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{role}', headers = {"Authorization": f"Bot {config.bot_token}"}, timeout = 1)
 
     if config.perms.driver[0] in removedroles:
         cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
