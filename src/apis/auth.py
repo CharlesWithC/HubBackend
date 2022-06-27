@@ -62,7 +62,7 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         if len(t) == 0:
             cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{user_data['avatar']}', '',\
                 '{email}', -1, -1, '', {int(time.time())})")
-            await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)\nUser must be added to member list by staff manually.")
+            await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)")
         else:
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
         conn.commit()

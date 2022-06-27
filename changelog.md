@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.8.12**  
+Fixed bug of navio webhook not accepting WoT jobs due to non-int meta distance  
+
 **v1.8.11**  
 Fixed bug of `welcome_roles` failing to remove roles  
 

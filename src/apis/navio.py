@@ -122,7 +122,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         revenue = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
         isdelivered = 1
         xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
-        meta_distance = int(d["data"]["object"]["events"][-1]["meta"]["distance"])
+        meta_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
         if driven_distance < 0 or driven_distance > meta_distance * 1.5:
             driven_distance = 0
     else:
