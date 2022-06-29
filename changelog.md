@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.8.13**  
+1.Removed function to not create database table for disabled plugins  
+2.Updated delivery webhook post  
+
 **v1.8.12**  
 Fixed bug of navio webhook not accepting WoT jobs due to non-int meta distance  
 

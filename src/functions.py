@@ -105,3 +105,9 @@ def iptype(Ip):
         return "ipv6"
     else:
         return "invalid ip"
+
+def TSeparator(num):
+    if int(num) < 1000:
+        return str(num)
+    else:
+        return TSeparator(str(num)[:-3]) + "," + str(num)[-3:]
