@@ -17,7 +17,12 @@ for division in config.divisions:
     DIVISIONPNT[division["id"]] = division["point"]
 
 @app.get(f"/{config.vtcprefix}/dlog/stats")
-async def dlogStats():
+async def dlogStats(request: Request, response: Response):
+    rl = ratelimit(request.client.host, 'GET /dlog/stats', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     conn = newconn()
     cur = conn.cursor()
 
@@ -63,6 +68,8 @@ async def dlogStats():
         fuel = 0
     if newfuel is None:
         newfuel = 0
+    fuel = int(fuel)
+    newfuel = int(newfuel)
 
     cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid >=0")
     distance = cur.fetchone()[0]
@@ -72,6 +79,8 @@ async def dlogStats():
         distance = 0
     if newdistance is None:
         newdistance = 0
+    distance = int(distance)
+    newdistance = int(newdistance)
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE unit = 1")
     ets2jobs = cur.fetchone()[0]
@@ -107,6 +116,11 @@ async def dlogStats():
 async def dlogChart(request: Request, response: Response,
     scale: Optional[int] = 2, addup: Optional[bool] = False, quserid: Optional[int] = -1,
     authorization: Optional[str] = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /dlog/chart', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     conn = newconn()
     cur = conn.cursor()
     if authorization is None:
@@ -218,18 +232,22 @@ async def dlogChart(request: Request, response: Response,
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
         noevent: Optional[bool] = False, nodivision: Optional[bool] = False):
+    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
     if page <= 0:
         page = 1
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -241,7 +259,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -260,16 +278,16 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     ratio = 1
@@ -437,15 +455,20 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
 @app.get(f"/{config.vtcprefix}/dlog/newdrivers")
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /dlog/newdrivers', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+        
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -457,7 +480,7 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -476,16 +499,16 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     conn = newconn()
@@ -503,15 +526,20 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
 @app.get(f"/{config.vtcprefix}/dlog/list")
 async def dlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
+    rl = ratelimit(request.client.host, 'GET /dlog/list', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -544,7 +572,7 @@ async def dlogList(request: Request, response: Response, authorization: str = He
                     if ip != request.client.host:
                         cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                         conn.commit()
-                        # response.status_code = 401
+                        response.status_code = 401
                         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
             t = cur.fetchall()
@@ -630,15 +658,20 @@ async def dlogList(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.vtcprefix}/dlog/detail")
 async def dlogDetail(logid: int, request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /dlog/detail', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -650,7 +683,7 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -669,16 +702,16 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     conn = newconn()
@@ -686,6 +719,7 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
     cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     data = json.loads(b64d(t[0][1]))
     distance = t[0][3]

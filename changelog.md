@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.9.1**  
+1.Added Rate Limiter  
+2.Added response status code for 401 and 404 errors  
+3.Updated delivery webhook post  
+4.Allowed application token for **GET** `/downloads`  
+
 **v1.8.13**  
 1.Removed function to not create database table for disabled plugins  
 2.Updated delivery webhook post  

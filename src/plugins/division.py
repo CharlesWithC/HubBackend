@@ -29,15 +29,20 @@ async def getRanks(request: Request, response: Response):
 
 @app.post(f"/{config.vtcprefix}/division/validate")
 async def divisionValidateRequest(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /division/validate', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -49,7 +54,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -68,7 +73,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
@@ -79,14 +84,17 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     t = cur.fetchall()
     userid = t[0][0]
     if userid == -1:
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found")}
     luserid = t[0][0]
     if userid != luserid:
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
@@ -110,6 +118,7 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
                 if division["roleid"] == int(role):
                     udivisions.append(division["id"])
     if not divisionid in udivisions:
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "not_division_driver")}
     
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
@@ -158,15 +167,20 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
 
 @app.get(f"/{config.vtcprefix}/division/validate")
 async def divisionValidateList(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /division/validate', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -178,7 +192,7 @@ async def divisionValidateList(request: Request, response: Response, authorizati
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -197,12 +211,12 @@ async def divisionValidateList(request: Request, response: Response, authorizati
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -215,7 +229,7 @@ async def divisionValidateList(request: Request, response: Response, authorizati
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0 AND logid >= 0")
@@ -233,15 +247,20 @@ async def divisionValidateList(request: Request, response: Response, authorizati
 
 @app.patch(f"/{config.vtcprefix}/division/validate")
 async def divisionValidate(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /division/validate', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -253,7 +272,7 @@ async def divisionValidate(request: Request, response: Response, authorization: 
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -272,12 +291,12 @@ async def divisionValidate(request: Request, response: Response, authorization: 
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -290,7 +309,7 @@ async def divisionValidate(request: Request, response: Response, authorization: 
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
@@ -344,15 +363,20 @@ async def divisionValidate(request: Request, response: Response, authorization: 
 
 @app.get(f"/{config.vtcprefix}/division/info")
 async def divisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /division/info', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -364,7 +388,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -383,7 +407,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = '{discordid}'")

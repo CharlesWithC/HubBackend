@@ -45,17 +45,22 @@ for division in divisions:
 
 @app.get(f'/{config.vtcprefix}/member/list')
 async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
+    rl = ratelimit(request.client.host, 'GET /member/list', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if page <= 0:
         page = 1
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -67,7 +72,7 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -86,16 +91,16 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     search = search.replace("'","''").lower()
@@ -140,15 +145,20 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
 
 @app.get(f'/{config.vtcprefix}/member/info')
 async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /member/info', 30, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -160,7 +170,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -179,12 +189,12 @@ async def member(request: Request, response: Response, userid: int, authorizatio
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -236,7 +246,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 404
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -259,7 +269,7 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 404
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -282,15 +292,20 @@ async def member(request: Request, response: Response, userid: int, authorizatio
 
 @app.post(f'/{config.vtcprefix}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /member/add', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -298,7 +313,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -315,12 +330,12 @@ async def addMember(request: Request, response: Response, authorization: str = H
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -333,7 +348,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     form = await request.form()
@@ -351,16 +366,13 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 400
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     if t[0][0] != -1:
-        # response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "member_registered")}
     if t[0][2] <= 0:
-        # response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
     if t[0][1] <= 0 and config.truckersmp_bind:
-        # response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
 
     name = t[0][3]
@@ -390,15 +402,20 @@ async def addMember(request: Request, response: Response, authorization: str = H
 
 @app.delete(f"/{config.vtcprefix}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /member/resign', 60, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -406,7 +423,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -423,12 +440,12 @@ async def deleteMember(request: Request, response: Response, authorization: str 
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, steamid, name, discordid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
@@ -449,15 +466,20 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
 @app.delete(f"/{config.vtcprefix}/member/dismiss")
 async def dismissMember(userid: int, request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 60, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -465,7 +487,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -482,12 +504,12 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -504,12 +526,13 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     steamid = t[0][1]
@@ -523,6 +546,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         if int(i) < highest:
             highest = int(i)
     if adminhighest >= highest:
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
 
     cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
@@ -537,15 +561,20 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
 
 @app.post(f'/{config.vtcprefix}/member/role')
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /member/role', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -553,7 +582,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -570,12 +599,12 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -599,7 +628,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
             ok = True
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
@@ -613,7 +642,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 404
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
     username = t[0][0]
     oldroles = t[0][1].split(",")
@@ -633,10 +662,12 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 
     for add in addedroles:
         if add <= adminhighest:
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal")}
     
     for remove in removedroles:
         if remove <= adminhighest:
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
 
     if len(addedroles) + len(removedroles) == 0:
@@ -645,9 +676,11 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if not isAdmin and not isHR and isDS:
         for add in addedroles:
             if add not in divisionroles:
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         for remove in removedroles:
             if remove not in divisionroles:
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     roles = [str(i) for i in roles]
@@ -723,15 +756,20 @@ async def getRanks(request: Request, response: Response):
 
 @app.post(f"/{config.vtcprefix}/member/point")
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /member/point', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -739,7 +777,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -756,12 +794,12 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -774,7 +812,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
@@ -812,15 +850,20 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 
 @app.get(f"/{config.vtcprefix}/member/steam")
 async def memberSteam(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /member/steam', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -832,7 +875,7 @@ async def memberSteam(request: Request, response: Response, authorization: str =
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -851,16 +894,16 @@ async def memberSteam(request: Request, response: Response, authorization: str =
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     cur.execute(f"SELECT steamid, name, userid FROM user")
@@ -879,15 +922,20 @@ def point2rank(point):
 
 @app.patch(f"/{config.vtcprefix}/member/discordrole")
 async def memberDiscordrole(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/discordrole', 60, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -899,7 +947,7 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         isapptoken = True
     discordid = t[0][0]
@@ -918,16 +966,16 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
             if ip != request.client.host:
                 cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
                 conn.commit()
-                # response.status_code = 401
+                response.status_code = 401
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     if userid == -1:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     ratio = 1

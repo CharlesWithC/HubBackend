@@ -22,22 +22,27 @@ def ChangeAllIntToStr(tconfig):
 
 @app.get(f"/{config.vtcprefix}/config")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /config', 30, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -54,12 +59,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -73,7 +78,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             isAdmin = True
     
     if not isAdmin:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     tconfig = json.loads(config_txt)
@@ -107,22 +112,27 @@ def reload():
 
 @app.patch(f"/{config.vtcprefix}/config")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /config', 600, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -139,12 +149,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -158,7 +168,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             isAdmin = True
     
     if not isAdmin:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     tconfig = json.loads(config_txt)
@@ -242,22 +252,27 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.vtcprefix}/reload")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /reload', 600, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -274,12 +289,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -293,7 +308,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             isAdmin = True
     
     if not isAdmin:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     threading.Thread(target=reload).start()
@@ -302,17 +317,22 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.get(f"/{config.vtcprefix}/auditlog")
 async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1, operation: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /auditlog', 30, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
     if page <= 0:
         page = 1
     if authorization is None:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
     if not authorization.startswith("Bearer "):
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     conn = newconn()
     cur = conn.cursor()
@@ -320,7 +340,7 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
     cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     discordid = t[0][0]
     ip = t[0][1]
@@ -337,12 +357,12 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
         if ip != request.client.host:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            # response.status_code = 401
+            response.status_code = 401
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
@@ -354,7 +374,7 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
             ok = True
 
     if not ok:
-        # response.status_code = 401
+        response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     operation = operation.lower().replace("'","''")

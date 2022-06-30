@@ -40,6 +40,8 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT) DATA DIRECTORY = '{config['telemetry_innodb_dir']}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config['telemetry_innodb_dir']}'")
 
+cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, firstop BIGINT, opcount INT)")
+
 cur.execute(f"SELECT * FROM settings WHERE skey = 'nxtuserid'")
 t = cur.fetchall()
 if len(t) == 0:

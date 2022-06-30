@@ -107,7 +107,35 @@ def iptype(Ip):
         return "invalid ip"
 
 def TSeparator(num):
+    flag = ""
+    if int(num) < 0:
+        flag = "-"
+        num = abs(int(num))
     if int(num) < 1000:
-        return str(num)
+        return flag + str(num)
     else:
-        return TSeparator(str(num)[:-3]) + "," + str(num)[-3:]
+        return flag + TSeparator(str(num)[:-3]) + "," + str(num)[-3:]
+
+def ratelimit(ip, endpoint, limittime, limitcnt):
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT firstop, opcount FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '{endpoint}', {int(time.time())}, 1)")
+        conn.commit()
+        return 0
+    else:
+        firstop = t[0][0]
+        opcount = t[0][1]
+        if int(time.time()) - firstop > limittime:
+            cur.execute(f"UPDATE ratelimit SET firstop = {int(time.time())}, opcount = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+            conn.commit()
+            return 0
+        else:
+            if opcount + 1 > limitcnt:
+                return limittime - (int(time.time()) - firstop)
+            else:
+                cur.execute(f"UPDATE ratelimit SET opcount = opcount + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+                conn.commit()
+                return 0
