@@ -1,8 +1,8 @@
 {
-    "vtcprefix": "charlws",
-    "vtcname": "Charles Drivers Hub",
-    "vtclogo": "https://hub.charlws.com/images/logo.png",
-    "teamupdate": "https://hub.charlws.com/images/TeamUpdate.png",
+    "vtcprefix": "",
+    "vtcname": "",
+    "vtclogo": "https://{dhdomain}/images/logo.png",
+    "teamupdate": "https://{dhdomain}/images/TeamUpdate.png",
     "distance_unit": "metric",
     "hexcolor": "FFFFFF",
     "truckersmp_bind": true,
@@ -10,17 +10,17 @@
     "apidoc": "./apidoc.json",
 
     "domain": "drivershub.charlws.com",
-    "dhdomain": "hub.charlws.com",
+    "dhdomain": "",
     "server_ip": "127.0.0.1",
     "server_port": 7777,
     "language_dir": "./languages",
 
     "database": "mysql",
     "mysql_host": "localhost",
-    "mysql_user": "charlws",
-    "mysql_passwd": "Not_12345678",
-    "mysql_db": "charlws_drivershub",
-    "telemetry_innodb_dir": "/var/lib/mysql/",
+    "mysql_user": "",
+    "mysql_passwd": "",
+    "mysql_db": "_drivershub",
+    "telemetry_innodb_dir": "/var/lib/mysqlext/",
 
     "enabled_plugins": ["announcement", "application", "division", "downloads", "event", "tracker"],
     "external_plugins": ["rework_member"],
@@ -42,9 +42,9 @@
     "guild": 0,
     "driver_channel_id": 0,
     "delivery_log_channel_id": 0,
-    "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**. Welcome to the family!",
+    "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**.",
     "welcome_message": "",
-    "welcome_image": "https://hub.xxxvtc.com/images/bg.jpg",
+    "welcome_image": "https://{dhdomain}/images/bg.jpg",
     "welcome_roles": [1237912873213, -43953495734],
     "rank_up_message": "GG {mention}! You have ranked up to {rank}!",
 
@@ -62,12 +62,11 @@
     "webhook_application": "",
     "webhook_division": "",
     "webhook_teamupdate": "",
-    "webhook_tracker": "",
 
     "discord_client_id": "",
     "discord_client_secret": "",
     "discord_oauth2_url": "",
-    "discord_callback_url": "https://drivershub.charlws.com/charlws/user/callback",
+    "discord_callback_url": "https://drivershub.charlws.com/{vtcprefix}/user/callback",
     "bot_token": "",
 
     "perms": {
