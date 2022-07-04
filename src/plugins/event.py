@@ -70,9 +70,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
-        for r in roles:
-            if r == "":
-                roles.remove(r)
+        while "" in roles:
+            roles.remove("")
     limit = ""
     ok = False
     for i in roles:
@@ -260,9 +259,8 @@ async def getFullEvent(request: Request, response: Response, authorization: str 
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
-        for r in roles:
-            if r == "":
-                roles.remove(r)
+        while "" in roles:
+            roles.remove("")
     limit = ""
     ok = False
     for i in roles:
@@ -327,6 +325,8 @@ async def eventVote(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     userid = t[0][0]
     roles = t[0][1].split(",")
+    while "" in roles:
+        roles.remove("")
     
     ok = False
     for i in roles:
@@ -581,6 +581,8 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     adminroles = t[0][1].split(",")
+    while "" in adminroles:
+        adminroles.remove("")
 
     ok = False
     for i in adminroles:

@@ -111,6 +111,8 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     cur.execute(f"SELECT roles FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     roles = t[0][0].split(",")
+    while "" in roles:
+        roles.remove("")
     udivisions = []
     for role in roles:
         if int(role) in divisionroles:

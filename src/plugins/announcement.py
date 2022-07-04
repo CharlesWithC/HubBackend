@@ -70,9 +70,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         userid = t[0][0]
         roles = t[0][1].split(",")
-        for r in roles:
-            if r == "":
-                roles.remove(r)
+        while "" in roles:
+            roles.remove("")
 
     limit = ""
     ok = False

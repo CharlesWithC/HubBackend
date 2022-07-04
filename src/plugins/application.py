@@ -73,10 +73,14 @@ async def newApplication(request: Request, response: Response, authorization: st
     userid = t[0][0]
 
     if apptype == 1:
-        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
+        cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
         p = cur.fetchall()
-        if len(p) > 0:
-            return {"error": True, "descriptor": ml.tr(request, "already_a_driver")}
+        roles = p[0][0].split(",")
+        while "" in roles:
+            roles.remove("")
+        for r in config.perms.driver:
+            if str(r) in roles:
+                return {"error": True, "descriptor": ml.tr(request, "already_a_driver")}
         cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND discordid = {discordid} AND status = 0")
         p = cur.fetchall()
         if len(p) > 0:
@@ -102,11 +106,6 @@ async def newApplication(request: Request, response: Response, authorization: st
     if t[0][3] <= 0 and config.truckersmp_bind:
         return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp")}
     userid = t[0][5]
-
-    form = await request.form()
-    apptype = form["apptype"]
-    data = json.loads(form["data"])
-    data = b64e(json.dumps(data))
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
     t = cur.fetchall()
@@ -536,6 +535,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
     t = cur.fetchall()
     userid = t[0][0]
     roles = t[0][1].split(",")
+    while "" in roles:
+        roles.remove("")
     ok = False
     isAdmin = False
     isHR = False
@@ -628,6 +629,8 @@ async def getApplicationList(page: int, apptype: int, request: Request, response
     t = cur.fetchall()
     userid = t[0][0]
     roles = t[0][1].split(",")
+    while "" in roles:
+        roles.remove("")
     ok = False
     isAdmin = False
     isHR = False

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.9.2**  
+1.Fixed bugs with role detection  
+2.Updated driver detection mechanism for application  
+
 **v1.9.1**  
 1.Added Rate Limiter  
 2.Added response status code for 401 and 404 errors  

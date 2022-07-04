@@ -357,6 +357,8 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
             if len(p) == 0:
                 continue
             roles = p[0][3].split(",")
+            while "" in roles:
+                roles.remove("")
             ok = False
             for i in roles:
                 if int(i) in config.perms.driver:
@@ -390,6 +392,8 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid = {userid}")
                 p = cur.fetchall()
                 roles = p[0][4].split(",")
+                while "" in roles:
+                    roles.remove("")
                 ok = False
                 for i in roles:
                     if int(i) in config.perms.driver:
@@ -424,6 +428,8 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         if len(p) == 0:
             continue
         roles = p[0][3].split(",")
+        while "" in roles:
+            roles.remove("")
         ok = False
         for i in roles:
             if int(i) in config.perms.driver:

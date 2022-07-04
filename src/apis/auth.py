@@ -276,6 +276,8 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     roles = t[0][0].split(",")
+    while "" in roles:
+        roles.remove("")
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid != 0 and userid >= 0:
