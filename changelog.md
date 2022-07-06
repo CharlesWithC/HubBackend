@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.9.3**  
+1.Added **PATCH** `/user/unbind` endpoint to unbind connections  
+2.Added **DELETE** `/user/delete` endpoint to delete user  
+3.Added **GET** `/dlog/export` endpoint to export .csv table of deliveries  
+4.Added auto remove for expired ratelimit data  
+5.Removed error response code for non 401 or 429 errors  
+
 **v1.9.2**  
 1.Fixed bugs with role detection  
 2.Updated driver detection mechanism for application  

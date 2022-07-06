@@ -9,6 +9,8 @@
 
     "invalid_discordid": "Identificación de discordia no válida.",
     "dismiss_before_ban": "Descartar miembro antes de prohibir.",
+    "dismiss_before_unbind": "Descartar miembro antes de desvincular sus conexiones.",
+    "dismiss_before_delete": "Descartar miembro antes de eliminar su cuenta.",
     "user_already_banned": "Usuario ya prohibido.",
     "user_not_banned": "Usuario no prohibido.",
     "bio_too_long": "Biografía demasiado largo.",

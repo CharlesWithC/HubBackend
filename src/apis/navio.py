@@ -159,20 +159,20 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             source_company = d["data"]["object"]["source_company"]
             destination_city = d["data"]["object"]["destination_city"]
             destination_company = d["data"]["object"]["destination_company"]
-            if source_city is None:
-                source_city = ""
+            if source_city is None or source_city["name"] is None:
+                source_city = "Unknown city"
             else:
                 source_city = source_city["name"]
-            if source_company is None:
-                source_company = ""
+            if source_company is None or source_company["name"] is None:
+                source_company = "Unknown company"
             else:
                 source_company = source_company["name"]
-            if destination_city is None:
-                destination_city = ""
+            if destination_city is None or destination_city["name"] is None:
+                destination_city = "Unknown city"
             else:
                 destination_city = destination_city["name"]
-            if destination_company is None:
-                destination_company = ""
+            if destination_company is None or destination_company["name"] is None:
+                destination_company = "Unknown company"
             else:
                 destination_company = destination_company["name"]
             cargo = d["data"]["object"]["cargo"]["name"]

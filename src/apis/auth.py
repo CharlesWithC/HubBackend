@@ -260,7 +260,6 @@ async def steamBind(request: Request, response: Response, authorization: str = H
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
-        response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "steam_api_error")}
     if r.text.find("is_valid:true") == -1:
         response.status_code = 401

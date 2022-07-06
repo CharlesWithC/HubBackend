@@ -9,6 +9,8 @@
 
     "invalid_discordid": "Invalid Discord ID.",
     "dismiss_before_ban": "Afsig medlemet for ban.",
+    "dismiss_before_unbind": "Afskedig medlem, før deres forbindelser ophæves.",
+    "dismiss_before_delete": "Afvis medlem, før du sletter deres konto.",
     "user_already_banned": "Brugeren er allerede bannet.",
     "user_not_banned": "Brugen er ikke bannet.",
     "bio_too_long": "Bio for lang.",

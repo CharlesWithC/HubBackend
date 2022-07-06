@@ -85,7 +85,6 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
         tt = t[0]
         cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
@@ -301,7 +300,6 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin:
@@ -393,7 +391,6 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     cur.execute(f"SELECT * FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin: # creator or leadership

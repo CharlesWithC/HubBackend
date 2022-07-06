@@ -246,7 +246,6 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -269,7 +268,6 @@ async def member(request: Request, response: Response, userid: int, authorizatio
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -366,7 +364,6 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     if t[0][0] != -1:
         return {"error": True, "descriptor": ml.tr(request, "member_registered")}
@@ -532,7 +529,6 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     steamid = t[0][1]
@@ -642,7 +638,6 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
     username = t[0][0]
     oldroles = t[0][1].split(",")

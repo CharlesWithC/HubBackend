@@ -362,7 +362,6 @@ async def userInfo(request: Request, response: Response, authorization: str = He
         cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {qdiscordid}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     roles = t[0][3].split(",")
     while "" in roles:
@@ -500,7 +499,6 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
@@ -522,3 +520,161 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
     await AuditLog(adminid, f"Updated user Discord ID from `{old_discord_id}` to `{new_discord_id}`")
 
     return {"error": False, "response": {"discordid": str(new_discord_id)}}
+    
+@app.patch(f"/{config.vtcprefix}/user/unbind")
+async def adminUnbindConnections(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /user/unbind', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    discordid = t[0][0]
+    ip = t[0][1]
+    orgiptype = 4
+    if iptype(ip) == "ipv6":
+        orgiptype = 6
+    curiptype = 4
+    if iptype(request.client.host) == "ipv6":
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    adminid = t[0][0]
+    adminroles = t[0][1].split(",")
+    adminname = t[0][2]
+    while "" in adminroles:
+        adminroles.remove("")
+
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+    
+    if not isAdmin:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    
+    form = await request.form()
+    discordid = int(form["discordid"])
+
+    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    userid = t[0][0]
+    if userid != -1:
+        return {"error": True, "descriptor": ml.tr(request, "dismiss_before_unbind")}
+    
+    cur.execute(f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
+    conn.commit()
+
+    await AuditLog(adminid, f"Unbound connections for user with Discord ID `{discordid}`")
+
+    return {"error": False}
+    
+@app.delete(f"/{config.vtcprefix}/user/delete")
+async def adminDeleteUser(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /user/delete', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
+    if not authorization.startswith("Bearer "):
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    discordid = t[0][0]
+    ip = t[0][1]
+    orgiptype = 4
+    if iptype(ip) == "ipv6":
+        orgiptype = 6
+    curiptype = 4
+    if iptype(request.client.host) == "ipv6":
+        curiptype = 6
+    if orgiptype != curiptype:
+        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        conn.commit()
+    else:
+        if ip != request.client.host:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            response.status_code = 401
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    adminid = t[0][0]
+    adminroles = t[0][1].split(",")
+    adminname = t[0][2]
+    while "" in adminroles:
+        adminroles.remove("")
+
+    isAdmin = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+    
+    if not isAdmin:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    
+    form = await request.form()
+    discordid = int(form["discordid"])
+
+    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    userid = t[0][0]
+    if userid != -1:
+        return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete")}
+    
+    cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+    conn.commit()
+
+    await AuditLog(adminid, f"Deleted user with Discord ID `{discordid}`")
+
+    return {"error": False}

@@ -119,6 +119,7 @@ def TSeparator(num):
 def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()
+    cur.execute(f"DELETE FROM ratelimit WHERE firstop <= {int(time.time() - 86400)}")
     cur.execute(f"SELECT firstop, opcount FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
     t = cur.fetchall()
     if len(t) == 0:

@@ -451,6 +451,100 @@
                 }
             }
         },
+        "/vtc/user/unbind": {
+            "patch": {
+                "summary": "Unbind User Connections",
+                "tags": ["admin"],
+                "operationId": "unbindUserConnections",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "discordid": {
+                                        "description": "Discord ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["discordid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/user/delete": {
+            "delete": {
+                "summary": "Delete User Account",
+                "tags": ["admin"],
+                "operationId": "deleteUserAccount",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "discordid": {
+                                        "description": "Discord ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["discordid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/user/steamauth": {
             "get": {
                 "summary": "Steam Authentication",
@@ -1266,6 +1360,53 @@
                         "type": "integer"
                     },
                     "name": "logid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/dlog/export": {
+            "get": {
+                "summary": "Export Delivery Log",
+                "tags": ["dlog"],
+                "operationId": "exportDeliveryLog",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Start Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "starttime",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "End Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "endtime",
                     "in": "query"
                 }],
                 "responses": {

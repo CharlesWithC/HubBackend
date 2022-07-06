@@ -9,6 +9,8 @@
 
     "invalid_discordid": "Invalid Discord ID.",
     "dismiss_before_ban": "Dismiss member before banning.",
+    "dismiss_before_unbind": "Dismiss member before unbinding their connections.",
+    "dismiss_before_delete": "Dismiss member before deleting their account.",
     "user_already_banned": "User already banned.",
     "user_not_banned": "User not banned.",
     "bio_too_long": "Bio too long.",

@@ -90,7 +90,6 @@ async def divisionValidateRequest(request: Request, response: Response, authoriz
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found")}
     luserid = t[0][0]
     if userid != luserid:

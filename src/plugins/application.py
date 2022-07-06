@@ -420,7 +420,6 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
     
     apptype = t[0][1]
@@ -555,7 +554,6 @@ async def getApplication(request: Request, response: Response, applicationid: in
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
     
     if not isAdmin and discordid != t[0][2]:

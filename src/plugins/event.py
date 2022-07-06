@@ -87,7 +87,6 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid = {eventid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
-            response.status_code = 404
             return {"error": True, "descriptor": "Event not found"}
         tt = t[0]
         attendee = tt[9].split(",")
@@ -342,7 +341,6 @@ async def eventVote(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     vote = t[0][0].split(",")
     if str(userid) in vote:
@@ -521,7 +519,6 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     cur.execute(f"SELECT userid FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     creator = t[0][0]
     
@@ -596,7 +593,6 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
     cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     
     cur.execute(f"UPDATE event SET eventid = -eventid WHERE eventid = {eventid}")
@@ -676,7 +672,6 @@ async def updateEventAttendee(request: Request, response: Response, authorizatio
     cur.execute(f"SELECT attendee FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     orgattendees = t[0][0].split(",")
     while "" in orgattendees:

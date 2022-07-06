@@ -2,10 +2,12 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
+from fastapi.responses import StreamingResponse
 import json, time, math
 from typing import Optional
 from datetime import datetime
 import requests
+from io import BytesIO
 
 from app import app, config
 from db import newconn
@@ -725,7 +727,6 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
     cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     data = json.loads(b64d(t[0][1]))
     distance = t[0][3]
@@ -753,3 +754,147 @@ async def dlogDetail(logid: int, request: Request, response: Response, authoriza
         telemetry = ver + p[0][0]
 
     return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "loggeddistance": distance, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}
+
+@app.get(f"/{config.vtcprefix}/dlog/export")
+async def dlogExport(request: Request, response: Response, authorization: str = Header(None), \
+        starttime: Optional[int] = -1, endtime: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    if authorization is None:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    conn = newconn()
+    cur = conn.cursor()
+
+    isapptoken = False
+    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            response.status_code = 401
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        isapptoken = True
+    discordid = t[0][0]
+    if not isapptoken:
+        ip = t[0][1]
+        orgiptype = 4
+        if iptype(ip) == "ipv6":
+            orgiptype = 6
+        curiptype = 4
+        if iptype(request.client.host) == "ipv6":
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                response.status_code = 401
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    userid = t[0][0]
+    if userid == -1:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+    if starttime == -1 or endtime == -1:
+        starttime = 0
+        endtime = int(time.time())
+
+    f = BytesIO()
+    f.write(b"logid, isdelivered, game, userid, username, source_company, source_city, destination_company, destination_city, distance, fuel, top_speed, truck, cargo, cargo_mass, damage, profit, offence, xp, time\n")
+    cur.execute(f"SELECT logid, userid, topspeed, unit, profit, unit, fuel, distance, data, isdelivered, timestamp FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} AND userid >= 0")
+    d = cur.fetchall()
+    for dd in d:
+        userid = dd[1]
+        game = "unknown"
+        if dd[3] == 1:
+            game = "ets2"
+        elif dd[3] == 2:
+            game = "ats"
+        
+        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        name = "unknown"
+        if len(t) > 0:
+            name = t[0][0]
+
+        data = json.loads(b64d(dd[8]))
+        
+        source_city = data["data"]["object"]["source_city"]
+        source_company = data["data"]["object"]["source_company"]
+        destination_city = data["data"]["object"]["destination_city"]
+        destination_company = data["data"]["object"]["destination_company"]
+        if source_city is None:
+            source_city = ""
+        else:
+            source_city = source_city["name"]
+        if source_company is None:
+            source_company = ""
+        else:
+            source_company = source_company["name"]
+        if destination_city is None:
+            destination_city = ""
+        else:
+            destination_city = destination_city["name"]
+        if destination_company is None:
+            destination_company = ""
+        else:
+            destination_company = destination_company["name"]
+        cargo = data["data"]["object"]["cargo"]["name"]
+        cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        truckd = data["data"]["object"]["truck"]
+        truck = ""
+        if truckd["brand"] is None or truckd["name"] is None:
+            truck = "Unknown"
+        else:
+            truck = truckd["brand"]["name"] + " " + truckd["name"]
+
+        isdelivered = dd[9]
+        profit = 0
+        damage = 0
+        xp = 0
+        if isdelivered:
+            profit = float(data["data"]["object"]["events"][-1]["meta"]["revenue"])
+            damage = float(data["data"]["object"]["events"][-1]["meta"]["cargo_damage"])
+            xp = float(data["data"]["object"]["events"][-1]["meta"]["earned_xp"])
+        else:
+            profit = -float(data["data"]["object"]["events"][-1]["meta"]["penalty"])
+            damage = float(data["data"]["object"]["cargo"]["damage"])
+        allevents = data["data"]["object"]["events"]
+        offence = 0
+        for eve in allevents:
+            if eve["type"] == "fine":
+                offence += int(eve["meta"]["amount"])
+        profit -= offence
+        
+        data = [dd[0], isdelivered, game, userid, name, source_company, source_city, destination_company, destination_city, dd[7], dd[6], dd[2], truck, cargo, cargo_mass, damage, profit, offence, xp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))]
+        for i in range(len(data)):
+            data[i] = '"' + str(data[i]) + '"'
+        
+        f.write(",".join(data).encode("utf-8"))
+        f.write(b"\n")
+
+    f.seek(0)
+    
+    response = StreamingResponse(iter([f.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+
+    return response
