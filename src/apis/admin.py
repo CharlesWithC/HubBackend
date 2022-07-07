@@ -108,7 +108,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 def reload():
     time.sleep(5)
-    os.system(f"./launcher hub restart atm &")
+    os.system(f"./launcher hub restart {config.vtcprefix} &")
 
 @app.patch(f"/{config.vtcprefix}/config")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
