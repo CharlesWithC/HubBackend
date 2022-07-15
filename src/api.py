@@ -4,6 +4,7 @@
 from fastapi import Request, Header, Response
 import json, os, sys
 from sys import exit
+from datetime import datetime
 
 from app import app, config
 from db import newconn
@@ -38,4 +39,7 @@ if "event" in config.enabled_plugins:
 
 @app.get(f'/{config.vtcprefix}')
 async def home():
-    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.9.4", "copyright": "Copyright (C) 2022 CharlesWithC"}}
+    currentDateTime = datetime.now()
+    date = currentDateTime.date()
+    year = date.strftime("%Y")
+    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.9.5", "copyright": f"Copyright (C) {year} CharlesWithC"}}

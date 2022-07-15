@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.9.5**  
+Added `limituser` argument for `/dlog/leaderboard`  
+
 **v1.9.4**  
 1.Fixed the issue that delivery webhook post would fail when `config.delivery_gifs = []`  
 2.Added audit log for **PATCH** `/config` and **PATCH** `/downloads`  

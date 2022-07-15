@@ -207,7 +207,7 @@ async def dlogChart(request: Request, response: Response,
 @app.get(f"/{config.vtcprefix}/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
-        noevent: Optional[bool] = False, nodivision: Optional[bool] = False):
+        noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -223,6 +223,12 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
     if page <= 0:
         page = 1
+
+    limituser = limituser.split(",")
+    while "" in limituser:
+        limituser.remove("")
+    if len(limituser) > 10:
+        limituser = limituser[:10]
 
     ratio = 1
     if config.distance_unit == "imperial":
@@ -315,8 +321,9 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     if o[0][0] in DIVISIONPNT.keys():
                         divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
             users.append(userid)
-            ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
+            if str(userid) in limituser or len(limituser) == 0:
+                ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                    "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
 
         cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
         t = cur.fetchall()
@@ -345,8 +352,9 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     for oo in o:
                         if o[0][0] in DIVISIONPNT.keys():
                             divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-                ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
-                    "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": int(tt[1]) + divisionpnt})
+                if str(userid) in limituser or len(limituser) == 0:
+                    ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
+                        "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": int(tt[1]) + divisionpnt})
 
         if (page - 1) * 10 >= len(ret):
             return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
@@ -380,7 +388,8 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         o = cur.fetchall()
         if len(o) > 0:
             divisionpnt += o[0][0]
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": int(tt[1]), "totnolimit": int(tt[1]) + divisionpnt})
+        if str(tt[0]) in limituser or len(limituser) == 0:
+            ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": int(tt[1]), "totnolimit": int(tt[1]) + divisionpnt})
 
     if (page - 1) * 10 >= len(ret):
         return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}

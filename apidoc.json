@@ -1209,6 +1209,14 @@
                     },
                     "name": "endtime",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Limit User (Up to 10, separate with ',')",
+                        "type": "string"
+                    },
+                    "name": "limituser",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
