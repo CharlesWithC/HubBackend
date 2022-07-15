@@ -18,6 +18,8 @@ from dateutil import parser
 import threading
 
 GIFS = config.delivery_gifs
+if len(GIFS) == 0:
+    GIFS = [""]
 
 def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
     conn = newconn()
@@ -57,10 +59,14 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
                 break
             except:
                 continue
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
-        conn.commit()
+        for _ in range(5):
+            try:
+                conn = newconn()
+                cur = conn.cursor()
+                cur.execute(f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
+                conn.commit()
+            except:
+                continue
 
 @app.post(f"/{config.vtcprefix}/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
@@ -153,7 +159,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
     conn.commit()
 
-    if config.delivery_log_channel_id != 0:
+    if int(config.delivery_log_channel_id) != 0:
         try:
             source_city = d["data"]["object"]["source_city"]
             source_company = d["data"]["object"]["source_company"]

@@ -1,5 +1,39 @@
 # Changelog
 
+**v1.9.4**  
+1.Fixed the issue that delivery webhook post would fail when `config.delivery_gifs = []`  
+2.Added audit log for **PATCH** `/config` and **PATCH** `/downloads`  
+3.Added `config.steam_callback_url` to redirect to custom frontend page  
+4.Changed to use official TruckersMP API to get TruckersMP ID with Steam ID  
+5.Changed query parameter from `search` to `query` for **GET** `/members`  
+6.Updated endpoint path (details in table below)  
+7.Improved fault-tolerance (integar / string) for config (except `config.perms`)  
+8.Improved and simplified code structure by using authentication API (in [functions.py](/src/functions.py))  
+|Endpoint Name|Old Path|New Path|  
+---|---|---|
+|Validate token|**GET** `/user/validate`|**GET** `/token`  
+|Request new token|**GET** `/user/refresh`|**PATCH** `/token`  
+|Revoke token|**POST** `/user/revoke`|**DELETE** `/token`  
+|Reset application token|**POST** `/user/apptoken`|**PATCH** `/token/application`  
+|Redirect to Steam OAuth|**GET** `/user/steamauth`|**GET** `/user/steam/oauth`  
+|Steam OAuth callback|**GET** `/user/steamcallback`|**GET** `/user/steam/callback`  
+|Validate Steam OAuth (connect Steam account)|**POST** `/user/steambind`|**PATCH** `/user/steam`  
+|Validate TruckersMP account (connect TruckersMP account)|**POST** `/user/truckersmpbind`|**PATCH** `/user/truckersmp`  
+|Get delivery logs|**GET** `/dlog/list`|**GET** `/dlogs`  
+|Get delivery log detail|**GET** `/dlog/detail`|**GET** `/dlog`  
+|Get members|**GET** `/member/list`|**GET** `/members`  
+|Get member detail|**GET** `/member/info`|**GET** `/member`  
+|Update rank role|**PATCH** `/member/discordrole`|**PATCH** `/member/role/rank`  
+|Get users|**GET** `/user/list`|**GET** `/users`  
+|Get user details|**GET** `/user/info`|**GET** `/user`  
+|Get applications|**GET** `/application/list`|**GET** `/applications`  
+|Get divisions|**GET** `/division/list`|**GET** `/divisions`  
+|Get pending division validation|**GET** `/division/validate`|**GET** `/divisions/pending`  
+|Get division detail|**GET** `/division/info`|**GET** `/division`  
+|Request division validation|**POST** `/division/validate`|**POST** `/division`  
+|Update division validation|**PATCH** `/division/validate`|**PATCH** `/division`  
+|Get all events|**GET** `/event/full`|**GET** `/events/all`  
+
 **v1.9.3**  
 1.Added **PATCH** `/user/unbind` endpoint to unbind connections  
 2.Added **DELETE** `/user/delete` endpoint to delete user  

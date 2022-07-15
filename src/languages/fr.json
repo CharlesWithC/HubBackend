@@ -2,6 +2,7 @@
     "no_authorization_header": "Aucun en-tête d'autorisation",
     "invalid_authorization_header": "En-tête d'autorisation non valide",
     "unauthorized": "Non autorisé",
+    "application_token_prohibited": "Jeton d'application interdit",
 
     "ban_with_reason_expire": "Vous êtes banni pour {reason} jusqu'au {expire} UTC",
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",

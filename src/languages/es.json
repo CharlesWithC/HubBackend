@@ -2,6 +2,7 @@
     "no_authorization_header": "Sin encabezado de autorización",
     "invalid_authorization_header": "Encabezado de autorización no válido",
     "unauthorized": "No autorizado",
+    "application_token_prohibited": "Token de aplicación prohibido",
 
     "ban_with_reason_expire": "Estás baneado por {reason} hasta las {expire} UTC",
     "discord_check_fail": "Error al verificar si estás en Discord Server.",

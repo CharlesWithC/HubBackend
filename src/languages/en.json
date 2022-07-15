@@ -2,6 +2,7 @@
     "no_authorization_header": "No Authorization Header",
     "invalid_authorization_header": "Invalid Authorization Header",
     "unauthorized": "Unauthorized",
+    "application_token_prohibited": "Application token prohibited",
 
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",

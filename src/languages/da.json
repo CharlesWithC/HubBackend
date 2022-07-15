@@ -2,6 +2,7 @@
     "no_authorization_header": "ingen bemyndigelse",
     "invalid_authorization_header": "Invalid bemyndigelse",
     "unauthorized": "ikke bemyndiget",
+    "application_token_prohibited": "Ansøgningstoken forbudt",
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",

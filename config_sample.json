@@ -1,19 +1,20 @@
 {
     "vtcprefix": "",
     "vtcname": "",
+    "distance_unit": "metric",
+    "truckersmp_bind": true,
+    "hexcolor": "FFFFFF",
     "vtclogo": "https://{dhdomain}/images/logo.png",
     "teamupdate": "https://{dhdomain}/images/TeamUpdate.png",
-    "distance_unit": "metric",
-    "hexcolor": "FFFFFF",
-    "truckersmp_bind": true,
 
     "apidoc": "./apidoc.json",
+    "language_dir": "./languages",
+    "steam_callback_url": "https://{dhdomain}/steam",
 
     "domain": "drivershub.charlws.com",
     "dhdomain": "",
     "server_ip": "127.0.0.1",
     "server_port": 7777,
-    "language_dir": "./languages",
 
     "database": "mysql",
     "mysql_host": "localhost",
@@ -24,6 +25,9 @@
 
     "enabled_plugins": ["announcement", "application", "division", "downloads", "event", "tracker"],
     "external_plugins": ["rework_member"],
+
+    "navio_token": "",
+    "navio_company_id": 0,
     "delivery_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
@@ -34,12 +38,9 @@
         "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
         "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
         "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
-
-    "navio_token": "",
-    "navio_company_id": 0,
     
-    "in_guild_check": true,
     "guild": 0,
+    "in_guild_check": true,
     "driver_channel_id": 0,
     "delivery_log_channel_id": 0,
     "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**.",

@@ -86,6 +86,7 @@ if app == "hub":
     
     elif op == "disable":
         os.system(f"systemctl --user disable hub{vtc}.service")
+        os.system(f"systemctl --user daemon-reload")
         os.system(f"rm -f {serdir}/hub{vtc}.service")
 
     else:
@@ -118,6 +119,7 @@ elif app == "tracker":
     
     elif op == "disable":
         os.system(f"systemctl --user disable tracker{vtc}.service")
+        os.system(f"systemctl --user daemon-reload")
         os.system(f"rm -f {serdir}/tracker{vtc}.service")
 
     else:

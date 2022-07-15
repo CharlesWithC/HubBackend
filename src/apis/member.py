@@ -43,69 +43,27 @@ divisionroles = []
 for division in divisions:
     divisionroles.append(division["roleid"])
 
-@app.get(f'/{config.vtcprefix}/member/list')
-async def memberSearch(page:int, request: Request, response: Response, authorization: str = Header(None), search: Optional[str] = ''):
-    rl = ratelimit(request.client.host, 'GET /member/list', 60, 60)
+@app.get(f'/{config.vtcprefix}/members')
+async def getMembers(page:int, request: Request, response: Response, authorization: str = Header(None), query: Optional[str] = ''):
+    rl = ratelimit(request.client.host, 'GET /members', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if page <= 0:
-        page = 1
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    
     conn = newconn()
     cur = conn.cursor()
-
-    isapptoken = False
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        isapptoken = True
-    discordid = t[0][0]
-    if not isapptoken:
-        ip = t[0][1]
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                conn.commit()
-                response.status_code = 401
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    userid = t[0][0]
-    if userid == -1:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-    search = search.replace("'","''").lower()
     
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{search}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 10}, 10")
+    if page <= 0:
+        page = 1
+
+    query = query.replace("'","''").lower()
+    
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -118,7 +76,7 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
                 highestrole = int(role)
         ret.append({"userid": tt[0], "name": tt[1], "discordid": f"{tt[2]}", "highestrole": highestrole, "avatar": tt[4]})
     
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE LOWER(name) LIKE '%{search}%' AND userid >= 0")
+    cur.execute(f"SELECT COUNT(*) FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
@@ -143,67 +101,25 @@ async def memberSearch(page:int, request: Request, response: Response, authoriza
 
     return {"error": False, "response": {"list": ret, "page": page, "tot": tot, "staff_of_the_month": staff_of_the_month, "driver_of_the_month": driver_of_the_month}}
 
-@app.get(f'/{config.vtcprefix}/member/info')
-async def member(request: Request, response: Response, userid: int, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member/info', 30, 10)
+@app.get(f'/{config.vtcprefix}/member')
+async def getMember(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /member', 30, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    roles = au["roles"]
+    
     conn = newconn()
     cur = conn.cursor()
 
-    isapptoken = False
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        isapptoken = True
-    discordid = t[0][0]
-    if not isapptoken:
-        ip = t[0][1]
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                conn.commit()
-                response.status_code = 401
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
-
     isAdmin = False
     isHR = False
-    for i in adminroles:
+    for i in roles:
         if int(i) in config.perms.admin:
             isAdmin = True
         if int(i) in config.perms.hr:
@@ -295,59 +211,14 @@ async def addMember(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr"])
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    adminid = au["userid"]
+    
     conn = newconn()
     cur = conn.cursor()
-
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
-        
-    ok = False
-    for i in adminroles:
-        if int(i) in config.perms.admin or int(i) in config.perms.hr:
-            ok = True
-
-    if not ok:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     form = await request.form()
     discordid = int(form["discordid"])
@@ -404,59 +275,26 @@ async def deleteMember(request: Request, response: Response, authorization: str 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    name = au["name"].replace("'", "''")
+    
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+    cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, steamid, name, discordid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    userid = t[0][0]
-    if userid == -1:
-        return {"error": False, "descriptor": ml.tr(request, "not_a_member")}
-    steamid = t[0][1]
+    steamid = t[0][0]
     cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_token})
-    
-    name = t[0][2].replace("'", "''")
-    discordid = t[0][3]
 
     await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
     return {"error": False}
@@ -468,63 +306,21 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, required_permission = ["admin", "hr"])
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    discordid = au["discordid"]
+    adminid = au["userid"]
+    adminroles = au["roles"]
+
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
-
-    ok = False
-    for i in adminroles:
-        if int(i) in config.perms.admin or int(i) in config.perms.hr:
-            ok = True
-
-    if not ok:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
@@ -562,55 +358,21 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "division"])
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    adminid = au["userid"]
+    adminroles = au["roles"]
+
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
-    ok = False
+            
     isAdmin = False
     isHR = False
     isDS = False
@@ -621,11 +383,6 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             isHR = True
         if int(i) in config.perms.division:
             isDS = True
-        if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.division:
-            ok = True
-    if not ok:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     userid = int(form["userid"])
@@ -756,59 +513,14 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, required_permission = ["admin"])
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    adminid = au["userid"]
+    
     conn = newconn()
     cur = conn.cursor()
-
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    while "" in adminroles:
-        adminroles.remove("")
-        
-    ok = False
-    for i in adminroles:
-        if int(i) in config.perms.admin or int(i) in config.perms.hr:
-            ok = True
-
-    if not ok:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     form = await request.form()
     userid = int(form["userid"])
@@ -850,56 +562,13 @@ async def memberSteam(request: Request, response: Response, authorization: str =
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    
     conn = newconn()
     cur = conn.cursor()
-
-    isapptoken = False
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        isapptoken = True
-    discordid = t[0][0]
-    if not isapptoken:
-        ip = t[0][1]
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                conn.commit()
-                response.status_code = 401
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    userid = t[0][0]
-    if userid == -1:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     cur.execute(f"SELECT steamid, name, userid FROM user")
     t = cur.fetchall()
@@ -915,63 +584,22 @@ def point2rank(point):
             return RANKING[keys[i-1]]
     return RANKING[keys[-1]]
 
-@app.patch(f"/{config.vtcprefix}/member/discordrole")
+@app.patch(f"/{config.vtcprefix}/member/role/rank")
 async def memberDiscordrole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/discordrole', 60, 3)
+    rl = ratelimit(request.client.host, 'PATCH /member/role/rank', 60, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    
     conn = newconn()
     cur = conn.cursor()
-
-    isapptoken = False
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        isapptoken = True
-    discordid = t[0][0]
-    if not isapptoken:
-        ip = t[0][1]
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                conn.commit()
-                response.status_code = 401
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    userid = t[0][0]
-    if userid == -1:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     ratio = 1
     if config.distance_unit == "imperial":

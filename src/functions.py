@@ -19,10 +19,15 @@ def b64d(s):
 import discord
 from discord import Webhook
 import aiohttp
-from db import newconn
-from app import config
+import json
 from datetime import datetime
 import time
+
+from db import newconn
+from app import config, config_txt
+import multilang as ml
+
+tconfig = json.loads(config_txt)
 
 async def AuditLog(userid, text):
     conn = newconn()
@@ -140,3 +145,118 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
                 cur.execute(f"UPDATE ratelimit SET opcount = opcount + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
                 conn.commit()
                 return 0
+
+def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
+    # authorization header basic check
+    if authorization is None:
+        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
+    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
+        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
+    
+    tokentype = authorization.split(" ")[0]
+    stoken = authorization.split(" ")[1]
+    if not stoken.replace("-","").isalnum():
+        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    # application token
+    if tokentype == "Application":
+        # check if allowed
+        if not allow_application_token:
+            return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited")}
+
+        # validate token
+        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        discordid = t[0][0]
+
+        # application token will skip ip check
+
+        # additional check
+        
+        # this should not happen but just in case
+        cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        userid = t[0][0]
+        roles = t[0][1].split(",")
+        name = t[0][2]
+        if userid == -1 and check_member:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        while "" in roles:
+            roles.remove("")
+
+        if check_member:
+            # permission check will only take place if member check is enforced
+            ok = False
+            for role in roles:
+                for perm in required_permission:
+                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm]:
+                        ok = True
+            
+            if not ok:
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": True}
+
+    # bearer token
+    elif tokentype == "Bearer":
+        cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        discordid = t[0][0]
+        ip = t[0][1]
+
+        # check ip
+        orgiptype = 4
+        if iptype(ip) == "ipv6":
+            orgiptype = 6
+        curiptype = 4
+        if iptype(request.client.host) == "ipv6":
+            curiptype = 6
+        if orgiptype != curiptype:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            conn.commit()
+        else:
+            if ip != request.client.host:
+                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                conn.commit()
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        
+        # additional check
+        
+        # this should not happen but just in case
+        cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        userid = t[0][0]
+        roles = t[0][1].split(",")
+        name = t[0][2]
+        if userid == -1 and check_member:
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        while "" in roles:
+            roles.remove("")
+
+        if check_member:
+            # permission check will only take place if member check is enforced
+            ok = False
+            for role in roles:
+                for perm in required_permission:
+                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm]:
+                        ok = True
+            
+            if not ok:
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
+    
+    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}

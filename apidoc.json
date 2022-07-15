@@ -53,9 +53,9 @@
                 }
             }
         },
-        "/vtc/user/info": {
+        "/vtc/user": {
             "get": {
-                "summary": "Get User Information",
+                "summary": "Get User",
                 "tags": ["user"],
                 "operationId": "getUserInfo",
                 "security": [{
@@ -139,7 +139,93 @@
                 }
             }
         },
-        "/vtc/user/apptoken": {
+        "/vtc/token": {
+            "get": {
+                "summary": "Validate Token",
+                "tags": ["user"],
+                "operationId": "userValidate_vtc_user_validate_get",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Request new token",
+                "tags": ["user"],
+                "operationId": "userRefreshToken",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Revoke Token",
+                "tags": ["user"],
+                "operationId": "userRevoke_vtc_user_revoke_post",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/token/application": {
             "post": {
                 "summary": "Generate New Application Token",
                 "tags": ["user"],
@@ -169,99 +255,9 @@
                 }
             }
         },
-        "/vtc/user/refresh": {
+        "/vtc/users": {
             "get": {
-                "summary": "Refresh Token",
-                "tags": ["user"],
-                "operationId": "userRefreshToken",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/user/validate": {
-            "get": {
-                "summary": "Validate Token",
-                "tags": ["user"],
-                "operationId": "userValidate_vtc_user_validate_get",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/user/revoke": {
-            "post": {
-                "summary": "Revoke Token",
-                "tags": ["user"],
-                "operationId": "userRevoke_vtc_user_revoke_post",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/user/list": {
-            "get": {
-                "summary": "Get User List (Not registered members)",
+                "summary": "Get Users (Not registered members)",
                 "tags": ["user"],
                 "operationId": "getUserList",
                 "parameters": [{
@@ -545,9 +541,9 @@
                 }
             }
         },
-        "/vtc/user/steamauth": {
+        "/vtc/user/steam/oauth": {
             "get": {
-                "summary": "Steam Authentication",
+                "summary": "Redirect to Steam OAuth",
                 "tags": ["auth"],
                 "operationId": "steamOpenid_vtc_user_steamauth_get",
                 "responses": {
@@ -562,9 +558,9 @@
                 }
             }
         },
-        "/vtc/user/steamcallback": {
+        "/vtc/user/steam/callback": {
             "get": {
-                "summary": "Steam Authentication Callback",
+                "summary": "Steam OAuth callback",
                 "tags": ["auth"],
                 "operationId": "steamCallback_vtc_user_steamcallback_get",
                 "responses": {
@@ -579,9 +575,9 @@
                 }
             }
         },
-        "/vtc/user/steambind": {
-            "post": {
-                "summary": "Bind Steam Account",
+        "/vtc/user/steam": {
+            "patch": {
+                "summary": "Validate Steam OAuth (connect Steam account)",
                 "tags": ["auth"],
                 "operationId": "steamBind_vtc_user_steambind_post",
                 "security": [{
@@ -609,9 +605,9 @@
                 }
             }
         },
-        "/vtc/user/truckersmpbind": {
-            "post": {
-                "summary": "Bind TruckersMP Account",
+        "/vtc/user/truckersmp": {
+            "patch": {
+                "summary": "Validate TruckersMP account (connect TruckersMP account)",
                 "tags": ["auth"],
                 "operationId": "truckersmpBind_atm_user_truckersmpbind_post",
                 "security": [{
@@ -656,9 +652,9 @@
                 }
             }
         },
-        "/vtc/member/list": {
+        "/vtc/members": {
             "get": {
-                "summary": "Get Member List",
+                "summary": "Get Members",
                 "tags": ["member"],
                 "operationId": "memberList_vtc_member_list_get",
                 "security": [{
@@ -733,9 +729,9 @@
                 }
             }
         },
-        "/vtc/member/info": {
+        "/vtc/member": {
             "get": {
-                "summary": "Get Member Information",
+                "summary": "Get Member",
                 "tags": ["member"],
                 "operationId": "member_vtc_member_info_get",
                 "parameters": [{
@@ -819,9 +815,9 @@
                 }
             }
         },
-        "/vtc/member/discordrole": {
+        "/vtc/member/role/rank": {
             "patch": {
-                "summary": "Update Discord Rank Role",
+                "summary": "Update rank role",
                 "tags": ["member"],
                 "operationId": "patchDiscordRole",
                 "security": [{
@@ -1266,9 +1262,9 @@
                 }
             }
         },
-        "/vtc/dlog/list": {
+        "/vtc/dlogs": {
             "get": {
-                "summary": "Get Delivery Log List",
+                "summary": "Get Delivery Logs",
                 "tags": ["dlog"],
                 "operationId": "getDlogList",
                 "security": [{
@@ -1345,9 +1341,9 @@
                 }
             }
         },
-        "/vtc/dlog/detail": {
+        "/vtc/dlog": {
             "get": {
-                "summary": "Get Delivery Log Detail",
+                "summary": "Get Delivery Log",
                 "tags": ["dlog"],
                 "operationId": "getDlogDetail",
                 "security": [{
@@ -1431,9 +1427,9 @@
                 }
             }
         },
-        "/vtc/division/list": {
+        "/vtc/divisions": {
             "get": {
-                "summary": "Get Division List",
+                "summary": "Get Divisions",
                 "tags": ["division"],
                 "operationId": "getDivision",
                 "responses": {
@@ -1458,9 +1454,9 @@
                 }
             }
         },
-        "/vtc/division/validate": {
+        "/vtc/divisions/pending": {
             "get": {
-                "summary": "Get Pending Delivery Division Validation Request",
+                "summary": "Get Pending Division Validation",
                 "tags": ["division"],
                 "operationId": "getDivisionPendingList",
                 "responses": {
@@ -1483,9 +1479,48 @@
                         }
                     }
                 }
+            }
+        },
+        "/vtc/division": {
+            "get": {
+                "summary": "Get Division Detail",
+                "tags": ["division"],
+                "operationId": "getDivisionInformation",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Delivery ID",
+                        "type": "integer"
+                    },
+                    "name": "logid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
             },
             "post": {
-                "summary": "Request Delivery Division Validation",
+                "summary": "Request Division Validation",
                 "tags": ["division"],
                 "operationId": "divisionRequest",
                 "security": [{
@@ -1534,7 +1569,7 @@
                 }
             },
             "patch": {
-                "summary": "Update Delivery Division Validation Request",
+                "summary": "Update Division Validation",
                 "tags": ["division"],
                 "operationId": "divisionRequestUpdate",
                 "security": [{
@@ -1569,45 +1604,6 @@
                         }
                     }
                 },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/division/info": {
-            "get": {
-                "summary": "Get Division Information",
-                "tags": ["division"],
-                "operationId": "getDivisionInformation",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "parameters": [{
-                    "required": false,
-                    "schema": {
-                        "title": "Delivery ID",
-                        "type": "integer"
-                    },
-                    "name": "logid",
-                    "in": "query"
-                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -2157,7 +2153,7 @@
                 }
             }
         },
-        "/vtc/event/full": {
+        "/vtc/events/all": {
             "get": {
                 "summary": "Get Full Event List (Only ID, Title, Meetup Timestamp)",
                 "tags": ["event"],
@@ -2481,9 +2477,9 @@
                 }
             }
         },
-        "/vtc/application/list": {
+        "/vtc/applications": {
             "get": {
-                "summary": "Get Application List",
+                "summary": "Get Applications",
                 "tags": ["application", "manage"],
                 "operationId": "getApplicationList_vtc_application_list_get",
                 "security": [{

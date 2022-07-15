@@ -18,66 +18,13 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+        
     conn = newconn()
     cur = conn.cursor()
-
-    isapptoken = False
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        isapptoken = True
-    discordid = t[0][0]
-    if not isapptoken:
-        ip = t[0][1]
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                conn.commit()
-                response.status_code = 401
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    userid = t[0][0]
-    roles = t[0][1].split(",")
-    name = t[0][2]
-    while "" in roles:
-        roles.remove("")
-
-    ok = False
-    for i in roles:
-        if int(i) in config.perms.driver or int(i) in config.perms.admin:
-            ok = True
-    
-    if not ok:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     cur.execute(f"SELECT data FROM downloads")
     t = cur.fetchall()
@@ -89,64 +36,19 @@ async def getDownloads(request: Request, response: Response, authorization: str 
 
 @app.patch(f"/{config.vtcprefix}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 60)
+    rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    if authorization is None:
+    au = auth(authorization, request, required_permission = ["admin"])
+    if au["error"]:
         response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
-    if not authorization.startswith("Bearer "):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
-    stoken = authorization.split(" ")[1]
-    if not stoken.replace("-","").isalnum():
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return au
+    adminid = au["userid"]
+        
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    discordid = t[0][0]
-    ip = t[0][1]
-    orgiptype = 4
-    if iptype(ip) == "ipv6":
-        orgiptype = 6
-    curiptype = 4
-    if iptype(request.client.host) == "ipv6":
-        curiptype = 6
-    if orgiptype != curiptype:
-        cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        conn.commit()
-    else:
-        if ip != request.client.host:
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    adminroles = t[0][1].split(",")
-    adminname = t[0][2]
-    while "" in adminroles:
-        adminroles.remove("")
-
-    isAdmin = False
-    for i in adminroles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-    
-    if not isAdmin:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     
     form = await request.form()
     data = b64e(form["data"])
@@ -154,5 +56,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     cur.execute(f"DELETE FROM downloads")
     cur.execute(f"INSERT INTO downloads VALUES ('{data}')")
     conn.commit()
+
+    await AuditLog(adminid, "Updated downloads")
 
     return {"error": False}

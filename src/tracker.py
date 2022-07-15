@@ -39,7 +39,7 @@ async def navio(uri):
     async with connect(uri, ping_interval=30) as websocket:
         print(f"{config.vtcname} Tracker")
         print(f"Navio Company ID: {config.navio_company_id}")
-        await websocket.send(json.dumps({"op": 1, "data": {"subscribe_to_company": config.navio_company_id}}))
+        await websocket.send(json.dumps({"op": 1, "data": {"subscribe_to_company": int(config.navio_company_id)}}))
         data = await websocket.recv()
         lasthandshake = int(time.time())
         while True:
