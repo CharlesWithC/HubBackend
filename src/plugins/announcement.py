@@ -79,7 +79,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -91,7 +91,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     
     isAdmin = False
     for i in adminroles:
-        if int(i) in config.perms.admin:
+        if int(i) in config.perms.admin or int(i) in config.perms.announcement:
             isAdmin = True
 
     form = await request.form()
@@ -142,7 +142,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -154,7 +154,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     isAdmin = False
     for i in adminroles:
-        if int(i) in config.perms.admin:
+        if int(i) in config.perms.admin or int(i) in config.perms.announcement:
             isAdmin = True
 
     form = await request.form()
@@ -203,7 +203,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -215,7 +215,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
 
     isAdmin = False
     for i in adminroles:
-        if int(i) in config.perms.admin:
+        if int(i) in config.perms.admin or int(i) in config.perms.announcement:
             isAdmin = True
 
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")

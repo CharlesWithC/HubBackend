@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.9.6**  
+Added `config.perms.announcement` for announcement permission control  
+
 **v1.9.5**  
 Added `limituser` argument for `/dlog/leaderboard`  
 

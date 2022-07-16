@@ -42,4 +42,4 @@ async def home():
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.9.5", "copyright": f"Copyright (C) {year} CharlesWithC"}}
+    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.9.6", "copyright": f"Copyright (C) {year} CharlesWithC"}}

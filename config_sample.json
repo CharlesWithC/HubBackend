@@ -73,6 +73,7 @@
     "perms": {
         "admin": [0],
         "hr": [],
+        "announcement": [],
         "event": [],
         "division": [],
         "audit": [],
