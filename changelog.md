@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.9.7**  
+Added `config.perms.hrm` who has higher permission than `config.perms.hr`  
+
 **v1.9.6**  
 Added `config.perms.announcement` for announcement permission control  
 

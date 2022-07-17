@@ -122,7 +122,7 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
     for i in roles:
         if int(i) in config.perms.admin:
             isAdmin = True
-        if int(i) in config.perms.hr:
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
 
     distance = 0
@@ -211,7 +211,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -306,7 +306,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -358,7 +358,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "division"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "division"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -379,7 +379,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     for i in adminroles:
         if int(i) in config.perms.admin:
             isAdmin = True
-        if int(i) in config.perms.hr:
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
         if int(i) in config.perms.division:
             isDS = True
@@ -513,7 +513,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au

@@ -297,7 +297,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     for i in roles:
         if int(i) in config.perms.admin:
             isAdmin = True
-        if int(i) in config.perms.hr:
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
         if int(i) in config.perms.division:
             isDS = True
@@ -400,7 +400,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
     for i in roles:
         if int(i) in config.perms.admin:
             isAdmin = True
-        if int(i) in config.perms.hr:
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
         if int(i) in config.perms.division:
             isDS = True
@@ -451,7 +451,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
     for i in roles:
         if int(i) in config.perms.admin:
             isAdmin = True
-        if int(i) in config.perms.hr:
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
         if int(i) in config.perms.division:
             isDS = True
@@ -547,7 +547,7 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au

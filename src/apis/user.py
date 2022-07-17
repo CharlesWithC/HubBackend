@@ -18,7 +18,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -67,7 +67,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -100,7 +100,7 @@ async def getUsers(page:int, request: Request, response: Response, authorization
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -159,7 +159,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     ok = False
     isDS = False
     for i in roles:
-        if int(i) in config.perms.admin or int(i) in config.perms.hr:
+        if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.hrm:
             ok = True
         if int(i) in config.perms.division:
             isDS = True
@@ -222,7 +222,7 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -267,7 +267,7 @@ async def adminUnbindConnections(request: Request, response: Response, authoriza
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -301,7 +301,7 @@ async def adminDeleteUser(request: Request, response: Response, authorization: s
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm"])
     if au["error"]:
         response.status_code = 401
         return au

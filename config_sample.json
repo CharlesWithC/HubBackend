@@ -73,11 +73,11 @@
     "perms": {
         "admin": [0],
         "hr": [],
+        "hrm": [],
         "announcement": [],
         "event": [],
         "division": [],
         "audit": [],
-        "external": [10000],
         "driver": [100],
         "staff_of_the_month": [],
         "driver_of_the_month": []
@@ -90,8 +90,7 @@
     "roles": {
         "0": "root",
         "100": "Driver",
-        "251": "Construction Division",
-        "10000": "External Staff"
+        "251": "Construction Division"
     },
 
     "ranking": {
