@@ -36,6 +36,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     try:
         discordid = int(discordid)
     except:
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_discordid")}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
@@ -44,6 +45,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     if len(t) > 0:
         userid = t[0][0]
         if userid != -1:
+            response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "dismiss_before_ban")}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
@@ -58,6 +60,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         await AuditLog(adminid, f"Banned **{username}** (Discord ID `{discordid}`) for `{reason}` **{duration}**.")
         return {"error": False, "response": {"discordid": str(discordid)}}
     else:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
 @app.post(f'/{config.vtcprefix}/user/unban')
@@ -81,11 +84,12 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     try:
         discordid = int(discordid)
     except:
-        
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_discordid")}
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_not_banned")}
     else:
         cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
@@ -150,7 +154,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
     adminid = t[0][0]
     roles = t[0][3].split(",")
@@ -169,12 +173,13 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     
     if discordid != qdiscordid:
         if not ok and not isDS:
-            response.status_code = 401
+            response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
         cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {qdiscordid}")
         t = cur.fetchall()
         if len(t) == 0:
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     else:
         ok = True
@@ -208,6 +213,7 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     form = await request.form()
     bio = form["bio"]
     if len(bio) > 500:
+        response.status_code = 413
         return {"error": True, "descriptor": ml.tr(request, "bio_too_long")}
 
     cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
@@ -238,16 +244,19 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "user_must_register_first")}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {new_discord_id}")
     t = cur.fetchall()
     if len(t) > 0 and t[0][0] != -1:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member")}
 
     cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
@@ -282,9 +291,11 @@ async def adminUnbindConnections(request: Request, response: Response, authoriza
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     if userid != -1:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "dismiss_before_unbind")}
     
     cur.execute(f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
@@ -316,9 +327,11 @@ async def adminDeleteUser(request: Request, response: Response, authorization: s
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     if userid != -1:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete")}
     
     cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")

@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.9.8**  
+1.Updated IP check mechanism  
+2.Allowed admin roles to be updated with API  
+3.Added response status code to all error response  
+4.Improved fault-tolerance (hexcolor) for config
+
 **v1.9.7**  
 Added `config.perms.hrm` who has higher permission than `config.perms.hr`  
 

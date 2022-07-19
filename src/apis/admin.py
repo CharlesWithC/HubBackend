@@ -104,15 +104,13 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         if i in tconfig:
             if i == "distance_unit":
                 if not newconfig[i] in ["metric", "imperial"]:
+                    response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "invalid_distance_unit")}
             
             if i in musthave:
                 if newconfig[i] == "" or newconfig[i] == 0:
+                    response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": i})}
-
-            if i == "perms":
-                if newconfig[i]["admin"] != tconfig[i]["admin"]:
-                    return {"error": True, "descriptor": ml.tr(request, "admin_cannot_be_changed")}
 
             tconfig[i] = newconfig[i]
             
@@ -125,6 +123,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             if type(orgconfig[t]) == int:
                 tconfig[t] = int(tconfig[t])
             if type(tconfig[t]) != type(orgconfig[t]):
+                response.status_code = 400
                 return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
         
         for perm in tconfig["perms"].keys():
@@ -152,6 +151,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     except:
         import traceback
         traceback.print_exc()
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "config_data_type_mismatch")}
 
     open(config_path, "w").write(json.dumps(tconfig))

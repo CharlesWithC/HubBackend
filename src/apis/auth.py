@@ -203,9 +203,10 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
+        response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "steam_api_error")}
     if r.text.find("is_valid:true") == -1:
-        response.status_code = 401
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_steam_auth")}
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
@@ -213,6 +214,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     cur.execute(f"SELECT * FROM user WHERE discordid != '{discordid}' AND steamid = {steamid}")
     t = cur.fetchall()
     if len(t) > 0:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "steam_bound_to_other_account")}
 
     cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
@@ -226,6 +228,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Steam ID updated from%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
         p = cur.fetchall()
         if len(p) > 0:
+            response.status_code = 429
             return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_7d")}
 
         for role in roles:
@@ -273,24 +276,29 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     try:
         truckersmpid = int(truckersmpid)
     except:
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
 
     r = requests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
     if r.status_code != 200:
+        response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error")}
     d = json.loads(r.text)
     if d["error"]:
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "steam_not_bound_before_truckersmp")}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]
     tmpname = d["response"]["name"]
     if tmpsteamid != steamid:
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"tmpname": tmpname, "truckersmpid": str(truckersmpid)})}
 
     cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")

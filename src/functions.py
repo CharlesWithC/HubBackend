@@ -105,11 +105,11 @@ ipv6 = '''(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|
  
 def iptype(Ip): 
     if re.search(ipv4, Ip):
-        return "ipv4"
+        return 4
     elif re.search(ipv6, Ip):
-        return "ipv6"
+        return 6
     else:
-        return "invalid ip"
+        return 0
 
 def TSeparator(num):
     flag = ""
@@ -215,20 +215,17 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         ip = t[0][1]
 
         # check ip
-        orgiptype = 4
-        if iptype(ip) == "ipv6":
-            orgiptype = 6
-        curiptype = 4
-        if iptype(request.client.host) == "ipv6":
-            curiptype = 6
-        if orgiptype != curiptype:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            conn.commit()
-        else:
-            if ip != request.client.host:
-                cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+        orgiptype = iptype(ip)
+        if orgiptype != 0:
+            curiptype = iptype(request.client.host)
+            if orgiptype != curiptype:
+                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
                 conn.commit()
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            else:
+                if ip != request.client.host:
+                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                    conn.commit()
+                    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         
         # additional check
         

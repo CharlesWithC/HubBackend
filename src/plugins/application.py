@@ -44,30 +44,37 @@ async def newApplication(request: Request, response: Response, authorization: st
             roles.remove("")
         for r in config.perms.driver:
             if str(r) in roles:
+                response.status_code = 409
                 return {"error": True, "descriptor": ml.tr(request, "already_a_driver")}
         cur.execute(f"SELECT * FROM application WHERE apptype = 1 AND discordid = {discordid} AND status = 0")
         p = cur.fetchall()
         if len(p) > 0:
+            response.status_code = 409
             return {"error": True, "descriptor": ml.tr(request, "already_driver_application")}
     if apptype == 4:
         cur.execute(f"SELECT * FROM application WHERE apptype = 4 AND discordid = {discordid} AND status = 0")
         p = cur.fetchall()
         if len(p) > 0:
+            response.status_code = 409
             return {"error": True, "descriptor": ml.tr(request, "already_driver_application")}
 
     cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submitTimestamp >= {int(time.time()) - 7200}")
     p = cur.fetchall()
     if len(p) > 0:
+        response.status_code = 429
         return {"error": True, "descriptor": ml.tr(request, "no_multiple_application_2h")}
 
     if userid == -1 and apptype == 3:
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "no_loa_application")}
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if t[0][4] <= 0:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "must_verify_steam")}
     if t[0][3] <= 0 and config.truckersmp_bind:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp")}
     userid = t[0][5]
 
@@ -186,10 +193,10 @@ async def updateApplication(request: Request, response: Response, authorization:
     cur.execute(f"SELECT discordid, data, status, apptype FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if discordid != t[0][0]:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_applicant")}
     if t[0][2] != 0:
-        # 
+        response.status_code = 409
         if t[0][2] == 1:
             return {"error": True, "descriptor": ml.tr(request, "application_already_accepted")}
         elif t[0][2] == 2:
@@ -314,6 +321,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
     
     apptype = t[0][1]
@@ -321,11 +329,11 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if not isAdmin:
         if apptype == 4:
             if not isDS:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         else:
             if not isHR:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     discordid = t[0][2]
@@ -408,16 +416,17 @@ async def getApplication(request: Request, response: Response, applicationid: in
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
     
     if not isAdmin and discordid != t[0][2]:
         if t[0][1] == 4:
             if not isDS:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         else:
             if not isHR:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     return {"error": False, "response": {"applicationid": t[0][0], "apptype": t[0][1],\
@@ -485,7 +494,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
             
         elif isHR and not isDS:
             if apptype == 4:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
             limit = " WHERE apptype != 4"
@@ -512,7 +521,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
                 tot = p[0][0]
         
         else:
-            response.status_code = 401
+            response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     ret = []

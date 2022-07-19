@@ -547,6 +547,7 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     data = json.loads(b64d(t[0][1]))
     del data["data"]["object"]["driver"]

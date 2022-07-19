@@ -156,12 +156,14 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
     profit = {"euro": europrofit, "dollar": dollarprofit}
     
     if userid < 0:
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_a_member")}
 
     if not isAdmin and not isHR:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -184,6 +186,7 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) == 0:
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
         roles = t[0][3].split(",")
         while "" in roles:
@@ -226,6 +229,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) > 0:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
@@ -235,12 +239,16 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     if t[0][0] != -1:
+        response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "member_registered")}
     if t[0][2] <= 0:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
     if t[0][1] <= 0 and config.truckersmp_bind:
+        response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
 
     name = t[0][3]
@@ -325,6 +333,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     steamid = t[0][1]
@@ -338,7 +347,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         if int(i) < highest:
             highest = int(i)
     if adminhighest >= highest:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
 
     cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
@@ -387,6 +396,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     form = await request.form()
     userid = int(form["userid"])
     if userid < 0:
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
     roles = form["roles"].split(",")
     while "" in roles:
@@ -395,6 +405,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
     username = t[0][0]
     oldroles = t[0][1].split(",")
@@ -414,12 +425,12 @@ async def setMemberRole(request: Request, response: Response, authorization: str
 
     for add in addedroles:
         if add <= adminhighest:
-            response.status_code = 401
+            response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal")}
     
     for remove in removedroles:
         if remove <= adminhighest:
-            response.status_code = 401
+            response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
 
     if len(addedroles) + len(removedroles) == 0:
@@ -428,11 +439,11 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     if not isAdmin and not isHR and isDS:
         for add in addedroles:
             if add not in divisionroles:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         for remove in removedroles:
             if remove not in divisionroles:
-                response.status_code = 401
+                response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     roles = [str(i) for i in roles]
@@ -608,6 +619,7 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
     cur.execute(f"SELECT distance, eventpnt FROM driver WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "member_not_driver")}
     totalpnt = int(t[0][0] * ratio + t[0][1])
     divisionpnt = 0
@@ -635,6 +647,7 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
                 if int(role) in list(RANKING.values()):
                     curroles.append(int(role))
             if rank in curroles:
+                response.status_code = 409
                 return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role")}
             else:
                 requests.put(f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
@@ -657,6 +670,7 @@ async def memberDiscordrole(request: Request, response: Response, authorization:
 
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
+            response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "not_in_discord_server")}
 
     except:

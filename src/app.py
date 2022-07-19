@@ -22,10 +22,16 @@ class Dict2Obj(object):
 
 config_txt = open(config_path, "r").read()
 config = json.loads(config_txt)
-hexcolor = config["hexcolor"]
-rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
-config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-config["intcolor"] = int(hexcolor, 16)
+hexcolor = config["hexcolor"][-6:]
+try:
+    rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
+    config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
+    config["intcolor"] = int(hexcolor, 16)
+except:
+    hexcolor = "FFFFFF"
+    rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
+    config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
+    config["intcolor"] = int(hexcolor, 16)
 config = Dict2Obj(config)
 
 if os.path.exists(config.apidoc):

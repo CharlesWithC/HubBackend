@@ -74,6 +74,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     cur = conn.cursor()
 
     if request.client.host != "185.233.107.244":
+        response.status_code = 403
         await AuditLog(-999, f"Detected suspicious navio webhook post from {request.client.host} - REJECTED")
         return {"error": True, "descriptor": "Validation failed"}
     

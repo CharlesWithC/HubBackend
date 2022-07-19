@@ -51,15 +51,17 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found")}
     luserid = t[0][0]
     if userid != luserid:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) > 0:
+        response.status_code = 409
         status = t[0][0]
         if status == 0:
             return {"error": True, "descriptor": ml.tr(request, "division_already_requested")}
@@ -80,7 +82,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
                 if division["roleid"] == int(role):
                     udivisions.append(division["id"])
     if not divisionid in udivisions:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_division_driver")}
     
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
@@ -180,6 +182,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
     cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found")}
     if divisionid == 0:
         divisionid = t[0][0]
@@ -245,9 +248,11 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
             t = cur.fetchall()
             if len(t) == 0:
+                response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
             duserid = t[0][0]
             if duserid != userid:
+                response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "delivery_not_division")}
             else:
                 return {"error": False, "response": {"requestSubmitted": False}}
@@ -267,6 +272,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
 
         if not ok:
             if userid != duserid and status != 1:
+                response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
 
         staffname = "/"

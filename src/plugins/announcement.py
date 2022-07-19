@@ -41,6 +41,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
+            response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
         tt = t[0]
         cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
@@ -100,7 +101,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     atype = int(form["atype"])
 
     if not isAdmin and atype != 1:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
@@ -172,9 +173,11 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin:
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
@@ -221,10 +224,11 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
     t = cur.fetchall()
     if len(t) == 0:
+        response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     creator = t[0][0]
     if creator != adminid and not isAdmin: # creator or leadership
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
     
     cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")
