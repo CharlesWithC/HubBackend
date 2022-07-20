@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.9.9**  
+1.Fixed the bug that User ID replaced User Name on `/dlog`  
+2.Updated telemetry data encoding method  
+
 **v1.9.8**  
 1.Updated IP check mechanism  
 2.Allowed admin roles to be updated with API  

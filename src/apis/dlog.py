@@ -573,9 +573,10 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
                 ver = "v3"
             elif basic[2] == "v4":
                 ver = "v4"
+            elif basic[2] == "v5":
+                ver = "v5"
         telemetry = ver + p[0][0]
 
-    name = t[0][0]
     if userid == -1:
         name = "Anonymous"
 

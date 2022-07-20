@@ -31,7 +31,7 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
         jobuuid = p[0][0]
         cur.execute(f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
         t = cur.fetchall()
-        data = f"{t[0][3]},{t[0][4]},v4;"
+        data = f"{t[0][3]},{t[0][4]},v5;"
         lastx = 0
         lastz = 0
         idle = 0
@@ -41,9 +41,15 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
                 continue
             else:
                 if idle > 0:
-                    data += f"idle{idle};"
+                    data += f"^{idle}^"
                     idle = 0
-            data += f"{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
+            st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
+            rx = (round(tt[0]) - lastx) + 26
+            rz = (round(tt[2]) - lastz) + 26
+            if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
+                data += f"{st[rx]}{st[rz]}"
+            else:
+                data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
             lastx = round(tt[0])
             lastz = round(tt[2])
         for _ in range(3):
