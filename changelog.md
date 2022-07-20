@@ -1,5 +1,15 @@
 # Changelog
 
+**v1.9.10**  
+1.Changed `config.telemetry_innodb_dir` to `mysql_ext`  
+2.Moved `announcement`, `dlog`, `division`, `event`, `application`, `auditlog`, `downloads` TABLE to `mysql_ext` for external storage  
+
+**A method to move data directory**  
+ALTER TABLE `table` RENAME TO `table_old`;  
+CREATE TABLE IF NOT EXISTS `table` `schema` DATA DIRECTORY = '/.../';  
+INSERT INTO `table` SELECT * FROM `table_old`;  
+DROP TABLE `table_old`;  
+
 **v1.9.9**  
 1.Fixed the bug that User ID replaced User Name on `/dlog`  
 2.Updated telemetry data encoding method  

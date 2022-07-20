@@ -38,7 +38,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
     tconfig = json.loads(config_txt)
     toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "telemetry_innodb_dir", "language_dir", \
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", "language_dir", \
             "enabled_plugins", "external_plugins", "steam_callback_url"]
     # vtcprefix will affect nginx settings, so it's not allowed to be changed
     # enabled_plugins are paid functions, so it's only changeable by developer
@@ -87,7 +87,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     newconfig = json.loads(form["config"])
 
     toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "telemetry_innodb_dir", "language_dir", \
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", "language_dir", \
             "enabled_plugins", "external_plugins", "steam_callback_url"]
     musthave = ["vtcname", "vtclogo", "hexcolor", \
         "navio_token", "navio_company_id", "guild", \
