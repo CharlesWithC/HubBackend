@@ -8,6 +8,7 @@ from typing import Optional
 from datetime import datetime
 import requests
 from io import BytesIO
+import zlib, base64
 
 from app import app, config
 from db import newconn
@@ -562,8 +563,12 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     p = cur.fetchall()
     telemetry = ""
     if len(p) > 0:
+        telemetry = p[0][0]
+        telemetry = base64.b64decode(telemetry)
+        telemetry = zlib.decompress(telemetry).decode()
+        orgt = telemetry
         ver = "v1"
-        telemetry = p[0][0].split(";")
+        telemetry = telemetry.split(";")
         t1 = telemetry[1].split(",")
         if len(t1) == 2:
             ver = "v2"
@@ -575,7 +580,7 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
                 ver = "v4"
             elif basic[2] == "v5":
                 ver = "v5"
-        telemetry = ver + p[0][0]
+        telemetry = ver + orgt
 
     if userid == -1:
         name = "Anonymous"

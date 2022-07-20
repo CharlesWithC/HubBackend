@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.9.11**  
+Added zlib compression for telemetry data (saving ~40% storage)  
+
 **v1.9.10**  
 1.Changed `config.telemetry_innodb_dir` to `mysql_ext`  
 2.Moved `announcement`, `dlog`, `division`, `event`, `application`, `auditlog`, `downloads` TABLE to `mysql_ext` for external storage  
