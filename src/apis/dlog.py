@@ -608,7 +608,7 @@ async def dlogExport(request: Request, response: Response, authorization: str = 
         endtime = int(time.time())
 
     f = BytesIO()
-    f.write(b"logid, isdelivered, game, userid, username, source_company, source_city, destination_company, destination_city, distance, fuel, top_speed, truck, cargo, cargo_mass, damage, profit, offence, xp, time\n")
+    f.write(b"logid, isdelivered, game, userid, username, source_company, source_city, destination_company, destination_city, distance, fuel, top_speed, truck, cargo, cargo_mass, damage, net_profit, profit, expense, offence, xp, time\n")
     cur.execute(f"SELECT logid, userid, topspeed, unit, profit, unit, fuel, distance, data, isdelivered, timestamp FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} AND userid >= 0")
     d = cur.fetchall()
     for dd in d:
@@ -667,14 +667,24 @@ async def dlogExport(request: Request, response: Response, authorization: str = 
         else:
             profit = -float(data["data"]["object"]["events"][-1]["meta"]["penalty"])
             damage = float(data["data"]["object"]["cargo"]["damage"])
+        net_profit = profit
         allevents = data["data"]["object"]["events"]
         offence = 0
+        expense = {"tollgate": 0, "ferry": 0, "train": 0}
+        totalexpense = 0
         for eve in allevents:
             if eve["type"] == "fine":
                 offence += int(eve["meta"]["amount"])
-        profit -= offence
+            elif eve["type"] in ["tollgate", "ferry", "train"]:
+                expense[eve["type"]] += int(eve["meta"]["cost"])
+                totalexpense += int(eve["meta"]["cost"])
+        expensetxt = ""
+        for k, v in expense.items():
+            expensetxt += f"{k}: {v}, "
+        expensetxt = expensetxt[:-2]
+        net_profit = net_profit - offence - totalexpense
         
-        data = [dd[0], isdelivered, game, userid, name, source_company, source_city, destination_company, destination_city, dd[7], dd[6], dd[2], truck, cargo, cargo_mass, damage, profit, offence, xp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))]
+        data = [dd[0], isdelivered, game, userid, name, source_company, source_city, destination_company, destination_city, dd[7], dd[6], dd[2], truck, cargo, cargo_mass, damage, net_profit, profit, expensetxt, offence, xp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))]
         for i in range(len(data)):
             data[i] = '"' + str(data[i]) + '"'
         

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.9.12**  
+1.Added `expense`, `net_profit` column in exported .csv table  
+2.Updated delivery webhook post  
+
 **v1.9.11**  
 Added zlib compression for telemetry data (saving ~40% storage)  
 

@@ -152,10 +152,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         driven_distance = 0
 
     allevents = d["data"]["object"]["events"]
+    totalexpense = 0
     for eve in allevents:
         if eve["type"] == "fine":
             offence += int(eve["meta"]["amount"])
-    revenue -= offence
+        elif eve["type"] in ["tollgate", "ferry", "train"]:
+            totalexpense += int(eve["meta"]["cost"])
+    revenue = revenue - offence - totalexpense
     
     if driven_distance < 0:
         driven_distance = 0
@@ -219,31 +222,32 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             offence = -offence
             if e == "job.delivered":
                 k = randint(0, len(GIFS)-1)
+                dhulink = f"https://{config.dhdomain}/member?userid={userid}"
                 if config.distance_unit == "imperial":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                             "url": f"https://{config.dhdomain}/delivery?logid={logid}",
-                            "fields": [{"name": "Driver", "value": username, "inline": True},
+                            "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
                                     {"name": "Distance", "value": f"{TSeparator(int(driven_distance * 0.621371))}Mi", "inline": True},
                                     {"name": "Fuel", "value": f"{TSeparator(int(fuel_used * 0.26417205))}Gal", "inline": True},
-                                    {"name": "Revenue / Offence", "value": f"{munit}{TSeparator(int(revenue))} / {munit}{TSeparator(int(offence))}", "inline": True},
+                                    {"name": "Net Profit", "value": f"{munit}{TSeparator(int(revenue))}", "inline": True},
                                     {"name": "XP Earned", "value": f"{TSeparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                 elif config.distance_unit == "metric":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                             "url": f"https://{config.dhdomain}/delivery?logid={logid}",
-                            "fields": [{"name": "Driver", "value": username, "inline": True},
+                            "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
                                     {"name": "Distance", "value": f"{TSeparator(int(driven_distance))}Km", "inline": True},
                                     {"name": "Fuel", "value": f"{TSeparator(int(fuel_used))}L", "inline": True},
-                                    {"name": "Revenue / Offence", "value": f"{munit}{TSeparator(int(revenue))} / {munit}{TSeparator(int(offence))}", "inline": True},
+                                    {"name": "Net Profit", "value": f"{munit}{TSeparator(int(revenue))}", "inline": True},
                                     {"name": "XP Earned", "value": f"{TSeparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
