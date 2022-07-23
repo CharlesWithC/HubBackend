@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.10.2**  
+1.Fixed minor bugs  
+2.Added `pagelimit` parameter for all list response  
+
 **v1.10.1**  
 1.Config format update (Use `config_upgrade.py` in release to upgrade config to v1.10.1)  
 a) Item name changes  

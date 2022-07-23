@@ -12,8 +12,9 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtc_abbr}/announcement")
-async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
+@app.get(f"/{config.vtc_abbr}/announcements")
+async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int]= -1, aid: Optional[int] = -1, pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /announcement', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -37,6 +38,11 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if userid == -1:
         limit = "AND pvt = 0"
 
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 100:
+        pagelimit = 100
+
     if aid != -1:
         cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
         t = cur.fetchall()
@@ -55,7 +61,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid >= 0 {limit} ORDER BY timestamp DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:

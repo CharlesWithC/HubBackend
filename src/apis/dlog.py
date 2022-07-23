@@ -17,7 +17,7 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[division["id"]] = division["point"]
+    DIVISIONPNT[division["id"]] = int(division["point"])
 
 @app.get(f"/{config.vtc_abbr}/dlog/stats")
 async def dlogStats(request: Request, response: Response):
@@ -34,21 +34,21 @@ async def dlogStats(request: Request, response: Response):
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND joints >= {int(time.time())-86400}")
     newdrivers = cur.fetchone()[0]
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >=0 AND isdelivered = 1")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1")
     jobs = cur.fetchone()[0]
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >=0 AND isdelivered = 1 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE isdelivered = 1 AND timestamp >= {int(time.time())-86400}")
     newjobs = cur.fetchone()[0]
 
     # euro profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 1")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1")
     europrofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 1 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1 AND timestamp >= {int(time.time())-86400}")
     neweuroprofit = cur.fetchone()[0]
     
     # dollar profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 2")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2")
     dollarprofit = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid >=0 AND unit = 2 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2 AND timestamp >= {int(time.time())-86400}")
     newdollarprofit = cur.fetchone()[0]
 
     if europrofit is None:
@@ -63,9 +63,9 @@ async def dlogStats(request: Request, response: Response):
     profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
     newprofit = {"euro": str(neweuroprofit), "dollar": str(newdollarprofit)}
 
-    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0")
+    cur.execute(f"SELECT SUM(fuel) FROM dlog")
     fuel = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
     newfuel = cur.fetchone()[0]
     if fuel is None:
         fuel = 0
@@ -74,9 +74,9 @@ async def dlogStats(request: Request, response: Response):
     fuel = int(fuel)
     newfuel = int(newfuel)
 
-    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid >=0")
+    cur.execute(f"SELECT SUM(distance) FROM dlog")
     distance = cur.fetchone()[0]
-    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid >=0 AND timestamp >= {int(time.time())-86400}")
+    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE timestamp >= {int(time.time())-86400}")
     newdistance = cur.fetchone()[0]
     if distance is None:
         distance = 0
@@ -89,25 +89,6 @@ async def dlogStats(request: Request, response: Response):
     ets2jobs = cur.fetchone()[0]
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE unit = 2")
     atsjobs = cur.fetchone()[0]
-    
-    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE timestamp >= {int(time.time())-86400} AND userid >= 0 GROUP BY userid ORDER BY SUM(distance) DESC LIMIT 1")
-    t = cur.fetchall()
-    username = "/"
-    avatar = ""
-    userid = ""
-    distance = 0
-    dotdiscordid = 0
-    if len(t) > 0:
-        userid = t[0][0]
-        distance = t[0][1]
-        cur.execute(f"SELECT name, avatar, discordid FROM user WHERE userid = {userid}")
-        p = cur.fetchall()
-        if len(p) > 0:
-            username = p[0][0]
-            avatar = p[0][1]
-            dotdiscordid = p[0][2]
-        else:
-            username = "Unknown Driver"
 
     return {"error": False, "response": {"drivers": {"all": str(drivers), "new": str(newdrivers)}, \
         "jobs": {"all": str(jobs), "new": str(newjobs), "ets2": str(ets2jobs), "ats": str(atsjobs)}, \
@@ -116,7 +97,7 @@ async def dlogStats(request: Request, response: Response):
 
 @app.get(f"/{config.vtc_abbr}/dlog/chart")
 async def dlogChart(request: Request, response: Response,
-    scale: Optional[int] = 2, sum: Optional[bool] = False, quserid: Optional[int] = -1,
+    scale: Optional[int] = 2, sumup: Optional[bool] = False, quserid: Optional[int] = -1,
     authorization: Optional[str] = Header(None)):
     rl = ratelimit(request.client.host, 'GET /dlog/chart', 60, 60)
     if rl > 0:
@@ -159,7 +140,7 @@ async def dlogChart(request: Request, response: Response,
     basefuel = 0
     baseeuro = 0
     basedollar = 0
-    if sum:
+    if sumup:
         endtime = timerange[0][0]
         cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {endtime}")
         t = cur.fetchall()
@@ -193,10 +174,10 @@ async def dlogChart(request: Request, response: Response,
         dollar = basedollar
         if len(t) > 0 and t[0][0] != None:
             dollar += int(t[0][0])
-        profit = {"euro": euro, "dollar": dollar}
-        ret.append({"starttime": str(starttime), "endtime": str(endtime), "distance": str(distance), "fuel": str(fuel), "profit": str(profit)})
+        profit = {"euro": str(euro), "dollar": str(dollar)}
+        ret.append({"starttime": str(starttime), "endtime": str(endtime), "distance": str(distance), "fuel": str(fuel), "profit": profit})
     
-        if sum:
+        if sumup:
             basedistance = distance
             basefuel = fuel
             baseeuro = euro
@@ -207,7 +188,7 @@ async def dlogChart(request: Request, response: Response,
 @app.get(f"/{config.vtc_abbr}/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
-        noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = ""):
+        noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = "", pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -223,6 +204,11 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
 
     if page <= 0:
         page = 1
+
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
 
     limituser = limituser.split(",")
     while "" in limituser:
@@ -358,10 +344,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                     ret.append({"userid": str(userid), "name": name, "discordid": str(discordid), "avatar": avatar, \
                         "distance": "0", "eventpnt": "0", "divisionpnt": "0", "totalpnt": "0", "totnolimit": str(int(tt[1]) + divisionpnt)})
 
-        if (page - 1) * 10 >= len(ret):
+        if (page - 1) * pagelimit >= len(ret):
             return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
 
-        return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": str(page), "tot": str(len(ret))}}
+        return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
 
     cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 ORDER BY distance * {ratio} + eventpnt DESC")
     t = cur.fetchall()
@@ -395,7 +381,7 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                 "distance": str(tt[2]), "eventpnt": str(tt[3]), "divisionpnt": str(divisionpnt), \
                     "totalpnt": str(tt[1]), "totnolimit": str(int(tt[1]) + divisionpnt)})
 
-    if (page - 1) * 10 >= len(ret):
+    if (page - 1) * pagelimit >= len(ret):
         return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
@@ -404,10 +390,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": str(page), "tot": str(tot)}}
+    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(tot)}}
 
 @app.get(f"/{config.vtc_abbr}/dlog/newdrivers")
-async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
+async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None), pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /dlog/newdrivers', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -417,11 +403,16 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
     if au["error"]:
         response.status_code = 401
         return au
+    
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
 
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT userid, joints FROM driver WHERE userid >= 0 ORDER BY joints DESC LIMIT 10")
+    cur.execute(f"SELECT userid, joints FROM driver WHERE userid >= 0 ORDER BY joints DESC LIMIT {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -429,11 +420,12 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
         p = cur.fetchall()
         ret.append({"userid": str(tt[0]), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "joints": str(tt[1])})
 
-    return {"error": False, "response": {"list": ret, "page": "1", "tot": "10"}}
+    return {"error": False, "response": {"list": ret, "page": "1", "tot": str(pagelimit)}}
 
 @app.get(f"/{config.vtc_abbr}/dlogs")
 async def dlogs(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
+    page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, \
+        starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0, pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /dlogs', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -455,6 +447,11 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
 
     if page <= 0:
         page = 1
+    
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
 
     limit = ""
     if quserid != -1:
@@ -473,7 +470,7 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
 
-    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * 10}, 10")
+    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid >= 0 {limit} {timelimit} {speedlimit} {gamelimit} ORDER BY timestamp DESC LIMIT {(page - 1) * pagelimit}, {pagelimit}")
     
     t = cur.fetchall()
     ret = []
@@ -520,7 +517,7 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
                     "cargo": cargo, "cargo_mass": str(cargo_mass), \
                         "profit": str(profit), "unit": str(unit), "isdivision": str(isdivision), "timestamp": str(tt[2])})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speedlimit} {gamelimit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
@@ -549,7 +546,7 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE userid >= 0 AND logid = {logid}")
+    cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE logid >= 0 AND logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -614,7 +611,7 @@ async def dlogExport(request: Request, response: Response, authorization: str = 
 
     f = BytesIO()
     f.write(b"logid, isdelivered, game, userid, username, source_company, source_city, destination_company, destination_city, distance, fuel, top_speed, truck, cargo, cargo_mass, damage, net_profit, profit, expense, offence, xp, time\n")
-    cur.execute(f"SELECT logid, userid, topspeed, unit, profit, unit, fuel, distance, data, isdelivered, timestamp FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} AND userid >= 0")
+    cur.execute(f"SELECT logid, userid, topspeed, unit, profit, unit, fuel, distance, data, isdelivered, timestamp FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} AND logid >= 0")
     d = cur.fetchall()
     for dd in d:
         userid = dd[1]

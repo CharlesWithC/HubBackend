@@ -25,7 +25,7 @@ if __name__ == "__main__":
     date = currentDateTime.date()
     year = date.strftime("%Y")
     print(drivershub)
-    print("Drivers Hub: Backend (v1.10.1)")
+    print("Drivers Hub: Backend (v1.10.2)")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
     print("")
 

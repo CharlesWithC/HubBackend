@@ -256,7 +256,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             duserid = t[0][0]
             if duserid != userid:
                 response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "delivery_not_division")}
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
             else:
                 return {"error": False, "response": {"requestSubmitted": False}}
         tt = t[0]
@@ -285,10 +285,10 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             staffname = t[0][0]
         if userid == duserid:
             return {"error": False, "response": {"divisionid": str(divisionid), "requestts": str(requestts), "status": str(status), \
-                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "reason": reason, "isstaff": str(ok)}}
+                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "reason": reason, "isstaff": ok}}
         else:
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
-                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "isstaff": str(ok)}}
+                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "isstaff": ok}}
 
     stats = []
     for division in divisions:

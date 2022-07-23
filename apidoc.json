@@ -268,6 +268,14 @@
                     },
                     "name": "page",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -675,6 +683,14 @@
                         "type": "string"
                     },
                     "name": "search",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
                     "in": "query"
                 }],
                 "responses": {
@@ -1177,7 +1193,7 @@
                     },
                     "name": "speedlimit",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Game (0: ETS2 & ATS | 1: ETS2 | 2: ATS)",
@@ -1185,7 +1201,7 @@
                     },
                     "name": "game",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "No counting event point",
@@ -1217,6 +1233,14 @@
                     },
                     "name": "limituser",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1247,6 +1271,15 @@
                 "operationId": "getNewDrivers",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1325,6 +1358,14 @@
                         "type": "integer"
                     },
                     "name": "endtime",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
                     "in": "query"
                 }],
                 "responses": {
@@ -1634,7 +1675,7 @@
                 }
             }
         },
-        "/vtc/announcement": {
+        "/vtc/announcements": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -1658,6 +1699,14 @@
                     },
                     "name": "aid",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1679,7 +1728,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/vtc/announcement": {
             "post": {
                 "summary": "Create Announcement",
                 "tags": ["announcement"],
@@ -1919,7 +1970,7 @@
                 }
             }
         },
-        "/vtc/event": {
+        "/vtc/events": {
             "get": {
                 "summary": "Get Event",
                 "tags": ["event"],
@@ -1943,6 +1994,14 @@
                     },
                     "name": "eventid",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1964,7 +2023,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/vtc/event": {
             "post": {
                 "summary": "Create Event",
                 "tags": ["event"],
@@ -2517,6 +2578,14 @@
                     },
                     "name": "showall",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -2757,7 +2826,7 @@
                     },
                     "name": "page",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Responsible User ID",
@@ -2765,13 +2834,21 @@
                     },
                     "name": "userid",
                     "in": "query"
-                },{
+                }, {
                     "required": false,
                     "schema": {
                         "title": "Operation",
                         "type": "string"
                     },
                     "name": "operation",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Limit",
+                        "type": "integar"
+                    },
+                    "name": "pagelimit",
                     "in": "query"
                 }],
                 "responses": {

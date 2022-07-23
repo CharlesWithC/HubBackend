@@ -17,7 +17,7 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[division["id"]] = division["point"]
+    DIVISIONPNT[division["id"]] = int(division["point"])
 
 sroles = tconfig["roles"]
 ROLES = {}
@@ -29,7 +29,10 @@ RANKS = tconfig["ranks"]
 RANKROLE = {}
 RANKNAME = {}
 for t in RANKS:
-    RANKROLE[int(t["distance"])] = int(t["discord_role_id"])
+    if t["discord_role_id"] != "":
+        RANKROLE[int(t["distance"])] = int(t["discord_role_id"])
+    else:
+        RANKROLE[int(t["distance"])] = 0
     RANKNAME[int(t["distance"])] = t["name"]
 RANKROLE = dict(collections.OrderedDict(sorted(RANKROLE.items())))
 RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
@@ -40,7 +43,8 @@ for division in divisions:
     divisionroles.append(division["role_id"])
 
 @app.get(f'/{config.vtc_abbr}/members')
-async def getMembers(page:int, request: Request, response: Response, authorization: str = Header(None), query: Optional[str] = ''):
+async def getMembers(page:int, request: Request, response: Response, authorization: str = Header(None), \
+    query: Optional[str] = '', pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /members', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -57,9 +61,14 @@ async def getMembers(page:int, request: Request, response: Response, authorizati
     if page <= 0:
         page = 1
 
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
+
     query = query.replace("'","''").lower()
     
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -150,7 +159,7 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
         dollarprofit = t[0][0]
     if dollarprofit is None:
         dollarprofit = 0
-    profit = {"euro": europrofit, "dollar": dollarprofit}
+    profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
     
     if userid < 0:
         response.status_code = 403
@@ -178,7 +187,7 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
             divisionpnt += o[0][0]
         return {"error": False, "response": {"userid": str(userid), "name": t[0][1], "discordid": str(t[0][0]), "avatar": t[0][2], \
             "bio": b64d(t[0][7]), "roles": roles, "join": str(t[0][4]), "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-                "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": str(profit), "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
+                "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
     else:
         cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
         t = cur.fetchall()
@@ -202,7 +211,7 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
         return {"error": False, "response": {"userid": str(userid), "name": t[0][1], "email": t[0][8], \
             "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64d(t[0][7]), "roles": roles, "join": str(t[0][4]), \
                 "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
-                    "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": str(profit), "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
+                    "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
 
 @app.post(f'/{config.vtc_abbr}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):

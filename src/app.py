@@ -41,9 +41,9 @@ for perm in perms.keys():
     perms[perm] = newroles
 config["perms"] = perms
 tconfig = config
+config = Dict2Obj(config)
 del tconfig["intcolor"]
 del tconfig["rgbcolor"]
-config = Dict2Obj(config)
 
 if os.path.exists(config.apidoc):
     app = FastAPI(openapi_url=f"/{config.vtc_abbr}/openapi.json", docs_url=f"/{config.vtc_abbr}/doc", redoc_url=None)

@@ -59,16 +59,17 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
 
         cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
-        username = user_data['username']
+        username = str(user_data['username'])
         username = username.replace("'", "''").replace(",","")
-        email = user_data['email']
+        email = str(user_data['email'])
         email = email.replace("'", "''")
+        avatar = str(user_data['avatar'])
         if len(t) == 0:
-            cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{user_data['avatar']}', '',\
+            cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{avatar}', '',\
                 '{email}', -1, -1, '', {int(time.time())})")
             await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)")
         else:
-            cur.execute(f"UPDATE user SET name = '{username}', avatar = '{user_data['avatar']}', email = '{email}' WHERE discordid = '{user_data['id']}'")
+            cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{user_data['id']}'")
         conn.commit()
         
         if config.in_guild_check:

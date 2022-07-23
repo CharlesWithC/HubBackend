@@ -300,9 +300,9 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     return {"error": False, "response": {"applicationid": str(applicationid)}}
 
-@app.post(f"/{config.vtc_abbr}/application/status")
+@app.patch(f"/{config.vtc_abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application/status', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /application/status', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -455,7 +455,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
             "closedTimestamp": str(t[0][7]), "closedBy": str(t[0][6])}}
 
 @app.get(f"/{config.vtc_abbr}/applications")
-async def getApplications(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), showall: Optional[bool] = False):
+async def getApplications(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), \
+    showall: Optional[bool] = False, pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /applications', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -486,6 +487,11 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         if int(i) in config.perms.division:
             isDS = True
 
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 100:
+        pagelimit = 100
+
     t = None
     tot = 0
     if showall == False:
@@ -493,7 +499,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         if apptype != 0:
             limit = f" AND apptype = {apptype}"
 
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
         t = cur.fetchall()
         
         cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
@@ -505,7 +511,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
             limit = ""
             if apptype != 0:
                 limit = f" WHERE apptype = {apptype}"
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")
@@ -522,7 +528,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
             if apptype != 0:
                 limit = f" WHERE apptype = {apptype}"
 
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")
@@ -533,7 +539,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         elif not isHR and isDS:
             limit = " WHERE apptype = 4"
 
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * 10}, 10")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")

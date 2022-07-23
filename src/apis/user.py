@@ -98,7 +98,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": False, "response": {"discordid": str(discordid)}}
 
 @app.get(f"/{config.vtc_abbr}/users")
-async def getUsers(page:int, request: Request, response: Response, authorization: str = Header(None)):
+async def getUsers(page:int, request: Request, response: Response, authorization: str = Header(None), pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /users', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -114,8 +114,13 @@ async def getUsers(page:int, request: Request, response: Response, authorization
     
     if page <= 0:
         page = 1
+
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC")
+    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC LIMIT {(page - 1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -127,7 +132,6 @@ async def getUsers(page:int, request: Request, response: Response, authorization
             banned = True
             banreason = p[0][0]
         ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": TF[banned], "banreason": banreason})
-    ret = ret[(page-1)*10:page*10]
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
     t = cur.fetchall()
     tot = 0

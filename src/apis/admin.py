@@ -95,8 +95,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             
             if i in musthave:
                 if newconfig[i] == "":
-                    response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": i})}
+                    newconfig[i] = orgconfig[i]
 
             ttconfig[i] = newconfig[i]
     
@@ -148,7 +147,8 @@ async def reloadService(request: Request, response: Response, authorization: str
     return {"error": False}
 
 @app.get(f"/{config.vtc_abbr}/auditlog")
-async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1, operation: Optional[str] = ""):
+async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None), \
+    userid: Optional[int] = -1, operation: Optional[str] = "", pagelimit: Optional[int] = 30):
     rl = ratelimit(request.client.host, 'GET /auditlog', 30, 10)
     if rl > 0:
         response.status_code = 429
@@ -171,8 +171,13 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
     limit = ""
     if userid != -1:
         limit = f"AND userid = {userid}"
+    
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 500:
+        pagelimit = 500
 
-    cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * 30}, 30")
+    cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:

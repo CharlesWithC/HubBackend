@@ -12,8 +12,9 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtc_abbr}/event")
-async def getEvent(request: Request, response: Response, authorization: str = Header(None), page: Optional[int] = 1, eventid: Optional[int] = -1):
+@app.get(f"/{config.vtc_abbr}/events")
+async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, eventid: Optional[int] = -1, pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /event', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -39,6 +40,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     if page <= 0:
         page = 1
+
+    if pagelimit <= 1:
+        pagelimit = 1
+    elif pagelimit >= 250:
+        pagelimit = 250
 
     if eventid != -1:
         cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid = {eventid} {limit}")
@@ -77,7 +83,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         return {"error": False, "response": {"eventid": str(tt[0]), "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
             "distance": b64d(tt[4]), "mts": str(tt[5]), "dts": str(tt[6]), "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)}}
 
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -117,7 +123,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * 10 - tot,0)}, 10")
+    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * pagelimit - tot,0)}, {pagelimit}")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")
@@ -158,7 +164,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret[:10], "page": str(page), "tot": str(tot)}}
+    return {"error": False, "response": {"list": ret[:pagelimit], "page": str(page), "tot": str(tot)}}
 
 @app.get(f"/{config.vtc_abbr}/events/all")
 async def getAllEvents(request: Request, response: Response, authorization: str = Header(None)):
