@@ -19,7 +19,7 @@ DIVISIONPNT = {}
 for division in config.divisions:
     DIVISIONPNT[division["id"]] = division["point"]
 
-@app.get(f"/{config.vtcprefix}/dlog/stats")
+@app.get(f"/{config.vtc_abbr}/dlog/stats")
 async def dlogStats(request: Request, response: Response):
     rl = ratelimit(request.client.host, 'GET /dlog/stats', 60, 60)
     if rl > 0:
@@ -60,8 +60,8 @@ async def dlogStats(request: Request, response: Response):
     if newdollarprofit is None:
         newdollarprofit = 0
 
-    profit = {"euro": europrofit, "dollar": dollarprofit}
-    newprofit = {"euro": neweuroprofit, "dollar": newdollarprofit}
+    profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
+    newprofit = {"euro": str(neweuroprofit), "dollar": str(newdollarprofit)}
 
     cur.execute(f"SELECT SUM(fuel) FROM dlog WHERE userid >=0")
     fuel = cur.fetchone()[0]
@@ -109,15 +109,14 @@ async def dlogStats(request: Request, response: Response):
         else:
             username = "Unknown Driver"
 
-    return {"error": False, "response": {"drivers": {"all": drivers, "new": newdrivers}, \
-        "jobs": {"all": jobs, "new": newjobs, "ets2": ets2jobs, "ats": atsjobs}, \
+    return {"error": False, "response": {"drivers": {"all": str(drivers), "new": str(newdrivers)}, \
+        "jobs": {"all": str(jobs), "new": str(newjobs), "ets2": str(ets2jobs), "ats": str(atsjobs)}, \
         "profit": {"all": profit, "new": newprofit}, \
-            "fuel": {"all": fuel, "new": newfuel}, "distance": {"all": distance, "new": newdistance}, 
-                "driver_of_the_day": {"userid": userid, "discordid": str(dotdiscordid), "name": username, "avatar": avatar, "distance": int(distance)}}}
+            "fuel": {"all": str(fuel), "new": str(newfuel)}, "distance": {"all": str(distance), "new": str(newdistance)}}}
 
-@app.get(f"/{config.vtcprefix}/dlog/chart")
+@app.get(f"/{config.vtc_abbr}/dlog/chart")
 async def dlogChart(request: Request, response: Response,
-    scale: Optional[int] = 2, addup: Optional[bool] = False, quserid: Optional[int] = -1,
+    scale: Optional[int] = 2, sum: Optional[bool] = False, quserid: Optional[int] = -1,
     authorization: Optional[str] = Header(None)):
     rl = ratelimit(request.client.host, 'GET /dlog/chart', 60, 60)
     if rl > 0:
@@ -160,7 +159,7 @@ async def dlogChart(request: Request, response: Response,
     basefuel = 0
     baseeuro = 0
     basedollar = 0
-    if addup:
+    if sum:
         endtime = timerange[0][0]
         cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {endtime}")
         t = cur.fetchall()
@@ -195,9 +194,9 @@ async def dlogChart(request: Request, response: Response,
         if len(t) > 0 and t[0][0] != None:
             dollar += int(t[0][0])
         profit = {"euro": euro, "dollar": dollar}
-        ret.append({"starttime": starttime, "endtime": endtime, "distance": distance, "fuel": fuel, "profit": profit})
+        ret.append({"starttime": str(starttime), "endtime": str(endtime), "distance": str(distance), "fuel": str(fuel), "profit": str(profit)})
     
-        if addup:
+        if sum:
             basedistance = distance
             basefuel = fuel
             baseeuro = euro
@@ -205,7 +204,7 @@ async def dlogChart(request: Request, response: Response,
 
     return {"error": False, "response": ret}
 
-@app.get(f"/{config.vtcprefix}/dlog/leaderboard")
+@app.get(f"/{config.vtc_abbr}/dlog/leaderboard")
 async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
         noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = ""):
@@ -323,8 +322,10 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                         divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
             users.append(userid)
             if str(userid) in limituser or len(limituser) == 0:
-                ret.append({"userid": userid, "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                    "distance": userdistance[userid], "eventpnt": userevent[userid], "divisionpnt": divisionpnt, "totalpnt": round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt, "totnolimit": totnolimit + divisionpnt})
+                ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                    "distance": str(userdistance[userid]), "eventpnt": str(userevent[userid]), "divisionpnt": str(divisionpnt), \
+                        "totalpnt": str(round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt), \
+                            "totnolimit": str(totnolimit + divisionpnt)})
 
         cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
         t = cur.fetchall()
@@ -354,13 +355,13 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
                         if o[0][0] in DIVISIONPNT.keys():
                             divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
                 if str(userid) in limituser or len(limituser) == 0:
-                    ret.append({"userid": userid, "name": name, "discordid": str(discordid), "avatar": avatar, \
-                        "distance": 0, "eventpnt": 0, "divisionpnt": 0, "totalpnt": 0, "totnolimit": int(tt[1]) + divisionpnt})
+                    ret.append({"userid": str(userid), "name": name, "discordid": str(discordid), "avatar": avatar, \
+                        "distance": "0", "eventpnt": "0", "divisionpnt": "0", "totalpnt": "0", "totnolimit": str(int(tt[1]) + divisionpnt)})
 
         if (page - 1) * 10 >= len(ret):
-            return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
+            return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
 
-        return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": len(ret)}}
+        return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": str(page), "tot": str(len(ret))}}
 
     cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 ORDER BY distance * {ratio} + eventpnt DESC")
     t = cur.fetchall()
@@ -390,10 +391,12 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
         if len(o) > 0:
             divisionpnt += o[0][0]
         if str(tt[0]) in limituser or len(limituser) == 0:
-            ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "distance": tt[2], "eventpnt": tt[3], "divisionpnt": divisionpnt, "totalpnt": int(tt[1]), "totnolimit": int(tt[1]) + divisionpnt})
+            ret.append({"userid": str(tt[0]), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                "distance": str(tt[2]), "eventpnt": str(tt[3]), "divisionpnt": str(divisionpnt), \
+                    "totalpnt": str(tt[1]), "totnolimit": str(int(tt[1]) + divisionpnt)})
 
     if (page - 1) * 10 >= len(ret):
-        return {"error": False, "response": {"list": [], "page": page, "tot": len(ret)}}
+        return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
 
     cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
     t = cur.fetchall()
@@ -401,9 +404,9 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret[(page - 1) * 10 : page * 10], "page": str(page), "tot": str(tot)}}
 
-@app.get(f"/{config.vtcprefix}/dlog/newdrivers")
+@app.get(f"/{config.vtc_abbr}/dlog/newdrivers")
 async def dlogNewDriver(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /dlog/newdrivers', 60, 60)
     if rl > 0:
@@ -424,11 +427,11 @@ async def dlogNewDriver(request: Request, response: Response, authorization: str
     for tt in t:
         cur.execute(f"SELECT name, discordid, avatar FROM user WHERE userid = {tt[0]}")
         p = cur.fetchall()
-        ret.append({"userid": tt[0], "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "joints": tt[1]})
+        ret.append({"userid": str(tt[0]), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], "joints": str(tt[1])})
 
-    return {"error": False, "response": {"list": ret, "page": 1, "tot": 10}}
+    return {"error": False, "response": {"list": ret, "page": "1", "tot": "10"}}
 
-@app.get(f"/{config.vtcprefix}/dlogs")
+@app.get(f"/{config.vtc_abbr}/dlogs")
 async def dlogs(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0):
     rl = ratelimit(request.client.host, 'GET /dlogs', 60, 60)
@@ -511,10 +514,11 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
         p = cur.fetchall()
         if len(p) > 0:
             isdivision = True
-        ret.append({"logid": tt[3], "userid": tt[0], "name": name, "distance": distance, \
+        ret.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "isdivision": isdivision, "timestamp": tt[2]})
+                    "cargo": cargo, "cargo_mass": str(cargo_mass), \
+                        "profit": str(profit), "unit": str(unit), "isdivision": str(isdivision), "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE userid >= 0 {limit} {timelimit} {speedlimit} {gamelimit}")
     t = cur.fetchall()
@@ -522,9 +526,9 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
-@app.get(f"/{config.vtcprefix}/dlog")
+@app.get(f"/{config.vtc_abbr}/dlog")
 async def dlog(logid: int, request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /dlog', 60, 60)
     if rl > 0:
@@ -585,9 +589,10 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     if userid == -1:
         name = "Anonymous"
 
-    return {"error": False, "response": {"logid": logid, "userid": t[0][0], "name": name, "loggeddistance": distance, "data": data, "timestamp": t[0][2], "telemetry": telemetry}}
+    return {"error": False, "response": {"logid": str(logid), "userid": str(t[0][0]), "name": name, \
+        "loggeddistance": str(distance), "detail": data, "timestamp": str(t[0][2]), "telemetry": telemetry}}
 
-@app.get(f"/{config.vtcprefix}/dlog/export")
+@app.get(f"/{config.vtc_abbr}/dlog/export")
 async def dlogExport(request: Request, response: Response, authorization: str = Header(None), \
         starttime: Optional[int] = -1, endtime: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)

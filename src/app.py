@@ -22,20 +22,31 @@ class Dict2Obj(object):
 
 config_txt = open(config_path, "r").read()
 config = json.loads(config_txt)
-hexcolor = config["hexcolor"][-6:]
+hex_color = config["hex_color"][-6:]
 try:
-    rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
+    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-    config["intcolor"] = int(hexcolor, 16)
+    config["intcolor"] = int(hex_color, 16)
 except:
-    hexcolor = "FFFFFF"
-    rgbcolor = tuple(int(hexcolor[i:i+2], 16) for i in (0, 2, 4))
+    hex_color = "FFFFFF"
+    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = discord.Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-    config["intcolor"] = int(hexcolor, 16)
+    config["intcolor"] = int(hex_color, 16)
+perms = config["perms"]
+for perm in perms.keys():
+    roles = perms[perm]
+    newroles = []
+    for role in roles:
+        newroles.append(int(role))
+    perms[perm] = newroles
+config["perms"] = perms
+tconfig = config
+del tconfig["intcolor"]
+del tconfig["rgbcolor"]
 config = Dict2Obj(config)
 
 if os.path.exists(config.apidoc):
-    app = FastAPI(openapi_url=f"/{config.vtcprefix}/openapi.json", docs_url=f"/{config.vtcprefix}/doc", redoc_url=None)
+    app = FastAPI(openapi_url=f"/{config.vtc_abbr}/openapi.json", docs_url=f"/{config.vtc_abbr}/doc", redoc_url=None)
     def openapi():
         with open(config.apidoc, "r") as openapi:
             return json.load(openapi)

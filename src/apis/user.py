@@ -11,7 +11,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.post(f'/{config.vtcprefix}/user/ban')
+@app.post(f'/{config.vtc_abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /user/ban', 60, 10)
     if rl > 0:
@@ -63,7 +63,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
-@app.post(f'/{config.vtcprefix}/user/unban')
+@app.post(f'/{config.vtc_abbr}/user/unban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /user/unban', 60, 10)
     if rl > 0:
@@ -97,7 +97,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         await AuditLog(adminid, f"Unbanned user with Discord ID `{discordid}`")
         return {"error": False, "response": {"discordid": str(discordid)}}
 
-@app.get(f"/{config.vtcprefix}/users")
+@app.get(f"/{config.vtc_abbr}/users")
 async def getUsers(page:int, request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /users', 60, 60)
     if rl > 0:
@@ -126,16 +126,16 @@ async def getUsers(page:int, request: Request, response: Response, authorization
         if len(p) > 0:
             banned = True
             banreason = p[0][0]
-        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": banned, "banreason": banreason})
+        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": TF[banned], "banreason": banreason})
     ret = ret[(page-1)*10:page*10]
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
-@app.get(f'/{config.vtcprefix}/user')
+@app.get(f'/{config.vtc_abbr}/user')
 async def getUser(request: Request, response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
     rl = ratelimit(request.client.host, 'GET /user', 30, 10)
     if rl > 0:
@@ -192,9 +192,11 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         edomain = email[email.rfind("@"):]
         l = email.rfind("@")
         email = "*" * l + edomain
-    return {"error": False, "response": {"userid": t[0][0], "name": t[0][1], "email": email, "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, "join": t[0][4], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
+    return {"error": False, "response": {"userid": str(t[0][0]), "name": t[0][1], "email": email, \
+        "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, \
+            "join": str(t[0][4]), "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
 
-@app.post(f'/{config.vtcprefix}/user/bio')
+@app.post(f'/{config.vtc_abbr}/user/bio')
 async def updateUserBio(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /user/bio', 60, 10)
     if rl > 0:
@@ -221,7 +223,7 @@ async def updateUserBio(request: Request, response: Response, authorization: str
 
     return {"error": False, "response": {"bio": bio}}
     
-@app.patch(f"/{config.vtcprefix}/user/discord")
+@app.patch(f"/{config.vtc_abbr}/user/discord")
 async def adminUpdateDiscord(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/discord', 60, 10)
     if rl > 0:
@@ -269,7 +271,7 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
 
     return {"error": False, "response": {"discordid": str(new_discord_id)}}
     
-@app.patch(f"/{config.vtcprefix}/user/unbind")
+@app.patch(f"/{config.vtc_abbr}/user/unbind")
 async def adminUnbindConnections(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/unbind', 60, 10)
     if rl > 0:
@@ -305,7 +307,7 @@ async def adminUnbindConnections(request: Request, response: Response, authoriza
 
     return {"error": False}
     
-@app.delete(f"/{config.vtcprefix}/user/delete")
+@app.delete(f"/{config.vtc_abbr}/user/delete")
 async def adminDeleteUser(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /user/delete', 60, 10)
     if rl > 0:

@@ -11,7 +11,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtcprefix}/downloads")
+@app.get(f"/{config.vtc_abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /downloads', 60, 30)
     if rl > 0:
@@ -34,14 +34,14 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         
     return {"error": False, "response": data}
 
-@app.patch(f"/{config.vtcprefix}/downloads")
+@app.patch(f"/{config.vtc_abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "downloads"])
     if au["error"]:
         response.status_code = 401
         return au

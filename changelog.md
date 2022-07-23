@@ -1,5 +1,44 @@
 # Changelog
 
+**v1.10.1**  
+1.Config format update (Use `config_upgrade.py` in release to upgrade config to v1.10.1)  
+a) Item name changes  
+|Old Name|New Name|  
+---|---|  
+|vtcprefix|vtc_abbr|  
+|vtcname|vtc_name|  
+|hexcolor|hex_color|  
+|vtclogo|vtc_logo_link|  
+|teamupdate|team_update_image_link|  
+|domain|apidomain|  
+|dhdomain|domain|  
+|guild|guild_id|  
+|navio_token|navio_api_token|  
+|delivery_gifs|delivery_post_gifs|  
+|bot_token|discord_bot_token|  
+|team_update_message|webhook_teamupdate_message|  
+|driver_channel_id|welcome_channel_id|  
+|welcome_image|welcome_image_link|  
+|welcome_roles|welcome_role_change|  
+|division_manager_role|webhook_division_message|  
+|divisions[].roleid|division[].role_id|  
+
+b) Removed `public_news_role` and `private_news_role` in config, merged them to `discord_message_content` which will be provided in form  
+c) Merged `ranking` and `rankname` to `ranks = [{"distance": 0, "name": "", "role_id": 0}]`  
+d) Changes on application system  
+i) Removed `assign_application_role`, `applicant_driver`, `applicant_staff`, `loa_request`, `human_resources_role`  
+ii) Created `application_types` (`role_id` is role to assign to applicant, `message` is content of webhook message)  
+iii) id = 1~4 are reserved for special use and must not be changed  
+e) Added `downloads` to `config.permission`  
+f) Changed all `int` to `str` to prevent precision lose  
+
+2.Changed **GET** `/token` response `extra` to `note`  
+3.Removed `driver_of_the_day` from **GET** `/dlog/stats` (use leaderboard instead)  
+4.Changed all `int` response element to `str`  
+5.Changed **GET** `/dlog` response `data` to `detail`  
+6.Changed **GET** `/dlog/chart` `addup` parameter to `sum`  
+7.Changed **GET** `/application` response `data` to `detail`  
+
 **v1.9.12**  
 1.Added `expense`, `net_profit` column in exported .csv table  
 2.Updated delivery webhook post  

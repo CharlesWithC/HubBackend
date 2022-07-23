@@ -14,7 +14,18 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.post(f"/{config.vtcprefix}/application")
+application_types = config.application_types
+for i in range(len(application_types)):
+    application_types[i]["id"] = int(application_types[i]["id"])
+
+@app.get(f"/{config.vtc_abbr}/application/types")
+async def getApplicationTypes(request: Request, response: Response):
+    APPLICATIONS_TYPES = []
+    for t in application_types:
+        APPLICATIONS_TYPES.append({"id": t["id"], "name": t["name"]})
+    return {"error": False, "response": APPLICATIONS_TYPES}
+
+@app.post(f"/{config.vtc_abbr}/application")
 async def newApplication(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /application', 60, 3)
     if rl > 0:
@@ -89,27 +100,31 @@ async def newApplication(request: Request, response: Response, authorization: st
 
     data = json.loads(form["data"])
     apptype = int(apptype)
-    APPTYPE = {0: ml.tr(request, "unknown"), 1: ml.tr(request, "driver"), 2: ml.tr(request, "staff"), 3: ml.tr(request, "loa"), 4: ml.tr(request, "division")}
-    apptypetxt = ml.tr(request, "unknown")
-    if apptype in APPTYPE.keys():
+
+    apptypetxt = ""
+    applicantrole = 0
+    discord_message_content = ""
+    for o in application_types:
+        if apptype == o["id"]:
+            apptypetxt = o["name"]
+            applicantrole = o["discord_role_id"]
+            discord_message_content = o["message"]
+    if apptype < 1 and apptype > 4 and apptypetxt == "":
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
+    if apptype >= 1 and apptype <= 4:
+        APPTYPE = {1: ml.tr(request, "driver"), 2: ml.tr(request, "staff"), 3: ml.tr(request, "loa"), 4: ml.tr(request, "division")}
         apptypetxt = APPTYPE[apptype]
 
-    if config.assign_application_role:
-        durl = ""
-        if apptype == 1:
-            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.applicant_driver}'
-        elif apptype == 2:
-            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.applicant_staff}'
-        elif apptype == 3:
-            durl = f'https://discord.com/api/v9/guilds/{config.guild}/members/{discordid}/roles/{config.loa_request}'
-        if durl != "":
-            try:
-                requests.put(durl, headers = {"Authorization": f"Bot {config.bot_token}"})
-            except:
-                pass
+    if applicantrole != 0:
+        durl = f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
+        try:
+            requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}"})
+        except:
+            pass
 
     try:
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -119,7 +134,7 @@ async def newApplication(request: Request, response: Response, authorization: st
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"apptypetxt": apptypetxt}),
                 "description": ml.tr(request, "bot_application_received"),
                     "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                          "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
@@ -131,10 +146,8 @@ async def newApplication(request: Request, response: Response, authorization: st
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
 
-    pingroles = config.human_resources_role
     webhookurl = config.webhook_application
     if apptype == 4:
-        pingroles = config.division_manager_role
         webhookurl = config.webhook_division
     if webhookurl != "":
         try:
@@ -148,7 +161,7 @@ async def newApplication(request: Request, response: Response, authorization: st
                     embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
                 embed.set_footer(text = f"Application ID: {applicationid} ")
                 embed.timestamp = datetime.now()
-                await webhook.send(content = pingroles, embed = embed)
+                await webhook.send(content = discord_message_content, embed = embed)
 
         except:
             try:
@@ -162,13 +175,13 @@ async def newApplication(request: Request, response: Response, authorization: st
                         embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
                     embed.set_footer(text = f"Application ID: {applicationid} ")
                     embed.timestamp = datetime.now()
-                    await webhook.send(content = pingroles, embed = embed)
+                    await webhook.send(content = discord_message_content, embed = embed)
             except:
                 pass
 
-    return {"error": False, "response": {"applicationid": applicationid}}
+    return {"error": False, "response": {"applicationid": str(applicationid)}}
 
-@app.patch(f"/{config.vtcprefix}/application")
+@app.patch(f"/{config.vtc_abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /application', 60, 10)
     if rl > 0:
@@ -226,7 +239,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     msg += f"**New message**: {message}\n\n"
 
     try:
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -236,16 +249,24 @@ async def updateApplication(request: Request, response: Response, authorization:
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
                 "description": ml.tr(request, "application_message_recorded"),
                     "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                          "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
         pass
 
-    pingroles = config.human_resources_role
+    apptypetxt = ""
+    discord_message_content = ""
+    for o in application_types:
+        if apptype == o["id"]:
+            apptypetxt = o["name"]
+            discord_message_content = o["message"]
+    if apptype < 1 and apptype > 4 and apptypetxt == "":
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
+
     webhookurl = config.webhook_application
     if apptype == 4:
-        pingroles = config.division_manager_role
         webhookurl = config.webhook_division
     if webhookurl != "":
         try:
@@ -259,7 +280,7 @@ async def updateApplication(request: Request, response: Response, authorization:
                     embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
                 embed.set_footer(text = f"Application ID: {applicationid} ")
                 embed.timestamp = datetime.now()
-                await webhook.send(content = pingroles, embed = embed)
+                await webhook.send(content = discord_message_content, embed = embed)
 
         except:
             try:
@@ -273,13 +294,13 @@ async def updateApplication(request: Request, response: Response, authorization:
                         embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png")
                     embed.set_footer(text = f"Application ID: {applicationid} ")
                     embed.timestamp = datetime.now()
-                    await webhook.send(content = pingroles, embed = embed)
+                    await webhook.send(content = discord_message_content, embed = embed)
             except:
                 pass
 
-    return {"error": False, "response": {"applicationid": applicationid}}
+    return {"error": False, "response": {"applicationid": str(applicationid)}}
 
-@app.post(f"/{config.vtcprefix}/application/status")
+@app.post(f"/{config.vtc_abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /application/status', 60, 10)
     if rl > 0:
@@ -363,7 +384,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         statustxt = f"Unknown Status ({status})"
         if int(status) in STATUS.keys():
             statustxt = STATUS[int(status)]
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -374,7 +395,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                 "description": f"[{ml.tr(request, 'message')}] {message}",
                     "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": statustxt, "inline": True}, \
                         {"name": ml.tr(request, "time"), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff"), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
-                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
@@ -382,9 +403,9 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         traceback.print_exc()
         pass
 
-    return {"error": False, "response": {"applicationid": applicationid, "status": status}}
+    return {"error": False, "response": {"applicationid": str(applicationid), "status": str(status)}}
 
-@app.get(f"/{config.vtcprefix}/application")
+@app.get(f"/{config.vtc_abbr}/application")
 async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /application', 60, 60)
     if rl > 0:
@@ -429,11 +450,11 @@ async def getApplication(request: Request, response: Response, applicationid: in
                 response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
-    return {"error": False, "response": {"applicationid": t[0][0], "apptype": t[0][1],\
-        "discordid": str(t[0][2]), "data": json.loads(b64d(t[0][3])), "status": t[0][4], "submitTimestamp": t[0][5], \
-            "closedTimestamp": t[0][7], "closedBy": t[0][6]}}
+    return {"error": False, "response": {"applicationid": str(t[0][0]), "apptype": str(t[0][1]),\
+        "discordid": str(t[0][2]), "detail": json.loads(b64d(t[0][3])), "status": str(t[0][4]), "submitTimestamp": str(t[0][5]), \
+            "closedTimestamp": str(t[0][7]), "closedBy": str(t[0][6])}}
 
-@app.get(f"/{config.vtcprefix}/applications")
+@app.get(f"/{config.vtc_abbr}/applications")
 async def getApplications(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), showall: Optional[bool] = False):
     rl = ratelimit(request.client.host, 'GET /applications', 60, 60)
     if rl > 0:
@@ -531,11 +552,13 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         name = "Unknown"
         if len(p) > 0:
             name = p[0][0]
-        ret.append({"applicationid": tt[0], "apptype": tt[1], "discordid": f"{tt[2]}", "name": name, "status": tt[4], "submitTimestamp": tt[3], "closedTimestamp": tt[5]})
+        ret.append({"applicationid": str(tt[0]), "apptype": str(tt[1]), \
+            "discordid": f"{tt[2]}", "name": name, \
+                "status": str(tt[4]), "submitTimestamp": str(tt[3]), "closedTimestamp": str(tt[5])})
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
-@app.get(f"/{config.vtcprefix}/application/positions")
+@app.get(f"/{config.vtc_abbr}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
     conn = newconn()
     cur = conn.cursor()
@@ -549,7 +572,7 @@ async def getApplicationPositions(request: Request, response: Response):
             ret.append(tt)
         return {"error": False, "response": ret}
 
-@app.post(f"/{config.vtcprefix}/application/positions")
+@app.post(f"/{config.vtc_abbr}/application/positions")
 async def setApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /application/positions', 60, 10)
     if rl > 0:

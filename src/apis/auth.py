@@ -18,16 +18,16 @@ client_id = config.discord_client_id
 client_secret = config.discord_client_secret
 oauth2_url = config.discord_oauth2_url
 callback_url = config.discord_callback_url
-dhdomain = config.dhdomain
+dhdomain = config.domain
 
 discord_auth = DiscordAuth(client_id, client_secret, callback_url)
 
-@app.get(f'/{config.vtcprefix}/user/login', response_class=RedirectResponse)
+@app.get(f'/{config.vtc_abbr}/user/login', response_class=RedirectResponse)
 async def userLogin(request: Request):
     # login_url = discord_auth.login()
     return RedirectResponse(url=oauth2_url, status_code=302)
     
-@app.get(f'/{config.vtcprefix}/user/callback')
+@app.get(f'/{config.vtc_abbr}/user/callback')
 async def userCallback(request: Request, response: Response, code: Optional[str] = "", error: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer != "https://discord.com/":
@@ -72,7 +72,7 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         conn.commit()
         
         if config.in_guild_check:
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.bot_token}"})
+            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
             if r.status_code != 200:
                 return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
             d = json.loads(r.text)
@@ -86,7 +86,7 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
 
-@app.get(f'/{config.vtcprefix}/token')
+@app.get(f'/{config.vtc_abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /token', 60, 60)
     if rl > 0:
@@ -119,9 +119,9 @@ async def getToken(request: Request, response: Response, authorization: str = He
         extra = ""
     if steamid > 0 and not config.truckersmp_bind:
         extra = ""
-    return {"error": False, "response": {"discordid": f"{discordid}", "extra": extra}}
+    return {"error": False, "response": {"discordid": f"{discordid}", "note": extra}}
 
-@app.patch(f"/{config.vtcprefix}/token")
+@app.patch(f"/{config.vtc_abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /token', 60, 3)
     if rl > 0:
@@ -145,7 +145,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
 
-@app.delete(f'/{config.vtcprefix}/token')
+@app.delete(f'/{config.vtc_abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /token', 60, 60)
     if rl > 0:
@@ -167,7 +167,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-@app.get(f"/{config.vtcprefix}/user/steam/oauth")
+@app.get(f"/{config.vtc_abbr}/user/steam/oauth")
 async def getSteamOAuth(request: Request, response: Response):
     rl = ratelimit(request.client.host, 'GET /user/steam/oauth', 60, 3)
     if rl > 0:
@@ -175,15 +175,15 @@ async def getSteamOAuth(request: Request, response: Response):
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
     steamLogin = SteamSignIn()
-    encodedData = steamLogin.ConstructURL(f'https://{config.domain}/{config.vtcprefix}/user/steam/callback')
+    encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/user/steam/callback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
-@app.get(f"/{config.vtcprefix}/user/steam/callback")
+@app.get(f"/{config.vtc_abbr}/user/steam/callback")
 async def getSteamCallback(request: Request, response: Response):
     return RedirectResponse(url=config.steam_callback_url + f"?{str(request.query_params)}", status_code=302)
 
-@app.patch(f"/{config.vtcprefix}/user/steam")
+@app.patch(f"/{config.vtc_abbr}/user/steam")
 async def patchSteam(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/steam', 180, 3)
     if rl > 0:
@@ -233,8 +233,8 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
 
         for role in roles:
             if role == "100":
-                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_token})
-                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_token})
+                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
                 await AuditLog(userid, f"Steam ID updated from `{orgsteamid}` to `{steamid}`")
 
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
@@ -255,7 +255,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     
     return {"error": False, "response": {"steamid": str(steamid)}}
 
-@app.patch(f"/{config.vtcprefix}/user/truckersmp")
+@app.patch(f"/{config.vtc_abbr}/user/truckersmp")
 async def patchTruckersMP(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/truckersmp', 180, 3)
     if rl > 0:
@@ -305,7 +305,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     conn.commit()
     return {"error": False, "response": {"truckersmpid": str(truckersmpid)}}
 
-@app.patch(f'/{config.vtcprefix}/token/application')
+@app.patch(f'/{config.vtc_abbr}/token/application')
 async def userBot(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /user/apptoken', 60, 10)
     if rl > 0:

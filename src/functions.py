@@ -1,6 +1,8 @@
 # Copyright (C) 2022 Charles All rights reserved.
 # Author: @CharlesWithC
 
+TF = [False, True]
+
 from base64 import b64encode, b64decode
 import re
 def b64e(s):
@@ -24,10 +26,8 @@ from datetime import datetime
 import time
 
 from db import newconn
-from app import config, config_txt
+from app import config, tconfig
 import multilang as ml
-
-tconfig = json.loads(config_txt)
 
 async def AuditLog(userid, text):
     conn = newconn()
@@ -197,7 +197,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
             ok = False
             for role in roles:
                 for perm in required_permission:
-                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm]:
+                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm] or int(role) in tconfig["perms"]["admin"]:
                         ok = True
             
             if not ok:
@@ -246,9 +246,10 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         if check_member:
             # permission check will only take place if member check is enforced
             ok = False
+            
             for role in roles:
                 for perm in required_permission:
-                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm]:
+                    if perm in tconfig["perms"].keys() and int(role) in tconfig["perms"][perm] or int(role) in tconfig["perms"]["admin"]:
                         ok = True
             
             if not ok:

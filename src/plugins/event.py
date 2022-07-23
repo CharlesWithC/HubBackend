@@ -12,7 +12,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtcprefix}/event")
+@app.get(f"/{config.vtc_abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), page: Optional[int] = 1, eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /event', 60, 60)
     if rl > 0:
@@ -74,8 +74,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             votetxt += f"{name}, "
         votetxt = votetxt[:-2]
-        return {"error": False, "response": {"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": tt[11],\
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)}}
+        return {"error": False, "response": {"eventid": str(tt[0]), "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
+            "distance": b64d(tt[4]), "mts": str(tt[5]), "dts": str(tt[6]), "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)}}
 
     cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * 10}, 10")
     t = cur.fetchall()
@@ -108,7 +108,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             votetxt += f"{name}, "
         votetxt = votetxt[:-2]
-        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": tt[11],\
+        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
             "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit}")
@@ -147,8 +147,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             votetxt += f"{name}, "
         votetxt = votetxt[:-2]
-        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": tt[11],\
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
+        ret.append({"eventid": str(tt[0]), "title": b64d(tt[8]), "tmplink": b64d(tt[1]), \
+            "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
+            "distance": b64d(tt[4]), "mts": str(tt[5]), "dts": str(tt[6]), "img": b64d(tt[7]).split(","), \
+                "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()
@@ -156,9 +158,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret[:10], "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret[:10], "page": str(page), "tot": str(tot)}}
 
-@app.get(f"/{config.vtcprefix}/events/all")
+@app.get(f"/{config.vtc_abbr}/events/all")
 async def getAllEvents(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /events/all', 60, 60)
     if rl > 0:
@@ -187,11 +189,11 @@ async def getAllEvents(request: Request, response: Response, authorization: str 
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"eventid": tt[0], "title": b64d(tt[1]), "mts": tt[2]})
+        ret.append({"eventid": str(tt[0]), "title": b64d(tt[1]), "mts": str(tt[2])})
 
     return {"error": False, "response": {"list": ret}}
 
-@app.post(f"/{config.vtcprefix}/event/vote")
+@app.post(f"/{config.vtc_abbr}/event/vote")
 async def eventVote(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /event/vote', 60, 30)
     if rl > 0:
@@ -226,7 +228,7 @@ async def eventVote(request: Request, response: Response, authorization: str = H
         conn.commit()
         return {"error": False}
 
-@app.post(f"/{config.vtcprefix}/event")
+@app.post(f"/{config.vtc_abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /event', 60, 3)
     if rl > 0:
@@ -265,9 +267,9 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 
-    return {"error": False, "response": {"eventid": nxteventid}}
+    return {"error": False, "response": {"eventid": str(nxteventid)}}
 
-@app.patch(f"/{config.vtcprefix}/event")
+@app.patch(f"/{config.vtc_abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /event', 60, 10)
     if rl > 0:
@@ -309,9 +311,9 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     await AuditLog(adminid, f"Updated event #{eventid}")
     conn.commit()
 
-    return {"error": False, "response": {"eventid": eventid}}
+    return {"error": False, "response": {"eventid": str(eventid)}}
 
-@app.delete(f"/{config.vtcprefix}/event")
+@app.delete(f"/{config.vtc_abbr}/event")
 async def deleteEvent(eventid: int, request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /event', 60, 10)
     if rl > 0:
@@ -339,7 +341,7 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
 
     return {"error": False}
 
-@app.post(f"/{config.vtcprefix}/event/attendee")
+@app.post(f"/{config.vtc_abbr}/event/attendee")
 async def updateEventAttendee(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /event/attendee', 60, 3)
     if rl > 0:

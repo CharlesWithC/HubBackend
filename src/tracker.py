@@ -37,7 +37,7 @@ async def navio(uri):
     conn = newconn()
     cur = conn.cursor()
     async with connect(uri, ping_interval=30) as websocket:
-        print(f"{config.vtcname} Tracker")
+        print(f"{config.vtc_name} Tracker")
         print(f"Navio Company ID: {config.navio_company_id}")
         await websocket.send(json.dumps({"op": 1, "data": {"subscribe_to_company": int(config.navio_company_id)}}))
         data = await websocket.recv()
@@ -95,8 +95,12 @@ async def navio(uri):
             await asyncio.sleep(0.01)
 
 if not "tracker" in config.enabled_plugins:
-    print(f"Tracker not enabled for {config.vtcname}")
+    print(f"Tracker not enabled for {config.vtc_name}")
     print("To enable, add 'tracker' in config.enabled_plugins")
+    exit(1)
+
+if config.navio_company_id == "":
+    print("Navio Company ID not set")
     exit(1)
 
 while 1:

@@ -7,20 +7,12 @@ import json, os, sys
 import threading, time
 from sys import exit
 
-from app import app, config, config_txt, config_path
+from app import app, config, tconfig, config_path
 from db import newconn
 from functions import *
 import multilang as ml
 
-def ChangeAllIntToStr(tconfig):
-    for key, value in tconfig.items():
-        if type(tconfig[key]) == dict:
-            tconfig[key] = ChangeAllIntToStr(value)
-        elif type(tconfig[key]) == int:
-            tconfig[key] = str(value)
-    return tconfig
-
-@app.get(f"/{config.vtcprefix}/config")
+@app.get(f"/{config.vtc_abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /config', 30, 10)
     if rl > 0:
@@ -36,36 +28,30 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     conn = newconn()
     cur = conn.cursor()
 
-    tconfig = json.loads(config_txt)
-    toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", "language_dir", \
-            "enabled_plugins", "external_plugins", "steam_callback_url"]
-    # vtcprefix will affect nginx settings, so it's not allowed to be changed
-    # enabled_plugins are paid functions, so it's only changeable by developer
-    # navio_token, discord_client_secret, bot_token are sensitive data, so it's only editable but not viewable
+    toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
+        "apidomain", "domain", "server_ip", "server_port",\
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
+            "enabled_plugins", "external_plugins"]
     
-    if not "division" in tconfig["enabled_plugins"]:
-        del tconfig["divisions"]
-        
-    for i in range(len(tconfig["welcome_roles"])):
-        tconfig["welcome_roles"][i] = str(tconfig["welcome_roles"][i])
+    ttconfig = tconfig
+    if not "division" in ttconfig["enabled_plugins"]:
+        del ttconfig["divisions"]
 
-    tconfig["navio_token"] = ""
-    tconfig["discord_client_secret"] = ""
-    tconfig["bot_token"] = ""
+    ttconfig["navio_api_token"] = ""
+    ttconfig["discord_client_secret"] = ""
+    ttconfig["discord_bot_token"] = ""
+    
     for i in toremove:
-        if i in tconfig:
-            del tconfig[i]
+        if i in ttconfig:
+            del ttconfig[i]
     
-    tconfig = ChangeAllIntToStr(tconfig)
-    
-    return {"error": False, "response": {"config": tconfig}}
+    return {"error": False, "response": {"config": ttconfig}}
 
 def reload():
     time.sleep(5)
-    os.system(f"./launcher hub restart {config.vtcprefix} &")
+    os.system(f"./launcher hub restart {config.vtc_abbr} &")
 
-@app.patch(f"/{config.vtcprefix}/config")
+@app.patch(f"/{config.vtc_abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /config', 600, 3)
     if rl > 0:
@@ -81,72 +67,45 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     conn = newconn()
     cur = conn.cursor()
 
-    tconfig = json.loads(config_txt)
-
     form = await request.form()
     newconfig = json.loads(form["config"])
 
-    toremove = ["vtcprefix", "apidoc", "domain", "dhdomain", "server_ip", "server_port",\
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", "language_dir", \
-            "enabled_plugins", "external_plugins", "steam_callback_url"]
-    musthave = ["vtcname", "vtclogo", "hexcolor", \
-        "navio_token", "navio_company_id", "guild", \
-        "discord_client_id", "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "bot_token"]
-    # those have to be removed from newconfig to prevent user changing them
+    toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
+        "apidomain", "domain", "server_ip", "server_port",\
+        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
+            "enabled_plugins", "external_plugins"]
+    musthave = ["vtc_name", "vtc_logo_link", "hex_color", \
+        "navio_api_token", "navio_company_id", "guild_id", \
+        "discord_client_id", "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]
             
     for i in toremove:
         if i in newconfig:
             del newconfig[i]
     
-    orgconfig = json.loads(config_txt)
+    ttconfig = tconfig
+    orgconfig = tconfig
 
+    # check must_have and distance_unit
     for i in newconfig:
-        if i in tconfig:
+        if i in ttconfig:
             if i == "distance_unit":
                 if not newconfig[i] in ["metric", "imperial"]:
                     response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "invalid_distance_unit")}
             
             if i in musthave:
-                if newconfig[i] == "" or newconfig[i] == 0:
+                if newconfig[i] == "":
                     response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": i})}
 
-            tconfig[i] = newconfig[i]
-            
+            ttconfig[i] = newconfig[i]
+    
+    # check item value type
     try:
-        for t in ["navio_company_id"]:
-            tconfig[t] = int(tconfig[t])
-
-        
-        for t in tconfig.keys():
-            if type(orgconfig[t]) == int:
-                tconfig[t] = int(tconfig[t])
-            if type(tconfig[t]) != type(orgconfig[t]):
+        for t in ttconfig.keys():
+            if type(ttconfig[t]) != type(orgconfig[t]):
                 response.status_code = 400
                 return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
-        
-        for perm in tconfig["perms"].keys():
-            for i in range(len(tconfig["perms"][perm])):
-                tconfig["perms"][perm][i] = int(tconfig["perms"][perm][i])
-        
-        for i in range(len(tconfig["welcome_roles"])):
-            tconfig["welcome_roles"][i] = int(tconfig["welcome_roles"][i])
-        
-        if "divisions" in tconfig.keys():
-            for i in range(0,len(tconfig["divisions"])):
-                tconfig["divisions"][i]["id"] = int(tconfig["divisions"][i]["id"])
-                tconfig["divisions"][i]["roleid"] = int(tconfig["divisions"][i]["roleid"])
-                tconfig["divisions"][i]["point"] = int(tconfig["divisions"][i]["point"])
-        
-        for role in tconfig["roles"].keys():
-            tconfig["roles"][role] = str(tconfig["roles"][role])
-        
-        for ranking in tconfig["ranking"].keys():
-            tconfig["ranking"][ranking] = int(tconfig["ranking"][ranking])
-        
-        for rankname in tconfig["rankname"].keys():
-            tconfig["rankname"][rankname] = str(tconfig["rankname"][rankname])
     
     except:
         import traceback
@@ -154,7 +113,13 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "config_data_type_mismatch")}
 
-    open(config_path, "w").write(json.dumps(tconfig))
+    # check if all necessary item exists
+    for t in orgconfig.keys():
+        if not t in ttconfig.keys():
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
+
+    open(config_path, "w").write(json.dumps(ttconfig, indent=4))
 
     await AuditLog(adminid, "Updated config")
     await AuditLog(adminid, "Reloaded service")
@@ -163,7 +128,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-@app.post(f"/{config.vtcprefix}/reload")
+@app.post(f"/{config.vtc_abbr}/reload")
 async def reloadService(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /reload', 600, 3)
     if rl > 0:
@@ -182,7 +147,7 @@ async def reloadService(request: Request, response: Response, authorization: str
 
     return {"error": False}
 
-@app.get(f"/{config.vtcprefix}/auditlog")
+@app.get(f"/{config.vtc_abbr}/auditlog")
 async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1, operation: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /auditlog', 30, 10)
     if rl > 0:
@@ -218,10 +183,10 @@ async def getAuditLog(page: int, request: Request, response: Response, authoriza
             name = p[0][0]
         if tt[0] == -999:
             name = "System"
-        ret.append({"timestamp": tt[2], "user": name, "operation": tt[1]})
+        ret.append({"timestamp": str(tt[2]), "user": name, "operation": tt[1]})
 
     cur.execute(f"SELECT COUNT(*) FROM auditlog")
     t = cur.fetchall()
     tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}

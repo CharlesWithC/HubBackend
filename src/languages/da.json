@@ -55,6 +55,7 @@
     "loa": "Fraværgs årgsag",
     "division": "Division",
     "application_id": "Ansøgning ID",
+    "unknown_application_type": "Ukendt applikationstype",
     "status": "Status",
     "creation": "Oprettels",
     "time": "Tid",

@@ -55,6 +55,7 @@
     "loa": "Congé autorisé",
     "division": "Division",
     "application_id": "ID d'application",
+    "unknown_application_type": "Type de demande inconnu",
     "status": "Statut",
     "creation": "Creation",
     "time": "Temps",

@@ -13,6 +13,22 @@ import asyncio
 
 from sys import exit
 
+drivershub = """    ____       _                         __  __      __  
+   / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
+  / / / / ___/ / | / / _ \/ ___/ ___/  / /_/ / / / / __ \\
+ / /_/ / /  / /| |/ /  __/ /  (__  )  / __  / /_/ / /_/ /
+/_____/_/  /_/ |___/\___/_/  /____/  /_/ /_/\__,_/_.___/ 
+                                                         """
+if __name__ == "__main__":
+    from datetime import datetime
+    currentDateTime = datetime.now()
+    date = currentDateTime.date()
+    year = date.strftime("%Y")
+    print(drivershub)
+    print("Drivers Hub: Backend (v1.10.1)")
+    print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+    print("")
+
 if len(sys.argv) == 1:
     print("Usage: python3 main.py <config.json>")
     exit(1)
@@ -29,39 +45,24 @@ if config_path == "":
     print("No config file specified")
     exit(1)
 
-print(f"Using config: {config_path}")
 if not os.path.exists(config_path):
     print("Config file not found")
     exit(1)
 
-os.environ["HUB_CONFIG_FILE"] = config_path
-print(f"Environment variable HUB_CONFIG_FILE set to {config_path}")
+if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
+    print(f"Using config: {config_path}")
+    os.environ["HUB_CONFIG_FILE"] = config_path
+    print(f"Environment variable HUB_CONFIG_FILE set to {config_path}")
+    print("")
 
 from app import app, config
 from db import newconn
 import api
 import multilang
 
-# v1.9.11 compress telemetry data
-import zlib, base64
-conn = newconn()
-cur = conn.cursor()
-cur.execute(f"SELECT logid, data FROM telemetry WHERE data LIKE '%;%'")
-# all data of old version contains ';'
-# but v1.9.11 encode data with base64 so it doesn't contain ';'
-t = cur.fetchall()
-if len(t) > 0:
-    print("v1.9.11 Upgrade")
-    print("Compressing telemetry data, this might take a while... ", end="")
-    for tt in t:
-        data = tt[1]
-        datac = zlib.compress(data.encode())
-        data = base64.b64encode(datac).decode()
-        cur.execute(f"UPDATE telemetry SET data = '{data}' WHERE logid = {tt[0]}")
-        conn.commit()
-    print("done")
-
 if __name__ == "__main__":
-    print(f"{config.vtcname} Drivers Hub")
-    time.sleep(3)
-    uvicorn.run("app:app", host=config.server_ip, port=config.server_port, log_level="info", workers = 3)
+    print(f"Company Name: {config.vtc_name}")
+    print(f"Company Abbreviation: {config.vtc_abbr}")
+    print("")
+    time.sleep(1)
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = 3)

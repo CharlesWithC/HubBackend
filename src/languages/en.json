@@ -55,6 +55,7 @@
     "loa": "Leave of Absence",
     "division": "Division",
     "application_id": "Application ID",
+    "unknown_application_type": "Unknown Application Type",
     "status": "Status",
     "creation": "Creation",
     "time": "Time",

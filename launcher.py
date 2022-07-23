@@ -57,7 +57,7 @@ if not os.path.exists(cf + "/" + vtc + ".json"):
     sys.exit(1)
 conf = open(cf + "/" + vtc + ".json", "r").read()
 conf = json.loads(conf)
-vtcfull = conf["vtcname"]
+vtcfull = conf["vtc_name"]
 
 if app == "hub":
     if op == "test": # python test

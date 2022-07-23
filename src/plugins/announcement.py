@@ -12,7 +12,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtcprefix}/announcement")
+@app.get(f"/{config.vtc_abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), page: Optional[int]= -1, aid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /announcement', 60, 60)
     if rl > 0:
@@ -49,7 +49,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        return {"error": False, "response": {"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "timestamp": tt[3], "private": tt[6]}}
+        return {"error": False, "response": {"aid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
+            "atype": str(tt[2]), "by": name, "timestamp": str(tt[3]), "private": TF[tt[6]]}}
 
     if page <= 0:
         page = 1
@@ -63,7 +64,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         name = "Unknown User"
         if len(n) > 0:
             name = n[0][0]
-        ret.append({"aid": tt[5], "title": b64d(tt[0]), "content": b64d(tt[1]), "atype": tt[2], "by":name, "byuserid": tt[4], "timestamp": tt[3], "private": tt[6]})
+        ret.append({"aid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
+            "atype": str(tt[2]), "by": name, "byuserid": str(tt[4]), "timestamp": str(tt[3]), "private": TF[tt[6]]})
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
@@ -71,9 +73,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": page, "tot": tot}}
+    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
-@app.post(f"/{config.vtcprefix}/announcement")
+@app.post(f"/{config.vtc_abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /announcement', 60, 3)
     if rl > 0:
@@ -86,6 +88,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
+    adminname = au["name"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -98,6 +101,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     form = await request.form()
     title = b64e(form["title"])
     content = b64e(form["content"])
+    discord_message_content = form["discord_message_content"]
     atype = int(form["atype"])
 
     if not isAdmin and atype != 1:
@@ -123,20 +127,17 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     if channelid != 0:
         try:
-            role = config.public_news_role
-            if pvt == 1:
-                role = config.private_news_role
-            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
+                    "footer": {"text": f"By {adminname}", "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                             "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
         except:
             pass
 
-    return {"error": False, "response": {"aid": aid}}
+    return {"error": False, "response": {"aid": str(aid)}}
 
-@app.patch(f"/{config.vtcprefix}/announcement")
+@app.patch(f"/{config.vtc_abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /announcement', 60, 10)
     if rl > 0:
@@ -149,6 +150,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
+    adminname = au["name"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -162,6 +164,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     aid = int(form["aid"])
     title = b64e(form["title"])
     content = b64e(form["content"])
+    discord_message_content = form["discord_message_content"]
     atype = int(form["atype"])
     pvt = 0
     if form["pvt"] == "true":
@@ -186,20 +189,17 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     if channelid != 0:
         try:
-            role = config.public_news_role
-            if pvt == 1:
-                role = config.private_news_role
-            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": role, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
+                    "footer": {"text": f"By {adminname}", "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
         except:
             pass
 
-    return {"error": False, "response": {"aid": aid}}
+    return {"error": False, "response": {"aid": str(aid)}}
 
-@app.delete(f"/{config.vtcprefix}/announcement")
+@app.delete(f"/{config.vtc_abbr}/announcement")
 async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /announcement', 60, 10)
     if rl > 0:

@@ -36,10 +36,10 @@ if "downloads" in config.enabled_plugins:
     import plugins.downloads
 if "event" in config.enabled_plugins:
     import plugins.event
-
-@app.get(f'/{config.vtcprefix}')
+    
+@app.get(f'/{config.vtc_abbr}')
 async def home():
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    return {"error": False, "response": {"vtc": config.vtcname, "prefix": config.vtcprefix, "version": "v1.9.12", "copyright": f"Copyright (C) {year} CharlesWithC"}}
+    return {"error": False, "response": {"vtc_name": config.vtc_name, "vtc_abbr": config.vtc_abbr, "version": "v1.10.1", "copyright": f"Copyright (C) {year} CharlesWithC"}}

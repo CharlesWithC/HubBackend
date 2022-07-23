@@ -1120,7 +1120,7 @@
                         "title": "Add Up (Calculate Sum)",
                         "type": "bool"
                     },
-                    "name": "addup",
+                    "name": "sum",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2518,6 +2518,33 @@
                     "name": "showall",
                     "in": "query"
                 }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/application/types": {
+            "get": {
+                "summary": "Get Application Types",
+                "tags": ["application"],
+                "operationId": "getApplicationTypes",
                 "responses": {
                     "200": {
                         "description": "Successful Response",

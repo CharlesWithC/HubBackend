@@ -19,7 +19,7 @@ import zlib, base64
 
 import threading
 
-GIFS = config.delivery_gifs
+GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
@@ -83,7 +83,7 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
             except:
                 continue
 
-@app.post(f"/{config.vtcprefix}/navio")
+@app.post(f"/{config.vtc_abbr}/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()
@@ -178,7 +178,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
     conn.commit()
 
-    if int(config.delivery_log_channel_id) != 0:
+    if config.delivery_log_channel_id != "":
         try:
             source_city = d["data"]["object"]["source_city"]
             source_company = d["data"]["object"]["source_company"]
@@ -214,7 +214,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                     multiplayer = "Unknown Multiplayer Mode"
             truck = d["data"]["object"]["truck"]
             truck = truck["brand"]["name"] + " " + truck["name"]
-            headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
             munit = "€"
             if not game.startswith("e"):
@@ -222,10 +222,10 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             offence = -offence
             if e == "job.delivered":
                 k = randint(0, len(GIFS)-1)
-                dhulink = f"https://{config.dhdomain}/member?userid={userid}"
+                dhulink = f"https://{config.domain}/member?userid={userid}"
                 if config.distance_unit == "imperial":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": f"https://{config.dhdomain}/delivery?logid={logid}",
+                            "url": f"https://{config.domain}/delivery?logid={logid}",
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
@@ -239,7 +239,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                 elif config.distance_unit == "metric":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": f"https://{config.dhdomain}/delivery?logid={logid}",
+                            "url": f"https://{config.domain}/delivery?logid={logid}",
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},

@@ -55,6 +55,7 @@
     "loa": "Excedencia",
     "division": "División",
     "application_id": "ID de aplicación",
+    "unknown_application_type": "Tipo de aplicación desconocido",
     "status": "Estado",
     "creation": "Creación",
     "time": "Tiempo",

@@ -12,22 +12,25 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-DIVISIONPNT = {}
-for division in config.divisions:
-    DIVISIONPNT[division["id"]] = division["point"]
-
 divisions = config.divisions
+for i in range(len(divisions)):
+    divisions[i]["id"] = int(divisions[i]["id"])
+    
 divisionroles = []
 divisiontxt = {}
 for division in divisions:
-    divisionroles.append(division["roleid"])
+    divisionroles.append(int(division["role_id"]))
     divisiontxt[division["id"]] = division["name"]
 
-@app.get(f"/{config.vtcprefix}/divisions")
+DIVISIONPNT = {}
+for division in divisions:
+    DIVISIONPNT[division["id"]] = int(division["point"])
+
+@app.get(f"/{config.vtc_abbr}/divisions")
 async def getDivisions(request: Request, response: Response):
     return {"error": False, "response": divisions}
 
-@app.post(f"/{config.vtcprefix}/division")
+@app.post(f"/{config.vtc_abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /division', 60, 10)
     if rl > 0:
@@ -79,8 +82,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
     for role in roles:
         if int(role) in divisionroles:
             for division in divisions:
-                if division["roleid"] == int(role):
-                    udivisions.append(division["id"])
+                if int(division["role_id"]) == int(role):
+                    udivisions.append(int(division["id"]))
     if not divisionid in udivisions:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_division_driver")}
@@ -89,7 +92,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     conn.commit()
     
     try:
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -99,7 +102,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
                 "description": f"Division supervisor will check your request and you will receive an update soon.",
                     "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                          "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
     except:
         pass
@@ -108,7 +111,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     t = cur.fetchall()
     tt = t[0]
     msg = f"**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
-    msg += f"**Delivery ID**: [{logid}](https://{config.dhdomain}/delivery?logid={logid})\n**Division**: {divisiontxt[divisionid]}"
+    msg += f"**Delivery ID**: [{logid}](https://{config.domain}/delivery?logid={logid})\n**Division**: {divisiontxt[divisionid]}"
     avatar = tt[2]
 
     if config.webhook_division != "":
@@ -123,13 +126,13 @@ async def postDivision(request: Request, response: Response, authorization: str 
                     embed.set_author(name = tt[1], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png")
                 embed.set_footer(text = f"Delivery ID: {logid} ")
                 embed.timestamp = datetime.now()
-                await webhook.send(content = config.division_manager_role, embed = embed)
+                await webhook.send(content = config.webhook_division_message, embed = embed)
         except:
             pass
         
     return {"error": False}
 
-@app.get(f"/{config.vtcprefix}/divisions/pending")
+@app.get(f"/{config.vtc_abbr}/divisions/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /divisions/pending', 60, 60)
     if rl > 0:
@@ -157,7 +160,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     
     return {"error": False, "response": ret}
 
-@app.patch(f"/{config.vtcprefix}/division")
+@app.patch(f"/{config.vtc_abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /division', 60, 60)
     if rl > 0:
@@ -205,7 +208,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
 
     try:
         STATUS = {0: "Pending", 1: "Validated", 2: "Denied"}
-        headers = {"Authorization": f"Bot {config.bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         durl = "https://discord.com/api/v9/users/@me/channels"
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         d = json.loads(r.text)
@@ -216,14 +219,14 @@ async def patchDivision(request: Request, response: Response, authorization: str
                 "description": reason,
                     "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
                         {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
-                    "footer": {"text": config.vtcname, "icon_url": config.vtclogo}, "thumbnail": {"url": config.vtclogo},\
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                          "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
     except:
         pass
 
     return {"error": False}
 
-@app.get(f"/{config.vtcprefix}/division")
+@app.get(f"/{config.vtc_abbr}/division")
 async def divisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /division', 60, 60)
     if rl > 0:
@@ -281,16 +284,16 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             t = cur.fetchall()
             staffname = t[0][0]
         if userid == duserid:
-            return {"error": False, "response": {"divisionid": divisionid, "requestts": requestts, "status": status, \
-                "updatets": updatets, "staffid": staffid, "staffname": staffname, "reason": reason, "isstaff": ok}}
+            return {"error": False, "response": {"divisionid": str(divisionid), "requestts": str(requestts), "status": str(status), \
+                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "reason": reason, "isstaff": str(ok)}}
         else:
-            return {"error": False, "response": {"divisionid": divisionid, "status": status, \
-                "updatets": updatets, "staffid": staffid, "staffname": staffname, "isstaff": ok}}
+            return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
+                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "isstaff": str(ok)}}
 
     stats = []
-    for division in config.divisions:
+    for division in divisions:
         tstats = []
-        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%{division['roleid']}%'")
+        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%{division['role_id']}%'")
         t = cur.fetchall()
         userpnt = {}
         username = {}

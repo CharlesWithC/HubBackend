@@ -1,20 +1,20 @@
 {
-    "vtcprefix": "",
-    "vtcname": "",
+    "vtc_abbr": "",
+    "vtc_name": "",
     "distance_unit": "metric",
     "truckersmp_bind": true,
-    "hexcolor": "FFFFFF",
-    "vtclogo": "https://{dhdomain}/images/logo.png",
-    "teamupdate": "https://{dhdomain}/images/TeamUpdate.png",
+    "hex_color": "FFFFFF",
+    "vtc_logo_link": "https://{domain}/images/logo.png",
+    "team_update_image_link": "https://{domain}/images/TeamUpdate.png",
 
     "apidoc": "./apidoc.json",
     "language_dir": "./languages",
-    "steam_callback_url": "https://{dhdomain}/steam",
+    "steam_callback_url": "https://{domain}/steam",
 
-    "domain": "drivershub.charlws.com",
-    "dhdomain": "",
+    "apidomain": "drivershub.charlws.com",
+    "domain": "",
     "server_ip": "127.0.0.1",
-    "server_port": 7777,
+    "server_port": "7777",
 
     "database": "mysql",
     "mysql_host": "localhost",
@@ -26,9 +26,13 @@
     "enabled_plugins": ["announcement", "application", "division", "downloads", "event", "tracker"],
     "external_plugins": ["rework_member"],
 
-    "navio_token": "",
-    "navio_company_id": 0,
-    "delivery_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+    "guild_id": "",
+    "in_guild_check": true,
+
+    "navio_api_token": "",
+    "navio_company_id": "",
+    "delivery_log_channel_id": "",
+    "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
         "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",
@@ -38,54 +42,54 @@
         "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
         "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
         "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
-    
-    "guild": 0,
-    "in_guild_check": true,
-    "driver_channel_id": 0,
-    "delivery_log_channel_id": 0,
-    "team_update_message": "{mention} has joined **{vtcname}** as a **Driver**.",
-    "welcome_message": "",
-    "welcome_image": "https://{dhdomain}/images/bg.jpg",
-    "welcome_roles": [1237912873213, -43953495734],
-    "rank_up_message": "GG {mention}! You have ranked up to {rank}!",
-
-    "assign_application_role": false,
-    "applicant_driver": 0,
-    "applicant_staff": 0,
-    "loa_request": 0,
-
-    "human_resources_role": "<@&0>",
-    "division_manager_role": "",
-    "public_news_role": "",
-    "private_news_role": "",
-
-    "webhook_audit": "",
-    "webhook_application": "",
-    "webhook_division": "",
-    "webhook_teamupdate": "",
 
     "discord_client_id": "",
     "discord_client_secret": "",
     "discord_oauth2_url": "",
-    "discord_callback_url": "https://drivershub.charlws.com/{vtcprefix}/user/callback",
-    "bot_token": "",
+    "discord_callback_url": "https://drivershub.charlws.com/{vtc_abbr}/user/callback",
+    "discord_bot_token": "",
+
+    "webhook_teamupdate": "",
+    "webhook_teamupdate_message": "{mention} has joined **{vtcname}** as a **Driver**.",
+
+    "welcome_channel_id": "",
+    "welcome_message": "",
+    "welcome_image_link": "https://{domain}/images/bg.jpg",
+    "welcome_role_change": ["+1237912873213", "-43953495734"],
+
+    "rank_up_channel_id": "",
+    "rank_up_message": "GG {mention}! You have ranked up to {rank}!",
+    "ranks": [
+        {"distance": "0", "name": "New Driver", "discord_role_id": ""}
+    ],
+
+    "webhook_application": "",
+    "application_types": [
+        {"id": "1", "name": "Driver", "discord_role_id": "", "message": ""},
+        {"id": "2", "name": "Staff", "discord_role_id": "", "message": ""},
+        {"id": "3", "name": "LOA", "discord_role_id": "", "message": ""},
+        {"id": "4", "name": "Division", "discord_role_id": "", "message": ""}
+    ],
+
+    "webhook_division": "",
+    "webhook_division_message": "",
+    "divisions": [
+        {"id": "1", "name": "Construction", "role_id": "251", "point": "500"}
+    ],
 
     "perms": {
-        "admin": [0],
+        "admin": ["0"],
+        "audit": [],
+        "announcement": [],
         "hr": [],
         "hrm": [],
-        "announcement": [],
-        "event": [],
         "division": [],
-        "audit": [],
-        "driver": [100],
+        "event": [],
+        "downloads": [],
+        "driver": ["100"],
         "staff_of_the_month": [],
         "driver_of_the_month": []
     },
-
-    "divisions": [
-        {"id": 1, "name": "Construction", "roleid": 251, "point": 500}
-    ],
 
     "roles": {
         "0": "root",
@@ -93,11 +97,5 @@
         "251": "Construction Division"
     },
 
-    "ranking": {
-        "0": 0
-    },
-
-    "rankname": {
-        "0": "New Driver"
-    }
+    "webhook_audit": ""
 }
