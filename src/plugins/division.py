@@ -293,7 +293,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
     stats = []
     for division in divisions:
         tstats = []
-        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%{division['role_id']}%'")
+        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
         t = cur.fetchall()
         userpnt = {}
         username = {}

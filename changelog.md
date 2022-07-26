@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.10.3**  
+1.Fixed [admin.py](/src/apis/admin.py) bug overwriting original `tconfig` which causes 500 on **GET** `/admin/config`  
+2.Improved driver & staff of the month and division role detection by adding ',' at the start and end of `roles` column  
+
 **v1.10.2**  
 1.Fixed minor bugs  
 2.Added `pagelimit` parameter for all list response  

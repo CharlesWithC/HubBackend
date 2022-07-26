@@ -6,6 +6,7 @@ from typing import Optional
 import json, os, sys
 import threading, time
 from sys import exit
+import copy
 
 from app import app, config, tconfig, config_path
 from db import newconn
@@ -33,7 +34,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
             "enabled_plugins", "external_plugins"]
     
-    ttconfig = tconfig
+    ttconfig = copy.deepcopy(tconfig)
     if not "division" in ttconfig["enabled_plugins"]:
         del ttconfig["divisions"]
 
@@ -82,8 +83,8 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         if i in newconfig:
             del newconfig[i]
     
-    ttconfig = tconfig
-    orgconfig = tconfig
+    ttconfig = copy.deepcopy(tconfig)
+    orgconfig = copy.deepcopy(tconfig)
 
     # check must_have and distance_unit
     for i in newconfig:

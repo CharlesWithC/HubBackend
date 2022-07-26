@@ -91,14 +91,14 @@ async def getMembers(page:int, request: Request, response: Response, authorizati
     driver_of_the_month = {}
     
     if "staff_of_the_month" in tconfig["perms"].keys() and len(tconfig["perms"]["staff_of_the_month"]) == 1:
-        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%{tconfig['perms']['staff_of_the_month'][0]}%'") # Staff of the month
+        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%,{tconfig['perms']['staff_of_the_month'][0]},%'") # Staff of the month
         t = cur.fetchall()
         if len(t) > 0:
             tt = t[0]
             staff_of_the_month = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[3]}
 
     if "driver_of_the_month" in tconfig["perms"].keys() and len(tconfig["perms"]["driver_of_the_month"]) == 1:
-        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%{tconfig['perms']['driver_of_the_month'][0]}%'") # Driver of the month
+        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%,{tconfig['perms']['driver_of_the_month'][0]},%'") # Driver of the month
         t = cur.fetchall()
         if len(t) > 0:
             tt = t[0]
@@ -453,7 +453,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     roles = [str(i) for i in roles]
-    cur.execute(f"UPDATE user SET roles = '{','.join(roles)}' WHERE userid = {userid}")
+    cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
 
     if config.perms.driver[0] in addedroles:
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
