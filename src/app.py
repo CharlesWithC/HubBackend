@@ -11,6 +11,8 @@ from sys import exit
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
+version = "v1.10.4"
+
 class Dict2Obj(object):
     def __init__(self, d):
         for key in d:

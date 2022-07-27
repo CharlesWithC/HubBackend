@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 import MySQLdb
-from app import app, config
+from app import app, config, version
 import json, os
 
 host = config.mysql_host
@@ -52,6 +52,7 @@ if len(t) == 0:
     cur.execute(f"INSERT INTO settings VALUES (0, 'nxtannid', 1)")
     cur.execute(f"INSERT INTO settings VALUES (0, 'nxtlogid', 1)")
     cur.execute(f"INSERT INTO settings VALUES (0, 'nxteventid', 1)")
+    cur.execute(f"INSERT INTO settings VALUES (0, 'version', {version})")
 
 conn.commit()
 

@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.10.4**  
+1.Added data compression for `dlog.detail` and `application.detail`  
+2.Added upgrade plugin  
+3.Added `version` in database settings table  
+
 **v1.10.3**  
 1.Fixed [admin.py](/src/apis/admin.py) bug overwriting original `tconfig` which causes 500 on **GET** `/admin/config`  
 2.Improved driver & staff of the month and division role detection by adding ',' at the start and end of `roles` column  

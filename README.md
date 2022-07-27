@@ -13,6 +13,10 @@ Author: [@CharlesWithC](https://charlws.com)
 **Official Plugins**  
 Announcement, Application, Division, Downloads, Event  
 
+**Upgrade Plugin**  
+*A plugin loaded to upgrade existing data to latest version, mainly used when database structure is updated*  
+Place "upgrade.py" in program directory, which contains **str** `target_version` and **def** `run`. Execute main program, it will detect if `target_version` match current version, then execute the `run` function.  
+
 **Code API**  
 1.Authorization  
 `auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"])`  

@@ -45,7 +45,6 @@ async def newApplication(request: Request, response: Response, authorization: st
     form = await request.form()
     apptype = int(form["apptype"])
     data = json.loads(form["data"])
-    data = b64e(json.dumps(data))
 
     if apptype == 1:
         cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
@@ -95,10 +94,9 @@ async def newApplication(request: Request, response: Response, authorization: st
     cur.execute(f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
     conn.commit()
 
-    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{data}', 0, {int(time.time())}, 0, 0)")
+    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{compress(json.dumps(data))}', 0, {int(time.time())}, 0, 0)")
     conn.commit()
 
-    data = json.loads(form["data"])
     apptype = int(apptype)
 
     apptypetxt = ""
@@ -218,7 +216,7 @@ async def updateApplication(request: Request, response: Response, authorization:
             return {"error": True, "descriptor": ml.tr(request, "application_already_processed")}
 
     discordid = t[0][0]
-    data = json.loads(b64d(t[0][1]))
+    data = json.loads(decompress(t[0][1]))
     apptype = t[0][3]
     i = 1
     while 1:
@@ -227,12 +225,10 @@ async def updateApplication(request: Request, response: Response, authorization:
         i += 1
         
     data[f"[Message] {name} #{i}"] = message
-    data = b64e(json.dumps(data))
 
-    cur.execute(f"UPDATE application SET data = '{data}' WHERE applicationid = {applicationid}")
+    cur.execute(f"UPDATE application SET data = '{compress(json.dumps(data))}' WHERE applicationid = {applicationid}")
     conn.commit()
 
-    data = json.loads(b64d(data))
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
@@ -358,7 +354,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     discordid = t[0][2]
-    data = json.loads(b64d(t[0][3]))
+    data = json.loads(decompress(t[0][3]))
     i = 1
     while 1:
         if not f"[Message] {adminname} #{i}" in data.keys():
@@ -366,13 +362,12 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         i += 1
         
     data[f"[Message] {adminname} #{i}"] = message
-    data = b64e(json.dumps(data))
 
     closedts = 0
     if status != 0:
         closedts = int(time.time())
 
-    cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {closedts}, data = '{data}' WHERE applicationid = {applicationid}")
+    cur.execute(f"UPDATE application SET status = {status}, closedBy = {adminid}, closedTimestamp = {closedts}, data = '{compress(json.dumps(data))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application {applicationid} status to {statustxt}")
     conn.commit()
 
@@ -451,7 +446,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     return {"error": False, "response": {"applicationid": str(t[0][0]), "apptype": str(t[0][1]),\
-        "discordid": str(t[0][2]), "detail": json.loads(b64d(t[0][3])), "status": str(t[0][4]), "submitTimestamp": str(t[0][5]), \
+        "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submitTimestamp": str(t[0][5]), \
             "closedTimestamp": str(t[0][7]), "closedBy": str(t[0][6])}}
 
 @app.get(f"/{config.vtc_abbr}/applications")

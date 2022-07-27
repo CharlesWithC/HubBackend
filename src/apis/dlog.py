@@ -8,7 +8,6 @@ from typing import Optional
 from datetime import datetime
 import requests
 from io import BytesIO
-import zlib, base64
 
 from app import app, config
 from db import newconn
@@ -475,7 +474,7 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
     t = cur.fetchall()
     ret = []
     for tt in t:
-        data = json.loads(b64d(tt[1]))
+        data = json.loads(decompress(tt[1]))
         source_city = "Unknown city"
         source_company = "Unknown company"
         destination_city = "Unknown city"
@@ -551,7 +550,7 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-    data = json.loads(b64d(t[0][1]))
+    data = json.loads(decompress(t[0][1]))
     del data["data"]["object"]["driver"]
     distance = t[0][3]
     name = "Unknown Driver"
@@ -564,9 +563,7 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
     p = cur.fetchall()
     telemetry = ""
     if len(p) > 0:
-        telemetry = p[0][0]
-        telemetry = base64.b64decode(telemetry)
-        telemetry = zlib.decompress(telemetry).decode()
+        telemetry = decompress(p[0][0])
         orgt = telemetry
         ver = "v1"
         telemetry = telemetry.split(";")
@@ -627,7 +624,7 @@ async def dlogExport(request: Request, response: Response, authorization: str = 
         if len(t) > 0:
             name = t[0][0]
 
-        data = json.loads(b64d(dd[8]))
+        data = json.loads(decompress(dd[8]))
         
         source_city = data["data"]["object"]["source_city"]
         source_company = data["data"]["object"]["source_company"]

@@ -15,8 +15,6 @@ import multilang as ml
 from random import randint
 from dateutil import parser
 
-import zlib, base64
-
 import threading
 
 GIFS = config.delivery_post_gifs
@@ -64,12 +62,7 @@ def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
                 if len(p) > 0:
                     break
                     
-                # after base64, zlib compression saves 40% storage
-                # without base64, zlib compression saves 55% storage
-                datac = zlib.compress(data.encode())
-                data = base64.b64encode(datac).decode()
-                    
-                cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{data}')")
+                cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
                 conn.commit()
                 break
             except:
@@ -174,7 +167,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
     cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
-    cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{b64e(json.dumps(d))}', {top_speed}, {int(time.time())}, \
+    cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d))}', {top_speed}, {int(time.time())}, \
         {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
     conn.commit()
 

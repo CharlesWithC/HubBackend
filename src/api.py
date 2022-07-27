@@ -6,7 +6,7 @@ import json, os, sys
 from sys import exit
 from datetime import datetime
 
-from app import app, config
+from app import app, config, version
 from db import newconn
 from functions import *
 import multilang as ml
@@ -42,4 +42,4 @@ async def home():
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    return {"error": False, "response": {"vtc_name": config.vtc_name, "vtc_abbr": config.vtc_abbr, "version": "v1.10.3", "copyright": f"Copyright (C) {year} CharlesWithC"}}
+    return {"error": False, "response": {"vtc_name": config.vtc_name, "vtc_abbr": config.vtc_abbr, "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}}
