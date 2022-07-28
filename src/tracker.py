@@ -5,6 +5,13 @@ import time
 
 from sys import exit
 
+drivershub = """    ____       _                         __  __      __  
+   / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
+  / / / / ___/ / | / / _ \/ ___/ ___/  / /_/ / / / / __ \\
+ / /_/ / /  / /| |/ /  __/ /  (__  )  / __  / /_/ / /_/ /
+/_____/_/  /_/ |___/\___/_/  /____/  /_/ /_/\__,_/_.___/ 
+                                                         """
+
 if len(sys.argv) == 1:
     print("Usage: python3 main.py <config.json>")
     exit(1)
@@ -21,24 +28,23 @@ if config_path == "":
     print("No config file specified")
     exit(1)
 
-print(f"Using config: {config_path}")
 if not os.path.exists(config_path):
     print("Config file not found")
     exit(1)
 
 os.environ["HUB_CONFIG_FILE"] = config_path
-print(f"Environment variable HUB_CONFIG_FILE set to {config_path}")
 
 from db import newconn
-from app import config
+from app import config, version
 
 async def navio(uri):
     lasthandshake = 0
     conn = newconn()
     cur = conn.cursor()
     async with connect(uri, ping_interval=30) as websocket:
-        print(f"{config.vtc_name} Tracker")
-        print(f"Navio Company ID: {config.navio_company_id}")
+        print(f"Company Name: {config.vtc_name}")
+        print(f"Company Abbreviation: {config.vtc_abbr}")
+        print(f"Navio Company ID: {config.navio_company_id}\n")
         await websocket.send(json.dumps({"op": 1, "data": {"subscribe_to_company": int(config.navio_company_id)}}))
         data = await websocket.recv()
         lasthandshake = int(time.time())
@@ -102,6 +108,15 @@ if not "tracker" in config.enabled_plugins:
 if config.navio_company_id == "":
     print("Navio Company ID not set")
     exit(1)
+
+from datetime import datetime
+currentDateTime = datetime.now()
+date = currentDateTime.date()
+year = date.strftime("%Y")
+print(drivershub)
+print(f"Drivers Hub: Backend ({version}) | Tracker")
+print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+print("")
 
 while 1:
     try:

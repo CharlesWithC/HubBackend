@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.10.5**  
+1.Removed `staff_of_the_month` and `drivers_of_the_month`  
+2.Added `roles` and `sort_by_highest_role` parameter for **GET** `/members`  
+3.Added tracker reload when reloading service  
+4.Added information and copyright in tracker  
+
 **v1.10.4**  
 1.Added data compression for `dlog.detail` and `application.detail`  
 2.Added upgrade plugin  

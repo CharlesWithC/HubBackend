@@ -49,6 +49,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     return {"error": False, "response": {"config": ttconfig}}
 
 def reload():
+    os.system(f"./launcher tracker restart {config.vtc_abbr} &")
     time.sleep(5)
     os.system(f"./launcher hub restart {config.vtc_abbr} &")
 

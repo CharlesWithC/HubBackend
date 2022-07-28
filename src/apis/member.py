@@ -44,7 +44,7 @@ for division in divisions:
 
 @app.get(f'/{config.vtc_abbr}/members')
 async def getMembers(page:int, request: Request, response: Response, authorization: str = Header(None), \
-    query: Optional[str] = '', pagelimit: Optional[int] = 10):
+    query: Optional[str] = '', roles: Optional[str] = '', sort_by_highest_role: Optional[bool] = True, pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /members', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -66,46 +66,43 @@ async def getMembers(page:int, request: Request, response: Response, authorizati
     elif pagelimit >= 250:
         pagelimit = 250
 
+    lroles = roles.split(",")
+    while "" in lroles:
+        lroles.remove("")
+    if len(lroles) > 5:
+        lroles = lroles[:5]
+
     query = query.replace("'","''").lower()
     
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC LIMIT {(page-1) * pagelimit}, {pagelimit}")
+    hrole = {}
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC")
     t = cur.fetchall()
-    ret = []
+    rret = {}
     for tt in t:
         roles = tt[3].split(",")
         while "" in roles:
             roles.remove("")
         highestrole = 99999
+        ok = False
+        if len(lroles) == 0:
+            ok = True
         for role in roles:
             if int(role) < highestrole:
                 highestrole = int(role)
-        ret.append({"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "highestrole": str(highestrole), "avatar": tt[4]})
-    
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0")
-    t = cur.fetchall()
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
-    
-    staff_of_the_month = {}
-    driver_of_the_month = {}
-    
-    if "staff_of_the_month" in tconfig["perms"].keys() and len(tconfig["perms"]["staff_of_the_month"]) == 1:
-        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%,{tconfig['perms']['staff_of_the_month'][0]},%'") # Staff of the month
-        t = cur.fetchall()
-        if len(t) > 0:
-            tt = t[0]
-            staff_of_the_month = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[3]}
+            if str(role) in lroles:
+                ok = True
+        if not ok:
+            continue
+        hrole[str(tt[0])] = highestrole
+        rret[str(tt[0])] = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "highestrole": str(highestrole), "avatar": tt[4]}
 
-    if "driver_of_the_month" in tconfig["perms"].keys() and len(tconfig["perms"]["driver_of_the_month"]) == 1:
-        cur.execute(f"SELECT userid, name, discordid, avatar FROM user WHERE roles LIKE '%,{tconfig['perms']['driver_of_the_month'][0]},%'") # Driver of the month
-        t = cur.fetchall()
-        if len(t) > 0:
-            tt = t[0]
-            driver_of_the_month = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[3]}    
-
-    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot), \
-        "staff_of_the_month": staff_of_the_month, "driver_of_the_month": driver_of_the_month}}
+    ret = []
+    if sort_by_highest_role:
+        hrole = dict(sorted(hrole.items(), key=lambda x:x[1]))
+    for userid in hrole.keys():
+        ret.append(rret[userid])
+        
+    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
 
 @app.get(f'/{config.vtc_abbr}/member')
 async def getMember(request: Request, response: Response, userid: int, authorization: str = Header(None)):

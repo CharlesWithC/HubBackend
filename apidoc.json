@@ -682,7 +682,23 @@
                         "title": "Member name to search for",
                         "type": "string"
                     },
-                    "name": "search",
+                    "name": "query",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Member must have roles (Separate with ',')",
+                        "type": "string"
+                    },
+                    "name": "roles",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Sort by highest role?",
+                        "type": "boolean"
+                    },
+                    "name": "sort_by_highest_role",
                     "in": "query"
                 }, {
                     "required": false,
