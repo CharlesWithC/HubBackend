@@ -268,8 +268,8 @@ async def addMember(request: Request, response: Response, authorization: str = H
         if "id" in d:
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title"), 
-                "description": ml.tr(request, "member_update", var = {"vtcname": config.vtc_name}),
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
+                "description": ml.tr(request, "member_update", var = {"vtcname": config.vtc_name}, force_en = True),
                     "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
                     "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                          "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)

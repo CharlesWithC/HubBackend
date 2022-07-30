@@ -318,7 +318,7 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")
         t = cur.fetchall()
         tt = t[0]
-        data = json.loads(b64d(tt[1]))
+        data = json.loads(decompress(tt[1]))
         source_city = "Unknown city"
         source_company = "Unknown company"
         destination_city = "Unknown city"

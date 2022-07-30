@@ -1111,6 +1111,23 @@
                 "summary": "Get Company Statistics",
                 "tags": ["dlog"],
                 "operationId": "getDlogStats",
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Start Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "starttime",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "End Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "endtime",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",

@@ -14,11 +14,13 @@ def get_lang(request: Request):
     lang = lang.split('-')[0]
     return lang
 
-def translate(request: Request, key: str, var: Optional[dict] = {}):
+def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
     lang = get_lang(request)
     langdir = config.language_dir
     if not os.path.exists(langdir + "/" + lang + ".json"): # no translation for language
         lang = "en" 
+    if force_en:
+        lang = "en"
     langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
     if key in langdata:
         ret = langdata[key]
@@ -38,5 +40,5 @@ def translate(request: Request, key: str, var: Optional[dict] = {}):
         else: # invalid key
             return ""
 
-def tr(request: Request, key: str, var: Optional[dict] = {}): # abbreviation of translate
-    return translate(request, key, var)
+def tr(request: Request, key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False): # abbreviation of translate
+    return translate(request, key, var, force_en)

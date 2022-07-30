@@ -7,6 +7,12 @@
     "ban_with_reason_expire": "Estás baneado por {reason} hasta las {expire} UTC",
     "discord_check_fail": "Error al verificar si estás en Discord Server.",
     "not_in_discord_server": "No estas en el Servidor de Discord.",
+    "invalid_email": "Correo electrónico no válido vinculado a la cuenta de Discord. Conecte su cuenta de Discord con una dirección de correo electrónico e inicie sesión nuevamente.",
+    "login_with_discord_to_change_password": "No se le permite cambiar la contraseña cuando ha iniciado sesión con contraseña. Inicie sesión con la cuenta de Discord para cambiar la contraseña.",
+    "too_many_user_with_same_email": "Demasiados usuarios tienen la misma dirección de correo electrónico. No se le permite utilizar la contraseña de inicio de sesión.",
+    "invalid_captcha": "Captcha inválido.",
+    "invalid_email_or_password": "Correo electrónico o contraseña no válidos.",
+    "weak_password": "Contraseña demasiado debil.",
 
     "invalid_discordid": "Identificación de discordia no válida.",
     "dismiss_before_ban": "Descartar miembro antes de prohibir.",

@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.10.6**  
+1.Added support to email & password login  
+2.Added time-range query for `/dlog/stats`  
+3.Added more data for `/dlog/stats` response  
+
 **v1.10.5**  
 1.Removed `staff_of_the_month` and `drivers_of_the_month`  
 2.Added `roles` and `sort_by_highest_role` parameter for **GET** `/members`  

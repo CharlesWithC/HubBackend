@@ -57,6 +57,22 @@ async def AuditLog(userid, text):
         except:
             pass
         
+import zlib
+def compress(s):
+    if type(s) == str:
+        s = s.encode()
+    t = zlib.compress(s)
+    t = b64encode(t).decode()
+    return t
+
+def decompress(s):
+    if type(s) == str:
+        s = s.encode()
+    t = b64decode(s)
+    t = zlib.decompress(t)
+    t = t.decode()
+    return t
+
 def b62encode(d):
     ret = ""
     l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -110,6 +126,13 @@ def iptype(Ip):
         return 6
     else:
         return 0
+
+def validateEmail(email):
+    regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+    if re.fullmatch(regex, email):
+        return True
+    else:
+        return False
 
 def TSeparator(num):
     flag = ""
@@ -258,19 +281,3 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
     
     return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-import zlib
-def compress(s):
-    if type(s) == str:
-        s = s.encode()
-    t = zlib.compress(s)
-    t = b64encode(t).decode()
-    return t
-
-def decompress(s):
-    if type(s) == str:
-        s = s.encode()
-    t = b64decode(s)
-    t = zlib.decompress(t)
-    t = t.decode()
-    return t

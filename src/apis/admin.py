@@ -32,7 +32,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
         "apidomain", "domain", "server_ip", "server_port",\
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
-            "enabled_plugins", "external_plugins"]
+            "enabled_plugins", "external_plugins", "hcaptcha_secret"]
     
     ttconfig = copy.deepcopy(tconfig)
     if not "division" in ttconfig["enabled_plugins"]:
@@ -75,7 +75,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
         "apidomain", "domain", "server_ip", "server_port",\
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
-            "enabled_plugins", "external_plugins"]
+            "enabled_plugins", "external_plugins", "hcaptcha_secret"]
     musthave = ["vtc_name", "vtc_logo_link", "hex_color", \
         "navio_api_token", "navio_company_id", "guild_id", \
         "discord_client_id", "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]

@@ -7,6 +7,12 @@
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",
     "not_in_discord_server": "You are not in Discord Server.",
+    "invalid_email": "Invalid email bound to Discord account. Connect your Discord account with an email address and login again.",
+    "login_with_discord_to_change_password": "You are not allowed to change password when you are logged in with password. Login with Discord account to change password.",
+    "too_many_user_with_same_email": "Too many user have the same email address. You are not allowed to use password login.",
+    "invalid_captcha": "Invalid captcha.",
+    "invalid_email_or_password": "Invalid email or password.",
+    "weak_password": "Password too weak.",
 
     "invalid_discordid": "Invalid Discord ID.",
     "dismiss_before_ban": "Dismiss member before banning.",

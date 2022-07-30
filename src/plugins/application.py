@@ -386,10 +386,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         if "id" in d:
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated"),
-                "description": f"[{ml.tr(request, 'message')}] {message}",
-                    "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": statustxt, "inline": True}, \
-                        {"name": ml.tr(request, "time"), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff"), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
+                "description": f"[{ml.tr(request, 'message', force_en = True)}] {message}",
+                    "fields": [{"name": ml.tr(request, "application_id", force_en = True), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status", force_en = True), "value": statustxt, "inline": True}, \
+                        {"name": ml.tr(request, "time", force_en = True), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff", force_en = True), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
                     "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 

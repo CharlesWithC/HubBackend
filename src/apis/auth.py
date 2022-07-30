@@ -8,6 +8,7 @@ from discord_oauth2 import DiscordAuth
 from pysteamsignin.steamsignin import SteamSignIn
 from uuid import uuid4
 import json, time, requests
+import bcrypt, re
 
 from app import app, config
 from db import newconn
@@ -48,7 +49,6 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         cur = conn.cursor()
         cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 7}")
         cur.execute(f"DELETE FROM banned WHERE expire < {int(time.time())}")
-        stoken = str(uuid4())
         cur.execute(f"SELECT reason, expire FROM banned WHERE discordid = '{user_data['id']}'")
         t = cur.fetchall()
         if len(t) > 0:
@@ -63,12 +63,15 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         username = username.replace("'", "''").replace(",","")
         email = str(user_data['email'])
         email = email.replace("'", "''")
+        if not validateEmail(email):
+            return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "invalid_email"), status_code=302)
         avatar = str(user_data['avatar'])
         if len(t) == 0:
             cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{avatar}', '',\
                 '{email}', -1, -1, '', {int(time.time())})")
             await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)")
         else:
+            cur.execute(f"UPDATE user_password SET email = '{email}' WHERE discordid = '{user_data['id']}'")
             cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{user_data['id']}'")
         conn.commit()
         
@@ -80,12 +83,114 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
             if not "user" in d.keys():
                 return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "not_in_discord_server"), status_code=302)
 
+        stoken = str(uuid4())
+        while stoken[0] == "e":
+            stoken = str(uuid4())
         cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
         conn.commit()
-        user_data["token"] = stoken
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
         
     return RedirectResponse(url=f"https://{dhdomain}/auth?message={tokens['error_description']}", status_code=302)
+
+@app.post(f'/{config.vtc_abbr}/user/login/password')
+async def passwordLogin(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /user/login/password', 60, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    
+    form = await request.form()
+    email = form["email"].replace("'", "''")    
+    password = form["password"].encode('utf-8')
+    hcaptcha_response = form["h-captcha-response"]
+
+    r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
+    d = json.loads(r.text)
+    if not d["success"]:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_captcha")}
+    
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid, password FROM user_password WHERE email = '{email}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_email_or_password")}
+    discordid = t[0][0]
+    pwdhash = t[0][1]
+    ok = bcrypt.checkpw(password, b64d(pwdhash).encode())
+    if not ok:
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "invalid_email_or_password")}
+    
+    stoken = str(uuid4())
+    stoken = "e" + stoken[1:]
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    conn.commit()
+
+    return {"error": False, "response": {"token": stoken}}
+    
+@app.patch(f'/{config.vtc_abbr}/user/password')
+async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /user/password', 60, 3)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 401
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_to_change_password")}
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    email = t[0][0]
+
+    form = await request.form()
+    password = form["password"]
+    if password == "":
+        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
+        conn.commit()
+        return {"error": False}
+
+    if not validateEmail(email):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "invalid_email")}
+        
+    cur.execute(f"SELECT userid FROM user WHERE email = '{email}'")
+    t = cur.fetchall()
+    if len(t) > 1:
+        response.status_code = 409
+        return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email")}
+        
+    if(len(password)>=8):
+        if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
+            (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
+            return {"error": True, "descriptor": ml.tr(request, "weak_password")}
+    else:
+        return {"error": True, "descriptor": ml.tr(request, "weak_password")}
+
+    password = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    pwdhash = bcrypt.hashpw(password, salt).decode()
+
+    cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
+    cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
+    cur.execute(f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
+    conn.commit()
+
+    return {"error": False}
 
 @app.get(f'/{config.vtc_abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
@@ -142,6 +247,8 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
     stoken = str(uuid4())
+    while stoken[0] == "e":
+        stoken = str(uuid4())
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
