@@ -43,8 +43,9 @@ for division in divisions:
     divisionroles.append(division["role_id"])
 
 @app.get(f'/{config.vtc_abbr}/members')
-async def getMembers(page:int, request: Request, response: Response, authorization: str = Header(None), \
-    query: Optional[str] = '', roles: Optional[str] = '', sort_by_highest_role: Optional[bool] = True, pagelimit: Optional[int] = 10):
+async def getMembers(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, query: Optional[str] = '', roles: Optional[str] = '', sort_by_highest_role: Optional[bool] = True, \
+        order_by: Optional[str] = "highest_role", order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /members', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -74,8 +75,30 @@ async def getMembers(page:int, request: Request, response: Response, authorizati
 
     query = query.replace("'","''").lower()
     
+    if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp"]:
+        order_by = "user_id"
+    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "joints", "highest_role": "highest_role"}
+    order_by = cvt[order_by]
+
+    sort_by_highest_role = False
+    hrole_order_by = "asc"
+    if order_by == "highest_role":
+        sort_by_highest_role = True
+        order_by = "userid"
+
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()
+
+    if sort_by_highest_role:
+        hrole_order_by = order
+        if order == "ASC":
+            order = "DESC"
+        elif order == "DESC":
+            order = "ASC"
+
     hrole = {}
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY userid ASC")
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar, joints FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY {order_by} {order}")
     t = cur.fetchall()
     rret = {}
     for tt in t:
@@ -94,11 +117,13 @@ async def getMembers(page:int, request: Request, response: Response, authorizati
         if not ok:
             continue
         hrole[str(tt[0])] = highestrole
-        rret[str(tt[0])] = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "highestrole": str(highestrole), "avatar": tt[4]}
+        rret[str(tt[0])] = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "highestrole": str(highestrole), "avatar": tt[4], "join_timestamp": tt[5]}
 
     ret = []
     if sort_by_highest_role:
         hrole = dict(sorted(hrole.items(), key=lambda x:x[1]))
+        if hrole_order_by == "ASC":
+            hrole = dict(reversed(list(hrole.items())))
     for userid in hrole.keys():
         ret.append(rret[userid])
         

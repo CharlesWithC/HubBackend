@@ -450,8 +450,8 @@ async def getApplication(request: Request, response: Response, applicationid: in
             "closedTimestamp": str(t[0][7]), "closedBy": str(t[0][6])}}
 
 @app.get(f"/{config.vtc_abbr}/applications")
-async def getApplications(page: int, apptype: int, request: Request, response: Response, authorization: str = Header(None), \
-    showall: Optional[bool] = False, pagelimit: Optional[int] = 10):
+async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
+    apptype: Optional[int] = 0, page: Optional[int] = -1, showall: Optional[bool] = False, order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /applications', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -459,6 +459,10 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
 
     if page <= 0:
         page = 1
+
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()
         
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -494,7 +498,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         if apptype != 0:
             limit = f" AND apptype = {apptype}"
 
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
         t = cur.fetchall()
         
         cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
@@ -506,7 +510,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
             limit = ""
             if apptype != 0:
                 limit = f" WHERE apptype = {apptype}"
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")
@@ -523,7 +527,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
             if apptype != 0:
                 limit = f" WHERE apptype = {apptype}"
 
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")
@@ -534,7 +538,7 @@ async def getApplications(page: int, apptype: int, request: Request, response: R
         elif not isHR and isDS:
             limit = " WHERE apptype = 4"
 
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid DESC LIMIT {(page-1) * pagelimit}, {pagelimit}")
+            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
             t = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM application {limit}")

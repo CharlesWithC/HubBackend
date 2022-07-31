@@ -98,7 +98,8 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": False, "response": {"discordid": str(discordid)}}
 
 @app.get(f"/{config.vtc_abbr}/users")
-async def getUsers(page:int, request: Request, response: Response, authorization: str = Header(None), pagelimit: Optional[int] = 10):
+async def getUsers(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, order_by: Optional[str] = "discord_id", order: Optional[str] = "asc", pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /users', 60, 60)
     if rl > 0:
         response.status_code = 429
@@ -120,7 +121,16 @@ async def getUsers(page:int, request: Request, response: Response, authorization
     elif pagelimit >= 250:
         pagelimit = 250
     
-    cur.execute(f"SELECT userid, name, discordid FROM user WHERE userid < 0 ORDER BY discordid ASC LIMIT {(page - 1) * pagelimit}, {pagelimit}")
+    if not order_by in ["name", "discord_id", "join_timestamp"]:
+        order_by = "discord_id"
+    cvt = {"name": "name", "discord_id": "discordid", "join_timestamp": "joints"}
+    order_by = cvt[order_by]
+
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()
+    
+    cur.execute(f"SELECT userid, name, discordid, joints FROM user WHERE userid < 0 ORDER BY {order_by} {order} LIMIT {(page - 1) * pagelimit}, {pagelimit}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -131,7 +141,7 @@ async def getUsers(page:int, request: Request, response: Response, authorization
         if len(p) > 0:
             banned = True
             banreason = p[0][0]
-        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": TF[banned], "banreason": banreason})
+        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "banned": TF[banned], "banreason": banreason, "join_timestamp": tt[3]})
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
     t = cur.fetchall()
     tot = 0

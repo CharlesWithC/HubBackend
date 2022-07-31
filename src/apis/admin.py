@@ -149,8 +149,8 @@ async def reloadService(request: Request, response: Response, authorization: str
     return {"error": False}
 
 @app.get(f"/{config.vtc_abbr}/auditlog")
-async def getAuditLog(page: int, request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = -1, operation: Optional[str] = "", pagelimit: Optional[int] = 30):
+async def getAuditLog(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, userid: Optional[int] = -1, operation: Optional[str] = "", pagelimit: Optional[int] = 30):
     rl = ratelimit(request.client.host, 'GET /auditlog', 30, 10)
     if rl > 0:
         response.status_code = 429

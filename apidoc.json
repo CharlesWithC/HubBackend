@@ -53,6 +53,102 @@
                 }
             }
         },
+        "/vtc/user/login/password": {
+            "post": {
+                "summary": "Password Login",
+                "tags": ["auth"],
+                "operationId": "user_login_password_get",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "description": "Email",
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string"
+                                    },
+                                    "h-captcha-response": {
+                                        "description": "hCaptcha Response",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["email", "password", "h-captcha-response"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/user/password": {
+            "patch": {
+                "summary": "Update Password",
+                "tags": ["auth"],
+                "operationId": "user_password_patch",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["password"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/user": {
             "get": {
                 "summary": "Get User",
@@ -267,6 +363,22 @@
                         "type": "integer"
                     },
                     "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (name, discord_id, join_timestamp)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
                     "in": "query"
                 }, {
                     "required": false,
@@ -695,10 +807,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Sort by highest role?",
-                        "type": "boolean"
+                        "title": "Order by (user_id, name, discord_id, highest_role, join_timestamp)",
+                        "type": "string"
                     },
-                    "name": "sort_by_highest_role",
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1297,45 +1417,6 @@
                 }
             }
         },
-        "/vtc/dlog/newdrivers": {
-            "get": {
-                "summary": "Get New Drivers",
-                "tags": ["dlog"],
-                "operationId": "getNewDrivers",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "parameters": [{
-                    "required": false,
-                    "schema": {
-                        "title": "Page Limit",
-                        "type": "integar"
-                    },
-                    "name": "pagelimit",
-                    "in": "query"
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/vtc/dlogs": {
             "get": {
                 "summary": "Get Delivery Logs",
@@ -1351,6 +1432,14 @@
                         "type": "integer"
                     },
                     "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1731,6 +1820,14 @@
                         "type": "integer"
                     },
                     "name": "aid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2610,6 +2707,14 @@
                         "type": "boolean"
                     },
                     "name": "showall",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
                     "in": "query"
                 }, {
                     "required": false,
