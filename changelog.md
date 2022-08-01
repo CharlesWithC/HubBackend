@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.10.8**  
+Fixed the bug that application webhook contains words in applicant's language  
+
 **v1.10.7**  
 1.Removed **GET** `/dlog/newdrivers`  
 2.Removed `sort_by_highest_role` parameter from **GET** `/members`  

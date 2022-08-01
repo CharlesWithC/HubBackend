@@ -144,6 +144,10 @@ async def newApplication(request: Request, response: Response, authorization: st
     for d in data.keys():
         msg += f"**{d}**: {data[d]}\n\n"
 
+    if apptype >= 1 and apptype <= 4:
+        APPTYPE = {1: "Driver", 2: "Staff", 3: "LOA", 4: "Division"}
+        apptypetxt = APPTYPE[apptype]
+
     webhookurl = config.webhook_application
     if apptype == 4:
         webhookurl = config.webhook_division
