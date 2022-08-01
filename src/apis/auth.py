@@ -63,7 +63,7 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         username = username.replace("'", "''").replace(",","")
         email = str(user_data['email'])
         email = email.replace("'", "''")
-        if not validateEmail(email):
+        if not "@" in email: # make sure it's not empty
             return RedirectResponse(url=f"https://{dhdomain}/auth?message=" + ml.tr(request, "invalid_email"), status_code=302)
         avatar = str(user_data['avatar'])
         if len(t) == 0:
@@ -164,7 +164,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
         conn.commit()
         return {"error": False}
 
-    if not validateEmail(email):
+    if not "@" in email: # make sure it's not empty
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "invalid_email")}
         
@@ -174,7 +174,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email")}
         
-    if(len(password)>=8):
+    if len(password)>=8:
         if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
             (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
             return {"error": True, "descriptor": ml.tr(request, "weak_password")}

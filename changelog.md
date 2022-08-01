@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.10.9**  
+Removed regex email validation  
+
 **v1.10.8**  
 Fixed the bug that application webhook contains words in applicant's language  
 
