@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.10.10**  
+Added `revoke-all-token` when updating password  
+
 **v1.10.9**  
 Removed regex email validation  
 

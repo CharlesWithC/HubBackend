@@ -188,6 +188,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
     cur.execute(f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
+    cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
     conn.commit()
 
     return {"error": False}
