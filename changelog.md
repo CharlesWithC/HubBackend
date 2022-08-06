@@ -1,5 +1,17 @@
 # Changelog
 
+**v1.11.1**  
+1.Improved `application` plugin:  
+i) Added support to per-type webhook  
+ii) Added support to per-type staff role  
+iii) Removed reservation for type ID 1~4 (driver, staff, loa, division)  
+iv) Added `note` (`driver`) for `config.application_types` as a substitute of reservation  
+2.Improved authentication  
+i) Added **DELETE** `/token/all` endpoint to revoke all sessions  
+ii) Added **DELETE** `/token/hash` endpoint to revoke specific token with sha256 hash  
+iii) Added **GET** `/token/all` endpoint to get all token sha256 hash, ip and timestamp  
+iv) Added session limit to ensure user have a maximum of 10 active sessions  
+
 **v1.10.10**  
 Added `revoke-all-token` when updating password  
 

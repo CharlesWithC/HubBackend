@@ -9,6 +9,7 @@ from pysteamsignin.steamsignin import SteamSignIn
 from uuid import uuid4
 import json, time, requests
 import bcrypt, re
+import hashlib
 
 from app import app, config
 from db import newconn
@@ -86,6 +87,11 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
         stoken = str(uuid4())
         while stoken[0] == "e":
             stoken = str(uuid4())
+        cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{user_data['id']}'")
+        r = cur.fetchall()
+        scnt = r[0][0]
+        if scnt >= 10:
+            cur.execute(f"DELETE FROM session WHERE discordid = '{user_data['id']}' LIMIT {scnt - 9}")
         cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
         conn.commit()
         return RedirectResponse(url=f"https://{dhdomain}/auth?token="+stoken, status_code=302)
@@ -126,6 +132,11 @@ async def passwordLogin(request: Request, response: Response, authorization: str
     
     stoken = str(uuid4())
     stoken = "e" + stoken[1:]
+    cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{user_data['id']}'")
+    r = cur.fetchall()
+    scnt = r[0][0]
+    if scnt >= 10:
+        cur.execute(f"DELETE FROM session WHERE discordid = '{user_data['id']}' LIMIT {scnt - 9}")
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
 
@@ -188,7 +199,6 @@ async def patchPassword(request: Request, response: Response, authorization: str
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
     cur.execute(f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
-    cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
     conn.commit()
 
     return {"error": False}
@@ -272,6 +282,87 @@ async def deleteToken(request: Request, response: Response, authorization: str =
     stoken = authorization.split(" ")[1]
 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+    conn.commit()
+
+    return {"error": False}
+
+@app.get(f'/{config.vtc_abbr}/token/all')
+async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /token/all', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    ret = []
+    cur.execute(f"SELECT token, ip, timestamp FROM session WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    for tt in t:
+        tk = tt[0]
+        tk = hashlib.sha256(tk.encode()).hexdigest()
+        ret.append({"hash": tk, "ip": tt[1], "timestamp": tt[2]})
+
+    return {"error": False, "response": {"list": ret}}
+
+@app.delete(f'/{config.vtc_abbr}/token/hash')
+async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /token/hash', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    form = await request.form()
+    hsh = form["hash"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    ok = False
+    cur.execute(f"SELECT token FROM session WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    for tt in t:
+        thsh = hashlib.sha256(tt[0].encode()).hexdigest()
+        if thsh == hsh:
+            ok = True
+            cur.execute(f"DELETE FROM session WHERE token = '{tt[0]}' AND discordid = {discordid}")
+            conn.commit()
+
+    if ok:
+        return {"error": False}
+    else:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token")}
+
+@app.delete(f'/{config.vtc_abbr}/token/all')
+async def deleteTokenAll(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /token/all', 60, 60)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
     conn.commit()
 
     return {"error": False}

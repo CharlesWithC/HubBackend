@@ -46,7 +46,23 @@ async def newApplication(request: Request, response: Response, authorization: st
     apptype = int(form["apptype"])
     data = json.loads(form["data"])
 
-    if apptype == 1:
+    apptypetxt = ""
+    applicantrole = 0
+    discord_message_content = ""
+    webhookurl = ""
+    note = ""
+    for o in application_types:
+        if apptype == o["id"]:
+            apptypetxt = o["name"]
+            applicantrole = o["discord_role_id"]
+            discord_message_content = o["message"]
+            webhookurl = o["webhook"]
+            note = o["note"]
+    if apptypetxt == "":
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
+
+    if note == "driver":
         cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
         p = cur.fetchall()
         roles = p[0][0].split(",")
@@ -61,12 +77,20 @@ async def newApplication(request: Request, response: Response, authorization: st
         if len(p) > 0:
             response.status_code = 409
             return {"error": True, "descriptor": ml.tr(request, "already_driver_application")}
-    if apptype == 4:
-        cur.execute(f"SELECT * FROM application WHERE apptype = 4 AND discordid = {discordid} AND status = 0")
+
+    if note == "division":
+        cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
         p = cur.fetchall()
-        if len(p) > 0:
-            response.status_code = 409
-            return {"error": True, "descriptor": ml.tr(request, "already_driver_application")}
+        roles = p[0][0].split(",")
+        while "" in roles:
+            roles.remove("")
+        ok = False
+        for r in config.perms.driver:
+            if str(r) in roles:
+                ok = True
+        if not ok:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "must_be_driver_to_submit_division_application")}        
 
     cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submitTimestamp >= {int(time.time()) - 7200}")
     p = cur.fetchall()
@@ -97,23 +121,6 @@ async def newApplication(request: Request, response: Response, authorization: st
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {apptype}, {discordid}, '{compress(json.dumps(data))}', 0, {int(time.time())}, 0, 0)")
     conn.commit()
 
-    apptype = int(apptype)
-
-    apptypetxt = ""
-    applicantrole = 0
-    discord_message_content = ""
-    for o in application_types:
-        if apptype == o["id"]:
-            apptypetxt = o["name"]
-            applicantrole = o["discord_role_id"]
-            discord_message_content = o["message"]
-    if apptype < 1 and apptype > 4 and apptypetxt == "":
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
-    if apptype >= 1 and apptype <= 4:
-        APPTYPE = {1: ml.tr(request, "driver"), 2: ml.tr(request, "staff"), 3: ml.tr(request, "loa"), 4: ml.tr(request, "division")}
-        apptypetxt = APPTYPE[apptype]
-
     if applicantrole != 0:
         durl = f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
         try:
@@ -142,15 +149,8 @@ async def newApplication(request: Request, response: Response, authorization: st
     t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     for d in data.keys():
-        msg += f"**{d}**: {data[d]}\n\n"
+        msg += f"**{d}**:\n{data[d]}\n\n"
 
-    if apptype >= 1 and apptype <= 4:
-        APPTYPE = {1: "Driver", 2: "Staff", 3: "LOA", 4: "Division"}
-        apptypetxt = APPTYPE[apptype]
-
-    webhookurl = config.webhook_application
-    if apptype == 4:
-        webhookurl = config.webhook_division
     if webhookurl != "":
         try:
             async with aiohttp.ClientSession() as session:
@@ -236,7 +236,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
-    msg += f"**New message**: {message}\n\n"
+    msg += f"**New message**: \n{message}\n\n"
 
     try:
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
@@ -257,17 +257,16 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     apptypetxt = ""
     discord_message_content = ""
+    webhookurl = ""
     for o in application_types:
         if apptype == o["id"]:
             apptypetxt = o["name"]
             discord_message_content = o["message"]
+            webhookurl = o["webhook"]
     if apptype < 1 and apptype > 4 and apptypetxt == "":
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
 
-    webhookurl = config.webhook_application
-    if apptype == 4:
-        webhookurl = config.webhook_division
     if webhookurl != "":
         try:
             async with aiohttp.ClientSession() as session:
@@ -319,17 +318,6 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     conn = newconn()
     cur = conn.cursor()
 
-    isAdmin = False
-    isHR = False
-    isDS = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            isHR = True
-        if int(i) in config.perms.division:
-            isDS = True
-
     form = await request.form()
     applicationid = form["applicationid"]
     status = form["status"]
@@ -347,15 +335,23 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     
     apptype = t[0][1]
 
+    isAdmin = False
+    for i in roles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+
     if not isAdmin:
-        if apptype == 4:
-            if not isDS:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        else:
-            if not isHR:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        ok = False
+        for tt in application_types:
+            if str(tt["id"]) == str(apptype):
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if str(role) in roles:
+                        ok = True
+                        break
+        if not ok:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     discordid = t[0][2]
     data = json.loads(decompress(t[0][3]))
@@ -422,32 +418,31 @@ async def getApplication(request: Request, response: Response, applicationid: in
     conn = newconn()
     cur = conn.cursor()
 
-    isAdmin = False
-    isHR = False
-    isDS = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            isHR = True
-        if int(i) in config.perms.division:
-            isDS = True
-
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+
+    apptype = t[0][1]
     
+    isAdmin = False
+    for i in roles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+
     if not isAdmin and discordid != t[0][2]:
-        if t[0][1] == 4:
-            if not isDS:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        else:
-            if not isHR:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        ok = False
+        for tt in application_types:
+            if str(tt["id"]) == str(apptype):
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if str(role) in roles:
+                        ok = True
+                        break
+        if not ok:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
     return {"error": False, "response": {"applicationid": str(t[0][0]), "apptype": str(t[0][1]),\
         "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submitTimestamp": str(t[0][5]), \
@@ -479,17 +474,6 @@ async def getApplications(request: Request, response: Response, authorization: s
     conn = newconn()
     cur = conn.cursor()
 
-    isAdmin = False
-    isHR = False
-    isDS = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            isHR = True
-        if int(i) in config.perms.division:
-            isDS = True
-
     if pagelimit <= 1:
         pagelimit = 1
     elif pagelimit >= 100:
@@ -510,49 +494,46 @@ async def getApplications(request: Request, response: Response, authorization: s
         if len(t) > 0:
             tot = p[0][0]
     else:
-        if isAdmin or isHR and isDS:
-            limit = ""
-            if apptype != 0:
-                limit = f" WHERE apptype = {apptype}"
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
-            t = cur.fetchall()
-            
-            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
-            p = cur.fetchall()
-            if len(t) > 0:
-                tot = p[0][0]
-            
-        elif isHR and not isDS:
-            if apptype == 4:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-            limit = " WHERE apptype != 4"
-            if apptype != 0:
-                limit = f" WHERE apptype = {apptype}"
-
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
-            t = cur.fetchall()
-            
-            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
-            p = cur.fetchall()
-            if len(t) > 0:
-                tot = p[0][0]
-                
-        elif not isHR and isDS:
-            limit = " WHERE apptype = 4"
-
-            cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
-            t = cur.fetchall()
-            
-            cur.execute(f"SELECT COUNT(*) FROM application {limit}")
-            p = cur.fetchall()
-            if len(t) > 0:
-                tot = p[0][0]
+        isAdmin = False
+        for i in roles:
+            if int(i) in config.perms.admin:
+                isAdmin = True
         
+        allowed_apptypes = []
+        if not isAdmin:
+            for tt in application_types:
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if str(role) in roles:
+                        allowed_apptypes.append(str(tt["id"]))
+                        break
         else:
+            for tt in application_types:
+                allowed_apptypes.append(str(tt["id"]))
+
+        if len(allowed_apptypes) == 0:
             response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        limit = ""
+        if apptype == 0: # show all type
+            limit = " WHERE "
+            for tt in allowed_apptypes:
+                limit += f"apptype = {tt} OR "
+            limit = limit[:-3]
+        else:
+            if not str(apptype) in allowed_apptypes:
+                response.status_code = 403
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            limit = f" WHERE apptype = {apptype} "
+
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
+        t = cur.fetchall()
+        
+        cur.execute(f"SELECT COUNT(*) FROM application {limit}")
+        p = cur.fetchall()
+        if len(t) > 0:
+            tot = p[0][0]
 
     ret = []
     for tt in t:

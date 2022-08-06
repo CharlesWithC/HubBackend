@@ -3,6 +3,7 @@
     "invalid_authorization_header": "Invalid Authorization Header",
     "unauthorized": "Unauthorized",
     "application_token_prohibited": "Application token prohibited",
+    "hash_does_not_match_any_token": "Hash does not match any token.",
 
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",
@@ -70,6 +71,7 @@
     "no_message": "No Message",
 
     "already_a_driver": "You are already a driver!",
+    "must_be_driver_to_submit_division_application": "You must be a driver to be able to submit division application!",
     "already_driver_application": "You cannot make another driver application while there's a pending driver application!",
     "already_division_application":  "You cannot make another division application while there's a pending division application!",
     "no_multiple_application_2h": "You cannot create multiple applications within 2 hours!",

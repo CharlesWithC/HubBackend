@@ -3,6 +3,7 @@
     "invalid_authorization_header": "Invalid bemyndigelse",
     "unauthorized": "ikke bemyndiget",
     "application_token_prohibited": "Ansøgningstoken forbudt",
+    "hash_does_not_match_any_token": "Hash matcher ikke noget token.",
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",
@@ -70,6 +71,7 @@
     "no_message": "Ingen besked",
 
     "already_a_driver": "Du er allerede en chauffør!",
+    "must_be_driver_to_submit_division_application": "Du skal være chauffør for at kunne indsende delingsansøgning!",
     "already_driver_application": "Du kan ikke lave en anden Chaffufør ansøgning når der allerede er en afventende ansøgning!",
     "already_division_application":  "Du kan ikke lave en anden Divisions ansøgning når der allerede er en afventende ansøgning!",
     "no_multiple_application_2h": "Du kan ikke lave flere ansøgninger indenfor 2 timer!",

@@ -64,12 +64,11 @@
         {"distance": "0", "name": "New Driver", "discord_role_id": ""}
     ],
 
-    "webhook_application": "",
     "application_types": [
-        {"id": "1", "name": "Driver", "discord_role_id": "", "message": ""},
-        {"id": "2", "name": "Staff", "discord_role_id": "", "message": ""},
-        {"id": "3", "name": "LOA", "discord_role_id": "", "message": ""},
-        {"id": "4", "name": "Division", "discord_role_id": "", "message": ""}
+        {"id": "1", "name": "Driver", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": "driver"},
+        {"id": "2", "name": "Staff", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
+        {"id": "3", "name": "LOA", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
+        {"id": "4", "name": "Division", "discord_role_id": "", "staff_role_id": ["40"], "message": "", "webhook": "", "note": ""}
     ],
 
     "webhook_division": "",

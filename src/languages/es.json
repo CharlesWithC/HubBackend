@@ -3,6 +3,7 @@
     "invalid_authorization_header": "Encabezado de autorización no válido",
     "unauthorized": "No autorizado",
     "application_token_prohibited": "Token de aplicación prohibido",
+    "hash_does_not_match_any_token": "Hash no coincide con ningún token.",
 
     "ban_with_reason_expire": "Estás baneado por {reason} hasta las {expire} UTC",
     "discord_check_fail": "Error al verificar si estás en Discord Server.",
@@ -70,6 +71,7 @@
     "no_message": "Sin mensaje",
 
     "already_a_driver": "¡Ya eres conductor!",
+    "must_be_driver_to_submit_division_application": "¡Debe ser un conductor para poder presentar la solicitud de división!",
     "already_driver_application": "No puede realizar otra solicitud de controlador mientras haya una solicitud de controlador pendiente!",
     "already_division_application":  "¡No puede hacer otra solicitud de división mientras haya una solicitud de división pendiente!",
     "no_multiple_application_2h": "¡No puede crear varias aplicaciones en 2 horas!",

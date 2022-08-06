@@ -3,6 +3,7 @@
     "invalid_authorization_header": "En-tête d'autorisation non valide",
     "unauthorized": "Non autorisé",
     "application_token_prohibited": "Jeton d'application interdit",
+    "hash_does_not_match_any_token": "Le hachage ne correspond à aucun jeton.",
 
     "ban_with_reason_expire": "Vous êtes banni pour {reason} jusqu'au {expire} UTC",
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",
@@ -70,6 +71,7 @@
     "no_message": "Pas de Message",
 
     "already_a_driver": "Vous êtes déjà chauffeur !",
+    "must_be_driver_to_submit_division_application": "Vous devez être un conducteur pour pouvoir soumettre une demande de division !",
     "already_driver_application": "Vous ne pouvez pas créer une autre demande de chauffeur tant qu'il y a une demande de chauffeur en attente !",
     "already_division_application":  "Vous ne pouvez pas faire une autre demande de division pendant qu'il y a une demande de division en attente !",
     "no_multiple_application_2h": "Vous ne pouvez pas créer plusieurs applications en 2 heures !",
