@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.11.2**  
+Added requirement to login with discord to revoke specific / all token  
+
 **v1.11.1**  
 1.Improved `application` plugin:  
 i) Added support to per-type webhook  

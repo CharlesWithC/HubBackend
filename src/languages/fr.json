@@ -9,7 +9,7 @@
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",
     "not_in_discord_server": "Vous n'êtes pas sur le serveur Discord.",
     "invalid_email": "E-mail invalide lié au compte Discord. Connectez votre compte Discord avec une adresse e-mail et reconnectez-vous.",
-    "login_with_discord_to_change_password": "Vous n'êtes pas autorisé à changer de mot de passe lorsque vous êtes connecté avec un mot de passe. Connectez-vous avec un compte Discord pour changer de mot de passe.",
+    "login_with_discord_required": "Vous devez vous connecter avec Discord pour accéder aux données sensibles.",
     "too_many_user_with_same_email": "Trop d'utilisateurs ont la même adresse e-mail. Vous n'êtes pas autorisé à utiliser la connexion par mot de passe.",
     "invalid_captcha": "Captcha invalide.",
     "invalid_email_or_password": "Email ou mot de passe invalide.",

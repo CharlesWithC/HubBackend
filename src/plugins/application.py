@@ -22,7 +22,7 @@ for i in range(len(application_types)):
 async def getApplicationTypes(request: Request, response: Response):
     APPLICATIONS_TYPES = []
     for t in application_types:
-        APPLICATIONS_TYPES.append({"id": t["id"], "name": t["name"]})
+        APPLICATIONS_TYPES.append({"id": str(t["id"]), "name": t["name"]})
     return {"error": False, "response": APPLICATIONS_TYPES}
 
 @app.post(f"/{config.vtc_abbr}/application")

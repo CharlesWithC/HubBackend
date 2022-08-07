@@ -113,7 +113,7 @@ async def passwordLogin(request: Request, response: Response, authorization: str
     r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
     d = json.loads(r.text)
     if not d["success"]:
-        response.status_code = 401
+        response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "invalid_captcha")}
     
     conn = newconn()
@@ -132,11 +132,11 @@ async def passwordLogin(request: Request, response: Response, authorization: str
     
     stoken = str(uuid4())
     stoken = "e" + stoken[1:]
-    cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{user_data['id']}'")
+    cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]
     if scnt >= 10:
-        cur.execute(f"DELETE FROM session WHERE discordid = '{user_data['id']}' LIMIT {scnt - 9}")
+        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
 
@@ -157,8 +157,8 @@ async def patchPassword(request: Request, response: Response, authorization: str
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_to_change_password")}
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -308,7 +308,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
     for tt in t:
         tk = tt[0]
         tk = hashlib.sha256(tk.encode()).hexdigest()
-        ret.append({"hash": tk, "ip": tt[1], "timestamp": tt[2]})
+        ret.append({"hash": tk, "ip": tt[1], "timestamp": str(tt[2])})
 
     return {"error": False, "response": {"list": ret}}
 
@@ -324,6 +324,11 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         response.status_code = 401
         return au
     discordid = au["discordid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
 
     form = await request.form()
     hsh = form["hash"]
@@ -358,6 +363,11 @@ async def deleteTokenAll(request: Request, response: Response, authorization: st
         response.status_code = 401
         return au
     discordid = au["discordid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()

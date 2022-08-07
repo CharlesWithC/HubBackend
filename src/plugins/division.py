@@ -13,8 +13,10 @@ from functions import *
 import multilang as ml
 
 divisions = config.divisions
+divisionsGET = divisions
 for i in range(len(divisions)):
     divisions[i]["id"] = int(divisions[i]["id"])
+    divisionsGET[i]["id"] = str(divisions[i]["id"])
     
 divisionroles = []
 divisiontxt = {}
@@ -28,7 +30,7 @@ for division in divisions:
 
 @app.get(f"/{config.vtc_abbr}/divisions")
 async def getDivisions(request: Request, response: Response):
-    return {"error": False, "response": divisions}
+    return {"error": False, "response": divisionsGET}
 
 @app.post(f"/{config.vtc_abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
@@ -156,7 +158,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
         ttt = cur.fetchall()
         if len(ttt) > 0:
             name = ttt[0][0]
-        ret.append({"logid": tt[0], "divisionid": tt[2], "userid": tt[1], "name": name})
+        ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "userid": str(tt[1]), "name": name})
     
     return {"error": False, "response": ret}
 
@@ -308,8 +310,8 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
             userpnt[tt[1]] = divisionpnt
         userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
         for uid in userpnt.keys():
-            tstats.append({"userid": uid, "name": username[uid], "points": userpnt[uid]})
-        stats.append({"id": division['id'], "name": division['name'], "stats": tstats[::-1]})
+            tstats.append({"userid": str(uid), "name": username[uid], "points": str(userpnt[uid])})
+        stats.append({"id": str(division['id']), "name": division['name'], "stats": tstats[::-1]})
     
     delivery = []
     cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
@@ -346,9 +348,9 @@ async def divisionInfo(request: Request, response: Response, authorization: str 
         if len(p) > 0:
             name = p[0][0]
 
-        delivery.append({"logid": tt[3], "userid": tt[0], "name": name, "distance": distance, \
+        delivery.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, "timestamp": tt[2]})
+                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), "timestamp": str(tt[2])})
     
     return {"error": False, "response": {"info": stats, "deliveries": delivery}}

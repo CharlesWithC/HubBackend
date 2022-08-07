@@ -114,8 +114,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 name = t[0][0]
             votetxt += f"{name}, "
         votetxt = votetxt[:-2]
-        ret.append({"eventid": tt[0], "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
-            "distance": b64d(tt[4]), "mts": tt[5], "dts": tt[6], "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
+        ret.append({"eventid": str(tt[0]), "title": b64d(tt[8]), "tmplink": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), "private": TF[tt[11]],\
+            "distance": b64d(tt[4]), "mts": str(tt[5]), "dts": str(tt[6]), "img": b64d(tt[7]).split(","), "attendee": attendeetxt, "attendeeid": ",".join(attendee), "vote": votetxt, "voteid": ",".join(vote)})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit}")
     t = cur.fetchall()
