@@ -76,5 +76,6 @@ if __name__ == "__main__":
 
     print(f"Company Name: {config.vtc_name}")
     print(f"Company Abbreviation: {config.vtc_abbr}\n")
-    time.sleep(1)
+    if not version.endswith(".rc"):
+        time.sleep(1)
     uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = 3)

@@ -19,8 +19,8 @@ for division in config.divisions:
     DIVISIONPNT[division["id"]] = int(division["point"])
 
 @app.get(f"/{config.vtc_abbr}/dlog/stats")
-async def dlogStats(request: Request, response: Response, starttime: Optional[int] = -1, endtime: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog/stats', 60, 60)
+async def getDlogStats(request: Request, response: Response, starttime: Optional[int] = -1, endtime: Optional[int] = -1, userid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /dlog/stats', 180, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -32,12 +32,19 @@ async def dlogStats(request: Request, response: Response, starttime: Optional[in
         starttime = 0
         endtime = int(time.time())
 
+    quser = ""
+    if userid != -1:
+        if config.privacy:
+            response.status_code = 401
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        quser = f"userid = {userid} AND"
+
     ret = {}
     # driver
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND joints <= {endtime}")
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE {quser} userid >= 0 AND joints <= {endtime}")
     totdrivers = cur.fetchone()[0]
     totdrivers = 0 if totdrivers is None else int(totdrivers)
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0 AND joints >= {starttime} AND joints <= {endtime}")
+    cur.execute(f"SELECT COUNT(*) FROM driver WHERE {quser} userid >= 0 AND joints >= {starttime} AND joints <= {endtime}")
     newdrivers = cur.fetchone()[0]
     newdrivers = 0 if newdrivers is None else int(newdrivers)
 
@@ -46,60 +53,60 @@ async def dlogStats(request: Request, response: Response, starttime: Optional[in
     # job / delivered / cancelled
     item = {"job": "COUNT(*)", "distance": "SUM(distance)", "fuel": "SUM(fuel)"}
     for key in item.keys():
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp <= {endtime}")
         tot = cur.fetchone()[0]
         tot = 0 if tot is None else int(tot)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp >= {starttime} AND timestamp <= {endtime}")
         new = cur.fetchone()[0]
         new = 0 if new is None else int(new)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE unit = 1 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp <= {endtime}")
         totets2 = cur.fetchone()[0]
         totets2 = 0 if totets2 is None else int(totets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newets2 = cur.fetchone()[0]
         newets2 = 0 if newets2 is None else int(newets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE unit = 2 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp <= {endtime}")
         totats = cur.fetchone()[0]
         totats = 0 if totats is None else int(totats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newats = cur.fetchone()[0]
         newats = 0 if newats is None else int(newats)
 
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp <= {endtime}")
         totdelivered = cur.fetchone()[0]
         totdelivered = 0 if totdelivered is None else int(totdelivered)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newdelivered = cur.fetchone()[0]
         newdelivered = 0 if newdelivered is None else int(newdelivered)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {endtime}")
         totdelivered_ets2 = cur.fetchone()[0]
         totdelivered_ets2 = 0 if totdelivered_ets2 is None else int(totdelivered_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newdelivered_ets2 = cur.fetchone()[0]
         newdelivered_ets2 = 0 if newdelivered_ets2 is None else int(newdelivered_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {endtime}")
         totdelivered_ats = cur.fetchone()[0]
         totdelivered_ats = 0 if totdelivered_ats is None else int(totdelivered_ats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newdelivered_ats = cur.fetchone()[0]
         newdelivered_ats = 0 if newdelivered_ats is None else int(newdelivered_ats)
 
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp <= {endtime}")
         totcancelled = cur.fetchone()[0]
         totcancelled = 0 if totcancelled is None else int(totcancelled)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newcancelled = cur.fetchone()[0]
         newcancelled = 0 if newcancelled is None else int(newcancelled)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND unit = 1 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {endtime}")
         totcancelled_ets2 = cur.fetchone()[0]
         totcancelled_ets2 = 0 if totcancelled_ets2 is None else int(totcancelled_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newcancelled_ets2 = cur.fetchone()[0]
         newcancelled_ets2 = 0 if newcancelled_ets2 is None else int(newcancelled_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND unit = 2 AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {endtime}")
         totcancelled_ats = cur.fetchone()[0]
         totcancelled_ats = 0 if totcancelled_ats is None else int(totcancelled_ats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE isdelivered = 0 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
         newcancelled_ats = cur.fetchone()[0]
         newcancelled_ats = 0 if newcancelled_ats is None else int(newcancelled_ats)
 
@@ -114,46 +121,46 @@ async def dlogStats(request: Request, response: Response, starttime: Optional[in
                     "ats": {"tot": str(totcancelled_ats), "new": str(newcancelled_ats)}}}
 
     # profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp <= {endtime}")
     toteuroprofit = cur.fetchone()[0]
     toteuroprofit = 0 if toteuroprofit is None else int(toteuroprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     neweuroprofit = cur.fetchone()[0]
     neweuroprofit = 0 if neweuroprofit is None else int(neweuroprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp <= {endtime}")
     totdollarprofit = cur.fetchone()[0]
     totdollarprofit = 0 if totdollarprofit is None else int(totdollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     newdollarprofit = cur.fetchone()[0]
     newdollarprofit = 0 if newdollarprofit is None else int(newdollarprofit)
     allprofit = {"tot": {"euro": str(toteuroprofit), "dollar": str(totdollarprofit)}, \
         "new": {"euro": str(neweuroprofit), "dollar": str(newdollarprofit)}}
 
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {endtime}")
     totdelivered_europrofit = cur.fetchone()[0]
     totdelivered_europrofit = 0 if totdelivered_europrofit is None else int(totdelivered_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     newdelivered_europrofit = cur.fetchone()[0]
     newdelivered_europrofit = 0 if newdelivered_europrofit is None else int(newdelivered_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {endtime}")
     totdelivered_dollarprofit = cur.fetchone()[0]
     totdelivered_dollarprofit = 0 if totdelivered_dollarprofit is None else int(totdelivered_dollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 1 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     newdelivered_dollarprofit = cur.fetchone()[0]
     newdelivered_dollarprofit = 0 if newdelivered_dollarprofit is None else int(newdelivered_dollarprofit)
     deliveredprofit = {"tot": {"euro": str(totdelivered_europrofit), "dollar": str(totdelivered_dollarprofit)}, \
         "new": {"euro": str(newdelivered_europrofit), "dollar": str(newdelivered_dollarprofit)}}
     
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 0 AND unit = 1 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {endtime}")
     totcancelled_europrofit = cur.fetchone()[0]
     totcancelled_europrofit = 0 if totcancelled_europrofit is None else int(totcancelled_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 0 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     newcancelled_europrofit = cur.fetchone()[0]
     newcancelled_europrofit = 0 if newcancelled_europrofit is None else int(newcancelled_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 0 AND unit = 2 AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {endtime}")
     totcancelled_dollarprofit = cur.fetchone()[0]
     totcancelled_dollarprofit = 0 if totcancelled_dollarprofit is None else int(totcancelled_dollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE isdelivered = 0 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
+    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {starttime} AND timestamp <= {endtime}")
     newcancelled_dollarprofit = cur.fetchone()[0]
     newcancelled_dollarprofit = 0 if newcancelled_dollarprofit is None else int(newcancelled_dollarprofit)
     cancelledprofit = {"tot": {"euro": str(totcancelled_europrofit), "dollar": str(totcancelled_dollarprofit)}, \
@@ -164,10 +171,10 @@ async def dlogStats(request: Request, response: Response, starttime: Optional[in
     return {"error": False, "response": ret}
 
 @app.get(f"/{config.vtc_abbr}/dlog/chart")
-async def dlogChart(request: Request, response: Response,
+async def getDlogChart(request: Request, response: Response,
     scale: Optional[int] = 2, sumup: Optional[bool] = False, quserid: Optional[int] = -1,
     authorization: Optional[str] = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /dlog/chart', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /dlog/chart', 180, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -254,10 +261,10 @@ async def dlogChart(request: Request, response: Response,
     return {"error": False, "response": ret}
 
 @app.get(f"/{config.vtc_abbr}/dlog/leaderboard")
-async def dlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
+async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
         noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = "", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -461,15 +468,17 @@ async def dlogLeaderboard(request: Request, response: Response, authorization: s
     return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(tot)}}
 
 @app.get(f"/{config.vtc_abbr}/dlogs")
-async def dlogs(request: Request, response: Response, authorization: str = Header(None), \
+async def getDlogs(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, order: Optional[str] = "desc", speedlimit: Optional[int] = 0, quserid: Optional[int] = -1, \
         starttime: Optional[int] = -1, endtime: Optional[int] = -1, game: Optional[int] = 0, pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /dlogs', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /dlogs', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    stoken = authorization.split(" ")[1]
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
     userid = -1
     if stoken == "guest":
         userid = -1
@@ -545,15 +554,17 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
         if len(p) > 0:
             name = p[0][0]
         
-        if userid == -1:
+        tuserid = str(tt[0])
+        if userid == -1 and config.privacy:
             name = "Anonymous"
+            tuserid = "-1"
 
         isdivision = False
         cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
         p = cur.fetchall()
         if len(p) > 0:
             isdivision = True
-        ret.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
+        ret.append({"logid": str(tt[3]), "userid": tuserid, "name": name, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), \
@@ -568,13 +579,15 @@ async def dlogs(request: Request, response: Response, authorization: str = Heade
     return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
 @app.get(f"/{config.vtc_abbr}/dlog")
-async def dlog(logid: int, request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /dlog', 60, 60)
+async def getDlogInfo(logid: int, request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /dlog', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    stoken = authorization.split(" ")[1]
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
     userid = -1
     if stoken == "guest":
         userid = -1
@@ -623,14 +636,16 @@ async def dlog(logid: int, request: Request, response: Response, authorization: 
                 ver = "v5"
         telemetry = ver + orgt
 
-    if userid == -1:
+    tuserid = str(t[0][0])
+    if userid == -1 and config.privacy:
         name = "Anonymous"
+        tuserid = "-1"
 
-    return {"error": False, "response": {"logid": str(logid), "userid": str(t[0][0]), "name": name, \
+    return {"error": False, "response": {"logid": str(logid), "userid": tuserid, "name": name, \
         "loggeddistance": str(distance), "detail": data, "timestamp": str(t[0][2]), "telemetry": telemetry}}
 
 @app.get(f"/{config.vtc_abbr}/dlog/export")
-async def dlogExport(request: Request, response: Response, authorization: str = Header(None), \
+async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         starttime: Optional[int] = -1, endtime: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)
     if rl > 0:

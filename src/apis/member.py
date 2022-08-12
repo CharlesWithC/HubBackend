@@ -9,8 +9,15 @@ from discord import Webhook
 from typing import Optional
 from datetime import datetime
 import collections
+import hashlib
+from io import BytesIO
+from PIL import Image
+from PIL import ImageFont, ImageDraw
+import numpy as np
+import string
+from fastapi.responses import StreamingResponse
 
-from app import app, config, tconfig
+from app import app, config, tconfig, logo, logobg
 from db import newconn
 from functions import *
 import multilang as ml
@@ -46,15 +53,16 @@ for division in divisions:
 async def getMembers(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, query: Optional[str] = '', roles: Optional[str] = '', sort_by_highest_role: Optional[bool] = True, \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /members', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /members', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = 401
-        return au
+    if config.privacy:
+        au = auth(authorization, request, allow_application_token = True)
+        if au["error"]:
+            response.status_code = 401
+            return au
     
     conn = newconn()
     cur = conn.cursor()
@@ -129,18 +137,28 @@ async def getMembers(request: Request, response: Response, authorization: str = 
         
     return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
 
-@app.get(f'/{config.vtc_abbr}/member')
-async def getMember(request: Request, response: Response, userid: int, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member', 30, 10)
+@app.get(f'/{config.vtc_abbr}/user')
+async def getMemberInfo(request: Request, response: Response, authorization: str = Header(None), \
+    userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /user', 180, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    roles = au["roles"]
+    roles = []
+    if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
+        au = auth(authorization, request, check_member = False, allow_application_token = True)
+        if au["error"]:
+            response.status_code = 401
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        else:
+            discordid = au["discordid"]
+    else:
+        if config.privacy:
+            au = auth(authorization, request, allow_application_token = True)
+            if au["error"]:
+                response.status_code = 401
+                return au
     
     conn = newconn()
     cur = conn.cursor()
@@ -153,91 +171,285 @@ async def getMember(request: Request, response: Response, userid: int, authoriza
         if int(i) in config.perms.hr or int(i) in config.perms.hrm:
             isHR = True
 
+    qu = ""
+    if userid != -1:
+        qu = f"userid = {userid}"
+    elif discordid != -1:
+        qu = f"discordid = {discordid}"
+    elif steamid != -1:
+        qu = f"steamid = {steamid}"
+    elif truckersmpid != -1:
+        qu = f"truckersmpid = {truckersmpid}"
+    else:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+
+    cur.execute(f"SELECT userid, discordid FROM user WHERE {qu}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    userid = t[0][0]
+    discordid = t[0][1]
+
     distance = 0
     totjobs = 0
     fuel = 0
     xp = 0
     eventpnt = 0
-    cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
-    t = cur.fetchall()
-    if len(t) > 0:
-        totjobs = t[0][1]
-        distance = t[0][2]
-        fuel = t[0][3]
-        xp = t[0][4]
-        eventpnt = t[0][5]
-
     europrofit = 0
+    dollarprofit = 0
+    divisionpnt = 0
+    if userid != -1:
+        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
+        t = cur.fetchall()
+        if len(t) > 0:
+            totjobs = t[0][1]
+            distance = int(t[0][2])
+            fuel = int(t[0][3])
+            xp = int(t[0][4])
+            eventpnt = t[0][5]
+
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
+        t = cur.fetchall()
+        if len(t) > 0:
+            europrofit = 0 if t[0][0] is None else int(t[0][0])
+        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
+        t = cur.fetchall()
+        if len(t) > 0:
+            dollarprofit = 0 if t[0][0] is None else int(t[0][0])
+    
+        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
+        o = cur.fetchall()
+        for oo in o:
+            if o[0][0] in DIVISIONPNT.keys():
+                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
+        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
+        o = cur.fetchall()
+        if len(o) > 0:
+            divisionpnt += o[0][0]
+
+    profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
+    
+    cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    roles = t[0][3].split(",")
+    while "" in roles:
+        roles.remove("")
+    roles = [int(i) for i in roles]
+
+    email = t[0][8]
+    if not isAdmin and not isHR:
+        email = ""
+
+    return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
+        "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+            "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
+                "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), \
+                    "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt), "bio": b64d(t[0][7])}}
+
+@app.get(f'/{config.vtc_abbr}/user/banner')
+async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
+    userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
+    if not "banner" in config.enabled_plugins:
+        response.status_code = 404
+        return {"error": True, "descriptor": f"Not Found"}
+    
+    qu = ""
+    if userid != -1:
+        qu = f"userid = {userid}"
+    elif discordid != -1:
+        qu = f"discordid = {discordid}"
+    elif steamid != -1:
+        qu = f"steamid = {steamid}"
+    elif truckersmpid != -1:
+        qu = f"truckersmpid = {truckersmpid}"
+    else:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+
+    conn = newconn()
+    cur = conn.cursor()
+        
+    cur.execute(f"SELECT name, discordid, avatar, joints, roles, userid FROM user WHERE {qu} AND userid >= 0")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    
+    au = auth(authorization, request)
+    if au["error"]:
+        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 10)
+        if rl > 0:
+            response.status_code = 429
+            return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    else:
+        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 30)
+        if rl > 0:
+            response.status_code = 429
+            return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+            
+    t = t[0]
+    userid = t[5]
+    name = t[0]
+    tname = ""
+    for i in range(len(name)):
+        if name[i] in string.printable:
+            tname += name[i]
+    while tname.startswith(" "):
+        tname = tname[1:]
+    name = tname
+    discordid = t[1]
+    avatar = t[2]
+    joints = t[3]
+    roles = t[4].split(",")
+    while "" in roles:
+        roles.remove("")
+    highest = 99999
+    for i in roles:
+        if int(i) < highest:
+            highest = int(i)
+    highest_role = "Unknown Role"
+    if str(highest) in tconfig["roles"]:
+        highest_role = tconfig["roles"][str(highest)]
+    joined = datetime.fromtimestamp(joints)
+    since = f"{joined.year}/{joined.month}/{joined.day}"
+
+    division = ""
+    for i in roles:
+        for divi in divisions:
+            if str(divi["role_id"]) == str(i):
+                division += divi["name"] + ", "
+    if division == "":
+        division = "N/A"
+    else:
+        division = division[:-2]
+
+    cur.execute(f"SELECT distance FROM driver WHERE userid = {userid}")
+    t = cur.fetchall()
+    distance = 0 if t[0][0] is None else int(t[0][0])
+    if config.distance_unit == "imperial":
+        distance = int(distance * 0.621371)
+        distance = f"{distance}Mi"
+    else:
+        distance = f"{distance}Km"
+    
     cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
     t = cur.fetchall()
     if len(t) > 0:
-        europrofit = t[0][0]
-    if europrofit is None:
-        europrofit = 0
-    dollarprofit = 0
+        europrofit = 0 if t[0][0] is None else int(t[0][0])
     cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
     t = cur.fetchall()
     if len(t) > 0:
-        dollarprofit = t[0][0]
-    if dollarprofit is None:
-        dollarprofit = 0
-    profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
-    
-    if userid < 0:
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "not_a_member")}
+        dollarprofit = 0 if t[0][0] is None else int(t[0][0])
+    profit = f"€{europrofit} + ${dollarprofit}"
 
-    if not isAdmin and not isHR:
-        cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
-        roles = t[0][3].split(",")
-        while "" in roles:
-            roles.remove("")
-        roles = [int(i) for i in roles]
-        divisionpnt = 0
-        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
-        o = cur.fetchall()
-        for oo in o:
-            if o[0][0] in DIVISIONPNT.keys():
-                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
-        o = cur.fetchall()
-        if len(o) > 0:
-            divisionpnt += o[0][0]
-        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], "discordid": str(t[0][0]), "avatar": t[0][2], \
-            "bio": b64d(t[0][7]), "roles": roles, "join": str(t[0][4]), "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-                "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
+    # pre-process avatar
+    avatarurl = ""
+    if avatar.startswith("a_"):
+        avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
     else:
-        cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
-        roles = t[0][3].split(",")
-        while "" in roles:
-            roles.remove("")
-        roles = [int(i) for i in roles]
-        divisionpnt = 0
-        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
-        o = cur.fetchall()
-        for oo in o:
-            if o[0][0] in DIVISIONPNT.keys():
-                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
-        o = cur.fetchall()
-        if len(o) > 0:
-            divisionpnt += o[0][0]
-        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], "email": t[0][8], \
-            "discordid": f"{t[0][0]}", "avatar": t[0][2], "bio": b64d(t[0][7]), "roles": roles, "join": str(t[0][4]), \
-                "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}",\
-                    "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt)}}
+        avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
+    r = requests.get(avatarurl, timeout=3)
+    if r.status_code == 200:
+        avatar = Image.open(BytesIO(r.content)).resize((500, 500)).convert("RGB")
+    else:
+        avatar = logo.resize((500, 500), resample=Image.ANTIALIAS).convert("RGB")
+    img = avatar
+    height,width = img.size
+    lum_img = Image.new('L', [height,width] , 0)
+    draw = ImageDraw.Draw(lum_img)
+    draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+    img_arr = np.array(img)
+    lum_img_arr = np.array(lum_img)
+    final_img_arr = np.dstack((img_arr,lum_img_arr))
+    avatar = Image.fromarray(final_img_arr).convert("RGBA")
+    avatar = avatar.getdata()
+
+    # render logobg, banner, logo
+    banner = Image.new("RGB", (3400,600),(255,255,255))
+    Image.Image.paste(banner, logobg, (0,-1300))
+    datas = banner.getdata()
+    logod = logo.getdata()
+    newData = []
+    for i in range(0,600):
+        for j in range(0,3400):
+            if i >= 50 and i < 550 and j >= 70 and j < 570:
+                if avatar[(i-50)*500+(j-70)][3] == 0:
+                    newData.append(datas[i*3400+j][:3])
+                else:
+                    newData.append(avatar[(i-50)*500+(j-70)][:3])
+            elif i >= 50 and i < 450 and j >= 2950 and j < 3350:
+                if logod[(i-50)*400+(j-2950)][3] == 0:
+                    newData.append(datas[i*3400+j][:3])
+                else:
+                    newData.append(logod[(i-50)*400+(j-2950)][:3])
+            else:
+                newData.append(datas[i*3400+j][:3])
+    banner.putdata(newData)
+
+    # draw text
+    draw = ImageDraw.Draw(banner)
+    # load font
+    usH80 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 80)
+    coH80 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 80)
+    co20 = ImageFont.truetype("./fonts/Consola.ttf", 20)
+    # set color
+    vtccolor = tuple(int(config.hex_color[i:i+2], 16) for i in (0, 2, 4))
+    # vtc name
+    vtcnamelen = usH80.getsize(f"{config.vtc_name}")[0]
+    draw.text((3400 - 50 - vtcnamelen, 480), f"{config.vtc_name}", fill=vtccolor, font=usH80)
+    
+    fontsize = 160
+    offset = 0
+    namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
+    namesize = namefont.getsize(f"{name}")[0]
+    for _ in range(10):
+        if namesize > 900:
+            fontsize -= 10
+            offset += 10
+            namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
+            namesize = namefont.getsize(f"{name}")[0]
+    draw.text((650, 100 + offset), f"{name}", fill=(0,0,0), font=namefont)
+
+    fontsize -= 40
+    hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
+    hrolesize = hrolefont.getsize(f"{highest_role}")[0]
+    for _ in range(10):
+        if hrolesize > 900:
+            fontsize -= 10
+            offset += 10
+            hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
+            hrolesize = hrolefont.getsize(f"{highest_role}")[0]
+    draw.text((650, 240 + offset), f"{highest_role}", fill=vtccolor, font=hrolefont)
+
+    sincefont = ImageFont.truetype("./fonts/Consola.ttf", 80)
+    draw.text((650, 420), f"Since {since}", fill=(0,0,0), font=sincefont)
+    # separate line
+    draw.line((1700, 50, 1700, 550), fill=vtccolor, width = 20)
+    draw.text((1800, 100), f"Division: {division}", fill=(0,0,0), font=coH80)
+    draw.text((1800, 220), f"Distance: {distance}", fill=(0,0,0), font=coH80)
+    draw.text((1800, 340), f"Income: {profit}", fill=(0,0,0), font=coH80)
+    # copyright
+    currentDateTime = datetime.now()
+    date = currentDateTime.date()
+    year = date.strftime("%Y")
+    cplen = co20.getsize(f"Copyright (C) {year} CharlesWithC")[0]
+    draw.text((3400 - 50 - cplen, 560), f"Copyright (C) {year} CharlesWithC", fill=(220,220,220), font=co20)
+
+    # output
+    output = BytesIO()
+    banner.save(output, "jpeg")
+    response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
+
+    return response
 
 @app.post(f'/{config.vtc_abbr}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /member/add', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /member/add', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -306,7 +518,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
 
 @app.delete(f"/{config.vtc_abbr}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /member/resign', 60, 3)
+    rl = ratelimit(request.client.host, 'DELETE /member/resign', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -337,7 +549,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
 @app.delete(f"/{config.vtc_abbr}/member/dismiss")
 async def dismissMember(userid: int, request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 60, 3)
+    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -390,7 +602,7 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
 
 @app.post(f'/{config.vtc_abbr}/member/role')
 async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /member/role', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /member/role', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -545,9 +757,9 @@ async def getRanks(request: Request, response: Response):
 async def getRanks(request: Request, response: Response):
     return {"error": False, "response": config.perms}
 
-@app.post(f"/{config.vtc_abbr}/member/point")
-async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /member/point', 60, 10)
+@app.patch(f"/{config.vtc_abbr}/member/point")
+async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -595,16 +807,17 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     return {"error": False}
 
 @app.get(f"/{config.vtc_abbr}/member/steam")
-async def memberSteam(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member/steam', 60, 60)
+async def getMemberSteam(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /member/steam', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = 401
-        return au
+    if config.privacy:
+        au = auth(authorization, request, allow_application_token = True)
+        if au["error"]:
+            response.status_code = 401
+            return au
     
     conn = newconn()
     cur = conn.cursor()
@@ -624,8 +837,8 @@ def point2rank(point):
     return RANKROLE[keys[-1]]
 
 @app.patch(f"/{config.vtc_abbr}/member/role/rank")
-async def memberDiscordrole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/role/rank', 60, 3)
+async def patchMemberDiscordRole(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/role/rank', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

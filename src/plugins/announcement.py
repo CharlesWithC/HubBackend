@@ -15,12 +15,14 @@ import multilang as ml
 @app.get(f"/{config.vtc_abbr}/announcements")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, aid: Optional[int] = -1, order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /announcement', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /announcement', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    stoken = authorization.split(" ")[1]
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
     userid = -1
     if stoken == "guest":
         userid = -1
@@ -87,7 +89,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.vtc_abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /announcement', 60, 3)
+    rl = ratelimit(request.client.host, 'POST /announcement', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -149,7 +151,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.vtc_abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /announcement', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /announcement', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -211,7 +213,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
 @app.delete(f"/{config.vtc_abbr}/announcement")
 async def deleteAnnouncement(aid: int, request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /announcement', 60, 10)
+    rl = ratelimit(request.client.host, 'DELETE /announcement', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

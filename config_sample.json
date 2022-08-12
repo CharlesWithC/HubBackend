@@ -24,7 +24,7 @@
     "mysql_ext": "/var/lib/mysqlext/",
     "hcaptcha_secret": "",
 
-    "enabled_plugins": ["announcement", "application", "division", "downloads", "event", "tracker"],
+    "enabled_plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
     "external_plugins": ["rework_member"],
 
     "guild_id": "",

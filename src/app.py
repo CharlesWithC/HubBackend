@@ -5,13 +5,16 @@ from fastapi import FastAPI
 import os
 import json
 import discord
+import requests
+from PIL import Image
+from io import BytesIO
 
 import sys
 from sys import exit
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.11.2"
+version = "v1.11.3"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -50,6 +53,36 @@ tconfig = config
 config = Dict2Obj(config)
 del tconfig["intcolor"]
 del tconfig["rgbcolor"]
+
+vtc_logo = ""
+logo = Image.new("RGBA", (400,400),(255,255,255))
+logobg = Image.new("RGB", (3400,3400),(255,255,255))
+try:
+    r = requests.get(config.vtc_logo_link, timeout = 10)
+    if r.status_code == 200:
+        vtc_logo = r.content
+        vtc_logo = Image.open(BytesIO(vtc_logo)).convert("RGBA")
+
+        logo = vtc_logo
+        logobg = vtc_logo
+        lnd = []
+        lbnd = []
+        datas = vtc_logo.getdata()
+        for item in datas:
+            if item[3] == 0:
+                lnd.append((255, 255, 255, 255))
+                lbnd.append((255, 255, 255, 255))
+            else:
+                lnd.append((item[0], item[1], item[2], 255))
+                lbnd.append((int(0.85*255+0.15*item[0]), int(0.85*255+0.15*item[1]), int(0.85*255+0.15*item[2]), 255))
+        logo.putdata(lnd)
+        logo = logo.resize((400, 400), resample=Image.ANTIALIAS).convert("RGBA")
+        logobg.putdata(lbnd)
+        logobg = logobg.resize((3400, 3400), resample=Image.ANTIALIAS).convert("RGB")
+except:
+    import traceback
+    traceback.print_exc()
+    pass
 
 if os.path.exists(config.apidoc):
     app = FastAPI(openapi_url=f"/{config.vtc_abbr}/openapi.json", docs_url=f"/{config.vtc_abbr}/doc", redoc_url=None)

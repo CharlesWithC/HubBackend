@@ -13,7 +13,7 @@ import multilang as ml
 
 @app.post(f'/{config.vtc_abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/ban', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /user/ban', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -65,7 +65,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
 
 @app.post(f'/{config.vtc_abbr}/user/unban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/unban', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /user/unban', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -100,7 +100,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
 @app.get(f"/{config.vtc_abbr}/users")
 async def getUsers(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, order_by: Optional[str] = "discord_id", order: Optional[str] = "asc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /users', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /users', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -149,70 +149,9 @@ async def getUsers(request: Request, response: Response, authorization: str = He
         tot = t[0][0]
     return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
 
-@app.get(f'/{config.vtc_abbr}/user')
-async def getUser(request: Request, response: Response, authorization: str = Header(None), qdiscordid: Optional[int] = 0):
-    rl = ratelimit(request.client.host, 'GET /user', 30, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    
-    conn = newconn()
-    cur = conn.cursor()
-
-    cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-    adminid = t[0][0]
-    roles = t[0][3].split(",")
-    while "" in roles:
-        roles.remove("")
-    ok = False
-    isDS = False
-    for i in roles:
-        if int(i) in config.perms.admin or int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            ok = True
-        if int(i) in config.perms.division:
-            isDS = True
-
-    if qdiscordid == 0:
-        qdiscordid = discordid
-    
-    if discordid != qdiscordid:
-        if not ok and not isDS:
-            response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-        cur.execute(f"SELECT userid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {qdiscordid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    else:
-        ok = True
-    roles = t[0][3].split(",")
-    while "" in roles:
-        roles.remove("")
-    roles = [int(i) for i in roles]
-    email = t[0][8]
-    if au["application_token"] or not ok and isDS:
-        edomain = email[email.rfind("@"):]
-        l = email.rfind("@")
-        email = "*" * l + edomain
-    return {"error": False, "response": {"userid": str(t[0][0]), "name": t[0][1], "email": email, \
-        "discordid": f"{discordid}", "avatar": t[0][2], "bio": b64e(t[0][7]), "roles": roles, \
-            "join": str(t[0][4]), "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}"}}
-
-@app.post(f'/{config.vtc_abbr}/user/bio')
-async def updateUserBio(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/bio', 60, 10)
+@app.patch(f'/{config.vtc_abbr}/user/bio')
+async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /user/bio', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -238,8 +177,8 @@ async def updateUserBio(request: Request, response: Response, authorization: str
     return {"error": False, "response": {"bio": bio}}
     
 @app.patch(f"/{config.vtc_abbr}/user/discord")
-async def adminUpdateDiscord(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/discord', 60, 10)
+async def patchUserDiscord(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /user/discord', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -285,9 +224,9 @@ async def adminUpdateDiscord(request: Request, response: Response, authorization
 
     return {"error": False, "response": {"discordid": str(new_discord_id)}}
     
-@app.patch(f"/{config.vtc_abbr}/user/unbind")
-async def adminUnbindConnections(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/unbind', 60, 10)
+@app.delete(f"/{config.vtc_abbr}/user/connection")
+async def deleteUserConnection(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /user/connection', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -322,8 +261,8 @@ async def adminUnbindConnections(request: Request, response: Response, authoriza
     return {"error": False}
     
 @app.delete(f"/{config.vtc_abbr}/user/delete")
-async def adminDeleteUser(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /user/delete', 60, 10)
+async def deleteUser(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /user/delete', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

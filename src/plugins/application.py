@@ -26,8 +26,8 @@ async def getApplicationTypes(request: Request, response: Response):
     return {"error": False, "response": APPLICATIONS_TYPES}
 
 @app.post(f"/{config.vtc_abbr}/application")
-async def newApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application', 60, 3)
+async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /application', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -185,7 +185,7 @@ async def newApplication(request: Request, response: Response, authorization: st
 
 @app.patch(f"/{config.vtc_abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /application', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -301,7 +301,7 @@ async def updateApplication(request: Request, response: Response, authorization:
 
 @app.patch(f"/{config.vtc_abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/status', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /application/status', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -402,7 +402,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
 @app.get(f"/{config.vtc_abbr}/application")
 async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /application', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /application', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -451,7 +451,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
 @app.get(f"/{config.vtc_abbr}/applications")
 async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
     apptype: Optional[int] = 0, page: Optional[int] = -1, showall: Optional[bool] = False, order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /applications', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /applications', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -564,7 +564,7 @@ async def getApplicationPositions(request: Request, response: Response):
 
 @app.post(f"/{config.vtc_abbr}/application/positions")
 async def setApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application/positions', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /application/positions', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

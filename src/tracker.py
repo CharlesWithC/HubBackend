@@ -37,7 +37,7 @@ os.environ["HUB_CONFIG_FILE"] = config_path
 from db import newconn
 from app import config, version
 
-async def navio(uri):
+async def work(uri):
     lasthandshake = 0
     conn = newconn()
     cur = conn.cursor()
@@ -120,7 +120,7 @@ print("")
 
 while 1:
     try:
-        asyncio.run(navio("wss://gateway.navio.app"))
+        asyncio.run(work("wss://gateway.navio.app"))
     except:
         time.sleep(3)
         import traceback

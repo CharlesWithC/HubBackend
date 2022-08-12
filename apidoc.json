@@ -151,7 +151,7 @@
         },
         "/vtc/user": {
             "get": {
-                "summary": "Get User",
+                "summary": "Get User Information",
                 "tags": ["user"],
                 "operationId": "getUserInfo",
                 "security": [{
@@ -160,10 +160,97 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Queried User's Discord ID (staff-only)",
+                        "title": "User ID",
                         "type": "string"
                     },
-                    "name": "qdiscordid",
+                    "name": "userid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Discord ID",
+                        "type": "string"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Steam ID",
+                        "type": "string"
+                    },
+                    "name": "steamid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "TruckersMP ID",
+                        "type": "string"
+                    },
+                    "name": "truckersmpid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/user/banner": {
+            "get": {
+                "summary": "Get User Banner",
+                "tags": ["user"],
+                "operationId": "getUserBanner",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "string"
+                    },
+                    "name": "userid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Discord ID",
+                        "type": "string"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Steam ID",
+                        "type": "string"
+                    },
+                    "name": "steamid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "TruckersMP ID",
+                        "type": "string"
+                    },
+                    "name": "truckersmpid",
                     "in": "query"
                 }],
                 "responses": {
@@ -189,7 +276,7 @@
             }
         },
         "/vtc/user/bio": {
-            "post": {
+            "patch": {
                 "summary": "Update User Bio",
                 "tags": ["user"],
                 "operationId": "updateUserBio",
@@ -567,9 +654,9 @@
                 }
             }
         },
-        "/vtc/user/unbind": {
-            "patch": {
-                "summary": "Unbind User Connections",
+        "/vtc/user/connection": {
+            "delete": {
+                "summary": "Delete User Connection",
                 "tags": ["admin"],
                 "operationId": "unbindUserConnections",
                 "security": [{
@@ -881,45 +968,6 @@
                 }
             }
         },
-        "/vtc/member": {
-            "get": {
-                "summary": "Get Member",
-                "tags": ["member"],
-                "operationId": "member_vtc_member_info_get",
-                "parameters": [{
-                    "required": true,
-                    "schema": {
-                        "title": "User ID",
-                        "type": "integer"
-                    },
-                    "name": "userid",
-                    "in": "query"
-                }],
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/vtc/member/add": {
             "post": {
                 "summary": "Add Member",
@@ -1118,8 +1166,8 @@
             }
         },
         "/vtc/member/point": {
-            "post": {
-                "summary": "Add Member Points",
+            "patch": {
+                "summary": "Update Member Points",
                 "tags": ["member", "manage"],
                 "operationId": "addMemberPoints",
                 "security": [{
@@ -2430,7 +2478,7 @@
             }
         },
         "/vtc/event/attendee": {
-            "post": {
+            "patch": {
                 "summary": "Update Event Attendees (Overwrite)",
                 "tags": ["event", "manage"],
                 "operationId": "updateEventAttendees",

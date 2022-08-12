@@ -1,5 +1,13 @@
 # Changelog
 
+**v1.11.3**  
+1.Merged `/member` and `/user` to `/user` for both member and public user, added `discordid`, `steamid`, `truckersmpid` parameter  
+2.Added `config.privacy` to select whether to show / hide member information in public, including: `/member/steam`, `/members`, `/user`, `/dlog`, `/dlogs`  
+3.Added `userid` parameter to `/dlog/stats` to query detailed user statistics (require `config.privacy = false`)  
+4.Added `/user/banner` for auto-generated profile banner (require `banner` in `config.enabled_plugins`)  
+5.Updated ratelimit  
+6.Updated API error response  
+
 **v1.11.2**  
 Added requirement to login with discord to revoke specific / all token  
 

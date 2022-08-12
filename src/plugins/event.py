@@ -15,12 +15,14 @@ import multilang as ml
 @app.get(f"/{config.vtc_abbr}/events")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, eventid: Optional[int] = -1, pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /event', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /event', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    stoken = authorization.split(" ")[1]
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
     userid = -1
     if stoken == "guest":
         userid = -1
@@ -168,12 +170,14 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.vtc_abbr}/events/all")
 async def getAllEvents(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /events/all', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /events/all', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    stoken = authorization.split(" ")[1]
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
     userid = -1
     if stoken == "guest":
         userid = -1
@@ -200,8 +204,8 @@ async def getAllEvents(request: Request, response: Response, authorization: str 
     return {"error": False, "response": {"list": ret}}
 
 @app.post(f"/{config.vtc_abbr}/event/vote")
-async def eventVote(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /event/vote', 60, 30)
+async def postEventVote(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /event/vote', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -236,7 +240,7 @@ async def eventVote(request: Request, response: Response, authorization: str = H
 
 @app.post(f"/{config.vtc_abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /event', 60, 3)
+    rl = ratelimit(request.client.host, 'POST /event', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -277,7 +281,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
 @app.patch(f"/{config.vtc_abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /event', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /event', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -321,7 +325,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
 @app.delete(f"/{config.vtc_abbr}/event")
 async def deleteEvent(eventid: int, request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /event', 60, 10)
+    rl = ratelimit(request.client.host, 'DELETE /event', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -347,9 +351,9 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
 
     return {"error": False}
 
-@app.post(f"/{config.vtc_abbr}/event/attendee")
-async def updateEventAttendee(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /event/attendee', 60, 3)
+@app.patch(f"/{config.vtc_abbr}/event/attendee")
+async def patchEventAttendee(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /event/attendee', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

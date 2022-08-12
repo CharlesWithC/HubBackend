@@ -34,7 +34,7 @@ async def getDivisions(request: Request, response: Response):
 
 @app.post(f"/{config.vtc_abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /division', 60, 10)
+    rl = ratelimit(request.client.host, 'POST /division', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -136,7 +136,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
 
 @app.get(f"/{config.vtc_abbr}/divisions/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /divisions/pending', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /divisions/pending', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -164,7 +164,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
 @app.patch(f"/{config.vtc_abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /division', 60, 60)
+    rl = ratelimit(request.client.host, 'PATCH /division', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -229,8 +229,8 @@ async def patchDivision(request: Request, response: Response, authorization: str
     return {"error": False}
 
 @app.get(f"/{config.vtc_abbr}/division")
-async def divisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /division', 60, 60)
+async def getDivisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /division', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

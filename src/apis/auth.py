@@ -100,7 +100,7 @@ async def userCallback(request: Request, response: Response, code: Optional[str]
 
 @app.post(f'/{config.vtc_abbr}/user/login/password')
 async def passwordLogin(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/login/password', 60, 3)
+    rl = ratelimit(request.client.host, 'POST /user/login/password', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -144,7 +144,7 @@ async def passwordLogin(request: Request, response: Response, authorization: str
     
 @app.patch(f'/{config.vtc_abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/password', 60, 3)
+    rl = ratelimit(request.client.host, 'PATCH /user/password', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -205,7 +205,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
 
 @app.get(f'/{config.vtc_abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token', 60, 60)
+    rl = ratelimit(request.client.host, 'GET /token', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -214,33 +214,12 @@ async def getToken(request: Request, response: Response, authorization: str = He
     if au["error"]:
         response.status_code = 401
         return au
-    discordid = au["discordid"]
-    
-    conn = newconn()
-    cur = conn.cursor()
 
-    cur.execute(f"SELECT steamid, truckersmpid, joints FROM user WHERE discordid = '{discordid}'")
-    t = cur.fetchall()
-    steamid = t[0][0]
-    truckersmpid = t[0][1]
-    joints = t[0][2]
-    extra = ""
-    if truckersmpid <= 0:
-        extra = "truckersmp"
-        cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
-    if steamid <= 0:
-        extra = "steamauth"
-        cur.execute(f"UPDATE user SET steamid = 0 WHERE discordid = '{discordid}'")
-    conn.commit()
-    if steamid == -1 or truckersmpid == -1:
-        extra = ""
-    if steamid > 0 and not config.truckersmp_bind:
-        extra = ""
-    return {"error": False, "response": {"discordid": f"{discordid}", "note": extra}}
+    return {"error": False}
 
 @app.patch(f"/{config.vtc_abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token', 60, 3)
+    rl = ratelimit(request.client.host, 'PATCH /token', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -266,7 +245,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
 @app.delete(f'/{config.vtc_abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token', 60, 60)
+    rl = ratelimit(request.client.host, 'DELETE /token', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -287,8 +266,8 @@ async def deleteToken(request: Request, response: Response, authorization: str =
     return {"error": False}
 
 @app.get(f'/{config.vtc_abbr}/token/all')
-async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token/all', 60, 60)
+async def getAllToken(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /token/all', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -314,7 +293,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
 @app.delete(f'/{config.vtc_abbr}/token/hash')
 async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/hash', 60, 60)
+    rl = ratelimit(request.client.host, 'DELETE /token/hash', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -352,8 +331,8 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token")}
 
 @app.delete(f'/{config.vtc_abbr}/token/all')
-async def deleteTokenAll(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/all', 60, 60)
+async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /token/all', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -379,11 +358,6 @@ async def deleteTokenAll(request: Request, response: Response, authorization: st
 
 @app.get(f"/{config.vtc_abbr}/user/steam/oauth")
 async def getSteamOAuth(request: Request, response: Response):
-    rl = ratelimit(request.client.host, 'GET /user/steam/oauth', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
     steamLogin = SteamSignIn()
     encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/user/steam/callback')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
@@ -516,8 +490,8 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     return {"error": False, "response": {"truckersmpid": str(truckersmpid)}}
 
 @app.patch(f'/{config.vtc_abbr}/token/application')
-async def userBot(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/apptoken', 60, 10)
+async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /token/application', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
