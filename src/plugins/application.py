@@ -3,11 +3,10 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, math
 from datetime import datetime
-import discord
-from discord import Webhook
-import aiohttp, requests
+from discord import Webhook, Embed
+from aiohttp import ClientSession
+import json, time, requests
 
 from app import app, config
 from db import newconn
@@ -153,10 +152,10 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     if webhookurl != "":
         try:
-            async with aiohttp.ClientSession() as session:
+            async with ClientSession() as session:
                 webhook = Webhook.from_url(webhookurl, session=session)
 
-                embed = discord.Embed(title = f"New {apptypetxt} Application", description = msg, color = config.rgbcolor)
+                embed = Embed(title = f"New {apptypetxt} Application", description = msg, color = config.rgbcolor)
                 if t[0][1].startswith("a_"):
                     embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
                 else:
@@ -167,10 +166,10 @@ async def postApplication(request: Request, response: Response, authorization: s
 
         except:
             try:
-                async with aiohttp.ClientSession() as session:
+                async with ClientSession() as session:
                     webhook = Webhook.from_url(webhookurl, session=session)
 
-                    embed = discord.Embed(title = f"New {apptypetxt} Application", description = "*Message too long, please view application on website.*", color = config.rgbcolor)
+                    embed = Embed(title = f"New {apptypetxt} Application", description = "*Message too long, please view application on website.*", color = config.rgbcolor)
                     if t[0][1].startswith("a_"):
                         embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
                     else:
@@ -269,10 +268,10 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     if webhookurl != "":
         try:
-            async with aiohttp.ClientSession() as session:
+            async with ClientSession() as session:
                 webhook = Webhook.from_url(webhookurl, session=session)
 
-                embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = msg, color = config.rgbcolor)
+                embed = Embed(title = f"Application #{applicationid} - New Message", description = msg, color = config.rgbcolor)
                 if t[0][1].startswith("a_"):
                     embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
                 else:
@@ -283,10 +282,10 @@ async def updateApplication(request: Request, response: Response, authorization:
 
         except:
             try:
-                async with aiohttp.ClientSession() as session:
+                async with ClientSession() as session:
                     webhook = Webhook.from_url(webhookurl, session=session)
 
-                    embed = discord.Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = config.rgbcolor)
+                    embed = Embed(title = f"Application #{applicationid} - New Message", description = "*Data too long, please view application on website.*", color = config.rgbcolor)
                     if t[0][1].startswith("a_"):
                         embed.set_author(name = t[0][0], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif")
                     else:

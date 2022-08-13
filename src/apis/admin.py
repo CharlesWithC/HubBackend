@@ -3,10 +3,8 @@
 
 from fastapi import Request, Header, Response
 from typing import Optional
-import json, os, sys
-import threading, time
-from sys import exit
-import copy
+import json, copy, os, time
+import threading
 
 from app import app, config, tconfig, config_path
 from db import newconn
@@ -30,7 +28,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     cur = conn.cursor()
 
     toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
-        "apidomain", "domain", "server_ip", "server_port",\
+        "apidomain", "domain", "server_ip", "server_port", "server_workers", \
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
             "enabled_plugins", "external_plugins", "hcaptcha_secret"]
     
@@ -73,7 +71,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     newconfig = json.loads(form["config"])
 
     toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
-        "apidomain", "domain", "server_ip", "server_port",\
+        "apidomain", "domain", "server_ip", "server_port", "server_workers", \
         "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
             "enabled_plugins", "external_plugins", "hcaptcha_secret"]
     musthave = ["vtc_name", "vtc_logo_link", "hex_color", \

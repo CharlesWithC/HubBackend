@@ -7,9 +7,9 @@ from fastapi.responses import RedirectResponse
 from discord_oauth2 import DiscordAuth
 from pysteamsignin.steamsignin import SteamSignIn
 from uuid import uuid4
+from hashlib import sha256
 import json, time, requests
 import bcrypt, re
-import hashlib
 
 from app import app, config
 from db import newconn
@@ -286,7 +286,7 @@ async def getAllToken(request: Request, response: Response, authorization: str =
     t = cur.fetchall()
     for tt in t:
         tk = tt[0]
-        tk = hashlib.sha256(tk.encode()).hexdigest()
+        tk = sha256(tk.encode()).hexdigest()
         ret.append({"hash": tk, "ip": tt[1], "timestamp": str(tt[2])})
 
     return {"error": False, "response": {"list": ret}}
@@ -318,7 +318,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
     cur.execute(f"SELECT token FROM session WHERE discordid = {discordid}")
     t = cur.fetchall()
     for tt in t:
-        thsh = hashlib.sha256(tt[0].encode()).hexdigest()
+        thsh = sha256(tt[0].encode()).hexdigest()
         if thsh == hsh:
             ok = True
             cur.execute(f"DELETE FROM session WHERE token = '{tt[0]}' AND discordid = {discordid}")

@@ -35,21 +35,65 @@ ExecStart="""+hubbase+"""/launcher tracker main {}
 [Install]
 WantedBy=default.target"""
 
+bgenconf = """[Unit]
+Description=Drivers Hub Banner Generator
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=60
+ExecStart="""+hubbase+"""/launcher bannergen main
+
+[Install]
+WantedBy=default.target"""
+
 serdir = userbase + "/.local/share/systemd/user/"
 pfi = hubbase + "/main.py"
 fi = hubbase + "/main"
 tpfi = hubbase + "/tracker.py"
 tfi = hubbase + "/tracker"
-cf = hubbase + "/configs"
+bfi = hubbase + "/bannergen"
+cf = hubbase + "/config"
 
 args = sys.argv[1:]
 
-if len(args) != 3:
-    print("Usage: launcher <hub|tracker> <operation> <config>")
+if len(args) != 3 and len(args) != 2:
+    print("Usage: launcher <hub|tracker|bannergen> <test|main|start|restart|stop|enable|disable> <vtc_abbr>")
     sys.exit(1)
     
 app = args[0]
 op = args[1]
+if app == "bannergen":
+    if op == "main": # executive file - should only be executed by systemctl
+        os.chdir("/".join(bfi.split("/")[:-1]))
+        os.system(f"{bfi}")
+
+    elif op == "start":
+        os.system(f"systemctl --user start bannergen.service")
+
+    elif op == "restart":
+        os.system(f"systemctl --user start bannergen.service")
+
+    elif op == "stop":
+        os.system(f"systemctl --user stop bannergen.service")
+
+    elif op == "enable":
+        os.system(f"rm -f {serdir}/bannergen.service")
+        open(f"{serdir}/bannergen.service", "w").write(bgenconf)
+        os.system(f"systemctl --user enable bannergen.service")
+    
+    elif op == "disable":
+        os.system(f"systemctl --user disable bannergen.service")
+        os.system(f"rm -f {serdir}/bannergen.service")
+        os.system(f"systemctl --user daemon-reload")
+
+    sys.exit(0)
+    
+if len(args) != 3:
+    print("Usage: launcher <hub|tracker|bannergen> <test|main|start|restart|stop|enable|disable> <vtc_abbr>")
+    sys.exit(1)
 vtc = args[2]
 
 if not os.path.exists(cf + "/" + vtc + ".json"):
@@ -90,7 +134,7 @@ if app == "hub":
         os.system(f"systemctl --user daemon-reload")
 
     else:
-        print("Unknown Service")
+        print("Unknown verb")
 
 elif app == "tracker":
     if op == "test": # python test
@@ -123,7 +167,7 @@ elif app == "tracker":
         os.system(f"systemctl --user daemon-reload")
 
     else:
-        print("Unknown Service")
+        print("Unknown verb")
 
 else:
     print("Unknown Application")

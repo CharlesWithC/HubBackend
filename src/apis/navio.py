@@ -2,20 +2,16 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-from uuid import uuid4
-import json, time, math
-import requests
 from datetime import datetime
+from random import randint
+from dateutil import parser
+import json, time, requests
+import threading
 
 from app import app, config
 from db import newconn
 from functions import *
 import multilang as ml
-
-from random import randint
-from dateutil import parser
-
-import threading
 
 GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:

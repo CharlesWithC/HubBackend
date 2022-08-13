@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.11.4**  
+Improved Banner Generator to save memory  
+
 **v1.11.3**  
 1.Merged `/member` and `/user` to `/user` for both member and public user, added `discordid`, `steamid`, `truckersmpid` parameter  
 2.Added `config.privacy` to select whether to show / hide member information in public, including: `/member/steam`, `/members`, `/user`, `/dlog`, `/dlogs`  

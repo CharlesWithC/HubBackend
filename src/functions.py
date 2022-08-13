@@ -18,12 +18,12 @@ def b64d(s):
     except:
         return s
 
-import discord
-from discord import Webhook
-import aiohttp
+from discord import Webhook, Embed
+from aiohttp import ClientSession
 import json
 from datetime import datetime
 import time
+import math
 
 from db import newconn
 from app import config, tconfig
@@ -45,9 +45,9 @@ async def AuditLog(userid, text):
     conn.commit()
     if config.webhook_audit != "":
         try:
-            async with aiohttp.ClientSession() as session:
+            async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_audit, session=session)
-                embed = discord.Embed(description = text, color = config.rgbcolor)
+                embed = Embed(description = text, color = config.rgbcolor)
                 if userid != -999:
                     embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
                 else:
@@ -136,6 +136,27 @@ def TSeparator(num):
         return flag + str(num)
     else:
         return flag + TSeparator(str(num)[:-3]) + "," + str(num)[-3:]
+
+def sigfig(num, sigfigs_opt = 3):
+    num = int(num)
+    flag = ""
+    if num < 0:
+        flag = "-"
+        num = -num
+    if num < 1000:
+        return str(num)
+    power10 = math.log10(num)
+    SUFFIXES = ['', 'K', 'M', 'B', 'T', 'P', 'E', 'Z']
+    suffixNum = math.floor(power10 / 3)
+    if suffixNum >= len(SUFFIXES):
+        return flag + "999+" + SUFFIXES[-1]
+    suffix = SUFFIXES[suffixNum]
+    suffixPower10 = math.pow(10, suffixNum * 3)
+    base = num / suffixPower10
+    baseRound = str(base)[:min(4,len(str(base)))]
+    if baseRound.endswith("."):
+        baseRound = baseRound[:-1]
+    return flag + baseRound + suffix
 
 def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()

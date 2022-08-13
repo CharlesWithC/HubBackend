@@ -2,9 +2,8 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-from uuid import uuid4
 from typing import Optional
-import json, time, requests, math
+import json, time, requests
 
 from app import app, config
 from db import newconn

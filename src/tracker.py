@@ -1,9 +1,7 @@
 import asyncio, json, time, os, sys
 from websockets import connect
-import traceback
-import time
-
-from sys import exit
+from datetime import datetime
+import MySQLdb
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -14,7 +12,7 @@ drivershub = """    ____       _                         __  __      __
 
 if len(sys.argv) == 1:
     print("You must specify a config file")
-    exit(1)
+    sys.exit(1)
 
 config_path = ""
 for argv in sys.argv:
@@ -26,16 +24,42 @@ if config_path == "" and "HUB_CONFIG_FILE" in os.environ.keys() and os.environ["
 
 if config_path == "":
     print("You must specify a config file")
-    exit(1)
+    sys.exit(1)
 
 if not os.path.exists(config_path):
     print("Config file not found")
-    exit(1)
+    sys.exit(1)
 
-os.environ["HUB_CONFIG_FILE"] = config_path
+version = "v1.11.4"
 
-from db import newconn
-from app import config, version
+for argv in sys.argv:
+    if argv.endswith(".py"):
+        version += ".rc"
+
+class Dict2Obj(object):
+    def __init__(self, d):
+        for key in d:
+            if type(d[key]) is dict:
+                data = Dict2Obj(d[key])
+                setattr(self, key, data)
+            else:
+                setattr(self, key, d[key])
+
+config_txt = open(config_path, "r").read()
+config = json.loads(config_txt)
+config = Dict2Obj(config)
+
+host = config.mysql_host
+user = config.mysql_user
+passwd = config.mysql_passwd
+dbname = config.mysql_db
+conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
+cur = conn.cursor()
+
+def newconn():
+    conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
+    conn.ping()
+    return conn
 
 async def work(uri):
     lasthandshake = 0
@@ -82,7 +106,6 @@ async def work(uri):
                 try:
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                 except:
-                    traceback.print_exc()
                     conn = newconn()
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
@@ -95,21 +118,21 @@ async def work(uri):
                 await websocket.send(json.dumps({"op": 2}))
                 lasthandshake = int(time.time())
                 try:
-                    cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 7)}") # cache for one week
+                    cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 3)}") # cache for 3 days
+                    conn.commit()
                 except:
-                    traceback.print_exc()
+                    pass
             await asyncio.sleep(0.01)
 
 if not "tracker" in config.enabled_plugins:
     print(f"Tracker not enabled for {config.vtc_name}")
     print("To enable, add 'tracker' in config.enabled_plugins")
-    exit(1)
+    sys.exit(1)
 
 if config.navio_company_id == "":
     print("Navio Company ID not set")
-    exit(1)
+    sys.exit(1)
 
-from datetime import datetime
 currentDateTime = datetime.now()
 date = currentDateTime.date()
 year = date.strftime("%Y")
@@ -123,6 +146,4 @@ while 1:
         asyncio.run(work("wss://gateway.navio.app"))
     except:
         time.sleep(3)
-        import traceback
-        traceback.print_exc()
         pass

@@ -3,11 +3,10 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from fastapi.responses import StreamingResponse
-import json, time, math
 from typing import Optional
 from datetime import datetime
-import requests
 from io import BytesIO
+import json, time
 
 from app import app, config
 from db import newconn

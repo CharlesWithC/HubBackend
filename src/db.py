@@ -2,8 +2,9 @@
 # Author: @CharlesWithC
 
 import MySQLdb
-from app import app, config, version
 import json, os
+
+from app import app, config, version
 
 host = config.mysql_host
 user = config.mysql_user

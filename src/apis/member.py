@@ -2,22 +2,16 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-from uuid import uuid4
-import json, time, math
-import requests
+from fastapi.responses import StreamingResponse
 from discord import Webhook
+from aiohttp import ClientSession
 from typing import Optional
 from datetime import datetime
-import collections
-import hashlib
 from io import BytesIO
-from PIL import Image
-from PIL import ImageFont, ImageDraw
-import numpy as np
-import string
-from fastapi.responses import StreamingResponse
+import json, time, requests
+import collections, string
 
-from app import app, config, tconfig, logo, logobg
+from app import app, config, tconfig
 from db import newconn
 from functions import *
 import multilang as ml
@@ -146,6 +140,7 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
     roles = []
+    udiscordid = -1
     if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
         au = auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
@@ -153,12 +148,16 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         else:
             discordid = au["discordid"]
+            roles = au["roles"]
+            udiscordid = discordid
+            selfq = True
     else:
-        if config.privacy:
-            au = auth(authorization, request, allow_application_token = True)
-            if au["error"]:
-                response.status_code = 401
-                return au
+        au = auth(authorization, request, allow_application_token = True)
+        if au["error"] and config.privacy:
+            response.status_code = 401
+            return au
+        udiscordid = au["discordid"]
+        roles = au["roles"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -242,7 +241,7 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
     roles = [int(i) for i in roles]
 
     email = t[0][8]
-    if not isAdmin and not isHR:
+    if not isAdmin and not isHR and udiscordid != t[0][0]:
         email = ""
 
     return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
@@ -282,12 +281,12 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     
     au = auth(authorization, request)
     if au["error"]:
-        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 10)
+        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 30)
         if rl > 0:
             response.status_code = 429
             return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
     else:
-        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 30)
+        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 60)
         if rl > 0:
             response.status_code = 429
             return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -322,20 +321,21 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     for i in roles:
         for divi in divisions:
             if str(divi["role_id"]) == str(i):
-                division += divi["name"] + ", "
+                division = divi["name"]
+                break
     if division == "":
         division = "N/A"
-    else:
-        division = division[:-2]
 
     cur.execute(f"SELECT distance FROM driver WHERE userid = {userid}")
     t = cur.fetchall()
-    distance = 0 if t[0][0] is None else int(t[0][0])
-    if config.distance_unit == "imperial":
-        distance = int(distance * 0.621371)
-        distance = f"{distance}Mi"
-    else:
-        distance = f"{distance}Km"
+    distance = 0
+    if len(t) > 0:
+        distance = 0 if t[0][0] is None else int(t[0][0])
+        if config.distance_unit == "imperial":
+            distance = int(distance * 0.621371)
+            distance = f"{distance}Mi"
+        else:
+            distance = f"{distance}Km"
     
     cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
     t = cur.fetchall()
@@ -345,106 +345,14 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     t = cur.fetchall()
     if len(t) > 0:
         dollarprofit = 0 if t[0][0] is None else int(t[0][0])
-    profit = f"€{europrofit} + ${dollarprofit}"
+    profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
-    # pre-process avatar
-    avatarurl = ""
-    if avatar.startswith("a_"):
-        avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
-    else:
-        avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
-    r = requests.get(avatarurl, timeout=3)
-    if r.status_code == 200:
-        avatar = Image.open(BytesIO(r.content)).resize((500, 500)).convert("RGB")
-    else:
-        avatar = logo.resize((500, 500), resample=Image.ANTIALIAS).convert("RGB")
-    img = avatar
-    height,width = img.size
-    lum_img = Image.new('L', [height,width] , 0)
-    draw = ImageDraw.Draw(lum_img)
-    draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
-    img_arr = np.array(img)
-    lum_img_arr = np.array(lum_img)
-    final_img_arr = np.dstack((img_arr,lum_img_arr))
-    avatar = Image.fromarray(final_img_arr).convert("RGBA")
-    avatar = avatar.getdata()
+    r = requests.post("http://127.0.0.1:8700/banner", data={"vtc_abbr": config.vtc_abbr, \
+        "vtc_name": config.vtc_name, "vtc_logo_link": config.vtc_logo_link, "hex_color": config.hex_color,
+        "discordid": discordid, "since": since, "highest_role": highest_role, \
+            "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit})
 
-    # render logobg, banner, logo
-    banner = Image.new("RGB", (3400,600),(255,255,255))
-    Image.Image.paste(banner, logobg, (0,-1300))
-    datas = banner.getdata()
-    logod = logo.getdata()
-    newData = []
-    for i in range(0,600):
-        for j in range(0,3400):
-            if i >= 50 and i < 550 and j >= 70 and j < 570:
-                if avatar[(i-50)*500+(j-70)][3] == 0:
-                    newData.append(datas[i*3400+j][:3])
-                else:
-                    newData.append(avatar[(i-50)*500+(j-70)][:3])
-            elif i >= 50 and i < 450 and j >= 2950 and j < 3350:
-                if logod[(i-50)*400+(j-2950)][3] == 0:
-                    newData.append(datas[i*3400+j][:3])
-                else:
-                    newData.append(logod[(i-50)*400+(j-2950)][:3])
-            else:
-                newData.append(datas[i*3400+j][:3])
-    banner.putdata(newData)
-
-    # draw text
-    draw = ImageDraw.Draw(banner)
-    # load font
-    usH80 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 80)
-    coH80 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 80)
-    co20 = ImageFont.truetype("./fonts/Consola.ttf", 20)
-    # set color
-    vtccolor = tuple(int(config.hex_color[i:i+2], 16) for i in (0, 2, 4))
-    # vtc name
-    vtcnamelen = usH80.getsize(f"{config.vtc_name}")[0]
-    draw.text((3400 - 50 - vtcnamelen, 480), f"{config.vtc_name}", fill=vtccolor, font=usH80)
-    
-    fontsize = 160
-    offset = 0
-    namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-    namesize = namefont.getsize(f"{name}")[0]
-    for _ in range(10):
-        if namesize > 900:
-            fontsize -= 10
-            offset += 10
-            namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-            namesize = namefont.getsize(f"{name}")[0]
-    draw.text((650, 100 + offset), f"{name}", fill=(0,0,0), font=namefont)
-
-    fontsize -= 40
-    hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-    hrolesize = hrolefont.getsize(f"{highest_role}")[0]
-    for _ in range(10):
-        if hrolesize > 900:
-            fontsize -= 10
-            offset += 10
-            hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-            hrolesize = hrolefont.getsize(f"{highest_role}")[0]
-    draw.text((650, 240 + offset), f"{highest_role}", fill=vtccolor, font=hrolefont)
-
-    sincefont = ImageFont.truetype("./fonts/Consola.ttf", 80)
-    draw.text((650, 420), f"Since {since}", fill=(0,0,0), font=sincefont)
-    # separate line
-    draw.line((1700, 50, 1700, 550), fill=vtccolor, width = 20)
-    draw.text((1800, 100), f"Division: {division}", fill=(0,0,0), font=coH80)
-    draw.text((1800, 220), f"Distance: {distance}", fill=(0,0,0), font=coH80)
-    draw.text((1800, 340), f"Income: {profit}", fill=(0,0,0), font=coH80)
-    # copyright
-    currentDateTime = datetime.now()
-    date = currentDateTime.date()
-    year = date.strftime("%Y")
-    cplen = co20.getsize(f"Copyright (C) {year} CharlesWithC")[0]
-    draw.text((3400 - 50 - cplen, 560), f"Copyright (C) {year} CharlesWithC", fill=(220,220,220), font=co20)
-
-    # output
-    output = BytesIO()
-    banner.save(output, "jpeg")
-    response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
-
+    response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
     return response
 
 @app.post(f'/{config.vtc_abbr}/member/add')
@@ -704,7 +612,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
         
         if config.webhook_teamupdate != "":
             try:
-                async with aiohttp.ClientSession() as session:
+                async with ClientSession() as session:
                     webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
                     embed = discord.Embed(title = "Team Update", description = config.webhook_teamupdate_message.replace("{mention}", usermention).replace("{vtcname}", config.vtc_name), color = config.rgbcolor)
                     embed.set_footer(text = f"{config.vtc_name} | Team Update", icon_url = config.vtc_logo_link)

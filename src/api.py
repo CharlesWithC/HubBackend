@@ -2,11 +2,10 @@
 # Author: @CharlesWithC
 
 from fastapi import Request, Header, Response
-import json, os, sys
-from sys import exit
-from datetime import datetime
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from datetime import datetime
+import json, os
 
 from app import app, config, version
 from db import newconn

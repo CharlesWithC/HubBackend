@@ -2,10 +2,10 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-import json, time, math
 from typing import Optional
 from datetime import datetime
-import requests
+from aiohttp import ClientSession
+import json, time, requests
 
 from app import app, config
 from db import newconn
@@ -118,7 +118,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
 
     if config.webhook_division != "":
         try:
-            async with aiohttp.ClientSession() as session:
+            async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_division, session=session)
 
                 embed = discord.Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = config.rgbcolor)

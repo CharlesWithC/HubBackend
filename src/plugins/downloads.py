@@ -3,8 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, math
-import requests
+import json, time, requests
 
 from app import app, config
 from db import newconn

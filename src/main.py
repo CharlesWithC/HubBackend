@@ -3,15 +3,8 @@
 # Copyright (C) 2022 Charles All rights reserved.
 # Author: @CharlesWithC
 
-import os, sys
-import contextlib
-import time
-import threading
+import os, sys, time, json
 import uvicorn
-import json
-import asyncio
-
-from sys import exit
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -22,7 +15,7 @@ drivershub = """    ____       _                         __  __      __
 
 if len(sys.argv) == 1:
     print("You must specify a config file")
-    exit(1)
+    sys.exit(1)
 
 config_path = ""
 for argv in sys.argv:
@@ -34,11 +27,11 @@ if config_path == "" and "HUB_CONFIG_FILE" in os.environ.keys() and os.environ["
 
 if config_path == "":
     print("You must specify a config file")
-    exit(1)
+    sys.exit(1)
 
 if not os.path.exists(config_path):
     print("Config file not found")
-    exit(1)
+    sys.exit(1)
 
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
@@ -72,10 +65,12 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
             print("Upgrade failed due to errors above, main program exited")
-            exit(1)
+            sys.exit(1)
 
     print(f"Company Name: {config.vtc_name}")
     print(f"Company Abbreviation: {config.vtc_abbr}\n")
+    os.system(f"rm -rf /tmp/hub/logo/{config.vtc_abbr}.png")
+    os.system(f"rm -rf /tmp/hub/logo/{config.vtc_abbr}_bg.png")
     if not version.endswith(".rc"):
         time.sleep(1)
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = 3)
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = int(config.server_workers))

@@ -1,0 +1,31 @@
+# Copyright (C) 2022 Charles All rights reserved.
+# Author: @CharlesWithC
+
+import uvicorn
+import os
+from app import app
+
+drivershub = """    ____       _                         __  __      __  
+   / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
+  / / / / ___/ / | / / _ \/ ___/ ___/  / /_/ / / / / __ \\
+ / /_/ / /  / /| |/ /  __/ /  (__  )  / __  / /_/ / /_/ /
+/_____/_/  /_/ |___/\___/_/  /____/  /_/ /_/\__,_/_.___/ 
+                                                         """
+
+if __name__ == "__main__":
+    from datetime import datetime
+    currentDateTime = datetime.now()
+    date = currentDateTime.date()
+    year = date.strftime("%Y")
+    print(drivershub)
+    print(f"Drivers Hub: Backend (v1.11.4) | Banner Generator")
+    print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+    print("")
+
+    if not os.path.exists("/tmp/hub"):
+        os.mkdir("/tmp/hub")
+    if not os.path.exists("/tmp/hub/logo"):
+        os.mkdir("/tmp/hub/logo")
+    if not os.path.exists("/tmp/hub/avatar"):
+        os.mkdir("/tmp/hub/avatar")
+    uvicorn.run("app:app", host="127.0.0.1", port=8700, log_level="info", workers = 5)

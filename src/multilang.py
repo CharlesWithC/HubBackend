@@ -2,8 +2,8 @@
 # Author: @CharlesWithC
 
 from fastapi import Request
-import os, json
 from typing import Optional
+import os, json
 
 from app import config
 
