@@ -394,6 +394,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             if not userid in users:
                 cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid = {userid}")
                 p = cur.fetchall()
+                if len(p) == 0:
+                    continue
                 roles = p[0][4].split(",")
                 while "" in roles:
                     roles.remove("")

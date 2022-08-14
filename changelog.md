@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.11.5**  
+1.Fixed the bug that leaderboard is not loading  
+2.Improved authentication system  
+3.Removed possibility to add event point and division point using `/member/point`  
+4.Added possibility of showing `distance` added with `Update Member Point` on time-ranged leaderboard  
+5.Added `hr` permission to `/member/point`  
+
 **v1.11.4**  
 Improved Banner Generator to save memory  
 

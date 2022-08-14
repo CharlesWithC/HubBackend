@@ -672,7 +672,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -684,22 +684,14 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     form = await request.form()
     userid = int(form["userid"])
     distance = int(int(form["distance"]))
-    eventpnt = int(form["eventpnt"])
-    divisionpnt = int(form["divisionpnt"])
 
-    cur.execute(f"UPDATE driver SET distance = distance + {distance}, eventpnt = eventpnt + {eventpnt} WHERE userid = {userid}")
-    
-    divisionorg = 0
-    cur.execute(f"SELECT status FROM division WHERE logid = -1 AND userid = {userid}")
-    p = cur.fetchall()
-    if len(p) > 0:
-        divisionorg = p[0][0]
-        cur.execute(f"DELETE FROM division WHERE logid = -1 AND userid = {userid}")
-    divisionpnt += divisionorg
-    if divisionpnt > 0:
-        cur.execute(f"INSERT INTO division VALUES (-1, -1, {userid}, 0, {divisionpnt}, 0, 0, 0)")
-
-    conn.commit()
+    if distance != 0:
+        cur.execute(f"UPDATE driver SET distance = distance + {distance} WHERE userid = {userid}")
+        if distance > 0:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
+        else:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
+        conn.commit()
 
     cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
     p = cur.fetchall()
@@ -707,10 +699,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     if int(distance) > 0:
         distance = "+" + form["distance"]
-    if int(eventpnt) > 0:
-        eventpnt = "+" + str(eventpnt)
 
-    await AuditLog(adminid, f"Updated user #{userid} points:\n{distance} km\n{eventpnt} Event Points\n{divisionpnt} Division Points")
+    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km")
 
     return {"error": False}
 

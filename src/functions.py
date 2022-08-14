@@ -24,6 +24,7 @@ import json
 from datetime import datetime
 import time
 import math
+import ipaddress
 
 from db import newconn
 from app import config, tconfig
@@ -259,10 +260,18 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
                 cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
                 conn.commit()
             else:
-                if ip != request.client.host:
-                    cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                    conn.commit()
-                    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                if curiptype == 6:
+                    curip = ipaddress.ip_address(request.client.host).exploded
+                    orgip = ipaddress.ip_address(ip).exploded
+                    if curip.split(":")[:4] != orgip.split(":")[:4]:
+                        cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                        conn.commit()
+                        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                elif curiptype == 4:
+                    if ip.split(".")[:3] != request.client.host.split(".")[:3]:
+                        cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+                        conn.commit()
+                        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         
         # additional check
         

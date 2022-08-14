@@ -30,12 +30,6 @@ if not os.path.exists(config_path):
     print("Config file not found")
     sys.exit(1)
 
-version = "v1.11.4"
-
-for argv in sys.argv:
-    if argv.endswith(".py"):
-        version += ".rc"
-
 class Dict2Obj(object):
     def __init__(self, d):
         for key in d:
@@ -137,7 +131,7 @@ currentDateTime = datetime.now()
 date = currentDateTime.date()
 year = date.strftime("%Y")
 print(drivershub)
-print(f"Drivers Hub: Backend ({version}) | Tracker")
+print(f"Drivers Hub: Backend | Tracker")
 print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
 print("")
 

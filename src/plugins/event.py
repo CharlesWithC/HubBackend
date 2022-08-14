@@ -219,6 +219,11 @@ async def postEventVote(request: Request, response: Response, authorization: str
 
     form = await request.form()
     eventid = int(form["eventid"])
+
+    if eventid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+
     cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -307,6 +312,10 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     if form["pvt"] == "true":
         pvt = 1
 
+    if eventid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+
     cur.execute(f"SELECT userid FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -336,6 +345,10 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
         
     conn = newconn()
     cur = conn.cursor()
+
+    if eventid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
     cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
@@ -371,6 +384,10 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     while "" in attendees:
         attendees.remove("")
     points = int(form["points"])
+
+    if eventid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
     cur.execute(f"SELECT attendee FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()

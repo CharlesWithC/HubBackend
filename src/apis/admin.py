@@ -92,6 +92,9 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                 if not newconfig[i] in ["metric", "imperial"]:
                     response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "invalid_distance_unit")}
+
+            if i == "hex_color":
+                newconfig[i] = newconfig[i][-6:]
             
             if i in musthave:
                 if newconfig[i] == "":

@@ -204,6 +204,10 @@ async def updateApplication(request: Request, response: Response, authorization:
     applicationid = form["applicationid"]
     message = form["message"]
 
+    if applicationid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+
     cur.execute(f"SELECT discordid, data, status, apptype FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if discordid != t[0][0]:
@@ -326,6 +330,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if int(status) in STATUS.keys():
         statustxt = STATUS[int(status)]
 
+    if applicationid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -416,6 +424,10 @@ async def getApplication(request: Request, response: Response, applicationid: in
 
     conn = newconn()
     cur = conn.cursor()
+
+    if applicationid < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
