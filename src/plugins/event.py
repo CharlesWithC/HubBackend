@@ -220,7 +220,7 @@ async def postEventVote(request: Request, response: Response, authorization: str
     form = await request.form()
     eventid = int(form["eventid"])
 
-    if eventid < 0:
+    if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
@@ -312,7 +312,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     if form["pvt"] == "true":
         pvt = 1
 
-    if eventid < 0:
+    if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
@@ -346,7 +346,7 @@ async def deleteEvent(eventid: int, request: Request, response: Response, author
     conn = newconn()
     cur = conn.cursor()
 
-    if eventid < 0:
+    if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
@@ -385,7 +385,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         attendees.remove("")
     points = int(form["points"])
 
-    if eventid < 0:
+    if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
@@ -436,7 +436,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     if ret == f"Updated event #{eventid} attendees\n":
         return {"error": False, "response": {"message": "No changes made."}}
 
-    cur.execute(f"UPDATE event SET attendee = '{','.join(attendees)}', eventpnt = {points} WHERE eventid = {eventid}")
+    cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', eventpnt = {points} WHERE eventid = {eventid}")
     conn.commit()
 
     ret = ret.replace("'","''")

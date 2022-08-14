@@ -15,7 +15,7 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[division["id"]] = int(division["point"])
+    DIVISIONPNT[int(division["id"])] = int(division["point"])
 
 @app.get(f"/{config.vtc_abbr}/dlog/stats")
 async def getDlogStats(request: Request, response: Response, starttime: Optional[int] = -1, endtime: Optional[int] = -1, userid: Optional[int] = -1):
@@ -261,8 +261,10 @@ async def getDlogChart(request: Request, response: Response,
 
 @app.get(f"/{config.vtc_abbr}/dlog/leaderboard")
 async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
-        noevent: Optional[bool] = False, nodivision: Optional[bool] = False, limituser: Optional[str] = "", pagelimit: Optional[int] = 10):
+    page: Optional[int] = -1, starttime: Optional[int] = -1, endtime: Optional[int] = -1, \
+        speedlimit: Optional[int] = 0, game: Optional[int] = 0, \
+        limittype: Optional[str] = "distance", \
+        limituser: Optional[str] = "", pagelimit: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -273,166 +275,207 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         response.status_code = 401
         return au
     
+    debug_start = time.time()
+
     conn = newconn()
     cur = conn.cursor()
 
-    if page <= 0:
-        page = 1
+    ratio = 1
+    if config.distance_unit == "imperial":
+        ratio = 0.621371
+    
+    # validate parameter
+    page = max(page, 1)
+    pagelimit = max(min(pagelimit, 250), 1)
+    (starttime, endtime) = (0, int(time.time())) if starttime == -1 or endtime == -1 else (min(starttime, endtime), max(starttime, endtime))
 
-    if pagelimit <= 1:
-        pagelimit = 1
-    elif pagelimit >= 250:
-        pagelimit = 250
-
+    # set limits
     limituser = limituser.split(",")
     while "" in limituser:
         limituser.remove("")
     if len(limituser) > 10:
         limituser = limituser[:10]
+    limit = ""
+    if speedlimit != 0:
+        limit = f" AND topspeed <= {int(speedlimit)}"
+    gamelimit = ""
+    if game == 1 or game == 2:
+        gamelimit = f" AND unit = {game}"
 
-    ratio = 1
-    if config.distance_unit == "imperial":
-        ratio = 0.621371
-
-    if starttime != -1 and endtime != -1 or speedlimit != 0 or game != 0 or noevent or nodivision:
-        if starttime > endtime:
-            starttime, endtime = endtime, starttime
-        if (starttime == -1 or endtime == -1):
-            starttime = 0
-            endtime = int(time.time())
-        limit = ""
-        if speedlimit != 0:
-            limit = f" AND topspeed <= {int(speedlimit)}"
-        gamelimit = ""
-        if game == 1 or game == 2:
-            gamelimit = f" AND unit = {game}"
-        cur.execute(f"SELECT userid, distance FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit} {gamelimit}")
-        t = cur.fetchall()
-        userdistance = {}
-        for tt in t:
-            if not tt[0] in userdistance.keys():
-                userdistance[tt[0]] = tt[1]
-            else:
-                userdistance[tt[0]] += tt[1]
-        userevent = {}
-        if not noevent:
-            cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
-            t = cur.fetchall()
-            for tt in t:
-                attendees = tt[0].split(",")
-                while "" in attendees:
-                    attendees.remove("")
-                for ttt in attendees:
-                    attendee = int(ttt)
-                    if not attendee in userevent.keys():
-                        userevent[attendee] = tt[1]
-                    else:
-                        userevent[attendee] += tt[1]
-        rank = {}
-        for k in userdistance.keys():
-            if k in userevent.keys():
-                rank[k] = round(userdistance[k] * ratio) + userevent[k]
-            else:
-                userevent[k] = 0
-                rank[k] = round(userdistance[k] * ratio)
-        for k in userevent.keys():
-            if not k in rank.keys():
-                rank[k] = userevent[k]
-                userdistance[k] = 0
-
-        rank = dict(sorted(rank.items(),key=lambda x:x[1]))
-        rank = list(rank.keys())[::-1]
-
-        cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} ORDER BY logid ASC")
-        t = cur.fetchall()
-        firstlogid = 0
-        if len(t) > 0:
-            firstlogid = t[0][0]
-
-        ret = []
-        users = []
-        for userid in rank:
-            cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
-            p = cur.fetchall()
-            if len(p) == 0:
-                continue
-            roles = p[0][3].split(",")
-            while "" in roles:
-                roles.remove("")
-            ok = False
-            for i in roles:
-                if int(i) in config.perms.driver:
-                    ok = True
-            if not ok:
-                continue
-            if not noevent:
-                cur.execute(f"SELECT distance * {ratio} + eventpnt FROM driver WHERE userid = {userid}")
-            else:
-                cur.execute(f"SELECT distance * {ratio} FROM driver WHERE userid = {userid}")
-            o = cur.fetchall()
-            totnolimit = 0
-            if len(o) > 0:
-                totnolimit = int(o[0][0])
-            divisionpnt = 0
-            if not nodivision:
-                cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= {firstlogid} GROUP BY divisionid")
-                o = cur.fetchall()
-                for oo in o:
-                    if o[0][0] in DIVISIONPNT.keys():
-                        divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-            users.append(userid)
-            if str(userid) in limituser or len(limituser) == 0:
-                ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                    "distance": str(userdistance[userid]), "eventpnt": str(userevent[userid]), "divisionpnt": str(divisionpnt), \
-                        "totalpnt": str(round(userdistance[userid] * ratio) + userevent[userid] + divisionpnt), \
-                            "totnolimit": str(totnolimit + divisionpnt)})
-
-        cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0")
-        t = cur.fetchall()
-        for tt in t:
-            userid = tt[0]
-            if not userid in users:
-                cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid = {userid}")
-                p = cur.fetchall()
-                if len(p) == 0:
-                    continue
-                roles = p[0][4].split(",")
-                while "" in roles:
-                    roles.remove("")
-                ok = False
-                for i in roles:
-                    if int(i) in config.perms.driver:
-                        ok = True
-                if not ok:
-                    continue
-                userid = p[0][0]
-                name = p[0][1]
-                discordid = p[0][2]
-                avatar = p[0][3]
-                divisionpnt = 0
-                if not nodivision:
-                    cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
-                    o = cur.fetchall()
-                    for oo in o:
-                        if o[0][0] in DIVISIONPNT.keys():
-                            divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-                if str(userid) in limituser or len(limituser) == 0:
-                    ret.append({"userid": str(userid), "name": name, "discordid": str(discordid), "avatar": avatar, \
-                        "distance": "0", "eventpnt": "0", "divisionpnt": "0", "totalpnt": "0", "totnolimit": str(int(tt[1]) + divisionpnt)})
-
-        if (page - 1) * pagelimit >= len(ret):
-            return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
-
-        return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
-
-    cur.execute(f"SELECT userid, distance * {ratio} + eventpnt, distance, eventpnt FROM driver WHERE userid >= 0 ORDER BY distance * {ratio} + eventpnt DESC")
+    ##### WITH LIMIT (Parameter)
+    # calculate distance
+    userdistance = {}
+    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit} {gamelimit} GROUP BY userid")
     t = cur.fetchall()
-    ret = []
     for tt in t:
-        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {tt[0]} AND userid >= 0")
+        if not tt[0] in userdistance.keys():
+            userdistance[tt[0]] = tt[1]
+        else:
+            userdistance[tt[0]] += tt[1]
+        userdistance[tt[0]] = int(userdistance[tt[0]])
+
+    # calculate event
+    userevent = {}
+    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
+    t = cur.fetchall()
+    for tt in t:
+        attendees = tt[0].split(",")
+        while "" in attendees:
+            attendees.remove("")
+        for ttt in attendees:
+            attendee = int(ttt)
+            if not attendee in userevent.keys():
+                userevent[attendee] = tt[1]
+            else:
+                userevent[attendee] += tt[1]
+    
+    # calculate division
+    cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid ASC")
+    t = cur.fetchall()
+    firstlogid = 0
+    if len(t) > 0:
+        firstlogid = t[0][0]
+
+    cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid DESC")
+    t = cur.fetchall()
+    lastlogid = 100000000
+    if len(t) > 0:
+        lastlogid = t[0][0]
+    
+    userdivision = {}
+    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in userdivision.keys():
+            userdivision[oo[0]] = 0
+        if oo[1] in DIVISIONPNT.keys():
+            userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+    
+    # calculate myth
+    usermyth = {}
+    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE timestamp >= {starttime} AND timestamp <= {endtime} GROUP BY userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in usermyth.keys():
+            usermyth[oo[0]] = 0
+        usermyth[oo[0]] += oo[1]
+
+    # calculate total point
+    limittype = limittype.split(",")
+    usertot = {}
+    for k in userdistance.keys():
+        if "distance" in limittype:
+            usertot[k] = round(userdistance[k] * ratio)
+    for k in userevent.keys():
+        if not k in usertot.keys():
+            usertot[k] = 0
+        if "event" in limittype:
+            usertot[k] += userevent[k]
+    for k in userdivision.keys():
+        if not k in usertot.keys():
+            usertot[k] = 0
+        if "division" in limittype:
+            usertot[k] += userdivision[k]
+    for k in usermyth.keys():
+        if not k in usertot.keys():
+            usertot[k] = 0
+        if "myth" in limittype:
+            usertot[k] += usermyth[k]
+
+    ##### WITHOUT LIMIT
+    # calculate distance
+    nluserdistance = {}
+    cur.execute(f"SELECT userid, SUM(distance) FROM dlog GROUP BY userid")
+    t = cur.fetchall()
+    for tt in t:
+        if not tt[0] in nluserdistance.keys():
+            nluserdistance[tt[0]] = tt[1]
+        else:
+            nluserdistance[tt[0]] += tt[1]
+        nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
+
+    # calculate event
+    nluserevent = {}
+    cur.execute(f"SELECT attendee, eventpnt FROM event")
+    t = cur.fetchall()
+    for tt in t:
+        attendees = tt[0].split(",")
+        while "" in attendees:
+            attendees.remove("")
+        for ttt in attendees:
+            attendee = int(ttt)
+            if not attendee in nluserevent.keys():
+                nluserevent[attendee] = tt[1]
+            else:
+                nluserevent[attendee] += tt[1]
+    
+    # calculate division    
+    nluserdivision = {}
+    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 GROUP BY divisionid, userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in nluserdivision.keys():
+            nluserdivision[oo[0]] = 0
+        if oo[1] in DIVISIONPNT.keys():
+            nluserdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+    
+    # calculate myth
+    nlusermyth = {}
+    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint GROUP BY userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in nlusermyth.keys():
+            nlusermyth[oo[0]] = 0
+        nlusermyth[oo[0]] += oo[1]
+
+    # calculate total point
+    nlusertot = {}
+    for k in nluserdistance.keys():
+        nlusertot[k] = round(nluserdistance[k] * ratio)
+    for k in nluserevent.keys():
+        if not k in nlusertot.keys():
+            nlusertot[k] = 0
+        nlusertot[k] += nluserevent[k]
+    for k in nluserdivision.keys():
+        if not k in nlusertot.keys():
+            nlusertot[k] = 0
+        nlusertot[k] += nluserdivision[k]
+    for k in nlusermyth.keys():
+        if not k in nlusertot.keys():
+            nlusertot[k] = 0
+        nlusertot[k] += nlusermyth[k]
+
+    usertot = dict(sorted(usertot.items(),key=lambda x:x[1]))
+    usertot_id = list(usertot.keys())[::-1]
+    nlusertot = dict(sorted(nlusertot.items(),key=lambda x:x[1]))
+    nlusertot_id = list(nlusertot.keys())[::-1]
+
+    # calculate rank
+    userrank = {}
+    rank = 1
+    lastpnt = 0
+    for userid in usertot_id:
+        userrank[userid] = rank
+        if lastpnt != usertot[userid]:
+            rank += 1
+    nluserrank = {}
+    nlrank = 1
+    lastpnt = 0
+    for userid in nlusertot_id:
+        nluserrank[userid] = nlrank
+        if lastpnt != nlusertot[userid]:
+            nlrank += 1
+
+    ret = []
+    withpoint = []
+    # drivers with points (WITH LIMIT)
+    for userid in usertot_id:
+        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
         p = cur.fetchall()
         if len(p) == 0:
             continue
+
+        # check if have driver role
         roles = p[0][3].split(",")
         while "" in roles:
             roles.remove("")
@@ -442,31 +485,94 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                 ok = True
         if not ok:
             continue
+
+        withpoint.append(userid)
+
+        distance = 0
+        eventpnt = 0
         divisionpnt = 0
-        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1 AND logid >= 0 GROUP BY divisionid")
-        o = cur.fetchall()
-        for oo in o:
-            if o[0][0] in DIVISIONPNT.keys():
-                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-        cur.execute(f"SELECT status FROM division WHERE userid = {tt[0]} AND logid = -1")
-        o = cur.fetchall()
-        if len(o) > 0:
-            divisionpnt += o[0][0]
-        if str(tt[0]) in limituser or len(limituser) == 0:
-            ret.append({"userid": str(tt[0]), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": str(tt[2]), "eventpnt": str(tt[3]), "divisionpnt": str(divisionpnt), \
-                    "totalpnt": str(tt[1]), "totnolimit": str(int(tt[1]) + divisionpnt)})
+        mythpnt = 0
+        if userid in userdistance.keys():
+            distance = userdistance[userid]
+        if userid in userevent.keys():
+            eventpnt = userevent[userid]
+        if userid in userdivision.keys():
+            divisionpnt = userdivision[userid]
+        if userid in usermyth.keys():
+            mythpnt = usermyth[userid]
+
+        if str(userid) in limituser or len(limituser) == 0:
+            ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                "distance": str(distance), "event": str(eventpnt), "division": str(divisionpnt), \
+                    "myth": str(mythpnt), "total": str(usertot[userid]), "rank": str(userrank[userid]), \
+                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
+
+    # drivers with points (WITHOUT LIMIT)
+    for userid in nlusertot_id:
+        if userid in withpoint:
+            continue
+
+        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
+        p = cur.fetchall()
+        if len(p) == 0:
+            continue
+
+        # check if have driver role
+        roles = p[0][3].split(",")
+        while "" in roles:
+            roles.remove("")
+        ok = False
+        for i in roles:
+            if int(i) in config.perms.driver:
+                ok = True
+        if not ok:
+            continue
+
+        withpoint.append(userid)
+
+        distance = 0
+        eventpnt = 0
+        divisionpnt = 0
+        mythpnt = 0
+
+        if str(userid) in limituser or len(limituser) == 0:
+            ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
+                "distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), \
+                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
+
+    # drivers without ponts (EVEN WITHOUT LIMIT)
+    cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid >= 0")
+    p = cur.fetchall()
+    for pp in p:
+        if pp[0] in withpoint:
+            continue
+
+        # check if have driver role
+        roles = pp[4].split(",")
+        while "" in roles:
+            roles.remove("")
+        ok = False
+        for i in roles:
+            if int(i) in config.perms.driver:
+                ok = True
+        if not ok:
+            continue
+        
+        userid = pp[0]
+        name = pp[1]
+        discordid = pp[2]
+        avatar = pp[3]
+        if str(userid) in limituser or len(limituser) == 0:
+            ret.append({"userid": str(userid), "rank": str(rank), "name": name, "discordid": str(discordid), "avatar": avatar, \
+                "distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)})
+
+    debug_end = time.time()
+    print(f"Leaderboard load took {int((debug_end - debug_start)*1000)}ms")
 
     if (page - 1) * pagelimit >= len(ret):
         return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
 
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE userid >= 0")
-    t = cur.fetchall()
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
-
-    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(tot)}}
+    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
 
 @app.get(f"/{config.vtc_abbr}/dlogs")
 async def getDlogs(request: Request, response: Response, authorization: str = Header(None), \

@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.12.1**  
+1.Added Myth Point  
+2.Changed getting `distance` and `eventpnt` from `driver` table to calculating them with record  
+3.Recoded `/dlog/leaderboard`  
+4.Fixed some bugs  
+
 **v1.11.5**  
 1.Fixed the bug that leaderboard is not loading  
 2.Improved authentication system  

@@ -20,7 +20,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, nam
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT, joints BIGINT)")
-
+cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar

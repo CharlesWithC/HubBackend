@@ -18,7 +18,7 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[division["id"]] = int(division["point"])
+    DIVISIONPNT[int(division["id"])] = int(division["point"])
 
 sroles = tconfig["roles"]
 ROLES = {}
@@ -196,18 +196,17 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
     fuel = 0
     xp = 0
     eventpnt = 0
+    mythpnt = 0
+    divisionpnt = 0
     europrofit = 0
     dollarprofit = 0
-    divisionpnt = 0
     if userid != -1:
         cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
         t = cur.fetchall()
         if len(t) > 0:
             totjobs = t[0][1]
-            distance = int(t[0][2])
             fuel = int(t[0][3])
             xp = int(t[0][4])
-            eventpnt = t[0][5]
 
         cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
         t = cur.fetchall()
@@ -217,16 +216,60 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         t = cur.fetchall()
         if len(t) > 0:
             dollarprofit = 0 if t[0][0] is None else int(t[0][0])
-    
-        cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
+
+        # calculate distance
+        userdistance = {}
+        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
+        t = cur.fetchall()
+        for tt in t:
+            if not tt[0] in userdistance.keys():
+                userdistance[tt[0]] = tt[1]
+            else:
+                userdistance[tt[0]] += tt[1]
+            userdistance[tt[0]] = int(userdistance[tt[0]])
+
+        # calculate event
+        userevent = {}
+        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE attendee LIKE '%,{userid},%'")
+        t = cur.fetchall()
+        for tt in t:
+            attendees = tt[0].split(",")
+            while "" in attendees:
+                attendees.remove("")
+            for ttt in attendees:
+                attendee = int(ttt)
+                if not attendee in userevent.keys():
+                    userevent[attendee] = tt[1]
+                else:
+                    userevent[attendee] += tt[1]
+        
+        # calculate division
+        userdivision = {}
+        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
         o = cur.fetchall()
         for oo in o:
-            if o[0][0] in DIVISIONPNT.keys():
-                divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-        cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
+            if not oo[0] in userdivision.keys():
+                userdivision[oo[0]] = 0
+            if oo[1] in DIVISIONPNT.keys():
+                userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+    
+        # calculate myth
+        usermyth = {}
+        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
         o = cur.fetchall()
-        if len(o) > 0:
-            divisionpnt += o[0][0]
+        for oo in o:
+            if not oo[0] in usermyth.keys():
+                usermyth[oo[0]] = 0
+            usermyth[oo[0]] += oo[1]
+        
+        if userid in userdistance.keys():
+            distance = userdistance[userid]
+        if userid in userevent.keys():
+            eventpnt = userevent[userid]
+        if userid in userdivision.keys():
+            divisionpnt = userdivision[userid]
+        if userid in usermyth.keys():
+            mythpnt = usermyth[userid]
 
     profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
     
@@ -248,7 +291,8 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
             "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
                 "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), \
-                    "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt), "bio": b64d(t[0][7])}}
+                    "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt), "mythpnt": str(mythpnt), \
+                        "totalpnt": str(distance+eventpnt+divisionpnt+mythpnt), "bio": b64d(t[0][7])}}
 
 @app.get(f'/{config.vtc_abbr}/user/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
@@ -326,10 +370,9 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     if division == "":
         division = "N/A"
 
-    cur.execute(f"SELECT distance FROM driver WHERE userid = {userid}")
+    cur.execute(f"SELECT distance FROM dlog WHERE userid = {userid}")
     t = cur.fetchall()
-    distance = 0
-    if len(t) > 0:
+    for tt in t:
         distance = 0 if t[0][0] is None else int(t[0][0])
         if config.distance_unit == "imperial":
             distance = int(distance * 0.621371)
@@ -347,13 +390,21 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         dollarprofit = 0 if t[0][0] is None else int(t[0][0])
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
-    r = requests.post("http://127.0.0.1:8700/banner", data={"vtc_abbr": config.vtc_abbr, \
-        "vtc_name": config.vtc_name, "vtc_logo_link": config.vtc_logo_link, "hex_color": config.hex_color,
-        "discordid": discordid, "since": since, "highest_role": highest_role, \
-            "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit})
-
-    response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
-    return response
+    try:
+        r = requests.post("http://127.0.0.1:8700/banner", data={"vtc_abbr": config.vtc_abbr, \
+            "vtc_name": config.vtc_name, "vtc_logo_link": config.vtc_logo_link, "hex_color": config.hex_color,
+            "discordid": discordid, "since": since, "highest_role": highest_role, \
+                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
+        if r.status_code != 200:
+            response.status_code = r.status_code
+            return {"error": True, "descriptor": r.text}
+            
+        response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
+        return response
+        
+    except:
+        response.status_code = 503
+        return {"error": True, "descriptor": "Service Unavailable"}
 
 @app.post(f'/{config.vtc_abbr}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
@@ -683,7 +734,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     form = await request.form()
     userid = int(form["userid"])
-    distance = int(int(form["distance"]))
+    distance = int(form["distance"])
+    mythpoint = int(form["mythpoint"])
 
     if distance != 0:
         cur.execute(f"UPDATE driver SET distance = distance + {distance} WHERE userid = {userid}")
@@ -692,15 +744,14 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         else:
             cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
         conn.commit()
-
-    cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
-    p = cur.fetchall()
-    udiscordid = p[0][0]
-
+    if mythpoint != 0:
+        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
+        conn.commit()
+    
     if int(distance) > 0:
         distance = "+" + form["distance"]
 
-    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km")
+    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
 
     return {"error": False}
 
@@ -755,24 +806,65 @@ async def patchMemberDiscordRole(request: Request, response: Response, authoriza
     if config.distance_unit == "imperial":
         ratio = 0.621371
 
-    cur.execute(f"SELECT distance, eventpnt FROM driver WHERE userid = {userid}")
+    # calculate distance
+    userdistance = {}
+    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
     t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "member_not_driver")}
-    totalpnt = int(t[0][0] * ratio + t[0][1])
-    divisionpnt = 0
-    cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {userid} AND status = 1 AND logid >= 0 GROUP BY divisionid")
+    for tt in t:
+        if not tt[0] in userdistance.keys():
+            userdistance[tt[0]] = tt[1]
+        else:
+            userdistance[tt[0]] += tt[1]
+        userdistance[tt[0]] = int(userdistance[tt[0]])
+
+    # calculate event
+    userevent = {}
+    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE attendee LIKE '%,{userid},%'")
+    t = cur.fetchall()
+    for tt in t:
+        attendees = tt[0].split(",")
+        while "" in attendees:
+            attendees.remove("")
+        for ttt in attendees:
+            attendee = int(ttt)
+            if not attendee in userevent.keys():
+                userevent[attendee] = tt[1]
+            else:
+                userevent[attendee] += tt[1]
+    
+    # calculate division
+    userdivision = {}
+    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
     o = cur.fetchall()
     for oo in o:
-        if o[0][0] in DIVISIONPNT.keys():
-            divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-    cur.execute(f"SELECT status FROM division WHERE userid = {userid} AND logid = -1")
-    o = cur.fetchall()
-    if len(o) > 0:
-        divisionpnt += o[0][0]
-    totalpnt += divisionpnt
+        if not oo[0] in userdivision.keys():
+            userdivision[oo[0]] = 0
+        if oo[1] in DIVISIONPNT.keys():
+            userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
     
+    # calculate myth
+    usermyth = {}
+    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in usermyth.keys():
+            usermyth[oo[0]] = 0
+        usermyth[oo[0]] += oo[1]
+    
+    distance = 0
+    eventpnt = 0
+    divisionpnt = 0
+    mythpnt = 0
+    if userid in userdistance.keys():
+        distance = userdistance[userid]
+    if userid in userevent.keys():
+        eventpnt = userevent[userid]
+    if userid in userdivision.keys():
+        divisionpnt = userdivision[userid]
+    if userid in usermyth.keys():
+        mythpnt = usermyth[userid]
+
+    totalpnt = distance + eventpnt + divisionpnt + mythpnt
     rank = point2rank(totalpnt)
 
     try:

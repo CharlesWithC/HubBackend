@@ -49,7 +49,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     order = order.upper()
 
     if aid != -1:
-        if aid < 0:
+        if int(aid) < 0:
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
             
@@ -188,7 +188,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     if not channelid.isdigit():
         channleid = 0
 
-    if aid < 0:
+    if int(aid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
@@ -239,7 +239,7 @@ async def deleteAnnouncement(aid: int, request: Request, response: Response, aut
         if int(i) in config.perms.admin or int(i) in config.perms.announcement:
             isAdmin = True
 
-    if aid < 0:
+    if int(aid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")

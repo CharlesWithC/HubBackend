@@ -1188,13 +1188,13 @@
                                         "description": "Distance (km)",
                                         "type": "string"
                                     },
-                                    "eventpnt": {
-                                        "description": "Event points",
+                                    "mythpoint": {
+                                        "description": "Myth Point",
                                         "type": "string"
                                     }
                                 }
                             },
-                            "required": ["userid", "distance", "eventpnt"]
+                            "required": ["userid", "distance", "mythpoint"]
                         }
                     }
                 },
@@ -1402,23 +1402,7 @@
                     },
                     "name": "game",
                     "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "No counting event point",
-                        "type": "boolean"
-                    },
-                    "name": "noevent",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Start Timestamp",
-                        "type": "integer"
-                    },
-                    "name": "starttime",
-                    "in": "query"
-                }, {
+                },  {
                     "required": false,
                     "schema": {
                         "title": "End Timestamp",
@@ -1427,6 +1411,22 @@
                     "name": "endtime",
                     "in": "query"
                 }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Limit types of point to be counted (distance, event, division, myth)",
+                        "type": "string"
+                    },
+                    "name": "limittype",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Start Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "starttime",
+                    "in": "query"
+                },{
                     "required": false,
                     "schema": {
                         "title": "Limit User (Up to 10, separate with ',')",

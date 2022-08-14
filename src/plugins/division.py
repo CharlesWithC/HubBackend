@@ -301,7 +301,7 @@ async def getDivisionInfo(request: Request, response: Response, authorization: s
         username = {}
         for tt in t:
             divisionpnt = 0
-            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[1]} AND status = 1 AND logid >= 0 GROUP BY divisionid")
+            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[1]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
             o = cur.fetchall()
             for oo in o:
                 if o[0][0] in DIVISIONPNT.keys():
