@@ -19,7 +19,6 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, nam
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire BIGINT, reason TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS driver (userid INT, totjobs INT, distance DOUBLE, fuel DOUBLE, xp DOUBLE, eventpnt BIGINT, joints BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -57,31 +56,41 @@ if len(t) == 0:
     cur.execute(f"INSERT INTO settings VALUES (0, 'version', '{version}')")
 cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
 
+indexes = ["CREATE INDEX user_userid ON user (userid)",
+"CREATE INDEX user_discordid ON user (discordid)",
+"CREATE INDEX user_truckersmpid ON user (truckersmpid)",
+"CREATE INDEX user_steamid ON user (steamid)",
+"CREATE INDEX user_password_discordid ON user_password (discordid)",
+"CREATE INDEX user_password_email ON user_password (email)",
+"CREATE INDEX banned_discordid ON banned (discordid)",
+"CREATE INDEX banned_expire ON banned (expire)",
+"CREATE INDEX mythpoint_idx ON banned (userid, timestamp)",
+"CREATE INDEX dlog_logid ON dlog (logid)",
+"CREATE INDEX dlog_userid ON dlog (userid)",
+"CREATE INDEX dlog_navioid ON dlog (navioid)",
+"CREATE INDEX dlog_topspeed ON dlog (topspeed)",
+"CREATE INDEX telemetry_logid ON telemetry (logid)",
+"CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid)",
+"CREATE INDEX temptelemetry_uuid ON temptelemetry (uuid)",
+"CREATE INDEX division_logid ON division (logid)",
+"CREATE INDEX division_userid ON division (userid)",
+"CREATE INDEX division_divisionid ON division (divisionid)",
+"CREATE INDEX announcement_aid ON announcement (aid)",
+"CREATE INDEX application_applicationid ON application (applicationid)",
+"CREATE INDEX application_discordid ON application (discordid)",
+"CREATE INDEX event_eventid ON event (eventid)",
+"CREATE INDEX session_token ON session (token)",
+"CREATE INDEX appsession_token ON appsession (token)",
+"CREATE INDEX ratelimit_ip ON ratelimit (ip)",
+"CREATE INDEX auditlog_userid ON auditlog (userid)",
+"CREATE INDEX settings_discordid ON settings (discordid)"]
+for idx in indexes:
+    try:
+        cur.execute(idx)
+    except:
+        pass
+    
 conn.commit()
-
-# NOTE Those index can only be created manually
-"""
-CREATE INDEX user_userid ON user (userid);
-CREATE INDEX user_discordid ON user (discordid);
-CREATE INDEX auditlog_userid ON auditlog (userid);
-CREATE INDEX application_applicationid ON application (applicationid);
-CREATE INDEX application_discordid ON application (discordid);
-CREATE INDEX session_token ON session (token);
-CREATE INDEX banned_discordid ON banned (discordid);
-CREATE INDEX settings_discordid ON settings (discordid);
-CREATE INDEX driver_userid ON driver (userid);
-CREATE INDEX dlog_logid ON dlog (logid);
-CREATE INDEX dlog_userid ON dlog (userid);
-CREATE INDEX dlog_navioid ON dlog (navioid);
-CREATE INDEX dlog_topspeed ON dlog (topspeed);
-CREATE INDEX division_logid ON division (logid);
-CREATE INDEX division_divisionid ON division (divisionid);
-CREATE INDEX event_eventid ON event (eventid);
-CREATE INDEX telemetry_logid ON telemetry (logid);
-CREATE INDEX telemetry_userid ON telemetry (userid);
-CREATE INDEX temptelemetry_uuidid ON temptelemetry (uuid);
-CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid);
-"""
 del cur
 
 def newconn():

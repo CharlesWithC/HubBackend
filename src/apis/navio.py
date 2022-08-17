@@ -96,7 +96,6 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         name = t[0][1].replace("'", "''")
         discordid = t[0][2]
         await AuditLog(-999, f"Member resigned from Navio: **{name}** (`{discordid}`)")
-        cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         conn.commit()
@@ -162,7 +161,6 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-    cur.execute(f"UPDATE driver SET totjobs = totjobs + 1, distance = distance + {driven_distance}, fuel = fuel + {fuel_used}, xp = xp + {xp} WHERE userid = {userid}")
     cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d))}', {top_speed}, {int(time.time())}, \
         {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
     conn.commit()

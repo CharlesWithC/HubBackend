@@ -3,7 +3,7 @@
 
 from PIL import Image, ImageFont, ImageDraw
 import numpy as np
-import requests, os
+import requests, os, time
 from io import BytesIO
 from datetime import datetime
 from fastapi import FastAPI, Request, Response
@@ -18,6 +18,22 @@ async def banner(request: Request, response: Response):
     vtc_name = form["vtc_name"]
     vtc_logo_link = form["vtc_logo_link"]
     hex_color = form["hex_color"][-6:]
+    discordid = form["discordid"]
+
+    l = os.listdir(f"/tmp/hub/banner")
+    for ll in l:
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 7200:
+            os.remove(f"/tmp/hub/banner/{ll}")
+
+    l = os.listdir(f"/tmp/hub/avatar")
+    for ll in l:
+        if time.time() - os.path.getmtime(f"/tmp/hub/avatar/{ll}") > 86400:
+            os.remove(f"/tmp/hub/avatar/{ll}")
+
+    if os.path.exists(f"/tmp/hub/banner/{discordid}.png"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{discordid}.png") <= 3600:
+            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{discordid}.png","rb").read()]), media_type="image/jpeg")
+            return response
 
     logo = Image.new("RGBA", (400,400),(255,255,255))
     logobg = Image.new("RGB", (3400,3400),(255,255,255))
@@ -26,7 +42,7 @@ async def banner(request: Request, response: Response):
         logo = Image.open(f"/tmp/hub/logo/{vtc_abbr}.png").convert("RGBA")
         logobg = Image.open(f"/tmp/hub/logo/{vtc_abbr}_bg.png").convert("RGB")
     else:
-        r = requests.get(vtc_logo_link, timeout = 10)
+        r = requests.get(vtc_logo_link, timeout = 3)
         if r.status_code == 200:
             vtc_logo = r.content
             vtc_logo = Image.open(BytesIO(vtc_logo)).convert("RGBA")
@@ -51,7 +67,6 @@ async def banner(request: Request, response: Response):
             logo.save(f"/tmp/hub/logo/{vtc_abbr}.png")
             logobg.save(f"/tmp/hub/logo/{vtc_abbr}_bg.png")
 
-    discordid = form["discordid"]
     avatar = form["avatar"]
     avatarid = avatar
     if os.path.exists(f"/tmp/hub/avatar/{discordid}_{avatar}.png"):
@@ -116,8 +131,11 @@ async def banner(request: Request, response: Response):
     draw.text((3400 - 50 - vtcnamelen, 490), f"{vtc_name}", fill=vtccolor, font=usH90)
 
     name = form["name"]
-    while name.startswith(" "):
-        name = name[1:]
+    for _ in range(10):
+        if name.startswith(" "):
+            name = name[1:]
+        else:
+            break
     fontsize = 160
     offset = 0
     namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
@@ -131,8 +149,11 @@ async def banner(request: Request, response: Response):
     draw.text((650, 100 + offset), f"{name}", fill=(0,0,0), font=namefont)
 
     highest_role = form["highest_role"]
-    while highest_role.startswith(" "):
-        highest_role = highest_role[1:]
+    for _ in range(10):
+        if highest_role.startswith(" "):
+            highest_role = highest_role[1:]
+        else:
+            break
     if fontsize >= 120:
         fontsize -= 40
     else:
@@ -155,8 +176,11 @@ async def banner(request: Request, response: Response):
     draw.text((650, 420), f"Since {since}", fill=(0,0,0), font=sincefont)
     # separate line
     draw.line((1700, 50, 1700, 550), fill=vtccolor, width = 20)
-    while division.startswith(" "):
-        division = division[1:]
+    for _ in range(10):
+        if division.startswith(" "):
+            division = division[1:]
+        else:
+            break
     draw.text((1800, 100), f"Division: {division}", fill=(0,0,0), font=coH80)
     draw.text((1800, 220), f"Distance: {distance}", fill=(0,0,0), font=coH80)
     draw.text((1800, 340), f"Income: {profit}", fill=(0,0,0), font=coH80)
@@ -164,6 +188,7 @@ async def banner(request: Request, response: Response):
     # output
     output = BytesIO()
     banner.save(output, "jpeg")
+    open(f"/tmp/hub/banner/{discordid}.png","wb").write(output.getvalue())
     
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
     return response

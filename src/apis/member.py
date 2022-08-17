@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from fastapi.responses import StreamingResponse
-from discord import Webhook
+from discord import Webhook, Embed
 from aiohttp import ClientSession
 from typing import Optional
 from datetime import datetime
@@ -190,88 +190,6 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     userid = t[0][0]
     discordid = t[0][1]
-
-    distance = 0
-    totjobs = 0
-    fuel = 0
-    xp = 0
-    eventpnt = 0
-    mythpnt = 0
-    divisionpnt = 0
-    europrofit = 0
-    dollarprofit = 0
-    if userid != -1:
-        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
-        t = cur.fetchall()
-        if len(t) > 0:
-            totjobs = t[0][1]
-            fuel = int(t[0][3])
-            xp = int(t[0][4])
-
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
-        t = cur.fetchall()
-        if len(t) > 0:
-            europrofit = 0 if t[0][0] is None else int(t[0][0])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
-        t = cur.fetchall()
-        if len(t) > 0:
-            dollarprofit = 0 if t[0][0] is None else int(t[0][0])
-
-        # calculate distance
-        userdistance = {}
-        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
-        t = cur.fetchall()
-        for tt in t:
-            if not tt[0] in userdistance.keys():
-                userdistance[tt[0]] = tt[1]
-            else:
-                userdistance[tt[0]] += tt[1]
-            userdistance[tt[0]] = int(userdistance[tt[0]])
-
-        # calculate event
-        userevent = {}
-        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE attendee LIKE '%,{userid},%'")
-        t = cur.fetchall()
-        for tt in t:
-            attendees = tt[0].split(",")
-            while "" in attendees:
-                attendees.remove("")
-            for ttt in attendees:
-                attendee = int(ttt)
-                if not attendee in userevent.keys():
-                    userevent[attendee] = tt[1]
-                else:
-                    userevent[attendee] += tt[1]
-        
-        # calculate division
-        userdivision = {}
-        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
-        o = cur.fetchall()
-        for oo in o:
-            if not oo[0] in userdivision.keys():
-                userdivision[oo[0]] = 0
-            if oo[1] in DIVISIONPNT.keys():
-                userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
-    
-        # calculate myth
-        usermyth = {}
-        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
-        o = cur.fetchall()
-        for oo in o:
-            if not oo[0] in usermyth.keys():
-                usermyth[oo[0]] = 0
-            usermyth[oo[0]] += oo[1]
-        
-        if userid in userdistance.keys():
-            distance = userdistance[userid]
-        if userid in userevent.keys():
-            eventpnt = userevent[userid]
-        if userid in userdivision.keys():
-            divisionpnt = userdivision[userid]
-        if userid in usermyth.keys():
-            mythpnt = usermyth[userid]
-
-    profit = {"euro": str(europrofit), "dollar": str(dollarprofit)}
     
     cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -288,11 +206,8 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         email = ""
 
     return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-        "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
-            "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
-                "distance": str(distance), "totjobs": str(totjobs), "fuel": str(fuel), "xp": str(xp), \
-                    "profit": profit, "eventpnt": str(eventpnt), "divisionpnt": str(divisionpnt), "mythpnt": str(mythpnt), \
-                        "totalpnt": str(distance+eventpnt+divisionpnt+mythpnt), "bio": b64d(t[0][7])}}
+        "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
+        "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
 
 @app.get(f'/{config.vtc_abbr}/user/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
@@ -370,7 +285,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     if division == "":
         division = "N/A"
 
-    cur.execute(f"SELECT distance FROM dlog WHERE userid = {userid}")
+    distance = 0
+    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
     t = cur.fetchall()
     for tt in t:
         distance = 0 if t[0][0] is None else int(t[0][0])
@@ -496,7 +412,6 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     steamid = t[0][0]
-    cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
@@ -549,7 +464,6 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
 
-    cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
@@ -649,11 +563,6 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
 
     if config.perms.driver[0] in addedroles:
-        cur.execute(f"SELECT * FROM driver WHERE userid = {userid}")
-        p = cur.fetchall()
-        if len(p) == 0:
-            cur.execute(f"INSERT INTO driver VALUES ({userid}, 0, 0, 0, 0, 0, {int(time.time())})")
-            conn.commit()
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
         
         cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
@@ -665,7 +574,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             try:
                 async with ClientSession() as session:
                     webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
-                    embed = discord.Embed(title = "Team Update", description = config.webhook_teamupdate_message.replace("{mention}", usermention).replace("{vtcname}", config.vtc_name), color = config.rgbcolor)
+                    embed = Embed(title = "Team Update", description = config.webhook_teamupdate_message.replace("{mention}", usermention).replace("{vtcname}", config.vtc_name), color = config.rgbcolor)
                     embed.set_footer(text = f"{config.vtc_name} | Team Update", icon_url = config.vtc_logo_link)
                     if config.team_update_image_link != "":
                         embed.set_image(url = config.team_update_image_link)
@@ -689,7 +598,6 @@ async def setMemberRole(request: Request, response: Response, authorization: str
                     requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
 
     if config.perms.driver[0] in removedroles:
-        cur.execute(f"UPDATE driver SET userid = -userid WHERE userid = {userid}")
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
@@ -738,7 +646,6 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     mythpoint = int(form["mythpoint"])
 
     if distance != 0:
-        cur.execute(f"UPDATE driver SET distance = distance + {distance} WHERE userid = {userid}")
         if distance > 0:
             cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
         else:

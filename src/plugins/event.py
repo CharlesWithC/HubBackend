@@ -411,7 +411,6 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             continue
         ret1 += f"{t[0][0]}, "
         cnt += 1
-        cur.execute(f"UPDATE driver SET eventpnt = eventpnt + {points} WHERE userid = {attendee}")
     ret1 = ret1[:-2]
     ret1 += f" {points} event points.\n"
     if cnt > 0:
@@ -427,7 +426,6 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             if len(t) == 0:
                 continue
             ret2 += f"{t[0][0]}, "
-            cur.execute(f"UPDATE driver SET eventpnt = eventpnt - {points} WHERE userid = {attendee}")
             cnt += 1
     ret2 = ret2[:-2]
     if cnt > 0:

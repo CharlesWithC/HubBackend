@@ -24,6 +24,8 @@ if __name__ == "__main__":
 
     if not os.path.exists("/tmp/hub"):
         os.mkdir("/tmp/hub")
+    if not os.path.exists("/tmp/hub/banner"):
+        os.mkdir("/tmp/hub/banner")
     if not os.path.exists("/tmp/hub/logo"):
         os.mkdir("/tmp/hub/logo")
     if not os.path.exists("/tmp/hub/avatar"):

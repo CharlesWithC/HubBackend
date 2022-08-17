@@ -3,6 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
+from discord import Webhook, Embed
 from datetime import datetime
 from aiohttp import ClientSession
 import json, time, requests
@@ -121,7 +122,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
             async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_division, session=session)
 
-                embed = discord.Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = config.rgbcolor)
+                embed = Embed(title = f"New Division Validation Request for Delivery #{logid}", description = msg, color = config.rgbcolor)
                 if t[0][1].startswith("a_"):
                     embed.set_author(name = tt[1], icon_url = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif")
                 else:

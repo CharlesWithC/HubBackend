@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.12.2**  
+1.Added cache for `/dlog/stats` (5min), `/dlog/leaderboard` (5min), `/user/banner` (1hr)  
+2.Removed statistics in `/user`  
+3.Removed `driver` table  
+4.Improved database index creation  
+5.Fixed some bugs  
+
 **v1.12.1**  
 1.Added Myth Point  
 2.Changed getting `distance` and `eventpnt` from `driver` table to calculating them with record  

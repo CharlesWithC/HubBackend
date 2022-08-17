@@ -17,15 +17,17 @@ DIVISIONPNT = {}
 for division in config.divisions:
     DIVISIONPNT[int(division["id"])] = int(division["point"])
 
+# cache (works in each worker process)
+cstats = {}
+cleaderboard = {}
+cnlleaderboard = {}
+
 @app.get(f"/{config.vtc_abbr}/dlog/stats")
 async def getDlogStats(request: Request, response: Response, starttime: Optional[int] = -1, endtime: Optional[int] = -1, userid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/stats', 180, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    conn = newconn()
-    cur = conn.cursor()
 
     if starttime == -1 or endtime == -1:
         starttime = 0
@@ -34,18 +36,48 @@ async def getDlogStats(request: Request, response: Response, starttime: Optional
     quser = ""
     if userid != -1:
         if config.privacy:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            au = auth(authorization, request, allow_application_token = True)
+            if au["error"]:
+                response.status_code = 401
+                return au
         quser = f"userid = {userid} AND"
+
+    # cache
+    global cstats
+    l = list(cstats.keys())
+    for ll in l:
+        if ll < int(time.time()) - 300:
+            del cstats[ll]
+        else:
+            tt = cstats[ll]
+            for t in tt:
+                if abs(t["starttime"] - starttime) <= 300 and abs(t["endtime"] - endtime) <= 300 and t["userid"] == userid:
+                    ret = t["result"]
+                    ret["cache"] = str(ll)
+                    return {"error": False, "response": ret}
+
+    conn = newconn()
+    cur = conn.cursor()
 
     ret = {}
     # driver
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE {quser} userid >= 0 AND joints <= {endtime}")
-    totdrivers = cur.fetchone()[0]
-    totdrivers = 0 if totdrivers is None else int(totdrivers)
-    cur.execute(f"SELECT COUNT(*) FROM driver WHERE {quser} userid >= 0 AND joints >= {starttime} AND joints <= {endtime}")
-    newdrivers = cur.fetchone()[0]
-    newdrivers = 0 if newdrivers is None else int(newdrivers)
+    totdid = []
+    newdid = []
+    totdrivers = 0
+    newdrivers = 0
+    for rid in config.perms.driver:
+        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND joints <= {endtime} AND roles LIKE '%,{rid},%'")
+        t = cur.fetchall()
+        for tt in t:
+            if not tt[0] in totdid:
+                totdid.append(tt[0])
+                totdrivers += 1
+        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND joints >= {starttime} AND joints <= {endtime} AND roles LIKE '%,{rid},%'")
+        t = cur.fetchall()
+        for tt in t:
+            if not tt[0] in newdid:
+                newdid.append(tt[0])
+                newdrivers += 1
 
     ret["driver"] = {"tot": str(totdrivers), "new": str(newdrivers)}
     
@@ -167,6 +199,13 @@ async def getDlogStats(request: Request, response: Response, starttime: Optional
     
     ret["profit"] = {"all": allprofit, "delivered": deliveredprofit, "cancelled": cancelledprofit}
 
+    ts = int(time.time())
+    if not ts in cstats.keys():
+        cstats[ts] = []
+    cstats[ts].append({"starttime": starttime, "endtime": endtime, "userid": userid, "result": ret})
+
+    ret["cache"] = "-1"
+
     return {"error": False, "response": ret}
 
 @app.get(f"/{config.vtc_abbr}/dlog/chart")
@@ -274,11 +313,70 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     if au["error"]:
         response.status_code = 401
         return au
-    
-    debug_start = time.time()
+
+    usecache = False
+    nlusecache = False
+    cachetime = -1
+    nlcachetime = -1
+
+    userdistance = {}
+    userevent = {}
+    userdivision = {}
+    usermyth = {}
+
+    nluserdistance = {}
+    nluserevent = {}
+    nluserdivision = {}
+    nlusermyth = {}
+    nlusertot = {}
+    nlusertot_id = []
+    nlrank = 1
+    nluserrank = {}
+
+    # cache
+    global cleaderboard
+    l = list(cleaderboard.keys())
+    for ll in l:
+        if ll < int(time.time()) - 300:
+            del cleaderboard[ll]
+        else:
+            tt = cleaderboard[ll]
+            for t in tt:
+                if abs(t["starttime"] - starttime) <= 300 and abs(t["endtime"] - endtime) <= 300 and \
+                        t["speedlimit"] == speedlimit and t["game"] == game:
+                    usecache = True
+                    cachetime = ll
+                    userdistance = t["userdistance"]
+                    userevent = t["userevent"]
+                    userdivision = t["userdivision"]
+                    usermyth = t["usermyth"]
+                    break
+    global cnlleaderboard
+    l = list(cnlleaderboard.keys())
+    for ll in l:
+        if ll < int(time.time()) - 300:
+            del cnlleaderboard[ll]
+        else:
+            t = cnlleaderboard[ll]
+            nlusecache = True
+            nlcachetime = ll
+            nluserdistance = t["nluserdistance"]
+            nluserevent = t["nluserevent"]
+            nluserdivision = t["nluserdivision"]
+            nlusermyth = t["nlusermyth"]
+            nlusertot = t["nlusertot"]
+            nlusertot_id = list(nlusertot.keys())[::-1]
+            nlrank = t["nlrank"]
+            nluserrank = t["nluserrank"]
 
     conn = newconn()
     cur = conn.cursor()
+
+    allusers = []
+    cur.execute(f"SELECT userid FROM user WHERE userid >= 0")
+    t = cur.fetchall()
+    for tt in t:
+        allusers.append(tt[0])
 
     ratio = 1
     if config.distance_unit == "imperial":
@@ -301,64 +399,63 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     gamelimit = ""
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
-
-    ##### WITH LIMIT (Parameter)
-    # calculate distance
-    userdistance = {}
-    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} {limit} {gamelimit} GROUP BY userid")
-    t = cur.fetchall()
-    for tt in t:
-        if not tt[0] in userdistance.keys():
-            userdistance[tt[0]] = tt[1]
-        else:
-            userdistance[tt[0]] += tt[1]
-        userdistance[tt[0]] = int(userdistance[tt[0]])
-
-    # calculate event
-    userevent = {}
-    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
-    t = cur.fetchall()
-    for tt in t:
-        attendees = tt[0].split(",")
-        while "" in attendees:
-            attendees.remove("")
-        for ttt in attendees:
-            attendee = int(ttt)
-            if not attendee in userevent.keys():
-                userevent[attendee] = tt[1]
+    
+    if not usecache:
+        ##### WITH LIMIT (Parameter)
+        # calculate distance
+        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {starttime} AND timestamp <= {endtime} {limit} {gamelimit} GROUP BY userid")
+        t = cur.fetchall()
+        for tt in t:
+            if not tt[0] in userdistance.keys():
+                userdistance[tt[0]] = tt[1]
             else:
-                userevent[attendee] += tt[1]
-    
-    # calculate division
-    cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid ASC")
-    t = cur.fetchall()
-    firstlogid = 0
-    if len(t) > 0:
-        firstlogid = t[0][0]
+                userdistance[tt[0]] += tt[1]
+            userdistance[tt[0]] = int(userdistance[tt[0]])
 
-    cur.execute(f"SELECT logid FROM dlog WHERE timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid DESC")
-    t = cur.fetchall()
-    lastlogid = 100000000
-    if len(t) > 0:
-        lastlogid = t[0][0]
-    
-    userdivision = {}
-    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
-    o = cur.fetchall()
-    for oo in o:
-        if not oo[0] in userdivision.keys():
-            userdivision[oo[0]] = 0
-        if oo[1] in DIVISIONPNT.keys():
-            userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
-    
-    # calculate myth
-    usermyth = {}
-    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE timestamp >= {starttime} AND timestamp <= {endtime} GROUP BY userid")
-    o = cur.fetchall()
-    for oo in o:
-        if not oo[0] in usermyth.keys():
-            usermyth[oo[0]] = 0
-        usermyth[oo[0]] += oo[1]
+        # calculate event
+        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {starttime} AND dts <= {endtime}")
+        t = cur.fetchall()
+        for tt in t:
+            attendees = tt[0].split(",")
+            while "" in attendees:
+                attendees.remove("")
+            for ttt in attendees:
+                attendee = int(ttt)
+                if not attendee in allusers:
+                    continue
+                if not attendee in userevent.keys():
+                    userevent[attendee] = tt[1]
+                else:
+                    userevent[attendee] += tt[1]
+        
+        # calculate division
+        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid ASC")
+        t = cur.fetchall()
+        firstlogid = 0
+        if len(t) > 0:
+            firstlogid = t[0][0]
+
+        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND timestamp >= {starttime} AND timestamp <= {endtime} ORDER BY logid DESC")
+        t = cur.fetchall()
+        lastlogid = 100000000
+        if len(t) > 0:
+            lastlogid = t[0][0]
+        
+        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in userdivision.keys():
+                userdivision[oo[0]] = 0
+            if oo[1] in DIVISIONPNT.keys():
+                userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+        
+        # calculate myth
+        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {starttime} AND timestamp <= {endtime} GROUP BY userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in usermyth.keys():
+                usermyth[oo[0]] = 0
+            usermyth[oo[0]] += oo[1]
 
     # calculate total point
     limittype = limittype.split(",")
@@ -382,89 +479,102 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         if "myth" in limittype:
             usertot[k] += usermyth[k]
 
-    ##### WITHOUT LIMIT
-    # calculate distance
-    nluserdistance = {}
-    cur.execute(f"SELECT userid, SUM(distance) FROM dlog GROUP BY userid")
-    t = cur.fetchall()
-    for tt in t:
-        if not tt[0] in nluserdistance.keys():
-            nluserdistance[tt[0]] = tt[1]
-        else:
-            nluserdistance[tt[0]] += tt[1]
-        nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
-
-    # calculate event
-    nluserevent = {}
-    cur.execute(f"SELECT attendee, eventpnt FROM event")
-    t = cur.fetchall()
-    for tt in t:
-        attendees = tt[0].split(",")
-        while "" in attendees:
-            attendees.remove("")
-        for ttt in attendees:
-            attendee = int(ttt)
-            if not attendee in nluserevent.keys():
-                nluserevent[attendee] = tt[1]
-            else:
-                nluserevent[attendee] += tt[1]
-    
-    # calculate division    
-    nluserdivision = {}
-    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 GROUP BY divisionid, userid")
-    o = cur.fetchall()
-    for oo in o:
-        if not oo[0] in nluserdivision.keys():
-            nluserdivision[oo[0]] = 0
-        if oo[1] in DIVISIONPNT.keys():
-            nluserdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
-    
-    # calculate myth
-    nlusermyth = {}
-    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint GROUP BY userid")
-    o = cur.fetchall()
-    for oo in o:
-        if not oo[0] in nlusermyth.keys():
-            nlusermyth[oo[0]] = 0
-        nlusermyth[oo[0]] += oo[1]
-
-    # calculate total point
-    nlusertot = {}
-    for k in nluserdistance.keys():
-        nlusertot[k] = round(nluserdistance[k] * ratio)
-    for k in nluserevent.keys():
-        if not k in nlusertot.keys():
-            nlusertot[k] = 0
-        nlusertot[k] += nluserevent[k]
-    for k in nluserdivision.keys():
-        if not k in nlusertot.keys():
-            nlusertot[k] = 0
-        nlusertot[k] += nluserdivision[k]
-    for k in nlusermyth.keys():
-        if not k in nlusertot.keys():
-            nlusertot[k] = 0
-        nlusertot[k] += nlusermyth[k]
-
     usertot = dict(sorted(usertot.items(),key=lambda x:x[1]))
     usertot_id = list(usertot.keys())[::-1]
-    nlusertot = dict(sorted(nlusertot.items(),key=lambda x:x[1]))
-    nlusertot_id = list(nlusertot.keys())[::-1]
 
     # calculate rank
     userrank = {}
-    rank = 1
-    lastpnt = 0
+    rank = 0
+    lastpnt = -1
     for userid in usertot_id:
-        userrank[userid] = rank
         if lastpnt != usertot[userid]:
             rank += 1
-    nluserrank = {}
-    nlrank = 1
-    lastpnt = 0
-    for userid in nlusertot_id:
-        nluserrank[userid] = nlrank
-        if lastpnt != nlusertot[userid]:
-            nlrank += 1
+            lastpnt = usertot[userid]
+        userrank[userid] = rank
+        usertot[userid] = int(usertot[userid])
+    for userid in allusers:
+        if not userid in userrank.keys():
+            userrank[userid] = rank
+            usertot[userid] = 0
+
+    if not nlusecache:
+        ##### WITHOUT LIMIT
+        # calculate distance
+        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
+        t = cur.fetchall()
+        for tt in t:
+            if not tt[0] in nluserdistance.keys():
+                nluserdistance[tt[0]] = tt[1]
+            else:
+                nluserdistance[tt[0]] += tt[1]
+            nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
+
+        # calculate event
+        cur.execute(f"SELECT attendee, eventpnt FROM event")
+        t = cur.fetchall()
+        for tt in t:
+            attendees = tt[0].split(",")
+            while "" in attendees:
+                attendees.remove("")
+            if not attendee in allusers:
+                continue
+            for ttt in attendees:
+                attendee = int(ttt)
+                if not attendee in nluserevent.keys():
+                    nluserevent[attendee] = tt[1]
+                else:
+                    nluserevent[attendee] += tt[1]
+        
+        # calculate division    
+        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in nluserdivision.keys():
+                nluserdivision[oo[0]] = 0
+            if oo[1] in DIVISIONPNT.keys():
+                nluserdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+        
+        # calculate myth
+        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in nlusermyth.keys():
+                nlusermyth[oo[0]] = 0
+            nlusermyth[oo[0]] += oo[1]
+
+        # calculate total point
+        for k in nluserdistance.keys():
+            nlusertot[k] = round(nluserdistance[k] * ratio)
+        for k in nluserevent.keys():
+            if not k in nlusertot.keys():
+                nlusertot[k] = 0
+            nlusertot[k] += nluserevent[k]
+        for k in nluserdivision.keys():
+            if not k in nlusertot.keys():
+                nlusertot[k] = 0
+            nlusertot[k] += nluserdivision[k]
+        for k in nlusermyth.keys():
+            if not k in nlusertot.keys():
+                nlusertot[k] = 0
+            nlusertot[k] += nlusermyth[k]
+
+        nlusertot = dict(sorted(nlusertot.items(),key=lambda x:x[1]))
+        nlusertot_id = list(nlusertot.keys())[::-1]
+
+        # calculate rank
+        nluserrank = {}
+        nlrank = 0
+        lastpnt = -1
+        for userid in nlusertot_id:
+            if lastpnt != nlusertot[userid]:
+                nlrank += 1
+                lastpnt = nlusertot[userid]
+            nluserrank[userid] = nlrank
+            nlusertot[userid] = int(nlusertot[userid])
+        for userid in allusers:
+            if not userid in nluserrank.keys():
+                nluserrank[userid] = nlrank
+                nlusertot[userid] = 0
 
     ret = []
     withpoint = []
@@ -566,13 +676,22 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             ret.append({"userid": str(userid), "rank": str(rank), "name": name, "discordid": str(discordid), "avatar": avatar, \
                 "distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)})
 
-    debug_end = time.time()
-    print(f"Leaderboard load took {int((debug_end - debug_start)*1000)}ms")
+    if not usecache:
+        ts = int(time.time())
+        if not ts in cleaderboard.keys():
+            cleaderboard[ts] = []
+        cleaderboard[ts].append({"starttime": starttime, "endtime": endtime, "speedlimit": speedlimit, "game": game,\
+            "userdistance": userdistance, "userevent": userevent, "userdivision": userdivision, "usermyth": usermyth})
+
+    if not nlusecache:
+        ts = int(time.time())
+        cnlleaderboard[ts]={"nluserdistance": nluserdistance, "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nlusermyth": nlusermyth, \
+            "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
 
     if (page - 1) * pagelimit >= len(ret):
-        return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret))}}
+        return {"error": False, "response": {"list": [], "page": str(page), "tot": str(len(ret)), "cache": str(cachetime), "cache_no_limit": str(nlcachetime)}}
 
-    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
+    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret)), "cache": str(cachetime), "cache_no_limit": str(nlcachetime)}}
 
 @app.get(f"/{config.vtc_abbr}/dlogs")
 async def getDlogs(request: Request, response: Response, authorization: str = Header(None), \

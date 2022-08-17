@@ -35,6 +35,7 @@ ExecStart="""+hubbase+"""/launcher tracker main {}
 [Install]
 WantedBy=default.target"""
 
+# bannergen might stuck randomly so restart every 30 minutes
 bgenconf = """[Unit]
 Description=Drivers Hub Banner Generator
 After=network.target
@@ -43,7 +44,8 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=always
-RestartSec=60
+RestartSec=5
+RuntimeMaxSec=1800s
 ExecStart="""+hubbase+"""/launcher bannergen main
 
 [Install]
