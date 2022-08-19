@@ -516,10 +516,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             attendees = tt[0].split(",")
             while "" in attendees:
                 attendees.remove("")
-            if not attendee in allusers:
-                continue
             for ttt in attendees:
                 attendee = int(ttt)
+                if not attendee in allusers:
+                    continue
                 if not attendee in nluserevent.keys():
                     nluserevent[attendee] = tt[1]
                 else:
@@ -575,6 +575,18 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             if not userid in nluserrank.keys():
                 nluserrank[userid] = nlrank
                 nlusertot[userid] = 0
+
+    # order by usertot first, if usertot is the same, then order by nlusertot, if nlusertot is the same, then order by userid
+    s = []
+    for userid in nlusertot_id:
+        if userid in usertot_id:
+            s.append((userid, -usertot[userid], -nlusertot[userid]))
+        else:
+            s.append((userid, 0, -nlusertot[userid]))
+    s.sort(key=lambda t: (t[1], t[2], t[0]))
+    usertot_id = []
+    for ss in s:
+        usertot_id.append(ss[0])
 
     ret = []
     withpoint = []

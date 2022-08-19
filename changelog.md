@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.12.3**  
+Improved leaderboard ordering  
+
 **v1.12.2**  
 1.Added cache for `/dlog/stats` (5min), `/dlog/leaderboard` (5min), `/user/banner` (1hr)  
 2.Removed statistics in `/user`  
