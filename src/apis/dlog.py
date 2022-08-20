@@ -23,7 +23,9 @@ cleaderboard = {}
 cnlleaderboard = {}
 
 @app.get(f"/{config.vtc_abbr}/dlog/stats")
-async def getDlogStats(request: Request, response: Response, starttime: Optional[int] = -1, endtime: Optional[int] = -1, userid: Optional[int] = -1):
+async def getDlogStats(request: Request, response: Response, \
+        starttime: Optional[int] = -1, endtime: Optional[int] = -1, userid: Optional[int] = -1, \
+            authorization: Optional[str] = Header(None)):
     rl = ratelimit(request.client.host, 'GET /dlog/stats', 180, 60)
     if rl > 0:
         response.status_code = 429
@@ -46,12 +48,12 @@ async def getDlogStats(request: Request, response: Response, starttime: Optional
     global cstats
     l = list(cstats.keys())
     for ll in l:
-        if ll < int(time.time()) - 300:
+        if ll < int(time.time()) - 120:
             del cstats[ll]
         else:
             tt = cstats[ll]
             for t in tt:
-                if abs(t["starttime"] - starttime) <= 300 and abs(t["endtime"] - endtime) <= 300 and t["userid"] == userid:
+                if abs(t["starttime"] - starttime) <= 120 and abs(t["endtime"] - endtime) <= 120 and t["userid"] == userid:
                     ret = t["result"]
                     ret["cache"] = str(ll)
                     return {"error": False, "response": ret}
@@ -337,12 +339,12 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     global cleaderboard
     l = list(cleaderboard.keys())
     for ll in l:
-        if ll < int(time.time()) - 300:
+        if ll < int(time.time()) - 120:
             del cleaderboard[ll]
         else:
             tt = cleaderboard[ll]
             for t in tt:
-                if abs(t["starttime"] - starttime) <= 300 and abs(t["endtime"] - endtime) <= 300 and \
+                if abs(t["starttime"] - starttime) <= 120 and abs(t["endtime"] - endtime) <= 120 and \
                         t["speedlimit"] == speedlimit and t["game"] == game:
                     usecache = True
                     cachetime = ll
@@ -354,7 +356,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     global cnlleaderboard
     l = list(cnlleaderboard.keys())
     for ll in l:
-        if ll < int(time.time()) - 300:
+        if ll < int(time.time()) - 120:
             del cnlleaderboard[ll]
         else:
             t = cnlleaderboard[ll]

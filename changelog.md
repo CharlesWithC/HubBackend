@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.12.4**  
+1.Fixed 500 error on `/dlog/stats` when `config.privacy = true`  
+2.Added Discord Login requirement to `/user/discord`, `/user/connection`, `/user/delete`, `/member/dismiss`, `/member/resign`  
+3.Reduced cache expire time from 300 seconds to 120 seconds for `/dlog/stats` and `/dlog/leaderboard`  
+
 **v1.12.3**  
 Improved leaderboard ordering  
 

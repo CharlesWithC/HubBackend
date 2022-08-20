@@ -187,6 +187,11 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         response.status_code = 401
         return au
     adminid = au["userid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -235,6 +240,11 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         response.status_code = 401
         return au
     adminid = au["userid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -271,6 +281,11 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         response.status_code = 401
         return au
     adminid = au["userid"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()

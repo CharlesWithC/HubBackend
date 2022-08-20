@@ -11,7 +11,7 @@ from sys import exit
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.12.3"
+version = "v1.12.4"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

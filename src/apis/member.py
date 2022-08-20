@@ -405,6 +405,11 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     discordid = au["discordid"]
     userid = au["userid"]
     name = au["name"].replace("'", "''")
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -435,6 +440,11 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     discordid = au["discordid"]
     adminid = au["userid"]
     adminroles = au["roles"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
 
     conn = newconn()
     cur = conn.cursor()
