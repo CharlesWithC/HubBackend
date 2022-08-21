@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.12.5**  
+1.Fixed 500 error on `/user` when `config.privacy = false` and no authorization header is provided  
+2.Fixed `/member/steam` showing non-member information  
+
 **v1.12.4**  
 1.Fixed 500 error on `/dlog/stats` when `config.privacy = true`  
 2.Added Discord Login requirement to `/user/discord`, `/user/connection`, `/user/delete`, `/member/dismiss`, `/member/resign`  

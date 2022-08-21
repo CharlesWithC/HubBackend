@@ -153,11 +153,13 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
             selfq = True
     else:
         au = auth(authorization, request, allow_application_token = True)
-        if au["error"] and config.privacy:
-            response.status_code = 401
-            return au
-        udiscordid = au["discordid"]
-        roles = au["roles"]
+        if au["error"]:
+            if config.privacy:
+                response.status_code = 401
+                return au
+        else:
+            udiscordid = au["discordid"]
+            roles = au["roles"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -201,9 +203,9 @@ async def getMemberInfo(request: Request, response: Response, authorization: str
         roles.remove("")
     roles = [int(i) for i in roles]
 
-    email = t[0][8]
-    if not isAdmin and not isHR and udiscordid != t[0][0]:
-        email = ""
+    email = ""
+    if isAdmin or isHR or udiscordid == t[0][0]:
+        email = t[0][8]
 
     return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
         "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
@@ -688,7 +690,7 @@ async def getMemberSteam(request: Request, response: Response, authorization: st
     conn = newconn()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT steamid, name, userid FROM user")
+    cur.execute(f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
     t = cur.fetchall()
     ret = []
     for tt in t:
