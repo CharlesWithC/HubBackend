@@ -1,6 +1,12 @@
 # Drivers Hub: Backend
 
-Author: [@CharlesWithC](https://charlws.com)  
+```
+    ____       _                         __  __      __  
+   / __ \_____(_)   _____  __________   / / / /_  __/ /_   
+  / / / / ___/ / | / / _ \/ ___/ ___/  / /_/ / / / / __ \  
+ / /_/ / /  / /| |/ /  __/ /  (__  )  / __  / /_/ / /_/ /  
+/_____/_/  /_/ |___/\___/_/  /____/  /_/ /_/\__,_/_.___/  
+```
 
 **Features:**  
 1.Discord OAuth2 Login + Steam & TruckersMP Account Connection  
@@ -9,7 +15,7 @@ Author: [@CharlesWithC](https://charlws.com)
 4.Automatic profile banner  
 5.Multiple languages  
 6.Editable config  
-7.Plugin system: Official and external. Official plugins are compiled into executive files, and external plugins can be loaded directly without the need to recompile the source code!  
+7.Plugin system  
 
 **Official Plugins**  
 Announcement, Application, Banner, Division, Downloads, Event  
@@ -28,3 +34,5 @@ returns `{error: bool, discordid: int, userid: int, name: str, roles: list, appl
 2.Rate limit  
 `ratelimit(ip, endpoint, limittime, limitcnt)`  
 returns `rate_limit_timeout: int`  
+
+&copy; 2022 [CharlesWithC](https://charlws.com)  

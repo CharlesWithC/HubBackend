@@ -3,6 +3,7 @@
     "vtc_name": "",
     "distance_unit": "metric",
     "truckersmp_bind": true,
+    "privacy": false,
     "hex_color": "FFFFFF",
     "vtc_logo_link": "https://{domain}/images/logo.png",
     "team_update_image_link": "https://{domain}/images/TeamUpdate.png",
