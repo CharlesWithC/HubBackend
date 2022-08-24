@@ -2,7 +2,6 @@
 # Author: @CharlesWithC
 
 from PIL import Image, ImageFont, ImageDraw
-import numpy as np
 import requests, os, time
 from io import BytesIO
 from datetime import datetime
@@ -45,33 +44,35 @@ async def banner(request: Request, response: Response):
         r = requests.get(vtc_logo_link, timeout = 3)
         if r.status_code == 200:
             vtc_logo = r.content
-            vtc_logo = Image.open(BytesIO(vtc_logo)).convert("RGBA")
+            try: # in case image is invalid
+                vtc_logo = Image.open(BytesIO(vtc_logo)).convert("RGBA")
+                logo = vtc_logo
+                logobg = vtc_logo
+                lnd = []
+                lbnd = []
+                datas = vtc_logo.getdata()
+                for item in datas:
+                    lnd.append(item) # use original logo for small one
+                    if item[3] == 0:
+                        lbnd.append((255,255,255,255))
+                    else:
+                        lbnd.append((int(0.85*255+0.15*item[3]/255*item[0]), \
+                            int(0.85*255+0.15*item[3]/255*item[1]), int(0.85*255+0.15*item[3]/255*item[2]), 255))
+                    # use 85% transparent logo for background (with white background)
+                logo.putdata(lnd)
+                logo = logo.resize((400, 400), resample=Image.ANTIALIAS).convert("RGBA")
+                logobg.putdata(lbnd)
+                logobg = logobg.resize((3400, 3400), resample=Image.ANTIALIAS).convert("RGB")
 
-            logo = vtc_logo
-            logobg = vtc_logo
-            lnd = []
-            lbnd = []
-            datas = vtc_logo.getdata()
-            for item in datas:
-                if item[3] == 0:
-                    lnd.append((255, 255, 255, 255))
-                    lbnd.append((255, 255, 255, 255))
-                else:
-                    lnd.append((item[0], item[1], item[2], 255))
-                    lbnd.append((int(0.85*255+0.15*item[0]), int(0.85*255+0.15*item[1]), int(0.85*255+0.15*item[2]), 255))
-            logo.putdata(lnd)
-            logo = logo.resize((400, 400), resample=Image.ANTIALIAS).convert("RGBA")
-            logobg.putdata(lbnd)
-            logobg = logobg.resize((3400, 3400), resample=Image.ANTIALIAS).convert("RGB")
-
-            logo.save(f"/tmp/hub/logo/{vtc_abbr}.png")
-            logobg.save(f"/tmp/hub/logo/{vtc_abbr}_bg.png")
+                logo.save(f"/tmp/hub/logo/{vtc_abbr}.png", optimize = True)
+                logobg.save(f"/tmp/hub/logo/{vtc_abbr}_bg.png", optimize = True)
+            except:
+                pass
 
     avatar = form["avatar"]
     avatarid = avatar
     if os.path.exists(f"/tmp/hub/avatar/{discordid}_{avatar}.png"):
         avatar = Image.open(f"/tmp/hub/avatar/{discordid}_{avatar}.png")
-        avatar = avatar.getdata()
     else:
         # pre-process avatar
         avatarurl = ""
@@ -80,40 +81,55 @@ async def banner(request: Request, response: Response):
         else:
             avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
         r = requests.get(avatarurl, timeout=3)
-        if r.status_code == 200:
-            avatar = Image.open(BytesIO(r.content)).resize((500, 500)).convert("RGB")
-        else:
-            avatar = logo.resize((500, 500), resample=Image.ANTIALIAS).convert("RGB")
-        img = avatar
-        height,width = img.size
-        lum_img = Image.new('L', [height,width] , 0)
-        draw = ImageDraw.Draw(lum_img)
-        draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
-        img_arr = np.array(img)
-        lum_img_arr = np.array(lum_img)
-        final_img_arr = np.dstack((img_arr,lum_img_arr))
-        avatar = Image.fromarray(final_img_arr).convert("RGBA")
-        avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png")
-        avatar = avatar.getdata()
+        try: # in case image is invalid
+            usedefault = False
+            if r.status_code == 200:
+                try:
+                    avatar = Image.open(BytesIO(r.content)).resize((500, 500)).convert("RGBA")
+                except:
+                    avatar = logo.resize((500, 500)).convert("RGBA")
+            else:
+                avatar = logo.resize((500, 500)).convert("RGBA")
+            def dist(a,b,c,d):
+                return (c-a)*(c-a)+(b-d)*(b-d)
+            data = avatar.getdata()
+            newData = []
+            for i in range(0,500):
+                for j in range(0,500):
+                    if dist(i,j,250,250) > 250*250:
+                        newData.append((255,255,255,0))
+                    else:
+                        newData.append(data[i*500+j])
+            avatar.putdata(newData)
+            avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
+        except:
+            import traceback
+            traceback.print_exc()
+            pass
+    avatar = avatar.getdata()
 
     # render logobg, banner, logo
     banner = Image.new("RGB", (3400,600),(255,255,255))
-    Image.Image.paste(banner, logobg, (0,-1300))
+    Image.Image.paste(banner, logobg, (0,-1300)) # paste background logo directly
     datas = banner.getdata()
     logod = logo.getdata()
     newData = []
     for i in range(0,600):
         for j in range(0,3400):
             if i >= 50 and i < 550 and j >= 70 and j < 570:
-                if avatar[(i-50)*500+(j-70)][3] == 0:
-                    newData.append(datas[i*3400+j][:3])
-                else:
-                    newData.append(avatar[(i-50)*500+(j-70)][:3])
+                # paste avatar
+                bg_a = 1 - avatar[(i-50)*500+(j-70)][3] / 255
+                fg_a = avatar[(i-50)*500+(j-70)][3] / 255
+                bg = datas[i*3400+j]
+                fg = avatar[(i-50)*500+(j-70)]
+                newData.append((int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a)))
             elif i >= 50 and i < 450 and j >= 2950 and j < 3350:
-                if logod[(i-50)*400+(j-2950)][3] == 0:
-                    newData.append(datas[i*3400+j][:3])
-                else:
-                    newData.append(logod[(i-50)*400+(j-2950)][:3])
+                # paste logo
+                bg_a = 1 - logod[(i-50)*400+(j-2950)][3] / 255
+                fg_a = logod[(i-50)*400+(j-2950)][3] / 255
+                bg = datas[i*3400+j]
+                fg = logod[(i-50)*400+(j-2950)]
+                newData.append((int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a)))
             else:
                 newData.append(datas[i*3400+j][:3])
     banner.putdata(newData)
@@ -138,15 +154,20 @@ async def banner(request: Request, response: Response):
             break
     fontsize = 160
     offset = 0
+    offsetp = 0
     namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
     namesize = namefont.getsize(f"{name}")[0]
     for _ in range(10):
         if namesize > 900:
             fontsize -= 10
-            offset += 10
+            if offset <= 40:
+                offset += 10
+            else:
+                offsetp += 10
             namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
             namesize = namefont.getsize(f"{name}")[0]
     draw.text((650, 100 + offset), f"{name}", fill=(0,0,0), font=namefont)
+    # y = 100 ~ 140
 
     highest_role = form["highest_role"]
     for _ in range(10):
@@ -154,10 +175,14 @@ async def banner(request: Request, response: Response):
             highest_role = highest_role[1:]
         else:
             break
-    if fontsize >= 120:
+    if fontsize >= 140:
         fontsize -= 40
+    elif fontsize >= 120:
+        fontsize -= 20
+        offset -= 20
     else:
         offset -= 40
+        offset += int(offsetp / 2)
     hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
     hrolesize = hrolefont.getsize(f"{highest_role}")[0]
     for _ in range(10):
@@ -167,6 +192,7 @@ async def banner(request: Request, response: Response):
             hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
             hrolesize = hrolefont.getsize(f"{highest_role}")[0]
     draw.text((650, 240 + offset), f"{highest_role}", fill=vtccolor, font=hrolefont)
+    # y = 240 ~ 280
 
     since = form["since"]
     division = form["division"]
@@ -187,7 +213,7 @@ async def banner(request: Request, response: Response):
 
     # output
     output = BytesIO()
-    banner.save(output, "jpeg")
+    banner.save(output, "jpeg", optimize = True)
     open(f"/tmp/hub/banner/{discordid}.png","wb").write(output.getvalue())
     
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")

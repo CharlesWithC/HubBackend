@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.12.6**  
+Improved Banner Generator:  
+i) Fixed 500 error when image is invalid  
+ii) Fixed transparent logo background becoming solid in some cases  
+iii) Improved rounded avatar generation and added transparency  
+
 **v1.12.5**  
 1.Fixed 500 error on `/user` when `config.privacy = false` and no authorization header is provided  
 2.Fixed `/member/steam` showing non-member information  

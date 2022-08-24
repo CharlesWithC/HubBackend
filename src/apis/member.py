@@ -312,7 +312,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         r = requests.post("http://127.0.0.1:8700/banner", data={"vtc_abbr": config.vtc_abbr, \
             "vtc_name": config.vtc_name, "vtc_logo_link": config.vtc_logo_link, "hex_color": config.hex_color,
             "discordid": discordid, "since": since, "highest_role": highest_role, \
-                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
+                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 10)
         if r.status_code != 200:
             response.status_code = r.status_code
             return {"error": True, "descriptor": r.text}
