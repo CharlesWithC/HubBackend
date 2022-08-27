@@ -17,11 +17,11 @@ GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
-def UpdateTelemetry(steamid, userid, logid, starttime, endtime):
+def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
     conn = newconn()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(starttime)} AND timestamp < {int(endtime)} LIMIT 1")
+    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
     p = cur.fetchall()
     if len(p) > 0:
         jobuuid = p[0][0]
@@ -151,14 +151,14 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
-    starttime = parser.parse(d["data"]["object"]["start_time"]).timestamp()
-    endtime = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
+    start_time = parser.parse(d["data"]["object"]["start_time"]).timestamp()
+    end_time = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
     t = cur.fetchall()
     logid = int(t[0][0])
 
     if "tracker" in config.enabled_plugins:
-        threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, starttime, endtime, )).start()
+        threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
     
     cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
     cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d))}', {top_speed}, {int(time.time())}, \

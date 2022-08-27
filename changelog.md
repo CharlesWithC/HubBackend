@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.12.7**  
+Improved endpoint path and response format for better readability
+
 **v1.12.6**  
 Improved Banner Generator:  
 i) Fixed 500 error when image is invalid  

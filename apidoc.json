@@ -5,9 +5,9 @@
         "version": "0.1.0"
     },
     "paths": {
-        "/vtc/user/login": {
+        "/vtc/auth/discord/redirect": {
             "get": {
-                "summary": "Discord Login",
+                "summary": "Get Discord Auth Redirect URL",
                 "tags": ["auth"],
                 "operationId": "userLogin_vtc_user_login_get",
                 "responses": {
@@ -17,7 +17,7 @@
                 }
             }
         },
-        "/vtc/user/callback": {
+        "/vtc/auth/discord/callback": {
             "get": {
                 "summary": "Discord Login Callback",
                 "tags": ["auth"],
@@ -53,7 +53,7 @@
                 }
             }
         },
-        "/vtc/user/login/password": {
+        "/vtc/auth/password": {
             "post": {
                 "summary": "Password Login",
                 "tags": ["auth"],
@@ -210,13 +210,58 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "summary": "Delete User",
+                "tags": ["admin"],
+                "operationId": "deleteUser",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "discordid": {
+                                        "description": "Discord ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["discordid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
-        "/vtc/user/banner": {
+        "/vtc/member/banner": {
             "get": {
-                "summary": "Get User Banner",
+                "summary": "Get Member Banner",
                 "tags": ["user"],
-                "operationId": "getUserBanner",
+                "operationId": "getMemberBanner",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -351,34 +396,6 @@
                     }
                 }
             },
-            "patch": {
-                "summary": "Request new token",
-                "tags": ["user"],
-                "operationId": "userRefreshToken",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
             "delete": {
                 "summary": "Revoke Token",
                 "tags": ["user"],
@@ -408,11 +425,69 @@
                 }
             }
         },
-        "/vtc/token/application": {
+        "/vtc/token/renew": {
             "post": {
+                "summary": "Renew token",
+                "tags": ["user"],
+                "operationId": "userRefreshToken",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vtc/token/application": {
+            "patch": {
                 "summary": "Generate New Application Token",
                 "tags": ["user"],
                 "operationId": "userGenAppToken",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Application Token",
+                "tags": ["user"],
+                "operationId": "userDelAppToken",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -470,10 +545,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Page Limit",
+                        "title": "Page Size",
                         "type": "integar"
                     },
-                    "name": "pagelimit",
+                    "name": "page_size",
                     "in": "query"
                 }],
                 "responses": {
@@ -654,9 +729,9 @@
                 }
             }
         },
-        "/vtc/user/connection": {
+        "/vtc/user/connections": {
             "delete": {
-                "summary": "Delete User Connection",
+                "summary": "Delete User Connections",
                 "tags": ["admin"],
                 "operationId": "unbindUserConnections",
                 "security": [{
@@ -701,54 +776,7 @@
                 }
             }
         },
-        "/vtc/user/delete": {
-            "delete": {
-                "summary": "Delete User Account",
-                "tags": ["admin"],
-                "operationId": "deleteUserAccount",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "discordid": {
-                                        "description": "Discord ID",
-                                        "type": "integer"
-                                    }
-                                }
-                            },
-                            "required": ["discordid"]
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/user/steam/oauth": {
+        "/vtc/auth/steam/redirect": {
             "get": {
                 "summary": "Redirect to Steam OAuth",
                 "tags": ["auth"],
@@ -765,7 +793,7 @@
                 }
             }
         },
-        "/vtc/user/steam/callback": {
+        "/vtc/auth/steam/callback": {
             "get": {
                 "summary": "Steam OAuth callback",
                 "tags": ["auth"],
@@ -859,9 +887,9 @@
                 }
             }
         },
-        "/vtc/members": {
+        "/vtc/member/list": {
             "get": {
-                "summary": "Get Members",
+                "summary": "Get Member List",
                 "tags": ["member"],
                 "operationId": "memberList_vtc_member_list_get",
                 "security": [{
@@ -878,10 +906,18 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Member name to search for",
                         "type": "string"
                     },
-                    "name": "query",
+                    "name": "name",
                     "in": "query"
                 }, {
                     "required": false,
@@ -907,14 +943,6 @@
                     },
                     "name": "order",
                     "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Page Limit",
-                        "type": "integar"
-                    },
-                    "name": "pagelimit",
-                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -938,11 +966,11 @@
                 }
             }
         },
-        "/vtc/member/steam": {
+        "/vtc/member/list/all": {
             "get": {
-                "summary": "Get Full Member Name - SteamID List (For live data)",
+                "summary": "Get All Member (Basic Info)",
                 "tags": ["member"],
-                "operationId": "getMemberSteamFull",
+                "operationId": "getMemberListAll",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1013,9 +1041,58 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "summary": "Update Member Roles",
+                "tags": ["member", "manage"],
+                "operationId": "setMemberRole_vtc_member_role_post",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "userid": {
+                                        "description": "User ID",
+                                        "type": "integer"
+                                    },
+                                    "roles": {
+                                        "description": "Roles",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["userid", "roles"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
-        "/vtc/member/role/rank": {
+        "/vtc/member/roles/rank": {
             "patch": {
                 "summary": "Update rank role",
                 "tags": ["member"],
@@ -1092,57 +1169,6 @@
                     "name": "userid",
                     "in": "query"
                 }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/vtc/member/role": {
-            "post": {
-                "summary": "Set Member Roles",
-                "tags": ["member", "manage"],
-                "operationId": "setMemberRole_vtc_member_role_post",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "userid": {
-                                        "description": "User ID",
-                                        "type": "integer"
-                                    },
-                                    "roles": {
-                                        "description": "Roles",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["userid", "roles"]
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1274,7 +1300,7 @@
                 }
             }
         },
-        "/vtc/dlog/stats": {
+        "/vtc/dlog/statistics/summary": {
             "get": {
                 "summary": "Get Company Statistics",
                 "tags": ["dlog"],
@@ -1285,7 +1311,7 @@
                         "title": "Start Timestamp",
                         "type": "integer"
                     },
-                    "name": "starttime",
+                    "name": "start_time",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1293,7 +1319,7 @@
                         "title": "End Timestamp",
                         "type": "integer"
                     },
-                    "name": "endtime",
+                    "name": "end_time",
                     "in": "query"
                 }],
                 "responses": {
@@ -1318,7 +1344,7 @@
                 }
             }
         },
-        "/vtc/dlog/chart": {
+        "/vtc/dlog/statistics/chart": {
             "get": {
                 "summary": "Get Delivery Statistics for creating chart",
                 "tags": ["dlog"],
@@ -1342,10 +1368,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Query User ID",
+                        "title": "User ID",
                         "type": "integer"
                     },
-                    "name": "quserid",
+                    "name": "userid",
                     "in": "query"
                 }],
                 "responses": {
@@ -1389,10 +1415,18 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Speed Limit (km/h)",
                         "type": "integer"
                     },
-                    "name": "speedlimit",
+                    "name": "speed_limit",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1405,42 +1439,34 @@
                 },  {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
-                        "type": "integer"
-                    },
-                    "name": "endtime",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Limit types of point to be counted (distance, event, division, myth)",
-                        "type": "string"
-                    },
-                    "name": "limittype",
-                    "in": "query"
-                },{
-                    "required": false,
-                    "schema": {
                         "title": "Start Timestamp",
                         "type": "integer"
                     },
-                    "name": "starttime",
-                    "in": "query"
-                },{
-                    "required": false,
-                    "schema": {
-                        "title": "Limit User (Up to 10, separate with ',')",
-                        "type": "string"
-                    },
-                    "name": "limituser",
+                    "name": "start_time",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Page Limit",
-                        "type": "integar"
+                        "title": "End Timestamp",
+                        "type": "integer"
                     },
-                    "name": "pagelimit",
+                    "name": "end_time",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Point types to be counted (distance, event, division, myth)",
+                        "type": "string"
+                    },
+                    "name": "point_types",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "User IDs (Up to 10, separate with ',')",
+                        "type": "string"
+                    },
+                    "name": "userids",
                     "in": "query"
                 }],
                 "responses": {
@@ -1465,7 +1491,7 @@
                 }
             }
         },
-        "/vtc/dlogs": {
+        "/vtc/dlog/list": {
             "get": {
                 "summary": "Get Delivery Logs",
                 "tags": ["dlog"],
@@ -1484,6 +1510,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Order (asc, desc)",
                         "type": "string"
                     },
@@ -1495,7 +1529,7 @@
                         "title": "Speed Limit (km/h)",
                         "type": "integer"
                     },
-                    "name": "speedlimit",
+                    "name": "speed_limit",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1508,10 +1542,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Query User ID",
+                        "title": "User ID",
                         "type": "integer"
                     },
-                    "name": "quserid",
+                    "name": "userid",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1519,7 +1553,7 @@
                         "title": "Start Timestamp",
                         "type": "integer"
                     },
-                    "name": "starttime",
+                    "name": "start_time",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1527,15 +1561,7 @@
                         "title": "End Timestamp",
                         "type": "integer"
                     },
-                    "name": "endtime",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Page Limit",
-                        "type": "integar"
-                    },
-                    "name": "pagelimit",
+                    "name": "end_time",
                     "in": "query"
                 }],
                 "responses": {
@@ -1613,7 +1639,7 @@
                         "title": "Start Timestamp",
                         "type": "integer"
                     },
-                    "name": "starttime",
+                    "name": "start_time",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1621,7 +1647,7 @@
                         "title": "End Timestamp",
                         "type": "integer"
                     },
-                    "name": "endtime",
+                    "name": "end_time",
                     "in": "query"
                 }],
                 "responses": {
@@ -1646,9 +1672,9 @@
                 }
             }
         },
-        "/vtc/divisions": {
+        "/vtc/division/list": {
             "get": {
-                "summary": "Get Divisions",
+                "summary": "Get Division List",
                 "tags": ["division"],
                 "operationId": "getDivision",
                 "responses": {
@@ -1673,7 +1699,7 @@
                 }
             }
         },
-        "/vtc/divisions/pending": {
+        "/vtc/division/list/pending": {
             "get": {
                 "summary": "Get Pending Division Validation",
                 "tags": ["division"],
@@ -1702,7 +1728,7 @@
         },
         "/vtc/division": {
             "get": {
-                "summary": "Get Division Detail",
+                "summary": "Get Division Info / Statistics",
                 "tags": ["division"],
                 "operationId": "getDivisionInformation",
                 "security": [{
@@ -1845,7 +1871,7 @@
                 }
             }
         },
-        "/vtc/announcements": {
+        "/vtc/announcement": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -1880,10 +1906,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Page Limit",
+                        "title": "Page Size",
                         "type": "integar"
                     },
-                    "name": "pagelimit",
+                    "name": "page_size",
                     "in": "query"
                 }],
                 "responses": {
@@ -1906,9 +1932,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/vtc/announcement": {
+            },
             "post": {
                 "summary": "Create Announcement",
                 "tags": ["announcement"],
@@ -2148,9 +2172,9 @@
                 }
             }
         },
-        "/vtc/events": {
+        "/vtc/event": {
             "get": {
-                "summary": "Get Event",
+                "summary": "Get Event List",
                 "tags": ["event"],
                 "operationId": "getEvent",
                 "security": [{
@@ -2175,10 +2199,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Page Limit",
+                        "title": "Page Size",
                         "type": "integar"
                     },
-                    "name": "pagelimit",
+                    "name": "page_size",
                     "in": "query"
                 }],
                 "responses": {
@@ -2201,9 +2225,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/vtc/event": {
+            },
             "post": {
                 "summary": "Create Event",
                 "tags": ["event"],
@@ -2400,9 +2422,9 @@
                 }
             }
         },
-        "/vtc/events/all": {
+        "/vtc/event/all": {
             "get": {
-                "summary": "Get Full Event List (Only ID, Title, Meetup Timestamp)",
+                "summary": "Get All Event List (Only ID, Title, Meetup Timestamp)",
                 "tags": ["event"],
                 "operationId": "getEventFull",
                 "security": [{
@@ -2584,7 +2606,7 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "apptype": {
+                                    "application_type": {
                                         "description": "Application Type (driver 1 / staff 2 / LOA 3)",
                                         "type": "integer"
                                     },
@@ -2594,7 +2616,7 @@
                                     }
                                 }
                             },
-                            "required": ["apptype", "data"]
+                            "required": ["application_type", "data"]
                         }
                     }
                 },
@@ -2724,9 +2746,9 @@
                 }
             }
         },
-        "/vtc/applications": {
+        "/vtc/application/list": {
             "get": {
-                "summary": "Get Applications",
+                "summary": "Get Application List",
                 "tags": ["application", "manage"],
                 "operationId": "getApplicationList_vtc_application_list_get",
                 "security": [{
@@ -2746,7 +2768,7 @@
                         "title": "Application Type (0 - All, 1 - Driver, 2 - Staff, 3 - LOA)",
                         "type": "integer"
                     },
-                    "name": "apptype",
+                    "name": "application_type",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2754,7 +2776,7 @@
                         "title": "Show all (Leadership / HR only)",
                         "type": "boolean"
                     },
-                    "name": "showall",
+                    "name": "all_user",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2767,10 +2789,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Page Limit",
+                        "title": "Page Size",
                         "type": "integar"
                     },
-                    "name": "pagelimit",
+                    "name": "page_size",
                     "in": "query"
                 }],
                 "responses": {
@@ -2848,7 +2870,7 @@
                     }
                 }
             },
-            "post": {
+            "patch": {
                 "summary": "Update Staff Application Positions",
                 "tags": ["application", "manage"],
                 "operationId": "updateApplicationPositions",
@@ -2996,7 +3018,7 @@
                 }
             }
         },
-        "/vtc/auditlog": {
+        "/vtc/audit": {
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["admin"],
@@ -3015,10 +3037,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Responsible User ID",
+                        "title": "Page Size",
                         "type": "integar"
                     },
-                    "name": "userid",
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Staff User ID",
+                        "type": "integar"
+                    },
+                    "name": "staff_userid",
                     "in": "query"
                 }, {
                     "required": false,
@@ -3027,14 +3057,6 @@
                         "type": "string"
                     },
                     "name": "operation",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Page Limit",
-                        "type": "integar"
-                    },
-                    "name": "pagelimit",
                     "in": "query"
                 }],
                 "responses": {

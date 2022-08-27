@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 from typing import Optional
 from datetime import datetime
 from io import BytesIO
-import json, time, requests
+import json, time, requests, math
 import collections, string
 
 from app import app, config, tconfig
@@ -43,15 +43,37 @@ divisionroles = []
 for division in divisions:
     divisionroles.append(division["role_id"])
 
-@app.get(f'/{config.vtc_abbr}/members')
-async def getMembers(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, query: Optional[str] = '', roles: Optional[str] = '', sort_by_highest_role: Optional[bool] = True, \
-        order_by: Optional[str] = "highest_role", order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /members', 180, 90)
+def point2rank(point):
+    keys = list(RANKROLE.keys())
+    for i in range(len(keys)):
+        if point < keys[i]:
+            return RANKROLE[keys[i-1]]
+    return RANKROLE[keys[-1]]
+
+# Basic Info Section
+@app.get(f"/{config.vtc_abbr}/member/roles")
+async def getRoles(request: Request, response: Response):
+    return {"error": False, "response": ROLES}
+
+@app.get(f"/{config.vtc_abbr}/member/ranks")
+async def getRanks(request: Request, response: Response):
+    return {"error": False, "response": RANKS}
+
+@app.get(f"/{config.vtc_abbr}/member/perms")
+async def getRanks(request: Request, response: Response):
+    return {"error": False, "response": config.perms}
+
+# Member Info Section
+@app.get(f'/{config.vtc_abbr}/member/list')
+async def getMemberList(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, page_size: Optional[int] = 10, \
+        name: Optional[str] = '', roles: Optional[str] = '', \
+        order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
+    rl = ratelimit(request.client.host, 'GET /member/list', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
+    
     if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
@@ -64,10 +86,10 @@ async def getMembers(request: Request, response: Response, authorization: str = 
     if page <= 0:
         page = 1
 
-    if pagelimit <= 1:
-        pagelimit = 1
-    elif pagelimit >= 250:
-        pagelimit = 250
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
 
     lroles = roles.split(",")
     while "" in lroles:
@@ -75,7 +97,7 @@ async def getMembers(request: Request, response: Response, authorization: str = 
     if len(lroles) > 5:
         lroles = lroles[:5]
 
-    query = query.replace("'","''").lower()
+    name = name.replace("'","''").lower()
     
     if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp"]:
         order_by = "user_id"
@@ -100,7 +122,7 @@ async def getMembers(request: Request, response: Response, authorization: str = 
             order = "ASC"
 
     hrole = {}
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar, joints FROM user WHERE LOWER(name) LIKE '%{query}%' AND userid >= 0 ORDER BY {order_by} {order}")
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar, joints FROM user WHERE LOWER(name) LIKE '%{name}%' AND userid >= 0 ORDER BY {order_by} {order}")
     t = cur.fetchall()
     rret = {}
     for tt in t:
@@ -129,89 +151,33 @@ async def getMembers(request: Request, response: Response, authorization: str = 
     for userid in hrole.keys():
         ret.append(rret[userid])
         
-    return {"error": False, "response": {"list": ret[(page - 1) * pagelimit : page * pagelimit], "page": str(page), "tot": str(len(ret))}}
+    return {"error": False, "response": {"list": ret[(page - 1) * page_size : page * page_size], \
+        "total_items": str(len(ret)), "total_pages": str(int(math.ceil(len(ret) / page_size)))}}
 
-@app.get(f'/{config.vtc_abbr}/user')
-async def getMemberInfo(request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /user', 180, 60)
+@app.get(f"/{config.vtc_abbr}/member/list/all")
+async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'GET /member/list/all', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    roles = []
-    udiscordid = -1
-    if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
-        au = auth(authorization, request, check_member = False, allow_application_token = True)
-        if au["error"]:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        else:
-            discordid = au["discordid"]
-            roles = au["roles"]
-            udiscordid = discordid
-            selfq = True
-    else:
+    if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            if config.privacy:
-                response.status_code = 401
-                return au
-        else:
-            udiscordid = au["discordid"]
-            roles = au["roles"]
+            response.status_code = 401
+            return au
     
     conn = newconn()
     cur = conn.cursor()
-
-    isAdmin = False
-    isHR = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            isHR = True
-
-    qu = ""
-    if userid != -1:
-        qu = f"userid = {userid}"
-    elif discordid != -1:
-        qu = f"discordid = {discordid}"
-    elif steamid != -1:
-        qu = f"steamid = {steamid}"
-    elif truckersmpid != -1:
-        qu = f"truckersmpid = {truckersmpid}"
-    else:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-
-    cur.execute(f"SELECT userid, discordid FROM user WHERE {qu}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    userid = t[0][0]
-    discordid = t[0][1]
     
-    cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
     t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    roles = t[0][3].split(",")
-    while "" in roles:
-        roles.remove("")
-    roles = [int(i) for i in roles]
+    ret = []
+    for tt in t:
+        ret.append({"steamid": str(tt[0]), "name": tt[1], "userid": str(tt[2])})
+    return {"error": False, "response": {"list": ret}}
 
-    email = ""
-    if isAdmin or isHR or udiscordid == t[0][0]:
-        email = t[0][8]
-
-    return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-        "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
-        "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
-
-@app.get(f'/{config.vtc_abbr}/user/banner')
+@app.get(f'/{config.vtc_abbr}/member/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     if not "banner" in config.enabled_plugins:
@@ -242,12 +208,12 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     
     au = auth(authorization, request)
     if au["error"]:
-        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 30)
+        rl = ratelimit(request.client.host, 'GET /member/banner', 180, 30)
         if rl > 0:
             response.status_code = 429
             return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
     else:
-        rl = ratelimit(request.client.host, 'GET /user/banner', 180, 60)
+        rl = ratelimit(request.client.host, 'GET /member/banner', 180, 60)
         if rl > 0:
             response.status_code = 429
             return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -324,6 +290,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
 
+# Member Operation Section
 @app.post(f'/{config.vtc_abbr}/member/add')
 async def addMember(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /member/add', 180, 10)
@@ -391,7 +358,7 @@ async def addMember(request: Request, response: Response, authorization: str = H
     except:
         pass
 
-    return {"error": False, "response": {"userid": str(userid)}}    
+    return {"error": False}    
 
 @app.delete(f"/{config.vtc_abbr}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
@@ -429,7 +396,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     return {"error": False}
 
 @app.delete(f"/{config.vtc_abbr}/member/dismiss")
-async def dismissMember(userid: int, request: Request, response: Response, authorization: str = Header(None)):
+async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
     if rl > 0:
         response.status_code = 429
@@ -485,9 +452,47 @@ async def dismissMember(userid: int, request: Request, response: Response, autho
     await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
     return {"error": False}
 
-@app.post(f'/{config.vtc_abbr}/member/role')
-async def setMemberRole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /member/role', 180, 30)
+@app.patch(f"/{config.vtc_abbr}/member/point")
+async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    form = await request.form()
+    userid = int(form["userid"])
+    distance = int(form["distance"])
+    mythpoint = int(form["mythpoint"])
+
+    if distance != 0:
+        if distance > 0:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
+        else:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
+        conn.commit()
+    if mythpoint != 0:
+        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
+        conn.commit()
+    
+    if int(distance) > 0:
+        distance = "+" + form["distance"]
+
+    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
+
+    return {"error": False}
+
+@app.patch(f'/{config.vtc_abbr}/member/roles')
+async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/roles', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -559,7 +564,7 @@ async def setMemberRole(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
 
     if len(addedroles) + len(removedroles) == 0:
-        return {"error": False, "response": {"roles": roles}}
+        return {"error": False}
         
     if not isAdmin and not isHR and isDS:
         for add in addedroles:
@@ -622,91 +627,11 @@ async def setMemberRole(request: Request, response: Response, authorization: str
     await AuditLog(adminid, audit)
     conn.commit()
 
-    return {"error": False, "response": {"roles": roles}}
-
-@app.get(f"/{config.vtc_abbr}/member/roles")
-async def getRoles(request: Request, response: Response):
-    return {"error": False, "response": ROLES}
-
-@app.get(f"/{config.vtc_abbr}/member/ranks")
-async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": RANKS}
-
-@app.get(f"/{config.vtc_abbr}/member/perms")
-async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": config.perms}
-
-@app.patch(f"/{config.vtc_abbr}/member/point")
-async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    adminid = au["userid"]
-    
-    conn = newconn()
-    cur = conn.cursor()
-
-    form = await request.form()
-    userid = int(form["userid"])
-    distance = int(form["distance"])
-    mythpoint = int(form["mythpoint"])
-
-    if distance != 0:
-        if distance > 0:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
-        else:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
-        conn.commit()
-    if mythpoint != 0:
-        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
-        conn.commit()
-    
-    if int(distance) > 0:
-        distance = "+" + form["distance"]
-
-    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
-
     return {"error": False}
 
-@app.get(f"/{config.vtc_abbr}/member/steam")
-async def getMemberSteam(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member/steam', 180, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    if config.privacy:
-        au = auth(authorization, request, allow_application_token = True)
-        if au["error"]:
-            response.status_code = 401
-            return au
-    
-    conn = newconn()
-    cur = conn.cursor()
-    
-    cur.execute(f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
-    t = cur.fetchall()
-    ret = []
-    for tt in t:
-        ret.append({"steamid": str(tt[0]), "name": tt[1], "userid": str(tt[2])})
-    return {"error": False, "response": {"list": ret}}
-
-def point2rank(point):
-    keys = list(RANKROLE.keys())
-    for i in range(len(keys)):
-        if point < keys[i]:
-            return RANKROLE[keys[i-1]]
-    return RANKROLE[keys[-1]]
-
-@app.patch(f"/{config.vtc_abbr}/member/role/rank")
-async def patchMemberDiscordRole(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/role/rank', 180, 5)
+@app.patch(f"/{config.vtc_abbr}/member/roles/rank")
+async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/roles/rank', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

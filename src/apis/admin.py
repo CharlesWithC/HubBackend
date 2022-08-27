@@ -3,7 +3,7 @@
 
 from fastapi import Request, Header, Response
 from typing import Optional
-import json, copy, os, time
+import json, copy, math, os, time
 import threading
 
 from app import app, config, tconfig, config_path
@@ -11,6 +11,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
+# get config
 @app.get(f"/{config.vtc_abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /config', 30, 10)
@@ -46,11 +47,13 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     
     return {"error": False, "response": {"config": ttconfig}}
 
+# thread to reload service
 def reload():
     os.system(f"./launcher tracker restart {config.vtc_abbr} &")
     time.sleep(5)
     os.system(f"./launcher hub restart {config.vtc_abbr} &")
 
+# update config
 @app.patch(f"/{config.vtc_abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /config', 600, 3)
@@ -130,8 +133,9 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
+# reload service
 @app.post(f"/{config.vtc_abbr}/reload")
-async def reloadService(request: Request, response: Response, authorization: str = Header(None)):
+async def postReload(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /reload', 600, 3)
     if rl > 0:
         response.status_code = 429
@@ -149,10 +153,11 @@ async def reloadService(request: Request, response: Response, authorization: str
 
     return {"error": False}
 
-@app.get(f"/{config.vtc_abbr}/auditlog")
-async def getAuditLog(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, userid: Optional[int] = -1, operation: Optional[str] = "", pagelimit: Optional[int] = 30):
-    rl = ratelimit(request.client.host, 'GET /auditlog', 30, 10)
+# get audit log (require audit / admin permission)
+@app.get(f"/{config.vtc_abbr}/audit")
+async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /audit', 30, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -172,15 +177,15 @@ async def getAuditLog(request: Request, response: Response, authorization: str =
     operation = operation.lower().replace("'","''")
 
     limit = ""
-    if userid != -1:
-        limit = f"AND userid = {userid}"
+    if staff_userid != -1:
+        limit = f"AND userid = {staff_userid}"
     
-    if pagelimit <= 1:
-        pagelimit = 1
-    elif pagelimit >= 500:
-        pagelimit = 500
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 500:
+        page_size = 500
 
-    cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * pagelimit}, {pagelimit}")
+    cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -197,4 +202,4 @@ async def getAuditLog(request: Request, response: Response, authorization: str =
     t = cur.fetchall()
     tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
+    return {"error": False, "response": {"list": ret, "total_items": str(tot)}, "total_pages": str(int(math.ceil(tot / page_size)))}

@@ -29,10 +29,140 @@ DIVISIONPNT = {}
 for division in divisions:
     DIVISIONPNT[division["id"]] = int(division["point"])
 
-@app.get(f"/{config.vtc_abbr}/divisions")
+# Basic info
+@app.get(f"/{config.vtc_abbr}/division/list")
 async def getDivisions(request: Request, response: Response):
     return {"error": False, "response": divisionsGET}
 
+# Get division info
+@app.get(f"/{config.vtc_abbr}/division")
+async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /division', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    roles = au["roles"]
+        
+    conn = newconn()
+    cur = conn.cursor()
+
+    if logid != -1:
+        cur.execute(f"SELECT divisionid, userid, requestts, status, updatets, staffid, reason FROM division WHERE logid = {logid} AND logid >= 0")
+        t = cur.fetchall()
+        if len(t) == 0:
+            cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
+            t = cur.fetchall()
+            if len(t) == 0:
+                response.status_code = 404
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+            duserid = t[0][0]
+            if duserid != userid:
+                response.status_code = 404
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+            else:
+                return {"error": False, "response": {"status": "-1"}}
+        tt = t[0]
+        divisionid = tt[0]
+        duserid = tt[1]
+        requestts = tt[2]
+        status = tt[3]
+        updatets = tt[4]
+        staffid = tt[5]
+        reason = b64d(tt[6])
+
+        ok = False
+        for i in roles:
+            if int(i) in config.perms.admin or int(i) in config.perms.division:
+                ok = True
+
+        if not ok:
+            if userid != duserid and status != 1:
+                response.status_code = 404
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+
+        staffname = "/"
+        if staffid != -1:
+            cur.execute(f"SELECT name FROM user WHERE userid = {staffid}")
+            t = cur.fetchall()
+            staffname = t[0][0]
+        if userid == duserid:
+            return {"error": False, "response": {"divisionid": str(divisionid), "request_timestamp": str(requestts), "status": str(status), \
+                "update_timestamp": str(updatets), "update_staff": {"userid": str(staffid), "name": staffname}, "update_reason": reason, "user_is_staff": ok}}
+        else:
+            return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
+                "update_timestamp": str(updatets), "update_staff": {"userid": str(staffid), "name": staffname}, "user_is_staff": ok}}
+
+    stats = []
+    for division in divisions:
+        tstats = []
+        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
+        t = cur.fetchall()
+        userpnt = {}
+        username = {}
+        for tt in t:
+            divisionpnt = 0
+            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[1]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
+            o = cur.fetchall()
+            for oo in o:
+                if o[0][0] in DIVISIONPNT.keys():
+                    divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
+            username[tt[1]] = tt[0]
+            userpnt[tt[1]] = divisionpnt
+        userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
+        for uid in userpnt.keys():
+            tstats.append({"userid": str(uid), "name": username[uid], "points": str(userpnt[uid])})
+        stats.append({"divisionid": str(division['id']), "name": division['name'], "drivers": tstats[::-1]})
+    
+    delivery = []
+    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
+    p = cur.fetchall()
+    for pp in p:
+        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")
+        t = cur.fetchall()
+        tt = t[0]
+        data = json.loads(decompress(tt[1]))
+        source_city = "Unknown city"
+        source_company = "Unknown company"
+        destination_city = "Unknown city"
+        destination_company = "Unknown company"
+        if data["data"]["object"]["source_city"] != None:
+            source_city = data["data"]["object"]["source_city"]["name"]
+        if data["data"]["object"]["source_company"] != None:
+            source_company = data["data"]["object"]["source_company"]["name"]
+        if data["data"]["object"]["destination_city"] != None:
+            destination_city = data["data"]["object"]["destination_city"]["name"]
+        if data["data"]["object"]["destination_company"] != None:
+            destination_company = data["data"]["object"]["destination_company"]["name"]
+        cargo = data["data"]["object"]["cargo"]["name"]
+        cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        distance = tt[6]
+        if distance < 0:
+            distance = 0
+
+        profit = tt[4]
+        unit = tt[5]
+
+        name = "Unknown"
+        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
+        p = cur.fetchall()
+        if len(p) > 0:
+            name = p[0][0]
+
+        delivery.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
+            "source_city": source_city, "source_company": source_company, \
+                "destination_city": destination_city, "destination_company": destination_company, \
+                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), "timestamp": str(tt[2])})
+    
+    return {"error": False, "response": {"statistics": stats, "recent": delivery}}
+
+# Self-operation
 @app.post(f"/{config.vtc_abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /division', 180, 3)
@@ -135,9 +265,9 @@ async def postDivision(request: Request, response: Response, authorization: str 
         
     return {"error": False}
 
-@app.get(f"/{config.vtc_abbr}/divisions/pending")
+@app.get(f"/{config.vtc_abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /divisions/pending', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /division/list/pending', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -228,130 +358,3 @@ async def patchDivision(request: Request, response: Response, authorization: str
         pass
 
     return {"error": False}
-
-@app.get(f"/{config.vtc_abbr}/division")
-async def getDivisionInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /division', 180, 90)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    userid = au["userid"]
-    roles = au["roles"]
-        
-    conn = newconn()
-    cur = conn.cursor()
-
-    if logid != -1:
-        cur.execute(f"SELECT divisionid, userid, requestts, status, updatets, staffid, reason FROM division WHERE logid = {logid} AND logid >= 0")
-        t = cur.fetchall()
-        if len(t) == 0:
-            cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
-            t = cur.fetchall()
-            if len(t) == 0:
-                response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
-            duserid = t[0][0]
-            if duserid != userid:
-                response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
-            else:
-                return {"error": False, "response": {"requestSubmitted": False}}
-        tt = t[0]
-        divisionid = tt[0]
-        duserid = tt[1]
-        requestts = tt[2]
-        status = tt[3]
-        updatets = tt[4]
-        staffid = tt[5]
-        reason = b64d(tt[6])
-
-        ok = False
-        for i in roles:
-            if int(i) in config.perms.admin or int(i) in config.perms.division:
-                ok = True
-
-        if not ok:
-            if userid != duserid and status != 1:
-                response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
-
-        staffname = "/"
-        if staffid != -1:
-            cur.execute(f"SELECT name FROM user WHERE userid = {staffid}")
-            t = cur.fetchall()
-            staffname = t[0][0]
-        if userid == duserid:
-            return {"error": False, "response": {"divisionid": str(divisionid), "requestts": str(requestts), "status": str(status), \
-                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "reason": reason, "isstaff": ok}}
-        else:
-            return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
-                "updatets": str(updatets), "staffid": str(staffid), "staffname": staffname, "isstaff": ok}}
-
-    stats = []
-    for division in divisions:
-        tstats = []
-        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
-        t = cur.fetchall()
-        userpnt = {}
-        username = {}
-        for tt in t:
-            divisionpnt = 0
-            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[1]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
-            o = cur.fetchall()
-            for oo in o:
-                if o[0][0] in DIVISIONPNT.keys():
-                    divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-            username[tt[1]] = tt[0]
-            userpnt[tt[1]] = divisionpnt
-        userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
-        for uid in userpnt.keys():
-            tstats.append({"userid": str(uid), "name": username[uid], "points": str(userpnt[uid])})
-        stats.append({"id": str(division['id']), "name": division['name'], "stats": tstats[::-1]})
-    
-    delivery = []
-    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
-    p = cur.fetchall()
-    for pp in p:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")
-        t = cur.fetchall()
-        tt = t[0]
-        data = json.loads(decompress(tt[1]))
-        source_city = "Unknown city"
-        source_company = "Unknown company"
-        destination_city = "Unknown city"
-        destination_company = "Unknown company"
-        if data["data"]["object"]["source_city"] != None:
-            source_city = data["data"]["object"]["source_city"]["name"]
-        if data["data"]["object"]["source_company"] != None:
-            source_company = data["data"]["object"]["source_company"]["name"]
-        if data["data"]["object"]["destination_city"] != None:
-            destination_city = data["data"]["object"]["destination_city"]["name"]
-        if data["data"]["object"]["destination_company"] != None:
-            destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = data["data"]["object"]["cargo"]["name"]
-        cargo_mass = data["data"]["object"]["cargo"]["mass"]
-        distance = tt[6]
-        if distance < 0:
-            distance = 0
-
-        profit = tt[4]
-        unit = tt[5]
-
-        name = "Unknown"
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
-        p = cur.fetchall()
-        if len(p) > 0:
-            name = p[0][0]
-
-        delivery.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
-            "source_city": source_city, "source_company": source_company, \
-                "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), "timestamp": str(tt[2])})
-    
-    return {"error": False, "response": {"info": stats, "deliveries": delivery}}

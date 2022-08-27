@@ -6,7 +6,7 @@ from typing import Optional
 from datetime import datetime
 from discord import Webhook, Embed
 from aiohttp import ClientSession
-import json, time, requests
+import json, time, requests, math
 
 from app import app, config
 from db import newconn
@@ -17,13 +17,191 @@ application_types = config.application_types
 for i in range(len(application_types)):
     application_types[i]["id"] = int(application_types[i]["id"])
 
+# Basic Info
 @app.get(f"/{config.vtc_abbr}/application/types")
 async def getApplicationTypes(request: Request, response: Response):
     APPLICATIONS_TYPES = []
     for t in application_types:
-        APPLICATIONS_TYPES.append({"id": str(t["id"]), "name": t["name"]})
+        APPLICATIONS_TYPES.append({"applicationid": str(t["id"]), "name": t["name"]})
     return {"error": False, "response": APPLICATIONS_TYPES}
 
+@app.get(f"/{config.vtc_abbr}/application/positions")
+async def getApplicationPositions(request: Request, response: Response):
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": False, "response": []}
+    else:
+        ret = []
+        for tt in t[0][0].split(","):
+            ret.append(tt)
+        return {"error": False, "response": ret}
+
+# Get Application
+@app.get(f"/{config.vtc_abbr}/application")
+async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /application', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    roles = au["roles"]
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    if int(applicationid) < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+
+    cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+
+    apptype = t[0][1]
+    
+    isAdmin = False
+    for i in roles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+
+    if not isAdmin and discordid != t[0][2]:
+        ok = False
+        for tt in application_types:
+            if str(tt["id"]) == str(apptype):
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if str(role) in roles:
+                        ok = True
+                        break
+        if not ok:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+    
+    cur.execute(f"SELECT name FROM user WHERE userid = {t[0][6]}")
+    p = cur.fetchall()
+    staff_name = "Unknown"
+    if len(p) > 0:
+        staff_name = p[0][0]
+
+    return {"error": False, "response": {"applicationid": str(t[0][0]), "application_type": str(t[0][1]),\
+        "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submit_timestamp": str(t[0][5]), \
+            "update_timestamp": str(t[0][7]), "last_update_staff": {"userid": str(t[0][6]), "name": staff_name}}}
+
+@app.get(f"/{config.vtc_abbr}/application/list")
+async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = -1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
+        all_user: Optional[bool] = False, order: Optional[str] = "desc"):
+    rl = ratelimit(request.client.host, 'GET /application/list', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    apptype = application_type
+    if page <= 0:
+        page = 1
+
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()
+        
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    roles = au["roles"]
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 100:
+        page_size = 100
+
+    t = None
+    tot = 0
+    if all_user == False:
+        limit = ""
+        if apptype != 0:
+            limit = f" AND apptype = {apptype}"
+
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        t = cur.fetchall()
+        
+        cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
+        p = cur.fetchall()
+        if len(t) > 0:
+            tot = p[0][0]
+    else:
+        isAdmin = False
+        for i in roles:
+            if int(i) in config.perms.admin:
+                isAdmin = True
+        
+        allowed_apptypes = []
+        if not isAdmin:
+            for tt in application_types:
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if str(role) in roles:
+                        allowed_apptypes.append(str(tt["id"]))
+                        break
+        else:
+            for tt in application_types:
+                allowed_apptypes.append(str(tt["id"]))
+
+        if len(allowed_apptypes) == 0:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        limit = ""
+        if apptype == 0: # show all type
+            limit = " WHERE "
+            for tt in allowed_apptypes:
+                limit += f"apptype = {tt} OR "
+            limit = limit[:-3]
+        else:
+            if not str(apptype) in allowed_apptypes:
+                response.status_code = 403
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            limit = f" WHERE apptype = {apptype} "
+
+        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        t = cur.fetchall()
+        
+        cur.execute(f"SELECT COUNT(*) FROM application {limit}")
+        p = cur.fetchall()
+        if len(t) > 0:
+            tot = p[0][0]
+
+    ret = []
+    for tt in t:
+        cur.execute(f"SELECT name FROM user WHERE discordid = {tt[2]}")
+        p = cur.fetchall()
+        name = "Unknown"
+        if len(p) > 0:
+            name = p[0][0]
+        ret.append({"applicationid": str(tt[0]), "application_type": str(tt[1]), \
+            "discordid": f"{tt[2]}", "name": name, \
+                "status": str(tt[4]), "submit_timestamp": str(tt[3]), "update_timestamp": str(tt[5])})
+
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
+
+# Self-operation
 @app.post(f"/{config.vtc_abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /application', 180, 3)
@@ -42,7 +220,7 @@ async def postApplication(request: Request, response: Response, authorization: s
     cur = conn.cursor()
 
     form = await request.form()
-    apptype = int(form["apptype"])
+    apptype = int(form["application_type"])
     data = json.loads(form["data"])
 
     apptypetxt = ""
@@ -300,8 +478,9 @@ async def updateApplication(request: Request, response: Response, authorization:
             except:
                 pass
 
-    return {"error": False, "response": {"applicationid": str(applicationid)}}
+    return {"error": False}
 
+# Management
 @app.patch(f"/{config.vtc_abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /application/status', 180, 30)
@@ -405,177 +584,12 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         traceback.print_exc()
         pass
 
-    return {"error": False, "response": {"applicationid": str(applicationid), "status": str(status)}}
+    return {"error": False}
 
-@app.get(f"/{config.vtc_abbr}/application")
-async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /application', 180, 90)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    userid = au["userid"]
-    roles = au["roles"]
-
-    conn = newconn()
-    cur = conn.cursor()
-
-    if int(applicationid) < 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
-
-    cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
-
-    apptype = t[0][1]
-    
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-
-    if not isAdmin and discordid != t[0][2]:
-        ok = False
-        for tt in application_types:
-            if str(tt["id"]) == str(apptype):
-                allowed_roles = tt["staff_role_id"]
-                for role in allowed_roles:
-                    if str(role) in roles:
-                        ok = True
-                        break
-        if not ok:
-            response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-    return {"error": False, "response": {"applicationid": str(t[0][0]), "apptype": str(t[0][1]),\
-        "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submitTimestamp": str(t[0][5]), \
-            "closedTimestamp": str(t[0][7]), "closedBy": str(t[0][6])}}
-
-@app.get(f"/{config.vtc_abbr}/applications")
-async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
-    apptype: Optional[int] = 0, page: Optional[int] = -1, showall: Optional[bool] = False, order: Optional[str] = "desc", pagelimit: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /applications', 180, 90)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    if page <= 0:
-        page = 1
-
-    if not order in ["asc", "desc"]:
-        order = "asc"
-    order = order.upper()
-        
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    userid = au["userid"]
-    roles = au["roles"]
-
-    conn = newconn()
-    cur = conn.cursor()
-
-    if pagelimit <= 1:
-        pagelimit = 1
-    elif pagelimit >= 100:
-        pagelimit = 100
-
-    t = None
-    tot = 0
-    if showall == False:
-        limit = ""
-        if apptype != 0:
-            limit = f" AND apptype = {apptype}"
-
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
-        t = cur.fetchall()
-        
-        cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
-        p = cur.fetchall()
-        if len(t) > 0:
-            tot = p[0][0]
-    else:
-        isAdmin = False
-        for i in roles:
-            if int(i) in config.perms.admin:
-                isAdmin = True
-        
-        allowed_apptypes = []
-        if not isAdmin:
-            for tt in application_types:
-                allowed_roles = tt["staff_role_id"]
-                for role in allowed_roles:
-                    if str(role) in roles:
-                        allowed_apptypes.append(str(tt["id"]))
-                        break
-        else:
-            for tt in application_types:
-                allowed_apptypes.append(str(tt["id"]))
-
-        if len(allowed_apptypes) == 0:
-            response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-        limit = ""
-        if apptype == 0: # show all type
-            limit = " WHERE "
-            for tt in allowed_apptypes:
-                limit += f"apptype = {tt} OR "
-            limit = limit[:-3]
-        else:
-            if not str(apptype) in allowed_apptypes:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-            limit = f" WHERE apptype = {apptype} "
-
-        cur.execute(f"SELECT applicationid, apptype, discordid, submitTimestamp, status, closedTimestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * pagelimit}, {pagelimit}")
-        t = cur.fetchall()
-        
-        cur.execute(f"SELECT COUNT(*) FROM application {limit}")
-        p = cur.fetchall()
-        if len(t) > 0:
-            tot = p[0][0]
-
-    ret = []
-    for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE discordid = {tt[2]}")
-        p = cur.fetchall()
-        name = "Unknown"
-        if len(p) > 0:
-            name = p[0][0]
-        ret.append({"applicationid": str(tt[0]), "apptype": str(tt[1]), \
-            "discordid": f"{tt[2]}", "name": name, \
-                "status": str(tt[4]), "submitTimestamp": str(tt[3]), "closedTimestamp": str(tt[5])})
-
-    return {"error": False, "response": {"list": ret, "page": str(page), "tot": str(tot)}}
-
-@app.get(f"/{config.vtc_abbr}/application/positions")
-async def getApplicationPositions(request: Request, response: Response):
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        return {"error": False, "response": []}
-    else:
-        ret = []
-        for tt in t[0][0].split(","):
-            ret.append(tt)
-        return {"error": False, "response": ret}
-
-@app.post(f"/{config.vtc_abbr}/application/positions")
-async def setApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application/positions', 180, 3)
+# Higher-management
+@app.patch(f"/{config.vtc_abbr}/application/positions")
+async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /application/positions', 180, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -602,4 +616,4 @@ async def setApplicationPositions(request: Request, response: Response, authoriz
 
     await AuditLog(adminid, f"Updated open staff positions to: {positions}")
 
-    return {"error": False, "response": {"positions": positions}}
+    return {"error": False}
