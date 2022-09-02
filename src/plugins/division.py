@@ -16,18 +16,27 @@ import multilang as ml
 divisions = config.divisions
 divisionsGET = divisions
 for i in range(len(divisions)):
-    divisions[i]["id"] = int(divisions[i]["id"])
-    divisionsGET[i]["id"] = str(divisions[i]["id"])
+    try:
+        divisions[i]["id"] = int(divisions[i]["id"])
+        divisionsGET[i]["id"] = str(divisions[i]["id"])
+    except:
+        pass
     
 divisionroles = []
 divisiontxt = {}
 for division in divisions:
-    divisionroles.append(int(division["role_id"]))
-    divisiontxt[division["id"]] = division["name"]
+    try:
+        divisionroles.append(int(division["role_id"]))
+        divisiontxt[int(division["id"])] = division["name"]
+    except:
+        pass
 
 DIVISIONPNT = {}
 for division in divisions:
-    DIVISIONPNT[division["id"]] = int(division["point"])
+    try:
+        DIVISIONPNT[int(division["id"])] = int(division["point"])
+    except:
+        pass
 
 # Basic info
 @app.get(f"/{config.vtc_abbr}/division/list")
@@ -181,8 +190,12 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur = conn.cursor()
 
     form = await request.form()
-    logid = int(form["logid"])
-    divisionid = int(form["divisionid"])
+    try:
+        logid = int(form["logid"])
+        divisionid = int(form["divisionid"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
@@ -215,8 +228,11 @@ async def postDivision(request: Request, response: Response, authorization: str 
     for role in roles:
         if int(role) in divisionroles:
             for division in divisions:
-                if int(division["role_id"]) == int(role):
-                    udivisions.append(int(division["id"]))
+                try:
+                    if int(division["role_id"]) == int(role):
+                        udivisions.append(int(division["id"]))
+                except:
+                    pass
     if not divisionid in udivisions:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_division_driver")}
@@ -310,10 +326,14 @@ async def patchDivision(request: Request, response: Response, authorization: str
     cur = conn.cursor()
 
     form = await request.form()
-    logid = int(form["logid"])
-    divisionid = int(form["divisionid"])
-    reason = form["reason"]
-    status = int(form["status"])
+    try:
+        logid = int(form["logid"])
+        divisionid = int(form["divisionid"])
+        reason = form["reason"]
+        status = int(form["status"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     
     cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()

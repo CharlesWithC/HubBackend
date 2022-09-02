@@ -220,7 +220,11 @@ async def postApplication(request: Request, response: Response, authorization: s
     cur = conn.cursor()
 
     form = await request.form()
-    apptype = int(form["application_type"])
+    try:
+        apptype = int(form["application_type"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     data = json.loads(form["data"])
 
     apptypetxt = ""

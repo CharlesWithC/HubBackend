@@ -265,8 +265,12 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     departure = b64e(form["departure"])
     destination = b64e(form["destination"])
     distance = b64e(form["distance"])
-    meetup_timestamp = int(form["meetup_timestamp"])
-    departure_timestamp = int(form["departure_timestamp"])
+    try:
+        meetup_timestamp = int(form["meetup_timestamp"])
+        departure_timestamp = int(form["departure_timestamp"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     images = b64e(form["images"])
     pvt = 0
     if form["pvt"] == "true":
@@ -300,8 +304,12 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     departure = b64e(form["departure"])
     destination = b64e(form["destination"])
     distance = b64e(form["distance"])
-    meetup_timestamp = int(form["meetup_timestamp"])
-    departure_timestamp = int(form["departure_timestamp"])
+    try:
+        meetup_timestamp = int(form["meetup_timestamp"])
+        departure_timestamp = int(form["departure_timestamp"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     images = b64e(form["images"])
     pvt = 0
     if form["pvt"] == "true":
@@ -377,7 +385,11 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     attendees = form["attendees"].replace(" ","").split(",")
     while "" in attendees:
         attendees.remove("")
-    points = int(form["points"])
+    try:
+        points = int(form["points"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     if int(eventid) < 0:
         response.status_code = 404

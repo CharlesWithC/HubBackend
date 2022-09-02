@@ -18,23 +18,32 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[int(division["id"])] = int(division["point"])
+    try:
+        DIVISIONPNT[int(division["id"])] = int(division["point"])
+    except:
+        pass
 
 sroles = tconfig["roles"]
 ROLES = {}
 for key in sroles:
-    ROLES[int(key)] = sroles[key]
+    try:
+        ROLES[int(key)] = sroles[key]
+    except:
+        pass
 ROLES = dict(collections.OrderedDict(sorted(ROLES.items())))
 
 RANKS = tconfig["ranks"]
 RANKROLE = {}
 RANKNAME = {}
 for t in RANKS:
-    if t["discord_role_id"] != "":
-        RANKROLE[int(t["distance"])] = int(t["discord_role_id"])
-    else:
-        RANKROLE[int(t["distance"])] = 0
-    RANKNAME[int(t["distance"])] = t["name"]
+    try:
+        if t["discord_role_id"] != "":
+            RANKROLE[int(t["distance"])] = int(t["discord_role_id"])
+        else:
+            RANKROLE[int(t["distance"])] = 0
+        RANKNAME[int(t["distance"])] = t["name"]
+    except:
+        pass
 RANKROLE = dict(collections.OrderedDict(sorted(RANKROLE.items())))
 RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
 
@@ -308,7 +317,11 @@ async def addMember(request: Request, response: Response, authorization: str = H
     cur = conn.cursor()
     
     form = await request.form()
-    discordid = int(form["discordid"])
+    try:
+        discordid = int(form["discordid"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -469,9 +482,13 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     cur = conn.cursor()
 
     form = await request.form()
-    userid = int(form["userid"])
-    distance = int(form["distance"])
-    mythpoint = int(form["mythpoint"])
+    try:
+        userid = int(form["userid"])
+        distance = int(form["distance"])
+        mythpoint = int(form["mythpoint"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     if distance != 0:
         if distance > 0:
@@ -524,7 +541,11 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             isDS = True
 
     form = await request.form()
-    userid = int(form["userid"])
+    try:
+        userid = int(form["userid"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     if userid < 0:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
@@ -609,10 +630,13 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         
         if config.welcome_role_change != []:
             for role in config.welcome_role_change:
-                if int(role) < 0:
-                    requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
-                elif int(role) > 0:
-                    requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                try:
+                    if int(role) < 0:
+                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                    elif int(role) > 0:
+                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                except:
+                    pass
 
     if config.perms.driver[0] in removedroles:
         cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")

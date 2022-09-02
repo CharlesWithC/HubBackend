@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.12.8**  
+1.Fixed 500 error when submitting division validation request  
+2.Fixed 500 error when Drivers Hub gets error from Discord getting user data (`/auth/discord/callback`)  
+3.Fixed some 500 errors when trying to convert non-int to int  
+
 **v1.12.7**  
 Improved endpoint path and response format for better readability
 

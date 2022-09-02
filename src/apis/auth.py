@@ -85,6 +85,9 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
     tokens = discord_auth.get_tokens(code)
     if "access_token" in tokens.keys():
         user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+        if not 'id' in user_data:
+            return RedirectResponse(url=f"https://{config.domain}/auth?message=Discord Error: " + user_data['message'], status_code=302)
+
         tokens = {**tokens, **user_data}
         conn = newconn()
         cur = conn.cursor()

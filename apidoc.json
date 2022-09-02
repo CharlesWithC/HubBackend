@@ -1955,7 +1955,7 @@
                                         "description": "Content",
                                         "type": "string"
                                     },
-                                    "atype": {
+                                    "announcement_type": {
                                         "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
                                         "type": "integer"
                                     },
@@ -1969,7 +1969,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "content", "atype", "pvt", "channelid"]
+                            "required": ["title", "content", "announcement_type", "pvt", "channelid"]
                         }
                     }
                 },
@@ -2020,7 +2020,7 @@
                                         "description": "Content",
                                         "type": "string"
                                     },
-                                    "atype": {
+                                    "announcement_type": {
                                         "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
                                         "type": "integer"
                                     },
@@ -2034,7 +2034,7 @@
                                     }
                                 }
                             },
-                            "required": ["aid", "title", "content", "atype", "pvt", "channelid"]
+                            "required": ["aid", "title", "content", "announcement_type", "pvt", "channelid"]
                         }
                     }
                 },

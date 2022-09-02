@@ -372,8 +372,12 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     cur = conn.cursor()
     
     form = await request.form()
-    discordid = int(form["discordid"])
-    expire = int(form["expire"])
+    try:
+        discordid = int(form["discordid"])
+        expire = int(form["expire"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     if expire == -1:
         expire = 9999999999999999
     reason = form["reason"].replace("'","''")
@@ -464,8 +468,12 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     cur = conn.cursor()
     
     form = await request.form()
-    old_discord_id = int(form["old_discord_id"])
-    new_discord_id = int(form["new_discord_id"])
+    try:
+        old_discord_id = int(form["old_discord_id"])
+        new_discord_id = int(form["new_discord_id"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()
@@ -517,7 +525,11 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     cur = conn.cursor()
     
     form = await request.form()
-    discordid = int(form["discordid"])
+    try:
+        discordid = int(form["discordid"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -558,7 +570,11 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     cur = conn.cursor()
     
     form = await request.form()
-    discordid = int(form["discordid"])
+    try:
+        discordid = int(form["discordid"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()

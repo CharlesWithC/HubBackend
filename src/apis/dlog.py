@@ -15,7 +15,10 @@ import multilang as ml
 
 DIVISIONPNT = {}
 for division in config.divisions:
-    DIVISIONPNT[int(division["id"])] = int(division["point"])
+    try:
+        DIVISIONPNT[int(division["id"])] = int(division["point"])
+    except:
+        pass
 
 # cache (works in each worker process)
 cstats = {}
@@ -136,10 +139,12 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if start_time != -1 and end_time != -1:
         timelimit = f"AND timestamp >= {start_time} AND timestamp <= {end_time}"
     
+    speed_limit = ""
     if speed_limit != 0:
-        speed_limit = f" AND topspeed <= {int(speed_limit)}"
-    else:
-        speed_limit = ""
+        try:
+            speed_limit = f" AND topspeed <= {int(speed_limit)}"
+        except:
+            pass
 
     gamelimit = ""
     if game == 1 or game == 2:
@@ -579,7 +584,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         limituser = limituser[:10]
     limit = ""
     if speed_limit != 0:
-        limit = f" AND topspeed <= {int(speed_limit)}"
+        try:
+            limit = f" AND topspeed <= {int(speed_limit)}"
+        except:
+            pass
     gamelimit = ""
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"

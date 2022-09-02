@@ -65,7 +65,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if len(n) > 0:
             name = n[0][0]
         return {"error": False, "response": {"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
-            "atype": str(tt[2]), "by": name, "timestamp": str(tt[3]), "is_private": TF[tt[6]]}}
+            "announcement_type": str(tt[2]), "author": {"name": name, "userid": str(tt[4])}, "timestamp": str(tt[3]), "is_private": TF[tt[6]]}}
 
     if page <= 0:
         page = 1
@@ -80,7 +80,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         if len(n) > 0:
             name = n[0][0]
         ret.append({"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
-            "atype": str(tt[2]), "by": name, "byuserid": str(tt[4]), "timestamp": str(tt[3]), "is_private": TF[tt[6]]})
+            "announcement_type": str(tt[2]), "author": {"name": name, "userid": str(tt[4])}, "timestamp": str(tt[3]), "is_private": TF[tt[6]]})
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
     t = cur.fetchall()
@@ -114,10 +114,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             isAdmin = True
 
     form = await request.form()
-    title = b64e(form["title"])
-    content = b64e(form["content"])
-    discord_message_content = form["discord_message_content"]
-    atype = int(form["atype"])
+    try:
+        title = b64e(form["title"])
+        content = b64e(form["content"])
+        discord_message_content = form["discord_message_content"]
+        atype = int(form["announcement_type"])
+    except:
+        response.status_code = 400
+        return {"error": True}
 
     if not isAdmin and atype != 1:
         response.status_code = 403
@@ -180,7 +184,11 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     title = b64e(form["title"])
     content = b64e(form["content"])
     discord_message_content = form["discord_message_content"]
-    atype = int(form["atype"])
+    try:
+        atype = int(form["announcement_type"])
+    except:
+        response.status_code = 400
+        return {"error": True}
     pvt = 0
     if form["pvt"] == "true":
         pvt = 1

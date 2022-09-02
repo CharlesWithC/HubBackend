@@ -11,7 +11,7 @@ from sys import exit
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.12.7"
+version = "v1.12.8"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -43,7 +43,10 @@ for perm in perms.keys():
     roles = perms[perm]
     newroles = []
     for role in roles:
-        newroles.append(int(role))
+        try:
+            newroles.append(int(role))
+        except:
+            pass
     perms[perm] = newroles
 config["perms"] = perms
 if not "server_workers" in config.keys():
