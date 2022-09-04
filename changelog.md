@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.12.9**  
+1.Fixed the bug that updating event point without updating attendee doesn't work  
+2.Added **DELETE** `/user/password` endpoint and removed the ability to disable password login by passing empty password to **PATCH** `/user/password`  
+
 **v1.12.8**  
 1.Fixed 500 error when submitting division validation request  
 2.Fixed 500 error when Drivers Hub gets error from Discord getting user data (`/auth/discord/callback`)  

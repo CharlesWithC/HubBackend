@@ -961,14 +961,17 @@ async def getDlogExport(request: Request, response: Response, authorization: str
             destination_company = ""
         else:
             destination_company = destination_company["name"]
-        cargo = data["data"]["object"]["cargo"]["name"]
-        cargo_mass = data["data"]["object"]["cargo"]["mass"]
-        truckd = data["data"]["object"]["truck"]
-        truck = ""
-        if truckd["brand"] is None or truckd["name"] is None:
-            truck = "Unknown"
+        cargo = "Unknown Cargo"
+        cargo_mass = 0
+        if not data["data"]["object"]["cargo"] is None and not data["data"]["object"]["cargo"]["name"] is None:
+            cargo = data["data"]["object"]["cargo"]["name"]
+        if not data["data"]["object"]["cargo"] is None and not data["data"]["object"]["cargo"]["mass"] is None:
+            cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        truck = data["data"]["object"]["truck"]
+        if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
+            truck = truck["brand"]["name"] + " " + truck["name"]
         else:
-            truck = truckd["brand"]["name"] + " " + truckd["name"]
+            truck = "Unknown Truck"
 
         isdelivered = dd[9]
         profit = 0

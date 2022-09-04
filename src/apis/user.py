@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, requests, math
+import json, time, requests, math, bcrypt
 
 from app import app, config
 from db import newconn
@@ -198,11 +198,6 @@ async def patchPassword(request: Request, response: Response, authorization: str
 
     form = await request.form()
     password = form["password"]
-    if password == "":
-        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
-        conn.commit()
-        return {"error": False}
 
     if not "@" in email: # make sure it's not empty
         response.status_code = 403
@@ -214,7 +209,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email")}
         
-    if len(password)>=8:
+    if len(password) >= 8:
         if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
             (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
             return {"error": True, "descriptor": ml.tr(request, "weak_password")}
@@ -228,6 +223,36 @@ async def patchPassword(request: Request, response: Response, authorization: str
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
     cur.execute(f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
+    conn.commit()
+
+    return {"error": False}
+    
+@app.delete(f'/{config.vtc_abbr}/user/password')
+async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /user/password', 180, 5)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    email = t[0][0]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+    
+    cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
+    cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
     conn.commit()
 
     return {"error": False}

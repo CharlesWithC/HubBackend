@@ -187,8 +187,12 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 destination_company = "Unknown company"
             else:
                 destination_company = destination_company["name"]
-            cargo = d["data"]["object"]["cargo"]["name"]
-            cargo_mass = d["data"]["object"]["cargo"]["mass"]
+            cargo = "Unknown Cargo"
+            cargo_mass = 0
+            if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["name"] is None:
+                cargo = d["data"]["object"]["cargo"]["name"]
+            if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
+                cargo_mass = d["data"]["object"]["cargo"]["mass"]
             multiplayer = d["data"]["object"]["multiplayer"]
             if multiplayer is None:
                 multiplayer = "Single Player"
@@ -200,7 +204,10 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 else:
                     multiplayer = "Unknown Multiplayer Mode"
             truck = d["data"]["object"]["truck"]
-            truck = truck["brand"]["name"] + " " + truck["name"]
+            if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
+                truck = truck["brand"]["name"] + " " + truck["name"]
+            else:
+                truck = "Unknown Truck"
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
             munit = "€"

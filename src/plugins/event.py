@@ -395,7 +395,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
-    cur.execute(f"SELECT attendee FROM event WHERE eventid = {eventid}")
+    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -403,9 +403,11 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     orgattendees = t[0][0].split(",")
     while "" in orgattendees:
         orgattendees.remove("")
+    orgeventpnt = t[0][1]
+    gap = points - orgeventpnt
 
     ret = f"Updated event #{eventid} attendees\n"
-    ret1 = f"Given "
+    ret1 = f"New attendees - Given {points} points to "
     cnt = 0
     for attendee in attendees:
         if attendee in orgattendees:
@@ -418,14 +420,16 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         ret1 += f"{t[0][0]}, "
         cnt += 1
     ret1 = ret1[:-2]
-    ret1 += f" {points} event points.\n"
+    ret1 += f".\n"
     if cnt > 0:
         ret = ret + ret1
 
-    ret2 = f"Removed {points} from "
+    ret2 = f"Removed attendees - Removed {points} points from "
     cnt = 0
+    toremove = []
     for attendee in orgattendees:
         if not attendee in attendees:
+            toremove.append(attendee)
             attendee = int(attendee)
             cur.execute(f"SELECT name, discordid FROM user WHERE userid = {attendee}")
             t = cur.fetchall()
@@ -434,14 +438,36 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             ret2 += f"{t[0][0]}, "
             cnt += 1
     ret2 = ret2[:-2]
+    ret2 += f".\n"
     if cnt > 0:
         ret = ret + ret2
-
-    if ret == f"Updated event #{eventid} attendees\n":
-        return {"error": False, "response": {"message": "No changes made."}}
+    for attendee in toremove:
+        orgattendees.remove(attendee)
+    
+    if gap != 0:
+        if gap > 0:
+            ret3 = f"Updated points - Added {gap} points to "
+        else:
+            ret3 = f"Updated points - Removed {-gap} points from "
+        cnt = 0
+        for attendee in orgattendees:
+            attendee = int(attendee)
+            cur.execute(f"SELECT name, discordid FROM user WHERE userid = {attendee}")
+            t = cur.fetchall()
+            if len(t) == 0:
+                continue
+            ret3 += f"{t[0][0]}, "
+            cnt += 1
+        ret3 = ret3[:-2]
+        ret3 += f".\n"
+        if cnt > 0:
+            ret = ret + ret3
 
     cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', eventpnt = {points} WHERE eventid = {eventid}")
     conn.commit()
+
+    if ret == f"Updated event #{eventid} attendees\n":
+        return {"error": False, "response": {"message": "No changes made."}}
 
     ret = ret.replace("'","''")
     await AuditLog(adminid, ret)
