@@ -4,14 +4,11 @@
 from fastapi import FastAPI
 from discord import Colour
 from io import BytesIO
-import os, json, requests
-
-import sys
-from sys import exit
+import os, sys, json, requests
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.12.9"
+version = "v1.13.1"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

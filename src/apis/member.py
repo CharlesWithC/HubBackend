@@ -300,9 +300,9 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         return {"error": True, "descriptor": "Service Unavailable"}
 
 # Member Operation Section
-@app.post(f'/{config.vtc_abbr}/member/add')
-async def addMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /member/add', 180, 10)
+@app.put(f'/{config.vtc_abbr}/member')
+async def putMember(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PUT /member', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -603,33 +603,25 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     if config.perms.driver[0] in addedroles:
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
         
-        cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
+        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         userdiscordid = t[0][0]
+        username = t[0][1]
         usermention = f"<@{userdiscordid}>"
         
-        if config.webhook_teamupdate != "":
-            try:
-                async with ClientSession() as session:
-                    webhook = Webhook.from_url(config.webhook_teamupdate, session=session)
-                    embed = Embed(title = "Team Update", description = config.webhook_teamupdate_message.replace("{mention}", usermention).replace("{vtcname}", config.vtc_name), color = config.rgbcolor)
-                    embed.set_footer(text = f"{config.vtc_name} | Team Update", icon_url = config.vtc_logo_link)
-                    if config.team_update_image_link != "":
-                        embed.set_image(url = config.team_update_image_link)
-                    embed.timestamp = datetime.now()
-                    await webhook.send(content = usermention, embed=embed)
-            except:
-                pass
+        def setvar(msg):
+            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+
+        if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
+            meta = config.team_update
+            await AutoMessage(meta, setvar)
         
-        if config.welcome_message != "":
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{config.welcome_channel_id}/messages"
-            requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Welcome", "description": config.welcome_message.replace("{mention}", usermention).replace("{vtcname}", config.vtc_name), 
-                    "footer": {"text": f"You are our #{userid} driver", "icon_url": config.vtc_logo_link}, "image": {"url": config.welcome_image_link},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}))
+        if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
+            meta = config.member_welcome
+            await AutoMessage(meta, setvar)
         
-        if config.welcome_role_change != []:
-            for role in config.welcome_role_change:
+        if config.member_welcome.role_change != []:
+            for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
                         requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
@@ -666,6 +658,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         return au
     discordid = au["discordid"]
     userid = au["userid"]
+    username = au["name"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -753,19 +746,14 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                 for role in curroles:
                     requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                 
-                if config.rank_up_channel_id != "" and config.rank_up_message != "":
-                    try:
-                        usermention = f"<@{discordid}>"
-                        rankmention = f"<@&{rank}>"
-                        msg = config.rank_up_message.replace("{mention}", usermention).replace("{rank}", rankmention)
+                usermention = f"<@{discordid}>"
+                rankmention = f"<@&{rank}>"
+                def setvar(msg):
+                    return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention)
 
-                        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-                        ddurl = f"https://discord.com/api/v9/channels/{config.rank_up_channel_id}/messages"
-                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Driver Rank Up", "description": msg, 
-                                "footer": {"text": f"Congratulations!", "icon_url": config.vtc_logo_link},\
-                                        "timestamp": str(datetime.now()), "color": config.intcolor}}))                       
-                    except:
-                        pass
+                if config.rank_up.webhook_url != "" or config.rank_up.channel_id != "":
+                    meta = config.rank_up
+                    await AutoMessage(meta, setvar)
 
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:

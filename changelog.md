@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.13.1**  
+1.Added ability to edit meta elements of automated embeds in Discord (Welcome, Team Update, Rank Update)  
+2.Added ability to switch between webhook and bot for automated embeds in Discord (Welcome, Team Update, Rank Update)  
+3.Updated partial endpoint path or method  
+
 **v1.12.9**  
 1.Fixed the bug that updating event point without updating attendee doesn't work  
 2.Added **DELETE** `/user/password` endpoint and removed the ability to disable password login by passing empty password to **PATCH** `/user/password`  

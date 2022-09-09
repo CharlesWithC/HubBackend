@@ -4,7 +4,16 @@
 TF = [False, True]
 
 from base64 import b64encode, b64decode
-import re
+from discord import Webhook, Embed
+from aiohttp import ClientSession
+from datetime import datetime
+import json, time, math, zlib, re
+import ipaddress, requests
+
+from db import newconn
+from app import config, tconfig
+import multilang as ml
+
 def b64e(s):
     s = re.sub(re.compile('<.*?>'), '', s)
     try:
@@ -18,47 +27,6 @@ def b64d(s):
     except:
         return s
 
-from discord import Webhook, Embed
-from aiohttp import ClientSession
-import json
-from datetime import datetime
-import time
-import math
-import ipaddress
-
-from db import newconn
-from app import config, tconfig
-import multilang as ml
-
-async def AuditLog(userid, text):
-    conn = newconn()
-    cur = conn.cursor()
-    name = "Unknown User"
-    if userid != -999:
-        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        if len(t) > 0:
-            name = t[0][0]
-    else:
-        name = "System"
-    text = text.replace("''","'").replace("'","''")
-    cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{text}', {int(time.time())})")
-    conn.commit()
-    if config.webhook_audit != "":
-        try:
-            async with ClientSession() as session:
-                webhook = Webhook.from_url(config.webhook_audit, session=session)
-                embed = Embed(description = text, color = config.rgbcolor)
-                if userid != -999:
-                    embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
-                else:
-                    embed.set_footer(text = f"Responsible User: {name}")
-                embed.timestamp = datetime.now()
-                await webhook.send(embed=embed)
-        except:
-            pass
-        
-import zlib
 def compress(s):
     if type(s) == str:
         s = s.encode()
@@ -304,3 +272,70 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
     
     return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+async def AuditLog(userid, text):
+    conn = newconn()
+    cur = conn.cursor()
+    name = "Unknown User"
+    if userid != -999:
+        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        if len(t) > 0:
+            name = t[0][0]
+    else:
+        name = "System"
+    text = text.replace("''","'").replace("'","''")
+    cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{text}', {int(time.time())})")
+    conn.commit()
+    if config.webhook_audit != "":
+        try:
+            async with ClientSession() as session:
+                webhook = Webhook.from_url(config.webhook_audit, session=session)
+                embed = Embed(description = text, color = config.rgbcolor)
+                if userid != -999:
+                    embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
+                else:
+                    embed.set_footer(text = f"Responsible User: {name}")
+                embed.timestamp = datetime.now()
+                await webhook.send(embed=embed)
+        except:
+            pass
+
+async def AutoMessage(meta, setvar):
+    try:
+        if meta.webhook_url != "":
+            async with ClientSession() as session:
+                webhook = Webhook.from_url(meta.webhook_url, session=session)
+                embed = Embed(title = setvar(meta.embed.title), \
+                    description = setvar(meta.embed.description), color = config.rgbcolor)
+                embed.set_footer(text = setvar(meta.embed.footer.text), icon_url = setvar(meta.embed.footer.icon_url))
+                if meta.embed.image_url != "":
+                    embed.set_image(url = setvar(meta.embed.image_url))
+                if meta.embed.timestamp:
+                    embed.timestamp = datetime.now()
+                await webhook.send(content = setvar(meta.content), embed=embed)
+
+        elif meta.channel_id != "":
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            ddurl = f"https://discord.com/api/v9/channels/{meta.channel_id}/messages"
+            timestamp = ""
+            if meta.embed.timestamp:
+                timestamp = str(datetime.now())
+            requests.post(ddurl, headers=headers, data=json.dumps({
+                "content": setvar(meta.content),
+                "embed":{
+                    "title": setvar(meta.embed.title), 
+                    "description": setvar(meta.embed.description), 
+                    "footer": {
+                        "text": setvar(meta.embed.footer.text), 
+                        "icon_url": setvar(meta.embed.footer.icon_url)
+                    }, 
+                    "image": {
+                        "url": setvar(meta.embed.image_url)
+                    },
+                    "timestamp": timestamp,
+                    "color": config.intcolor
+                }}))
+    except:
+        import traceback
+        traceback.print_exc()

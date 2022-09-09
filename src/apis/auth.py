@@ -168,9 +168,9 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
     return {"error": False}
 
-@app.post(f"/{config.vtc_abbr}/token/renew")
-async def postTokenRenew(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token/renew', 180, 5)
+@app.patch(f"/{config.vtc_abbr}/token")
+async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /token', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

@@ -200,9 +200,9 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"list": ret}}
 
-@app.post(f"/{config.vtc_abbr}/event/vote")
-async def postEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'POST /event/vote', 180, 30)
+@app.put(f"/{config.vtc_abbr}/event/vote")
+async def putEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'PUT /event/vote', 180, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

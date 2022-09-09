@@ -6,7 +6,6 @@
     "privacy": false,
     "hex_color": "FFFFFF",
     "vtc_logo_link": "https://{domain}/images/logo.png",
-    "team_update_image_link": "https://{domain}/images/TeamUpdate.png",
 
     "apidoc": "./apidoc.json",
     "language_dir": "./languages",
@@ -52,16 +51,54 @@
     "discord_callback_url": "https://drivershub.charlws.com/{vtc_abbr}/user/callback",
     "discord_bot_token": "",
 
-    "webhook_teamupdate": "",
-    "webhook_teamupdate_message": "{mention} has joined **{vtcname}** as a **Driver**.",
+    "team_update": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "descrpition": "{name} has joined **VTC** as a **Driver**.",
+            "image_url": "",
+            "footer": {
+                "text": "",
+                "icon_url": ""
+            },
+            "timestamp": true
+        }
+    },
 
-    "welcome_channel_id": "",
-    "welcome_message": "",
-    "welcome_image_link": "https://{domain}/images/bg.jpg",
-    "welcome_role_change": ["+1237912873213", "-43953495734"],
+    "member_welcome": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "descrpition": "Welcome {name}.",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "You are our #{userid} driver",
+                "icon_url": ""
+            },
+            "timestamp": true
+        },
+        "role_change": ["+1237912873213", "-43953495734"]
+    },
 
-    "rank_up_channel_id": "",
-    "rank_up_message": "GG {mention}! You have ranked up to {rank}!",
+    "rank_up": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "descrpition": "GG {mention}! You have ranked up to {rank}!",
+            "image_url": "",
+            "footer": {
+                "text": "",
+                "icon_url": ""
+            },
+            "timestamp": true
+        }
+    },
     "ranks": [
         {"distance": "0", "name": "New Driver", "discord_role_id": ""}
     ],

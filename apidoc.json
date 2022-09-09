@@ -396,10 +396,10 @@
                     }
                 }
             },
-            "delete": {
-                "summary": "Revoke Token",
+            "patch": {
+                "summary": "Renew token",
                 "tags": ["user"],
-                "operationId": "userRevoke_vtc_user_revoke_post",
+                "operationId": "userRefreshToken",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -423,13 +423,11 @@
                         }
                     }
                 }
-            }
-        },
-        "/vtc/token/renew": {
-            "post": {
-                "summary": "Renew token",
+            },
+            "delete": {
+                "summary": "Revoke Token",
                 "tags": ["user"],
-                "operationId": "userRefreshToken",
+                "operationId": "userRevoke_vtc_user_revoke_post",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -996,8 +994,8 @@
                 }
             }
         },
-        "/vtc/member/add": {
-            "post": {
+        "/vtc/member": {
+            "put": {
                 "summary": "Add Member",
                 "tags": ["member", "manage"],
                 "operationId": "addMember_vtc_member_add_post",
@@ -1018,55 +1016,6 @@
                                 }
                             },
                             "required": ["discordid"]
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "summary": "Update Member Roles",
-                "tags": ["member", "manage"],
-                "operationId": "setMemberRole_vtc_member_role_post",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "userid": {
-                                        "description": "User ID",
-                                        "type": "integer"
-                                    },
-                                    "roles": {
-                                        "description": "Roles",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["userid", "roles"]
                         }
                     }
                 },
@@ -1251,6 +1200,55 @@
                 "summary": "Get All Roles",
                 "tags": ["member"],
                 "operationId": "getAllRoles",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update Member Roles",
+                "tags": ["member", "manage"],
+                "operationId": "setMemberRole_vtc_member_role_post",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "userid": {
+                                        "description": "User ID",
+                                        "type": "integer"
+                                    },
+                                    "roles": {
+                                        "description": "Roles",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["userid", "roles"]
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -2453,7 +2451,7 @@
             }
         },
         "/vtc/event/vote": {
-            "post": {
+            "put": {
                 "summary": "Vote / Unvote an event",
                 "tags": ["event"],
                 "operationId": "voteEvent",
