@@ -195,7 +195,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
         divisionid = int(form["divisionid"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
@@ -329,11 +329,11 @@ async def patchDivision(request: Request, response: Response, authorization: str
     try:
         logid = int(form["logid"])
         divisionid = int(form["divisionid"])
-        reason = form["reason"]
+        reason = str(form["reason"])
         status = int(form["status"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     
     cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()

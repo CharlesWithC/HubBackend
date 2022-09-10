@@ -337,5 +337,4 @@ async def AutoMessage(meta, setvar):
                     "color": config.intcolor
                 }}))
     except:
-        import traceback
-        traceback.print_exc()
+        pass

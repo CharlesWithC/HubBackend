@@ -27,9 +27,13 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
     
     form = await request.form()
-    email = form["email"].replace("'", "''")    
-    password = form["password"].encode('utf-8')
-    hcaptcha_response = form["h-captcha-response"]
+    try:
+        email = str(form["email"]).replace("'", "''")    
+        password = str(form["password"]).encode('utf-8')
+        hcaptcha_response = form["h-captcha-response"]
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
     d = json.loads(r.text)
@@ -70,7 +74,7 @@ async def getAuthDiscordRedirect(request: Request):
     return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
 @app.get(f'/{config.vtc_abbr}/auth/discord/callback')
-async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error: Optional[str] = "", error_description: Optional[str] = ""):
+async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer != "https://discord.com/":
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
@@ -161,12 +165,14 @@ async def getToken(request: Request, response: Response, authorization: str = He
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, check_member = False)
+    au = auth(authorization, request, check_member = False, allow_application_token = True)
     if au["error"]:
         response.status_code = 401
         return au
 
-    return {"error": False}
+    token_type = authorization.split(" ")[0].lower()
+
+    return {"error": False, "response": {"token_type": token_type}}
 
 @app.patch(f"/{config.vtc_abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
@@ -261,7 +267,11 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
 
     form = await request.form()
-    hsh = form["hash"]
+    try:
+        hsh = form["hash"]
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     conn = newconn()
     cur = conn.cursor()

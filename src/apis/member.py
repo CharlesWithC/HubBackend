@@ -75,7 +75,7 @@ async def getRanks(request: Request, response: Response):
 # Member Info Section
 @app.get(f'/{config.vtc_abbr}/member/list')
 async def getMemberList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     rl = ratelimit(request.client.host, 'GET /member/list', 180, 90)
@@ -183,7 +183,7 @@ async def getAllMemberList(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"steamid": str(tt[0]), "name": tt[1], "userid": str(tt[2])})
+        ret.append({"userid": str(tt[2]), "name": tt[1], "steamid": str(tt[0])})
     return {"error": False, "response": {"list": ret}}
 
 @app.get(f'/{config.vtc_abbr}/member/banner')
@@ -298,352 +298,6 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     except:
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
-
-# Member Operation Section
-@app.put(f'/{config.vtc_abbr}/member')
-async def putMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /member', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    adminid = au["userid"]
-    
-    conn = newconn()
-    cur = conn.cursor()
-    
-    form = await request.form()
-    try:
-        discordid = int(form["discordid"])
-    except:
-        response.status_code = 400
-        return {"error": True}
-
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) > 0:
-        response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted")}
-
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
-    t = cur.fetchall()
-    userid = int(t[0][0])
-    
-    cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    if t[0][0] != -1:
-        response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "member_registered")}
-    if t[0][2] <= 0:
-        response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
-    if t[0][1] <= 0 and config.truckersmp_bind:
-        response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
-
-    name = t[0][3]
-    cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
-    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
-    conn.commit()
-
-    try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
-                "description": ml.tr(request, "member_update", var = {"vtcname": config.vtc_name}, force_en = True),
-                    "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-
-    except:
-        pass
-
-    return {"error": False}    
-
-@app.delete(f"/{config.vtc_abbr}/member/resign")
-async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /member/resign', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    userid = au["userid"]
-    name = au["name"].replace("'", "''")
-
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
-    
-    conn = newconn()
-    cur = conn.cursor()
-
-    cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    steamid = t[0][0]
-    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
-    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-    conn.commit()
-
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
-
-    await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
-    return {"error": False}
-
-@app.delete(f"/{config.vtc_abbr}/member/dismiss")
-async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    discordid = au["discordid"]
-    adminid = au["userid"]
-    adminroles = au["roles"]
-
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
-
-    conn = newconn()
-    cur = conn.cursor()
-
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-
-    cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    userid = t[0][0]
-    steamid = t[0][1]
-    name = t[0][2]
-    roles = t[0][3].split(",")
-    udiscordid = t[0][4]
-    while "" in roles:
-        roles.remove("")
-    highest = 99999
-    for i in roles:
-        if int(i) < highest:
-            highest = int(i)
-    if adminhighest >= highest:
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
-
-    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
-    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-    conn.commit()
-
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
-    
-    await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
-    return {"error": False}
-
-@app.patch(f"/{config.vtc_abbr}/member/point")
-async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    adminid = au["userid"]
-    
-    conn = newconn()
-    cur = conn.cursor()
-
-    form = await request.form()
-    try:
-        userid = int(form["userid"])
-        distance = int(form["distance"])
-        mythpoint = int(form["mythpoint"])
-    except:
-        response.status_code = 400
-        return {"error": True}
-
-    if distance != 0:
-        if distance > 0:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
-        else:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
-        conn.commit()
-    if mythpoint != 0:
-        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
-        conn.commit()
-    
-    if int(distance) > 0:
-        distance = "+" + form["distance"]
-
-    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
-
-    return {"error": False}
-
-@app.patch(f'/{config.vtc_abbr}/member/roles')
-async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/roles', 180, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "division"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    adminid = au["userid"]
-    adminroles = au["roles"]
-
-    conn = newconn()
-    cur = conn.cursor()
-
-    adminhighest = 99999
-    for i in adminroles:
-        if int(i) < adminhighest:
-            adminhighest = int(i)
-            
-    isAdmin = False
-    isHR = False
-    isDS = False
-    for i in adminroles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
-            isHR = True
-        if int(i) in config.perms.division:
-            isDS = True
-
-    form = await request.form()
-    try:
-        userid = int(form["userid"])
-    except:
-        response.status_code = 400
-        return {"error": True}
-    if userid < 0:
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
-    roles = form["roles"].split(",")
-    while "" in roles:
-        roles.remove("")
-    roles = [int(i) for i in roles]
-    cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
-    username = t[0][0]
-    oldroles = t[0][1].split(",")
-    steamid = t[0][2]
-    discordid = t[0][3]
-    while "" in oldroles:
-        oldroles.remove("")
-    oldroles = [int(i) for i in oldroles]
-    addedroles = []
-    removedroles = []
-    for role in roles:
-        if role not in oldroles:
-            addedroles.append(role)
-    for role in oldroles:
-        if role not in roles:
-            removedroles.append(role)
-
-    for add in addedroles:
-        if add <= adminhighest:
-            response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal")}
-    
-    for remove in removedroles:
-        if remove <= adminhighest:
-            response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
-
-    if len(addedroles) + len(removedroles) == 0:
-        return {"error": False}
-        
-    if not isAdmin and not isHR and isDS:
-        for add in addedroles:
-            if add not in divisionroles:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-        for remove in removedroles:
-            if remove not in divisionroles:
-                response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-
-    roles = [str(i) for i in roles]
-    cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
-
-    if config.perms.driver[0] in addedroles:
-        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
-        
-        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        userdiscordid = t[0][0]
-        username = t[0][1]
-        usermention = f"<@{userdiscordid}>"
-        
-        def setvar(msg):
-            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
-
-        if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
-            meta = config.team_update
-            await AutoMessage(meta, setvar)
-        
-        if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
-            meta = config.member_welcome
-            await AutoMessage(meta, setvar)
-        
-        if config.member_welcome.role_change != []:
-            for role in config.member_welcome.role_change:
-                try:
-                    if int(role) < 0:
-                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
-                    elif int(role) > 0:
-                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
-                except:
-                    pass
-
-    if config.perms.driver[0] in removedroles:
-        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
-        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
-    
-    audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
-    for add in addedroles:
-        audit += f"**+** {ROLES[add]}\n"
-    for remove in removedroles:
-        audit += f"**-** {ROLES[remove]}\n"
-    audit = audit[:-1].replace("'","''")
-    await AuditLog(adminid, audit)
-    conn.commit()
-
-    return {"error": False}
 
 @app.patch(f"/{config.vtc_abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
@@ -762,3 +416,349 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
     except:
         pass
+
+# Member Operation Section
+@app.put(f'/{config.vtc_abbr}/member')
+async def putMember(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PUT /member', 180, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+    
+    form = await request.form()
+    try:
+        discordid = int(form["discordid"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
+    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) > 0:
+        response.status_code = 409
+        return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted")}
+
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
+    t = cur.fetchall()
+    userid = int(t[0][0])
+    
+    cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    if t[0][0] != -1:
+        response.status_code = 409
+        return {"error": True, "descriptor": ml.tr(request, "member_registered")}
+    if t[0][2] <= 0:
+        response.status_code = 428
+        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
+    if t[0][1] <= 0 and config.truckersmp_bind:
+        response.status_code = 428
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
+
+    name = t[0][3]
+    cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
+    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
+    await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
+    conn.commit()
+
+    try:
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+        durl = "https://discord.com/api/v9/users/@me/channels"
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+        d = json.loads(r.text)
+        if "id" in d:
+            channelid = d["id"]
+            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
+                "description": ml.tr(request, "member_update", var = {"vtcname": config.vtc_name}, force_en = True),
+                    "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
+                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
+                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+
+    except:
+        pass
+
+    return {"error": False}   
+
+@app.patch(f'/{config.vtc_abbr}/member/roles')
+async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/roles', 180, 30)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "division"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+    adminroles = au["roles"]
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+            
+    isAdmin = False
+    isHR = False
+    isDS = False
+    for i in adminroles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+        if int(i) in config.perms.hr or int(i) in config.perms.hrm:
+            isHR = True
+        if int(i) in config.perms.division:
+            isDS = True
+
+    form = await request.form()
+    try:
+        userid = int(form["userid"])
+        roles = str(form["roles"]).split(",")
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+    if userid < 0:
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
+    while "" in roles:
+        roles.remove("")
+    roles = [int(i) for i in roles]
+    cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
+    username = t[0][0]
+    oldroles = t[0][1].split(",")
+    steamid = t[0][2]
+    discordid = t[0][3]
+    while "" in oldroles:
+        oldroles.remove("")
+    oldroles = [int(i) for i in oldroles]
+    addedroles = []
+    removedroles = []
+    for role in roles:
+        if role not in oldroles:
+            addedroles.append(role)
+    for role in oldroles:
+        if role not in roles:
+            removedroles.append(role)
+
+    for add in addedroles:
+        if add <= adminhighest:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal")}
+    
+    for remove in removedroles:
+        if remove <= adminhighest:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
+
+    if len(addedroles) + len(removedroles) == 0:
+        return {"error": False}
+        
+    if not isAdmin and not isHR and isDS:
+        for add in addedroles:
+            if add not in divisionroles:
+                response.status_code = 403
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        for remove in removedroles:
+            if remove not in divisionroles:
+                response.status_code = 403
+                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+    roles = [str(i) for i in roles]
+    cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
+
+    if config.perms.driver[0] in addedroles:
+        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
+        
+        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        userdiscordid = t[0][0]
+        username = t[0][1]
+        usermention = f"<@{userdiscordid}>"
+        
+        def setvar(msg):
+            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+
+        if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
+            meta = config.team_update
+            await AutoMessage(meta, setvar)
+        
+        if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
+            meta = config.member_welcome
+            await AutoMessage(meta, setvar)
+        
+        if config.member_welcome.role_change != []:
+            for role in config.member_welcome.role_change:
+                try:
+                    if int(role) < 0:
+                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                    elif int(role) > 0:
+                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                except:
+                    pass
+
+    if config.perms.driver[0] in removedroles:
+        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
+        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+    
+    audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
+    for add in addedroles:
+        audit += f"**+** {ROLES[add]}\n"
+    for remove in removedroles:
+        audit += f"**-** {ROLES[remove]}\n"
+    audit = audit[:-1].replace("'","''")
+    await AuditLog(adminid, audit)
+    conn.commit()
+
+    return {"error": False} 
+
+@app.patch(f"/{config.vtc_abbr}/member/point")
+async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    form = await request.form()
+    try:
+        userid = int(form["userid"])
+        distance = int(form["distance"])
+        mythpoint = int(form["mythpoint"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
+    if distance != 0:
+        if distance > 0:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
+        else:
+            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
+        conn.commit()
+    if mythpoint != 0:
+        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
+        conn.commit()
+    
+    if int(distance) > 0:
+        distance = "+" + form["distance"]
+
+    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
+
+    return {"error": False}
+
+@app.delete(f"/{config.vtc_abbr}/member/resign")
+async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'DELETE /member/resign', 180, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    userid = au["userid"]
+    name = au["name"].replace("'", "''")
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    steamid = t[0][0]
+    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
+    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    conn.commit()
+
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+
+    await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
+    return {"error": False}
+
+@app.delete(f"/{config.vtc_abbr}/member/dismiss")
+async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    adminid = au["userid"]
+    adminroles = au["roles"]
+
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    adminhighest = 99999
+    for i in adminroles:
+        if int(i) < adminhighest:
+            adminhighest = int(i)
+
+    cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+    userid = t[0][0]
+    steamid = t[0][1]
+    name = t[0][2]
+    roles = t[0][3].split(",")
+    udiscordid = t[0][4]
+    while "" in roles:
+        roles.remove("")
+    highest = 99999
+    for i in roles:
+        if int(i) < highest:
+            highest = int(i)
+    if adminhighest >= highest:
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
+
+    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
+    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    conn.commit()
+
+    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+    
+    await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
+    return {"error": False}

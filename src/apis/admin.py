@@ -71,7 +71,11 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     cur = conn.cursor()
 
     form = await request.form()
-    newconfig = json.loads(form["config"])
+    try:
+        newconfig = json.loads(form["config"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
         "apidomain", "domain", "server_ip", "server_port", "server_workers", \
@@ -113,8 +117,6 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                 return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
     
     except:
-        import traceback
-        traceback.print_exc()
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "config_data_type_mismatch")}
 
@@ -156,7 +158,7 @@ async def postReload(request: Request, response: Response, authorization: str = 
 # get audit log (require audit / admin permission)
 @app.get(f"/{config.vtc_abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
+    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /audit', 30, 10)
     if rl > 0:
         response.status_code = 429

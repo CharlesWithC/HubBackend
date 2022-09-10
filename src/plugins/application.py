@@ -222,10 +222,10 @@ async def postApplication(request: Request, response: Response, authorization: s
     form = await request.form()
     try:
         apptype = int(form["application_type"])
+        data = json.loads(form["data"])
     except:
         response.status_code = 400
-        return {"error": True}
-    data = json.loads(form["data"])
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     apptypetxt = ""
     applicantrole = 0
@@ -383,8 +383,12 @@ async def updateApplication(request: Request, response: Response, authorization:
     cur = conn.cursor()
 
     form = await request.form()
-    applicationid = form["applicationid"]
-    message = form["message"]
+    try:
+        applicationid = int(form["applicationid"])
+        message = str(form["message"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     if int(applicationid) < 0:
         response.status_code = 404
@@ -505,9 +509,13 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     cur = conn.cursor()
 
     form = await request.form()
-    applicationid = form["applicationid"]
-    status = form["status"]
-    message = form["message"]
+    try:
+        applicationid = int(form["applicationid"])
+        status = int(form["status"])
+        message = str(form["message"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     statustxt = f"Unknown Status ({status})"
     if int(status) in STATUS.keys():
@@ -584,8 +592,6 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
     except:
-        import traceback
-        traceback.print_exc()
         pass
 
     return {"error": False}

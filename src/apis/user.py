@@ -88,12 +88,12 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         email = t[0][8]
 
     return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-        "email": email, "avatar": t[0][2], "join": str(t[0][4]), "roles": roles, \
+        "email": email, "avatar": t[0][2], "join_timestamp": str(t[0][4]), "roles": roles, \
         "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
 
 @app.get(f"/{config.vtc_abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, order_by: Optional[str] = "discord_id", order: Optional[str] = "asc", page_size: Optional[int] = 10):
+    page: Optional[int] = -1, page_size: Optional[int] = 10, order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
     rl = ratelimit(request.client.host, 'GET /user/list', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -161,8 +161,13 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
     cur = conn.cursor()
 
     form = await request.form()
-    bio = form["bio"]
-    if len(bio) > 500:
+    try:
+        bio = str(form["bio"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        
+    if len(bio) > 1000:
         response.status_code = 413
         return {"error": True, "descriptor": ml.tr(request, "bio_too_long")}
 
@@ -197,7 +202,11 @@ async def patchPassword(request: Request, response: Response, authorization: str
     email = t[0][0]
 
     form = await request.form()
-    password = form["password"]
+    try:
+        password = str(form["password"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     if not "@" in email: # make sure it's not empty
         response.status_code = 403
@@ -274,7 +283,11 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     cur = conn.cursor()
 
     form = await request.form()
-    openid = form["openid"].replace("openid.mode=id_res", "openid.mode=check_authentication")
+    try:
+        openid = str(form["callback"]).replace("openid.mode=id_res", "openid.mode=check_authentication")
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
         response.status_code = 503
@@ -346,7 +359,11 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     cur = conn.cursor()
 
     form = await request.form()
-    truckersmpid = form["truckersmpid"]
+    try:
+        truckersmpid = form["truckersmpid"]
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     try:
         truckersmpid = int(truckersmpid)
     except:
@@ -380,9 +397,9 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     return {"error": False}
 
 # Manage User Section
-@app.post(f'/{config.vtc_abbr}/user/ban')
+@app.put(f'/{config.vtc_abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/ban', 180, 10)
+    rl = ratelimit(request.client.host, 'PUT /user/ban', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -400,12 +417,12 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     try:
         discordid = int(form["discordid"])
         expire = int(form["expire"])
+        reason = form["reason"].replace("'","''")
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     if expire == -1:
         expire = 9999999999999999
-    reason = form["reason"].replace("'","''")
     try:
         discordid = int(discordid)
     except:
@@ -436,9 +453,9 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
-@app.post(f'/{config.vtc_abbr}/user/unban')
+@app.put(f'/{config.vtc_abbr}/user/unban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /user/unban', 180, 10)
+    rl = ratelimit(request.client.host, 'PUT /user/unban', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -453,12 +470,11 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     cur = conn.cursor()
     
     form = await request.form()
-    discordid = int(form["discordid"])
     try:
-        discordid = int(discordid)
+        discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_discordid")}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -498,7 +514,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         new_discord_id = int(form["new_discord_id"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()
@@ -554,7 +570,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -599,7 +615,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()

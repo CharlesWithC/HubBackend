@@ -93,7 +93,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
 
 @app.get(f"/{config.vtc_abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0):
     rl = ratelimit(request.client.host, 'GET /dlog/list', 180, 90)

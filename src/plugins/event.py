@@ -12,7 +12,7 @@ import multilang as ml
 
 @app.get(f"/{config.vtc_abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, eventid: Optional[int] = -1, page_size: Optional[int] = 10):
+    page: Optional[int] = 1, page_size: Optional[int] = 10, eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /event', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -260,21 +260,21 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     conn.commit()
 
     form = await request.form()
-    title = b64e(form["title"])
-    truckersmp_link = b64e(form["truckersmp_link"])
-    departure = b64e(form["departure"])
-    destination = b64e(form["destination"])
-    distance = b64e(form["distance"])
     try:
+        title = b64e(form["title"])
+        truckersmp_link = b64e(form["truckersmp_link"])
+        departure = b64e(form["departure"])
+        destination = b64e(form["destination"])
+        distance = b64e(form["distance"])
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
+        images = b64e(form["images"])
+        pvt = 0
+        if form["is_private"] == "true":
+            pvt = 1
     except:
         response.status_code = 400
-        return {"error": True}
-    images = b64e(form["images"])
-    pvt = 0
-    if form["pvt"] == "true":
-        pvt = 1
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{truckersmp_link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{images}', {pvt}, '{title}', '', 0, '')")
     await AuditLog(adminid, f"Created event #{nxteventid}")
@@ -299,21 +299,21 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     cur = conn.cursor()
 
     form = await request.form()
-    title = b64e(form["title"])
-    truckersmp_link = b64e(form["truckersmp_link"])
-    departure = b64e(form["departure"])
-    destination = b64e(form["destination"])
-    distance = b64e(form["distance"])
     try:
+        title = b64e(form["title"])
+        truckersmp_link = b64e(form["truckersmp_link"])
+        departure = b64e(form["departure"])
+        destination = b64e(form["destination"])
+        distance = b64e(form["distance"])
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
+        images = b64e(form["images"])
+        pvt = 0
+        if form["is_private"] == "true":
+            pvt = 1
     except:
         response.status_code = 400
-        return {"error": True}
-    images = b64e(form["images"])
-    pvt = 0
-    if form["pvt"] == "true":
-        pvt = 1
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     if int(eventid) < 0:
         response.status_code = 404
@@ -359,7 +359,7 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     
-    cur.execute(f"UPDATE event SET eventid = -eventid WHERE eventid = {eventid}")
+    cur.execute(f"DELETE FROM event WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Deleted event #{eventid}")
     conn.commit()
 
@@ -382,14 +382,14 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     cur = conn.cursor()
     
     form = await request.form()
-    attendees = form["attendees"].replace(" ","").split(",")
-    while "" in attendees:
-        attendees.remove("")
     try:
+        attendees = str(form["attendees"]).replace(" ","").split(",")
+        while "" in attendees:
+            attendees.remove("")
         points = int(form["points"])
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     if int(eventid) < 0:
         response.status_code = 404

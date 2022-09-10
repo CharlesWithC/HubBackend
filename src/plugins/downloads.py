@@ -50,7 +50,11 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     cur = conn.cursor()
     
     form = await request.form()
-    data = b64e(form["data"])
+    try:
+        data = b64e(form["data"])
+    except:        
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     
     cur.execute(f"DELETE FROM downloads")
     cur.execute(f"INSERT INTO downloads VALUES ('{data}')")

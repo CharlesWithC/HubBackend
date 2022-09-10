@@ -103,8 +103,6 @@ async def banner(request: Request, response: Response):
             avatar.putdata(newData)
             avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
         except:
-            import traceback
-            traceback.print_exc()
             pass
     avatar = avatar.getdata()
 

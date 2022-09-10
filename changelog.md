@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.13.2**  
+1.Added 400 response when required form data is not provided  
+2.Added "real deletion" for `announcement` and `event` instead of changing the id to negative numbers  
+3.Improved API Documentation  
+
 **v1.13.1**  
 1.Added ability to edit meta elements of automated embeds in Discord (Welcome, Team Update, Rank Update)  
 2.Added ability to switch between webhook and bot for automated embeds in Discord (Welcome, Team Update, Rank Update)  

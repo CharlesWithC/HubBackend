@@ -250,8 +250,6 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 udiscordid = p[0][0]
 
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
     return {"error": False, "response": "Logged"}

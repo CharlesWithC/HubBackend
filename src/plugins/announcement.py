@@ -13,7 +13,7 @@ import multilang as ml
 
 @app.get(f"/{config.vtc_abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int]= -1, aid: Optional[int] = -1, order: Optional[str] = "desc", page_size: Optional[int] = 10):
+    page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", announcementid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /announcement', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -117,11 +117,15 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     try:
         title = b64e(form["title"])
         content = b64e(form["content"])
-        discord_message_content = form["discord_message_content"]
+        discord_message_content = str(form["discord_message_content"])
         atype = int(form["announcement_type"])
+        channelid = int(form["channelid"])
+        pvt = 0
+        if form["is_private"] == "true":
+            pvt = 1
     except:
         response.status_code = 400
-        return {"error": True}
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
     if not isAdmin and atype != 1:
         response.status_code = 403
@@ -133,10 +137,6 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     cur.execute(f"UPDATE settings SET sval = {aid+1} WHERE skey = 'nxtannid'")
     conn.commit()
     timestamp = int(time.time())
-    pvt = 0
-    if form["pvt"] == "true":
-        pvt = 1
-    channelid = form["channelid"]
     if not channelid.isdigit():
         channleid = 0
 
@@ -181,18 +181,19 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     form = await request.form()
     aid = announcementid
-    title = b64e(form["title"])
-    content = b64e(form["content"])
-    discord_message_content = form["discord_message_content"]
     try:
+        title = b64e(form["title"])
+        content = b64e(form["content"])
+        discord_message_content = str(form["discord_message_content"])
         atype = int(form["announcement_type"])
+        channelid = int(form["channelid"])
+        pvt = 0
+        if form["is_private"] == "true":
+            pvt = 1
     except:
         response.status_code = 400
-        return {"error": True}
-    pvt = 0
-    if form["pvt"] == "true":
-        pvt = 1
-    channelid = form["channelid"]
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        
     if not channelid.isdigit():
         channleid = 0
 
@@ -260,7 +261,7 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
     
-    cur.execute(f"UPDATE announcement SET aid = -aid WHERE aid = {aid}")
+    cur.execute(f"DELETE FROM announcement WHERE aid = {aid}")
     await AuditLog(adminid, f"Deleted announcement #{aid}")
     conn.commit()
 
