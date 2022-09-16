@@ -413,6 +413,70 @@
                 }
             }
         },
+        "/vtc/auth/tip": {
+            "put": {
+                "summary": "Generate Temporary Identity Proof Token",
+                "tags": ["auth"],
+                "operationId": "put_auth_tip",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "Validate Temporary Identity Proof Token",
+                "tags": ["auth"],
+                "operationId": "get_auth_tip",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Token",
+                        "type": "string"
+                    },
+                    "name": "token",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/user": {
             "get": {
                 "summary": "Get User Information",
@@ -3042,7 +3106,7 @@
                                         "type": "integer"
                                     },
                                     "images": {
-                                        "description": "Image links (Separated with ",")",
+                                        "description": "Image links (Separated with ',')",
                                         "type": "string"
                                     },
                                     "is_private": {
@@ -3128,7 +3192,7 @@
                                         "type": "integer"
                                     },
                                     "images": {
-                                        "description": "Image links (Separated with ",")",
+                                        "description": "Image links (Separated with ',')",
                                         "type": "string"
                                     },
                                     "is_private": {

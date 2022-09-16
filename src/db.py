@@ -23,16 +23,16 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, times
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar
-cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid BIGINT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game BIGINT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game INT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, requestts BIGINT, status INT, updatets BIGINT, staffid INT, reason TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: validated | 2: denied
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (aid INT, userid INT, title TEXT, content TEXT, \
-    atype INT, timestamp BIGINT, pvt BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+    atype INT, timestamp BIGINT, pvt INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # atype = 0: info | 1: event | 2: warning | 3: critical
-cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid BIGINT, apptype INT, discordid BIGINT, data TEXT,\
-    status INT, submitTimestamp BIGINT, closedBy BIGINT, closedTimestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, apptype INT, discordid BIGINT, data TEXT,\
+    status INT, submitTimestamp BIGINT, closedBy INT, closedTimestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: accepted | 2: declined
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
     mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT, eventpnt INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -41,6 +41,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT) DATA DIRECT
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, firstop BIGINT, opcount INT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT, expire BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
@@ -80,6 +81,7 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX application_discordid ON application (discordid)",
 "CREATE INDEX event_eventid ON event (eventid)",
 "CREATE INDEX session_token ON session (token)",
+"CREATE INDEX temp_identity_proof_token ON temp_identity_proof (token)",
 "CREATE INDEX appsession_token ON appsession (token)",
 "CREATE INDEX ratelimit_ip ON ratelimit (ip)",
 "CREATE INDEX auditlog_userid ON auditlog (userid)",

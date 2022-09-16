@@ -19,6 +19,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
+    aid = announcementid
+
     stoken = "guest"
     if authorization != None:
         stoken = authorization.split(" ")[1]

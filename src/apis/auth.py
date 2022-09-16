@@ -356,8 +356,50 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
     conn = newconn()
     cur = conn.cursor()
     
-    stoken = str(uuid4())
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     conn.commit()
     
     return {"error": False}
+
+# Temporary Identity Proof
+@app.put(f"/{config.vtc_abbr}/auth/tip")
+async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PUT /auth/tip', 180, 5)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    stoken = str(uuid4())
+    cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
+    cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+180})")
+    conn.commit()
+
+    return {"error": False, "response": {"token": stoken}}
+
+@app.get(f"/{config.vtc_abbr}/auth/tip")
+async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /auth/tip', 60, 120)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    token = token.replace("'","")
+
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM temp_identity_proof WHERE token = '{token}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": True, "descriptor": "Invalid token"}
+    cur.execute(f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
+    conn.commit()
+    return {"error": False, "response": {"discordid": int(t[0][0])}}

@@ -3,6 +3,7 @@
 
 from fastapi import Request, Header, Response
 from typing import Optional
+from discord import Colour
 import json, copy, math, os, time
 import threading
 
@@ -10,6 +11,17 @@ from app import app, config, tconfig, config_path
 from db import newconn
 from functions import *
 import multilang as ml
+
+config_whitelist = ['vtc_name', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'vtc_logo_link', \
+    'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
+    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', \
+    'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', \
+    'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+
+config_plugins = {"application": ["application_types"],
+    "division": ["webhook_division", "webhook_division_message", "divisions"]}
+
+config_protected = ["navio_api_token", "discord_client_secret", "discord_bot_token"]
 
 # get config
 @app.get(f"/{config.vtc_abbr}/config")
@@ -27,23 +39,24 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
     conn = newconn()
     cur = conn.cursor()
-
-    toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
-        "apidomain", "domain", "server_ip", "server_port", "server_workers", \
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
-            "enabled_plugins", "external_plugins", "hcaptcha_secret"]
     
-    ttconfig = copy.deepcopy(tconfig)
-    if not "division" in ttconfig["enabled_plugins"]:
-        del ttconfig["divisions"]
+    t = copy.deepcopy(tconfig)
+    ttconfig = {}
 
-    ttconfig["navio_api_token"] = ""
-    ttconfig["discord_client_secret"] = ""
-    ttconfig["discord_bot_token"] = ""
-    
-    for i in toremove:
-        if i in ttconfig:
-            del ttconfig[i]
+    # process whitelist
+    for tt in t.keys():
+        if tt in config_whitelist:
+            ttconfig[tt] = t[tt]
+
+    # remove sensitive data
+    for tt in config_protected:
+        ttconfig[tt] = ""
+
+    # remove disabled plugins
+    for t in config_plugins.keys():
+        if not t in tconfig["enabled_plugins"]:
+            for tt in config_plugins[t]:
+                del ttconfig[tt]
     
     return {"error": False, "response": {"config": ttconfig}}
 
@@ -56,7 +69,7 @@ def reload():
 # update config
 @app.patch(f"/{config.vtc_abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /config', 600, 3)
+    rl = ratelimit(request.client.host, 'PATCH /config', 30, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -72,66 +85,75 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     form = await request.form()
     try:
-        newconfig = json.loads(form["config"])
+        formconfig = json.loads(form["config"])
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    toremove = ["vtc_abbr", "apidoc", "language_dir", "steam_callback_url", \
-        "apidomain", "domain", "server_ip", "server_port", "server_workers", \
-        "database", "mysql_host", "mysql_user", "mysql_passwd", "mysql_db", "mysql_ext", \
-            "enabled_plugins", "external_plugins", "hcaptcha_secret"]
-    musthave = ["vtc_name", "vtc_logo_link", "hex_color", \
-        "navio_api_token", "navio_company_id", "guild_id", \
-        "discord_client_id", "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]
-            
-    for i in toremove:
-        if i in newconfig:
-            del newconfig[i]
-    
+    global tconfig
     ttconfig = copy.deepcopy(tconfig)
-    orgconfig = copy.deepcopy(tconfig)
 
-    # check must_have and distance_unit
-    for i in newconfig:
-        if i in ttconfig:
-            if i == "distance_unit":
-                if not newconfig[i] in ["metric", "imperial"]:
+    for tt in formconfig.keys():
+        if tt in config_whitelist:
+            if tt in ["vtc_name", "vtc_logo_link", "guild_id", "navio_api_token", "discord_client_id", \
+                    "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
+                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "invalid_distance_unit")}
+                    return {"error": True, "descriptor": f'Invalid value for "{tt}": Must not be empty.'}
 
-            if i == "hex_color":
-                newconfig[i] = newconfig[i][-6:]
+            if tt == "distance_unit":
+                if not formconfig[tt] in ["metric", "imperial"]:
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Invalid value for "distance_unit": Must be "metric" or "imperial".'}
             
-            if i in musthave:
-                if newconfig[i] == "":
-                    newconfig[i] = orgconfig[i]
+            if tt in ["truckersmp_bind", "privacy", "in_guild_check"]:
+                if type(formconfig[tt]) != bool:
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Invalid data type for "{tt}": Must be boolean.'}
 
-            ttconfig[i] = newconfig[i]
-    
-    # check item value type
-    try:
-        for t in ttconfig.keys():
-            if type(ttconfig[t]) != type(orgconfig[t]):
-                response.status_code = 400
-                return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
-    
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "config_data_type_mismatch")}
+            if tt in ["guild_id", "navio_company_id", "delivery_log_channel_id", "discord_client_id"]:
+                try:
+                    int(formconfig[tt])
+                except:
+                    if tt in ["navio_company_id", "delivery_log_channel_id"] and formconfig[tt] == "":
+                        formconfig[tt] = "0"
+                    else:
+                        response.status_code = 400
+                        return {"error": True, "descriptor": f'Invalid data type for "{tt}": Must be integar.'}
 
-    # check if all necessary item exists
-    for t in orgconfig.keys():
-        if not t in ttconfig.keys():
-            response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "invalid_value", var = {"key": t})}
+            if tt == "hex_color":
+                formconfig[tt] = formconfig[tt][-6:]
+                hex_color = formconfig[tt]
+                try:
+                    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                    rgbcolor = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
+                    intcolor = int(hex_color, 16)
+                except:
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Invalid value for "hex_color": Must be a hex string of 6 characters.'}
+
+            if tt == "delivery_post_gifs":
+                p = []
+                for o in formconfig[tt]:
+                    if isurl(o):
+                        p.append(o)
+                formconfig[tt] = p
+
+            if tt in ["vtc_logo_link", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
+                if formconfig[tt] != "" and not isurl(formconfig[tt]):
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Invalid value for "{tt}": Must be a valid URL.'}
+
+            if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
+                ttconfig[tt] = str(formconfig[tt])
+            else:
+                ttconfig[tt] = formconfig[tt]
 
     open(config_path, "w").write(json.dumps(ttconfig, indent=4))
 
-    await AuditLog(adminid, "Updated config")
-    await AuditLog(adminid, "Reloaded service")
+    tconfig = copy.deepcopy(ttconfig)
 
-    threading.Thread(target=reload).start()
+    await AuditLog(adminid, "Updated config")
 
     return {"error": False}
 

@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.14.1**  
+1.Improved config validation on **PATCH** `/config`  
+2.Removed automatic reload on **PATCH** `/config`  
+3.Added **Temporary Identity Proof** (`/auth/tip`)  
+
 **v1.13.2**  
 1.Added 400 response when required form data is not provided  
 2.Added "real deletion" for `announcement` and `event` instead of changing the id to negative numbers  
