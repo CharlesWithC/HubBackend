@@ -9,7 +9,7 @@
     "discord_check_fail": "Failed to check if you are in Discord Server.",
     "not_in_discord_server": "You are not in Discord Server.",
     "invalid_email": "Invalid email bound to Discord account. Connect your Discord account with an email address and login again.",
-    "login_with_discord_required": "You have to login with Discord to access sensitive data.",
+    "oauth_login_required": "You have to login with Discord or Steam to access sensitive data.",
     "too_many_user_with_same_email": "Too many user have the same email address. You are not allowed to use password login.",
     "invalid_captcha": "Invalid captcha.",
     "invalid_email_or_password": "Invalid email or password.",

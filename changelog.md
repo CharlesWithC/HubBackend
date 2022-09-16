@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.14.2**  
+Added steam login  
+
 **v1.14.1**  
 1.Improved config validation on **PATCH** `/config`  
 2.Removed automatic reload on **PATCH** `/config`  

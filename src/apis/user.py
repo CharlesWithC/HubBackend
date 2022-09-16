@@ -192,7 +192,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -258,7 +258,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
@@ -503,7 +503,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -560,7 +560,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -605,7 +605,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     conn = newconn()
     cur = conn.cursor()

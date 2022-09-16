@@ -9,7 +9,7 @@
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",
     "not_in_discord_server": "Du er ikke på Discord Serveren.",
     "invalid_email": "Ugyldig e-mail bundet til Discord-konto. Forbind din Discord-konto med en e-mailadresse, og log ind igen.",
-    "login_with_discord_required": "Du skal logge ind med Discord for at få adgang til følsomme data.",
+    "oauth_login_required": "Du skal logge ind med Discord eller Steam for at få adgang til følsomme data.",
     "too_many_user_with_same_email": "For mange brugere har den samme e-mailadresse. Du må ikke bruge password login.",
     "invalid_captcha": "Ugyldig captcha.",
     "invalid_email_or_password": "Ugyldig email eller kodeord.",

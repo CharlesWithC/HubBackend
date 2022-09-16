@@ -147,15 +147,63 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
 
 # Steam Auth (Only for connecting account)
 @app.get(f"/{config.vtc_abbr}/auth/steam/redirect")
-async def getSteamOAuth(request: Request, response: Response):
+async def getSteamOAuth(request: Request, response: Response, connect_account: Optional[bool] = False):
     steamLogin = SteamSignIn()
-    encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/callback')
+    encodedData = ""
+    if not connect_account:
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/callback')
+    else:
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/connect')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
+@app.get(f"/{config.vtc_abbr}/auth/steam/connect")
+async def getSteamConnect(request: Request, response: Response):
+    return RedirectResponse(url=config.steam_callback_url + f"?{str(request.query_params)}", status_code=302)
+
 @app.get(f"/{config.vtc_abbr}/auth/steam/callback")
 async def getSteamCallback(request: Request, response: Response):
-    return RedirectResponse(url=config.steam_callback_url + f"?{str(request.query_params)}", status_code=302)
+    referer = request.headers.get("Referer")
+    data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
+    if referer != "https://steamcommunity.com/" or data == "":
+        steamLogin = SteamSignIn()
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/callback')
+        url = 'https://steamcommunity.com/openid/login?' + encodedData
+        return RedirectResponse(url=url, status_code=302)
+
+    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 150, 3)
+    if rl > 0:
+        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + f"Rate limit: Wait {rl} seconds", status_code=302)
+
+    r = requests.get("https://steamcommunity.com/openid/login?" + data)
+    if r.status_code != 200:
+        response.status_code = 503
+        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "steam_api_error"), status_code=302)
+    if r.text.find("is_valid:true") == -1:
+        response.status_code = 400
+        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "invalid_steam_auth"), status_code=302)
+    steamid = data.split("openid.identity=")[1].split("&")[0]
+    steamid = int(steamid[steamid.rfind("%2F") + 3 :])
+    
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid FROM user WHERE steamid = '{steamid}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 401
+        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "user_not_found"), status_code=302)
+    discordid = t[0][0]
+
+    stoken = str(uuid4())
+    cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
+    r = cur.fetchall()
+    scnt = r[0][0]
+    if scnt >= 10:
+        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    conn.commit()
+
+    return RedirectResponse(url=f"https://{config.domain}/auth?token=" + stoken, status_code=302)
 
 # Token Management
 @app.get(f'/{config.vtc_abbr}/token')
@@ -264,7 +312,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
 
     form = await request.form()
     try:
@@ -307,7 +355,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "login_with_discord_required")}
+        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
     
     conn = newconn()
     cur = conn.cursor()

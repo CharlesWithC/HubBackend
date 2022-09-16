@@ -135,6 +135,15 @@
                 "summary": "Redirect to Steam OAuth",
                 "tags": ["auth"],
                 "operationId": "get_auth_steam_redirect",
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Whether to connect account or login",
+                        "type": "boolean"
+                    },
+                    "name": "connect_account",
+                    "in": "query"
+                }],
                 "responses": {
                     "302": {
                         "description": "Redirect to Steam OAuth",
@@ -147,9 +156,26 @@
                 }
             }
         },
+        "/vtc/auth/steam/connect": {
+            "get": {
+                "summary": "Steam OAuth Callback (To connect account)",
+                "tags": ["auth"],
+                "operationId": "get_auth_steam_connect",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/auth/steam/callback": {
             "get": {
-                "summary": "Steam OAuth Callback",
+                "summary": "Steam OAuth Callback (To login)",
                 "tags": ["auth"],
                 "operationId": "get_auth_steam_callback",
                 "responses": {
