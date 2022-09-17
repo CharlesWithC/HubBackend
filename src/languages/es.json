@@ -50,6 +50,7 @@
     "discord_role_given": "Se te ha dado el rol.",
     "member_update_title": "Actualización de los miembros",
     "member_update": "¡Ahora eres miembro de {vtcname}!",
+    "losing_admin_permission": "Actualización de rol rechazada: los nuevos roles eliminarán el permiso de administrador del usuario actual.",
 
     "announcement_not_found": "Anuncio no encontrado",
     "event_staff_announcement_limit": "El personal de eventos solo puede publicar anuncios de eventos.",

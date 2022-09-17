@@ -50,6 +50,7 @@
     "discord_role_given": "Vous avez reçu le rôle.",
     "member_update_title": "Mise à jour des membres",
     "member_update": "Vous êtes maintenant membre de {vtcname} !",
+    "losing_admin_permission": "Mise à jour du rôle rejetée : les nouveaux rôles supprimeront l'autorisation d'administration de l'utilisateur actuel.",
 
     "announcement_not_found": "Annonce introuvable",
     "event_staff_announcement_limit": "Le personnel de l'événement ne peut publier que des annonces d'événement.",

@@ -50,6 +50,7 @@
     "discord_role_given": "You have been given the role.",
     "member_update_title": "Member Update",
     "member_update": "You are now a member of {vtcname}!",
+    "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
 
     "announcement_not_found": "Announcement not found",
     "event_staff_announcement_limit": "Event staff can only post event announcements.",

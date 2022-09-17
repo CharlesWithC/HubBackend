@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.14.3**  
+Improved role & config update validator to prevent admin users removing their own admin permission  
+
 **v1.14.2**  
 Added steam login  
 

@@ -9,13 +9,11 @@
 ```
 
 **Features:**  
-1.Discord OAuth2 Login + Steam & TruckersMP Account Connection  
+1.Discord / Steam / Password Login  
 2.Delivery log and telemetry tracker  
 3.Role-based permission management  
 4.Automatic profile banner  
 5.Multiple languages  
-6.Editable config  
-7.Plugin system  
 
 **Official Plugins**  
 Announcement, Application, Banner, Division, Downloads, Event  

@@ -581,6 +581,15 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                 response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
+    if isAdmin and adminid == userid: # check if user will lose admin permission
+        ok = False
+        for role in roles:
+            if int(role) in config.perms.admin:
+                ok = True
+        if not ok:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "losing_admin_permission")}
+
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
 

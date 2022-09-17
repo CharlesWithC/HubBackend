@@ -1,10 +1,10 @@
-nuitka3 main.py --standalone --include-package=websockets --show-progress --remove-output
+nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code
 cd bannergen/
-nuitka3 main.py --standalone --include-package=websockets --show-progress --remove-output
+nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code
 mv main.dist/main main.dist/bannergen
 cd ..
-nuitka3 tracker.py --standalone --include-package=websockets --show-progress --remove-output
-nuitka3 launcher.py --standalone --show-progress --remove-output
+nuitka3 tracker.py --standalone --include-package=websockets --show-progress --prefer-source-code
+nuitka3 launcher.py --standalone --show-progress --prefer-source-code
 mkdir build
 cp main.dist/* build/ -r
 cp bannergen/main.dist/* build/ -r

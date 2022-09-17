@@ -79,6 +79,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 401
         return au
     adminid = au["userid"]
+    userroles = au["roles"]
 
     conn = newconn()
     cur = conn.cursor()
@@ -143,6 +144,23 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                 if formconfig[tt] != "" and not isurl(formconfig[tt]):
                     response.status_code = 400
                     return {"error": True, "descriptor": f'Invalid value for "{tt}": Must be a valid URL.'}
+
+            if tt == "perms":
+                newperms = formconfig[tt]
+                if not "admin" in newperms:
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Invalid value for "perms": "admin" permission not found.'}
+                ar = newperms["admin"]
+                adminroles = []
+                for arr in ar:
+                    adminroles.append(int(arr))
+                ok = False
+                for role in userroles:
+                    if int(role) in adminroles:
+                        ok = True
+                if not ok:
+                    response.status_code = 400
+                    return {"error": True, "descriptor": f'Permission update rejected: New "admin" permission does not include any role the current user has.'}
 
             if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
                 ttconfig[tt] = str(formconfig[tt])

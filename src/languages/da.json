@@ -50,6 +50,7 @@
     "discord_role_given": "Du har fået rollen.",
     "member_update_title": "Bruger opdatering",
     "member_update": "Du er nu medlem af {vtcname}!",
+    "losing_admin_permission": "Rolleopdatering afvist: Nye roller fjerner administratortilladelse fra den nuværende bruger.",
 
     "announcement_not_found": "Bekendtgørelse ikke funder",
     "event_staff_announcement_limit": "Kun Event staff kan poste event bekendtgørelser.",
