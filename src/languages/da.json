@@ -1,5 +1,5 @@
 {
-    "no_authorization_header": "ingen bemyndigelse",
+    "authorization_header_not_found": "Autorisationsoverskrift blev ikke fundet",
     "invalid_authorization_header": "Invalid bemyndigelse",
     "unauthorized": "ikke bemyndiget",
     "application_token_prohibited": "Ansøgningstoken forbudt",
@@ -7,7 +7,7 @@
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",
-    "not_in_discord_server": "Du er ikke på Discord Serveren.",
+    "must_join_discord": "Du skal tilmelde dig Discord Server.",
     "invalid_email": "Ugyldig e-mail bundet til Discord-konto. Forbind din Discord-konto med en e-mailadresse, og log ind igen.",
     "oauth_login_required": "Du skal logge ind med Discord eller Steam for at få adgang til følsomme data.",
     "too_many_user_with_same_email": "For mange brugere har den samme e-mailadresse. Du må ikke bruge password login.",
@@ -38,7 +38,7 @@
     "user_not_found": "Bruger ikke fundet",
     "user_must_register_first": "Brugeren skal først registrere sig med en ny Discord-konto.",
     "user_must_not_be_member": "Bruger med ny Discord-konto må ikke være medlem.",
-    "member_registered": "Medlem er allerede registerret.",
+    "already_member": "Brugeren er allerede medlem.",
     "steam_not_bound": "Brugern skal have registreret deres Steam konto",
     "truckersmp_not_bound": "Brugern skal have registreret deres TruckersMP konto",
     "user_position_higher_or_equal": "Brugers position er højere eller magen til din.",
@@ -79,7 +79,7 @@
     "no_loa_application": "Du kan ikke sende en LOA ansøgning indtil du er blevet medlem.",
     "must_verify_steam": "Du skal verifisere din Steam konto inden du kan blive medlem.",
     "must_verify_truckersmp": "Du skal verifisere din TruckersMP konto inden du kan blive medlem.",
-    "bot_application_received_title": "{apptypetxt} Ansøgning modtaget",
+    "bot_application_received_title": "{application_type_text} Ansøgning modtaget",
     "bot_application_received": "En medarbjder vil hjælpe snart. Hvis du ønsker at ændre i din ansøgning skal du gå til `My Applications` i Drivers Hub, klik `Details` kanppen og rul ned hvor du kan tilføje en besked.",
     "not_applicant": "Du er ikke ansøgeren",
     "application_already_accepted": "Ansøgningen er allerede acctepteret",

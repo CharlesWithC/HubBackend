@@ -19,8 +19,6 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    aid = announcementid
-
     stoken = "guest"
     if authorization != None:
         stoken = authorization.split(" ")[1]
@@ -39,7 +37,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     limit = ""
     if userid == -1:
-        limit = "AND pvt = 0"
+        limit = "AND is_private = 0"
 
     if page_size <= 1:
         page_size = 1
@@ -50,12 +48,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         order = "asc"
     order = order.upper()
 
-    if aid != -1:
-        if int(aid) < 0:
+    if announcementid != -1:
+        if int(announcementid) < 0:
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
             
-        cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid = {aid} {limit}")
+        cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid = {announcementid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
             response.status_code = 404
@@ -72,7 +70,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, atype, timestamp, userid, aid, pvt FROM announcement WHERE aid >= 0 {limit} ORDER BY aid {order} LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY announcementid {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -84,7 +82,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         ret.append({"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
             "announcement_type": str(tt[2]), "author": {"name": name, "userid": str(tt[4])}, "timestamp": str(tt[3]), "is_private": TF[tt[6]]})
         
-    cur.execute(f"SELECT COUNT(*) FROM announcement WHERE aid >= 0 {limit}")
+    cur.execute(f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
@@ -120,30 +118,30 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         title = b64e(form["title"])
         content = b64e(form["content"])
         discord_message_content = str(form["discord_message_content"])
-        atype = int(form["announcement_type"])
+        announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
-        pvt = 0
+        is_private = 0
         if form["is_private"] == "true":
-            pvt = 1
+            is_private = 1
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    if not isAdmin and atype != 1:
+    if not isAdmin and announcement_type != 1:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
     t = cur.fetchall()
-    aid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {aid+1} WHERE skey = 'nxtannid'")
+    announcementid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")
     conn.commit()
     timestamp = int(time.time())
     if not channelid.isdigit():
         channleid = 0
 
-    cur.execute(f"INSERT INTO announcement VALUES ({aid}, {adminid}, '{title}', '{content}', {atype}, {timestamp}, {pvt})")
-    await AuditLog(adminid, f"Created announcement #{aid}")
+    cur.execute(f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
+    await AuditLog(adminid, f"Created announcement #{announcementid}")
     conn.commit()
 
     if channelid != 0:
@@ -156,7 +154,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         except:
             pass
 
-    return {"error": False, "response": {"announcementid": str(aid)}}
+    return {"error": False, "response": {"announcementid": str(announcementid)}}
 
 @app.patch(f"/{config.vtc_abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
@@ -182,16 +180,15 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             isAdmin = True
 
     form = await request.form()
-    aid = announcementid
     try:
         title = b64e(form["title"])
         content = b64e(form["content"])
         discord_message_content = str(form["discord_message_content"])
-        atype = int(form["announcement_type"])
+        announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
-        pvt = 0
+        is_private = 0
         if form["is_private"] == "true":
-            pvt = 1
+            is_private = 1
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -199,10 +196,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     if not channelid.isdigit():
         channleid = 0
 
-    if int(aid) < 0:
+    if int(announcementid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
-    cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
+    cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -212,8 +209,8 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
     
-    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', atype = {atype} WHERE aid = {aid}")
-    await AuditLog(adminid, f"Updated announcement #{aid}")
+    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type} WHERE announcementid = {announcementid}")
+    await AuditLog(adminid, f"Updated announcement #{announcementid}")
     conn.commit()
 
     if channelid != 0:
@@ -234,7 +231,6 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-    aid = announcementid
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = 401
@@ -250,10 +246,10 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         if int(i) in config.perms.admin or int(i) in config.perms.announcement:
             isAdmin = True
 
-    if int(aid) < 0:
+    if int(announcementid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
-    cur.execute(f"SELECT userid FROM announcement WHERE aid = {aid}")
+    cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -263,8 +259,8 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
     
-    cur.execute(f"DELETE FROM announcement WHERE aid = {aid}")
-    await AuditLog(adminid, f"Deleted announcement #{aid}")
+    cur.execute(f"DELETE FROM announcement WHERE announcementid = {announcementid}")
+    await AuditLog(adminid, f"Deleted announcement #{announcementid}")
     conn.commit()
 
     return {"error": False}

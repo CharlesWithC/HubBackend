@@ -110,7 +110,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
     
     if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp"]:
         order_by = "user_id"
-    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "joints", "highest_role": "highest_role"}
+    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role"}
     order_by = cvt[order_by]
 
     sort_by_highest_role = False
@@ -131,7 +131,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
             order = "ASC"
 
     hrole = {}
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar, joints FROM user WHERE LOWER(name) LIKE '%{name}%' AND userid >= 0 ORDER BY {order_by} {order}")
+    cur.execute(f"SELECT userid, name, discordid, roles, avatar, join_timestamp FROM user WHERE LOWER(name) LIKE '%{name}%' AND userid >= 0 ORDER BY {order_by} {order}")
     t = cur.fetchall()
     rret = {}
     for tt in t:
@@ -209,7 +209,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     conn = newconn()
     cur = conn.cursor()
         
-    cur.execute(f"SELECT name, discordid, avatar, joints, roles, userid FROM user WHERE {qu} AND userid >= 0")
+    cur.execute(f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -239,7 +239,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     name = tname
     discordid = t[1]
     avatar = t[2]
-    joints = t[3]
+    join_timestamp = t[3]
     roles = t[4].split(",")
     while "" in roles:
         roles.remove("")
@@ -250,7 +250,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     highest_role = "Unknown Role"
     if str(highest) in tconfig["roles"]:
         highest_role = tconfig["roles"][str(highest)]
-    joined = datetime.fromtimestamp(joints)
+    joined = datetime.fromtimestamp(join_timestamp)
     since = f"{joined.year}/{joined.month}/{joined.day}"
 
     division = ""
@@ -334,7 +334,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
     # calculate event
     userevent = {}
-    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE attendee LIKE '%,{userid},%'")
+    cur.execute(f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
     t = cur.fetchall()
     for tt in t:
         attendees = tt[0].split(",")
@@ -412,7 +412,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "not_in_discord_server")}
+            return {"error": True, "descriptor": ml.tr(request, "must_join_discord")}
 
     except:
         pass
@@ -458,7 +458,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     if t[0][0] != -1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "member_registered")}
+        return {"error": True, "descriptor": ml.tr(request, "already_member")}
     if t[0][2] <= 0:
         response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
@@ -467,7 +467,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
 
     name = t[0][3]
-    cur.execute(f"UPDATE user SET userid = {userid}, joints = {int(time.time())} WHERE discordid = {discordid}")
+    cur.execute(f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
     cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
     conn.commit()

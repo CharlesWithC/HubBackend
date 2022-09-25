@@ -1,5 +1,40 @@
 # Changelog
 
+**v1.14.4**  
+1.Fixed `isdivision` (boolean) response being stringified to "True" / "False"  
+2.Added `Unknown Error` response to **GET** `/auth/discord/callback` to prevent `Internal Server Error`  
+3.Added `name` parameter to **GET** `/user/list` request for querying username  
+4.Added User ID to application messages  
+5.Added `backup` field to **GET** `/config` response for getting old config (currently loaded) before reload  
+6.Added endpoint **PUT** `/config/reset` to revert config to old config (currently loaded)  
+7.Added `frontend_urls` to config to customize frontend URL on redirect / clickable link  
+8.Updated partial string table items  
+9.Updated `images` for events to `description`  
+10.Renamed database columns for better readability  
+|Table|Old Column Name|New Column Name|
+--|--|--|
+|user|joints|join_timestamp|
+|banned|expire|expire_timestamp|
+|announcement|aid|announcementid|
+|announcement|atype|announcement_type|
+|announcement|pvt|is_private|
+|application|apptype|application_type|
+|application|submitTimestamp|submit_timestamp|
+|application|closedBy|update_staff_userid|
+|application|closedTimestamp|update_staff_timestamp|
+|division|requestts|request_timestamp|
+|division|updatets|update_timestamp|
+|division|staffid|update_staff_userid|
+|division|reason|message|
+|event|tmplink|truckersmp_link|
+|event|mts|meetup_timestamp|
+|event|dts|departure_timestamp|
+|event|img|description|
+|event|pvt|is_private|
+|event|eventpnt|points|
+|ratelimit|firstop|first_request_timestamp|
+|ratelimit|opcount|request_count|
+
 **v1.14.3**  
 Improved role & config update validator to prevent admin users removing their own admin permission  
 

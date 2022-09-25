@@ -1,5 +1,5 @@
 {
-    "no_authorization_header": "Sin encabezado de autorización",
+    "authorization_header_not_found": "Encabezado de autorización no encontrado",
     "invalid_authorization_header": "Encabezado de autorización no válido",
     "unauthorized": "No autorizado",
     "application_token_prohibited": "Token de solicitud prohibido",
@@ -7,7 +7,7 @@
 
     "ban_with_reason_expire": "Estás prohibido por {reason} hasta {expire} UTC",
     "discord_check_fail": "No se pudo comprobar si está en Discord Server.",
-    "not_in_discord_server": "No estás en Discord Server.",
+    "must_join_discord": "Debes unirte a Discord Server.",
     "invalid_email": "Correo electrónico no válido vinculado a la cuenta de Discord. Conecta tu cuenta de Discord con una dirección de correo electrónico e inicia sesión de nuevo.",
     "oauth_login_required": "Debe iniciar sesión con Discord o Steam para acceder a datos confidenciales.",
     "too_many_user_with_same_email": "Demasiados usuarios tienen la misma dirección de correo electrónico. No se le permite usar el inicio de sesión con contraseña.",
@@ -38,7 +38,7 @@
     "user_not_found": "Usuario no encontrado",
     "user_must_register_first": "El usuario debe registrarse primero con una nueva cuenta de Discord.",
     "user_must_not_be_member": "El usuario con una nueva cuenta de Discord no debe ser miembro.",
-    "member_registered": "Miembro ya registrado.",
+    "already_member": "El usuario ya es miembro.",
     "steam_not_bound": "El usuario debe haber vinculado su cuenta de Steam.",
     "truckersmp_not_bound": "El usuario debe haber vinculado su cuenta TruckersMP.",
     "user_position_higher_or_equal": "La posición del usuario es superior o igual a la tuya.",
@@ -79,7 +79,7 @@
     "no_loa_application": "No puedes enviar una solicitud de LOA hasta que te conviertas en miembro.",
     "must_verify_steam": "Debes vincular tu cuenta de Steam antes de enviar una solicitud.",
     "must_verify_truckersmp": "Debes vincular tu cuenta TruckersMP antes de enviar una solicitud.",
-    "bot_application_received_title": "{apptypetxt} Solicitud recibida",
+    "bot_application_received_title": "{application_type_text} Solicitud recibida",
     "bot_application_received": "Un miembro de nuestro personal se pondrá en contacto con usted en breve. Si desea actualizarlo, vaya a `Mis aplicaciones` en Drivers Hub, haga clic en el botón `Detalles`, desplácese hacia abajo y podrá añadir un mensaje.",
     "not_applicant": "Usted no es el solicitante",
     "application_already_accepted": "Solicitud ya aceptada",

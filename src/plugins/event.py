@@ -36,7 +36,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     limit = ""
     if userid == -1:
-        limit = "AND pvt = 0"
+        limit = "AND is_private = 0"
 
     if page <= 0:
         page = 1
@@ -47,7 +47,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         page_size = 250
 
     if eventid != -1:
-        cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid = {eventid} {limit}")
+        cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid = {eventid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
             response.status_code = 404
@@ -81,9 +81,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         return {"error": False, "response": {"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), \
             "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "images": b64d(tt[7]).split(","), "attendees": attendee_ret, "votes": vote_ret}}
+                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret}}
 
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -115,15 +115,15 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), \
             "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "images": b64d(tt[7]).split(","), "attendees": attendee_ret, "votes": vote_ret})
+                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
     
-    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND mts >= {int(time.time()) - 86400} {limit}")
+    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, tmplink, departure, destination, distance, mts, dts, img, title, attendee, vote, pvt FROM event WHERE eventid >= 0 AND mts < {int(time.time()) - 86400} {limit} ORDER BY mts ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
+    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid >= 0 AND meetup_timestamp < {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")
@@ -154,7 +154,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), \
             "departure": b64d(tt[2]), "destination": b64d(tt[3]),\
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "images": b64d(tt[7]).split(","), "attendees": attendee_ret, "votes": vote_ret})
+                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()
@@ -190,9 +190,9 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
     limit = ""
     if userid == -1:
-        limit = "AND pvt = 0"
+        limit = "AND is_private = 0"
 
-    cur.execute(f"SELECT eventid, title, mts FROM event WHERE eventid >= 0 {limit} ORDER BY mts")
+    cur.execute(f"SELECT eventid, title, meetup_timestamp FROM event WHERE eventid >= 0 {limit} ORDER BY meetup_timestamp")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -268,15 +268,15 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         distance = b64e(form["distance"])
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
-        images = b64e(form["images"])
-        pvt = 0
+        description = b64e(form["description"])
+        is_private = 0
         if form["is_private"] == "true":
-            pvt = 1
+            is_private = 1
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{truckersmp_link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{images}', {pvt}, '{title}', '', 0, '')")
+    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{truckersmp_link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
     await AuditLog(adminid, f"Created event #{nxteventid}")
     conn.commit()
 
@@ -307,10 +307,10 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         distance = b64e(form["distance"])
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
-        images = b64e(form["images"])
-        pvt = 0
+        description = b64e(form["description"])
+        is_private = 0
         if form["is_private"] == "true":
-            pvt = 1
+            is_private = 1
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -326,8 +326,8 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     creator = t[0][0]
     
-    cur.execute(f"UPDATE event SET title = '{title}', tmplink = '{truckersmp_link}', departure = '{departure}', destination = '{destination}', \
-        distance = '{distance}', mts = {meetup_timestamp}, dts = {departure_timestamp}, img = '{images}', pvt = {pvt} WHERE eventid = {eventid}")
+    cur.execute(f"UPDATE event SET title = '{title}', truckersmp_link = '{truckersmp_link}', departure = '{departure}', destination = '{destination}', \
+        distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Updated event #{eventid}")
     conn.commit()
 
@@ -395,7 +395,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
-    cur.execute(f"SELECT attendee, eventpnt FROM event WHERE eventid = {eventid}")
+    cur.execute(f"SELECT attendee, points FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -463,7 +463,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         if cnt > 0:
             ret = ret + ret3
 
-    cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', eventpnt = {points} WHERE eventid = {eventid}")
+    cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', points = {points} WHERE eventid = {eventid}")
     conn.commit()
 
     if ret == f"Updated event #{eventid} attendees\n":

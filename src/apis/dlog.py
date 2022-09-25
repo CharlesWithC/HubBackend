@@ -197,7 +197,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), \
-                        "profit": str(profit), "unit": str(unit), "isdivision": str(isdivision), "timestamp": str(tt[2])})
+                        "profit": str(profit), "unit": str(unit), "isdivision": isdivision, "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit}")
     t = cur.fetchall()
@@ -252,13 +252,13 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     totdrivers = 0
     newdrivers = 0
     for rid in config.perms.driver:
-        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND joints <= {end_time} AND roles LIKE '%,{rid},%'")
+        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
         t = cur.fetchall()
         for tt in t:
             if not tt[0] in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
-        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND joints >= {start_time} AND joints <= {end_time} AND roles LIKE '%,{rid},%'")
+        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
         t = cur.fetchall()
         for tt in t:
             if not tt[0] in newdid:
@@ -605,7 +605,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             userdistance[tt[0]] = int(userdistance[tt[0]])
 
         # calculate event
-        cur.execute(f"SELECT attendee, eventpnt FROM event WHERE dts >= {start_time} AND dts <= {end_time}")
+        cur.execute(f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
         t = cur.fetchall()
         for tt in t:
             attendees = tt[0].split(",")
@@ -702,7 +702,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
 
         # calculate event
-        cur.execute(f"SELECT attendee, eventpnt FROM event")
+        cur.execute(f"SELECT attendee, points FROM event")
         t = cur.fetchall()
         for tt in t:
             attendees = tt[0].split(",")

@@ -55,8 +55,7 @@ if __name__ == "__main__":
         print("Detected upgrade")
         import upgrade
         try:
-            if upgrade.target_version == version:
-                print("Running upgrade...")
+            if upgrade.target_version == version or upgrade.target_version + ".rc" == version:
                 upgrade.run()
                 print("Upgrade completed\n")
             else:
@@ -66,6 +65,11 @@ if __name__ == "__main__":
             traceback.print_exc()
             print("Upgrade failed due to errors above, main program exited")
             sys.exit(1)
+    
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
+    conn.commit()
 
     print(f"Company Name: {config.vtc_name}")
     print(f"Company Abbreviation: {config.vtc_abbr}\n")

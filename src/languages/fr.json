@@ -1,5 +1,5 @@
 {
-    "no_authorization_header": "Aucun en-tête d'autorisation",
+    "authorization_header_not_found": "En-tête d'autorisation introuvable",
     "invalid_authorization_header": "En-tête d'autorisation non valide",
     "unauthorized": "Non autorisé",
     "application_token_prohibited": "Jeton d'application interdit",
@@ -7,7 +7,7 @@
 
     "ban_with_reason_expire": "Vous êtes banni pour {reason} jusqu'au {expire} UTC",
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",
-    "not_in_discord_server": "Vous n'êtes pas sur le serveur Discord.",
+    "must_join_discord": "Vous devez rejoindre le serveur Discord.",
     "invalid_email": "E-mail invalide lié au compte Discord. Connectez votre compte Discord avec une adresse e-mail et reconnectez-vous.",
     "oauth_login_required": "Vous devez vous connecter avec Discord ou Steam pour accéder aux données sensibles.",
     "too_many_user_with_same_email": "Trop d'utilisateurs ont la même adresse e-mail. Vous n'êtes pas autorisé à utiliser la connexion par mot de passe.",
@@ -38,7 +38,7 @@
     "user_not_found": "Utilisateur non trouvé",
     "user_must_register_first": "L'utilisateur doit d'abord s'inscrire avec un nouveau compte Discord.",
     "user_must_not_be_member": "L'utilisateur avec un nouveau compte Discord ne doit pas être membre.",
-    "member_registered": "Membre déjà inscrit.",
+    "already_member": "L'utilisateur est déjà membre.",
     "steam_not_bound": "L'utilisateur doit avoir vérifié son compte Steam.",
     "truckersmp_not_bound": "L'utilisateur doit avoir vérifié son compte TruckersMP.",
     "user_position_higher_or_equal": "La position de l'utilisateur est supérieure ou égale à vous.",
@@ -79,7 +79,7 @@
     "no_loa_application": "Vous ne pouvez pas soumettre une demande de LOA tant que vous n'êtes pas membre.",
     "must_verify_steam": "Vous devez vérifier votre compte Steam avant de soumettre une candidature.",
     "must_verify_truckersmp": "Vous devez vérifier votre compte TruckersMP avant de soumettre une candidature.",
-    "bot_application_received_title": "{apptypetxt} Candidature reçue",
+    "bot_application_received_title": "{application_type_text} Candidature reçue",
     "bot_application_received": "Un de nos collaborateurs vous répondra sous peu. Si vous souhaitez la mettre à jour, accédez à 'Mes applications' dans le Drivers Hub, cliquez sur le bouton 'Détails', défiler vers le bas pour ajouter un message.",
     "not_applicant": "Vous n'êtes pas le candidat",
     "application_already_accepted": "Candidature déjà acceptée",

@@ -216,33 +216,34 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             offence = -offence
             if e == "job.delivered":
                 k = randint(0, len(GIFS)-1)
-                dhulink = f"https://{config.domain}/member?userid={userid}"
+                dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
+                dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
                 if config.distance_unit == "imperial":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": f"https://{config.domain}/delivery?logid={logid}",
+                            "url": dlglink,
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{TSeparator(int(driven_distance * 0.621371))}Mi", "inline": True},
-                                    {"name": "Fuel", "value": f"{TSeparator(int(fuel_used * 0.26417205))}Gal", "inline": True},
-                                    {"name": "Net Profit", "value": f"{munit}{TSeparator(int(revenue))}", "inline": True},
-                                    {"name": "XP Earned", "value": f"{TSeparator(xp)}", "inline": True}],
+                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}Mi", "inline": True},
+                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))}Gal", "inline": True},
+                                    {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                    {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                 elif config.distance_unit == "metric":
                     r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": f"https://{config.domain}/delivery?logid={logid}",
+                            "url": dlglink,
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{TSeparator(int(driven_distance))}Km", "inline": True},
-                                    {"name": "Fuel", "value": f"{TSeparator(int(fuel_used))}L", "inline": True},
-                                    {"name": "Net Profit", "value": f"{munit}{TSeparator(int(revenue))}", "inline": True},
-                                    {"name": "XP Earned", "value": f"{TSeparator(xp)}", "inline": True}],
+                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance))}Km", "inline": True},
+                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used))}L", "inline": True},
+                                    {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                    {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                 cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")

@@ -63,7 +63,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
     cur = conn.cursor()
 
     if logid != -1:
-        cur.execute(f"SELECT divisionid, userid, requestts, status, updatets, staffid, reason FROM division WHERE logid = {logid} AND logid >= 0")
+        cur.execute(f"SELECT divisionid, userid, request_timestamp, status, update_timestamp, update_staff_userid, message FROM division WHERE logid = {logid} AND logid >= 0")
         t = cur.fetchall()
         if len(t) == 0:
             cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
@@ -80,11 +80,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
         tt = t[0]
         divisionid = tt[0]
         duserid = tt[1]
-        requestts = tt[2]
+        request_timestamp = tt[2]
         status = tt[3]
-        updatets = tt[4]
-        staffid = tt[5]
-        reason = b64d(tt[6])
+        update_timestamp = tt[4]
+        update_staff_userid = tt[5]
+        message = b64d(tt[6])
 
         ok = False
         for i in roles:
@@ -97,16 +97,16 @@ async def getDivision(request: Request, response: Response, authorization: str =
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
 
         staffname = "/"
-        if staffid != -1:
-            cur.execute(f"SELECT name FROM user WHERE userid = {staffid}")
+        if update_staff_userid != -1:
+            cur.execute(f"SELECT name FROM user WHERE userid = {update_staff_userid}")
             t = cur.fetchall()
             staffname = t[0][0]
         if userid == duserid:
-            return {"error": False, "response": {"divisionid": str(divisionid), "request_timestamp": str(requestts), "status": str(status), \
-                "update_timestamp": str(updatets), "update_staff": {"userid": str(staffid), "name": staffname}, "update_reason": reason, "user_is_staff": ok}}
+            return {"error": False, "response": {"divisionid": str(divisionid), "request_timestamp": str(request_timestamp), "status": str(status), \
+                "update_timestamp": str(update_timestamp), "update_staff": {"userid": str(update_staff_userid), "name": staffname}, "message": message, "user_is_staff": ok}}
         else:
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
-                "update_timestamp": str(updatets), "update_staff": {"userid": str(staffid), "name": staffname}, "user_is_staff": ok}}
+                "update_timestamp": str(update_timestamp), "update_staff": {"userid": str(update_staff_userid), "name": staffname}, "user_is_staff": ok}}
 
     stats = []
     for division in divisions:
@@ -130,7 +130,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         stats.append({"divisionid": str(division['id']), "name": division['name'], "drivers": tstats[::-1]})
     
     delivery = []
-    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY updatets DESC LIMIT 10")
+    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY update_timestamp DESC LIMIT 10")
     p = cur.fetchall()
     for pp in p:
         cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")
@@ -256,11 +256,12 @@ async def postDivision(request: Request, response: Response, authorization: str 
     except:
         pass
 
+    dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     tt = t[0]
     msg = f"**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
-    msg += f"**Delivery ID**: [{logid}](https://{config.domain}/delivery?logid={logid})\n**Division**: {divisiontxt[divisionid]}"
+    msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {divisiontxt[divisionid]}"
     avatar = tt[2]
 
     if config.webhook_division != "":
@@ -329,7 +330,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
     try:
         logid = int(form["logid"])
         divisionid = int(form["divisionid"])
-        reason = str(form["reason"])
+        message = str(form["message"])
         status = int(form["status"])
     except:
         response.status_code = 400
@@ -343,7 +344,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
     if divisionid == 0:
         divisionid = t[0][0]
         
-    cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, staffid = {adminid}, updatets = {int(time.time())}, reason = '{b64e(reason)}' WHERE logid = {logid}")
+    cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{b64e(message)}' WHERE logid = {logid}")
     conn.commit()
 
     STATUS = {0: "pending", 1: "validated", 2: "denied"}
@@ -369,7 +370,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
             channelid = d["id"]
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
-                "description": reason,
+                "description": message,
                     "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
                         {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
                     "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\

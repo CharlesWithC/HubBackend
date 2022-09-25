@@ -58,7 +58,24 @@ async def getConfig(request: Request, response: Response, authorization: str = H
             for tt in config_plugins[t]:
                 del ttconfig[tt]
     
-    return {"error": False, "response": {"config": ttconfig}}
+    f = json.loads(open(config_path, "r").read())
+    ffconfig = {}
+    # process whitelist
+    for tt in f.keys():
+        if tt in config_whitelist:
+            ffconfig[tt] = f[tt]
+
+    # remove sensitive data
+    for tt in config_protected:
+        ffconfig[tt] = ""
+
+    # remove disabled plugins
+    for t in config_plugins.keys():
+        if not t in tconfig["enabled_plugins"]:
+            for tt in config_plugins[t]:
+                del ffconfig[tt]
+
+    return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
 
 # thread to reload service
 def reload():
@@ -175,6 +192,25 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
+@app.put(f"/{config.vtc_abbr}/config/reset")
+async def putConfigReset(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PUT /config/reset', 30, 10)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, required_permission = ["admin"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+
+    open(config_path, "w").write(json.dumps(tconfig, indent=4))
+
+    await AuditLog(adminid, "Reset config")
+    
+    return {"error": False}
+
 # reload service
 @app.post(f"/{config.vtc_abbr}/reload")
 async def postReload(request: Request, response: Response, authorization: str = Header(None)):
@@ -244,4 +280,4 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     t = cur.fetchall()
     tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "total_items": str(tot)}, "total_pages": str(int(math.ceil(tot / page_size)))}
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}

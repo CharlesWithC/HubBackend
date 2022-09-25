@@ -648,6 +648,14 @@
                     },
                     "name": "order",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Query with username",
+                        "type": "string"
+                    },
+                    "name": "name",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -1641,6 +1649,26 @@
                 }
             }
         },
+        "/vtc/config/reset": {
+            "put": {
+                "summary": "Reset Config",
+                "tags": ["admin"],
+                "operationId": "reset_config",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/vtc/reload": {
             "post": {
                 "summary": "Reload API Service",
@@ -2333,7 +2361,7 @@
                                     }
                                 }
                             },
-                            "required": ["aid", "title", "content", "announcement_type", "is_private", "channelid"]
+                            "required": ["announcementid", "title", "content", "announcement_type", "is_private", "channelid"]
                         }
                     }
                 },
@@ -2371,7 +2399,7 @@
                         "title": "Announcement ID",
                         "type": "integer"
                     },
-                    "name": "aid",
+                    "name": "announcementid",
                     "in": "query"
                 }],
                 "responses": {
@@ -2898,13 +2926,13 @@
                                         "description": "Status (0: Pending | 1: Accepted | 2: Denied)",
                                         "type": "integar"
                                     },
-                                    "reason": {
-                                        "description": "Reason",
+                                    "message": {
+                                        "description": "Message",
                                         "type": "string"
                                     }
                                 }
                             },
-                            "required": ["logid", "divisionid", "status", "reason"]
+                            "required": ["logid", "divisionid", "status", "message"]
                         }
                     }
                 },
@@ -3131,8 +3159,8 @@
                                         "description": "Departure Timestamp",
                                         "type": "integer"
                                     },
-                                    "images": {
-                                        "description": "Image links (Separated with ',')",
+                                    "description": {
+                                        "description": "Description",
                                         "type": "string"
                                     },
                                     "is_private": {
@@ -3141,7 +3169,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "images", "is_private"]
+                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
                         }
                     }
                 },
@@ -3217,8 +3245,8 @@
                                         "description": "Departure Timestamp",
                                         "type": "integer"
                                     },
-                                    "images": {
-                                        "description": "Image links (Separated with ',')",
+                                    "description": {
+                                        "description": "Description",
                                         "type": "string"
                                     },
                                     "is_private": {
@@ -3227,7 +3255,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "images", "is_private"]
+                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
                         }
                     }
                 },

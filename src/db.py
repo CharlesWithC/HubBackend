@@ -16,31 +16,36 @@ cur = conn.cursor()
 # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
-    email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, joints BIGINT)")
+    email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire BIGINT, reason TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire_timestamp BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar
+
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game INT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, requestts BIGINT, status INT, updatets BIGINT, staffid INT, reason TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+
+cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT, userid INT, title TEXT, content TEXT, \
+    announcement_type INT, timestamp BIGINT, is_private INT) DATA DIRECTORY = '{config.mysql_ext}'")
+# atype = 0: info | 1: event | 2: warning | 3: critical
+
+cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, application_type INT, discordid BIGINT, data TEXT,\
+    status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+# status = 0: pending | 1: accepted | 2: declined
+
+cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, request_timestamp BIGINT, \
+    status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: validated | 2: denied
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (aid INT, userid INT, title TEXT, content TEXT, \
-    atype INT, timestamp BIGINT, pvt INT) DATA DIRECTORY = '{config.mysql_ext}'")
-# atype = 0: info | 1: event | 2: warning | 3: critical
-cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, apptype INT, discordid BIGINT, data TEXT,\
-    status INT, submitTimestamp BIGINT, closedBy INT, closedTimestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
-# status = 0: pending | 1: accepted | 2: declined
-cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, tmplink TEXT, departure TEXT, destination TEXT, distance TEXT, \
-    mts BIGINT, dts BIGINT, img TEXT, pvt INT, title TEXT, attendee TEXT, eventpnt INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
-# tmplink = '' -> private convoy | m/dts -> meetup/departure timestamp | img -> multiple link separated with ','
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
+cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, truckersmp_link TEXT, departure TEXT, destination TEXT, distance TEXT, \
+    meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, firstop BIGINT, opcount INT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT, expire BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -55,7 +60,6 @@ if len(t) == 0:
     cur.execute(f"INSERT INTO settings VALUES (0, 'nxtlogid', 1)")
     cur.execute(f"INSERT INTO settings VALUES (0, 'nxteventid', 1)")
     cur.execute(f"INSERT INTO settings VALUES (0, 'version', '{version}')")
-cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
 
 indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX user_discordid ON user (discordid)",
@@ -64,19 +68,22 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX user_password_discordid ON user_password (discordid)",
 "CREATE INDEX user_password_email ON user_password (email)",
 "CREATE INDEX banned_discordid ON banned (discordid)",
-"CREATE INDEX banned_expire ON banned (expire)",
+"CREATE INDEX banned_expire_timestamp ON banned (expire_timestamp)",
 "CREATE INDEX mythpoint_idx ON banned (userid, timestamp)",
 "CREATE INDEX dlog_logid ON dlog (logid)",
 "CREATE INDEX dlog_userid ON dlog (userid)",
 "CREATE INDEX dlog_navioid ON dlog (navioid)",
 "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
+"CREATE INDEX dlogcache_data_type ON dlogcache (data_type)",
+"CREATE INDEX dlogcache_data_scale ON dlogcache (data_scale)",
+"CREATE INDEX dlogcache_start_timestamp ON dlogcache (start_timestamp)",
 "CREATE INDEX telemetry_logid ON telemetry (logid)",
 "CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid)",
 "CREATE INDEX temptelemetry_uuid ON temptelemetry (uuid)",
 "CREATE INDEX division_logid ON division (logid)",
 "CREATE INDEX division_userid ON division (userid)",
 "CREATE INDEX division_divisionid ON division (divisionid)",
-"CREATE INDEX announcement_aid ON announcement (aid)",
+"CREATE INDEX announcement_announcementid ON announcement (announcementid)",
 "CREATE INDEX application_applicationid ON application (applicationid)",
 "CREATE INDEX application_discordid ON application (discordid)",
 "CREATE INDEX event_eventid ON event (eventid)",

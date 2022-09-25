@@ -18,6 +18,12 @@ import multilang as ml
 
 discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, config.discord_callback_url)
 
+def getUrl4Msg(message):
+    return config.frontend_urls.auth_message.replace("{message}", str(message))
+
+def getUrl4Token(token):
+    return config.frontend_urls.auth_token.replace("{token}", str(token))
+
 # Password Auth
 @app.post(f'/{config.vtc_abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):
@@ -80,70 +86,77 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
     if code == "":
-        return RedirectResponse(url=f"https://{config.domain}/auth?message={error_description}", status_code=302)
+        return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
 
     rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 150, 3)
     if rl > 0:
-        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + f"Rate limit: Wait {rl} seconds", status_code=302)
+        return RedirectResponse(url=getUrl4Msg("Rate limit: Wait {rl} seconds"), status_code=302)
 
-    tokens = discord_auth.get_tokens(code)
-    if "access_token" in tokens.keys():
-        user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
-        if not 'id' in user_data:
-            return RedirectResponse(url=f"https://{config.domain}/auth?message=Discord Error: " + user_data['message'], status_code=302)
+    try:
+        tokens = discord_auth.get_tokens(code)
+        if "access_token" in tokens.keys():
+            user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+            if not 'id' in user_data:
+                return RedirectResponse(url=getUrl4Msg("Discord Error: " + user_data['message']), status_code=302)
 
-        tokens = {**tokens, **user_data}
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 7}")
-        cur.execute(f"DELETE FROM banned WHERE expire < {int(time.time())}")
-        cur.execute(f"SELECT reason, expire FROM banned WHERE discordid = '{user_data['id']}'")
-        t = cur.fetchall()
-        if len(t) > 0:
-            reason = t[0][0]
-            expire = t[0][1]
-            expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
-            return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire}), status_code=302)
+            tokens = {**tokens, **user_data}
+            conn = newconn()
+            cur = conn.cursor()
+            cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 7}")
+            cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+            cur.execute(f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{user_data['id']}'")
+            t = cur.fetchall()
+            if len(t) > 0:
+                reason = t[0][0]
+                expire = t[0][1]
+                expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
 
-        cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
-        t = cur.fetchall()
-        username = str(user_data['username'])
-        username = username.replace("'", "''").replace(",","")
-        email = str(user_data['email'])
-        email = email.replace("'", "''")
-        if not "@" in email: # make sure it's not empty
-            return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "invalid_email"), status_code=302)
-        avatar = str(user_data['avatar'])
-        if len(t) == 0:
-            cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{avatar}', '',\
-                '{email}', -1, -1, '', {int(time.time())})")
-            await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)")
-        else:
-            cur.execute(f"UPDATE user_password SET email = '{email}' WHERE discordid = '{user_data['id']}'")
-            cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{user_data['id']}'")
-        conn.commit()
-        
-        if config.in_guild_check:
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
-            if r.status_code != 200:
-                return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "discord_check_fail"), status_code=302)
-            d = json.loads(r.text)
-            if not "user" in d.keys():
-                return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "not_in_discord_server"), status_code=302)
+            cur.execute(f"SELECT * FROM user WHERE discordid = '{user_data['id']}'")
+            t = cur.fetchall()
+            username = str(user_data['username'])
+            username = username.replace("'", "''").replace(",","")
+            email = str(user_data['email'])
+            email = email.replace("'", "''")
+            if not "@" in email: # make sure it's not empty
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
+            avatar = str(user_data['avatar'])
+            if len(t) == 0:
+                cur.execute(f"INSERT INTO user VALUES (-1, {user_data['id']}, '{username}', '{avatar}', '',\
+                    '{email}', -1, -1, '', {int(time.time())})")
+                await AuditLog(-999, f"User register: {username} (`{user_data['id']}`)")
+            else:
+                cur.execute(f"UPDATE user_password SET email = '{email}' WHERE discordid = '{user_data['id']}'")
+                cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{user_data['id']}'")
+            conn.commit()
+            
+            if config.in_guild_check:
+                r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{user_data['id']}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                if r.status_code != 200:
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
+                d = json.loads(r.text)
+                if not "user" in d.keys():
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
 
-        stoken = str(uuid4())
-        while stoken[0] == "e":
             stoken = str(uuid4())
-        cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{user_data['id']}'")
-        r = cur.fetchall()
-        scnt = r[0][0]
-        if scnt >= 10:
-            cur.execute(f"DELETE FROM session WHERE discordid = '{user_data['id']}' LIMIT {scnt - 9}")
-        cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
-        conn.commit()
-        return RedirectResponse(url=f"https://{config.domain}/auth?token="+stoken, status_code=302)
+            while stoken[0] == "e":
+                stoken = str(uuid4())
+            cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{user_data['id']}'")
+            r = cur.fetchall()
+            scnt = r[0][0]
+            if scnt >= 10:
+                cur.execute(f"DELETE FROM session WHERE discordid = '{user_data['id']}' LIMIT {scnt - 9}")
+            cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{user_data['id']}', '{int(time.time())}', '{request.client.host}')")
+            conn.commit()
+            return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
         
-    return RedirectResponse(url=f"https://{config.domain}/auth?message={tokens['error_description']}", status_code=302)
+        if 'error_description' in tokens.keys():
+            return RedirectResponse(url=getUrl4Msg(tokens['error_description']), status_code=302)
+        else:
+            return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
+
+    except:
+        return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
 
 # Steam Auth (Only for connecting account)
 @app.get(f"/{config.vtc_abbr}/auth/steam/redirect")
@@ -159,7 +172,7 @@ async def getSteamOAuth(request: Request, response: Response, connect_account: O
 
 @app.get(f"/{config.vtc_abbr}/auth/steam/connect")
 async def getSteamConnect(request: Request, response: Response):
-    return RedirectResponse(url=config.steam_callback_url + f"?{str(request.query_params)}", status_code=302)
+    return RedirectResponse(url=config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
 @app.get(f"/{config.vtc_abbr}/auth/steam/callback")
 async def getSteamCallback(request: Request, response: Response):
@@ -173,15 +186,15 @@ async def getSteamCallback(request: Request, response: Response):
 
     rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 150, 3)
     if rl > 0:
-        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + f"Rate limit: Wait {rl} seconds", status_code=302)
+        return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
 
     r = requests.get("https://steamcommunity.com/openid/login?" + data)
     if r.status_code != 200:
         response.status_code = 503
-        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "steam_api_error"), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
-        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "invalid_steam_auth"), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_steam_auth")), status_code=302)
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
     
@@ -191,7 +204,7 @@ async def getSteamCallback(request: Request, response: Response):
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 401
-        return RedirectResponse(url=f"https://{config.domain}/auth?message=" + ml.tr(request, "user_not_found"), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
     discordid = t[0][0]
 
     stoken = str(uuid4())
@@ -203,7 +216,7 @@ async def getSteamCallback(request: Request, response: Response):
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
 
-    return RedirectResponse(url=f"https://{config.domain}/auth?token=" + stoken, status_code=302)
+    return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
 # Token Management
 @app.get(f'/{config.vtc_abbr}/token')

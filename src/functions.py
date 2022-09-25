@@ -6,7 +6,7 @@ TF = [False, True]
 from base64 import b64encode, b64decode
 from discord import Webhook, Embed
 from aiohttp import ClientSession
-from datetime import datetime
+from datetime import datetime, timedelta
 import json, time, math, zlib, re
 import ipaddress, requests
 
@@ -106,7 +106,11 @@ def isurl(s):
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(r, s) is not None
 
-def TSeparator(num):
+def getDayStartTs(timestamp):
+    dt = datetime.fromtimestamp(timestamp)
+    return int(datetime(dt.year, dt.month, dt.day).timestamp())
+
+def tseparator(num):
     flag = ""
     if int(num) < 0:
         flag = "-"
@@ -114,7 +118,7 @@ def TSeparator(num):
     if int(num) < 1000:
         return flag + str(num)
     else:
-        return flag + TSeparator(str(num)[:-3]) + "," + str(num)[-3:]
+        return flag + tseparator(str(num)[:-3]) + "," + str(num)[-3:]
 
 def sigfig(num, sigfigs_opt = 3):
     num = int(num)
@@ -140,32 +144,32 @@ def sigfig(num, sigfigs_opt = 3):
 def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"DELETE FROM ratelimit WHERE firstop <= {int(time.time() - 86400)}")
-    cur.execute(f"SELECT firstop, opcount FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {int(time.time() - 86400)}")
+    cur.execute(f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
     t = cur.fetchall()
     if len(t) == 0:
         cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '{endpoint}', {int(time.time())}, 1)")
         conn.commit()
         return 0
     else:
-        firstop = t[0][0]
-        opcount = t[0][1]
-        if int(time.time()) - firstop > limittime:
-            cur.execute(f"UPDATE ratelimit SET firstop = {int(time.time())}, opcount = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+        first_request_timestamp = t[0][0]
+        request_count = t[0][1]
+        if int(time.time()) - first_request_timestamp > limittime:
+            cur.execute(f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
             conn.commit()
             return 0
         else:
-            if opcount + 1 > limitcnt:
-                return limittime - (int(time.time()) - firstop)
+            if request_count + 1 > limitcnt:
+                return limittime - (int(time.time()) - first_request_timestamp)
             else:
-                cur.execute(f"UPDATE ratelimit SET opcount = opcount + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+                cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
                 conn.commit()
                 return 0
 
 def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
     # authorization header basic check
     if authorization is None:
-        return {"error": True, "descriptor": ml.tr(request, "no_authorization_header")}
+        return {"error": True, "descriptor": ml.tr(request, "authorization_header_not_found")}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
     

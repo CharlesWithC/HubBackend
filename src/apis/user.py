@@ -73,7 +73,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     userid = t[0][0]
     discordid = t[0][1]
     
-    cur.execute(f"SELECT discordid, name, avatar, roles, joints, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT discordid, name, avatar, roles, join_timestamp, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -93,7 +93,8 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 
 @app.get(f"/{config.vtc_abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
+    page: Optional[int] = -1, page_size: Optional[int] = 10, name: Optional[str] = '', \
+        order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
     rl = ratelimit(request.client.host, 'GET /user/list', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -115,16 +116,18 @@ async def getUserList(request: Request, response: Response, authorization: str =
     elif page_size >= 250:
         page_size = 250
     
+    name = name.replace("'","''").lower()
+    
     if not order_by in ["name", "discord_id", "join_timestamp"]:
         order_by = "discord_id"
-    cvt = {"name": "name", "discord_id": "discordid", "join_timestamp": "joints"}
+    cvt = {"name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp"}
     order_by = cvt[order_by]
 
     if not order in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
     
-    cur.execute(f"SELECT userid, name, discordid, joints FROM user WHERE userid < 0 ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    cur.execute(f"SELECT userid, name, discordid, join_timestamp FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -136,7 +139,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
             banned = True
             banreason = p[0][0]
         ret.append({"name": tt[1], "discordid": f"{tt[2]}", "is_banned": TF[banned], "ban_reason": banreason, "join_timestamp": tt[3]})
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0")
+    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:

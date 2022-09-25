@@ -9,7 +9,13 @@
 
     "apidoc": "./apidoc.json",
     "language_dir": "./languages",
-    "steam_callback_url": "https://{domain}/steam",
+    "frontend_urls": {
+        "steam_callback": "https://{domain}/steam",
+        "auth_message": "https://{domain}/auth?message={message}",
+        "auth_token": "https://{domain}/auth?token={token}",
+        "member": "https://{domain}/member?userid={userid}",
+        "delivery": "https://{domain}/delivery?logid={logid}"
+    },
 
     "apidomain": "drivershub.charlws.com",
     "domain": "",
