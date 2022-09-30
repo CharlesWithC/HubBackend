@@ -11,7 +11,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtc_abbr}/announcement")
+@app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", announcementid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /announcement', 180, 90)
@@ -90,7 +90,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
-@app.post(f"/{config.vtc_abbr}/announcement")
+@app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /announcement', 180, 3)
     if rl > 0:
@@ -149,14 +149,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
+                    "footer": {"text": f"By {adminname}", "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
         except:
             pass
 
     return {"error": False, "response": {"announcementid": str(announcementid)}}
 
-@app.patch(f"/{config.vtc_abbr}/announcement")
+@app.patch(f"/{config.abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'PATCH /announcement', 180, 30)
     if rl > 0:
@@ -218,14 +218,14 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
+                    "footer": {"text": f"By {adminname}", "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
         except:
             pass
 
     return {"error": False}
 
-@app.delete(f"/{config.vtc_abbr}/announcement")
+@app.delete(f"/{config.abbr}/announcement")
 async def deleteAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'DELETE /announcement', 180, 30)
     if rl > 0:

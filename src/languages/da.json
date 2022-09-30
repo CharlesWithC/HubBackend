@@ -30,7 +30,7 @@
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API utilgængelig.e. Kunne ikke binde TruckersMP konto",
     "steam_not_bound_before_truckersmp": "Du skal binde din Steam-konto, før du binder TruckersMP-kontoen.",
-    "truckersmp_steam_mismatch": "Steam konto bundet til TruckersMP User {tmpname} ({truckersmpid}) matcher ikke din steam konto.",
+    "truckersmp_steam_mismatch": "Steam konto bundet til TruckersMP User {truckersmp_name} ({truckersmpid}) matcher ikke din steam konto.",
 
     "not_a_member": "Ikke medlem",
     "member_not_found": "Medlemet blev ikke fundet.",
@@ -49,7 +49,7 @@
     "already_have_discord_role": "Du har allerede denne rolle.",
     "discord_role_given": "Du har fået rollen.",
     "member_update_title": "Bruger opdatering",
-    "member_update": "Du er nu medlem af {vtcname}!",
+    "member_update": "Du er nu medlem af {company_name}!",
     "losing_admin_permission": "Rolleopdatering afvist: Nye roller fjerner administratortilladelse fra den nuværende bruger.",
 
     "announcement_not_found": "Bekendtgørelse ikke funder",

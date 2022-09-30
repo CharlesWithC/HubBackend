@@ -60,8 +60,8 @@ async def work(uri):
     conn = newconn()
     cur = conn.cursor()
     async with connect(uri, ping_interval=30) as websocket:
-        print(f"Company Name: {config.vtc_name}")
-        print(f"Company Abbreviation: {config.vtc_abbr}")
+        print(f"Company Name: {config.name}")
+        print(f"Company Abbreviation: {config.abbr}")
         print(f"Navio Company ID: {config.navio_company_id}\n")
         await websocket.send(json.dumps({"op": 1, "data": {"subscribe_to_company": int(config.navio_company_id)}}))
         data = await websocket.recv()
@@ -119,7 +119,7 @@ async def work(uri):
             await asyncio.sleep(0.01)
 
 if not "tracker" in config.enabled_plugins:
-    print(f"Tracker not enabled for {config.vtc_name}")
+    print(f"Tracker not enabled for {config.name}")
     print("To enable, add 'tracker' in config.enabled_plugins")
     sys.exit(1)
 

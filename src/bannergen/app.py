@@ -13,9 +13,9 @@ app = FastAPI()
 @app.post("/banner")
 async def banner(request: Request, response: Response):
     form = await request.form()
-    vtc_abbr = form["vtc_abbr"]
-    vtc_name = form["vtc_name"]
-    vtc_logo_link = form["vtc_logo_link"]
+    company_abbr = form["abbr"]
+    company_name = form["name"]
+    logo_url = form["logo_url"]
     hex_color = form["hex_color"][-6:]
     discordid = form["discordid"]
 
@@ -37,20 +37,20 @@ async def banner(request: Request, response: Response):
     logo = Image.new("RGBA", (400,400),(255,255,255))
     logobg = Image.new("RGB", (3400,3400),(255,255,255))
 
-    if os.path.exists(f"/tmp/hub/logo/{vtc_abbr}.png"):
-        logo = Image.open(f"/tmp/hub/logo/{vtc_abbr}.png").convert("RGBA")
-        logobg = Image.open(f"/tmp/hub/logo/{vtc_abbr}_bg.png").convert("RGB")
+    if os.path.exists(f"/tmp/hub/logo/{company_abbr}.png"):
+        logo = Image.open(f"/tmp/hub/logo/{company_abbr}.png").convert("RGBA")
+        logobg = Image.open(f"/tmp/hub/logo/{company_abbr}_bg.png").convert("RGB")
     else:
-        r = requests.get(vtc_logo_link, timeout = 3)
+        r = requests.get(logo_url, timeout = 3)
         if r.status_code == 200:
-            vtc_logo = r.content
+            logo = r.content
             try: # in case image is invalid
-                vtc_logo = Image.open(BytesIO(vtc_logo)).convert("RGBA")
-                logo = vtc_logo
-                logobg = vtc_logo
+                logo = Image.open(BytesIO(logo)).convert("RGBA")
+                logo = logo
+                logobg = logo
                 lnd = []
                 lbnd = []
-                datas = vtc_logo.getdata()
+                datas = logo.getdata()
                 for item in datas:
                     lnd.append(item) # use original logo for small one
                     if item[3] == 0:
@@ -64,8 +64,8 @@ async def banner(request: Request, response: Response):
                 logobg.putdata(lbnd)
                 logobg = logobg.resize((3400, 3400), resample=Image.ANTIALIAS).convert("RGB")
 
-                logo.save(f"/tmp/hub/logo/{vtc_abbr}.png", optimize = True)
-                logobg.save(f"/tmp/hub/logo/{vtc_abbr}_bg.png", optimize = True)
+                logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
+                logobg.save(f"/tmp/hub/logo/{company_abbr}_bg.png", optimize = True)
             except:
                 pass
 
@@ -139,10 +139,10 @@ async def banner(request: Request, response: Response):
     coH80 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 80)
     co20 = ImageFont.truetype("./fonts/Consola.ttf", 20)
     # set color
-    vtccolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    # vtc name
-    vtcnamelen = usH90.getsize(f"{vtc_name}")[0]
-    draw.text((3400 - 50 - vtcnamelen, 490), f"{vtc_name}", fill=vtccolor, font=usH90)
+    theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    # company name
+    company_name_len = usH90.getsize(f"{company_name}")[0]
+    draw.text((3400 - 50 - company_name_len, 490), f"{company_name}", fill=theme_color, font=usH90)
 
     name = form["name"]
     for _ in range(10):
@@ -189,7 +189,7 @@ async def banner(request: Request, response: Response):
             offset += 10
             hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
             hrolesize = hrolefont.getsize(f"{highest_role}")[0]
-    draw.text((650, 240 + offset), f"{highest_role}", fill=vtccolor, font=hrolefont)
+    draw.text((650, 240 + offset), f"{highest_role}", fill=theme_color, font=hrolefont)
     # y = 240 ~ 280
 
     since = form["since"]
@@ -199,7 +199,7 @@ async def banner(request: Request, response: Response):
     sincefont = ImageFont.truetype("./fonts/Consola.ttf", 80)
     draw.text((650, 420), f"Since {since}", fill=(0,0,0), font=sincefont)
     # separate line
-    draw.line((1700, 50, 1700, 550), fill=vtccolor, width = 20)
+    draw.line((1700, 50, 1700, 550), fill=theme_color, width = 20)
     for _ in range(10):
         if division.startswith(" "):
             division = division[1:]

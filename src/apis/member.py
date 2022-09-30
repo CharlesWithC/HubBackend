@@ -60,20 +60,20 @@ def point2rank(point):
     return RANKROLE[keys[-1]]
 
 # Basic Info Section
-@app.get(f"/{config.vtc_abbr}/member/roles")
+@app.get(f"/{config.abbr}/member/roles")
 async def getRoles(request: Request, response: Response):
     return {"error": False, "response": ROLES}
 
-@app.get(f"/{config.vtc_abbr}/member/ranks")
+@app.get(f"/{config.abbr}/member/ranks")
 async def getRanks(request: Request, response: Response):
     return {"error": False, "response": RANKS}
 
-@app.get(f"/{config.vtc_abbr}/member/perms")
+@app.get(f"/{config.abbr}/member/perms")
 async def getRanks(request: Request, response: Response):
     return {"error": False, "response": config.perms}
 
 # Member Info Section
-@app.get(f'/{config.vtc_abbr}/member/list')
+@app.get(f'/{config.abbr}/member/list')
 async def getMemberList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', \
@@ -163,7 +163,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
     return {"error": False, "response": {"list": ret[(page - 1) * page_size : page * page_size], \
         "total_items": str(len(ret)), "total_pages": str(int(math.ceil(len(ret) / page_size)))}}
 
-@app.get(f"/{config.vtc_abbr}/member/list/all")
+@app.get(f"/{config.abbr}/member/list/all")
 async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /member/list/all', 180, 30)
     if rl > 0:
@@ -186,7 +186,7 @@ async def getAllMemberList(request: Request, response: Response, authorization: 
         ret.append({"userid": str(tt[2]), "name": tt[1], "steamid": str(tt[0])})
     return {"error": False, "response": {"list": ret}}
 
-@app.get(f'/{config.vtc_abbr}/member/banner')
+@app.get(f'/{config.abbr}/member/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     if not "banner" in config.enabled_plugins:
@@ -284,8 +284,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
     try:
-        r = requests.post("http://127.0.0.1:8700/banner", data={"vtc_abbr": config.vtc_abbr, \
-            "vtc_name": config.vtc_name, "vtc_logo_link": config.vtc_logo_link, "hex_color": config.hex_color,
+        r = requests.post("http://127.0.0.1:8700/banner", data={"abbr": config.abbr, \
+            "name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
             "discordid": discordid, "since": since, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 10)
         if r.status_code != 200:
@@ -299,7 +299,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
 
-@app.patch(f"/{config.vtc_abbr}/member/roles/rank")
+@app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /member/roles/rank', 180, 5)
     if rl > 0:
@@ -418,7 +418,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         pass
 
 # Member Operation Section
-@app.put(f'/{config.vtc_abbr}/member')
+@app.put(f'/{config.abbr}/member')
 async def putMember(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PUT /member', 180, 10)
     if rl > 0:
@@ -472,26 +472,27 @@ async def putMember(request: Request, response: Response, authorization: str = H
     await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
     conn.commit()
 
-    try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
-                "description": ml.tr(request, "member_update", var = {"vtcname": config.vtc_name}, force_en = True),
-                    "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+    if config.discord_bot_dm:
+        try:
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
+                    "description": ml.tr(request, "member_update", var = {"company_name": config.name}, force_en = True),
+                        "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
-    except:
-        pass
+        except:
+            pass
 
     return {"error": False}   
 
-@app.patch(f'/{config.vtc_abbr}/member/roles')
+@app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /member/roles', 180, 30)
     if rl > 0:
@@ -638,7 +639,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
     return {"error": False} 
 
-@app.patch(f"/{config.vtc_abbr}/member/point")
+@app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
     if rl > 0:
@@ -680,7 +681,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     return {"error": False}
 
-@app.delete(f"/{config.vtc_abbr}/member/resign")
+@app.delete(f"/{config.abbr}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /member/resign', 180, 10)
     if rl > 0:
@@ -715,7 +716,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
     return {"error": False}
 
-@app.delete(f"/{config.vtc_abbr}/member/dismiss")
+@app.delete(f"/{config.abbr}/member/dismiss")
 async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
     if rl > 0:

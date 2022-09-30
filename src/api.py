@@ -41,12 +41,12 @@ if "event" in config.enabled_plugins:
     import plugins.event
 
 # basic info
-@app.get(f'/{config.vtc_abbr}')
+@app.get(f'/{config.abbr}')
 async def index():
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    return {"error": False, "response": {"vtc_name": config.vtc_name, "vtc_abbr": config.vtc_abbr, \
+    return {"error": False, "response": {"name": config.name, "abbr": config.abbr, \
         "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}}
 
 # error handler to uniform error response

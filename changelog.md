@@ -1,5 +1,19 @@
 # Changelog
 
+**v1.14.5**  
+1.Removed 'vtc' element  
+2.Added `points` field to **GET** `/event` response  
+3.Added `config.discord_bot_dm` (boolean) to enable / disable bot DM  
+4.Config format update  
+a) Item name changes  
+|Old Name|New Name|  
+---|---|  
+|vtc_abbr|abbr|
+|vtc_name|name|
+|vtc_logo_link|logo_url|  
+
+b) Updated `roles` format to `[{"id": "id", "name": "role"}]`  
+
 **v1.14.4**  
 1.Fixed `isdivision` (boolean) response being stringified to "True" / "False"  
 2.Added `Unknown Error` response to **GET** `/auth/discord/callback` to prevent `Internal Server Error`  

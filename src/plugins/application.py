@@ -18,14 +18,14 @@ for i in range(len(application_types)):
     application_types[i]["id"] = int(application_types[i]["id"])
 
 # Basic Info
-@app.get(f"/{config.vtc_abbr}/application/types")
+@app.get(f"/{config.abbr}/application/types")
 async def getApplicationTypes(request: Request, response: Response):
     APPLICATIONS_TYPES = []
     for t in application_types:
         APPLICATIONS_TYPES.append({"applicationid": str(t["id"]), "name": t["name"]})
     return {"error": False, "response": APPLICATIONS_TYPES}
 
-@app.get(f"/{config.vtc_abbr}/application/positions")
+@app.get(f"/{config.abbr}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
     conn = newconn()
     cur = conn.cursor()
@@ -40,7 +40,7 @@ async def getApplicationPositions(request: Request, response: Response):
         return {"error": False, "response": ret}
 
 # Get Application
-@app.get(f"/{config.vtc_abbr}/application")
+@app.get(f"/{config.abbr}/application")
 async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /application', 180, 90)
     if rl > 0:
@@ -99,7 +99,7 @@ async def getApplication(request: Request, response: Response, authorization: st
         "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submit_timestamp": str(t[0][5]), \
             "update_timestamp": str(t[0][7]), "last_update_staff": {"userid": str(t[0][6]), "name": staff_name}}}
 
-@app.get(f"/{config.vtc_abbr}/application/list")
+@app.get(f"/{config.abbr}/application/list")
 async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, order: Optional[str] = "desc"):
@@ -201,7 +201,7 @@ async def getApplications(request: Request, response: Response, authorization: s
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 # Self-operation
-@app.post(f"/{config.vtc_abbr}/application")
+@app.post(f"/{config.abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /application', 180, 3)
     if rl > 0:
@@ -308,22 +308,23 @@ async def postApplication(request: Request, response: Response, authorization: s
         except:
             pass
 
-    try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
-                "description": ml.tr(request, "bot_application_received"),
-                    "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+    if config.discord_bot_dm:
+        try:
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
+                    "description": ml.tr(request, "bot_application_received"),
+                        "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
-    except:
-        pass
+        except:
+            pass
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -363,7 +364,7 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     return {"error": False, "response": {"applicationid": str(applicationid)}}
 
-@app.patch(f"/{config.vtc_abbr}/application")
+@app.patch(f"/{config.abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /application', 180, 10)
     if rl > 0:
@@ -426,22 +427,23 @@ async def updateApplication(request: Request, response: Response, authorization:
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     msg += f"**New message**: \n{message}\n\n"
 
-    try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
-                "description": ml.tr(request, "application_message_recorded"),
-                    "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+    if config.discord_bot_dm:
+        try:
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
+                    "description": ml.tr(request, "application_message_recorded"),
+                        "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
-    except:
-        pass
+        except:
+            pass
 
     application_type_text = ""
     discord_message_content = ""
@@ -488,7 +490,7 @@ async def updateApplication(request: Request, response: Response, authorization:
     return {"error": False}
 
 # Management
-@app.patch(f"/{config.vtc_abbr}/application/status")
+@app.patch(f"/{config.abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /application/status', 180, 30)
     if rl > 0:
@@ -571,32 +573,33 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if message == "":
         message = f"*{ml.tr(request, 'no_message')}*"
 
-    try:
-        STATUS = {0: "Pending", 1: "Accepted", 2: "Declined"}
-        statustxt = f"Unknown Status ({status})"
-        if int(status) in STATUS.keys():
-            statustxt = STATUS[int(status)]
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
-                "description": f"[{ml.tr(request, 'message', force_en = True)}] {message}",
-                    "fields": [{"name": ml.tr(request, "application_id", force_en = True), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status", force_en = True), "value": statustxt, "inline": True}, \
-                        {"name": ml.tr(request, "time", force_en = True), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff", force_en = True), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+    if config.discord_bot_dm:
+        try:
+            STATUS = {0: "Pending", 1: "Accepted", 2: "Declined"}
+            statustxt = f"Unknown Status ({status})"
+            if int(status) in STATUS.keys():
+                statustxt = STATUS[int(status)]
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
+                    "description": f"[{ml.tr(request, 'message', force_en = True)}] {message}",
+                        "fields": [{"name": ml.tr(request, "application_id", force_en = True), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status", force_en = True), "value": statustxt, "inline": True}, \
+                            {"name": ml.tr(request, "time", force_en = True), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff", force_en = True), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
-    except:
-        pass
+        except:
+            pass
 
     return {"error": False}
 
 # Higher-management
-@app.patch(f"/{config.vtc_abbr}/application/positions")
+@app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /application/positions', 180, 3)
     if rl > 0:

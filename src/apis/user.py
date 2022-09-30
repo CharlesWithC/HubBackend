@@ -11,7 +11,7 @@ from functions import *
 import multilang as ml
 
 # User Info Section
-@app.get(f'/{config.vtc_abbr}/user')
+@app.get(f'/{config.abbr}/user')
 async def getUser(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /user', 180, 60)
@@ -91,7 +91,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         "email": email, "avatar": t[0][2], "join_timestamp": str(t[0][4]), "roles": roles, \
         "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
 
-@app.get(f"/{config.vtc_abbr}/user/list")
+@app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, page_size: Optional[int] = 10, name: Optional[str] = '', \
         order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
@@ -147,7 +147,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 # Self-Operation Section
-@app.patch(f'/{config.vtc_abbr}/user/bio')
+@app.patch(f'/{config.abbr}/user/bio')
 async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/bio', 180, 10)
     if rl > 0:
@@ -179,7 +179,7 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
     return {"error": False}
 
-@app.patch(f'/{config.vtc_abbr}/user/password')
+@app.patch(f'/{config.abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/password', 180, 5)
     if rl > 0:
@@ -239,7 +239,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
 
     return {"error": False}
     
-@app.delete(f'/{config.vtc_abbr}/user/password')
+@app.delete(f'/{config.abbr}/user/password')
 async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /user/password', 180, 5)
     if rl > 0:
@@ -269,7 +269,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
 
     return {"error": False}
     
-@app.patch(f"/{config.vtc_abbr}/user/steam")
+@app.patch(f"/{config.abbr}/user/steam")
 async def patchSteam(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/steam', 180, 3)
     if rl > 0:
@@ -345,7 +345,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     
     return {"error": False}
 
-@app.patch(f"/{config.vtc_abbr}/user/truckersmp")
+@app.patch(f"/{config.abbr}/user/truckersmp")
 async def patchTruckersMP(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/truckersmp', 180, 3)
     if rl > 0:
@@ -400,7 +400,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     return {"error": False}
 
 # Manage User Section
-@app.put(f'/{config.vtc_abbr}/user/ban')
+@app.put(f'/{config.abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PUT /user/ban', 180, 10)
     if rl > 0:
@@ -456,7 +456,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
-@app.put(f'/{config.vtc_abbr}/user/unban')
+@app.put(f'/{config.abbr}/user/unban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PUT /user/unban', 180, 10)
     if rl > 0:
@@ -490,7 +490,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return {"error": False}
 
 # Higher Management Section
-@app.patch(f"/{config.vtc_abbr}/user/discord")
+@app.patch(f"/{config.abbr}/user/discord")
 async def patchUserDiscord(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /user/discord', 180, 10)
     if rl > 0:
@@ -547,7 +547,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
 
     return {"error": False}
     
-@app.delete(f"/{config.vtc_abbr}/user/connections")
+@app.delete(f"/{config.abbr}/user/connections")
 async def deleteUserConnection(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /user/connections', 180, 10)
     if rl > 0:
@@ -592,7 +592,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
 
     return {"error": False}
     
-@app.delete(f"/{config.vtc_abbr}/user")
+@app.delete(f"/{config.abbr}/user")
 async def deleteUser(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /user', 180, 10)
     if rl > 0:

@@ -30,7 +30,7 @@
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API inaccessible. Failed to bind TruckersMP Account.",
     "steam_not_bound_before_truckersmp": "You must bind your Steam Account before binding TruckersMP Account.",
-    "truckersmp_steam_mismatch": "Steam account bound to TruckersMP User {tmpname} ({truckersmpid}) does not match your steam account.",
+    "truckersmp_steam_mismatch": "Steam account bound to TruckersMP User {truckersmp_name} ({truckersmpid}) does not match your steam account.",
 
     "not_a_member": "Not a member",
     "member_not_found": "Member not found.",
@@ -49,7 +49,7 @@
     "already_have_discord_role": "You already have the role.",
     "discord_role_given": "You have been given the role.",
     "member_update_title": "Member Update",
-    "member_update": "You are now a member of {vtcname}!",
+    "member_update": "You are now a member of {company_name}!",
     "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
 
     "announcement_not_found": "Announcement not found",

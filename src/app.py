@@ -8,7 +8,7 @@ import os, sys, json, requests
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.14.4"
+version = "v1.14.5"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -25,6 +25,7 @@ class Dict2Obj(object):
 
 config_txt = open(config_path, "r").read()
 config = json.loads(config_txt)
+
 hex_color = config["hex_color"][-6:]
 try:
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
@@ -35,6 +36,7 @@ except:
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)
+
 perms = config["perms"]
 for perm in perms.keys():
     roles = perms[perm]
@@ -46,15 +48,26 @@ for perm in perms.keys():
             pass
     perms[perm] = newroles
 config["perms"] = perms
+
+roles = config["roles"]
+newroles = {}
+for role in roles:
+    try:
+        newroles[role["id"]] = role["name"]
+    except:
+        pass
+config["roles"] = newroles
+
 if not "server_workers" in config.keys():
     config["server_workers"] = 1
+
 tconfig = config
 config = Dict2Obj(config)
 del tconfig["intcolor"]
 del tconfig["rgbcolor"]
 
 if os.path.exists(config.apidoc):
-    app = FastAPI(openapi_url=f"/{config.vtc_abbr}/openapi.json", docs_url=f"/{config.vtc_abbr}/doc", redoc_url=None)
+    app = FastAPI(openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
     def openapi():
         with open(config.apidoc, "r") as openapi:
             return json.load(openapi)

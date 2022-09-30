@@ -10,7 +10,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtc_abbr}/downloads")
+@app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /downloads', 60, 30)
     if rl > 0:
@@ -33,7 +33,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         
     return {"error": False, "response": data}
 
-@app.patch(f"/{config.vtc_abbr}/downloads")
+@app.patch(f"/{config.abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 10)
     if rl > 0:

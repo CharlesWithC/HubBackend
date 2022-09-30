@@ -39,12 +39,12 @@ for division in divisions:
         pass
 
 # Basic info
-@app.get(f"/{config.vtc_abbr}/division/list")
+@app.get(f"/{config.abbr}/division/list")
 async def getDivisions(request: Request, response: Response):
     return {"error": False, "response": divisionsGET}
 
 # Get division info
-@app.get(f"/{config.vtc_abbr}/division")
+@app.get(f"/{config.abbr}/division")
 async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /division', 180, 90)
     if rl > 0:
@@ -172,7 +172,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
     return {"error": False, "response": {"statistics": stats, "recent": delivery}}
 
 # Self-operation
-@app.post(f"/{config.vtc_abbr}/division")
+@app.post(f"/{config.abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /division', 180, 3)
     if rl > 0:
@@ -240,21 +240,22 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
     
-    try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
-                "description": f"Division supervisor will check your request and you will receive an update soon.",
-                    "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-    except:
-        pass
+    if config.discord_bot_dm:
+        try:
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
+                    "description": f"Division supervisor will check your request and you will receive an update soon.",
+                        "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+        except:
+            pass
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
@@ -282,7 +283,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
         
     return {"error": False}
 
-@app.get(f"/{config.vtc_abbr}/division/list/pending")
+@app.get(f"/{config.abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /division/list/pending', 180, 90)
     if rl > 0:
@@ -310,7 +311,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     
     return {"error": False, "response": ret}
 
-@app.patch(f"/{config.vtc_abbr}/division")
+@app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /division', 180, 30)
     if rl > 0:
@@ -360,22 +361,23 @@ async def patchDivision(request: Request, response: Response, authorization: str
     t = cur.fetchall()
     adiscordid = t[0][0]
 
-    try:
-        STATUS = {0: "Pending", 1: "Validated", 2: "Denied"}
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-        d = json.loads(r.text)
-        if "id" in d:
-            channelid = d["id"]
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
-                "description": message,
-                    "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
-                        {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
-                    "footer": {"text": config.vtc_name, "icon_url": config.vtc_logo_link}, "thumbnail": {"url": config.vtc_logo_link},\
-                         "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-    except:
-        pass
+    if config.discord_bot_dm:
+        try:
+            STATUS = {0: "Pending", 1: "Validated", 2: "Denied"}
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            durl = "https://discord.com/api/v9/users/@me/channels"
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            d = json.loads(r.text)
+            if "id" in d:
+                channelid = d["id"]
+                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
+                    "description": message,
+                        "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
+                            {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
+                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+        except:
+            pass
 
     return {"error": False}

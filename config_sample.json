@@ -1,11 +1,11 @@
 {
-    "vtc_abbr": "",
-    "vtc_name": "",
+    "abbr": "",
+    "name": "",
     "distance_unit": "metric",
     "truckersmp_bind": true,
     "privacy": false,
     "hex_color": "FFFFFF",
-    "vtc_logo_link": "https://{domain}/images/logo.png",
+    "logo_url": "https://{domain}/images/logo.png",
 
     "apidoc": "./apidoc.json",
     "language_dir": "./languages",
@@ -54,8 +54,9 @@
     "discord_client_id": "",
     "discord_client_secret": "",
     "discord_oauth2_url": "",
-    "discord_callback_url": "https://drivershub.charlws.com/{vtc_abbr}/user/callback",
+    "discord_callback_url": "https://drivershub.charlws.com/{abbr}/auth/discord/callback",
     "discord_bot_token": "",
+    "discord_bot_dm": true,
 
     "team_update": {
         "webhook_url": "",
@@ -134,11 +135,11 @@
         "driver": ["100"]
     },
 
-    "roles": {
-        "0": "root",
-        "100": "Driver",
-        "251": "Construction Division"
-    },
+    "roles": [
+        {"id": "0", "name": "root"},
+        {"id": "100", "name": "Driver"},
+        {"id": "251", "name": "Construction Division"}
+    ],
 
     "webhook_audit": ""
 }

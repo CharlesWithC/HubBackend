@@ -72,7 +72,7 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
             except:
                 continue
 
-@app.post(f"/{config.vtc_abbr}/navio")
+@app.post(f"/{config.abbr}/navio")
 async def navio(request: Request, Navio_Signature: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()

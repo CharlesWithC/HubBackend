@@ -10,7 +10,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-@app.get(f"/{config.vtc_abbr}/event")
+@app.get(f"/{config.abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /event', 180, 90)
@@ -47,7 +47,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         page_size = 250
 
     if eventid != -1:
-        cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid = {eventid} {limit}")
+        cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid} {limit}")
         t = cur.fetchall()
         if len(t) == 0:
             response.status_code = 404
@@ -78,12 +78,12 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        return {"error": False, "response": {"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), \
-            "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+        return {"error": False, "response": {"eventid": str(tt[0]), "is_private": TF[tt[11]], "points": str(tt[12]), \
+            "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
                 "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret}}
 
-    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -112,8 +112,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), \
-            "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "points": str(tt[12]), \
+            "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
                 "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
     
@@ -123,7 +123,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private FROM event WHERE eventid >= 0 AND meetup_timestamp < {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
+    cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")
@@ -151,8 +151,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), \
-            "departure": b64d(tt[2]), "destination": b64d(tt[3]),\
+        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "points": str(tt[12]), "title": b64d(tt[8]), \
+            "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]),\
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
                 "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
     
@@ -165,7 +165,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     return {"error": False, "response": {"list": ret[:page_size], "total_items": str(tot), \
         "total_pages": str(int(math.ceil(tot / page_size)))}}
 
-@app.get(f"/{config.vtc_abbr}/event/all")
+@app.get(f"/{config.abbr}/event/all")
 async def getAllEvent(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /event/all', 180, 90)
     if rl > 0:
@@ -200,7 +200,7 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"list": ret}}
 
-@app.put(f"/{config.vtc_abbr}/event/vote")
+@app.put(f"/{config.abbr}/event/vote")
 async def putEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'PUT /event/vote', 180, 30)
     if rl > 0:
@@ -237,7 +237,7 @@ async def putEventVote(request: Request, response: Response, authorization: str 
         conn.commit()
         return {"error": False}
 
-@app.post(f"/{config.vtc_abbr}/event")
+@app.post(f"/{config.abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /event', 180, 3)
     if rl > 0:
@@ -282,7 +282,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
     return {"error": False, "response": {"eventid": str(nxteventid)}}
 
-@app.patch(f"/{config.vtc_abbr}/event")
+@app.patch(f"/{config.abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'PATCH /event', 180, 30)
     if rl > 0:
@@ -333,7 +333,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
     return {"error": False}
 
-@app.delete(f"/{config.vtc_abbr}/event")
+@app.delete(f"/{config.abbr}/event")
 async def deleteEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'DELETE /event', 180, 30)
     if rl > 0:
@@ -365,7 +365,7 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-@app.patch(f"/{config.vtc_abbr}/event/attendee")
+@app.patch(f"/{config.abbr}/event/attendee")
 async def patchEventAttendee(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'PATCH /event/attendee', 180, 10)
     if rl > 0:

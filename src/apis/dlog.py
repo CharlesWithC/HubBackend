@@ -25,7 +25,7 @@ cstats = {}
 cleaderboard = {}
 cnlleaderboard = {}
 
-@app.get(f"/{config.vtc_abbr}/dlog")
+@app.get(f"/{config.abbr}/dlog")
 async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog', 180, 90)
     if rl > 0:
@@ -91,7 +91,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     return {"error": False, "response": {"logid": str(logid), "userid": tuserid, "name": name, \
         "distance": str(distance), "timestamp": str(t[0][2]), "detail": data, "telemetry": telemetry}}
 
-@app.get(f"/{config.vtc_abbr}/dlog/list")
+@app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
@@ -207,7 +207,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
-@app.get(f"/{config.vtc_abbr}/dlog/statistics/summary")
+@app.get(f"/{config.abbr}/dlog/statistics/summary")
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/statistics/summary', 180, 60)
@@ -394,7 +394,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 
     return {"error": False, "response": ret}
 
-@app.get(f"/{config.vtc_abbr}/dlog/statistics/chart")
+@app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         scale: Optional[int] = 2, sum_up: Optional[bool] = False, userid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/statistics/chart', 180, 60)
@@ -484,7 +484,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
 
     return {"error": False, "response": ret}
 
-@app.get(f"/{config.vtc_abbr}/dlog/leaderboard")
+@app.get(f"/{config.abbr}/dlog/leaderboard")
 async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = -1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
@@ -901,7 +901,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         "total_items": str(len(ret)), "total_pages": str(int(math.ceil(len(ret) / page_size))), \
             "cache": str(cachetime), "cache_no_limit": str(nlcachetime)}}
 
-@app.get(f"/{config.vtc_abbr}/dlog/export")
+@app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)

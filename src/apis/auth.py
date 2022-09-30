@@ -25,7 +25,7 @@ def getUrl4Token(token):
     return config.frontend_urls.auth_token.replace("{token}", str(token))
 
 # Password Auth
-@app.post(f'/{config.vtc_abbr}/auth/password')
+@app.post(f'/{config.abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /auth/password', 180, 5)
     if rl > 0:
@@ -74,12 +74,12 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     return {"error": False, "response": {"token": stoken}}
 
 # Discord Auth
-@app.get(f'/{config.vtc_abbr}/auth/discord/redirect', response_class=RedirectResponse)
+@app.get(f'/{config.abbr}/auth/discord/redirect', response_class=RedirectResponse)
 async def getAuthDiscordRedirect(request: Request):
     # login_url = discord_auth.login()
     return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
-@app.get(f'/{config.vtc_abbr}/auth/discord/callback')
+@app.get(f'/{config.abbr}/auth/discord/callback')
 async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer != "https://discord.com/":
@@ -159,28 +159,28 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
         return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
 
 # Steam Auth (Only for connecting account)
-@app.get(f"/{config.vtc_abbr}/auth/steam/redirect")
+@app.get(f"/{config.abbr}/auth/steam/redirect")
 async def getSteamOAuth(request: Request, response: Response, connect_account: Optional[bool] = False):
     steamLogin = SteamSignIn()
     encodedData = ""
     if not connect_account:
-        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/callback')
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/callback')
     else:
-        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/connect')
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/connect')
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
-@app.get(f"/{config.vtc_abbr}/auth/steam/connect")
+@app.get(f"/{config.abbr}/auth/steam/connect")
 async def getSteamConnect(request: Request, response: Response):
     return RedirectResponse(url=config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
-@app.get(f"/{config.vtc_abbr}/auth/steam/callback")
+@app.get(f"/{config.abbr}/auth/steam/callback")
 async def getSteamCallback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if referer != "https://steamcommunity.com/" or data == "":
         steamLogin = SteamSignIn()
-        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.vtc_abbr}/auth/steam/callback')
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/callback')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
         return RedirectResponse(url=url, status_code=302)
 
@@ -219,7 +219,7 @@ async def getSteamCallback(request: Request, response: Response):
     return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
 # Token Management
-@app.get(f'/{config.vtc_abbr}/token')
+@app.get(f'/{config.abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /token', 180, 30)
     if rl > 0:
@@ -235,7 +235,7 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
     return {"error": False, "response": {"token_type": token_type}}
 
-@app.patch(f"/{config.vtc_abbr}/token")
+@app.patch(f"/{config.abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /token', 180, 5)
     if rl > 0:
@@ -261,7 +261,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
 
-@app.delete(f'/{config.vtc_abbr}/token')
+@app.delete(f'/{config.abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /token', 180, 5)
     if rl > 0:
@@ -283,7 +283,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-@app.get(f'/{config.vtc_abbr}/token/all')
+@app.get(f'/{config.abbr}/token/all')
 async def getAllToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /token/all', 180, 30)
     if rl > 0:
@@ -309,7 +309,7 @@ async def getAllToken(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"list": ret}}
 
-@app.delete(f'/{config.vtc_abbr}/token/hash')
+@app.delete(f'/{config.abbr}/token/hash')
 async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /token/hash', 180, 10)
     if rl > 0:
@@ -352,7 +352,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token")}
 
-@app.delete(f'/{config.vtc_abbr}/token/all')
+@app.delete(f'/{config.abbr}/token/all')
 async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /token/all', 180, 3)
     if rl > 0:
@@ -378,7 +378,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
 
     return {"error": False}
 
-@app.patch(f'/{config.vtc_abbr}/token/application')
+@app.patch(f'/{config.abbr}/token/application')
 async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /token/application', 180, 5)
     if rl > 0:
@@ -401,7 +401,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
     
     return {"error": False, "response": {"token": stoken}}
 
-@app.delete(f'/{config.vtc_abbr}/token/application')
+@app.delete(f'/{config.abbr}/token/application')
 async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'DELETE /token/application', 180, 5)
     if rl > 0:
@@ -423,7 +423,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
     return {"error": False}
 
 # Temporary Identity Proof
-@app.put(f"/{config.vtc_abbr}/auth/tip")
+@app.put(f"/{config.abbr}/auth/tip")
 async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PUT /auth/tip', 180, 5)
     if rl > 0:
@@ -445,7 +445,7 @@ async def putTemporaryIdentityProof(request: Request, response: Response, author
 
     return {"error": False, "response": {"token": stoken}}
 
-@app.get(f"/{config.vtc_abbr}/auth/tip")
+@app.get(f"/{config.abbr}/auth/tip")
 async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /auth/tip', 60, 120)
     if rl > 0:

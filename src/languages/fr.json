@@ -30,7 +30,7 @@
     "invalid_truckersmp_id": "Identifiant TruckersMP non valide.",
     "truckersmp_api_error": "API TruckersMP inaccessible. Impossible de lier le compte TruckersMP.",
     "steam_not_bound_before_truckersmp": "Vous devez lier votre compte Steam avant de lier votre compte TruckersMP.",
-    "truckersmp_steam_mismatch": "Le compte Steam lié à l'utilisateur TruckersMP {tmpname} ({truckersmpid}) ne correspond pas à votre compte Steam.",
+    "truckersmp_steam_mismatch": "Le compte Steam lié à l'utilisateur TruckersMP {truckersmp_name} ({truckersmpid}) ne correspond pas à votre compte Steam.",
 
     "not_a_member": "Pas un membre",
     "member_not_found": "Membre introuvable.",
@@ -49,7 +49,7 @@
     "already_have_discord_role": "Vous avez déjà le rôle.",
     "discord_role_given": "Vous avez reçu le rôle.",
     "member_update_title": "Mise à jour des membres",
-    "member_update": "Vous êtes maintenant membre de {vtcname} !",
+    "member_update": "Vous êtes maintenant membre de {company_name} !",
     "losing_admin_permission": "Mise à jour du rôle rejetée : les nouveaux rôles supprimeront l'autorisation d'administration de l'utilisateur actuel.",
 
     "announcement_not_found": "Annonce introuvable",

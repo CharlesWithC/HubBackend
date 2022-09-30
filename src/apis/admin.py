@@ -12,19 +12,21 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-config_whitelist = ['vtc_name', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'vtc_logo_link', \
+config_whitelist = ['name', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
     'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
     'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', \
-    'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', \
-    'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+    'discord_bot_token', 'discord_bot_dm', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
+    'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
 
 config_protected = ["navio_api_token", "discord_client_secret", "discord_bot_token"]
 
+latest_config = copy.deepcopy(tconfig) # DO NOT EDIT tconfig
+
 # get config
-@app.get(f"/{config.vtc_abbr}/config")
+@app.get(f"/{config.abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'GET /config', 30, 10)
     if rl > 0:
@@ -40,6 +42,26 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     conn = newconn()
     cur = conn.cursor()
     
+    # current config
+    f = copy.deepcopy(latest_config)
+    ffconfig = {}
+
+    # process whitelist
+    for tt in f.keys():
+        if tt in config_whitelist:
+            ffconfig[tt] = f[tt]
+
+    # remove sensitive data
+    for tt in config_protected:
+        ffconfig[tt] = ""
+
+    # remove disabled plugins
+    for t in config_plugins.keys():
+        if not t in tconfig["enabled_plugins"]:
+            for tt in config_plugins[t]:
+                del ffconfig[tt]
+    
+    # old config
     t = copy.deepcopy(tconfig)
     ttconfig = {}
 
@@ -57,34 +79,17 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         if not t in tconfig["enabled_plugins"]:
             for tt in config_plugins[t]:
                 del ttconfig[tt]
-    
-    f = json.loads(open(config_path, "r").read())
-    ffconfig = {}
-    # process whitelist
-    for tt in f.keys():
-        if tt in config_whitelist:
-            ffconfig[tt] = f[tt]
-
-    # remove sensitive data
-    for tt in config_protected:
-        ffconfig[tt] = ""
-
-    # remove disabled plugins
-    for t in config_plugins.keys():
-        if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t]:
-                del ffconfig[tt]
 
     return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
 
 # thread to reload service
 def reload():
-    os.system(f"./launcher tracker restart {config.vtc_abbr} &")
+    os.system(f"./launcher tracker restart {config.abbr} &")
     time.sleep(5)
-    os.system(f"./launcher hub restart {config.vtc_abbr} &")
+    os.system(f"./launcher hub restart {config.abbr} &")
 
 # update config
-@app.patch(f"/{config.vtc_abbr}/config")
+@app.patch(f"/{config.abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PATCH /config', 30, 10)
     if rl > 0:
@@ -108,12 +113,12 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    global tconfig
-    ttconfig = copy.deepcopy(tconfig)
+    global latest_config
+    ttconfig = copy.deepcopy(latest_config)
 
     for tt in formconfig.keys():
         if tt in config_whitelist:
-            if tt in ["vtc_name", "vtc_logo_link", "guild_id", "navio_api_token", "discord_client_id", \
+            if tt in ["name", "logo_url", "guild_id", "navio_api_token", "discord_client_id", \
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
                 if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
@@ -157,7 +162,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         p.append(o)
                 formconfig[tt] = p
 
-            if tt in ["vtc_logo_link", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
+            if tt in ["logo_url", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
                 if formconfig[tt] != "" and not isurl(formconfig[tt]):
                     response.status_code = 400
                     return {"error": True, "descriptor": f'Invalid value for "{tt}": Must be a valid URL.'}
@@ -180,19 +185,19 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     return {"error": True, "descriptor": f'Permission update rejected: New "admin" permission does not include any role the current user has.'}
 
             if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
-                ttconfig[tt] = str(formconfig[tt])
+                ttconfig[tt] = copy.deepcopy(str(formconfig[tt]))
             else:
-                ttconfig[tt] = formconfig[tt]
+                ttconfig[tt] = copy.deepcopy(formconfig[tt])
 
     open(config_path, "w").write(json.dumps(ttconfig, indent=4))
 
-    tconfig = copy.deepcopy(ttconfig)
+    latest_config = copy.deepcopy(ttconfig)
 
     await AuditLog(adminid, "Updated config")
 
     return {"error": False}
 
-@app.put(f"/{config.vtc_abbr}/config/reset")
+@app.put(f"/{config.abbr}/config/reset")
 async def putConfigReset(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'PUT /config/reset', 30, 10)
     if rl > 0:
@@ -205,14 +210,14 @@ async def putConfigReset(request: Request, response: Response, authorization: st
         return au
     adminid = au["userid"]
 
-    open(config_path, "w").write(json.dumps(tconfig, indent=4))
+    open(config_path, "w").write(json.dumps(latest_config, indent=4))
 
     await AuditLog(adminid, "Reset config")
     
     return {"error": False}
 
 # reload service
-@app.post(f"/{config.vtc_abbr}/reload")
+@app.post(f"/{config.abbr}/reload")
 async def postReload(request: Request, response: Response, authorization: str = Header(None)):
     rl = ratelimit(request.client.host, 'POST /reload', 600, 3)
     if rl > 0:
@@ -232,7 +237,7 @@ async def postReload(request: Request, response: Response, authorization: str = 
     return {"error": False}
 
 # get audit log (require audit / admin permission)
-@app.get(f"/{config.vtc_abbr}/audit")
+@app.get(f"/{config.abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /audit', 30, 10)

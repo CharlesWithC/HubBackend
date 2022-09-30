@@ -5,7 +5,7 @@
         "version": "0.1.0"
     },
     "paths": {
-        "/vtc": {
+        "/abbr": {
             "get": {
                 "summary": "Drivers Hub Index",
                 "tags": ["index"],
@@ -22,7 +22,7 @@
                 }
             }
         },
-        "/vtc/auth/password": {
+        "/abbr/auth/password": {
             "post": {
                 "summary": "Password Login",
                 "tags": ["auth"],
@@ -74,7 +74,7 @@
                 }
             }
         },
-        "/vtc/auth/discord/redirect": {
+        "/abbr/auth/discord/redirect": {
             "get": {
                 "summary": "Redirects to Discord OAuth2",
                 "tags": ["auth"],
@@ -86,7 +86,7 @@
                 }
             }
         },
-        "/vtc/auth/discord/callback": {
+        "/abbr/auth/discord/callback": {
             "get": {
                 "summary": "Discord OAuth2 Callback",
                 "tags": ["auth"],
@@ -130,7 +130,7 @@
                 }
             }
         },
-        "/vtc/auth/steam/redirect": {
+        "/abbr/auth/steam/redirect": {
             "get": {
                 "summary": "Redirect to Steam OAuth",
                 "tags": ["auth"],
@@ -156,7 +156,7 @@
                 }
             }
         },
-        "/vtc/auth/steam/connect": {
+        "/abbr/auth/steam/connect": {
             "get": {
                 "summary": "Steam OAuth Callback (To connect account)",
                 "tags": ["auth"],
@@ -173,7 +173,7 @@
                 }
             }
         },
-        "/vtc/auth/steam/callback": {
+        "/abbr/auth/steam/callback": {
             "get": {
                 "summary": "Steam OAuth Callback (To login)",
                 "tags": ["auth"],
@@ -190,7 +190,7 @@
                 }
             }
         },
-        "/vtc/token": {
+        "/abbr/token": {
             "get": {
                 "summary": "Validate Token",
                 "tags": ["auth"],
@@ -276,7 +276,7 @@
                 }
             }
         },
-        "/vtc/token/all": {
+        "/abbr/token/all": {
             "get": {
                 "summary": "Get All Token (Hash)",
                 "tags": ["auth"],
@@ -334,7 +334,7 @@
                 }
             }
         },
-        "/vtc/token/hash": {
+        "/abbr/token/hash": {
             "delete": {
                 "summary": "Revoke Specific Token (Hash)",
                 "tags": ["auth"],
@@ -381,7 +381,7 @@
                 }
             }
         },
-        "/vtc/token/application": {
+        "/abbr/token/application": {
             "patch": {
                 "summary": "Reset Application Token",
                 "tags": ["user"],
@@ -439,7 +439,7 @@
                 }
             }
         },
-        "/vtc/auth/tip": {
+        "/abbr/auth/tip": {
             "put": {
                 "summary": "Generate Temporary Identity Proof Token",
                 "tags": ["auth"],
@@ -503,7 +503,7 @@
                 }
             }
         },
-        "/vtc/user": {
+        "/abbr/user": {
             "get": {
                 "summary": "Get User Information",
                 "tags": ["user"],
@@ -611,7 +611,7 @@
                 }
             }
         },
-        "/vtc/user/list": {
+        "/abbr/user/list": {
             "get": {
                 "summary": "Get User List",
                 "tags": ["user"],
@@ -682,7 +682,7 @@
                 }]
             }
         },
-        "/vtc/user/bio": {
+        "/abbr/user/bio": {
             "patch": {
                 "summary": "Edit Bio",
                 "tags": ["user"],
@@ -729,7 +729,7 @@
                 }
             }
         },
-        "/vtc/user/password": {
+        "/abbr/user/password": {
             "patch": {
                 "summary": "Update Password",
                 "tags": ["user"],
@@ -804,7 +804,7 @@
                 }
             }
         },
-        "/vtc/user/steam": {
+        "/abbr/user/steam": {
             "patch": {
                 "summary": "Update Steam Account",
                 "tags": ["user"],
@@ -834,7 +834,7 @@
                 }
             }
         },
-        "/vtc/user/truckersmp": {
+        "/abbr/user/truckersmp": {
             "patch": {
                 "summary": "Update TruckersMP Account",
                 "tags": ["user"],
@@ -881,7 +881,7 @@
                 }
             }
         },
-        "/vtc/user/ban": {
+        "/abbr/user/ban": {
             "put": {
                 "summary": "Ban User",
                 "tags": ["user"],
@@ -936,7 +936,7 @@
                 }
             }
         },
-        "/vtc/user/unban": {
+        "/abbr/user/unban": {
             "put": {
                 "summary": "Unban User",
                 "tags": ["user"],
@@ -983,7 +983,7 @@
                 }
             }
         },
-        "/vtc/user/discord": {
+        "/abbr/user/discord": {
             "patch": {
                 "summary": "Update User Dicsord Snowflake",
                 "tags": ["user"],
@@ -1034,7 +1034,7 @@
                 }
             }
         },
-        "/vtc/user/connections": {
+        "/abbr/user/connections": {
             "delete": {
                 "summary": "Delete User Account Connections",
                 "tags": ["user"],
@@ -1081,7 +1081,7 @@
                 }
             }
         },
-        "/vtc/member/roles": {
+        "/abbr/member/roles": {
             "get": {
                 "summary": "Get All Roles",
                 "tags": ["member"],
@@ -1157,7 +1157,7 @@
                 }
             }
         },
-        "/vtc/member/ranks": {
+        "/abbr/member/ranks": {
             "get": {
                 "summary": "Get All Ranks",
                 "tags": ["member"],
@@ -1184,7 +1184,7 @@
                 }
             }
         },
-        "/vtc/member/perms": {
+        "/abbr/member/perms": {
             "get": {
                 "summary": "Get All Permissions",
                 "tags": ["member"],
@@ -1211,7 +1211,7 @@
                 }
             }
         },
-        "/vtc/member/list": {
+        "/abbr/member/list": {
             "get": {
                 "summary": "Get Member List",
                 "tags": ["member"],
@@ -1290,7 +1290,7 @@
                 }
             }
         },
-        "/vtc/member/list/all": {
+        "/abbr/member/list/all": {
             "get": {
                 "summary": "Get Member List (All)",
                 "tags": ["member"],
@@ -1320,7 +1320,7 @@
                 }
             }
         },
-        "/vtc/member/banner": {
+        "/abbr/member/banner": {
             "get": {
                 "summary": "Get Banner",
                 "tags": ["member"],
@@ -1383,7 +1383,7 @@
                 }
             }
         },
-        "/vtc/member/roles/rank": {
+        "/abbr/member/roles/rank": {
             "patch": {
                 "summary": "Update Rank Role",
                 "tags": ["member"],
@@ -1413,7 +1413,7 @@
                 }
             }
         },
-        "/vtc/member": {
+        "/abbr/member": {
             "put": {
                 "summary": "Add Member",
                 "tags": ["member"],
@@ -1460,7 +1460,7 @@
                 }
             }
         },
-        "/vtc/member/point": {
+        "/abbr/member/point": {
             "patch": {
                 "summary": "Update Member Points",
                 "tags": ["member"],
@@ -1515,7 +1515,7 @@
                 }
             }
         },
-        "/vtc/member/resign": {
+        "/abbr/member/resign": {
             "delete": {
                 "summary": "Member Resign",
                 "tags": ["member"],
@@ -1545,7 +1545,7 @@
                 }
             }
         },
-        "/vtc/member/dismiss": {
+        "/abbr/member/dismiss": {
             "delete": {
                 "summary": "Dismiss Member",
                 "tags": ["member"],
@@ -1584,7 +1584,7 @@
                 }
             }
         },
-        "/vtc/config": {
+        "/abbr/config": {
             "get": {
                 "summary": "Get Config",
                 "tags": ["admin"],
@@ -1649,7 +1649,7 @@
                 }
             }
         },
-        "/vtc/config/reset": {
+        "/abbr/config/reset": {
             "put": {
                 "summary": "Reset Config",
                 "tags": ["admin"],
@@ -1669,7 +1669,7 @@
                 }
             }
         },
-        "/vtc/reload": {
+        "/abbr/reload": {
             "post": {
                 "summary": "Reload API Service",
                 "tags": ["admin"],
@@ -1689,7 +1689,7 @@
                 }
             }
         },
-        "/vtc/audit": {
+        "/abbr/audit": {
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["admin"],
@@ -1752,7 +1752,7 @@
                 }
             }
         },
-        "/vtc/dlog": {
+        "/abbr/dlog": {
             "get": {
                 "summary": "Get Delivery Log",
                 "tags": ["dlog"],
@@ -1791,7 +1791,7 @@
                 }
             }
         },
-        "/vtc/dlog/list": {
+        "/abbr/dlog/list": {
             "get": {
                 "summary": "Get Delivery Log List",
                 "tags": ["dlog"],
@@ -1886,7 +1886,7 @@
                 }
             }
         },
-        "/vtc/dlog/statistics/summary": {
+        "/abbr/dlog/statistics/summary": {
             "get": {
                 "summary": "Get Summary Statistics",
                 "tags": ["dlog"],
@@ -1941,7 +1941,7 @@
                 }
             }
         },
-        "/vtc/dlog/statistics/chart": {
+        "/abbr/dlog/statistics/chart": {
             "get": {
                 "summary": "Get Chart Statistics",
                 "tags": ["dlog"],
@@ -1996,7 +1996,7 @@
                 }
             }
         },
-        "/vtc/dlog/leaderboard": {
+        "/abbr/dlog/leaderboard": {
             "get": {
                 "summary": "Get Leaderboard",
                 "tags": ["dlog"],
@@ -2091,7 +2091,7 @@
                 }
             }
         },
-        "/vtc/dlog/export": {
+        "/abbr/dlog/export": {
             "get": {
                 "summary": "Export Delivery Log",
                 "tags": ["dlog"],
@@ -2138,7 +2138,7 @@
                 }
             }
         },
-        "/vtc/navio": {
+        "/abbr/navio": {
             "post": {
                 "summary": "Navio Webhook",
                 "tags": ["navio"],
@@ -2193,7 +2193,7 @@
                 }
             }
         },
-        "/vtc/announcement": {
+        "/abbr/announcement": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -2278,7 +2278,7 @@
                                         "type": "string"
                                     },
                                     "announcement_type": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
+                                        "description": "Type)",
                                         "type": "integer"
                                     },
                                     "is_private": {
@@ -2348,7 +2348,7 @@
                                         "type": "string"
                                     },
                                     "announcement_type": {
-                                        "description": "Type (0: info / 1: event / 2: warning / 3: criticle / 4: resolved / 5: vtc)",
+                                        "description": "Type",
                                         "type": "integer"
                                     },
                                     "is_private": {
@@ -2424,7 +2424,7 @@
                 }
             }
         },
-        "/vtc/application/types": {
+        "/abbr/application/types": {
             "get": {
                 "summary": "Get Application Types",
                 "tags": ["application"],
@@ -2451,7 +2451,7 @@
                 }
             }
         },
-        "/vtc/application/positions": {
+        "/abbr/application/positions": {
             "get": {
                 "summary": "Get Application Positions",
                 "tags": ["application"],
@@ -2523,7 +2523,7 @@
                 }
             }
         },
-        "/vtc/application/list": {
+        "/abbr/application/list": {
             "get": {
                 "summary": "Get Application List",
                 "tags": ["application"],
@@ -2594,7 +2594,7 @@
                 }
             }
         },
-        "/vtc/application": {
+        "/abbr/application": {
             "get": {
                 "summary": "Get Application",
                 "tags": ["application"],
@@ -2731,7 +2731,7 @@
                 }
             }
         },
-        "/vtc/application/status": {
+        "/abbr/application/status": {
             "post": {
                 "summary": "Update Application Status",
                 "tags": ["application"],
@@ -2786,7 +2786,7 @@
                 }
             }
         },
-        "/vtc/division/list": {
+        "/abbr/division/list": {
             "get": {
                 "summary": "Get Division List",
                 "tags": ["division"],
@@ -2813,7 +2813,7 @@
                 }
             }
         },
-        "/vtc/division": {
+        "/abbr/division": {
             "get": {
                 "summary": "Get Division Info",
                 "tags": ["division"],
@@ -2958,7 +2958,7 @@
                 }
             }
         },
-        "/vtc/division/list/pending": {
+        "/abbr/division/list/pending": {
             "get": {
                 "summary": "Get Pending Division Validation",
                 "tags": ["division"],
@@ -2988,7 +2988,7 @@
                 }
             }
         },
-        "/vtc/downloads": {
+        "/abbr/downloads": {
             "get": {
                 "summary": "Get Downloads",
                 "tags": ["downloads"],
@@ -3063,7 +3063,7 @@
                 }
             }
         },
-        "/vtc/event": {
+        "/abbr/event": {
             "get": {
                 "summary": "Get Event",
                 "tags": ["event"],
@@ -3318,7 +3318,7 @@
                 }
             }
         },
-        "/vtc/event/all": {
+        "/abbr/event/all": {
             "get": {
                 "summary": "Get Event (All)",
                 "tags": ["event"],
@@ -3348,7 +3348,7 @@
                 }
             }
         },
-        "/vtc/event/vote": {
+        "/abbr/event/vote": {
             "put": {
                 "summary": "Event Vote / Unvote",
                 "tags": ["event"],
@@ -3387,7 +3387,7 @@
                 }
             }
         },
-        "/vtc/event/attendee": {
+        "/abbr/event/attendee": {
             "patch": {
                 "summary": "Update Event Attendees",
                 "tags": ["event"],

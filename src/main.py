@@ -38,7 +38,6 @@ if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] =
 
 from app import app, config, version
 from db import newconn
-import api
 import multilang
 
 if __name__ == "__main__":
@@ -71,10 +70,12 @@ if __name__ == "__main__":
     cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
     conn.commit()
 
-    print(f"Company Name: {config.vtc_name}")
-    print(f"Company Abbreviation: {config.vtc_abbr}\n")
-    os.system(f"rm -rf /tmp/hub/logo/{config.vtc_abbr}.png")
-    os.system(f"rm -rf /tmp/hub/logo/{config.vtc_abbr}_bg.png")
+import api
+if __name__ == "__main__":
+    print(f"Company Name: {config.name}")
+    print(f"Company Abbreviation: {config.abbr}\n")
+    os.system(f"rm -rf /tmp/hub/logo/{config.abbr}.png")
+    os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
     if not version.endswith(".rc"):
         time.sleep(1)
     uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = int(config.server_workers))
