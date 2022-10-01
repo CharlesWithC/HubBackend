@@ -3,6 +3,7 @@
 
 from fastapi import Request, Header, Response
 from typing import Optional
+from onetimepass import valid_totp
 from discord import Colour
 import json, copy, math, os, time
 import threading
@@ -229,6 +230,26 @@ async def postReload(request: Request, response: Response, authorization: str = 
         response.status_code = 401
         return au
     adminid = au["userid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT mfa_secret FROM user WHERE userid = {adminid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret == "":
+        response.status_code = 428
+        return {"error": True, "descriptor": ml.tr(requrest, "mfa_required")}
+    
+    form = await request.form()
+    try:
+        otp = int(form["otp"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+    if not valid_totp(otp, mfa_secret):
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
 
     await AuditLog(adminid, "Reloaded service")
 

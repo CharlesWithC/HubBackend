@@ -9,3 +9,4 @@ bcrypt==3.2.2
 numpy==1.23.1
 pillow==9.2.0
 mysqlclient==2.1.1
+onetimepass==1.0.1

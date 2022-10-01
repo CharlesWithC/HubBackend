@@ -3,6 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from fastapi.responses import StreamingResponse
+from onetimepass import valid_totp
 from discord import Webhook, Embed
 from aiohttp import ClientSession
 from typing import Optional
@@ -62,7 +63,7 @@ def point2rank(point):
 # Basic Info Section
 @app.get(f"/{config.abbr}/member/roles")
 async def getRoles(request: Request, response: Response):
-    return {"error": False, "response": ROLES}
+    return {"error": False, "response": tconfig["roles_list"]}
 
 @app.get(f"/{config.abbr}/member/ranks")
 async def getRanks(request: Request, response: Response):
@@ -699,10 +700,24 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     conn = newconn()
     cur = conn.cursor()
+
+    cur.execute(f"SELECT mfa_secret FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret != "":
+        form = await request.form()
+        try:
+            otp = int(form["otp"])
+        except:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        if not valid_totp(otp, mfa_secret):
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -734,7 +749,7 @@ async def dismissMember(request: Request, response: Response, authorization: str
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
 
     conn = newconn()
     cur = conn.cursor()

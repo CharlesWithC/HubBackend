@@ -13,6 +13,7 @@
         "steam_callback": "https://{domain}/steam",
         "auth_message": "https://{domain}/auth?message={message}",
         "auth_token": "https://{domain}/auth?token={token}",
+        "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
         "member": "https://{domain}/member?userid={userid}",
         "delivery": "https://{domain}/delivery?logid={logid}"
     },

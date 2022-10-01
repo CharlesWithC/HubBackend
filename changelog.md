@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.15.1**  
+Added **Multiple Factor Authentication**  
+i) New endpoints: **PUT**, **POST**, **DELETE** `/auth/mfa`  
+ii) Endpoint to check if user has MFA enabled: **GET** `/user`  
+iii) Endpoints that support MFA if enabled: **POST** `/auth/password`, **GET** `/auth/discord/callback`, **GET** `/auth/steam/callback`, **DELETE** `/member/resign`  
+iv) Endpoint that requires MFA: **POST** `/reload`  
+
 **v1.14.5**  
 1.Removed 'vtc' element  
 2.Added `points` field to **GET** `/event` response  

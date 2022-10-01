@@ -16,7 +16,7 @@ cur = conn.cursor()
 # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
-    email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT)")
+    email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire_timestamp BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")

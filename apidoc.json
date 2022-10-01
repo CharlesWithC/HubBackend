@@ -503,6 +503,157 @@
                 }
             }
         },
+        "/abbr/auth/mfa": {
+            "put": {
+                "summary": "Enable MFA",
+                "tags": ["auth"],
+                "operationId": "put_auth_mfa",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "secret": {
+                                        "description": "Secret",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": ["secret", "otp"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Check MFA",
+                "tags": ["auth"],
+                "operationId": "post_auth_mfa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tip": {
+                                        "description": "Temporary Identity Proof Token",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": ["tip", "otp"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Disable MFA",
+                "tags": ["auth"],
+                "operationId": "delete_auth_mfa",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Discord ID (Required when disabling MFA for another user)",
+                        "type": "integar"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP (Required when disabling MFA for current user)",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/user": {
             "get": {
                 "summary": "Get User Information",
@@ -1523,6 +1674,23 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1657,6 +1825,23 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["otp"]
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1673,10 +1858,27 @@
             "post": {
                 "summary": "Reload API Service",
                 "tags": ["admin"],
-                "operationId": "reloadApiService",
+                "operationId": "post_reload",
                 "security": [{
                     "bearerAuth": []
                 }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1693,7 +1895,7 @@
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["admin"],
-                "operationId": "getAuditLog",
+                "operationId": "get_audit",
                 "security": [{
                     "bearerAuth": []
                 }],

@@ -73,7 +73,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     userid = t[0][0]
     discordid = t[0][1]
     
-    cur.execute(f"SELECT discordid, name, avatar, roles, join_timestamp, truckersmpid, steamid, bio, email FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT discordid, name, avatar, roles, join_timestamp, truckersmpid, steamid, bio, email, mfa_secret FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -83,13 +83,19 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         roles.remove("")
     roles = [int(i) for i in roles]
 
-    email = ""
-    if isAdmin or isHR or udiscordid == t[0][0]:
-        email = t[0][8]
+    mfa_secret = t[0][9]
+    mfa_enabled = False
+    if mfa_secret != "":
+        mfa_enabled = True
 
-    return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-        "email": email, "avatar": t[0][2], "join_timestamp": str(t[0][4]), "roles": roles, \
-        "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
+    if isAdmin or isHR or udiscordid == t[0][0]:
+        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
+            "email": t[0][8], "avatar": t[0][2], "join_timestamp": str(t[0][4]), "mfa": mfa_enabled, "roles": roles, \
+            "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
+    else:
+        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
+            "avatar": t[0][2], "join_timestamp": str(t[0][4]), "roles": roles, \
+            "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
 
 @app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
@@ -195,7 +201,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -261,7 +267,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
@@ -506,7 +512,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -563,7 +569,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -608,7 +614,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "oauth_login_required")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
     
     conn = newconn()
     cur = conn.cursor()

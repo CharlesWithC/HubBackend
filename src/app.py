@@ -8,7 +8,7 @@ import os, sys, json, requests
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.14.5"
+version = "v1.15.1"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -56,6 +56,7 @@ for role in roles:
         newroles[role["id"]] = role["name"]
     except:
         pass
+config["roles_list"] = roles
 config["roles"] = newroles
 
 if not "server_workers" in config.keys():
@@ -69,8 +70,9 @@ del tconfig["rgbcolor"]
 if os.path.exists(config.apidoc):
     app = FastAPI(openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
     def openapi():
-        with open(config.apidoc, "r") as openapi:
-            return json.load(openapi)
+        f = open(config.apidoc, "r")
+        d = f.read().replace("/abbr", f"/{config.abbr}")
+        return json.loads(d)
     app.openapi = openapi
 else:
     app = FastAPI()
