@@ -239,7 +239,7 @@ async def postReload(request: Request, response: Response, authorization: str = 
     mfa_secret = t[0][0]
     if mfa_secret == "":
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(requrest, "mfa_required")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_required")}
     
     form = await request.form()
     try:

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.15.2**  
+1.Fixed **POST** `/reload` 500 error when MFA is not enabled  
+2.Changed `tip` form field to `token` for **POST** `/auth/mfa`  
+
 **v1.15.1**  
 Added **Multiple Factor Authentication**  
 i) New endpoints: **PUT**, **POST**, **DELETE** `/auth/mfa`  

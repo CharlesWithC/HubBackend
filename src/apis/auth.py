@@ -554,7 +554,7 @@ async def postMFA(request: Request, response: Response):
     
     form = await request.form()
     try:
-        tip = form["tip"]
+        tip = form["token"]
         otp = int(form["otp"])
     except:
         response.status_code = 400
