@@ -285,8 +285,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
     try:
-        r = requests.post("http://127.0.0.1:8700/banner", data={"abbr": config.abbr, \
-            "name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
+        r = requests.post("http://127.0.0.1:8700/banner", data={"company_abbr": config.abbr, \
+            "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
             "discordid": discordid, "since": since, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 10)
         if r.status_code != 200:

@@ -13,8 +13,8 @@ app = FastAPI()
 @app.post("/banner")
 async def banner(request: Request, response: Response):
     form = await request.form()
-    company_abbr = form["abbr"]
-    company_name = form["name"]
+    company_abbr = form["company_abbr"]
+    company_name = form["company_name"]
     logo_url = form["logo_url"]
     hex_color = form["hex_color"][-6:]
     discordid = form["discordid"]
