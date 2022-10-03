@@ -24,16 +24,16 @@ for division in config.divisions:
     except:
         pass
 
-sroles = tconfig["roles"]
 ROLES = {}
-for key in sroles:
+sroles = config.roles
+for srole in sroles:
     try:
-        ROLES[int(key)] = sroles[key]
+        ROLES[int(srole["id"])] = srole["name"]
     except:
         pass
 ROLES = dict(collections.OrderedDict(sorted(ROLES.items())))
 
-RANKS = tconfig["ranks"]
+RANKS = config.ranks
 RANKROLE = {}
 RANKNAME = {}
 for t in RANKS:
@@ -63,11 +63,11 @@ def point2rank(point):
 # Basic Info Section
 @app.get(f"/{config.abbr}/member/roles")
 async def getRoles(request: Request, response: Response):
-    return {"error": False, "response": tconfig["roles_list"]}
+    return {"error": False, "response": config.roles}
 
 @app.get(f"/{config.abbr}/member/ranks")
 async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": RANKS}
+    return {"error": False, "response": config.ranks}
 
 @app.get(f"/{config.abbr}/member/perms")
 async def getRanks(request: Request, response: Response):
@@ -249,8 +249,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         if int(i) < highest:
             highest = int(i)
     highest_role = "Unknown Role"
-    if str(highest) in tconfig["roles"]:
-        highest_role = tconfig["roles"][str(highest)]
+    if highest in ROLES.keys():
+        highest_role = ROLES[highest]
     joined = datetime.fromtimestamp(join_timestamp)
     since = f"{joined.year}/{joined.month}/{joined.day}"
 

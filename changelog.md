@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.15.4**  
+Fixed **GET** `/config` returning malformed `roles` data  
+
 **v1.15.3**  
 Fixed bannergen showing username as company name  
 

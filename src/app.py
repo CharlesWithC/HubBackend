@@ -8,7 +8,7 @@ import os, sys, json, requests
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.15.3"
+version = "v1.15.4"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -48,16 +48,6 @@ for perm in perms.keys():
             pass
     perms[perm] = newroles
 config["perms"] = perms
-
-roles = config["roles"]
-newroles = {}
-for role in roles:
-    try:
-        newroles[role["id"]] = role["name"]
-    except:
-        pass
-config["roles_list"] = roles
-config["roles"] = newroles
 
 if not "server_workers" in config.keys():
     config["server_workers"] = 1

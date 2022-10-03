@@ -65,7 +65,7 @@
         "content": "{mention}",
         "embed": {
             "title": "",
-            "descrpition": "{name} has joined **VTC** as a **Driver**.",
+            "description": "{name} has joined **VTC** as a **Driver**.",
             "image_url": "",
             "footer": {
                 "text": "",
@@ -81,7 +81,7 @@
         "content": "{mention}",
         "embed": {
             "title": "",
-            "descrpition": "Welcome {name}.",
+            "description": "Welcome {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
             "footer": {
                 "text": "You are our #{userid} driver",
@@ -98,7 +98,7 @@
         "content": "{mention}",
         "embed": {
             "title": "",
-            "descrpition": "GG {mention}! You have ranked up to {rank}!",
+            "description": "GG {mention}! You have ranked up to {rank}!",
             "image_url": "",
             "footer": {
                 "text": "",
