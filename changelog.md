@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.15.5**  
+Fixed leaderboard skipping rank due to deleted users  
+
 **v1.15.4**  
 Fixed **GET** `/config` returning malformed `roles` data  
 

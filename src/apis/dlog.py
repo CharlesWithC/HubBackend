@@ -24,6 +24,8 @@ for division in config.divisions:
 cstats = {}
 cleaderboard = {}
 cnlleaderboard = {}
+callusers = []
+callusers_ts = 0
 
 @app.get(f"/{config.abbr}/dlog")
 async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
@@ -561,11 +563,26 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     conn = newconn()
     cur = conn.cursor()
 
-    allusers = []
-    cur.execute(f"SELECT userid FROM user WHERE userid >= 0")
-    t = cur.fetchall()
-    for tt in t:
-        allusers.append(tt[0])
+    global callusers, callusers_ts
+    if int(time.time()) - callusers_ts <= 300:
+        allusers = callusers
+    else:
+        allusers = []
+        cur.execute(f"SELECT userid, roles FROM user WHERE userid >= 0")
+        t = cur.fetchall()
+        for tt in t:
+            roles = tt[1].split(",")
+            while "" in roles:
+                roles.remove("")
+            ok = False
+            for i in roles:
+                if int(i) in config.perms.driver:
+                    ok = True
+            if not ok:
+                continue
+            allusers.append(tt[0])
+        callusers = allusers
+        callusers_ts = int(time.time())
 
     ratio = 1
     if config.distance_unit == "imperial":
@@ -598,6 +615,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
         t = cur.fetchall()
         for tt in t:
+            if not tt[0] in allusers:
+                continue
             if not tt[0] in userdistance.keys():
                 userdistance[tt[0]] = tt[1]
             else:
@@ -636,6 +655,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
         o = cur.fetchall()
         for oo in o:
+            if not oo[0] in allusers:
+                continue
             if not oo[0] in userdivision.keys():
                 userdivision[oo[0]] = 0
             if oo[1] in DIVISIONPNT.keys():
@@ -645,6 +666,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
         o = cur.fetchall()
         for oo in o:
+            if not oo[0] in allusers:
+                continue
             if not oo[0] in usermyth.keys():
                 usermyth[oo[0]] = 0
             usermyth[oo[0]] += oo[1]
@@ -695,6 +718,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
         t = cur.fetchall()
         for tt in t:
+            if not tt[0] in allusers:
+                continue
             if not tt[0] in nluserdistance.keys():
                 nluserdistance[tt[0]] = tt[1]
             else:
@@ -721,6 +746,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
         o = cur.fetchall()
         for oo in o:
+            if not oo[0] in allusers:
+                continue
             if not oo[0] in nluserdivision.keys():
                 nluserdivision[oo[0]] = 0
             if oo[1] in DIVISIONPNT.keys():
@@ -730,6 +757,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
         o = cur.fetchall()
         for oo in o:
+            if not oo[0] in allusers:
+                continue
             if not oo[0] in nlusermyth.keys():
                 nlusermyth[oo[0]] = 0
             nlusermyth[oo[0]] += oo[1]
