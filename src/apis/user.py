@@ -81,7 +81,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     roles = t[0][3].split(",")
     while "" in roles:
         roles.remove("")
-    roles = [int(i) for i in roles]
+    roles = [str(i) for i in roles]
 
     mfa_secret = t[0][9]
     mfa_enabled = False
@@ -89,13 +89,13 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         mfa_enabled = True
 
     if isAdmin or isHR or udiscordid == t[0][0]:
-        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-            "email": t[0][8], "avatar": t[0][2], "join_timestamp": str(t[0][4]), "mfa": mfa_enabled, "roles": roles, \
-            "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
+        return {"error": False, "response": {"name": t[0][1], "userid": str(userid), \
+            "discordid": f"{t[0][0]}", "avatar": t[0][2], "email": t[0][8], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+             "roles": roles, "bio": b64d(t[0][7]), "mfa": mfa_enabled, "join_timestamp": str(t[0][4])}}
     else:
-        return {"error": False, "response": {"userid": str(userid), "name": t[0][1], \
-            "avatar": t[0][2], "join_timestamp": str(t[0][4]), "roles": roles, \
-            "discordid": f"{t[0][0]}", "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", "bio": b64d(t[0][7])}}
+        return {"error": False, "response": {"name": t[0][1], "userid": str(userid), \
+            "discordid": f"{t[0][0]}", "avatar": t[0][2], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+                "roles": roles, "bio": b64d(t[0][7]), "join_timestamp": str(t[0][4])}}
 
 @app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
@@ -133,7 +133,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
         order = "asc"
     order = order.upper()
     
-    cur.execute(f"SELECT userid, name, discordid, join_timestamp FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    cur.execute(f"SELECT userid, name, discordid, join_timestamp, avatar FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -144,7 +144,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
         if len(p) > 0:
             banned = True
             banreason = p[0][0]
-        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "is_banned": TF[banned], "ban_reason": banreason, "join_timestamp": tt[3]})
+        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[4], "ban": {"is_banned": TF[banned], "ban_reason": banreason}, "join_timestamp": tt[3]})
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
     t = cur.fetchall()
     tot = 0

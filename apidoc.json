@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.15.6"
+        "version": "1.15.7"
     },
     "paths": {
         "/abbr": {
@@ -2261,7 +2261,7 @@
                 },  {
                     "required": false,
                     "schema": {
-                        "title": "Point Types, default distance | Select (multiple) from distance, event, division, myth",
+                        "title": "Point Types, default 'distance,event,division,myth' | Select (multiple) from distance, event, division, myth",
                         "type": "string"
                     },
                     "name": "point_types",

@@ -288,18 +288,11 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     elif page_size >= 500:
         page_size = 500
 
-    cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
+    cur.execute(f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
-        p = cur.fetchall()
-        name = "Unknown"
-        if len(p) > 0:
-            name = p[0][0]
-        if tt[0] == -999:
-            name = "System"
-        ret.append({"timestamp": str(tt[2]), "user": name, "operation": tt[1]})
+        ret.append({"user": getUserInfo(userid = tt[0]), "operation": tt[1], "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM auditlog")
     t = cur.fetchall()

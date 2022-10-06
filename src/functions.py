@@ -162,6 +162,51 @@ def get_totp_token(secret):
 def valid_totp(otp, secret):
     return str(otp) in get_totp_token(secret)
 
+cuserinfo = {} # user info cache
+
+def getUserInfo(userid = -1, discordid = -1, privacy = False):
+    if userid == -999:
+        return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        
+    if privacy:
+        return {"name": "[Removed]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+
+    if userid == -1 and discordid == -1:
+        return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+
+    global cuserinfo
+    
+    if userid != -1 and f"userid={userid}" in cuserinfo.keys():
+        if int(time.time()) < cuserinfo[f"userid={userid}"]["expire"]:
+            return cuserinfo[f"userid={userid}"]["data"]
+    if discordid != -1 and f"discordid={discordid}" in cuserinfo.keys():
+        if int(time.time()) < cuserinfo[f"discordid={discordid}"]["expire"]:
+            return cuserinfo[f"discordid={discordid}"]["data"]
+
+    query = ""
+    if userid != -1:
+        query = f"userid = '{userid}'"
+    elif discordid != -1:
+        query = f"discordid = '{discordid}'"
+
+    conn = newconn()
+    cur = conn.cursor()
+    
+    cur.execute(f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
+    p = cur.fetchall()
+    if len(p) == 0:
+        return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+
+    roles = p[0][4].split(",")
+    while "" in roles:
+        roles.remove("")
+
+    if p[0][1] != -1:
+        cuserinfo[f"userid={p[0][1]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+
+    return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
+
 def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()

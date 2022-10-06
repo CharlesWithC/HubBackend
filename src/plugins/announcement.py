@@ -59,13 +59,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
         tt = t[0]
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
-        n = cur.fetchall()
-        name = "Unknown User"
-        if len(n) > 0:
-            name = n[0][0]
         return {"error": False, "response": {"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
-            "announcement_type": str(tt[2]), "author": {"name": name, "userid": str(tt[4])}, "timestamp": str(tt[3]), "is_private": TF[tt[6]]}}
+            "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
+                "timestamp": str(tt[3])}}
 
     if page <= 0:
         page = 1
@@ -74,13 +70,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     t = cur.fetchall()
     ret = []
     for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[4]}")
-        n = cur.fetchall()
-        name = "Unknown User"
-        if len(n) > 0:
-            name = n[0][0]
         ret.append({"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
-            "announcement_type": str(tt[2]), "author": {"name": name, "userid": str(tt[4])}, "timestamp": str(tt[3]), "is_private": TF[tt[6]]})
+            "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
+                "timestamp": str(tt[3])})
         
     cur.execute(f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = cur.fetchall()

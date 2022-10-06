@@ -499,7 +499,7 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
         return {"error": True, "descriptor": ml.tr(request, "invalid_token")}
     cur.execute(f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
     conn.commit()
-    return {"error": False, "response": {"discordid": str(t[0][0])}}
+    return {"error": False, "response": {"user": getUserInfo(discordid = t[0][0])}}
 
 # Multiple Factor Authentication
 @app.put(f"/{config.abbr}/auth/mfa")

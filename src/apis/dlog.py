@@ -85,13 +85,12 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
                 ver = "v5"
         telemetry = ver + orgt
 
-    tuserid = str(t[0][0])
+    userinfo = getUserInfo(userid = t[0][0])
     if userid == -1 and config.privacy:
-        name = "Anonymous"
-        tuserid = "-1"
+        userinfo = getUserInfo(privacy = True)
 
-    return {"error": False, "response": {"logid": str(logid), "userid": tuserid, "name": name, \
-        "distance": str(distance), "timestamp": str(t[0][2]), "detail": data, "telemetry": telemetry}}
+    return {"error": False, "response": {"logid": str(logid), "user": userinfo, \
+        "distance": str(distance), "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}
 
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
@@ -185,21 +184,20 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         if len(p) > 0:
             name = p[0][0]
         
-        tuserid = str(tt[0])
+        userinfo = getUserInfo(userid = tt[0])
         if userid == -1 and config.privacy:
-            name = "Anonymous"
-            tuserid = "-1"
+            userinfo = getUserInfo(privacy = True)
 
-        isdivision = False
+        division_validated = False
         cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
         p = cur.fetchall()
         if len(p) > 0:
-            isdivision = True
-        ret.append({"logid": str(tt[3]), "userid": tuserid, "name": name, "distance": str(distance), \
+            division_validated = True
+        ret.append({"logid": str(tt[3]), "user": userinfo, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": str(cargo_mass), \
-                        "profit": str(profit), "unit": str(unit), "isdivision": isdivision, "timestamp": str(tt[2])})
+                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
+                        "division_validated": division_validated, "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit}")
     t = cur.fetchall()
@@ -491,7 +489,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     page: Optional[int] = -1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
-        point_types: Optional[str] = "distance", userids: Optional[str] = ""):
+        point_types: Optional[str] = "distance,event,division,myth", userids: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -813,20 +811,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     withpoint = []
     # drivers with points (WITH LIMIT)
     for userid in usertot_id:
-        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
-        p = cur.fetchall()
-        if len(p) == 0:
-            continue
-
         # check if have driver role
-        roles = p[0][3].split(",")
-        while "" in roles:
-            roles.remove("")
-        ok = False
-        for i in roles:
-            if int(i) in config.perms.driver:
-                ok = True
-        if not ok:
+        if not userid in allusers:
             continue
 
         withpoint.append(userid)
@@ -845,9 +831,9 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             mythpnt = usermyth[userid]
 
         if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": str(distance), "event": str(eventpnt), "division": str(divisionpnt), \
-                    "myth": str(mythpnt), "total": str(usertot[userid]), "rank": str(userrank[userid]), \
+            ret.append({"user": getUserInfo(userid = userid), \
+                "points": {"distance": str(distance), "event": str(eventpnt), "division": str(divisionpnt), \
+                    "myth": str(mythpnt)}, "total": str(usertot[userid]), "rank": str(userrank[userid]), \
                         "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
 
     # drivers with points (WITHOUT LIMIT)
@@ -855,20 +841,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         if userid in withpoint:
             continue
 
-        cur.execute(f"SELECT name, discordid, avatar, roles FROM user WHERE userid = {userid} AND userid >= 0")
-        p = cur.fetchall()
-        if len(p) == 0:
-            continue
-
         # check if have driver role
-        roles = p[0][3].split(",")
-        while "" in roles:
-            roles.remove("")
-        ok = False
-        for i in roles:
-            if int(i) in config.perms.driver:
-                ok = True
-        if not ok:
+        if not userid in allusers:
             continue
 
         withpoint.append(userid)
@@ -879,35 +853,18 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         mythpnt = 0
 
         if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"userid": str(userid), "name": p[0][0], "discordid": str(p[0][1]), "avatar": p[0][2], \
-                "distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), \
+            ret.append({"user": getUserInfo(userid = userid), \
+                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0"}, "total": "0", "rank": str(rank), \
                         "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
-    cur.execute(f"SELECT userid, name, discordid, avatar, roles FROM user WHERE userid >= 0")
-    p = cur.fetchall()
-    for pp in p:
-        if pp[0] in withpoint:
-            continue
-
-        # check if have driver role
-        roles = pp[4].split(",")
-        while "" in roles:
-            roles.remove("")
-        ok = False
-        for i in roles:
-            if int(i) in config.perms.driver:
-                ok = True
-        if not ok:
+    for userid in allusers:
+        if userid in withpoint:
             continue
         
-        userid = pp[0]
-        name = pp[1]
-        discordid = pp[2]
-        avatar = pp[3]
         if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"userid": str(userid), "rank": str(rank), "name": name, "discordid": str(discordid), "avatar": avatar, \
-                "distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)})
+            ret.append({"user": getUserInfo(userid = userid), 
+                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0"}, "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)})
 
     if not usecache:
         ts = int(time.time())

@@ -1,5 +1,20 @@
 # Changelog
 
+**v1.15.7**  
+Improved response format  
+**GET** `/audit` - Added detailed user info  
+**GET** `/auth/tip` - Added detailed user info  
+**GET** `/dlog` - Added detailed user info  
+**GET** `/dlog/list` - Added detailed user info, changed `isdivision` to `division_validated`  
+**GET** `/dlog/leaderboard` - Improved response format  
+**GET** `/user/list` - Improved response format  
+**GET** `/member/list` - Added `roles`, removed `highestrole` which should be calculated by frontend  
+**GET** `/announcement` - Added detailed author info  
+**GET** `/application` - Added detailed creator / staff info  
+**GET** `/application/list` - Added detailed creator / staff info  
+**GET** `/division` - Added detailed user / staff info, removed `user_is_staff` which should be calculated by frontend  
+**GET** `/division/list/pending` - Added detailed user info  
+
 **v1.15.6**  
 1.Improved TOTP function to accept OTP of bigger time range  
 2.Added MFA secret base32 check  

@@ -78,10 +78,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        return {"error": False, "response": {"eventid": str(tt[0]), "is_private": TF[tt[11]], "points": str(tt[12]), \
-            "title": b64d(tt[8]), "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
+        return {"error": False, "response": {"eventid": str(tt[0]), "title": b64d(tt[8]), "description": b64d(tt[7]), \
+            "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret}}
+                "points": str(tt[12]), "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}}
 
     cur.execute(f"SELECT eventid, truckersmp_link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
@@ -112,10 +112,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "title": b64d(tt[8]), "points": str(tt[12]), \
-            "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]), \
-            "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
+        ret.append({"eventid": str(tt[0]), "title": b64d(tt[8]), "description": b64d(tt[7]), "truckersmp_link": b64d(tt[1]), \
+            "departure": b64d(tt[2]), "destination": b64d(tt[3]), "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), \
+                "departure_timestamp": str(tt[6]), "points": str(tt[12]), "is_private": TF[tt[11]], \
+                    "attendees": attendee_ret, "votes": vote_ret})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit}")
     t = cur.fetchall()
@@ -151,10 +151,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
-        ret.append({"eventid": str(tt[0]), "is_private": TF[tt[11]], "points": str(tt[12]), "title": b64d(tt[8]), \
+        ret.append({"eventid": str(tt[0]), "title": b64d(tt[8]), "description": b64d(tt[7]), \
             "truckersmp_link": b64d(tt[1]), "departure": b64d(tt[2]), "destination": b64d(tt[3]),\
             "distance": b64d(tt[4]), "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "description": b64d(tt[7]), "attendees": attendee_ret, "votes": vote_ret})
+                "points": str(tt[12]), "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret})
     
     cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
     t = cur.fetchall()

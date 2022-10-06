@@ -88,16 +88,9 @@ async def getApplication(request: Request, response: Response, authorization: st
             response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
-    
-    cur.execute(f"SELECT name FROM user WHERE userid = {t[0][6]}")
-    p = cur.fetchall()
-    staff_name = "Unknown"
-    if len(p) > 0:
-        staff_name = p[0][0]
-
-    return {"error": False, "response": {"applicationid": str(t[0][0]), "application_type": str(t[0][1]),\
-        "discordid": str(t[0][2]), "detail": json.loads(decompress(t[0][3])), "status": str(t[0][4]), "submit_timestamp": str(t[0][5]), \
-            "update_timestamp": str(t[0][7]), "last_update_staff": {"userid": str(t[0][6]), "name": staff_name}}}
+    return {"error": False, "response": {"applicationid": str(t[0][0]), "detail": json.loads(decompress(t[0][3])), \
+        "creator": getUserInfo(discordid = t[0][2]), "application_type": str(t[0][1]), "status": str(t[0][4]), \
+            "submit_timestamp": str(t[0][5]), "update_timestamp": str(t[0][7]), "last_update_staff": getUserInfo(userid = t[0][6])}}
 
 @app.get(f"/{config.abbr}/application/list")
 async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
@@ -138,7 +131,7 @@ async def getApplications(request: Request, response: Response, authorization: s
         if application_type != 0:
             limit = f" AND application_type = {application_type}"
 
-        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
         t = cur.fetchall()
         
         cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
@@ -179,7 +172,7 @@ async def getApplications(request: Request, response: Response, authorization: s
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             limit = f" WHERE application_type = {application_type} "
 
-        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
         t = cur.fetchall()
         
         cur.execute(f"SELECT COUNT(*) FROM application {limit}")
@@ -194,9 +187,9 @@ async def getApplications(request: Request, response: Response, authorization: s
         name = "Unknown"
         if len(p) > 0:
             name = p[0][0]
-        ret.append({"applicationid": str(tt[0]), "application_type": str(tt[1]), \
-            "discordid": f"{tt[2]}", "name": name, \
-                "status": str(tt[4]), "submit_timestamp": str(tt[3]), "update_timestamp": str(tt[5])})
+        ret.append({"applicationid": str(tt[0]), "creator": getUserInfo(discordid = tt[2]), "application_type": str(tt[1]), \
+                "status": str(tt[4]), "submit_timestamp": str(tt[3]), "update_timestamp": str(tt[5]), \
+                    "last_update_staff": getUserInfo(userid = tt[6])})
 
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
@@ -559,8 +552,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         if not f"[Message] {adminname} ({adminid}) #{i}" in data.keys():
             break
         i += 1
-        
-    data[f"[Message] {adminname} ({adminid}) #{i}"] = message
+    if message != "":
+        data[f"[Message] {adminname} ({adminid}) #{i}"] = message
 
     update_timestamp = 0
     if status != 0:

@@ -150,7 +150,8 @@ async def getMemberList(request: Request, response: Response, authorization: str
         if not ok:
             continue
         hrole[str(tt[0])] = highestrole
-        rret[str(tt[0])] = {"userid": str(tt[0]), "name": tt[1], "discordid": f"{tt[2]}", "highestrole": str(highestrole), "avatar": tt[4], "join_timestamp": tt[5]}
+        rret[str(tt[0])] = {"name": tt[1], "userid": str(tt[0]), "discordid": f"{tt[2]}", "avatar": tt[4], "roles": roles, \
+            "join_timestamp": tt[5]}
 
     ret = []
     if sort_by_highest_role:
@@ -183,7 +184,7 @@ async def getAllMemberList(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"userid": str(tt[2]), "name": tt[1], "steamid": str(tt[0])})
+        ret.append({"name": tt[1], "userid": str(tt[2]), "steamid": str(tt[0])})
     return {"error": False, "response": {"list": ret}}
 
 @app.get(f'/{config.abbr}/member/banner')

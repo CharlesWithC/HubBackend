@@ -76,7 +76,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
                 response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
             else:
-                return {"error": False, "response": {"status": "-1"}}
+                return {"error": False, "response": {"divisionid": "-1", "status": "-1"}}
         tt = t[0]
         divisionid = tt[0]
         duserid = tt[1]
@@ -96,37 +96,30 @@ async def getDivision(request: Request, response: Response, authorization: str =
                 response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
 
-        staffname = "/"
-        if update_staff_userid != -1:
-            cur.execute(f"SELECT name FROM user WHERE userid = {update_staff_userid}")
-            t = cur.fetchall()
-            staffname = t[0][0]
-        if userid == duserid:
-            return {"error": False, "response": {"divisionid": str(divisionid), "request_timestamp": str(request_timestamp), "status": str(status), \
-                "update_timestamp": str(update_timestamp), "update_staff": {"userid": str(update_staff_userid), "name": staffname}, "message": message, "user_is_staff": ok}}
-        else:
+        if userid == duserid or ok: # delivery driver check division / division staff check delivery
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
-                "update_timestamp": str(update_timestamp), "update_staff": {"userid": str(update_staff_userid), "name": staffname}, "user_is_staff": ok}}
+                "request_timestamp": str(request_timestamp), "update_timestamp": str(update_timestamp), \
+                    "update_staff": getUserInfo(userid = update_staff_userid), "update_message": message}}
+        else:
+            return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status)}}
 
     stats = []
     for division in divisions:
         tstats = []
-        cur.execute(f"SELECT name, userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
+        cur.execute(f"SELECT userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
         t = cur.fetchall()
         userpnt = {}
-        username = {}
         for tt in t:
             divisionpnt = 0
-            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[1]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
+            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
             o = cur.fetchall()
             for oo in o:
                 if o[0][0] in DIVISIONPNT.keys():
                     divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-            username[tt[1]] = tt[0]
-            userpnt[tt[1]] = divisionpnt
+            userpnt[tt[0]] = divisionpnt
         userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
         for uid in userpnt.keys():
-            tstats.append({"userid": str(uid), "name": username[uid], "points": str(userpnt[uid])})
+            tstats.append({"user": getUserInfo(userid = uid), "points": str(userpnt[uid])})
         stats.append({"divisionid": str(division['id']), "name": division['name'], "drivers": tstats[::-1]})
     
     delivery = []
@@ -158,16 +151,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
         profit = tt[4]
         unit = tt[5]
 
-        name = "Unknown"
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
-        p = cur.fetchall()
-        if len(p) > 0:
-            name = p[0][0]
-
-        delivery.append({"logid": str(tt[3]), "userid": str(tt[0]), "name": name, "distance": str(distance), \
+        delivery.append({"logid": str(tt[3]), "user": getUserInfo(userid = tt[0]), "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), "timestamp": str(tt[2])})
+                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
+                        "division_validated": True, "timestamp": str(tt[2])})
     
     return {"error": False, "response": {"statistics": stats, "recent": delivery}}
 
@@ -307,7 +295,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
         ttt = cur.fetchall()
         if len(ttt) > 0:
             name = ttt[0][0]
-        ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "userid": str(tt[1]), "name": name})
+        ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": getUserInfo(userid = tt[1])})
     
     return {"error": False, "response": ret}
 
