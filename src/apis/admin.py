@@ -3,7 +3,6 @@
 
 from fastapi import Request, Header, Response
 from typing import Optional
-from onetimepass import valid_totp
 from discord import Colour
 import json, copy, math, os, time
 import threading

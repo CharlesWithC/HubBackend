@@ -206,6 +206,20 @@ async def patchPassword(request: Request, response: Response, authorization: str
     conn = newconn()
     cur = conn.cursor()
 
+    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret != "":
+        form = await request.form()
+        try:
+            otp = int(form["otp"])
+        except:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        if not valid_totp(otp, mfa_secret):
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+
     cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     email = t[0][0]

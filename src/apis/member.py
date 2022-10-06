@@ -3,7 +3,6 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from fastapi.responses import StreamingResponse
-from onetimepass import valid_totp
 from discord import Webhook, Embed
 from aiohttp import ClientSession
 from typing import Optional
@@ -705,7 +704,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT mfa_secret FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     mfa_secret = t[0][0]
     if mfa_secret != "":

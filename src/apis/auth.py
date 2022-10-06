@@ -4,13 +4,12 @@
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
 from fastapi.responses import RedirectResponse
-from onetimepass import valid_totp
 from discord_oauth2 import DiscordAuth
 from pysteamsignin.steamsignin import SteamSignIn
 from uuid import uuid4
 from hashlib import sha256
 import json, time, requests
-import bcrypt, re
+import bcrypt, re, base64
 
 from app import app, config
 from db import newconn
@@ -532,10 +531,17 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
     if len(secret) != 16 or not secret.isalnum():
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret")}
     
+    try:
+        base64.b32decode(secret)
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret")}
+
     if not valid_totp(otp, secret):
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}

@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.15.2"
+        "version": "1.15.6"
     },
     "paths": {
         "/abbr": {
@@ -524,7 +524,7 @@
                                     },
                                     "otp": {
                                         "description": "OTP",
-                                        "type": "integar"
+                                        "type": "string"
                                     }
                                 }
                             },
@@ -570,7 +570,7 @@
                                     },
                                     "otp": {
                                         "description": "OTP",
-                                        "type": "integar"
+                                        "type": "string"
                                     }
                                 }
                             },
@@ -624,7 +624,7 @@
                                 "properties": {
                                     "otp": {
                                         "description": "OTP (Required when disabling MFA for current user)",
-                                        "type": "integar"
+                                        "type": "string"
                                     }
                                 }
                             },
@@ -897,6 +897,10 @@
                                 "properties": {
                                     "password": {
                                         "description": "Password",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "OTP",
                                         "type": "string"
                                     }
                                 }

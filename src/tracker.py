@@ -11,7 +11,7 @@ drivershub = """    ____       _                         __  __      __
                                                          """
 
 if len(sys.argv) == 1:
-    print("You must specify a config file")
+    print("Config file not specified")
     sys.exit(1)
 
 config_path = ""
@@ -23,7 +23,7 @@ if config_path == "" and "HUB_CONFIG_FILE" in os.environ.keys() and os.environ["
     config_path = os.environ["HUB_CONFIG_FILE"]
 
 if config_path == "":
-    print("You must specify a config file")
+    print("Config file not specified")
     sys.exit(1)
 
 if not os.path.exists(config_path):

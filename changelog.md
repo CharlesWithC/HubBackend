@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.15.6**  
+1.Improved TOTP function to accept OTP of bigger time range  
+2.Added MFA secret base32 check  
+3.Added MFA support (if enabled) to **PATCH** `/user/password`  
+
 **v1.15.5**  
 Fixed leaderboard skipping rank due to deleted users  
 
