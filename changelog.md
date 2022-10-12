@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.15.8**  
+Moved Steam & TruckersMP connection check to when adding driver role instead of when accepting user as member  
+
 **v1.15.7**  
 Improved response format  
 **GET** `/audit` - Added detailed user info  

@@ -452,7 +452,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
     t = cur.fetchall()
     userid = int(t[0][0])
     
-    cur.execute(f"SELECT userid, truckersmpid, steamid, name FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -460,14 +460,8 @@ async def putMember(request: Request, response: Response, authorization: str = H
     if t[0][0] != -1:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "already_member")}
-    if t[0][2] <= 0:
-        response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
-    if t[0][1] <= 0 and config.truckersmp_bind:
-        response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
 
-    name = t[0][3]
+    name = t[0][1]
     cur.execute(f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
     cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
@@ -491,7 +485,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         except:
             pass
 
-    return {"error": False}   
+    return {"error": False, "response": {"userid": userid}}   
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
@@ -539,7 +533,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    cur.execute(f"SELECT name, roles, steamid, discordid FROM user WHERE userid = {userid}")
+    cur.execute(f"SELECT name, roles, steamid, discordid, truckersmpid FROM user WHERE userid = {userid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -548,6 +542,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     oldroles = t[0][1].split(",")
     steamid = t[0][2]
     discordid = t[0][3]
+    truckersmpid = t[0][4]
     while "" in oldroles:
         oldroles.remove("")
     oldroles = [int(i) for i in oldroles]
@@ -592,8 +587,17 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "losing_admin_permission")}
 
+    if config.perms.driver[0] in addedroles:
+        if steamid <= 0:
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
+        if truckersmpid <= 0 and config.truckersmp_bind:
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
+
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
+    conn.commit()
 
     if config.perms.driver[0] in addedroles:
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
