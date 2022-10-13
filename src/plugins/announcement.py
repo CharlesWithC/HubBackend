@@ -129,8 +129,6 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     cur.execute(f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")
     conn.commit()
     timestamp = int(time.time())
-    if not channelid.isdigit():
-        channleid = 0
 
     cur.execute(f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
     await AuditLog(adminid, f"Created announcement #{announcementid}")
@@ -141,7 +139,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                    "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
         except:
             pass
@@ -184,9 +182,6 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
-        
-    if not channelid.isdigit():
-        channleid = 0
 
     if int(announcementid) < 0:
         response.status_code = 404
@@ -210,7 +205,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
-                    "footer": {"text": f"By {adminname}", "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
+                    "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
         except:
             pass

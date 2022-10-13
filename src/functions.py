@@ -164,6 +164,20 @@ def valid_totp(otp, secret):
 
 cuserinfo = {} # user info cache
 
+def getAvatarSrc(userid):
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT discordid, avatar FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    discordid = str(t[0][0])
+    avatar = str(t[0][1])
+    src = ""
+    if avatar.startswith("a_"):
+        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif"
+    else:
+        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png"
+    return src
+
 def getUserInfo(userid = -1, discordid = -1, privacy = False):
     if userid == -999:
         return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
@@ -373,9 +387,9 @@ async def AuditLog(userid, text):
                 webhook = Webhook.from_url(config.webhook_audit, session=session)
                 embed = Embed(description = text, color = config.rgbcolor)
                 if userid != -999:
-                    embed.set_footer(text = f"Responsible User: {name} (ID {userid})")
+                    embed.set_footer(text = f"{name} (ID {userid})", icon_url = getAvatarSrc(userid))
                 else:
-                    embed.set_footer(text = f"Responsible User: {name}")
+                    embed.set_footer(text = f"{name}")
                 embed.timestamp = datetime.now()
                 await webhook.send(embed=embed)
         except:

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.15.9**  
+1.Fixed announcement plugin 500 error  
+2.Added avatar to announcement and audit log embed  
+
 **v1.15.8**  
 Moved Steam & TruckersMP connection check to when adding driver role instead of when accepting user as member  
 
