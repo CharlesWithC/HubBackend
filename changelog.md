@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.15.10**  
+1.Fixed speed limit not working for `/dlog/list` and `/dlog/leaderboard`  
+2.Added `status` parameter `(0: All | 1: Delivered | 2: Cancelled)` to `/dlog/list`  
+3.Added `status` field to `/dlog/list` response  
+
 **v1.15.9**  
 1.Fixed announcement plugin 500 error  
 2.Added avatar to announcement and audit log embed  

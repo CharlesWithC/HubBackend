@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.15.9"
+        "version": "1.15.10"
     },
     "paths": {
         "/abbr": {
@@ -2068,6 +2068,14 @@
                         "type": "integer"
                     },
                     "name": "game",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Status (0: All | 1: Delivered | 2: Cancelled)",
+                        "type": "integer"
+                    },
+                    "name": "status",
                     "in": "query"
                 }],
                 "responses": {

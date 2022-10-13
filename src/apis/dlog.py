@@ -96,7 +96,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0):
+        start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1):
     rl = ratelimit(request.client.host, 'GET /dlog/list', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -140,18 +140,22 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if start_time != -1 and end_time != -1:
         timelimit = f"AND timestamp >= {start_time} AND timestamp <= {end_time}"
     
-    speed_limit = ""
-    if speed_limit != 0:
-        try:
-            speed_limit = f" AND topspeed <= {int(speed_limit)}"
-        except:
-            pass
+    if speed_limit > 0:
+        speed_limit = f" AND topspeed <= {speed_limit}"
+    else:
+        speed_limit = ""
+
+    status_limit = ""
+    if status == 1:
+        status_limit = f" AND isdelivered = 1"
+    elif status == 2:
+        status_limit = f" AND isdelivered = 0"
 
     gamelimit = ""
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
 
-    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} ORDER BY logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance, isdelivered FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
     
     t = cur.fetchall()
     ret = []
@@ -188,6 +192,10 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         if userid == -1 and config.privacy:
             userinfo = getUserInfo(privacy = True)
 
+        status = 1
+        if tt[7] == 0:
+            status = 2
+
         division_validated = False
         cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
         p = cur.fetchall()
@@ -197,9 +205,9 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
-                        "division_validated": division_validated, "timestamp": str(tt[2])})
+                        "division_validated": division_validated, "status": str(status), "timestamp": str(tt[2])})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit}")
+    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
@@ -598,11 +606,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     if len(limituser) > 10:
         limituser = limituser[:10]
     limit = ""
-    if speed_limit != 0:
-        try:
-            limit = f" AND topspeed <= {int(speed_limit)}"
-        except:
-            pass
+    if speed_limit > 0:
+        limit = f" AND topspeed <= {speed_limit}"
     gamelimit = ""
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
