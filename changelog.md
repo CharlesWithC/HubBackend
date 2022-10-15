@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.15.11**  
+1.Removed detailed per-user statistics from **GET** `/division`  
+2.Updated **GET** `/dlog/leaderboard` response to include `total` and `rank` in `points`  
+3.Improved **PATCH** `/division` to prevent overwriting `divisionid` to invalid id  
+4.Added 100-row limit to **GET** `/division/list/pending` to prevent large response  
+
 **v1.15.10**  
 1.Fixed speed limit not working for `/dlog/list` and `/dlog/leaderboard`  
 2.Added `status` parameter `(0: All | 1: Delivered | 2: Cancelled)` to `/dlog/list`  

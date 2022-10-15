@@ -118,9 +118,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
                     divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
             userpnt[tt[0]] = divisionpnt
         userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
+        totalpnt = 0
         for uid in userpnt.keys():
-            tstats.append({"user": getUserInfo(userid = uid), "points": str(userpnt[uid])})
-        stats.append({"divisionid": str(division['id']), "name": division['name'], "drivers": tstats[::-1]})
+            totalpnt += userpnt[uid]
+            # tstats.append({"user": getUserInfo(userid = uid), "points": str(userpnt[uid])})
+        stats.append({"divisionid": str(division['id']), "name": division['name'], "total_drivers": len(userpnt), "total_points": totalpnt})
     
     delivery = []
     cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY update_timestamp DESC LIMIT 10")
@@ -157,7 +159,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
                         "division_validated": True, "timestamp": str(tt[2])})
     
-    return {"error": False, "response": {"statistics": stats, "recent": delivery}}
+    return {"error": False, "response": {"statistics": stats, "recent_deliveries": delivery}}
 
 # Self-operation
 @app.post(f"/{config.abbr}/division")
@@ -297,7 +299,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
             name = ttt[0][0]
         ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": getUserInfo(userid = tt[1])})
     
-    return {"error": False, "response": ret}
+    return {"error": False, "response": ret[:100]}
 
 @app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None)):
@@ -330,7 +332,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found")}
-    if divisionid == 0:
+    if not divisionid in divisiontxt.keys():
         divisionid = t[0][0]
         
     cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{b64e(message)}' WHERE logid = {logid}")

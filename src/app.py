@@ -8,7 +8,7 @@ import os, sys, json, requests
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.15.10"
+version = "v1.15.11"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

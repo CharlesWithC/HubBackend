@@ -29,9 +29,9 @@ async def banner(request: Request, response: Response):
         if time.time() - os.path.getmtime(f"/tmp/hub/avatar/{ll}") > 86400:
             os.remove(f"/tmp/hub/avatar/{ll}")
 
-    if os.path.exists(f"/tmp/hub/banner/{discordid}.png"):
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{discordid}.png") <= 3600:
-            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{discordid}.png","rb").read()]), media_type="image/jpeg")
+    if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{discordid}.png"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{discordid}.png") <= 3600:
+            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{company_abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
             return response
 
     logo = Image.new("RGBA", (400,400),(255,255,255))
@@ -212,7 +212,7 @@ async def banner(request: Request, response: Response):
     # output
     output = BytesIO()
     banner.save(output, "jpeg", optimize = True)
-    open(f"/tmp/hub/banner/{discordid}.png","wb").write(output.getvalue())
+    open(f"/tmp/hub/banner/{company_abbr}_{discordid}.png","wb").write(output.getvalue())
     
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
     return response

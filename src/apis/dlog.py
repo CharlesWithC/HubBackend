@@ -838,8 +838,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), \
                 "points": {"distance": str(distance), "event": str(eventpnt), "division": str(divisionpnt), \
-                    "myth": str(mythpnt)}, "total": str(usertot[userid]), "rank": str(userrank[userid]), \
-                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
+                    "myth": str(mythpnt), "total": str(usertot[userid]), "rank": str(userrank[userid]), \
+                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
 
     # drivers with points (WITHOUT LIMIT)
     for userid in nlusertot_id:
@@ -859,8 +859,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), \
-                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0"}, "total": "0", "rank": str(rank), \
-                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])})
+                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), \
+                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
     for userid in allusers:
@@ -869,7 +869,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), 
-                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0"}, "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)})
+                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)}})
 
     if not usecache:
         ts = int(time.time())
