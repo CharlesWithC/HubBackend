@@ -291,7 +291,7 @@ async def postApplication(request: Request, response: Response, authorization: s
     cur.execute(f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
     conn.commit()
 
-    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data))}', 0, {int(time.time())}, 0, 0)")
+    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data))}', 0, {int(time.time())}, -1, 0)")
     conn.commit()
 
     if applicantrole != 0:
@@ -311,7 +311,6 @@ async def postApplication(request: Request, response: Response, authorization: s
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
                 r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
-                    "description": ml.tr(request, "bot_application_received"),
                         "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)

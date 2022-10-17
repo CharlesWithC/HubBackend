@@ -216,17 +216,10 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
     
-    au = auth(authorization, request)
-    if au["error"]:
-        rl = ratelimit(request.client.host, 'GET /member/banner', 180, 30)
-        if rl > 0:
-            response.status_code = 429
-            return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-    else:
-        rl = ratelimit(request.client.host, 'GET /member/banner', 180, 60)
-        if rl > 0:
-            response.status_code = 429
-            return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request.client.host, 'GET /member/banner', 10, 2)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
             
     t = t[0]
     userid = t[5]
@@ -270,9 +263,9 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         distance = 0 if t[0][0] is None else int(t[0][0])
         if config.distance_unit == "imperial":
             distance = int(distance * 0.621371)
-            distance = f"{distance}Mi"
+            distance = f"{distance}mi"
         else:
-            distance = f"{distance}Km"
+            distance = f"{distance}km"
     
     cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
     t = cur.fetchall()

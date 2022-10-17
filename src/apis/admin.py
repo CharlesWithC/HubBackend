@@ -23,7 +23,7 @@ config_plugins = {"application": ["application_types"],
 
 config_protected = ["navio_api_token", "discord_client_secret", "discord_bot_token"]
 
-latest_config = copy.deepcopy(tconfig) # DO NOT EDIT tconfig
+backup_config = copy.deepcopy(tconfig)
 
 # get config
 @app.get(f"/{config.abbr}/config")
@@ -43,7 +43,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     cur = conn.cursor()
     
     # current config
-    f = copy.deepcopy(latest_config)
+    f = copy.deepcopy(json.loads(open(config_path, "r").read()))
     ffconfig = {}
 
     # process whitelist
@@ -62,7 +62,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
                 del ffconfig[tt]
     
     # old config
-    t = copy.deepcopy(tconfig)
+    t = copy.deepcopy(backup_config)
     ttconfig = {}
 
     # process whitelist
@@ -113,8 +113,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    global latest_config
-    ttconfig = copy.deepcopy(latest_config)
+    ttconfig = json.loads(open(config_path, "r").read())
 
     for tt in formconfig.keys():
         if tt in config_whitelist:
@@ -191,29 +190,8 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     open(config_path, "w").write(json.dumps(ttconfig, indent=4))
 
-    latest_config = copy.deepcopy(ttconfig)
-
     await AuditLog(adminid, "Updated config")
 
-    return {"error": False}
-
-@app.put(f"/{config.abbr}/config/reset")
-async def putConfigReset(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /config/reset', 30, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, required_permission = ["admin"])
-    if au["error"]:
-        response.status_code = 401
-        return au
-    adminid = au["userid"]
-
-    open(config_path, "w").write(json.dumps(latest_config, indent=4))
-
-    await AuditLog(adminid, "Reset config")
-    
     return {"error": False}
 
 # reload service

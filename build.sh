@@ -13,5 +13,5 @@ cp launcher.dist/* build/ -r
 cp languages/ build/ -r
 cp bannergen/fonts build/ -r
 mkdir build/config
-mv config_sample.json build/config/
-mv apidoc.json build/
+cp config_sample.json build/config/
+cp apidoc.json build/

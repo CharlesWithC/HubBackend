@@ -413,7 +413,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
 
 @app.patch(f'/{config.abbr}/token/application')
 async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token/application', 180, 5)
+    rl = ratelimit(request.client.host, 'PATCH /token/application', 180, 15)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -424,8 +424,27 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
         return au
     discordid = au["discordid"]
     
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+    
     conn = newconn()
     cur = conn.cursor()
+    
+    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret != "":
+        form = await request.form()
+        try:
+            otp = int(form["otp"])
+        except:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        if not valid_totp(otp, mfa_secret):
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
     
     stoken = str(uuid4())
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
@@ -447,8 +466,27 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
         return au
     discordid = au["discordid"]
     
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+    
     conn = newconn()
     cur = conn.cursor()
+    
+    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret != "":
+        form = await request.form()
+        try:
+            otp = int(form["otp"])
+        except:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        if not valid_totp(otp, mfa_secret):
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
     
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     conn.commit()

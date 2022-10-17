@@ -1,5 +1,16 @@
 # Changelog
 
+**v1.16.1**  
+1.Fixed application setting `user[userid=0]` as `last_update_staff` when nobody updated the application  
+2.Fixed config update corruption due to multiple workers  
+3.Fixed **PATCH** `/user/discord` that removes account when `old_discord_id = new_discord_id`  
+4.Fixed **PUT** `/user/ban` always using "Unknown User" in audit log  
+5.Removed `bot_application_received` message  
+6.Removed **PUT** `/config/reset` endpoint  
+7.Added MFA support to **PATCH**, **DELETE** `/token/application`, **DELETE** `/user/password`  
+8.Tightened rate-limit of **GET** `/member/banner` to 2r/10s (from 30r/180s), also lowered `bannergen` workers to 3  
+9.Improved rate-limiter, added 10-minute ban for IPs surpassing 150r/m  
+
 **v1.15.11**  
 1.Removed detailed per-user statistics from **GET** `/division`  
 2.Updated **GET** `/dlog/leaderboard` response to include `total` and `rank` in `points`  

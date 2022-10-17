@@ -85,7 +85,6 @@
     "must_verify_steam": "Vous devez vérifier votre compte Steam avant de soumettre une candidature.",
     "must_verify_truckersmp": "Vous devez vérifier votre compte TruckersMP avant de soumettre une candidature.",
     "bot_application_received_title": "{application_type_text} Candidature reçue",
-    "bot_application_received": "Un de nos collaborateurs vous répondra sous peu. Si vous souhaitez la mettre à jour, accédez à 'Mes applications' dans le Drivers Hub, cliquez sur le bouton 'Détails', défiler vers le bas pour ajouter un message.",
     "not_applicant": "Vous n'êtes pas le candidat",
     "application_already_accepted": "Candidature déjà acceptée",
     "application_already_declined": "Candidature déjà refusée",

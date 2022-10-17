@@ -226,8 +226,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}Mi", "inline": True},
-                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))}Gal", "inline": True},
+                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
+                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                     {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                     {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
@@ -240,8 +240,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                     {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
                                     {"name": "From", "value": source_company + ", " + source_city, "inline": True},
                                     {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance))}Km", "inline": True},
-                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used))}L", "inline": True},
+                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance))}km", "inline": True},
+                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                     {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                     {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\

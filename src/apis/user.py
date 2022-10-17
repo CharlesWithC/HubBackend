@@ -187,7 +187,7 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
 @app.patch(f'/{config.abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/password', 180, 5)
+    rl = ratelimit(request.client.host, 'PATCH /user/password', 180, 15)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -272,8 +272,28 @@ async def deletePassword(request: Request, response: Response, authorization: st
         return au
     discordid = au["discordid"]
 
+    stoken = authorization.split(" ")[1]
+    if stoken.startswith("e"):
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+
     conn = newconn()
     cur = conn.cursor()
+
+    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    mfa_secret = t[0][0]
+    if mfa_secret != "":
+        form = await request.form()
+        try:
+            otp = int(form["otp"])
+        except:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        if not valid_totp(otp, mfa_secret):
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+
     cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     email = t[0][0]
@@ -410,10 +430,10 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]
-    tmpname = d["response"]["name"]
+    truckersmp_name = d["response"]["name"]
     if tmpsteamid != steamid:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"tmpname": tmpname, "truckersmpid": str(truckersmpid)})}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)})}
 
     cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
     conn.commit()
@@ -452,11 +472,12 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_discordid")}
 
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+    cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     username = "Unknown User"
     if len(t) > 0:
         userid = t[0][0]
+        username = t[0][1]
         if userid != -1:
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "dismiss_before_ban")}
@@ -538,6 +559,9 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        
+    if old_discord_id == new_discord_id:
+        return {"error": False}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
     t = cur.fetchall()

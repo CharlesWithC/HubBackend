@@ -35,7 +35,7 @@
     "invalid_truckersmp_id": "ID de TruckersMP no válido.",
     "truckersmp_api_error": "API de TruckersMP inaccesible. No se pudo vincular la cuenta TruckersMP.",
     "steam_not_bound_before_truckersmp": "Debes vincular tu cuenta de Steam antes de vincular la cuenta de TruckersMP.",
-    "truckersmp_steam_mismatch": "La cuenta de Steam vinculada a TruckersMP User {truckersmp_name} ({truckersmpid}) no coincide con tu cuenta de Steam.",
+    "truckersmp_steam_mismatch": "La cuenta de Steam vinculada a TruckersMP user {truckersmp_name} ({truckersmpid}) no coincide con tu cuenta de Steam.",
 
     "not_a_member": "No es miembro",
     "member_not_found": "No se ha encontrado un miembro.",
@@ -85,7 +85,6 @@
     "must_verify_steam": "Debes vincular tu cuenta de Steam antes de enviar una solicitud.",
     "must_verify_truckersmp": "Debes vincular tu cuenta TruckersMP antes de enviar una solicitud.",
     "bot_application_received_title": "{application_type_text} Solicitud recibida",
-    "bot_application_received": "Un miembro de nuestro personal se pondrá en contacto con usted en breve. Si desea actualizarlo, vaya a `Mis aplicaciones` en Drivers Hub, haga clic en el botón `Detalles`, desplácese hacia abajo y podrá añadir un mensaje.",
     "not_applicant": "Usted no es el solicitante",
     "application_already_accepted": "Solicitud ya aceptada",
     "application_already_declined": "La solicitud ya ha sido rechazada",

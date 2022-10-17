@@ -35,7 +35,7 @@
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API utilgængelig.e. Kunne ikke binde TruckersMP konto",
     "steam_not_bound_before_truckersmp": "Du skal binde din Steam-konto, før du binder TruckersMP-kontoen.",
-    "truckersmp_steam_mismatch": "Steam konto bundet til TruckersMP User {truckersmp_name} ({truckersmpid}) matcher ikke din steam konto.",
+    "truckersmp_steam_mismatch": "Steam konto bundet til TruckersMP user {truckersmp_name} ({truckersmpid}) matcher ikke din steam konto.",
 
     "not_a_member": "Ikke medlem",
     "member_not_found": "Medlemet blev ikke fundet.",
@@ -85,7 +85,6 @@
     "must_verify_steam": "Du skal verifisere din Steam konto inden du kan blive medlem.",
     "must_verify_truckersmp": "Du skal verifisere din TruckersMP konto inden du kan blive medlem.",
     "bot_application_received_title": "{application_type_text} Ansøgning modtaget",
-    "bot_application_received": "En medarbjder vil hjælpe snart. Hvis du ønsker at ændre i din ansøgning skal du gå til `My Applications` i Drivers Hub, klik `Details` kanppen og rul ned hvor du kan tilføje en besked.",
     "not_applicant": "Du er ikke ansøgeren",
     "application_already_accepted": "Ansøgningen er allerede acctepteret",
     "application_already_declined": "Ansøgningen er allerede afvist",

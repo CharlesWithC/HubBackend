@@ -225,6 +225,30 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {int(time.time() - 86400)}")
+    cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {int(time.time() - 60)}")
+    cur.execute(f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE ip = '{ip}' AND endpoint LIKE 'ip-ban-%'")
+    t = cur.fetchall()
+    maxban = 0
+    for tt in t:
+        frt = tt[0]
+        bansec = int(tt[1].split("-")[-1])
+        maxban = max(frt + bansec, maxban)
+        if maxban < int(time.time()):
+            cur.execute(f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-{bansec}'")
+            conn.commit()
+            maxban = 0
+    if maxban > 0:
+        return maxban - int(time.time())
+    cur.execute(f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
+    t = cur.fetchall()
+    if t[0][0] != None and t[0][0] > 150:
+        # more than 150r/m combined
+        # including 429 requests
+        # 10min ip ban
+        cur.execute(f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-600'")
+        cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', 'ip-ban-600', {int(time.time())}, 0)")
+        conn.commit()
+        return 600
     cur.execute(f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
     t = cur.fetchall()
     if len(t) == 0:
@@ -240,6 +264,14 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
             return 0
         else:
             if request_count + 1 > limitcnt:
+                cur.execute(f"SELECT request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '429-error'")
+                t = cur.fetchall()
+                if len(t) > 0:
+                    cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '429-error'")
+                    conn.commit()
+                else:
+                    cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '429-error', {int(time.time())}, 1)")
+                    conn.commit()
                 return limittime - (int(time.time()) - first_request_timestamp)
             else:
                 cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
