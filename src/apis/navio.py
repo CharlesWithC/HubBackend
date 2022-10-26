@@ -8,10 +8,14 @@ from dateutil import parser
 import json, time, requests
 import threading
 
-from app import app, config
+from app import app, config, tconfig
 from db import newconn
 from functions import *
 import multilang as ml
+
+JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special"]
+JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int}
+JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0}
 
 GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
@@ -79,7 +83,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
 
     if request.client.host != "185.233.107.244":
         response.status_code = 403
-        await AuditLog(-999, f"Detected suspicious navio webhook post from {request.client.host} - REJECTED")
+        await AuditLog(-999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
     
     d = await request.json()
@@ -93,10 +97,9 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
         if len(t) == 0:
             return {"error": True, "descriptor": "User not found."}
         userid = t[0][0]
-        name = t[0][1].replace("'", "''")
+        name = convert_quotation(t[0][1])
         discordid = t[0][2]
-        await AuditLog(-999, f"Member resigned from Navio: **{name}** (`{discordid}`)")
-        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
+        await AuditLog(-999, f"Member resigned: `{name}` (Discord ID: `{discordid}`)")
         cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         conn.commit()
         
@@ -141,11 +144,15 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
 
     allevents = d["data"]["object"]["events"]
     totalexpense = 0
+    has_overspeed = False
     for eve in allevents:
         if eve["type"] == "fine":
             offence += int(eve["meta"]["amount"])
         elif eve["type"] in ["tollgate", "ferry", "train"]:
             totalexpense += int(eve["meta"]["cost"])
+        elif eve["type"] == "speeding":
+            if eve["meta"]["max_speed"] > eve["meta"]["speed_limit"]:
+                has_overspeed = True
     revenue = revenue - offence - totalexpense
     
     if driven_distance < 0:
@@ -157,13 +164,36 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     t = cur.fetchall()
     logid = int(t[0][0])
 
-    if "tracker" in config.enabled_plugins:
-        threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
-    
-    cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-    cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d))}', {top_speed}, {int(time.time())}, \
-        {isdelivered}, {revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
-    conn.commit()
+    delivery_rule_ok = True
+    try:
+        mod_revenue = revenue
+        if "delivery_rules" in tconfig.keys() and "action" in tconfig["delivery_rules"].keys() \
+                and tconfig["delivery_rules"]["action"] != "bypass":
+            action = tconfig["delivery_rules"]["action"]
+            delivery_rules = tconfig["delivery_rules"]
+            try:
+                if top_speed > int(delivery_rules["max_speed"]) and action == "block":
+                    delivery_rule_ok = False
+            except:
+                pass
+            try:
+                if revenue > int(delivery_rules["max_profit"]):
+                    if action == "block":
+                        delivery_rule_ok = False
+                    elif action == "drop":
+                        mod_revenue = 0
+            except:
+                pass
+        if delivery_rule_ok:
+            if "tracker" in config.enabled_plugins:
+                threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
+            
+            cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
+            cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
+                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
+            conn.commit()
+    except:
+        pass
 
     if config.delivery_log_channel_id != "":
         try:
@@ -252,5 +282,164 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
 
         except:
             pass
+
+    try:
+        if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered:
+            cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+            current_distance = cur.fetchone()[0]
+            current_distance = 0 if current_distance is None else int(current_distance)
+
+            userinfo = getUserInfo(userid = userid)
+            roles = userinfo["roles"]
+
+            cur.execute(f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements \
+                FROM challenge \
+                WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
+            t = cur.fetchall()
+            for tt in t:
+                challengeid = tt[0]
+                challenge_type = tt[1]
+                delivery_count = tt[2]
+                required_roles = tt[3].split(",")
+                reward_points = tt[4]
+                job_requirements = tt[5]
+
+                rolesok = False
+                if len(required_roles) == 0:
+                    roleok = True
+                for r in required_roles:
+                    if r == "":
+                        continue
+                    if r in roles:
+                        rolesok = True
+                if not rolesok:
+                    continue
+
+                p = json.loads(decompress(job_requirements))
+                jobreq = {}
+                for i in range(0,len(p)):
+                    jobreq[JOB_REQUIREMENTS[i]] = p[i]
+                
+                if jobreq["minimum_distance"] != -1 and distance < jobreq["minimum_distance"]:
+                    continue
+
+                source_city = d["data"]["object"]["source_city"]
+                source_company = d["data"]["object"]["source_company"]
+                destination_city = d["data"]["object"]["destination_city"]
+                destination_company = d["data"]["object"]["destination_company"]
+                if source_city is None or source_city["unique_id"] is None:
+                    source_city = "[unknown]"
+                else:
+                    source_city = source_city["unique_id"]
+                if source_company is None or source_company["unique_id"] is None:
+                    source_company = "[unknown]"
+                else:
+                    source_company = source_company["unique_id"]
+                if destination_city is None or destination_city["unique_id"] is None:
+                    destination_city = "[unknown]"
+                else:
+                    destination_city = destination_city["unique_id"]
+                if destination_company is None or destination_company["unique_id"] is None:
+                    destination_company = "[unknown]"
+                else:
+                    destination_company = destination_company["unique_id"]
+                if jobreq["source_city_id"] != "" and jobreq["source_city_id"] != source_city:
+                    continue
+                if jobreq["source_company_id"] != "" and jobreq["source_company_id"] != source_company:
+                    continue
+                if jobreq["destination_city_id"] != "" and jobreq["destination_city_id"] != destination_city:
+                    continue
+                if jobreq["destination_company_id"] != "" and jobreq["destination_company_id"] != destination_company:
+                    continue
+
+                cargo = "[unknown]"
+                cargo_mass = 0
+                cargo_damage = 0
+                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["unique_id"] is None:
+                    cargo = d["data"]["object"]["cargo"]["unique_id"]
+                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
+                    cargo_mass = d["data"]["object"]["cargo"]["mass"]
+                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["damage"] is None:
+                    cargo_mass = d["data"]["object"]["cargo"]["damage"]
+                if jobreq["cargo_id"] != "" and jobreq["cargo_id"] != cargo:
+                    continue
+                if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
+                    continue
+                if jobreq["maximum_cargo_damage"] != -1 and cargo_damage > jobreq["maximum_cargo_damage"]:
+                    continue
+                
+                if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
+                    continue
+                if jobreq["maximum_fuel"] != -1 and fuel_used > jobreq["maximum_fuel"]:
+                    continue
+                
+                profit = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
+                if jobreq["minimum_profit"] != -1 and profit < jobreq["minimum_profit"]:
+                    continue
+                if jobreq["maximum_profit"] != -1 and profit > jobreq["maximum_profit"]:
+                    continue
+                if jobreq["maximum_offence"] != -1 and offence > jobreq["maximum_offence"]:
+                    continue
+                
+                if not jobreq["allow_overspeed"] and has_overspeed:
+                    continue
+
+                auto_park = d["data"]["object"]["events"][-1]["meta"]["auto_park"]
+                auto_load = d["data"]["object"]["events"][-1]["meta"]["auto_load"]
+                if not jobreq["allow_auto_park"] and autopark:
+                    continue
+                if not jobreq["allow_auto_load"] and autoload:
+                    continue
+
+                is_late = d["data"]["object"]["is_late"]
+                is_special = d["data"]["object"]["is_special"]
+                if jobreq["must_not_be_late"] and is_late:
+                    continue
+                if jobreq["must_be_special"] and not is_special:
+                    continue
+
+                cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
+                conn.commit()
+
+                current_delivery_count = 0
+                if challenge_type == 1:
+                    cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
+                    current_delivery_count = cur.fetchone()[0]
+                    current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+                elif challenge_type == 2:
+                    cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
+                    current_delivery_count = cur.fetchone()[0]
+                    current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+                
+                if current_delivery_count >= delivery_count:
+                    if challenge_type == 1:
+                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                        t = cur.fetchall()
+                        if len(t) == 0:
+                            cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                            conn.commit()
+                    elif challenge_type == 2:
+                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                        t = cur.fetchall()
+                        if len(t) == 0:
+                            curtime = int(time.time())
+                            cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
+                            t = cur.fetchall()
+                            usercnt = {}
+                            for tt in t:
+                                uid = tt[0]
+                                if not uid in usercnt.keys():
+                                    usercnt[uid] = 1
+                                else:
+                                    usercnt[uid] += 1
+                            for uid in usercnt.keys():
+                                s = usercnt[uid]
+                                reward = round(reward_points * s / delivery_count)
+                                cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                            conn.commit()
+                
+    except:
+        import traceback
+        traceback.print_exc()
 
     return {"error": False, "response": "Logged"}

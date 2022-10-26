@@ -24,6 +24,7 @@
     "dismiss_before_ban": "Despedir al miembro antes de prohibir.",
     "dismiss_before_unbind": "Despedir al miembro antes de desvincular sus conexiones.",
     "dismiss_before_delete": "Despedir al miembro antes de eliminar su cuenta.",
+    "leave_company_before_delete": "Abandonar la empresa antes de eliminar la cuenta.",
     "user_already_banned": "El usuario ya está prohibido.",
     "user_not_banned": "Usuario no prohibido.",
     "bio_too_long": "Bio demasiado largo.",
@@ -40,7 +41,7 @@
     "not_a_member": "No es miembro",
     "member_not_found": "No se ha encontrado un miembro.",
     "banned_user_cannot_be_accepted": "El usuario prohibido no puede ser aceptado como miembro.",
-    "user_not_found": "Usuario no encontrado",
+    "user_not_found": "Usuario no encontrado.",
     "user_must_register_first": "El usuario debe registrarse primero con una nueva cuenta de Discord.",
     "user_must_not_be_member": "El usuario con una nueva cuenta de Discord no debe ser miembro.",
     "already_member": "El usuario ya es miembro.",
@@ -57,7 +58,7 @@
     "member_update": "¡Ahora eres miembro de {company_name}!",
     "losing_admin_permission": "Actualización de rol rechazada: los nuevos roles eliminarán el permiso de administrador del usuario actual.",
 
-    "announcement_not_found": "Anuncio no encontrado",
+    "announcement_not_found": "Anuncio no encontrado.",
     "event_staff_announcement_limit": "El personal de eventos solo puede publicar anuncios de eventos.",
     "announcement_only_creator_can_edit": "Solo el creador de anuncios puede editar el anuncio.",
     "announcement_only_creator_can_delete": "Solo el creador del anuncio puede eliminar el anuncio.",
@@ -89,7 +90,7 @@
     "application_already_accepted": "Solicitud ya aceptada",
     "application_already_declined": "La solicitud ya ha sido rechazada",
     "application_already_processed": "Solicitud ya procesada, estado desconocido.",
-    "application_not_found": "Solicitud no encontrada",
+    "application_not_found": "Solicitud no encontrada.",
     "application_status_updated":"Estado de la solicitud actualizado",
     "application_updated": "Aplicación actualizada",
     "application_message_recorded": "Este es un recordatorio de que su mensaje ha sido grabado.",
@@ -102,10 +103,19 @@
     "division_validation_not_found": "No se ha encontrado la solicitud de validación de la división de entrega.",
     "division_not_validated": "¡Esta entrega no está validada como una entrega de división!",
 
-    "event_not_found": "Evento no encontrado",
+    "event_not_found": "Evento no encontrado.",
 
     "invalid_distance_unit": "Unidad de distancia no válida. Solo se aceptan “métricos” e “imperial”.",
     "invalid_value": "Valor no válido para {key}",
-    "admin_cannot_be_changed": "Los roles con permiso de administrador no se pueden cambiar, póngase en contacto con el equipo de desarrollo.",
-    "config_data_type_mismatch": "El tipo de datos de una o más claves no coincide con el tipo de datos original."
+    "config_data_type_mismatch": "El tipo de datos de una o más claves no coincide con el tipo de datos original.",
+    
+    "invalid_time_range": "La hora de inicio debe ser anterior a la hora de finalización.",
+    "invalid_challenge_type": "Tipo de desafío no válido.",
+    "invalid_required_roles": "Roles requeridos no válidos.",
+    "invalid_reward_points": "Los puntos de recompensa no deben ser negativos.",
+    "invalid_delivery_count": "El recuento de entregas no debe ser negativo ni cero.",
+    "challenge_not_found": "Desafío no encontrado.",
+    "challenge_delivery_not_found": "La entrega no se acepta para el desafío.",
+    "challenge_delivery_already_accepted": "La entrega ya se aceptó para el desafío.",
+    "maximum_15_active_challenge": "Se permiten como máximo 15 desafíos activos al mismo tiempo."
 }

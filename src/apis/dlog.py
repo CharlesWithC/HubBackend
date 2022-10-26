@@ -85,18 +85,32 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
                 ver = "v5"
         telemetry = ver + orgt
 
+    division = ""
+    cur.execute(f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
+    p = cur.fetchall()
+    if len(p) != 0:
+        division = str(p[0][0])
+
+    challenge_record = []
+    cur.execute(f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
+    o = cur.fetchall()
+    for oo in o:
+        challenge_record.append(oo[0])
+
     userinfo = getUserInfo(userid = t[0][0])
     if userid == -1 and config.privacy:
         userinfo = getUserInfo(privacy = True)
 
     return {"error": False, "response": {"logid": str(logid), "user": userinfo, \
-        "distance": str(distance), "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}
+        "distance": str(distance), "division": division, "challenge_record": challenge_record, \
+            "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}
 
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1):
+        start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
+        challenge: Optional[str] = "any", division: Optional[str] = "any"):
     rl = ratelimit(request.client.host, 'GET /dlog/list', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -134,7 +148,31 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 
     limit = ""
     if quserid != -1:
-        limit = f"AND userid = {quserid}"
+        limit += f"AND userid = {quserid} "
+    if challenge == "include":
+        limit = limit
+    elif challenge == "only":
+        limit += f"AND logid IN (SELECT logid FROM challenge_record) "
+    elif challenge == "none":
+        limit += f"AND logid NOT IN (SELECT logid FROM challenge_record) "
+    else:
+        try:
+            challengeid = int(challenge)
+            limit += f"AND logid IN (SELECT logid FROM challenge_record WHERE challengeid = {challengeid}) "
+        except:
+            pass
+    if division == "include":
+        limit = limit
+    elif division == "only":
+        limit += f"AND logid IN (SELECT logid FROM division WHERE status = 1) "
+    elif division == "none":
+        limit += f"AND logid NOT IN (SELECT logid FROM division WHERE status = 1) "
+    else:
+        try:
+            divisionid = int(division)
+            limit += f"AND logid IN (SELECT logid FROM division WHERE status = 1 AND divisionid = {divisionid}) "
+        except:
+            pass
     
     timelimit = ""
     if start_time != -1 and end_time != -1:
@@ -181,12 +219,6 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 
         profit = tt[4]
         unit = tt[5]
-
-        name = "Unknown"
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[0]}")
-        p = cur.fetchall()
-        if len(p) > 0:
-            name = p[0][0]
         
         userinfo = getUserInfo(userid = tt[0])
         if userid == -1 and config.privacy:
@@ -196,16 +228,24 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         if tt[7] == 0:
             status = 2
 
-        division_validated = False
-        cur.execute(f"SELECT * FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
+        division = ""
+        cur.execute(f"SELECT divisionid FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
         p = cur.fetchall()
-        if len(p) > 0:
-            division_validated = True
+        if len(p) != 0:
+            division = str(p[0][0])
+
+        challenge_record = []
+        cur.execute(f"SELECT challengeid FROM challenge_record WHERE logid = {tt[3]} AND logid >= 0")
+        o = cur.fetchall()
+        for oo in o:
+            challenge_record.append(oo[0])
+
         ret.append({"logid": str(tt[3]), "user": userinfo, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
-                        "division_validated": division_validated, "status": str(status), "timestamp": str(tt[2])})
+                        "division": division, "challenge_record": challenge_record, \
+                            "status": str(status), "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = cur.fetchall()
@@ -494,10 +534,10 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
 
 @app.get(f"/{config.abbr}/dlog/leaderboard")
 async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
-        point_types: Optional[str] = "distance,event,division,myth", userids: Optional[str] = ""):
+        point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -517,11 +557,13 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     nlcachetime = -1
 
     userdistance = {}
+    userchallenge = {}
     userevent = {}
     userdivision = {}
     usermyth = {}
 
     nluserdistance = {}
+    nluserchallenge = {}
     nluserevent = {}
     nluserdivision = {}
     nlusermyth = {}
@@ -544,6 +586,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                     usecache = True
                     cachetime = ll
                     userdistance = t["userdistance"]
+                    userchallenge = t["userchallenge"]
                     userevent = t["userevent"]
                     userdivision = t["userdivision"]
                     usermyth = t["usermyth"]
@@ -558,6 +601,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nlusecache = True
             nlcachetime = ll
             nluserdistance = t["nluserdistance"]
+            nluserchallenge = t["nluserchallenge"]
             nluserevent = t["nluserevent"]
             nluserdivision = t["nluserdivision"]
             nlusermyth = t["nlusermyth"]
@@ -625,6 +669,16 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             else:
                 userdistance[tt[0]] += tt[1]
             userdistance[tt[0]] = int(userdistance[tt[0]])
+        
+        # calculate challenge
+        cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in allusers:
+                continue
+            if not oo[0] in userchallenge.keys():
+                userchallenge[oo[0]] = 0
+            userchallenge[oo[0]] += oo[1]
 
         # calculate event
         cur.execute(f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
@@ -681,6 +735,11 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     for k in userdistance.keys():
         if "distance" in limittype:
             usertot[k] = round(userdistance[k] * ratio)
+    for k in userchallenge.keys():
+        if not k in usertot.keys():
+            usertot[k] = 0
+        if "challenge" in limittype:
+            usertot[k] += userchallenge[k]
     for k in userevent.keys():
         if not k in usertot.keys():
             usertot[k] = 0
@@ -729,6 +788,16 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                 nluserdistance[tt[0]] += tt[1]
             nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
 
+        # calculate challenge
+        cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
+        o = cur.fetchall()
+        for oo in o:
+            if not oo[0] in allusers:
+                continue
+            if not oo[0] in nluserchallenge.keys():
+                nluserchallenge[oo[0]] = 0
+            nluserchallenge[oo[0]] += oo[1]
+
         # calculate event
         cur.execute(f"SELECT attendee, points FROM event")
         t = cur.fetchall()
@@ -769,6 +838,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         # calculate total point
         for k in nluserdistance.keys():
             nlusertot[k] = round(nluserdistance[k] * ratio)
+        for k in nluserchallenge.keys():
+            if not k in nlusertot.keys():
+                nlusertot[k] = 0
+            nlusertot[k] += nluserchallenge[k]
         for k in nluserevent.keys():
             if not k in nlusertot.keys():
                 nlusertot[k] = 0
@@ -823,11 +896,14 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         withpoint.append(userid)
 
         distance = 0
+        challengepnt = 0
         eventpnt = 0
         divisionpnt = 0
         mythpnt = 0
         if userid in userdistance.keys():
             distance = userdistance[userid]
+        if userid in userchallenge.keys():
+            challengepnt = userchallenge[userid]
         if userid in userevent.keys():
             eventpnt = userevent[userid]
         if userid in userdivision.keys():
@@ -837,9 +913,9 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), \
-                "points": {"distance": str(distance), "event": str(eventpnt), "division": str(divisionpnt), \
-                    "myth": str(mythpnt), "total": str(usertot[userid]), "rank": str(userrank[userid]), \
-                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
+                "points": {"distance": str(distance), "challenge": str(challengepnt), "event": str(eventpnt), \
+                    "division": str(divisionpnt), "myth": str(mythpnt), "total": str(usertot[userid]), \
+                    "rank": str(userrank[userid]), "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
 
     # drivers with points (WITHOUT LIMIT)
     for userid in nlusertot_id:
@@ -852,15 +928,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
         withpoint.append(userid)
 
-        distance = 0
-        eventpnt = 0
-        divisionpnt = 0
-        mythpnt = 0
-
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), \
-                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), \
-                        "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
+                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
+                "rank": str(rank), "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
     for userid in allusers:
@@ -869,18 +940,21 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         
         if str(userid) in limituser or len(limituser) == 0:
             ret.append({"user": getUserInfo(userid = userid), 
-                "points": {"distance": "0", "event": "0", "division": "0", "myth": "0", "total": "0", "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)}})
+                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
+                    "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)}})
 
     if not usecache:
         ts = int(time.time())
         if not ts in cleaderboard.keys():
             cleaderboard[ts] = []
         cleaderboard[ts].append({"start_time": start_time, "end_time": end_time, "speed_limit": speed_limit, "game": game,\
-            "userdistance": userdistance, "userevent": userevent, "userdivision": userdivision, "usermyth": usermyth})
+            "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
+            "userdivision": userdivision, "usermyth": usermyth})
 
     if not nlusecache:
         ts = int(time.time())
-        cnlleaderboard[ts]={"nluserdistance": nluserdistance, "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nlusermyth": nlusermyth, \
+        cnlleaderboard[ts]={"nluserdistance": nluserdistance, "nluserchallenge": nluserchallenge, \
+            "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nlusermyth": nlusermyth, \
             "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
 
     if (page - 1) * page_size >= len(ret):
@@ -924,11 +998,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         elif dd[3] == 2:
             game = "ats"
         
-        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        name = "unknown"
-        if len(t) > 0:
-            name = t[0][0]
+        name = getUserInfo(userid)["name"]
 
         data = json.loads(decompress(dd[8]))
         

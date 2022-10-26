@@ -94,7 +94,7 @@ async def getApplication(request: Request, response: Response, authorization: st
 
 @app.get(f"/{config.abbr}/application/list")
 async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, order: Optional[str] = "desc"):
     rl = ratelimit(request.client.host, 'GET /application/list', 180, 90)
     if rl > 0:
@@ -182,11 +182,6 @@ async def getApplications(request: Request, response: Response, authorization: s
 
     ret = []
     for tt in t:
-        cur.execute(f"SELECT name FROM user WHERE discordid = {tt[2]}")
-        p = cur.fetchall()
-        name = "Unknown"
-        if len(p) > 0:
-            name = p[0][0]
         ret.append({"applicationid": str(tt[0]), "creator": getUserInfo(discordid = tt[2]), "application_type": str(tt[1]), \
                 "status": str(tt[4]), "submit_timestamp": str(tt[3]), "update_timestamp": str(tt[5]), \
                     "last_update_staff": getUserInfo(userid = tt[6])})
@@ -196,7 +191,7 @@ async def getApplications(request: Request, response: Response, authorization: s
 # Self-operation
 @app.post(f"/{config.abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application', 180, 3)
+    rl = ratelimit(request.client.host, 'POST /application', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -291,7 +286,7 @@ async def postApplication(request: Request, response: Response, authorization: s
     cur.execute(f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
     conn.commit()
 
-    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data))}', 0, {int(time.time())}, -1, 0)")
+    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
     conn.commit()
 
     if applicantrole != 0:
@@ -411,7 +406,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         
     data[f"[Message] {name} ({userid}) #{i}"] = message
 
-    cur.execute(f"UPDATE application SET data = '{compress(json.dumps(data))}' WHERE applicationid = {applicationid}")
+    cur.execute(f"UPDATE application SET data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     conn.commit()
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
@@ -558,8 +553,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if status != 0:
         update_timestamp = int(time.time())
 
-    cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data))}' WHERE applicationid = {applicationid}")
-    await AuditLog(adminid, f"Updated application {applicationid} status to {statustxt}")
+    cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
     conn.commit()
 
     if message == "":
@@ -593,7 +588,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 # Higher-management
 @app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/positions', 180, 3)
+    rl = ratelimit(request.client.host, 'PATCH /application/positions', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -608,7 +603,7 @@ async def patchApplicationPositions(request: Request, response: Response, author
     cur = conn.cursor()
 
     form = await request.form()
-    positions = form["positions"].replace("'", "''")
+    positions = convert_quotation(form["positions"])
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = cur.fetchall()
@@ -618,6 +613,6 @@ async def patchApplicationPositions(request: Request, response: Response, author
         cur.execute(f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     conn.commit()
 
-    await AuditLog(adminid, f"Updated open staff positions to: {positions}")
+    await AuditLog(adminid, f"Updated staff positions to: `{positions}`")
 
     return {"error": False}

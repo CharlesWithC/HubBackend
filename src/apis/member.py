@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from discord import Webhook, Embed
 from aiohttp import ClientSession
 from typing import Optional
@@ -54,10 +54,15 @@ for division in divisions:
 
 def point2rank(point):
     keys = list(RANKROLE.keys())
-    for i in range(len(keys)):
-        if point < keys[i]:
+    if point < keys[0]:
+        return -1
+    if point >= keys[0] and point < keys[1]:
+        return RANKROLE[keys[0]]
+    for i in range(1, len(keys)):
+        if point >= keys[i-1] and point < keys[i]:
             return RANKROLE[keys[i-1]]
-    return RANKROLE[keys[-1]]
+    if point >= keys[-1]:
+        return RANKROLE[keys[-1]]
 
 # Basic Info Section
 @app.get(f"/{config.abbr}/member/roles")
@@ -106,7 +111,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
     if len(lroles) > 5:
         lroles = lroles[:5]
 
-    name = name.replace("'","''").lower()
+    name = convert_quotation(name).lower()
     
     if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp"]:
         order_by = "user_id"
@@ -215,6 +220,13 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+
+    if userid == -1:
+        return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={t[0][5]}", status_code=302)
+
+    for param in request.query_params:
+        if param != "userid":
+            return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
     
     rl = ratelimit(request.client.host, 'GET /member/banner', 10, 2)
     if rl > 0:
@@ -287,6 +299,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": r.text}
             
         response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
+        response.headers["Cache-Control"] = "public, max-age=7200, stale-if-error=604800"
         return response
         
     except:
@@ -326,6 +339,15 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             userdistance[tt[0]] += tt[1]
         userdistance[tt[0]] = int(userdistance[tt[0]])
 
+    # calculate challenge
+    userchallenge = {}
+    cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
+    o = cur.fetchall()
+    for oo in o:
+        if not oo[0] in userchallenge.keys():
+            userchallenge[oo[0]] = 0
+        userchallenge[oo[0]] += oo[1]
+
     # calculate event
     userevent = {}
     cur.execute(f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
@@ -361,11 +383,14 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         usermyth[oo[0]] += oo[1]
     
     distance = 0
+    challengepnt = 0
     eventpnt = 0
     divisionpnt = 0
     mythpnt = 0
     if userid in userdistance.keys():
         distance = userdistance[userid]
+    if userid in userchallenge.keys():
+        challengepnt = userchallenge[userid]
     if userid in userevent.keys():
         eventpnt = userevent[userid]
     if userid in userdivision.keys():
@@ -373,7 +398,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     if userid in usermyth.keys():
         mythpnt = usermyth[userid]
 
-    totalpnt = distance + eventpnt + divisionpnt + mythpnt
+    totalpnt = distance + challengepnt + eventpnt + divisionpnt + mythpnt
     rank = point2rank(totalpnt)
 
     try:
@@ -457,7 +482,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
     name = t[0][1]
     cur.execute(f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
     cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(adminid, f'Added member **{name}** (User ID `{userid}`) (Discord ID `{discordid}`)')
+    await AuditLog(adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
     conn.commit()
 
     if config.discord_bot_dm:
@@ -623,15 +648,14 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                     pass
 
     if config.perms.driver[0] in removedroles:
-        cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
-    audit = f"Updated **{username}** (User ID `{userid}`) roles:\n"
+    audit = f"Updated `{username}` (User ID: `{userid}`) roles:\n"
     for add in addedroles:
-        audit += f"**+** {ROLES[add]}\n"
+        audit += f"`+ {ROLES[add]}`\n"
     for remove in removedroles:
-        audit += f"**-** {ROLES[remove]}\n"
-    audit = audit[:-1].replace("'","''")
+        audit += f"`- {ROLES[remove]}`\n"
+    audit = convert_quotation(audit[:-1])
     await AuditLog(adminid, audit)
     conn.commit()
 
@@ -674,8 +698,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     
     if int(distance) > 0:
         distance = "+" + form["distance"]
-
-    await AuditLog(adminid, f"Updated user #{userid} points:\nDistance: {distance} km\nMyth Point: {mythpoint}")
+    
+    username = getUserInfo(userid = userid)["name"]
+    await AuditLog(adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
 
     return {"error": False}
 
@@ -692,7 +717,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
         return au
     discordid = au["discordid"]
     userid = au["userid"]
-    name = au["name"].replace("'", "''")
+    name = convert_quotation(au["name"])
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
@@ -719,13 +744,13 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     steamid = t[0][0]
-    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
 
-    await AuditLog(-999, f'Member resigned: **{name}** (`{discordid}`)')
+    await AuditLog(-999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
+    
     return {"error": False}
 
 @app.delete(f"/{config.abbr}/member/dismiss")
@@ -776,11 +801,10 @@ async def dismissMember(request: Request, response: Response, authorization: str
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
 
-    cur.execute(f"UPDATE dlog SET userid = -userid WHERE userid = {userid}")
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
-    await AuditLog(adminid, f'Dismissed member: **{name}** (`{udiscordid}`)')
+    await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
     return {"error": False}

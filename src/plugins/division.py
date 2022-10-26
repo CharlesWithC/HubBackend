@@ -84,7 +84,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         status = tt[3]
         update_timestamp = tt[4]
         update_staff_userid = tt[5]
-        message = b64d(tt[6])
+        message = decompress(tt[6])
 
         ok = False
         for i in roles:
@@ -124,47 +124,12 @@ async def getDivision(request: Request, response: Response, authorization: str =
             # tstats.append({"user": getUserInfo(userid = uid), "points": str(userpnt[uid])})
         stats.append({"divisionid": str(division['id']), "name": division['name'], "total_drivers": len(userpnt), "total_points": totalpnt})
     
-    delivery = []
-    cur.execute(f"SELECT logid FROM division WHERE status = 1 AND logid >= 0 ORDER BY update_timestamp DESC LIMIT 10")
-    p = cur.fetchall()
-    for pp in p:
-        cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance FROM dlog WHERE logid = {pp[0]}")
-        t = cur.fetchall()
-        tt = t[0]
-        data = json.loads(decompress(tt[1]))
-        source_city = "Unknown city"
-        source_company = "Unknown company"
-        destination_city = "Unknown city"
-        destination_company = "Unknown company"
-        if data["data"]["object"]["source_city"] != None:
-            source_city = data["data"]["object"]["source_city"]["name"]
-        if data["data"]["object"]["source_company"] != None:
-            source_company = data["data"]["object"]["source_company"]["name"]
-        if data["data"]["object"]["destination_city"] != None:
-            destination_city = data["data"]["object"]["destination_city"]["name"]
-        if data["data"]["object"]["destination_company"] != None:
-            destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = data["data"]["object"]["cargo"]["name"]
-        cargo_mass = data["data"]["object"]["cargo"]["mass"]
-        distance = tt[6]
-        if distance < 0:
-            distance = 0
-
-        profit = tt[4]
-        unit = tt[5]
-
-        delivery.append({"logid": str(tt[3]), "user": getUserInfo(userid = tt[0]), "distance": str(distance), \
-            "source_city": source_city, "source_company": source_company, \
-                "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
-                        "division_validated": True, "timestamp": str(tt[2])})
-    
-    return {"error": False, "response": {"statistics": stats, "recent_deliveries": delivery}}
+    return {"error": False, "response": stats}   
 
 # Self-operation
 @app.post(f"/{config.abbr}/division")
-async def postDivision(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /division', 180, 3)
+async def postDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'POST /division', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -182,7 +147,6 @@ async def postDivision(request: Request, response: Response, authorization: str 
     form = await request.form()
     try:
         logid = int(form["logid"])
-        divisionid = int(form["divisionid"])
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -274,7 +238,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
     return {"error": False}
 
 @app.get(f"/{config.abbr}/division/list/pending")
-async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None)):
+async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
+        page: Optional[int] = 1, page_size: Optional[int] = 10):
     rl = ratelimit(request.client.host, 'GET /division/list/pending', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -285,24 +250,37 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
         response.status_code = 401
         return au
         
+    if page <= 0:
+        page = 1
+    
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+        
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0 AND logid >= 0")
+    limit = ""
+    if divisionid != -1:
+        limit = f"AND divisionid = {divisionid}"
+    cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
+        LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        name = "Unknown"
-        cur.execute(f"SELECT name FROM user WHERE userid = {tt[1]}")
-        ttt = cur.fetchall()
-        if len(ttt) > 0:
-            name = ttt[0][0]
         ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": getUserInfo(userid = tt[1])})
     
-    return {"error": False, "response": ret[:100]}
+    cur.execute(f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 @app.patch(f"/{config.abbr}/division")
-async def patchDivision(request: Request, response: Response, authorization: str = Header(None)):
+async def patchDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'PATCH /division', 180, 30)
     if rl > 0:
         response.status_code = 429
@@ -320,36 +298,29 @@ async def patchDivision(request: Request, response: Response, authorization: str
     form = await request.form()
     try:
         logid = int(form["logid"])
-        divisionid = int(form["divisionid"])
         message = str(form["message"])
         status = int(form["status"])
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
     
-    cur.execute(f"SELECT divisionid, status FROM division WHERE logid = {logid} AND logid >= 0")
+    cur.execute(f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found")}
     if not divisionid in divisiontxt.keys():
         divisionid = t[0][0]
+    userid = t[0][2]
         
-    cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{b64e(message)}' WHERE logid = {logid}")
+    cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     conn.commit()
 
     STATUS = {0: "pending", 1: "validated", 2: "denied"}
-    await AuditLog(adminid, f"Updated division validation request for delivery #{logid} to {STATUS[status]}")
+    await AuditLog(adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
 
-    cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
-    t = cur.fetchall()
-    userid = t[0][0]
-    cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
-    discordid = t[0][0]
-    cur.execute(f"SELECT discordid FROM user WHERE userid = {adminid}")
-    t = cur.fetchall()
-    adiscordid = t[0][0]
+    discordid = getUserInfo(userid = userid)["discordid"]
+    adiscordid = getUserInfo(userid = adminid)["discordid"]
 
     if config.discord_bot_dm:
         try:

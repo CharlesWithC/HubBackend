@@ -10,12 +10,22 @@ from datetime import datetime, timedelta
 import json, time, math, zlib, re
 import hmac, base64, struct, hashlib
 import ipaddress, requests
+from iso3166 import countries
 
 from db import newconn
 from app import config, tconfig
 import multilang as ml
 
+def convert_quotation(s):
+    s = str(s)
+    return s.replace("'", "\\'")
+
+def reverse_convert_quotation(s):
+    s = str(s)
+    return s.replace("\\'", "'")
+
 def b64e(s):
+    s = str(s)
     s = re.sub(re.compile('<.*?>'), '', s)
     try:
         return b64encode(s.encode()).decode()
@@ -23,12 +33,15 @@ def b64e(s):
         return s
     
 def b64d(s):
+    s = str(s)
     try:
         return b64decode(s.encode()).decode()
     except:
         return s
 
 def compress(s):
+    if s == "":
+        return ""
     if type(s) == str:
         s = s.encode()
     t = zlib.compress(s)
@@ -36,6 +49,8 @@ def compress(s):
     return t
 
 def decompress(s):
+    if s == "":
+        return ""
     if type(s) == str:
         s = s.encode()
     t = b64decode(s)
@@ -161,6 +176,16 @@ def get_totp_token(secret):
 
 def valid_totp(otp, secret):
     return str(otp) in get_totp_token(secret)
+
+def getRequestCountry(request):
+    country = "Unknown Country"
+    if "cf-ipcountry" in request.headers.keys():
+        country = request.headers["cf-ipcountry"]
+        try:
+            country = countries.get(country).name
+        except:
+            pass
+    return country
 
 cuserinfo = {} # user info cache
 
@@ -410,8 +435,7 @@ async def AuditLog(userid, text):
             name = t[0][0]
     else:
         name = "System"
-    text = text.replace("''","'").replace("'","''")
-    cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{text}', {int(time.time())})")
+    cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
     conn.commit()
     if config.webhook_audit != "":
         try:

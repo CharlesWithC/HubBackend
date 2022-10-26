@@ -15,7 +15,7 @@ cur = conn.cursor()
 
 # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT,\
+cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT, \
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire_timestamp BIGINT, reason TEXT)")
@@ -41,8 +41,16 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, us
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, truckersmp_link TEXT, departure TEXT, destination TEXT, distance TEXT, \
+cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, \
     meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT, userid INT, title TEXT, description TEXT, \
+    start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, \
+    reward_points BIGINT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) \
+            DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) \
+            DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
@@ -51,14 +59,13 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid B
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
 
-cur.execute(f"SELECT * FROM settings WHERE skey = 'nxtuserid'")
+cur.execute(f"SELECT skey FROM settings")
 t = cur.fetchall()
-if len(t) == 0:
-    cur.execute(f"INSERT INTO settings VALUES (0, 'nxtuserid', 1)")
-    cur.execute(f"INSERT INTO settings VALUES (0, 'nxtappid', 1)")
-    cur.execute(f"INSERT INTO settings VALUES (0, 'nxtannid', 1)")
-    cur.execute(f"INSERT INTO settings VALUES (0, 'nxtlogid', 1)")
-    cur.execute(f"INSERT INTO settings VALUES (0, 'nxteventid', 1)")
+keys = ["nxtuserid", "nxtappid", "nxtannid", "nxtlogid", "nxteventid", "nxtchallengeid"]
+for key in keys:
+    if not (key,) in t:
+        cur.execute(f"INSERT INTO settings VALUES (0, '{key}', 1)")
+if not ("version",) in t:
     cur.execute(f"INSERT INTO settings VALUES (0, 'version', '{version}')")
 
 indexes = ["CREATE INDEX user_userid ON user (userid)",
@@ -74,9 +81,6 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX dlog_userid ON dlog (userid)",
 "CREATE INDEX dlog_navioid ON dlog (navioid)",
 "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
-"CREATE INDEX dlogcache_data_type ON dlogcache (data_type)",
-"CREATE INDEX dlogcache_data_scale ON dlogcache (data_scale)",
-"CREATE INDEX dlogcache_start_timestamp ON dlogcache (start_timestamp)",
 "CREATE INDEX telemetry_logid ON telemetry (logid)",
 "CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid)",
 "CREATE INDEX temptelemetry_uuid ON temptelemetry (uuid)",
@@ -87,6 +91,14 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX application_applicationid ON application (applicationid)",
 "CREATE INDEX application_discordid ON application (discordid)",
 "CREATE INDEX event_eventid ON event (eventid)",
+"CREATE INDEX challenge_challengeid ON challenge (challengeid)",
+"CREATE INDEX challenge_start_time ON challenge (start_time)",
+"CREATE INDEX challenge_end_time ON challenge (end_time)",
+"CREATE INDEX challenge_type ON challenge (challenge_type)",
+"CREATE INDEX challenge_record_userid ON challenge_record (userid)",
+"CREATE INDEX challenge_record_challengeid ON challenge_record (challengeid)",
+"CREATE INDEX challenge_completed_userid ON challenge_completed (userid)",
+"CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
 "CREATE INDEX session_token ON session (token)",
 "CREATE INDEX temp_identity_proof_token ON temp_identity_proof (token)",
 "CREATE INDEX appsession_token ON appsession (token)",

@@ -24,6 +24,7 @@
     "dismiss_before_ban": "Afsig medlemet for ban.",
     "dismiss_before_unbind": "Afskedig medlem, før deres forbindelser ophæves.",
     "dismiss_before_delete": "Afvis medlem, før du sletter deres konto.",
+    "leave_company_before_delete": "Forlad virksomheden, før du sletter konto.",
     "user_already_banned": "Brugeren er allerede bannet.",
     "user_not_banned": "Brugen er ikke bannet.",
     "bio_too_long": "Bio for lang.",
@@ -40,7 +41,7 @@
     "not_a_member": "Ikke medlem",
     "member_not_found": "Medlemet blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Den bannede bruger kan ikke blive medlem.",
-    "user_not_found": "Bruger ikke fundet",
+    "user_not_found": "Bruger ikke fundet.",
     "user_must_register_first": "Brugeren skal først registrere sig med en ny Discord-konto.",
     "user_must_not_be_member": "Bruger med ny Discord-konto må ikke være medlem.",
     "already_member": "Brugeren er allerede medlem.",
@@ -57,7 +58,7 @@
     "member_update": "Du er nu medlem af {company_name}!",
     "losing_admin_permission": "Rolleopdatering afvist: Nye roller fjerner administratortilladelse fra den nuværende bruger.",
 
-    "announcement_not_found": "Bekendtgørelse ikke funder",
+    "announcement_not_found": "Bekendtgørelse ikke funder.",
     "event_staff_announcement_limit": "Kun Event staff kan poste event bekendtgørelser.",
     "announcement_only_creator_can_edit": "Kun bekendtgørelses ejeren kan lave ændringer.",
     "announcement_only_creator_can_delete": "Kun bekendtgørelses ejeren kan slette bekendtgørelsen.",
@@ -89,7 +90,7 @@
     "application_already_accepted": "Ansøgningen er allerede acctepteret",
     "application_already_declined": "Ansøgningen er allerede afvist",
     "application_already_processed": "Ansøgningen er allerede bearbejdet, status ukendt.",
-    "application_not_found": "Ansøgningen ikke fundet",
+    "application_not_found": "Ansøgningen ikke fundet.",
     "application_status_updated":"Ansøgnings status er opdateret",
     "application_updated": "Ansøgning opdateret",
     "application_message_recorded": "Dette er en påmindelse om at din besked er blevet optaget.",
@@ -102,10 +103,19 @@
     "division_validation_not_found": "Anmodning om validering af en divisions levering blev ikke fundet.",
     "division_not_validated": "Denne leverance er ikke valideret som en divisions levering!",
 
-    "event_not_found": "Begivenhed ikke fundet",
+    "event_not_found": "Begivenhed ikke fundet.",
 
     "invalid_distance_unit": "Ugyldig afstandsenhed. Kun 'metric' og 'imperial' accepteres.",
     "invalid_value": "Ugyldig værdi for {key}",
-    "admin_cannot_be_changed": "Roller med administratortilladelse kan ikke ændres, kontakt venligst udviklingsteamet.",
-    "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype."
+    "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype.",
+    
+    "invalid_time_range": "Starttidspunktet skal være tidligere end sluttidspunktet.",
+    "invalid_challenge_type": "Ugyldig udfordringstype.",
+    "invalid_required_roles": "Ugyldige påkrævede roller.",
+    "invalid_reward_points": "Belønningspoint må ikke være negative.",
+    "invalid_delivery_count": "Leveringsantallet må ikke være negativt eller nul.",
+    "challenge_not_found": "Udfordring ikke fundet.",
+    "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
+    "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
+    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid."
 }

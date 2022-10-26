@@ -37,7 +37,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     
     form = await request.form()
     try:
-        email = str(form["email"]).replace("'", "''")    
+        email = convert_quotation(form["email"])  
         password = str(form["password"]).encode('utf-8')
         hcaptcha_response = form["h-captcha-response"]
     except:
@@ -84,6 +84,9 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
 
+    username = getUserInfo(discordid = discordid)["name"]
+    await AuditLog(-999, f"Password login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+
     return {"error": False, "response": {"token": stoken, "mfa": False}}
 
 # Discord Auth
@@ -128,16 +131,16 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             cur.execute(f"SELECT * FROM user WHERE discordid = '{discordid}'")
             t = cur.fetchall()
             username = str(user_data['username'])
-            username = username.replace("'", "''").replace(",","")
+            username = convert_quotation(username).replace(",","")
             email = str(user_data['email'])
-            email = email.replace("'", "''")
+            email = convert_quotation(email)
             if not "@" in email: # make sure it's not empty
                 return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
             avatar = str(user_data['avatar'])
             if len(t) == 0:
                 cur.execute(f"INSERT INTO user VALUES (-1, {discordid}, '{username}', '{avatar}', '',\
                     '{email}', -1, -1, '', {int(time.time())}, '')")
-                await AuditLog(-999, f"User register: {username} (`{discordid}`)")
+                await AuditLog(-999, f"User register: `{username}` (Discord ID: `{discordid}`)")
             else:
                 cur.execute(f"UPDATE user_password SET email = '{email}' WHERE discordid = '{discordid}'")
                 cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{discordid}'")
@@ -171,6 +174,8 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
                 cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
             cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
             conn.commit()
+            username = getUserInfo(discordid = discordid)["name"]
+            await AuditLog(-999, f"Discord login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
             return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
         
         if 'error_description' in tokens.keys():
@@ -248,6 +253,8 @@ async def getSteamCallback(request: Request, response: Response):
         cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
+    username = getUserInfo(discordid = discordid)["name"]
+    await AuditLog(-999, f"Steam login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
 
     return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
@@ -640,6 +647,8 @@ async def postMFA(request: Request, response: Response):
         cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
+    username = getUserInfo(discordid = discordid)["name"]
+    await AuditLog(-999, f"2FA login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
 
     return {"error": False, "response": {"token": stoken}}
 

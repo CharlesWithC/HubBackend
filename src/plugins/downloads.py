@@ -29,7 +29,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     t = cur.fetchall()
     data = ""
     if len(t) > 0:
-        data = b64d(t[0][0])
+        data = decompress(t[0][0])
         
     return {"error": False, "response": data}
 
@@ -51,7 +51,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     
     form = await request.form()
     try:
-        data = b64e(form["data"])
+        data = compress(form["data"])
     except:        
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

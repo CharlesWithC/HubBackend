@@ -1,5 +1,28 @@
 # Changelog
 
+**v1.17.1**  
+**[Bug fixes]**  
+1.*[Member]* Fixed **PATCH** `/member/roles/rank` giving highest role when there is no `point = 0` role  
+**[Minor changes]**  
+2.*[Member]* Added automatic redirect for `/member/banner` to `?userid=` when query param is not `userid`  
+3.*[Announcement]* Added `order_by` (`announcementid` or `title`) and `title` (for searching) parameter to **GET** `/announcement`  
+4.*[Division]* Moved `divisionid` to request param instead of form data for **POST** `/division`, **PATCH** `/division`  
+5.*[Division]* Added `page`, `page_size`, `divisionid` parameter to **GET** `/division/list/pending`  
+6.*[Division]* Added division info to **GET** `/dlog`  
+7.*[Division]* Added detailed division info to **GET** `/dlog/list`, removed `division_validated` field  
+8.*[Division]* Added `division` request param to `/dlog/list` to query division delivery, removed `recent_deliveries` from **GET** `/division`  
+9.*[Event]* Added `title` (for searching) parameter to **GET** `/event`  
+10.Improved audit log  
+**[New features]**  
+11.*[User]* Updated **DELETE** `/user`, moved `discordid` to request params. If specified, then delete user with the Discord ID. Otherwise delete user themselves. This will not delete a member  
+12.*[Config]* Added `config.delivery_rules` with `max_profit`, `max_speed`, `action` sub-keys. `action` could be `block`, `drop`, `bypass`. `block` will reject the delivery from webhook post, `drop` will drop the item that violated the rule, `bypass` will accept the delivery (or, disable the rules). `drop` will only work for `max_profit`, by reducing it to `0`.  
+13.*[Challenge]* Added new plugin: **challenge**  
+**[Database Changes]**  
+1.*[Announcement]* Plain text for `title` and compressed `content`  
+2.*[Division]* Compressed `message`  
+3.*[Downloads]* Compressed `downloads`  
+4.*[Event]* Plain text for `title`, `departure`, `destination` and compressed `link`, `description`  
+
 **v1.16.1**  
 1.Fixed application setting `user[userid=0]` as `last_update_staff` when nobody updated the application  
 2.Fixed config update corruption due to multiple workers  

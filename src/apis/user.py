@@ -99,7 +99,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 
 @app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = -1, page_size: Optional[int] = 10, name: Optional[str] = '', \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, name: Optional[str] = '', \
         order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
     rl = ratelimit(request.client.host, 'GET /user/list', 180, 90)
     if rl > 0:
@@ -122,7 +122,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
     elif page_size >= 250:
         page_size = 250
     
-    name = name.replace("'","''").lower()
+    name = convert_quotation(name).lower()
     
     if not order_by in ["name", "discord_id", "join_timestamp"]:
         order_by = "discord_id"
@@ -355,7 +355,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid != 0 and userid >= 0:
-        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Steam ID updated from%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
+        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
         p = cur.fetchall()
         if len(p) > 0:
             response.status_code = 429
@@ -365,7 +365,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
             if role == "100":
                 requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
                 requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
-                await AuditLog(userid, f"Steam ID updated from `{orgsteamid}` to `{steamid}`")
+                await AuditLog(userid, f"Updated Steam ID to `{steamid}`")
 
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     conn.commit()
@@ -460,7 +460,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
     try:
         discordid = int(form["discordid"])
         expire = int(form["expire"])
-        reason = form["reason"].replace("'","''")
+        reason = convert_quotation(form["reason"])
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -490,8 +490,8 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         conn.commit()
         duration = "forever"
         if expire != 9999999999999999:
-            duration = f'until {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))} UTC'
-        await AuditLog(adminid, f"Banned **{username}** (Discord ID `{discordid}`) for `{reason}` **{duration}**.")
+            duration = f'until `{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))}` UTC'
+        await AuditLog(adminid, f"Banned `{username}` (Discord ID: `{discordid}`) {duration}.")
         return {"error": False}
     else:
         response.status_code = 409
@@ -527,7 +527,9 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     else:
         cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
         conn.commit()
-        await AuditLog(adminid, f"Unbanned user with Discord ID `{discordid}`")
+        
+        username = getUserInfo(discordid = discordid)["name"]
+        await AuditLog(adminid, f"Unbanned `{username}` (Discord ID: `{discordid}`)")
         return {"error": False}
 
 # Higher Management Section
@@ -587,7 +589,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     cur.execute(f"UPDATE user SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
     conn.commit()
 
-    await AuditLog(adminid, f"Updated user Discord ID from `{old_discord_id}` to `{new_discord_id}`")
+    await AuditLog(adminid, f"Updated Discord ID from `{old_discord_id}` to `{new_discord_id}`")
 
     return {"error": False}
     
@@ -632,51 +634,79 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     cur.execute(f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
     conn.commit()
 
-    await AuditLog(adminid, f"Unbound connections for user with Discord ID `{discordid}`")
+    username = getUserInfo(discordid = discordid)["name"]
+    await AuditLog(adminid, f"Deleted connections of `{username}` (Discord ID: `{discordid}`)")
 
     return {"error": False}
     
 @app.delete(f"/{config.abbr}/user")
-async def deleteUser(request: Request, response: Response, authorization: str = Header(None)):
+async def deleteUser(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'DELETE /user', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm"])
+    au = auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = 401
         return au
-    adminid = au["userid"]
+    auth_discordid = au["discordid"]
+    if discordid == auth_discordid:
+        discordid = -1
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
-    
-    conn = newconn()
-    cur = conn.cursor()
-    
-    form = await request.form()
-    try:
-        discordid = int(form["discordid"])
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
 
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
-    userid = t[0][0]
-    if userid != -1:
-        response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete")}
+    if discordid != -1:
+        au = auth(authorization, request, required_permission = ["admin", "hrm"])
+        if au["error"]:
+            response.status_code = 401
+            return au
+        adminid = au["userid"]
+
+        conn = newconn()
+        cur = conn.cursor()
+        
+        cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        userid = t[0][0]
+        if userid != -1:
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete")}
+        
+        username = getUserInfo(discordid = discordid)["name"]
+        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
+        conn.commit()
+
+        await AuditLog(adminid, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
+
+        return {"error": False}
     
-    cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
-    conn.commit()
+    else:
+        discordid = auth_discordid
+        
+        conn = newconn()
+        cur = conn.cursor()
+        
+        cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
+        t = cur.fetchall()
+        userid = t[0][0]
+        name = t[0][1]
+        if userid != -1:
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "leave_company_before_delete")}
+        
+        username = getUserInfo(discordid = discordid)["name"]
+        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
+        conn.commit()
 
-    await AuditLog(adminid, f"Deleted user with Discord ID `{discordid}`")
+        await AuditLog(-999, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
 
-    return {"error": False}
+        return {"error": False}

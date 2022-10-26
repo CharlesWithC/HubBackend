@@ -255,7 +255,7 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     if page <= 0:
         page = 1
 
-    operation = operation.lower().replace("'","''")
+    operation = convert_quotation(operation.lower())
 
     limit = ""
     if staff_userid != -1:

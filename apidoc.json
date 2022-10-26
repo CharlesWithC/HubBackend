@@ -2,14 +2,31 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.15.12"
+        "version": "1.17.1"
     },
     "paths": {
         "/abbr": {
             "get": {
-                "summary": "Drivers Hub Index",
+                "summary": "Drivers Hub Info",
                 "tags": ["index"],
                 "operationId": "get_index",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/ping": {
+            "get": {
+                "summary": "Ping it!",
+                "tags": ["index"],
+                "operationId": "get_ping",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -757,23 +774,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "discordid": {
-                                        "description": "Discord Snowflake",
-                                        "type": "integer"
-                                    }
-                                }
-                            },
-                            "required": ["discordid"]
-                        }
-                    }
-                },
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Discord Snowflake",
+                        "type": "integar"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1332,7 +1341,7 @@
                                         "type": "integer"
                                     },
                                     "roles": {
-                                        "description": "Roles (Separated with ',')",
+                                        "description": "Roles (Use Role ID, Separate with ',')",
                                         "type": "string"
                                     }
                                 }
@@ -1452,7 +1461,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Required roles (Separated with ',')",
+                        "title": "Required roles (Use Role ID, Separate with ',')",
                         "type": "string"
                     },
                     "name": "roles",
@@ -2091,6 +2100,22 @@
                     },
                     "name": "status",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Division ('include', 'only', 'none', or specify division id)",
+                        "type": "string"
+                    },
+                    "name": "division",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Challenge ('include', 'only', 'none', or specify challenge id)",
+                        "type": "string"
+                    },
+                    "name": "challenge",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -2283,7 +2308,7 @@
                 },  {
                     "required": false,
                     "schema": {
-                        "title": "Point Types, default 'distance,event,division,myth' | Select (multiple) from distance, event, division, myth",
+                        "title": "Point Types, default 'distance,challenge,event,division,myth' | Select (multiple) from distance, challenge, event, division, myth",
                         "type": "string"
                     },
                     "name": "point_types",
@@ -2452,6 +2477,22 @@
                         "type": "string"
                     },
                     "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (announcementid, title)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Title (for searching)",
+                        "type": "string"
+                    },
+                    "name": "title",
                     "in": "query"
                 }, {
                     "required": false,
@@ -3014,6 +3055,504 @@
                 }
             }
         },
+        "/abbr/challenge": {
+            "get": {
+                "summary": "Get Challenge",
+                "tags": ["challenge"],
+                "operationId": "get_challenge",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Challenge ID",
+                        "type": "integer"
+                    },
+                    "name": "challengeid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Post Challenge",
+                "tags": ["challenge"],
+                "operationId": "post_challenge",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "start_time": {
+                                        "description": "Start Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "end_time": {
+                                        "description": "End Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "challenge_type": {
+                                        "description": "Challenge Type (1: Personal | 2: Company)",
+                                        "type": "integar"
+                                    },
+                                    "delivery_count": {
+                                        "description": "Delivery Count",
+                                        "type": "integar"
+                                    },
+                                    "required_roles": {
+                                        "description": "Required Roles (Use Role ID, Required Any, Max 20, Separate with ',')",
+                                        "type": "string"
+                                    },
+                                    "required_distance": {
+                                        "description": "Required Distance (of User Statistics)",
+                                        "type": "integar"
+                                    },
+                                    "reward_points": {
+                                        "description": "Reward Points",
+                                        "type": "integar"
+                                    },
+                                    "public_details": {
+                                        "description": "Make Details Public?",
+                                        "type": "boolean"
+                                    },
+                                    "job_requirements": {
+                                        "description": "Job Requirements (JSON Format)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["title", "start_time", "end_time", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update Challenge",
+                "tags": ["challenge"],
+                "operationId": "patch_challenge",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Challenge ID",
+                        "type": "integer"
+                    },
+                    "name": "challengeid",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "start_time": {
+                                        "description": "Start Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "end_time": {
+                                        "description": "End Timestamp",
+                                        "type": "integar"
+                                    },
+                                    "challenge_type": {
+                                        "description": "Challenge Type (1: Personal | 2: Company)",
+                                        "type": "integar"
+                                    },
+                                    "delivery_count": {
+                                        "description": "Delivery Count",
+                                        "type": "integar"
+                                    },
+                                    "required_roles": {
+                                        "description": "Required Roles (Use Role ID, Required Any, Max 20, Separate with ',')",
+                                        "type": "string"
+                                    },
+                                    "required_distance": {
+                                        "description": "Required Distance (of User Statistics)",
+                                        "type": "integar"
+                                    },
+                                    "reward_points": {
+                                        "description": "Reward Points",
+                                        "type": "integar"
+                                    },
+                                    "public_details": {
+                                        "description": "Make Details Public?",
+                                        "type": "boolean"
+                                    },
+                                    "job_requirements": {
+                                        "description": "Job Requirements (JSON Format)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["title", "start_time", "end_time", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Challenge",
+                "tags": ["challenge"],
+                "operationId": "delete_challenge",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Challenge ID",
+                        "type": "integer"
+                    },
+                    "name": "challengeid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/challenge/list": {
+            "get": {
+                "summary": "Get Challenge List",
+                "tags": ["challenge"],
+                "operationId": "get_challenge_list",
+                "security": [{
+                    "bearerAuth": []
+                }],"parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (challengeid, title, start_time, end_time, required_distance, reward_points, delivery_count)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Start Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "start_time",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "End Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "end_time",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Title",
+                        "type": "string"
+                    },
+                    "name": "title",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Challenge Type (1: Personal | 2: Company)",
+                        "type": "integer"
+                    },
+                    "name": "challenge_type",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Required Role",
+                        "type": "integer"
+                    },
+                    "name": "required_role",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Minimum Required Distance",
+                        "type": "integer"
+                    },
+                    "name": "minimum_required_distance",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Maximum Required Distance",
+                        "type": "integer"
+                    },
+                    "name": "maximum_required_distance",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Must Have Completed",
+                        "type": "boolean"
+                    },
+                    "name": "must_have_completed",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/challenge/delivery": {
+            "put": {
+                "summary": "Add Challenge Delivery",
+                "tags": ["challenge"],
+                "operationId": "put_challenge_delivery",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Challenge ID",
+                        "type": "integer"
+                    },
+                    "name": "challengeid",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logid": {
+                                        "description": "Delivery Log ID",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": ["logid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Challenge Delivery",
+                "tags": ["challenge"],
+                "operationId": "delete_challenge_delivery",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Challenge ID",
+                        "type": "integer"
+                    },
+                    "name": "challengeid",
+                    "in": "query"
+                }, {
+                    "required": true,
+                    "schema": {
+                        "title": "Delivery Log ID",
+                        "type": "integer"
+                    },
+                    "name": "logid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/division/list": {
             "get": {
                 "summary": "Get Division List",
@@ -3086,6 +3625,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Division ID",
+                        "type": "integer"
+                    },
+                    "name": "divisionid",
+                    "in": "query"
+                }],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3096,14 +3644,10 @@
                                     "logid": {
                                         "description": "Delivery Log ID",
                                         "type": "integar"
-                                    },
-                                    "divisionid": {
-                                        "description": "Division ID",
-                                        "type": "integar"
                                     }
                                 }
                             },
-                            "required": ["logid", "divisionid"]
+                            "required": ["logid"]
                         }
                     }
                 },
@@ -3135,6 +3679,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Division ID",
+                        "type": "integer"
+                    },
+                    "name": "divisionid",
+                    "in": "query"
+                }],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3144,10 +3697,6 @@
                                 "properties": {
                                     "logid": {
                                         "description": "Delivery Log ID",
-                                        "type": "integar"
-                                    },
-                                    "divisionid": {
-                                        "description": "Division ID",
                                         "type": "integar"
                                     },
                                     "status": {
@@ -3160,7 +3709,7 @@
                                     }
                                 }
                             },
-                            "required": ["logid", "divisionid", "status", "message"]
+                            "required": ["logid", "status", "message"]
                         }
                     }
                 },
@@ -3193,6 +3742,31 @@
                 "operationId": "getDivisionPendingList",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Division ID",
+                        "type": "integer"
+                    },
+                    "name": "divisionid",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -3318,6 +3892,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Title (for searching)",
+                        "type": "string"
+                    },
+                    "name": "title",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Specific Event ID",
                         "type": "integer"
                     },
@@ -3363,8 +3945,8 @@
                                         "description": "Title",
                                         "type": "string"
                                     },
-                                    "truckersmp_link": {
-                                        "description": "TruckersMP Link",
+                                    "link": {
+                                        "description": "Link",
                                         "type": "string"
                                     },
                                     "departure": {
@@ -3397,7 +3979,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
+                            "required": ["title", "link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
                         }
                     }
                 },
@@ -3449,8 +4031,8 @@
                                         "description": "Title",
                                         "type": "string"
                                     },
-                                    "truckersmp_link": {
-                                        "description": "TruckersMP Link",
+                                    "link": {
+                                        "description": "Link",
                                         "type": "string"
                                     },
                                     "departure": {
@@ -3483,7 +4065,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "truckersmp_link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
+                            "required": ["title", "link", "departure", "destination", "distance", "meetup_timestamp", "departure_timestamp", "description", "is_private"]
                         }
                     }
                 },
@@ -3644,7 +4226,7 @@
                                         "type": "integer"
                                     },
                                     "attendees": {
-                                        "description": "Attendees (Separated with ',')",
+                                        "description": "Attendees (Use User ID, Separate with ',')",
                                         "type": "string"
                                     }
                                 }
@@ -3703,6 +4285,9 @@
     },{
         "name": "application",
         "description": "Application Plugin"
+    },{
+        "name": "challenge",
+        "description": "Challenge Plugin"
     },{
         "name": "division",
         "description": "Division Plugin"

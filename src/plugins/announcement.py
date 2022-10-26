@@ -13,7 +13,8 @@ import multilang as ml
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", announcementid: Optional[int] = -1):
+    page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", order_by: Optional[str] = "announcementid", \
+        announcementid: Optional[int] = -1, title: Optional[str] = ""):
     rl = ratelimit(request.client.host, 'GET /announcement', 180, 90)
     if rl > 0:
         response.status_code = 429
@@ -37,13 +38,18 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
     limit = ""
     if userid == -1:
-        limit = "AND is_private = 0"
+        limit = "AND is_private = 0 "
+    if title != "":
+        title = convert_quotation(title)
+        limit += f"AND title LIKE '%{title}%' "
 
     if page_size <= 1:
         page_size = 1
     elif page_size >= 100:
         page_size = 100
-
+    
+    if not order_by in ["announcementid", "title"]:
+        order_by = "announcementidid"
     if not order in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
@@ -59,18 +65,18 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
         tt = t[0]
-        return {"error": False, "response": {"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
+        return {"error": False, "response": {"announcementid": str(tt[5]), "title": tt[0], "content": decompress(tt[1]), \
             "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
                 "timestamp": str(tt[3])}}
 
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY announcementid {order} LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        ret.append({"announcementid": str(tt[5]), "title": b64d(tt[0]), "content": b64d(tt[1]), \
+        ret.append({"announcementid": str(tt[5]), "title": tt[0], "content": decompress(tt[1]), \
             "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
                 "timestamp": str(tt[3])})
         
@@ -84,7 +90,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /announcement', 180, 3)
+    rl = ratelimit(request.client.host, 'POST /announcement', 180, 5)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -107,8 +113,8 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     form = await request.form()
     try:
-        title = b64e(form["title"])
-        content = b64e(form["content"])
+        title = convert_quotation(form["title"])
+        content = compress(form["content"])
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -131,14 +137,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     timestamp = int(time.time())
 
     cur.execute(f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
-    await AuditLog(adminid, f"Created announcement #{announcementid}")
+    await AuditLog(adminid, f"Created announcement `#{announcementid}`")
     conn.commit()
 
     if channelid != 0:
         try:
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                     "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
         except:
@@ -171,8 +177,8 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     form = await request.form()
     try:
-        title = b64e(form["title"])
-        content = b64e(form["content"])
+        title = convert_quotation(form["title"])
+        content = compress(form["content"])
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -197,14 +203,14 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type} WHERE announcementid = {announcementid}")
-    await AuditLog(adminid, f"Updated announcement #{announcementid}")
+    await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
     conn.commit()
 
     if channelid != 0:
         try:
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": b64d(title), "description": b64d(content), 
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                     "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}))
         except:
@@ -247,7 +253,7 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
     
     cur.execute(f"DELETE FROM announcement WHERE announcementid = {announcementid}")
-    await AuditLog(adminid, f"Deleted announcement #{announcementid}")
+    await AuditLog(adminid, f"Deleted announcement `#{announcementid}`")
     conn.commit()
 
     return {"error": False}

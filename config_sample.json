@@ -40,6 +40,11 @@
 
     "navio_api_token": "",
     "navio_company_id": "",
+    "delivery_rules": {
+        "max_speed": "180",
+        "max_profit": "1000000",
+        "action": "block"
+    },
     "delivery_log_channel_id": "",
     "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
@@ -108,7 +113,7 @@
         }
     },
     "ranks": [
-        {"distance": "0", "name": "New Driver", "discord_role_id": ""}
+        {"distance": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],
 
     "application_types": [
@@ -132,14 +137,15 @@
         "hrm": [],
         "division": [],
         "event": [],
+        "challenge": [],
         "downloads": [],
         "driver": ["100"]
     },
 
     "roles": [
-        {"id": "0", "name": "root"},
-        {"id": "100", "name": "Driver"},
-        {"id": "251", "name": "Construction Division"}
+        {"id": "0", "name": "root", "color": "#000000"},
+        {"id": "100", "name": "Driver", "color": "#000000"},
+        {"id": "251", "name": "Construction Division", "color": "#000000"}
     ],
 
     "webhook_audit": ""
