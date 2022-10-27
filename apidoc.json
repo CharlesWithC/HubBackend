@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.17.1"
+        "version": "1.18.1"
     },
     "paths": {
         "/abbr": {
@@ -874,6 +874,141 @@
                 "security": [{
                     "bearerAuth": []
                 }]
+            }
+        },
+        "/abbr/user/notification/list": {
+            "get": {
+                "summary": "Get User Notification List",
+                "tags": ["user"],
+                "operationId": "get_user_notification_list",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Query with content",
+                        "type": "string"
+                    },
+                    "name": "content",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Status (-1 = all | 0 = unread | 1 = read)",
+                        "type": "integar"
+                    },
+                    "name": "status",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (notificationid, content)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/user/notification/status": {
+            "put": {
+                "summary": "Update User Notification Status",
+                "tags": ["user"],
+                "operationId": "put_user_notification_status",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Notification IDs (Separate with ','), or 'all' to update all status",
+                        "type": "string"
+                    },
+                    "name": "notificationids",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "read": {
+                                        "description": "Read",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": ["read"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/abbr/user/bio": {

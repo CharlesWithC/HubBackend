@@ -21,6 +21,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     if au["error"]:
         response.status_code = 401
         return au
+    activityUpdate(au["discordid"], "Viewing Downloads")
         
     conn = newconn()
     cur = conn.cursor()

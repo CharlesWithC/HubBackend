@@ -116,9 +116,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     username = t[0][1]
     navioid = d["data"]["object"]["id"]
 
+    duplicate = False
+    logid = -1
     cur.execute(f"SELECT logid FROM dlog WHERE navioid = {navioid}")
     o = cur.fetchall()
     if len(o) > 0:
+        duplicate = True # only for debugging purpose
+        logid = o[0][0]
         return {"error": True, "descriptor": "Already logged"}
 
     driven_distance = float(d["data"]["object"]["driven_distance"])
@@ -160,9 +164,10 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
     start_time = parser.parse(d["data"]["object"]["start_time"]).timestamp()
     end_time = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
-    t = cur.fetchall()
-    logid = int(t[0][0])
+    if not duplicate:
+        cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
+        t = cur.fetchall()
+        logid = int(t[0][0])
 
     delivery_rule_ok = True
     try:
@@ -184,7 +189,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                         mod_revenue = 0
             except:
                 pass
-        if delivery_rule_ok:
+        if delivery_rule_ok and not duplicate:
             if "tracker" in config.enabled_plugins:
                 threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
             
@@ -192,10 +197,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
                 {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
             conn.commit()
+
+            discordid = getUserInfo(userid = userid)["discordid"]
+            notification(discordid, f"New Delivery `#{logid}`")
     except:
         pass
 
-    if config.delivery_log_channel_id != "":
+    if config.delivery_log_channel_id != "" and not duplicate:
         try:
             source_city = d["data"]["object"]["source_city"]
             source_company = d["data"]["object"]["source_company"]
@@ -284,7 +292,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             pass
 
     try:
-        if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered:
+        if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered and not duplicate:
             cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
             current_distance = cur.fetchone()[0]
             current_distance = 0 if current_distance is None else int(current_distance)
@@ -292,7 +300,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             userinfo = getUserInfo(userid = userid)
             roles = userinfo["roles"]
 
-            cur.execute(f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements \
+            cur.execute(f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
                 FROM challenge \
                 WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
             t = cur.fetchall()
@@ -300,9 +308,10 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 challengeid = tt[0]
                 challenge_type = tt[1]
                 delivery_count = tt[2]
-                required_roles = tt[3].split(",")
+                required_roles = tt[3].split(",")[:20]
                 reward_points = tt[4]
                 job_requirements = tt[5]
+                title = tt[6]
 
                 rolesok = False
                 if len(required_roles) == 0:
@@ -320,7 +329,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 for i in range(0,len(p)):
                     jobreq[JOB_REQUIREMENTS[i]] = p[i]
                 
-                if jobreq["minimum_distance"] != -1 and distance < jobreq["minimum_distance"]:
+                if jobreq["minimum_distance"] != -1 and driven_distance < jobreq["minimum_distance"]:
                     continue
 
                 source_city = d["data"]["object"]["source_city"]
@@ -343,13 +352,13 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                     destination_company = "[unknown]"
                 else:
                     destination_company = destination_company["unique_id"]
-                if jobreq["source_city_id"] != "" and jobreq["source_city_id"] != source_city:
+                if jobreq["source_city_id"] != "" and not source_city in jobreq["source_city_id"].split(","):
                     continue
-                if jobreq["source_company_id"] != "" and jobreq["source_company_id"] != source_company:
+                if jobreq["source_company_id"] != "" and not source_company in jobreq["source_company_id"].split(","):
                     continue
-                if jobreq["destination_city_id"] != "" and jobreq["destination_city_id"] != destination_city:
+                if jobreq["destination_city_id"] != "" and not destination_city in jobreq["destination_city_id"].split(","):
                     continue
-                if jobreq["destination_company_id"] != "" and jobreq["destination_company_id"] != destination_company:
+                if jobreq["destination_company_id"] != "" and not destination_company in jobreq["destination_company_id"].split(","):
                     continue
 
                 cargo = "[unknown]"
@@ -361,7 +370,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                     cargo_mass = d["data"]["object"]["cargo"]["mass"]
                 if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["damage"] is None:
                     cargo_mass = d["data"]["object"]["cargo"]["damage"]
-                if jobreq["cargo_id"] != "" and jobreq["cargo_id"] != cargo:
+                
+                if jobreq["cargo_id"] != "" and not cargo in jobreq["cargo_id"].split(","):
                     continue
                 if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
                     continue
@@ -378,7 +388,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                     continue
                 if jobreq["maximum_profit"] != -1 and profit > jobreq["maximum_profit"]:
                     continue
-                if jobreq["maximum_offence"] != -1 and offence > jobreq["maximum_offence"]:
+                if jobreq["maximum_offence"] != -1 and abs(offence) > jobreq["maximum_offence"]:
                     continue
                 
                 if not jobreq["allow_overspeed"] and has_overspeed:
@@ -386,9 +396,9 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
 
                 auto_park = d["data"]["object"]["events"][-1]["meta"]["auto_park"]
                 auto_load = d["data"]["object"]["events"][-1]["meta"]["auto_load"]
-                if not jobreq["allow_auto_park"] and autopark:
+                if not jobreq["allow_auto_park"] and auto_park:
                     continue
-                if not jobreq["allow_auto_load"] and autoload:
+                if not jobreq["allow_auto_load"] and auto_load:
                     continue
 
                 is_late = d["data"]["object"]["is_late"]
@@ -397,7 +407,9 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                     continue
                 if jobreq["must_be_special"] and not is_special:
                     continue
-
+                
+                discordid = getUserInfo(userid = userid)["discordid"]
+                notification(discordid, f"Delivery `#{logid}` accepted by challenge `{title}` (Challenge ID: `{challengeid}`)")
                 cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                 conn.commit()
 
@@ -418,6 +430,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                         if len(t) == 0:
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
+                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
                     elif challenge_type == 2:
                         cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                         t = cur.fetchall()
@@ -436,6 +449,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                 s = usercnt[uid]
                                 reward = round(reward_points * s / delivery_count)
                                 cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                discordid = getUserInfo(userid = uid)["discordid"]
+                                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward)}` points.")
                             conn.commit()
                 
     except:

@@ -32,6 +32,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             userid = -1
         else:
             userid = au["userid"]
+            activityUpdate(au["discordid"], "Viewing Announcements")
     
     conn = newconn()
     cur = conn.cursor()

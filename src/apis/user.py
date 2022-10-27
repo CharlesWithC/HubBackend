@@ -88,14 +88,132 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     if mfa_secret != "":
         mfa_enabled = True
 
+    if userid != -1:
+        activityUpdate(udiscordid, f"Viewing {t[0][1]}'s Profile (User ID: {userid})")
+    else:
+        activityUpdate(udiscordid, f"Viewing {t[0][1]}'s Profile")
+
+    activity_last_seen = 0
+    activity_name = "Offline"
+    cur.execute(f"SELECT activity, timestamp FROM user_activity WHERE discordid = {t[0][0]}")
+    ac = cur.fetchall()
+    if len(ac) != 0:
+        activity_name = ac[0][0]
+        activity_last_seen = ac[0][1]
+        if int(time.time()) - activity_last_seen >= 300:
+            activity_name = "Offline"
+        elif int(time.time()) - activity_last_seen >= 120:
+            activity_name = "Online"
+
     if isAdmin or isHR or udiscordid == t[0][0]:
         return {"error": False, "response": {"name": t[0][1], "userid": str(userid), \
-            "discordid": f"{t[0][0]}", "avatar": t[0][2], "email": t[0][8], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+            "discordid": f"{t[0][0]}", "avatar": t[0][2], "activity": {"name": activity_name, "last_seen": str(activity_last_seen)}, \
+                "email": t[0][8], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
              "roles": roles, "bio": b64d(t[0][7]), "mfa": mfa_enabled, "join_timestamp": str(t[0][4])}}
     else:
         return {"error": False, "response": {"name": t[0][1], "userid": str(userid), \
-            "discordid": f"{t[0][0]}", "avatar": t[0][2], "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
+            "discordid": f"{t[0][0]}", "avatar": t[0][2], "activity": {"name": activity_name, "last_seen": str(activity_last_seen)}, \
+                "truckersmpid": f"{t[0][5]}", "steamid": f"{t[0][6]}", \
                 "roles": roles, "bio": b64d(t[0][7]), "join_timestamp": str(t[0][4])}}
+
+@app.get(f"/{config.abbr}/user/notification/list")
+async def getUserNotificationList(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, content: Optional[str] = '', status: Optional[int] = -1, \
+        order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
+    rl = ratelimit(request.client.host, 'GET /user/notification/list', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    
+    if page <= 0:
+        page = 1
+
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+
+    content = convert_quotation(content).lower()
+    
+    if not order_by in ["content", "notificationid"]:
+        order_by = "notificationid"
+
+    if not order in ["asc", "desc"]:
+        if order_by == "notificationid":
+            order = "desc"
+        elif order_by == "content":
+            order = "asc"
+    order = order.upper()
+
+    limit = ""
+    if status == 0:
+        limit += f"AND status = 0"
+    elif status == 1:
+        limit += f"AND status = 1"
+
+    cur.execute(f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    t = cur.fetchall()
+    ret = []
+    for tt in t:
+        ret.append({"notificationid": str(tt[0]), "content": tt[1], "timestamp": str(tt[2]), "read": TF[tt[3]]})
+    cur.execute(f"SELECT COUNT(*) FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%'")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
+
+@app.put(f"/{config.abbr}/user/notification/status")
+async def putUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
+        notificationids: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /user/notification/status', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+        
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    form = await request.form()
+    try:
+        read = 0
+        if form["read"] == "true":
+            read = 1
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
+    if notificationids == "all":
+        cur.execute(f"UPDATE user_notification SET status = {read} WHERE discordid = {discordid}")
+        conn.commit()
+        return {"error": False}
+
+    notificationids = notificationids.split(",")
+    
+    for notificationid in notificationids:
+        try:
+            notificationid = int(notificationid)
+            cur.execute(f"UPDATE user_notification SET status = {read} WHERE notificationid = {notificationid} AND discordid = {discordid}")
+        except:
+            pass
+    conn.commit()
+    
+    return {"error": False}
 
 @app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
@@ -110,6 +228,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
     if au["error"]:
         response.status_code = 401
         return au
+    activityUpdate(au["discordid"], f"Viewing Pending Users")
     
     conn = newconn()
     cur = conn.cursor()

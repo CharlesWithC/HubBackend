@@ -18,6 +18,9 @@ cur = conn.cursor()
 cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT, \
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
 cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (discordid BIGINT, activity TEXT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT, discordid BIGINT, content TEXT, \
+    timestamp BIGINT, status INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire_timestamp BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
@@ -61,7 +64,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, 
 
 cur.execute(f"SELECT skey FROM settings")
 t = cur.fetchall()
-keys = ["nxtuserid", "nxtappid", "nxtannid", "nxtlogid", "nxteventid", "nxtchallengeid"]
+keys = ["nxtuserid", "nxtappid", "nxtannid", "nxtlogid", "nxteventid", "nxtchallengeid", "nxtnotificationid"]
 for key in keys:
     if not (key,) in t:
         cur.execute(f"INSERT INTO settings VALUES (0, '{key}', 1)")
@@ -72,6 +75,7 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX user_discordid ON user (discordid)",
 "CREATE INDEX user_truckersmpid ON user (truckersmpid)",
 "CREATE INDEX user_steamid ON user (steamid)",
+"CREATE INDEX user_activity_discordid ON user_activity (discordid)",
 "CREATE INDEX user_password_discordid ON user_password (discordid)",
 "CREATE INDEX user_password_email ON user_password (email)",
 "CREATE INDEX banned_discordid ON banned (discordid)",

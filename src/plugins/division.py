@@ -103,6 +103,8 @@ async def getDivision(request: Request, response: Response, authorization: str =
         else:
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status)}}
 
+    activityUpdate(au["discordid"], f"Viewing Divisions")
+    
     stats = []
     for division in divisions:
         tstats = []
@@ -324,7 +326,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
 
     if config.discord_bot_dm:
         try:
-            STATUS = {0: "Pending", 1: "Validated", 2: "Denied"}
+            STATUS = {0: "Pending", 1: "Accepted", 2: "Rejected"}
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             durl = "https://discord.com/api/v9/users/@me/channels"
             r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
@@ -332,6 +334,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+                notification(discordid, f"Division Validation Request for Delivery `#{logid}` {STATUS[status]}")
                 r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
                     "description": message,
                         "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\

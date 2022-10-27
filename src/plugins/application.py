@@ -115,6 +115,7 @@ async def getApplications(request: Request, response: Response, authorization: s
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
+    activityUpdate(au["discordid"], f"Viewing Applications")
 
     conn = newconn()
     cur = conn.cursor()
@@ -520,6 +521,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
     
     application_type = t[0][1]
+    applicant_discordid = t[0][2]
 
     isAdmin = False
     for i in roles:
@@ -555,6 +557,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
+    notification(applicant_discordid, f"Application `#{applicationid}` {statustxt}")
     conn.commit()
 
     if message == "":

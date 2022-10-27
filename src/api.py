@@ -44,7 +44,10 @@ if "event" in config.enabled_plugins:
 
 # basic info
 @app.get(f'/{config.abbr}')
-async def index():
+async def index(request: Request, authorization: str = Header(None)):
+    au = auth(authorization, request, check_member = False)
+    if not au["error"]:
+        activityUpdate(au["discordid"], "Viewing Drivers Hub Index")
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")

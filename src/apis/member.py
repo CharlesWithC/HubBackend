@@ -64,6 +64,18 @@ def point2rank(point):
     if point >= keys[-1]:
         return RANKROLE[keys[-1]]
 
+def point2rankname(point):
+    keys = list(RANKNAME.keys())
+    if point < keys[0]:
+        return -1
+    if point >= keys[0] and point < keys[1]:
+        return RANKNAME[keys[0]]
+    for i in range(1, len(keys)):
+        if point >= keys[i-1] and point < keys[i]:
+            return RANKNAME[keys[i-1]]
+    if point >= keys[-1]:
+        return RANKNAME[keys[-1]]
+
 # Basic Info Section
 @app.get(f"/{config.abbr}/member/roles")
 async def getRoles(request: Request, response: Response):
@@ -93,6 +105,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
         if au["error"]:
             response.status_code = 401
             return au
+        activityUpdate(au["discordid"], f"Viewing Members")
     
     conn = newconn()
     cur = conn.cursor()
@@ -428,6 +441,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     meta = config.rank_up
                     await AutoMessage(meta, setvar)
 
+                rankname = point2rankname(totalpnt)
+                notification(discordid, f"New rank: `{rankname}`")
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
@@ -651,13 +666,19 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
     audit = f"Updated `{username}` (User ID: `{userid}`) roles:\n"
+    upd = ""
     for add in addedroles:
+        upd += f"`+ {ROLES[add]}`\n"
         audit += f"`+ {ROLES[add]}`\n"
     for remove in removedroles:
+        upd += f"`- {ROLES[remove]}`\n"
         audit += f"`- {ROLES[remove]}`\n"
     audit = convert_quotation(audit[:-1])
     await AuditLog(adminid, audit)
     conn.commit()
+
+    discordid = getUserInfo(userid = userid)["discordid"]
+    notification(discordid, f"Roles updated: \n"+upd)
 
     return {"error": False} 
 
@@ -701,6 +722,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     
     username = getUserInfo(userid = userid)["name"]
     await AuditLog(adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
+    discordid = getUserInfo(userid = userid)["discordid"]
+    notification(discordid, f"You are given `{distance}km` and `{mythpoint}` myth points.")
 
     return {"error": False}
 
@@ -750,6 +773,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
 
     await AuditLog(-999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
+    notification(discordid, f"You have resigned.")
     
     return {"error": False}
 
@@ -807,4 +831,5 @@ async def dismissMember(request: Request, response: Response, authorization: str
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
     await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
+    notification(udiscordid, f"You have been dismissed.")
     return {"error": False}

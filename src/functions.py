@@ -246,6 +246,32 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False):
 
     return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
 
+def activityUpdate(discordid, activity):
+    conn = newconn()
+    cur = conn.cursor()
+    activity = convert_quotation(activity)
+    cur.execute(f"SELECT timestamp FROM user_activity WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    if len(t) != 0:
+        last_timestamp = t[0][0]
+        if int(time.time()) - last_timestamp <= 2 and activity.find("Delivery Log #") == -1 and activity.find("Profile") == -1:
+            return
+        cur.execute(f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE discordid = {discordid}")
+    else:
+        cur.execute(f"INSERT INTO user_activity VALUES ({discordid}, '{activity}', {int(time.time())})")
+    conn.commit()
+
+def notification(discordid, content):
+    content = convert_quotation(content)
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
+    t = cur.fetchall()
+    nxtnotificationid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
+    cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
+    conn.commit()
+
 def ratelimit(ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()

@@ -30,6 +30,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             userid = -1
         else:
             userid = au["userid"]
+            activityUpdate(au["discordid"], f"Viewing Events")
     
     conn = newconn()
     cur = conn.cursor()
@@ -38,8 +39,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if userid == -1:
         limit = "AND is_private = 0 "
     if title != "":
-        title = convert_quotation(title)
-        limit += f"AND title LIKE '%{title}%' "
+        title = convert_quotation(title).lower()
+        limit += f"AND LOWER(title) LOLIKE '%{title}%' "
 
     if page <= 0:
         page = 1
@@ -379,7 +380,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
-    cur.execute(f"SELECT attendee, points FROM event WHERE eventid = {eventid}")
+    cur.execute(f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -388,6 +389,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     while "" in orgattendees:
         orgattendees.remove("")
     orgeventpnt = t[0][1]
+    title = t[0][2]
     gap = points - orgeventpnt
 
     ret = f"Updated event `#{eventid}` attendees\n"
@@ -398,6 +400,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             continue
         attendee = int(attendee)
         name = getUserInfo(userid = attendee)["name"]
+        discordid = getUserInfo(userid = attendee)["discordid"]
+        notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{tseparator(points)}` points.")
         ret1 += f"{name} ({attendee}), "
         cnt += 1
     ret1 = ret1[:-2]
@@ -413,6 +417,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             toremove.append(attendee)
             attendee = int(attendee)
             name = getUserInfo(userid = attendee)["name"]
+            discordid = getUserInfo(userid = attendee)["discordid"]
+            notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{tseparator(points)}` points.")
             ret2 += f"{name} ({attendee}), "
             cnt += 1
     ret2 = ret2[:-2]
@@ -431,6 +437,11 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         for attendee in orgattendees:
             attendee = int(attendee)
             name = getUserInfo(userid = attendee)["name"]
+            discordid = getUserInfo(userid = attendee)["discordid"]
+            if gap > 0:
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` more points. You got {points} points from the event.")
+            elif gap < 0:
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You got {points} points from the event.")
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]

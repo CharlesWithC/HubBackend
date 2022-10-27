@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.18.1**  
+**[Minor changes]**  
+1.*[Challenge]* Added multiple item support to `source_city_id`, `source_company_id`, `destination_city_id`, `destination_company_it`, `cargo_id`  
+**[New features]**  
+2.Added user activity  
+3.Added notification system  
+
 **v1.17.1**  
 **[Bug fixes]**  
 1.*[Member]* Fixed **PATCH** `/member/roles/rank` giving highest role when there is no `point = 0` role  

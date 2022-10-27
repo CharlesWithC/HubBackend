@@ -38,6 +38,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     if authorization != None:
         stoken = authorization.split(" ")[1]
     userid = -1
+    discordid = -1
     if stoken == "guest":
         userid = -1
     else:
@@ -46,6 +47,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
             response.status_code = 401
             return au
         userid = au["userid"]
+        discordid = au["discordid"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -55,6 +57,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
+    activityUpdate(discordid, f"Viewing Delivery Log #{logid}")
     data = json.loads(decompress(t[0][1]))
     del data["data"]["object"]["driver"]
     distance = t[0][3]
@@ -130,6 +133,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             response.status_code = 401
             return au
         userid = au["userid"]
+        activityUpdate(au["discordid"], "Viewing Delivery Logs")
     
     conn = newconn()
     cur = conn.cursor()
@@ -547,6 +551,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     if au["error"]:
         response.status_code = 401
         return au
+    activityUpdate(au["discordid"], "Viewing Leaderboard")
 
     limittype = point_types
     limituser = userids
@@ -998,7 +1003,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         elif dd[3] == 2:
             game = "ats"
         
-        name = getUserInfo(userid)["name"]
+        name = getUserInfo(userid = userid)["name"]
 
         data = json.loads(decompress(dd[8]))
         

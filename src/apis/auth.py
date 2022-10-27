@@ -85,7 +85,8 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     conn.commit()
 
     username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(-999, f"Password login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(-999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
 
     return {"error": False, "response": {"token": stoken, "mfa": False}}
 
@@ -175,7 +176,8 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
             conn.commit()
             username = getUserInfo(discordid = discordid)["name"]
-            await AuditLog(-999, f"Discord login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+            await AuditLog(-999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+            notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
             return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
         
         if 'error_description' in tokens.keys():
@@ -254,7 +256,8 @@ async def getSteamCallback(request: Request, response: Response):
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(-999, f"Steam login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(-999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
 
     return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
@@ -593,6 +596,10 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
     
     cur.execute(f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
     conn.commit()
+        
+    username = getUserInfo(discordid = discordid)["name"]
+    await AuditLog(-999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
+    notification(discordid, f"MFA enabled.")
 
     return {"error": False}
 
@@ -648,7 +655,8 @@ async def postMFA(request: Request, response: Response):
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(-999, f"2FA login: {username} (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
 
     return {"error": False, "response": {"token": stoken}}
 
@@ -689,6 +697,10 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         
         cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         conn.commit()
+        
+        username = getUserInfo(discordid = discordid)["name"]
+        await AuditLog(-999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
+        notification(discordid, f"MFA disabled.")
 
         return {"error": False}
     
@@ -714,5 +726,9 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         
         cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         conn.commit()
+        
+        username = getUserInfo(discordid = discordid)["name"]
+        await AuditLog(adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
+        notification(discordid, f"MFA disabled.")
 
         return {"error": False}

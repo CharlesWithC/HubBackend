@@ -258,22 +258,38 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 GROUP BY userid HAVING COUNT(*) >= {org_delivery_count} AND COUNT(*) < {delivery_count}")
             t = cur.fetchall()
             for tt in t:
-                cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                userid = tt[0]
+                cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                p = cur.fetchall()
+                if len(p) > 0:
+                    cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost {p[0][0]} points.")
         elif org_delivery_count > delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} \
                 GROUP BY userid HAVING COUNT(*) >= {org_delivery_count} AND COUNT(*) < {delivery_count}")
             t = cur.fetchall()
             for tt in t:
-                cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
-                cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                userid = tt[0]
+                cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                p = cur.fetchall()
+                if len(p) == 0:
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received {reward_points} points.")
         conn.commit()
 
     elif challenge_type == 2:
         curtime = 0
         cur.execute(f"SELECT timestamp FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
         t = cur.fetchall()
+        previously_completed = {}
         if len(t) != 0:
             curtime = t[0][0]
+            cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+            p = cur.fetchall()
+            for pp in p:
+                previously_completed[pp[0]] = pp[1]
             cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
         else:
             curtime = int(time.time())
@@ -291,7 +307,19 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 s = usercnt[uid]
                 reward = round(reward_points * s / delivery_count)
                 cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                if uid in previously_completed.keys():
+                    gap = reward - previously_completed[uid]
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    if gap > 0:
+                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{gap}` more points. You got {reward} points from the challenge.")
+                    elif gap < 0:
+                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{-gap}` points. You got {reward} points from the challenge.")
+                    del previously_completed[uid]
             conn.commit()
+        for uid in previously_completed.keys():
+            reward = previously_completed[uid]
+            discordid = getUserInfo(userid = uid)["discordid"]
+            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost {reward} points.")
 
     await AuditLog(adminid, f"Updated challenge `#{challengeid}`")
 
@@ -367,7 +395,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
 
-    cur.execute(f"SELECT delivery_count, challenge_type, reward_points FROM challenge WHERE challengeid = {challengeid}")
+    cur.execute(f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -375,6 +403,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     delivery_count = t[0][0]
     challenge_type = t[0][1]
     reward_points = t[0][2]
+    title = t[0][3]
 
     cur.execute(f"SELECT * FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     t = cur.fetchall()
@@ -391,6 +420,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     timestamp = t[0][1]
     cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")    
     conn.commit()
+    discordid = getUserInfo(userid = userid)["discordid"]
+    notification(discordid, f"Delivery `#{logid}` added to challenge `{title}` (Challenge ID: `{challengeid}`)")
 
     current_delivery_count = 0
     if challenge_type == 1:
@@ -409,6 +440,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
             if len(t) == 0:
                 cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 conn.commit()
+                discordid = getUserInfo(userid = userid)["discordid"]
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
         elif challenge_type == 2:
             cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
             t = cur.fetchall()
@@ -427,6 +460,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward)}` points.")
                 conn.commit()
 
     await AuditLog(adminid, f"Added delivery `#{logid}` to challenge `#{challengeid}`")
@@ -459,7 +494,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
 
-    cur.execute(f"SELECT delivery_count, challenge_type, reward_points FROM challenge WHERE challengeid = {challengeid}")
+    cur.execute(f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -467,6 +502,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     delivery_count = t[0][0]
     challenge_type = t[0][1]
     reward_points = t[0][2]
+    title = t[0][3]
 
     cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     t = cur.fetchall()
@@ -477,20 +513,32 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     
     cur.execute(f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     conn.commit()
+    discordid = getUserInfo(userid = userid)["discordid"]
+    notification(discordid, f"Delivery `#{logid}` removed from challenge `{title}` (Challenge ID: `{challengeid}`)")
 
     cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
     current_delivery_count = cur.fetchone()[0]
     current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
     if current_delivery_count < delivery_count:
         if challenge_type == 1:
-            cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-            conn.commit()
+            cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+            p = cur.fetchall()
+            if len(p) > 0:
+                cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                discordid = getUserInfo(userid = userid)["discordid"]
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost {p[0][0]} points.")
             
         elif challenge_type == 2:
+            curtime = 0
             cur.execute(f"SELECT timestamp FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = cur.fetchall()
+            previously_completed = {}
             if len(t) != 0:
                 curtime = t[0][0]
+                cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+                p = cur.fetchall()
+                for pp in p:
+                    previously_completed[pp[0]] = pp[1]
                 cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
 
                 cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
@@ -506,7 +554,19 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                    if uid in previously_completed.keys():
+                        gap = reward - previously_completed[uid]
+                        discordid = getUserInfo(userid = uid)["discordid"]
+                        if gap > 0:
+                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{gap}` more points. You got {reward} points from the challenge.")
+                        elif gap < 0:
+                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{-gap}` points. You got {reward} points from the challenge.")
+                        del previously_completed[uid]
                 conn.commit()
+            for uid in previously_completed.keys():
+                reward = previously_completed[uid]
+                discordid = getUserInfo(userid = uid)["discordid"]
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost {reward} points.")
 
     await AuditLog(adminid, f"Removed delivery `#{logid}` from challenge `#{challengeid}`")
 
@@ -548,6 +608,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     if au["error"]:
         response.status_code = 401
         return au
+    activityUpdate(au["discordid"], f"Viewing Challenges")
     
     if page <= 0:
         page = 1
@@ -559,8 +620,8 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     query_limit = "WHERE challengeid >= 0 "
 
     if title != "":
-        title = convert_quotation(title)
-        query_limit += f"AND title LIKE '%{title}%' "
+        title = convert_quotation(title).lower()
+        query_limit += f"AND LOWER(title) LIKE '%{title}%' "
 
     if start_time != -1 and end_time != -1:
         query_limit += f"AND start_time >= {start_time} AND end_time <= {end_time} "
