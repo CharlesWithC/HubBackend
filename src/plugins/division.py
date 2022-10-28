@@ -302,6 +302,9 @@ async def patchDivision(request: Request, response: Response, authorization: str
         logid = int(form["logid"])
         message = str(form["message"])
         status = int(form["status"])
+        if len(form["message"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 200."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

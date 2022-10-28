@@ -1,5 +1,14 @@
 # Changelog
 
+**v1.18.2**  
+1.*[Event]* Separated single-event query from event-list query  
+2.*[Announcement]* Separated single-announcement query from announcement-list query  
+3.*[User]* Changed **PUT** `/user/unban` to **DELETE** `/user/ban`  
+4.*[User]* Changed `ban.ban_reason` response to `ban.reason`  
+5.*[Challenge]* Added `completed` field in **GET** `/challenge` response  
+6.*[Challenge]* Fixed various bugs of this plugin  
+7.Added form string length limit  
+
 **v1.18.1**  
 **[Minor changes]**  
 1.*[Challenge]* Added multiple item support to `source_city_id`, `source_company_id`, `destination_city_id`, `destination_company_it`, `cargo_id`  

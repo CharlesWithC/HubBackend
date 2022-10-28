@@ -11,9 +11,66 @@ from functions import *
 import multilang as ml
 
 @app.get(f"/{config.abbr}/event")
-async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", eventid: Optional[int] = -1):
+async def getEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
     rl = ratelimit(request.client.host, 'GET /event', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    stoken = "guest"
+    if authorization != None:
+        stoken = authorization.split(" ")[1]
+    userid = -1
+    if stoken == "guest":
+        userid = -1
+    else:
+        au = auth(authorization, request, allow_application_token = True)
+        if au["error"]:
+            userid = -1
+        else:
+            userid = au["userid"]
+            activityUpdate(au["discordid"], f"Viewing Events")
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    if int(eventid) < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": "Event not found"}
+
+    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": "Event not found"}
+    tt = t[0]
+    attendee = tt[9].split(",")
+    vote = tt[10].split(",")
+    if userid == -1:
+        attendee = []
+        vote = []
+    while "" in attendee:
+        attendee.remove("")
+    while "" in vote:
+        vote.remove("")
+    attendee_ret = []
+    for at in attendee:
+        name = getUserInfo(userid = at)["name"]
+        attendee_ret.append({"userid": at, "name": name})
+    vote_ret = []
+    for vt in vote:
+        name = getUserInfo(userid = vt)["name"]
+        vote_ret.append({"userid": vt, "name": name})
+
+    return {"error": False, "response": {"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]), \
+        "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], \
+        "distance": tt[4], "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
+            "points": str(tt[12]), "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}}
+
+@app.get(f"/{config.abbr}/event/list")
+async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /event/list', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -40,7 +97,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         limit = "AND is_private = 0 "
     if title != "":
         title = convert_quotation(title).lower()
-        limit += f"AND LOWER(title) LOLIKE '%{title}%' "
+        limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
 
     if page <= 0:
         page = 1
@@ -49,35 +106,6 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         page_size = 1
     elif page_size >= 250:
         page_size = 250
-
-    if eventid != -1:
-        cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid} {limit}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": True, "descriptor": "Event not found"}
-        tt = t[0]
-        attendee = tt[9].split(",")
-        vote = tt[10].split(",")
-        if userid == -1:
-            attendee = []
-            vote = []
-        while "" in attendee:
-            attendee.remove("")
-        while "" in vote:
-            vote.remove("")
-        attendee_ret = []
-        for at in attendee:
-            name = getUserInfo(userid = at)["name"]
-            attendee_ret.append({"userid": at, "name": name})
-        vote_ret = []
-        for vt in vote:
-            name = getUserInfo(userid = vt)["name"]
-            vote_ret.append({"userid": vt, "name": name})
-        return {"error": False, "response": {"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]), \
-            "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], \
-            "distance": tt[4], "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
-                "points": str(tt[12]), "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}}
 
     cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
@@ -133,7 +161,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             vote.remove("")
         attendee_ret = []
         for at in attendee:
-            name = getUserInfo(userid = vt)["name"]
+            name = getUserInfo(userid = at)["name"]
             attendee_ret.append({"userid": at, "name": name})
         vote_ret = []
         for vt in vote:
@@ -251,6 +279,21 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
         description = compress(form["description"])
+        if len(form["title"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+        if len(form["departure"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'departure' allowed is 200."}
+        if len(form["destination"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'destination' allowed is 200."}
+        if len(form["distance"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'distance' allowed is 200."}
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
@@ -304,6 +347,21 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         meetup_timestamp = int(form["meetup_timestamp"])
         departure_timestamp = int(form["departure_timestamp"])
         description = compress(form["description"])
+        if len(form["title"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+        if len(form["departure"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'departure' allowed is 200."}
+        if len(form["destination"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'destination' allowed is 200."}
+        if len(form["distance"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'distance' allowed is 200."}
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
@@ -439,9 +497,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
             if gap > 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` more points. You got {points} points from the event.")
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` more points. You got `{points}` points from the event.")
             elif gap < 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You got {points} points from the event.")
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You got `{points}` points from the event.")
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]

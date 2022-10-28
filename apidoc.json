@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.18.1"
+        "version": "1.18.2"
     },
     "paths": {
         "/abbr": {
@@ -1284,13 +1284,11 @@
                         }
                     }
                 }
-            }
-        },
-        "/abbr/user/unban": {
-            "put": {
+            },
+            "delete": {
                 "summary": "Unban User",
                 "tags": ["user"],
-                "operationId": "put_user_unban",
+                "operationId": "delete_user_ban",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -2581,11 +2579,11 @@
                 }
             }
         },
-        "/abbr/announcement": {
+        "/abbr/announcement/list": {
             "get": {
-                "summary": "Get Announcement",
+                "summary": "Get Announcement List",
                 "tags": ["announcement"],
-                "operationId": "get_announcement",
+                "operationId": "get_announcement_list",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -2629,10 +2627,41 @@
                     },
                     "name": "title",
                     "in": "query"
-                }, {
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/announcement": {
+            "get": {
+                "summary": "Get Announcement",
+                "tags": ["announcement"],
+                "operationId": "get_announcement",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Specific Announcement ID",
+                        "title": "Announcement ID",
                         "type": "integer"
                     },
                     "name": "announcementid",
@@ -2682,7 +2711,7 @@
                                         "type": "string"
                                     },
                                     "announcement_type": {
-                                        "description": "Type)",
+                                        "description": "Type",
                                         "type": "integer"
                                     },
                                     "is_private": {
@@ -4000,11 +4029,11 @@
                 }
             }
         },
-        "/abbr/event": {
+        "/abbr/event/list": {
             "get": {
-                "summary": "Get Event",
+                "summary": "Get Event List",
                 "tags": ["event"],
-                "operationId": "get_event",
+                "operationId": "get_event_list",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -4032,10 +4061,41 @@
                     },
                     "name": "title",
                     "in": "query"
-                }, {
-                    "required": false,
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/event": {
+            "get": {
+                "summary": "Get Event",
+                "tags": ["event"],
+                "operationId": "get_event",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
                     "schema": {
-                        "title": "Specific Event ID",
+                        "title": "Event ID",
                         "type": "integer"
                     },
                     "name": "eventid",

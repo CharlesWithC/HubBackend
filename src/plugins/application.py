@@ -93,7 +93,7 @@ async def getApplication(request: Request, response: Response, authorization: st
             "submit_timestamp": str(t[0][5]), "update_timestamp": str(t[0][7]), "last_update_staff": getUserInfo(userid = t[0][6])}}
 
 @app.get(f"/{config.abbr}/application/list")
-async def getApplications(request: Request, response: Response, authorization: str = Header(None), \
+async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, order: Optional[str] = "desc"):
     rl = ratelimit(request.client.host, 'GET /application/list', 180, 90)
@@ -374,6 +374,9 @@ async def updateApplication(request: Request, response: Response, authorization:
     try:
         applicationid = int(form["applicationid"])
         message = str(form["message"])
+        if len(form["message"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 2000."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -502,6 +505,9 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         applicationid = int(form["applicationid"])
         status = int(form["status"])
         message = str(form["message"])
+        if len(form["message"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 2000."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

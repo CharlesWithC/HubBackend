@@ -436,7 +436,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                         t = cur.fetchall()
                         if len(t) == 0:
                             curtime = int(time.time())
-                            cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
+                            cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
                             t = cur.fetchall()
                             usercnt = {}
                             for tt in t:

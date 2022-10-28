@@ -53,6 +53,9 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     form = await request.form()
     try:
         data = compress(form["data"])
+        if len(form["data"]) > 20000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'downloads' allowed is 20000."}
     except:        
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

@@ -3,10 +3,8 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-from discord import Webhook, Embed
 from datetime import datetime
-from aiohttp import ClientSession
-import json, time, requests
+import json, time
 
 from app import app, config
 from db import newconn
@@ -84,6 +82,12 @@ async def postChallenge(request: Request, response: Response, authorization: str
     try:
         title = convert_quotation(form["title"])
         description = compress(form["description"])
+        if len(form["title"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         challenge_type = int(form["challenge_type"])
@@ -189,6 +193,12 @@ async def patchChallenge(request: Request, response: Response, authorization: st
     try:
         title = convert_quotation(form["title"])
         description = compress(form["description"])
+        if len(form["title"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         delivery_count = int(form["delivery_count"])
@@ -264,7 +274,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 if len(p) > 0:
                     cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                     discordid = getUserInfo(userid = userid)["discordid"]
-                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost {p[0][0]} points.")
+                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost `{tseparator(p[0][0])}` points.")
         elif org_delivery_count > delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} \
                 GROUP BY userid HAVING COUNT(*) >= {org_delivery_count} AND COUNT(*) < {delivery_count}")
@@ -276,24 +286,24 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 if len(p) == 0:
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                     discordid = getUserInfo(userid = userid)["discordid"]
-                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received {reward_points} points.")
+                    notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
         conn.commit()
 
     elif challenge_type == 2:
-        curtime = 0
-        cur.execute(f"SELECT timestamp FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
+        curtime = int(time.time())
+
+        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
         t = cur.fetchall()
         previously_completed = {}
         if len(t) != 0:
-            curtime = t[0][0]
-            cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+            cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid}")
             p = cur.fetchall()
             for pp in p:
-                previously_completed[pp[0]] = pp[1]
+                previously_completed[pp[0]] = (pp[1], pp[2])
             cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
-        else:
-            curtime = int(time.time())
-        cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
+            conn.commit()
+
+        cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
         t = cur.fetchall()
         if len(t) == delivery_count:
             usercnt = {}
@@ -306,20 +316,22 @@ async def patchChallenge(request: Request, response: Response, authorization: st
             for uid in usercnt.keys():
                 s = usercnt[uid]
                 reward = round(reward_points * s / delivery_count)
-                cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                 if uid in previously_completed.keys():
-                    gap = reward - previously_completed[uid]
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
+                    gap = reward - previously_completed[uid][0]
                     discordid = getUserInfo(userid = uid)["discordid"]
                     if gap > 0:
-                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{gap}` more points. You got {reward} points from the challenge.")
+                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{tseparator(gap)}` more points. You got `{tseparator(reward)}` points from the challenge.")
                     elif gap < 0:
-                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{-gap}` points. You got {reward} points from the challenge.")
+                        notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{tseparator(-gap)}` points. You got `{tseparator(reward)}` points from the challenge.")
                     del previously_completed[uid]
+                else:
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
             conn.commit()
         for uid in previously_completed.keys():
-            reward = previously_completed[uid]
+            reward = previously_completed[uid][0]
             discordid = getUserInfo(userid = uid)["discordid"]
-            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost {reward} points.")
+            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{tseparator(reward)}` points.")
 
     await AuditLog(adminid, f"Updated challenge `#{challengeid}`")
 
@@ -443,11 +455,11 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                 discordid = getUserInfo(userid = userid)["discordid"]
                 notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
         elif challenge_type == 2:
-            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = cur.fetchall()
             if len(t) == 0:
                 curtime = int(time.time())
-                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
+                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
                 t = cur.fetchall()
                 usercnt = {}
                 for tt in t:
@@ -516,32 +528,52 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     discordid = getUserInfo(userid = userid)["discordid"]
     notification(discordid, f"Delivery `#{logid}` removed from challenge `{title}` (Challenge ID: `{challengeid}`)")
 
-    cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-    current_delivery_count = cur.fetchone()[0]
-    current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
-    if current_delivery_count < delivery_count:
-        if challenge_type == 1:
+    current_delivery_count = 0
+    if challenge_type == 1:
+        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
+        current_delivery_count = cur.fetchone()[0]
+        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+    elif challenge_type == 2:
+        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
+        current_delivery_count = cur.fetchone()[0]
+        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+
+    if challenge_type == 1:
+        if current_delivery_count < delivery_count:
             cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
             p = cur.fetchall()
             if len(p) > 0:
                 cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost {p[0][0]} points.")
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost `{tseparator(p[0][0])}` points.")
+      
+    elif challenge_type == 2:
+        if current_delivery_count < delivery_count:
+            cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+            p = cur.fetchall()
+            if len(p) > 0:
+                userid = p[0][0]
+                points = p[0][1]
+                discordid = getUserInfo(userid = userid)["discordid"]
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost `{tseparator(points)}` points.")
+            cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+            conn.commit()
+        
+        else:
+            curtime = int(time.time())
             
-        elif challenge_type == 2:
-            curtime = 0
-            cur.execute(f"SELECT timestamp FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
+            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = cur.fetchall()
             previously_completed = {}
             if len(t) != 0:
-                curtime = t[0][0]
-                cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+                cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid}")
                 p = cur.fetchall()
                 for pp in p:
-                    previously_completed[pp[0]] = pp[1]
+                    previously_completed[pp[0]] = (pp[1], pp[2])
                 cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+                conn.commit()
 
-                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp LIMIT {delivery_count}")
+                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
                 t = cur.fetchall()
                 usercnt = {}
                 for tt in t:
@@ -553,143 +585,27 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
                 for uid in usercnt.keys():
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
-                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                     if uid in previously_completed.keys():
-                        gap = reward - previously_completed[uid]
+                        cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
+                        gap = reward - previously_completed[uid][0]
                         discordid = getUserInfo(userid = uid)["discordid"]
                         if gap > 0:
-                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{gap}` more points. You got {reward} points from the challenge.")
+                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{tseparator(gap)}` more points. You got `{tseparator(reward)}` points from the challenge.")
                         elif gap < 0:
-                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{-gap}` points. You got {reward} points from the challenge.")
+                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{tseparator(-gap)}` points. You got `{tseparator(reward)}` points from the challenge.")
                         del previously_completed[uid]
+                    else:
+                        cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                 conn.commit()
             for uid in previously_completed.keys():
-                reward = previously_completed[uid]
+                reward = previously_completed[uid][0]
                 discordid = getUserInfo(userid = uid)["discordid"]
-                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost {reward} points.")
+                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{tseparator(reward)}` points.")
 
     await AuditLog(adminid, f"Removed delivery `#{logid}` from challenge `#{challengeid}`")
 
     return {"error": False}
 
-# GET /challenge/list
-# REQUEST PARAM
-# - string: title (search)
-# - integar: start_time
-# - integar: end_time
-# - integar: challenge_type
-# - integar: required_role
-# - integar: minimum_required_distance
-# - integar: maximum_required_distance
-# - integar: userid - to show challenges that user participated
-# - boolean: must_have_completed (if userid is specified, show challenges that user completed, including completed company challenge)
-#                       otherwise show all completed challenges
-# - string: order (asc / desc)
-# - string: order_by (start_time / end_time / title / required_distance / reward_points / delivery_count)
-# - integar: page
-# - integar: page_size (max = 100)
-# RETURN
-# challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points
-# if userid is specified, then add "finished_delivery_count"
-@app.get(f"/{config.abbr}/challenge/list")
-async def getChallengeList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, challenge_type: Optional[int] = 0,
-        required_role: Optional[int] = -1, minimum_required_distance: Optional[int] = -1, maximum_required_distance: Optional[int] = -1,\
-        userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
-        order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
-
-    rl = ratelimit(request.client.host, 'GET /challenge/list', 180, 90)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
-
-    au = auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = 401
-        return au
-    activityUpdate(au["discordid"], f"Viewing Challenges")
-    
-    if page <= 0:
-        page = 1
-    if page_size <= 0:
-        page_size = 1
-    elif page_size >= 100:
-        page_size = 100
-    
-    query_limit = "WHERE challengeid >= 0 "
-
-    if title != "":
-        title = convert_quotation(title).lower()
-        query_limit += f"AND LOWER(title) LIKE '%{title}%' "
-
-    if start_time != -1 and end_time != -1:
-        query_limit += f"AND start_time >= {start_time} AND end_time <= {end_time} "
-    else:
-        query_limit += f"AND end_time >= {end_time - 86400} "
-    
-    if challenge_type in [1,2]:
-        query_limit += f"AND challenge_type = {challenge_type} "
-    
-    if required_role != -1:
-        query_limit += f"AND required_roles LIKE '%,{required_role},%' "
-
-    if minimum_required_distance != -1:
-        query_limit += f"AND required_distance >= {minimum_required_distance} "
-    if maximum_required_distance != -1:
-        query_limit += f"AND required_distance <= {maximum_required_distance} "
-    
-    if userid != -1:
-        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {userid}) "
-    if userid == -1:
-        userid = au["userid"]
-    
-    if must_have_completed:
-        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_completed) "
-    
-    # start_time / end_time / title / required_distance / reward_points / delivery_count
-    if not order_by in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
-        order_by = "reward_points"
-        order = "desc"
-    
-    if not order.lower() in ["asc", "desc"]:
-        order = "asc"
-    
-    query_limit += f"ORDER BY {order_by} {order.upper()}"
-
-    ret = []
-
-    conn = newconn()
-    cur = conn.cursor()
-
-    cur.execute(f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
-            required_distance, reward_points, description FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
-    t = cur.fetchall()
-    for tt in t:
-        current_delivery_count = 0
-        if tt[4] == 1:
-            cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]} AND userid = {userid}")
-            current_delivery_count = cur.fetchone()[0]
-            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
-        elif tt[4] == 2:
-            cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]}")
-            current_delivery_count = cur.fetchone()[0]
-            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
-
-        ret.append({"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[9]), \
-                "start_time": str(tt[2]), "end_time": str(tt[3]),\
-                "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
-                "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8])})
-    
-    cur.execute(f"SELECT COUNT(*) FROM challenge {query_limit}")
-    t = cur.fetchall()
-    
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
-
-    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
-    
 # GET /challenge
 # REQUEST PARAM
 # - integar: challengeid
@@ -746,9 +662,141 @@ async def getChallenge(request: Request, response: Response, authorization: str 
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
         current_delivery_count = cur.fetchone()[0]
         current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
-            
+    
+    completed = []
+    cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, userid ASC")
+    p = cur.fetchall()
+    for pp in p:
+        username = getUserInfo(userid = pp[0])["name"]
+        completed.append({"userid": str(pp[0]), "name": username, "points": str(pp[1]), "timestamp": str(pp[2])})
+
     return {"error": False, "response": {"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[11]), \
             "start_time": str(tt[2]), "end_time": str(tt[3]), \
             "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
             "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), \
-            "job_requirements": jobreq}}
+            "job_requirements": jobreq, "completed": completed}}
+            
+# GET /challenge/list
+# REQUEST PARAM
+# - string: title (search)
+# - integar: start_time
+# - integar: end_time
+# - integar: challenge_type
+# - integar: required_role
+# - integar: minimum_required_distance
+# - integar: maximum_required_distance
+# - integar: userid - to show challenges that user participated
+# - boolean: must_have_completed (if userid is specified, show challenges that user completed, including completed company challenge)
+#                       otherwise show all completed challenges
+# - string: order (asc / desc)
+# - string: order_by (start_time / end_time / title / required_distance / reward_points / delivery_count)
+# - integar: page
+# - integar: page_size (max = 100)
+# RETURN
+# challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points
+# if userid is specified, then add "finished_delivery_count"
+@app.get(f"/{config.abbr}/challenge/list")
+async def getChallengeList(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
+        start_time: Optional[int] = -1, end_time: Optional[int] = -1, challenge_type: Optional[int] = 0,
+        required_role: Optional[int] = -1, minimum_required_distance: Optional[int] = -1, maximum_required_distance: Optional[int] = -1,\
+        userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
+        order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
+
+    rl = ratelimit(request.client.host, 'GET /challenge/list', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    activityUpdate(au["discordid"], f"Viewing Challenges")
+    
+    if page <= 0:
+        page = 1
+    if page_size <= 0:
+        page_size = 1
+    elif page_size >= 100:
+        page_size = 100
+    
+    query_limit = "WHERE challengeid >= 0 "
+
+    if title != "":
+        title = convert_quotation(title).lower()
+        query_limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
+
+    if start_time != -1 and end_time != -1:
+        query_limit += f"AND start_time >= {start_time} AND end_time <= {end_time} "
+    else:
+        query_limit += f"AND end_time >= {end_time - 86400} "
+    
+    if challenge_type in [1,2]:
+        query_limit += f"AND challenge_type = {challenge_type} "
+    
+    if required_role != -1:
+        query_limit += f"AND required_roles LIKE '%,{required_role},%' "
+
+    if minimum_required_distance != -1:
+        query_limit += f"AND required_distance >= {minimum_required_distance} "
+    if maximum_required_distance != -1:
+        query_limit += f"AND required_distance <= {maximum_required_distance} "
+    
+    if userid != -1:
+        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {userid}) "
+    if userid == -1:
+        userid = au["userid"]
+    
+    if must_have_completed:
+        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_completed) "
+    
+    # start_time / end_time / title / required_distance / reward_points / delivery_count
+    if not order_by in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
+        order_by = "reward_points"
+        order = "desc"
+    
+    if not order.lower() in ["asc", "desc"]:
+        order = "asc"
+    
+    query_limit += f"ORDER BY {order_by} {order.upper()}"
+
+    ret = []
+
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
+            required_distance, reward_points, description FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
+    t = cur.fetchall()
+    for tt in t:
+        current_delivery_count = 0
+        if tt[4] == 1:
+            cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]} AND userid = {userid}")
+            current_delivery_count = cur.fetchone()[0]
+            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+        elif tt[4] == 2:
+            cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]}")
+            current_delivery_count = cur.fetchone()[0]
+            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+
+        completed = []
+        cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, userid ASC")
+        p = cur.fetchall()
+        for pp in p:
+            username = getUserInfo(userid = pp[0])["name"]
+            completed.append({"userid": str(pp[0]), "name": username, "points": str(pp[1]), "timestamp": str(pp[2])})
+
+        ret.append({"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[9]), \
+                "start_time": str(tt[2]), "end_time": str(tt[3]),\
+                "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
+                "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), "completed": completed})
+    
+    cur.execute(f"SELECT COUNT(*) FROM challenge {query_limit}")
+    t = cur.fetchall()
+    
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}

@@ -263,7 +263,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
         if len(p) > 0:
             banned = True
             banreason = p[0][0]
-        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[4], "ban": {"is_banned": TF[banned], "ban_reason": banreason}, "join_timestamp": tt[3]})
+        ret.append({"name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[4], "ban": {"is_banned": TF[banned], "reason": banreason}, "join_timestamp": tt[3]})
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
     t = cur.fetchall()
     tot = 0
@@ -580,6 +580,9 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         discordid = int(form["discordid"])
         expire = int(form["expire"])
         reason = convert_quotation(form["reason"])
+        if len(reason) > 256:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'reason' allowed is 256."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -616,9 +619,9 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
 
-@app.put(f'/{config.abbr}/user/unban')
+@app.delete(f'/{config.abbr}/user/ban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /user/unban', 180, 10)
+    rl = ratelimit(request.client.host, 'DELETE /user/ban', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

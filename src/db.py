@@ -38,6 +38,14 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, applica
     status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: accepted | 2: declined
 
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT, userid INT, title TEXT, description TEXT, \
+    start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, \
+    reward_points BIGINT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) \
+            DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) \
+            DATA DIRECTORY = '{config.mysql_ext}'")
+
 cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, request_timestamp BIGINT, \
     status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: validated | 2: denied
@@ -46,14 +54,6 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT) DATA DIRECT
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, \
     meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
-
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT, userid INT, title TEXT, description TEXT, \
-    start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, \
-    reward_points BIGINT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) \
-            DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) \
-            DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
