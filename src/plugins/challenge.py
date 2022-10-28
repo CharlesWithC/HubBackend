@@ -664,7 +664,7 @@ async def getChallenge(request: Request, response: Response, authorization: str 
         current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
     
     completed = []
-    cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, userid ASC")
+    cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, timestamp ASC, userid ASC")
     p = cur.fetchall()
     for pp in p:
         username = getUserInfo(userid = pp[0])["name"]
@@ -748,9 +748,6 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     if userid == -1:
         userid = au["userid"]
     
-    if must_have_completed:
-        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_completed) "
-    
     # start_time / end_time / title / required_distance / reward_points / delivery_count
     if not order_by in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
         order_by = "reward_points"
@@ -781,11 +778,23 @@ async def getChallengeList(request: Request, response: Response, authorization: 
             current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
 
         completed = []
-        cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, userid ASC")
+        cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, timestamp ASC, userid ASC")
         p = cur.fetchall()
         for pp in p:
             username = getUserInfo(userid = pp[0])["name"]
             completed.append({"userid": str(pp[0]), "name": username, "points": str(pp[1]), "timestamp": str(pp[2])})
+
+        if must_have_completed:
+            if tt[4] == 1:
+                cur.execute(f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]} AND userid = {userid}")
+                p = cur.fetchall()
+                if len(p) == 0:
+                    continue
+            elif tt[4] == 2:
+                cur.execute(f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]}")
+                p = cur.fetchall()
+                if len(p) == 0:
+                    continue
 
         ret.append({"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[9]), \
                 "start_time": str(tt[2]), "end_time": str(tt[3]),\

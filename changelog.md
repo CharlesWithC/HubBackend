@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.18.3**  
+1.Fixed **GET** `/challenge/list` param `must_have_completed` not working correctly  
+2.Changed order of `challenge[].completed` to `points DESC, timestamp ASC, userid ASC`  
+
 **v1.18.2**  
 1.*[Event]* Separated single-event query from event-list query  
 2.*[Announcement]* Separated single-announcement query from announcement-list query  
