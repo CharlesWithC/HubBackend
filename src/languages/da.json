@@ -27,7 +27,6 @@
     "leave_company_before_delete": "Forlad virksomheden, før du sletter konto.",
     "user_already_banned": "Brugeren er allerede bannet.",
     "user_not_banned": "Brugen er ikke bannet.",
-    "bio_too_long": "Bio for lang.",
 
     "steam_api_error": "Steam API utilgængelig. Kunne ikke binde Steam konto.",
     "invalid_steam_auth": "Invalid Steam Authentication.",

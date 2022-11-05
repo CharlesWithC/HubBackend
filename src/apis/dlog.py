@@ -193,7 +193,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         gamelimit = f" AND dlog.unit = {game}"
 
     cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
-        LEFT JOIN division ON dlog.logid = division.logid \
+        LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
@@ -1022,7 +1022,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
     else:
         f.write(b"logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
     cur.execute(f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
-        LEFT JOIN division ON dlog.logid = division.logid \
+        LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time} AND dlog.logid >= 0")

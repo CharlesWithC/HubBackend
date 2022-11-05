@@ -87,7 +87,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         challenge_type = int(form["challenge_type"])
@@ -198,7 +198,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
             return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         delivery_count = int(form["delivery_count"])

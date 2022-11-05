@@ -27,7 +27,6 @@
     "leave_company_before_delete": "Abandonar la empresa antes de eliminar la cuenta.",
     "user_already_banned": "El usuario ya está prohibido.",
     "user_not_banned": "Usuario no prohibido.",
-    "bio_too_long": "Bio demasiado largo.",
 
     "steam_api_error": "API de Steam inaccesible. No se pudo vincular la cuenta de vapor.",
     "invalid_steam_auth": "Autenticación de Steam no válida.",

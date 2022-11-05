@@ -23,6 +23,10 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     if au["error"]:
         response.status_code = 401
         return au
+    staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
+    isstaff = False
+    if not staffau["error"]:
+        isstaff = True
     activityUpdate(au["discordid"], "Viewing Downloads")
 
     if downloadsid <= 0:
@@ -32,7 +36,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count FROM downloads WHERE downloadsid = {downloadsid}")
+    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
@@ -44,7 +48,10 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
     conn.commit()
 
-    return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": f"/{config.abbr}/downloads/{secret}", "click_count": str(tt[5])}}
+    if not isstaff:
+        return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}
+    else:
+        return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}
 
 @app.get(f"/{config.abbr}/downloads/list")
 async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
@@ -60,6 +67,10 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     if au["error"]:
         response.status_code = 401
         return au
+    staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
+    isstaff = False
+    if not staffau["error"]:
+        isstaff = True
     activityUpdate(au["discordid"], "Viewing Downloads")
         
     limit = ""
@@ -87,12 +98,14 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     conn = newconn()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        link = tt[4]
-        ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "click_count": str(tt[5])})
+        if not isstaff:
+            ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "orderid": str(tt[6]), "click_count": str(tt[5])})
+        else:
+            ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "orderid": str(tt[6]), "click_count": str(tt[5])})
         
     cur.execute(f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
@@ -164,7 +177,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413
@@ -227,7 +240,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413

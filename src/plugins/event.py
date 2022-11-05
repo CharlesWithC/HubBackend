@@ -293,7 +293,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
             return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
@@ -361,7 +361,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
             return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1

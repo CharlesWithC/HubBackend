@@ -297,7 +297,7 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         
     if len(bio) > 1000:
         response.status_code = 413
-        return {"error": True, "descriptor": ml.tr(request, "bio_too_long")}
+        return {"error": True, "descriptor": "Maximum length of 'bio' is 1,000 characters."}
 
     cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
     conn.commit()

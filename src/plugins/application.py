@@ -375,7 +375,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'message' is 2,000 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -508,7 +508,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'message' is 2,000 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

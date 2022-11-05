@@ -28,7 +28,6 @@
     "leave_company_before_delete": "Leave company before deleting account.",
     "user_already_banned": "User already banned.",
     "user_not_banned": "User not banned.",
-    "bio_too_long": "Bio too long.",
 
     "steam_api_error": "Steam API inaccessible. Failed to bind Steam account.",
     "invalid_steam_auth": "Invalid Steam Authentication.",

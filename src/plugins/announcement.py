@@ -145,7 +145,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'content' is 2,000 characters."}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -212,7 +212,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' is 2000 characters."}
+            return {"error": True, "descriptor": "Maximum length of 'content' is 2,000 characters."}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -236,7 +236,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
     
-    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type} WHERE announcementid = {announcementid}")
+    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
     await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
     conn.commit()
 

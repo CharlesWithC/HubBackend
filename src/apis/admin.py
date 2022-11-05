@@ -110,6 +110,9 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     form = await request.form()
     try:
         formconfig = json.loads(form["config"])
+        if len(form["config"]) > 150000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'config' is 150,000 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}

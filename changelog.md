@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.19.2**  
+1.Fixed the bug that `is_private` is not updated when **PATCH** `/announcement`  
+2.Fixed **GET** `/dlog/list` and **GET** `/dlog/export` shows pending division info  
+3.Added 150,000-character limit for config  
+
 **v1.19.1**  
 **[Minor changes]**  
 1.*[Dlog]* Improved `dlog` to support empty delivery log data (detail)  

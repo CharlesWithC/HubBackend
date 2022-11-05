@@ -27,7 +27,6 @@
     "leave_company_before_delete": "Quittez l'entreprise avant de supprimer le compte.",
     "user_already_banned": "Utilisateur déjà banni.",
     "user_not_banned": "Utilisateur non banni.",
-    "bio_too_long": "Bio trop long.",
 
     "steam_api_error": "API Steam inaccessible. Impossible de lier le compte steam.",
     "invalid_steam_auth": "Authentification Steam invalide.",
