@@ -4,11 +4,11 @@
 from fastapi import FastAPI
 from discord import Colour
 from io import BytesIO
-import os, sys, json, requests, time
+import os, sys, json, requests, time, logging
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.18.3"
+version = "v1.19.1"
 
 DH_START_TIME = int(time.time())
 

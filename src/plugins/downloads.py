@@ -3,7 +3,8 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, requests
+from fastapi.responses import RedirectResponse
+import json, time, requests, random, string
 
 from app import app, config
 from db import newconn
@@ -11,8 +12,46 @@ from functions import *
 import multilang as ml
 
 @app.get(f"/{config.abbr}/downloads")
-async def getDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /downloads', 60, 30)
+async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
+        downloadsid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /downloads', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    activityUpdate(au["discordid"], "Viewing Downloads")
+
+    if downloadsid <= 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count FROM downloads WHERE downloadsid = {downloadsid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    tt = t[0]
+
+    secret = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    cur.execute(f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
+    cur.execute(f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
+    conn.commit()
+
+    return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": f"/{config.abbr}/downloads/{secret}", "click_count": str(tt[5])}}
+
+@app.get(f"/{config.abbr}/downloads/list")
+async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
+        title: Optional[str] = "", creator_userid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'GET /downloads/list', 180, 90)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -23,25 +62,141 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         return au
     activityUpdate(au["discordid"], "Viewing Downloads")
         
+    limit = ""
+    if title != "":
+        title = convert_quotation(title).lower()
+        limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
+    if creator_userid != -1:
+        limit += f"AND userid = {creator_userid} "
+
+    if page <= 0:
+        page = 1
+
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+
+    if not order_by in ["orderid", "downloadsid", "title", "click_count"]:
+        order_by = "orderid"
+        order = "asc"
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()    
+
     conn = newconn()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT data FROM downloads")
+    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
-    data = ""
-    if len(t) > 0:
-        data = decompress(t[0][0])
+    ret = []
+    for tt in t:
+        link = tt[4]
+        ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "click_count": str(tt[5])})
         
-    return {"error": False, "response": data}
+    cur.execute(f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
 
-@app.patch(f"/{config.abbr}/downloads")
-async def patchDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 10)
+    return {"error": False, "response": {"list": ret[:page_size], "total_items": str(tot), \
+        "total_pages": str(int(math.ceil(tot / page_size)))}}
+
+# MUST BE AFTER /downloads/list or this will overwrite that
+@app.get(f"/{config.abbr}/downloads/{{secret}}")
+async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
+        secret: Optional[str] = ""):
+    rl = ratelimit(request.client.host, 'GET /downloads/redirect', 180, 90)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
+    conn.commit()
+
+    secret = convert_quotation(secret)
+
+    cur.execute(f"SELECT downloadsid FROM downloads_templink WHERE secret = '{secret}'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    downloadsid = t[0][0]
+
+    cur.execute(f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    link = t[0][0]
+
+    cur.execute(f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")
+    conn.commit()
+
+    return RedirectResponse(url=link, status_code=302)
+
+@app.post(f"/{config.abbr}/downloads")
+async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'POST /downloads', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "downloads"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    
+    form = await request.form()
+    try:
+        title = convert_quotation(form["title"])
+        if len(form["title"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+        description = compress(form["description"])
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+        link = convert_quotation(form["link"])
+        if len(form["link"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'link' is 200 characters."}
+        orderid = int(form["orderid"])
+    except:        
+        response.status_code = 400
+        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
+    if not isurl(link):
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link")}
+    
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid'")
+    t = cur.fetchall()
+    nxtdownloadsid = int(t[0][0])
+    cur.execute(f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")
+    cur.execute(f"INSERT INTO downloads VALUES ({nxtdownloadsid}, {adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
+    await AuditLog(adminid, f"Created downloadable item `#{nxtdownloadsid}`")
+    conn.commit()
+
+    return {"error": False, "response": {"downloadsid": str(nxtdownloadsid)}}
+
+@app.patch(f"/{config.abbr}/downloads")
+async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
+        downloadsid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'PATCH /downloads', 180, 30)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -49,21 +204,78 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         
     conn = newconn()
     cur = conn.cursor()
+
+    if downloadsid <= 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    
+    conn = newconn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
     
     form = await request.form()
     try:
-        data = compress(form["data"])
-        if len(form["data"]) > 20000:
+        title = convert_quotation(form["title"])
+        if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'downloads' allowed is 20000."}
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+        description = compress(form["description"])
+        if len(form["description"]) > 2000:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
+        link = convert_quotation(form["link"])
+        if len(form["link"]) > 200:
+            response.status_code = 413
+            return {"error": True, "descriptor": "Maximum length of 'link' is 200 characters."}
+        orderid = int(form["orderid"])
     except:        
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+
+    if not isurl(link):
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link")}
     
-    cur.execute(f"DELETE FROM downloads")
-    cur.execute(f"INSERT INTO downloads VALUES ('{data}')")
+    cur.execute(f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
+    await AuditLog(adminid, f"Updated downloadable item `#{downloadsid}`")
     conn.commit()
 
-    await AuditLog(adminid, "Updated downloads")
+    return {"error": False}
+    
+@app.delete(f"/{config.abbr}/downloads")
+async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
+        downloadsid: Optional[int] = -1):
+    rl = ratelimit(request.client.host, 'DELETE /downloads', 180, 30)
+    if rl > 0:
+        response.status_code = 429
+        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    if au["error"]:
+        response.status_code = 401
+        return au
+    adminid = au["userid"]
+        
+    conn = newconn()
+    cur = conn.cursor()
+
+    if int(downloadsid) < 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+
+    cur.execute(f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+    
+    cur.execute(f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
+    await AuditLog(adminid, f"Deleted downloadable item `#{downloadsid}`")
+    conn.commit()
 
     return {"error": False}

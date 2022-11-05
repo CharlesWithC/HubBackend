@@ -146,6 +146,7 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
     
     if not order_by in ["content", "notificationid"]:
         order_by = "notificationid"
+        order = "desc"
 
     if not order in ["asc", "desc"]:
         if order_by == "notificationid":
@@ -224,7 +225,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -245,24 +246,23 @@ async def getUserList(request: Request, response: Response, authorization: str =
     
     if not order_by in ["name", "discord_id", "join_timestamp"]:
         order_by = "discord_id"
-    cvt = {"name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp"}
+        order = "asc"
+    cvt = {"name": "user.name", "discord_id": "user.discordid", "join_timestamp": "user.join_timestamp"}
     order_by = cvt[order_by]
 
     if not order in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
     
-    cur.execute(f"SELECT userid, name, discordid, join_timestamp, avatar FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    cur.execute(f"SELECT user.userid, user.name, user.discordid, user.join_timestamp, user.avatar, banned.reason FROM user LEFT JOIN banned ON banned.discordid = user.discordid WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
-        cur.execute(f"SELECT reason FROM banned WHERE discordid = {tt[2]}")
-        p = cur.fetchall()
-        banned = False
         banreason = ""
-        if len(p) > 0:
+        banned = False
+        if tt[5] != None:
             banned = True
-            banreason = p[0][0]
+            banreason = tt[5]
         ret.append({"name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[4], "ban": {"is_banned": TF[banned], "reason": banreason}, "join_timestamp": tt[3]})
     cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
     t = cur.fetchall()
@@ -380,7 +380,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     
 @app.delete(f'/{config.abbr}/user/password')
 async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /user/password', 180, 5)
+    rl = ratelimit(request.client.host, 'DELETE /user/password', 180, 20)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -566,7 +566,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -582,7 +582,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         reason = convert_quotation(form["reason"])
         if len(reason) > 256:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'reason' allowed is 256."}
+            return {"error": True, "descriptor": "Maximum length of 'reason' is 256 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -626,7 +626,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -662,7 +662,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -722,7 +722,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -782,7 +782,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
 
     if discordid != -1:
-        au = auth(authorization, request, required_permission = ["admin", "hrm"])
+        au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
         if au["error"]:
             response.status_code = 401
             return au

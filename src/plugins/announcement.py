@@ -89,6 +89,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     
     if not order_by in ["announcementid", "title"]:
         order_by = "announcementidid"
+        order = "asc"
     if not order in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
@@ -114,7 +115,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /announcement', 180, 5)
+    rl = ratelimit(request.client.host, 'POST /announcement', 180, 20)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -141,10 +142,10 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'content' is 2000 characters."}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -171,14 +172,11 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     conn.commit()
 
     if channelid != 0:
-        try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
-                    "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
-        except:
-            pass
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+                "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
+                        "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
 
     return {"error": False, "response": {"announcementid": str(announcementid)}}
 
@@ -211,10 +209,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'content' is 2000 characters."}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -243,14 +241,11 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     conn.commit()
 
     if channelid != 0:
-        try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
-                    "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}))
-        except:
-            pass
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+                "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
+                        "timestamp": str(datetime.now()), "color": config.intcolor}}))
 
     return {"error": False}
 

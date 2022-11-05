@@ -117,5 +117,8 @@
     "challenge_not_found": "Défi introuvable.",
     "challenge_delivery_not_found": "La livraison n'est pas acceptée pour le défi.",
     "challenge_delivery_already_accepted": "La livraison est déjà acceptée pour le défi.",
-    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps."
+    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps.",
+    
+    "downloads_not_found": "Élément téléchargeable introuvable.",
+    "downloads_invalid_link": "Lien invalide."
 }

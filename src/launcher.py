@@ -172,4 +172,4 @@ elif app == "tracker":
         print("Unknown verb")
 
 else:
-    print("Unknown Application")
+    print("Unknown application")

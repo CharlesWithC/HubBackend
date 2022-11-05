@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.18.3"
+        "version": "1.19.1"
     },
     "paths": {
         "/abbr": {
@@ -903,22 +903,6 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Query with content",
-                        "type": "string"
-                    },
-                    "name": "content",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Status (-1 = all | 0 = unread | 1 = read)",
-                        "type": "integar"
-                    },
-                    "name": "status",
-                    "in": "query"
-                },{
-                    "required": false,
-                    "schema": {
                         "title": "Order by (notificationid, content)",
                         "type": "string"
                     },
@@ -931,6 +915,22 @@
                         "type": "string"
                     },
                     "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Query with content",
+                        "type": "string"
+                    },
+                    "name": "content",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Status (-1 = all | 0 = unread | 1 = read)",
+                        "type": "integar"
+                    },
+                    "name": "status",
                     "in": "query"
                 }],
                 "responses": {
@@ -1586,6 +1586,22 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Order by (user_id, name, discord_id, highest_role, join_timestamp, last_seen)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Query with username",
                         "type": "string"
                     },
@@ -1602,18 +1618,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (user_id, name, discord_id, highest_role, join_timestamp)",
-                        "type": "string"
+                        "title": "Last seen after (timestamp)",
+                        "type": "integar"
                     },
-                    "name": "order_by",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Order (asc, desc)",
-                        "type": "string"
-                    },
-                    "name": "order",
+                    "name": "last_seen_after",
                     "in": "query"
                 }],
                 "responses": {
@@ -2606,20 +2614,20 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order (asc, desc)",
-                        "type": "string"
-                    },
-                    "name": "order",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
                         "title": "Order by (announcementid, title)",
                         "type": "string"
                     },
                     "name": "order_by",
                     "in": "query"
-                }, {
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                },  {
                     "required": false,
                     "schema": {
                         "title": "Title (for searching)",
@@ -3508,20 +3516,20 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order (asc, desc)",
-                        "type": "string"
-                    },
-                    "name": "order",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
                         "title": "Order by (challengeid, title, start_time, end_time, required_distance, reward_points, delivery_count)",
                         "type": "string"
                     },
                     "name": "order_by",
                     "in": "query"
-                }, {
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                },  {
                     "required": false,
                     "schema": {
                         "title": "Start Timestamp",
@@ -3954,6 +3962,85 @@
                 }
             }
         },
+        "/abbr/downloads/list": {
+            "get": {
+                "summary": "Get Downloads List",
+                "tags": ["downloads"],
+                "operationId": "get_downloads_list",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integar"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (downloadsid, orderid, title, click_count)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Title (for searching)",
+                        "type": "string"
+                    },
+                    "name": "title",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Creator User ID",
+                        "type": "integar"
+                    },
+                    "name": "creator_userid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/downloads": {
             "get": {
                 "summary": "Get Downloads",
@@ -3961,6 +4048,15 @@
                 "operationId": "get_downloads",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Downloads ID",
+                        "type": "integer"
+                    },
+                    "name": "downloadsid",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -3983,10 +4079,10 @@
                     }
                 }
             },
-            "patch": {
-                "summary": "Edit Downloads",
+            "post": {
+                "summary": "Create Downloadable Item",
                 "tags": ["downloads"],
-                "operationId": "patch_downloads",
+                "operationId": "post_downloads",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -3997,16 +4093,170 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "data": {
-                                        "description": "Markdown Downloads Content",
+                                    "title": {
+                                        "description": "Title",
                                         "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "link": {
+                                        "description": "Link",
+                                        "type": "string"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integar"
                                     }
                                 }
                             },
-                            "required": ["data"]
+                            "required": ["title", "description", "link", "orderid"]
                         }
                     }
                 },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Edit Downloadable Item",
+                "tags": ["downloads"],
+                "operationId": "patch_downloads",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Downloads ID",
+                        "type": "integer"
+                    },
+                    "name": "downloadsid",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "link": {
+                                        "description": "Link",
+                                        "type": "string"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integar"
+                                    }
+                                }
+                            },
+                            "required": ["title", "description", "link", "orderid"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Downloadable Item",
+                "tags": ["downloads"],
+                "operationId": "delete_downloads",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Downloads ID",
+                        "type": "integer"
+                    },
+                    "name": "downloadsid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/downloads/{secret}": {
+            "get": {
+                "summary": "Redirect to Original URL",
+                "tags": ["downloads"],
+                "operationId": "redirect_downloads",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Secret",
+                        "type": "string"
+                    },
+                    "name": "secret",
+                    "in": "path"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",

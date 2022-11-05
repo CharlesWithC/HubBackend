@@ -281,19 +281,19 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'departure' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'departure' is 200 characters."}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'destination' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'destination' is 200 characters."}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'distance' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
@@ -349,19 +349,19 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'departure' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'departure' is 200 characters."}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'destination' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'destination' is 200 characters."}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'distance' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'description' is 2000 characters."}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
@@ -450,7 +450,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     title = t[0][2]
     gap = points - orgeventpnt
 
-    ret = f"Updated event `#{eventid}` attendees\n"
+    ret = f"Updated event `#{eventid}` attendees  \n"
     ret1 = f"New attendees - Given `{points}` points to "
     cnt = 0
     for attendee in attendees:
@@ -463,7 +463,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         ret1 += f"{name} ({attendee}), "
         cnt += 1
     ret1 = ret1[:-2]
-    ret1 += f".\n"
+    ret1 += f".  \n"
     if cnt > 0:
         ret = ret + ret1
 
@@ -480,7 +480,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             ret2 += f"{name} ({attendee}), "
             cnt += 1
     ret2 = ret2[:-2]
-    ret2 += f".\n"
+    ret2 += f".  \n"
     if cnt > 0:
         ret = ret + ret2
     for attendee in toremove:
@@ -503,14 +503,14 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]
-        ret3 += f".\n"
+        ret3 += f".  \n  "
         if cnt > 0:
             ret = ret + ret3
 
     cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', points = {points} WHERE eventid = {eventid}")
     conn.commit()
 
-    if ret == f"Updated event #{eventid} attendees\n":
+    if ret == f"Updated event #{eventid} attendees  \n":
         return {"error": False, "response": {"message": "No changes made."}}
 
     ret = convert_quotation(ret)

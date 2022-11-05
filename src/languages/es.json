@@ -117,5 +117,8 @@
     "challenge_not_found": "Desafío no encontrado.",
     "challenge_delivery_not_found": "La entrega no se acepta para el desafío.",
     "challenge_delivery_already_accepted": "La entrega ya se aceptó para el desafío.",
-    "maximum_15_active_challenge": "Se permiten como máximo 15 desafíos activos al mismo tiempo."
+    "maximum_15_active_challenge": "Se permiten como máximo 15 desafíos activos al mismo tiempo.",
+
+    "downloads_not_found": "Elemento descargable no encontrado.",
+    "downloads_invalid_link": "Enlace no válido."
 }

@@ -117,5 +117,8 @@
     "challenge_not_found": "Udfordring ikke fundet.",
     "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
     "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
-    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid."
+    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid.",
+    
+    "downloads_not_found": "Downloadbar element blev ikke fundet.",
+    "downloads_invalid_link": "Ugyldigt link."
 }

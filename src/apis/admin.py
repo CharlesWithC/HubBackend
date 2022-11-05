@@ -33,7 +33,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -97,7 +97,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -196,14 +196,14 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     return {"error": False}
 
 # reload service
-@app.post(f"/{config.abbr}/reload")
-async def postReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /reload', 600, 3)
+@app.put(f"/{config.abbr}/reload")
+async def putReload(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request.client.host, 'PUT /reload', 600, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin"])
+    au = auth(authorization, request, required_permission = ["admin", "reload"])
     if au["error"]:
         response.status_code = 401
         return au

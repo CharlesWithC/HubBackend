@@ -203,7 +203,7 @@ def getAvatarSrc(userid):
         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png"
     return src
 
-def getUserInfo(userid = -1, discordid = -1, privacy = False):
+def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = False):
     if userid == -999:
         return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
         
@@ -211,7 +211,10 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False):
         return {"name": "[Removed]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
 
     if userid == -1 and discordid == -1:
-        return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        if not tell_deleted:
+            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        else:
+            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": [], "is_deleted": True}
 
     global cuserinfo
     
@@ -234,7 +237,10 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False):
     cur.execute(f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
     p = cur.fetchall()
     if len(p) == 0:
-        return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+        if not tell_deleted:
+            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+        else:
+            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": [], "is_deleted": True}
 
     roles = p[0][4].split(",")
     while "" in roles:
@@ -475,7 +481,8 @@ async def AuditLog(userid, text):
                 embed.timestamp = datetime.now()
                 await webhook.send(embed=embed)
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
 async def AutoMessage(meta, setvar):
     try:
@@ -513,4 +520,5 @@ async def AutoMessage(meta, setvar):
                     "color": config.intcolor
                 }}))
     except:
-        pass
+        import traceback
+        traceback.print_exc()

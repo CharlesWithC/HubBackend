@@ -78,4 +78,4 @@ if __name__ == "__main__":
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
     if not version.endswith(".rc"):
         time.sleep(1)
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", workers = int(config.server_workers))
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, workers = int(config.server_workers))

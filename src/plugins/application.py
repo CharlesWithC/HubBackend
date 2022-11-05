@@ -292,10 +292,7 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     if applicantrole != 0:
         durl = f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
-        try:
-            requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}"})
-        except:
-            pass
+        requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
 
     if config.discord_bot_dm:
         try:
@@ -306,13 +303,14 @@ async def postApplication(request: Request, response: Response, authorization: s
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
                         "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -348,7 +346,8 @@ async def postApplication(request: Request, response: Response, authorization: s
                     embed.timestamp = datetime.now()
                     await webhook.send(content = discord_message_content, embed = embed)
             except:
-                pass
+                import traceback
+                traceback.print_exc()
 
     return {"error": False, "response": {"applicationid": str(applicationid)}}
 
@@ -376,7 +375,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'message' is 2000 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -427,14 +426,15 @@ async def updateApplication(request: Request, response: Response, authorization:
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
                     "description": ml.tr(request, "application_message_recorded"),
                         "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     application_type_text = ""
     discord_message_content = ""
@@ -476,7 +476,8 @@ async def updateApplication(request: Request, response: Response, authorization:
                     embed.timestamp = datetime.now()
                     await webhook.send(content = discord_message_content, embed = embed)
             except:
-                pass
+                import traceback
+                traceback.print_exc()
 
     return {"error": False}
 
@@ -507,7 +508,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 2000."}
+            return {"error": True, "descriptor": "Maximum length of 'message' is 2000 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -582,7 +583,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
                     "description": f"[{ml.tr(request, 'message', force_en = True)}] {message}",
                         "fields": [{"name": ml.tr(request, "application_id", force_en = True), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status", force_en = True), "value": statustxt, "inline": True}, \
                             {"name": ml.tr(request, "time", force_en = True), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff", force_en = True), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
@@ -590,7 +591,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     return {"error": False}
 
@@ -602,7 +604,7 @@ async def patchApplicationPositions(request: Request, response: Response, author
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
     if au["error"]:
         response.status_code = 401
         return au

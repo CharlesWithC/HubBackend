@@ -30,7 +30,7 @@ def getUrl4MFA(token):
 # Password Auth
 @app.post(f'/{config.abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /auth/password', 180, 5)
+    rl = ratelimit(request.client.host, 'POST /auth/password', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -64,6 +64,16 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_email_or_password")}
     
+    if config.in_guild_check:
+        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+        if r.status_code == 404:
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+        if r.status_code != 200:
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
+        d = json.loads(r.text)
+        if not "user" in d.keys():
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+
     cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     mfa_secret = t[0][0]
@@ -99,7 +109,7 @@ async def getAuthDiscordRedirect(request: Request):
 @app.get(f'/{config.abbr}/auth/discord/callback')
 async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
-    if referer != "https://discord.com/":
+    if referer == "":
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
     if code == "":
@@ -149,6 +159,8 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             
             if config.in_guild_check:
                 r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                if r.status_code == 404:
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
                 if r.status_code != 200:
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
                 d = json.loads(r.text)
@@ -202,13 +214,21 @@ async def getSteamOAuth(request: Request, response: Response, connect_account: O
 
 @app.get(f"/{config.abbr}/auth/steam/connect")
 async def getSteamConnect(request: Request, response: Response):
+    referer = request.headers.get("Referer")
+    data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
+    if referer == "" or data == "":
+        steamLogin = SteamSignIn()
+        encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/connect')
+        url = 'https://steamcommunity.com/openid/login?' + encodedData
+        return RedirectResponse(url=url, status_code=302)
+
     return RedirectResponse(url=config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
 @app.get(f"/{config.abbr}/auth/steam/callback")
 async def getSteamCallback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    if referer != "https://steamcommunity.com/" or data == "":
+    if referer == "" or data == "":
         steamLogin = SteamSignIn()
         encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/callback')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
@@ -236,6 +256,16 @@ async def getSteamCallback(request: Request, response: Response):
         response.status_code = 401
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
     discordid = t[0][0]
+
+    if config.in_guild_check:
+        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+        if r.status_code == 404:
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+        if r.status_code != 200:
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
+        d = json.loads(r.text)
+        if not "user" in d.keys():
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
 
     cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -280,7 +310,7 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
 @app.patch(f"/{config.abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token', 180, 5)
+    rl = ratelimit(request.client.host, 'PATCH /token', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -306,7 +336,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
 @app.delete(f'/{config.abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token', 180, 5)
+    rl = ratelimit(request.client.host, 'DELETE /token', 180, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -465,7 +495,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
 
 @app.delete(f'/{config.abbr}/token/application')
 async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/application', 180, 5)
+    rl = ratelimit(request.client.host, 'DELETE /token/application', 180, 20)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -506,7 +536,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
 # Temporary Identity Proof
 @app.put(f"/{config.abbr}/auth/tip")
 async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /auth/tip', 180, 5)
+    rl = ratelimit(request.client.host, 'PUT /auth/tip', 180, 20)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -706,7 +736,7 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
     
     else:
         # admin / hrm disable user mfa
-        au = auth(authorization, request, required_permission = ["admin", "hrm"])
+        au = auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
         if au["error"]:
             response.status_code = 401
             return au

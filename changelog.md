@@ -1,5 +1,42 @@
 # Changelog
 
+**v1.19.1**  
+**[Minor changes]**  
+1.*[Dlog]* Improved `dlog` to support empty delivery log data (detail)  
+2.*[Auth]* Updated **GET** `/auth/discord/callback` and **GET** `/auth/steam/callback` **Referer Check** to only make sure the request is not direct  
+3.*[Auth]* Added **Referer Check** to **GET** `/auth/steam/connect`  
+4.*[Auth]* Added **In-guild Check** to **POST** `/auth/password` and **GET** `/auth/steam/callback`  
+5.*[Auth]* Improved **In-guild Check** to return `must_join_discord` error when Discord API Response Code is `404`  
+6.Added `X-Audit-Log-Reason` header when updating User Discord Roles through Discord API  
+**[New features]**  
+7.*[Member]* Added `Navio API Error` to response of **PATCH** `/member/roles` (e.g. Steam profile is not public)  
+8.*[Member]* Added `last_seen` to `order` parameter of **GET** `/member/list` and `last_seen_after` parameter to **GET** `/member/list`  
+**[Major changes]**  
+9.*[Dlog]* Improved Delivery Log Export (Added many more details, including division & challenge)  
+10.*[Downloads]* Reworked **downloads** plugin, added item-based management and downloads click count  
+11.Added per-function (endpoint) permission control (Note that existing integrated permissions are not modified)  
+|Endpoint|Added Permission|
+--|--|
+|**GET**, **PATCH** /config|config|
+|**PUT** /reload|reload|
+|**DELETE** /auth/mfa|disable_user_mfa|
+|**PUT** /member|add_member|
+|**PATCH** /member/roles|update_member_roles|
+|**PATCH** /member/point|update_member_points|
+|**DELETE** /dismiss|dismiss_member|
+|**GET** /user/list|get_pending_user_list|
+|**PUT**, **DELETE** /user/ban|ban_user|
+|**PATCH** /user/discord|update_user_discord|
+|**DELETE** /user/connections|delete_account_connections|
+|**DELETE** /user|delete_user|
+|**PATCH** /application/positions|update_application_positions|
+
+12.Optimized database query  
+|Endpoint|Note|
+--|--|
+|**GET** /dlog/list|Improved division & challenge query, added division & challenge name in response|
+|**GET** /user/list|Improved banned info query|
+
 **v1.18.3**  
 1.Fixed **GET** `/challenge/list` param `must_have_completed` not working correctly  
 2.Changed order of `challenge[].completed` to `points DESC, timestamp ASC, userid ASC`  

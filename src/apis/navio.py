@@ -210,19 +210,19 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             destination_city = d["data"]["object"]["destination_city"]
             destination_company = d["data"]["object"]["destination_company"]
             if source_city is None or source_city["name"] is None:
-                source_city = "Unknown city"
+                source_city = "Unknown City"
             else:
                 source_city = source_city["name"]
             if source_company is None or source_company["name"] is None:
-                source_company = "Unknown company"
+                source_company = "Unknown Company"
             else:
                 source_company = source_company["name"]
             if destination_city is None or destination_city["name"] is None:
-                destination_city = "Unknown city"
+                destination_city = "Unknown City"
             else:
                 destination_city = destination_city["name"]
             if destination_company is None or destination_company["name"] is None:
-                destination_company = "Unknown company"
+                destination_company = "Unknown Company"
             else:
                 destination_company = destination_company["name"]
             cargo = "Unknown Cargo"
@@ -257,7 +257,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
                 dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
                 if config.distance_unit == "imperial":
-                    r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                    requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                             "url": dlglink,
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
@@ -271,7 +271,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                 "footer": {"text": multiplayer}, "color": config.intcolor,\
                                 "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                 elif config.distance_unit == "metric":
-                    r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                    requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                             "url": dlglink,
                             "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
                                     {"name": "Truck", "value": truck, "inline": True},
@@ -289,7 +289,8 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 udiscordid = p[0][0]
 
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     try:
         if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered and not duplicate:

@@ -205,13 +205,14 @@ async def postDivision(request: Request, response: Response, authorization: str 
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
                     "description": f"Division supervisor will check your request and you will receive an update soon.",
                         "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
@@ -235,7 +236,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
                 embed.timestamp = datetime.now()
                 await webhook.send(content = config.webhook_division_message, embed = embed)
         except:
-            pass
+            import traceback
+            traceback.print_exc()
         
     return {"error": False}
 
@@ -304,7 +306,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
         status = int(form["status"])
         if len(form["message"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' allowed is 200."}
+            return {"error": True, "descriptor": "Maximum length of 'message' is 200 characters."}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
@@ -338,13 +340,14 @@ async def patchDivision(request: Request, response: Response, authorization: str
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
                 notification(discordid, f"Division Validation Request for Delivery `#{logid}` {STATUS[status]}")
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
                     "description": message,
                         "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
                             {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     return {"error": False}

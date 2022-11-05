@@ -15,13 +15,7 @@ from app import app, config, tconfig
 from db import newconn
 from functions import *
 import multilang as ml
-
-DIVISIONPNT = {}
-for division in config.divisions:
-    try:
-        DIVISIONPNT[int(division["id"])] = int(division["point"])
-    except:
-        pass
+from plugins.division import DIVISIONPNT
 
 ROLES = {}
 sroles = config.roles
@@ -93,7 +87,7 @@ async def getRanks(request: Request, response: Response):
 @app.get(f'/{config.abbr}/member/list')
 async def getMemberList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        name: Optional[str] = '', roles: Optional[str] = '', \
+        name: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = -1,\
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     rl = ratelimit(request.client.host, 'GET /member/list', 180, 90)
     if rl > 0:
@@ -126,9 +120,13 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
     name = convert_quotation(name).lower()
     
-    if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp"]:
+    order_by_last_seen = False
+    if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp", "last_seen"]:
         order_by = "user_id"
-    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role"}
+        order = "asc"
+    if order_by == "last_seen":
+        order_by_last_seen = True
+    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
     order_by = cvt[order_by]
 
     sort_by_highest_role = False
@@ -148,11 +146,20 @@ async def getMemberList(request: Request, response: Response, authorization: str
         elif order == "DESC":
             order = "ASC"
 
+    activity_limit = ""
+    if last_seen_after >= 0:
+        activity_limit = f"AND user.discordid IN (SELECT user_activity.discordid FROM user_activity WHERE user_activity.timestamp >= {last_seen_after}) "
+
     hrole = {}
-    cur.execute(f"SELECT userid, name, discordid, roles, avatar, join_timestamp FROM user WHERE LOWER(name) LIKE '%{name}%' AND userid >= 0 ORDER BY {order_by} {order}")
+    if order_by_last_seen:
+        cur.execute(f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
+    else:
+        cur.execute(f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
     t = cur.fetchall()
     rret = {}
     for tt in t:
+        if str(tt[0]) in hrole.keys(): # prevent duplicate result from SQL query
+            continue
         roles = tt[3].split(",")
         while "" in roles:
             roles.remove("")
@@ -167,9 +174,19 @@ async def getMemberList(request: Request, response: Response, authorization: str
                 ok = True
         if not ok:
             continue
+        activity_name = tt[6]
+        activity_last_seen = tt[7]
+        if activity_last_seen != None:
+            if int(time.time()) - activity_last_seen >= 300:
+                activity_name = "Offline"
+            elif int(time.time()) - activity_last_seen >= 120:
+                activity_name = "Online"
+        else:
+            activity_name = "Offline"
+            activity_last_seen = ""
         hrole[str(tt[0])] = highestrole
         rret[str(tt[0])] = {"name": tt[1], "userid": str(tt[0]), "discordid": f"{tt[2]}", "avatar": tt[4], "roles": roles, \
-            "join_timestamp": tt[5]}
+            "join_timestamp": str(tt[5]), "activity": {"name": activity_name, "last_seen": str(activity_last_seen)}}
 
     ret = []
     if sort_by_highest_role:
@@ -316,6 +333,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         return response
         
     except:
+        import traceback
+        traceback.print_exc()
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
 
@@ -415,7 +434,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     rank = point2rank(totalpnt)
 
     try:
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         r=requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         d = json.loads(r.text)
         if "roles" in d:
@@ -449,7 +468,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             return {"error": True, "descriptor": ml.tr(request, "must_join_discord")}
 
     except:
-        pass
+        import traceback
+        traceback.print_exc()
 
 # Member Operation Section
 @app.put(f'/{config.abbr}/member')
@@ -459,7 +479,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -509,14 +529,15 @@ async def putMember(request: Request, response: Response, authorization: str = H
             if "id" in d:
                 channelid = d["id"]
                 ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
+                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
                     "description": ml.tr(request, "member_update", var = {"company_name": config.name}, force_en = True),
                         "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
                         "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
                             "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
 
         except:
-            pass
+            import traceback
+            traceback.print_exc()
 
     return {"error": False, "response": {"userid": userid}}   
 
@@ -527,7 +548,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "division"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -632,14 +653,32 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
     conn.commit()
 
+    navio_error = ""
+
     if config.perms.driver[0] in addedroles:
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
+        if r.status_code == 401:
+            navio_error = "Navio API Error: Invalid API Token"
+        elif r.status_code != 200:
+            try:
+                err = json.loads(r.text)["error"]
+                if err is None:
+                    navio_error = "Navio API Error: `Unknown Error`"
+                elif "message" in err.keys():
+                    navio_error = "Navio API Error: `" + err["message"] + "`"
+            except:
+                navio_error = "Navio API Error: `Unknown Error`"
         
         cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
         t = cur.fetchall()
         userdiscordid = t[0][0]
         username = t[0][1]
         usermention = f"<@{userdiscordid}>"
+
+        if navio_error != "":
+            await AuditLog(adminid, f"Failed to add `{username}` (User ID: `{userid}`) to Navio Company.  \n"+navio_error)
+        else:
+            await AuditLog(adminid, f"Added `{username}` (User ID: `{userid}`) to Navio Company.")
         
         def setvar(msg):
             return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
@@ -656,23 +695,24 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
-                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
                     elif int(role) > 0:
-                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}"}, timeout = 1)
+                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
                 except:
-                    pass
+                    import traceback
+                    traceback.print_exc()
 
     if config.perms.driver[0] in removedroles:
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
-    audit = f"Updated `{username}` (User ID: `{userid}`) roles:\n"
+    audit = f"Updated `{username}` (User ID: `{userid}`) roles:  \n"
     upd = ""
     for add in addedroles:
-        upd += f"`+ {ROLES[add]}`\n"
-        audit += f"`+ {ROLES[add]}`\n"
+        upd += f"`+ {ROLES[add]}`  \n"
+        audit += f"`+ {ROLES[add]}`  \n"
     for remove in removedroles:
-        upd += f"`- {ROLES[remove]}`\n"
-        audit += f"`- {ROLES[remove]}`\n"
+        upd += f"`- {ROLES[remove]}`  \n"
+        audit += f"`- {ROLES[remove]}`  \n"
     audit = convert_quotation(audit[:-1])
     await AuditLog(adminid, audit)
     conn.commit()
@@ -680,7 +720,10 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     discordid = getUserInfo(userid = userid)["discordid"]
     notification(discordid, f"Roles updated: \n"+upd)
 
-    return {"error": False} 
+    if navio_error != "":
+        return {"error": False, "response": {"navio_api_error": navio_error.replace("Navio API Error: ", "")}}
+    else:
+        return {"error": False}
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
@@ -689,7 +732,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr"])
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "update_member_points"])
     if au["error"]:
         response.status_code = 401
         return au
@@ -784,7 +827,7 @@ async def dismissMember(request: Request, response: Response, authorization: str
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm"])
+    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
     if au["error"]:
         response.status_code = 401
         return au

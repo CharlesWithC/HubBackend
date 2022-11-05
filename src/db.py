@@ -50,7 +50,9 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, us
     status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: validated | 2: denied
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT, userid INT, title TEXT, description TEXT, \
+    link TEXT, orderid INT, click_count INT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, \
     meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -64,7 +66,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, 
 
 cur.execute(f"SELECT skey FROM settings")
 t = cur.fetchall()
-keys = ["nxtuserid", "nxtappid", "nxtannid", "nxtlogid", "nxteventid", "nxtchallengeid", "nxtnotificationid"]
+keys = ["nxtuserid", "nxtlogid", "nxtappid", "nxtannid", "nxtchallengeid", "nxtdownloadsid", "nxteventid", "nxtnotificationid"]
 for key in keys:
     if not (key,) in t:
         cur.execute(f"INSERT INTO settings VALUES (0, '{key}', 1)")
@@ -94,6 +96,8 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX announcement_announcementid ON announcement (announcementid)",
 "CREATE INDEX application_applicationid ON application (applicationid)",
 "CREATE INDEX application_discordid ON application (discordid)",
+"CREATE INDEX downloads_downloadsid ON downloads (downloadsid)",
+"CREATE INDEX downloads_templink_secret ON downloads_templink (secret)",
 "CREATE INDEX event_eventid ON event (eventid)",
 "CREATE INDEX challenge_challengeid ON challenge (challengeid)",
 "CREATE INDEX challenge_start_time ON challenge (start_time)",

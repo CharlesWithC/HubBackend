@@ -4,7 +4,6 @@
 from fastapi import FastAPI, Response, Request, Header
 from fastapi.responses import StreamingResponse
 from typing import Optional
-from datetime import datetime
 from io import BytesIO
 import json, time, math
 
@@ -12,13 +11,7 @@ from app import app, config
 from db import newconn
 from functions import *
 import multilang as ml
-
-DIVISIONPNT = {}
-for division in config.divisions:
-    try:
-        DIVISIONPNT[int(division["id"])] = int(division["point"])
-    except:
-        pass
+from plugins.division import divisiontxt, DIVISIONPNT
 
 # cache (works in each worker process)
 cstats = {}
@@ -58,14 +51,12 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     activityUpdate(discordid, f"Viewing Delivery Log #{logid}")
-    data = json.loads(decompress(t[0][1]))
-    del data["data"]["object"]["driver"]
+    data = {}
+    if t[0][1] != "":
+        data = json.loads(decompress(t[0][1]))
+    if "data" in data.keys():
+        del data["data"]["object"]["driver"]
     distance = t[0][3]
-    name = "Unknown Driver"
-    cur.execute(f"SELECT name FROM user WHERE userid = {t[0][0]}")
-    p = cur.fetchall()
-    if len(p) > 0:
-        name = p[0][0]
 
     cur.execute(f"SELECT data FROM telemetry WHERE logid = {logid}")
     p = cur.fetchall()
@@ -100,9 +91,13 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     for oo in o:
         challenge_record.append(oo[0])
 
-    userinfo = getUserInfo(userid = t[0][0])
+    userinfo = None
     if userid == -1 and config.privacy:
         userinfo = getUserInfo(privacy = True)
+    else:
+        userinfo = getUserInfo(userid = t[0][0], tell_deleted = True)
+        if "is_deleted" in userinfo:
+            userinfo = getUserInfo(-1)
 
     return {"error": False, "response": {"logid": str(logid), "user": userinfo, \
         "distance": str(distance), "division": division, "challenge_record": challenge_record, \
@@ -152,71 +147,113 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 
     limit = ""
     if quserid != -1:
-        limit += f"AND userid = {quserid} "
+        limit += f"AND dlog.userid = {quserid} "
     if challenge == "include":
         limit = limit
     elif challenge == "only":
-        limit += f"AND logid IN (SELECT logid FROM challenge_record) "
+        limit += f"AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record) "
     elif challenge == "none":
-        limit += f"AND logid NOT IN (SELECT logid FROM challenge_record) "
+        limit += f"AND dlog.logid NOT IN (SELECT challenge_record.logid FROM challenge_record) "
     else:
         try:
             challengeid = int(challenge)
-            limit += f"AND logid IN (SELECT logid FROM challenge_record WHERE challengeid = {challengeid}) "
+            limit += f"AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record WHERE challenge_record.challengeid = {challengeid}) "
         except:
             pass
     if division == "include":
         limit = limit
     elif division == "only":
-        limit += f"AND logid IN (SELECT logid FROM division WHERE status = 1) "
+        limit += f"AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1) "
     elif division == "none":
-        limit += f"AND logid NOT IN (SELECT logid FROM division WHERE status = 1) "
+        limit += f"AND dlog.logid NOT IN (SELECT division.logid FROM division WHERE division.status = 1) "
     else:
         try:
             divisionid = int(division)
-            limit += f"AND logid IN (SELECT logid FROM division WHERE status = 1 AND divisionid = {divisionid}) "
+            limit += f"AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1 AND division.divisionid = {divisionid}) "
         except:
             pass
     
     timelimit = ""
     if start_time != -1 and end_time != -1:
-        timelimit = f"AND timestamp >= {start_time} AND timestamp <= {end_time}"
+        timelimit = f"AND dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time}"
     
     if speed_limit > 0:
-        speed_limit = f" AND topspeed <= {speed_limit}"
+        speed_limit = f" AND dlog.topspeed <= {speed_limit}"
     else:
         speed_limit = ""
 
     status_limit = ""
     if status == 1:
-        status_limit = f" AND isdelivered = 1"
+        status_limit = f" AND dlog.isdelivered = 1"
     elif status == 2:
-        status_limit = f" AND isdelivered = 0"
+        status_limit = f" AND dlog.isdelivered = 0"
 
     gamelimit = ""
     if game == 1 or game == 2:
-        gamelimit = f" AND unit = {game}"
+        gamelimit = f" AND dlog.unit = {game}"
 
-    cur.execute(f"SELECT userid, data, timestamp, logid, profit, unit, distance, isdelivered FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
-    
-    t = cur.fetchall()
+    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
+        LEFT JOIN division ON dlog.logid = division.logid \
+        LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
+        LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
+        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
     ret = []
-    for tt in t:
-        data = json.loads(decompress(tt[1]))
-        source_city = "Unknown city"
-        source_company = "Unknown company"
-        destination_city = "Unknown city"
-        destination_company = "Unknown company"
-        if data["data"]["object"]["source_city"] != None:
+    t = cur.fetchall()
+    for ti in range(len(t)):
+        tt = t[ti]
+
+        logid = tt[3]
+
+        division_id = tt[8]
+        division_name = ""
+        division = {}
+        if division_id == None:
+            division_id = ""
+        else:
+            if division_id in divisiontxt.keys():
+                division_name = divisiontxt[division_id]
+            division = {"divisionid": str(division_id), "name": division_name}
+
+        challengeids = tt[9]
+        challengenames = tt[10]
+        if challengeids == None:
+            challengeids = []
+            challengenames = []
+        else:
+            challengeids = [str(tt[9])]
+            challengenames = [tt[10]]
+            while ti + 1 < len(t):
+                if t[ti + 1][0] == logid: # same log => multiple challenge id
+                    challengeids.append(str(t[ti+1][9]))
+                    challengenames.append(t[ti+1][10])
+                    ti += 1
+                else:
+                    break
+        
+        challenge = []
+        for i in range(len(challengeids)):
+            challenge.append({"challengeid": str(challengeids[i]), "name": challengenames[i]})
+
+        data = {}
+        if tt[1] != "":
+            data = json.loads(decompress(tt[1]))
+        source_city = "Unknown City"
+        source_company = "Unknown Company"
+        destination_city = "Unknown City"
+        destination_company = "Unknown Company"
+        if "data" in data.keys() and data["data"]["object"]["source_city"] != None:
             source_city = data["data"]["object"]["source_city"]["name"]
-        if data["data"]["object"]["source_company"] != None:
+        if "data" in data.keys() and data["data"]["object"]["source_company"] != None:
             source_company = data["data"]["object"]["source_company"]["name"]
-        if data["data"]["object"]["destination_city"] != None:
+        if "data" in data.keys() and data["data"]["object"]["destination_city"] != None:
             destination_city = data["data"]["object"]["destination_city"]["name"]
-        if data["data"]["object"]["destination_company"] != None:
+        if "data" in data.keys() and data["data"]["object"]["destination_company"] != None:
             destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = data["data"]["object"]["cargo"]["name"]
-        cargo_mass = data["data"]["object"]["cargo"]["mass"]
+        cargo = "Unknown Cargo"
+        cargo_mass = 0
+        if "data" in data.keys() and data["data"]["object"]["cargo"] != None:
+            cargo = data["data"]["object"]["cargo"]["name"]
+            cargo_mass = data["data"]["object"]["cargo"]["mass"]
         distance = tt[6]
         if distance < 0:
             distance = 0
@@ -232,23 +269,11 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         if tt[7] == 0:
             status = 2
 
-        division = ""
-        cur.execute(f"SELECT divisionid FROM division WHERE logid = {tt[3]} AND status = 1 AND logid >= 0")
-        p = cur.fetchall()
-        if len(p) != 0:
-            division = str(p[0][0])
-
-        challenge_record = []
-        cur.execute(f"SELECT challengeid FROM challenge_record WHERE logid = {tt[3]} AND logid >= 0")
-        o = cur.fetchall()
-        for oo in o:
-            challenge_record.append(oo[0])
-
-        ret.append({"logid": str(tt[3]), "user": userinfo, "distance": str(distance), \
+        ret.append({"logid": str(logid), "user": userinfo, "distance": str(distance), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
-                        "division": division, "challenge_record": challenge_record, \
+                        "division": division, "challenge": challenge, \
                             "status": str(status), "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
@@ -973,7 +998,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1):
+        start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
     rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)
     if rl > 0:
         response.status_code = 429
@@ -992,82 +1017,200 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         end_time = int(time.time())
 
     f = BytesIO()
-    f.write(b"logid, isdelivered, game, userid, username, source_company, source_city, destination_company, destination_city, distance, fuel, top_speed, truck, cargo, cargo_mass, damage, net_profit, profit, expense, offence, xp, time\n")
-    cur.execute(f"SELECT logid, userid, topspeed, unit, profit, unit, fuel, distance, data, isdelivered, timestamp FROM dlog WHERE timestamp >= {start_time} AND timestamp <= {end_time} AND logid >= 0")
+    if not include_ids:
+        f.write(b"logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+    else:
+        f.write(b"logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+    cur.execute(f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
+        LEFT JOIN division ON dlog.logid = division.logid \
+        LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
+        LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
+        WHERE dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time} AND dlog.logid >= 0")
     d = cur.fetchall()
-    for dd in d:
-        userid = dd[1]
-        game = "unknown"
+    for di in range(len(d)):
+        dd = d[di]
+        logid = dd[0]
+
+        division_id = dd[11]
+        division = ""
+        if division_id == None:
+            division_id = ""
+        else:
+            if division_id in divisiontxt.keys():
+                division = divisiontxt[division_id]
+
+        challengeids = dd[12]
+        challengenames = dd[13]
+        if challengeids == None:
+            challengeids = []
+            challengenames = []
+        else:
+            challengeids = [str(dd[12])]
+            challengenames = [dd[13]]
+            while di + 1 < len(d):
+                if d[di + 1][0] == logid: # same log => multiple challenge id
+                    challengeids.append(str(d[di+1][12]))
+                    challengenames.append(d[di+1][13])
+                    di += 1
+                else:
+                    break
+        
+        challenge_id = ", ".join(challengeids)
+        challenge = ", ".join(challengenames)
+
+        navioid = 0
+        game = ""
         if dd[3] == 1:
             game = "ets2"
         elif dd[3] == 2:
             game = "ats"
-        
-        name = getUserInfo(userid = userid)["name"]
 
-        data = json.loads(decompress(dd[8]))
-        
-        source_city = data["data"]["object"]["source_city"]
-        source_company = data["data"]["object"]["source_company"]
-        destination_city = data["data"]["object"]["destination_city"]
-        destination_company = data["data"]["object"]["destination_company"]
-        if source_city is None:
-            source_city = ""
-        else:
-            source_city = source_city["name"]
-        if source_company is None:
-            source_company = ""
-        else:
-            source_company = source_company["name"]
-        if destination_city is None:
-            destination_city = ""
-        else:
-            destination_city = destination_city["name"]
-        if destination_company is None:
-            destination_company = ""
-        else:
-            destination_company = destination_company["name"]
-        cargo = "Unknown Cargo"
+        time_submitted = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))
+        start_time = "1970-01-01 00:00:00"
+        stop_time = "1970-01-01 00:00:00"
+
+        is_delivered = dd[9]
+
+        user_id = dd[1]
+        user = getUserInfo(userid = user_id, tell_deleted = True)
+        username = user["name"]
+        if "is_deleted" in user.keys():
+            user_id = "-1"
+            username = "Unknown"        
+
+        source_city = ""
+        source_city_id = ""
+        source_company = ""
+        source_company_id = ""
+        destination_city = ""
+        destination_city_id = ""
+        destination_company = ""
+        destination_company_id = ""
+
+        logged_distance = dd[7]
+        planned_distance = 0
+        reported_distance = 0
+
+        cargo = ""
+        cargo_id = ""
         cargo_mass = 0
-        if not data["data"]["object"]["cargo"] is None and not data["data"]["object"]["cargo"]["name"] is None:
-            cargo = data["data"]["object"]["cargo"]["name"]
-        if not data["data"]["object"]["cargo"] is None and not data["data"]["object"]["cargo"]["mass"] is None:
-            cargo_mass = data["data"]["object"]["cargo"]["mass"]
-        truck = data["data"]["object"]["truck"]
-        if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
-            truck = truck["brand"]["name"] + " " + truck["name"]
-        else:
-            truck = "Unknown Truck"
+        cargo_damage = 0
 
-        isdelivered = dd[9]
-        profit = 0
-        damage = 0
-        xp = 0
-        if isdelivered:
-            profit = float(data["data"]["object"]["events"][-1]["meta"]["revenue"])
-            damage = float(data["data"]["object"]["events"][-1]["meta"]["cargo_damage"])
-            xp = float(data["data"]["object"]["events"][-1]["meta"]["earned_xp"])
-        else:
-            profit = -float(data["data"]["object"]["events"][-1]["meta"]["penalty"])
-            damage = float(data["data"]["object"]["cargo"]["damage"])
-        net_profit = profit
-        allevents = data["data"]["object"]["events"]
-        offence = 0
-        expense = {"tollgate": 0, "ferry": 0, "train": 0}
-        totalexpense = 0
-        for eve in allevents:
-            if eve["type"] == "fine":
-                offence += int(eve["meta"]["amount"])
-            elif eve["type"] in ["tollgate", "ferry", "train"]:
-                expense[eve["type"]] += int(eve["meta"]["cost"])
-                totalexpense += int(eve["meta"]["cost"])
-        expensetxt = ""
-        for k, v in expense.items():
-            expensetxt += f"{k}: {v}, "
-        expensetxt = expensetxt[:-2]
-        net_profit = net_profit - offence - totalexpense
+        truck_brand = ""
+        truck_brand_id = ""
+        truck_name = ""
+        truck_id = ""
+        license_plate = ""
+        license_plate_country = ""
+        license_plate_country_id = ""
         
-        data = [dd[0], isdelivered, game, userid, name, source_company, source_city, destination_company, destination_city, dd[7], dd[6], dd[2], truck, cargo, cargo_mass, damage, net_profit, profit, expensetxt, offence, xp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(dd[10]))]
+        fuel = dd[6]
+        avg_fuel = 0
+        if logged_distance != 0:
+            avg_fuel = round(fuel / logged_distance * 100, 2)
+        adblue = 0
+        max_speed = dd[2]
+        avg_speed = 0
+
+        revenue = 0
+        expense = ""
+        offence = 0
+        net_profit = dd[4]
+
+        xp = 0
+
+        is_special = 0
+        is_late = 0
+        has_police_enabled = 0
+        market = ""
+        multiplayer = ""
+        auto_load = 0
+        auto_park = 0
+
+        if dd[8] != "":
+            try:
+                data = json.loads(decompress(dd[8]))["data"]["object"]
+                last_event = data["events"][-1]
+                
+                navioid = data["id"]
+                
+                start_time = data["start_time"]
+                stop_time = data["stop_time"]
+
+                if data["source_city"] != None:
+                    source_city = data["source_city"]["name"]
+                    source_city_id = data["source_city"]["unique_id"]
+                if data["source_company"] != None:
+                    source_company = data["source_company"]["name"]
+                    source_company_id = data["source_company"]["unique_id"]
+                if data["destination_city"] != None:
+                    destination_city = data["destination_city"]["name"]
+                    destination_city_id = data["destination_city"]["unique_id"]
+                if data["destination_company"] != None:
+                    destination_company = data["destination_company"]["name"]
+                    destination_company_id = data["destination_company"]["unique_id"]
+                
+                planned_distance = data["planned_distance"]
+                if "distance" in last_event["meta"]:
+                    reported_distance = last_event["meta"]["distance"]
+
+                if data["cargo"] != None:
+                    cargo = data["cargo"]["name"]
+                    cargo_id = data["cargo"]["unique_id"]
+                    cargo_mass = data["cargo"]["mass"]
+                    cargo_damage = data["cargo"]["damage"]
+
+                if data["truck"] != None:
+                    truck = data["truck"]
+                    if truck["brand"] != None:
+                        truck_brand = truck["brand"]["name"]
+                        truck_brand_id = truck["brand"]["unique_id"]
+                    truck_name = truck["name"]
+                    truck_id = truck["unique_id"]
+                    license_plate = truck["license_plate"]
+                    if truck["license_plate_country"] != None:
+                        license_plate_country = truck["license_plate_country"]["name"]
+                        license_plate_country_id = truck["license_plate_country"]["unique_id"]
+                    avg_speed = truck["average_speed"]
+
+                adblue = data["adblue_used"]
+
+                if is_delivered:
+                    revenue = float(last_event["meta"]["revenue"])
+                    xp = float(last_event["meta"]["earned_xp"])
+                    auto_load = last_event["meta"]["auto_load"]
+                    auto_park = last_event["meta"]["auto_park"]
+                else:
+                    revenue = -float(last_event["meta"]["penalty"])
+                
+                expensedict = {"tollgate": 0, "ferry": 0, "train": 0, "total": 0}
+                allevents = data["events"]
+                for eve in allevents:
+                    if eve["type"] == "fine":
+                        offence += int(eve["meta"]["amount"])
+                    elif eve["type"] in ["tollgate", "ferry", "train"]:
+                        expensedict[eve["type"]] += int(eve["meta"]["cost"])
+                        expensedict["total"] += int(eve["meta"]["cost"])
+                for k, v in expensedict.items():
+                    expense += f"{k}: {v}, "
+                expense = expense[:-2]
+
+                is_special = int(data["is_special"])
+                is_late = int(data["is_late"])
+                had_police_enabled = int(data["game"]["had_police_enabled"])
+                market = data["market"]
+                if data["multiplayer"] != None:
+                    multiplayer = data["multiplayer"]["type"]
+
+            except:
+                import traceback
+                traceback.print_exc()
+
+        if not include_ids:
+            data = [logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+        else:
+            data = [logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+
         for i in range(len(data)):
             data[i] = '"' + str(data[i]) + '"'
         

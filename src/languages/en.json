@@ -118,5 +118,8 @@
     "challenge_not_found": "Challenge not found.",
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
-    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time."
+    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time.",
+
+    "downloads_not_found": "Downloadable item not found.",
+    "downloads_invalid_link": "Invalid link."
 }
