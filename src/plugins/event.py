@@ -497,9 +497,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
             if gap > 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` more points. You got `{points}` points from the event.")
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` points. You got `{points}` points from the event in total.")
             elif gap < 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You got `{points}` points from the event.")
+                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You still got `{points}` points from the event.")
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]

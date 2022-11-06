@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.19.2"
+        "version": "1.19.3"
     },
     "paths": {
         "/abbr": {
@@ -3304,7 +3304,7 @@
                                         "type": "integar"
                                     },
                                     "challenge_type": {
-                                        "description": "Challenge Type (1: Personal | 2: Company)",
+                                        "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
                                         "type": "integar"
                                     },
                                     "delivery_count": {
@@ -3398,7 +3398,7 @@
                                         "type": "integar"
                                     },
                                     "challenge_type": {
-                                        "description": "Challenge Type (1: Personal | 2: Company)",
+                                        "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
                                         "type": "integar"
                                     },
                                     "delivery_count": {
@@ -3556,7 +3556,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Challenge Type (1: Personal | 2: Company)",
+                        "title": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
                         "type": "integer"
                     },
                     "name": "challenge_type",

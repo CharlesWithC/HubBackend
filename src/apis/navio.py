@@ -426,12 +426,21 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 
                 if current_delivery_count >= delivery_count:
                     if challenge_type == 1:
-                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                        cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                         t = cur.fetchall()
                         if len(t) == 0:
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
-                            notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
+                            discordid = getUserInfo(userid = userid)["discordid"]
+                            notification(discordid, f"Ont-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
+                    elif challenge_type == 3:
+                        cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                        t = cur.fetchall()
+                        if current_delivery_count >= (len(t) + 1) * delivery_count:
+                            cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                            conn.commit()
+                            discordid = getUserInfo(userid = userid)["discordid"]
+                            notification(discordid, f"1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added: You received `{tseparator(reward_points)}` points. You got `{tseparator((len(t)+1) * reward_points)}` points from the challenge in total.")
                     elif challenge_type == 2:
                         cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                         t = cur.fetchall()
@@ -451,7 +460,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                                 reward = round(reward_points * s / delivery_count)
                                 cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                                 discordid = getUserInfo(userid = uid)["discordid"]
-                                notification(discordid, f"Challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward)}` points.")
+                                notification(discordid, f"Company challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward)}` points.")
                             conn.commit()
                 
     except:

@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.19.3**  
+*[Challenge]* Added new challenge type `Personal (Recurring)` (original `Personal` type renamed to `Personal (One-time)`), which supports single challenge being completed for multiple times and receiving multiple rewards  
+
 **v1.19.2**  
 1.Fixed the bug that `is_private` is not updated when **PATCH** `/announcement`  
 2.Fixed **GET** `/dlog/list` and **GET** `/dlog/export` shows pending division info  
