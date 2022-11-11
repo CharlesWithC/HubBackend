@@ -8,7 +8,7 @@ import os, sys, json, requests, time, logging
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.19.3"
+version = "v1.19.4"
 
 DH_START_TIME = int(time.time())
 

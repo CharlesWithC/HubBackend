@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.19.3"
+        "version": "1.19.4"
     },
     "paths": {
         "/abbr": {
@@ -3003,6 +3003,14 @@
                         "type": "integer"
                     },
                     "name": "application_type",
+                    "in": "query"
+                },{
+                    "required": false,
+                    "schema": {
+                        "title": "Status (0: Pending | 1: Accepted | 2: Declined)",
+                        "type": "integer"
+                    },
+                    "name": "status",
                     "in": "query"
                 }, {
                     "required": false,

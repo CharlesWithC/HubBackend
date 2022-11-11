@@ -28,7 +28,7 @@ backup_config = copy.deepcopy(tconfig)
 # get config
 @app.get(f"/{config.abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /config', 30, 10)
+    rl = ratelimit(request.client.host, 'GET /config', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -92,7 +92,7 @@ def reload():
 # update config
 @app.patch(f"/{config.abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /config', 30, 10)
+    rl = ratelimit(request.client.host, 'PATCH /config', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -242,7 +242,7 @@ async def putReload(request: Request, response: Response, authorization: str = H
 @app.get(f"/{config.abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /audit', 30, 10)
+    rl = ratelimit(request.client.host, 'GET /audit', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

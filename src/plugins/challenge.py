@@ -57,7 +57,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 
 @app.post(f"/{config.abbr}/challenge")
 async def postChallenge(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /challenge', 180, 10)
+    rl = ratelimit(request.client.host, 'POST /challenge', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -163,7 +163,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 # *Same as POST /challenge
 @app.patch(f"/{config.abbr}/challenge")
 async def patchChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /challenge', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /challenge', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -390,7 +390,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 # - integar: challengeid
 @app.delete(f"/{config.abbr}/challenge")
 async def deleteChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /challenge', 180, 30)
+    rl = ratelimit(request.client.host, 'DELETE /challenge', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -430,7 +430,7 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 # => manually accept a delivery as challenge
 @app.put(f"/{config.abbr}/challenge/delivery")
 async def putChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PUT /challenge/delivery', 180, 30)
+    rl = ratelimit(request.client.host, 'PUT /challenge/delivery', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -544,7 +544,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 @app.delete(f"/{config.abbr}/challenge/delivery")
 async def deleteChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /challenge/delivery', 180, 30)
+    rl = ratelimit(request.client.host, 'DELETE /challenge/delivery', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -682,7 +682,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 @app.get(f"/{config.abbr}/challenge")
 async def getChallenge(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /challenge', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /challenge', 60, 120)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -738,11 +738,12 @@ async def getChallenge(request: Request, response: Response, authorization: str 
         username = getUserInfo(userid = pp[0])["name"]
         completed.append({"userid": str(pp[0]), "name": username, "points": str(pp[1]), "timestamp": str(pp[2])})
 
-    return {"error": False, "response": {"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[11]), \
+    return {"error": False, "response": {"challenge": {"challengeid": str(tt[0]), "title": tt[1], \
+            "description": decompress(tt[11]), \
             "start_time": str(tt[2]), "end_time": str(tt[3]), \
             "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
             "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), \
-            "job_requirements": jobreq, "completed": completed}}
+            "job_requirements": jobreq, "completed": completed}}}
             
 # GET /challenge/list
 # REQUEST PARAM
@@ -771,7 +772,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
 
-    rl = ratelimit(request.client.host, 'GET /challenge/list', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /challenge/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

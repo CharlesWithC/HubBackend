@@ -13,7 +13,7 @@ import multilang as ml
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /announcement', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /announcement', 60, 120)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -45,15 +45,15 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
     tt = t[0]
-    return {"error": False, "response": {"announcementid": str(tt[5]), "title": tt[0], "content": decompress(tt[1]), \
-        "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
-            "timestamp": str(tt[3])}}
+    return {"error": False, "response": {"announcement": {"announcementid": str(tt[5]), \
+        "title": tt[0], "content": decompress(tt[1]), "author": getUserInfo(userid = tt[4]), \
+            "announcement_type": str(tt[2]), "is_private": TF[tt[6]], "timestamp": str(tt[3])}}}
 
 @app.get(f"/{config.abbr}/announcement/list")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", order_by: Optional[str] = "announcementid", \
         title: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /announcement/list', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /announcement/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -115,7 +115,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /announcement', 180, 20)
+    rl = ratelimit(request.client.host, 'POST /announcement', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -182,7 +182,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /announcement', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /announcement', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -251,7 +251,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
 @app.delete(f"/{config.abbr}/announcement")
 async def deleteAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /announcement', 180, 30)
+    rl = ratelimit(request.client.host, 'DELETE /announcement', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

@@ -46,6 +46,12 @@ divisionroles = []
 for division in divisions:
     divisionroles.append(division["role_id"])
 
+PERMS_STR = {}
+for perm in tconfig["perms"].keys():
+    PERMS_STR[perm] = []
+    for role in tconfig["perms"][perm]:
+        PERMS_STR[perm].append(str(role))
+
 def point2rank(point):
     keys = list(RANKROLE.keys())
     if point < keys[0]:
@@ -81,7 +87,7 @@ async def getRanks(request: Request, response: Response):
 
 @app.get(f"/{config.abbr}/member/perms")
 async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": config.perms}
+    return {"error": False, "response": PERMS_STR}
 
 # Member Info Section
 @app.get(f'/{config.abbr}/member/list')
@@ -89,7 +95,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = -1,\
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
-    rl = ratelimit(request.client.host, 'GET /member/list', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /member/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -201,7 +207,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
 @app.get(f"/{config.abbr}/member/list/all")
 async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member/list/all', 180, 30)
+    rl = ratelimit(request.client.host, 'GET /member/list/all', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -258,7 +264,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
     
-    rl = ratelimit(request.client.host, 'GET /member/banner', 10, 2)
+    rl = ratelimit(request.client.host, 'GET /member/banner', 10, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -340,7 +346,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/roles/rank', 180, 5)
+    rl = ratelimit(request.client.host, 'PATCH /member/roles/rank', 60, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -474,7 +480,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 # Member Operation Section
 @app.put(f'/{config.abbr}/member')
 async def putMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /member', 180, 10)
+    rl = ratelimit(request.client.host, 'PUT /member', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -543,7 +549,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/roles', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /member/roles', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -727,7 +733,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 10)
+    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -772,7 +778,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
 @app.delete(f"/{config.abbr}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /member/resign', 180, 10)
+    rl = ratelimit(request.client.host, 'DELETE /member/resign', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -822,7 +828,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
 @app.delete(f"/{config.abbr}/member/dismiss")
 async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 180, 10)
+    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

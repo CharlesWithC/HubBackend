@@ -42,7 +42,7 @@ async def getApplicationPositions(request: Request, response: Response):
 # Get Application
 @app.get(f"/{config.abbr}/application")
 async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /application', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /application', 60, 120)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -88,15 +88,16 @@ async def getApplication(request: Request, response: Response, authorization: st
             response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
-    return {"error": False, "response": {"applicationid": str(t[0][0]), "detail": json.loads(decompress(t[0][3])), \
-        "creator": getUserInfo(discordid = t[0][2]), "application_type": str(t[0][1]), "status": str(t[0][4]), \
-            "submit_timestamp": str(t[0][5]), "update_timestamp": str(t[0][7]), "last_update_staff": getUserInfo(userid = t[0][6])}}
+    return {"error": False, "response": {"application": {"applicationid": str(t[0][0]), \
+        "detail": json.loads(decompress(t[0][3])), "creator": getUserInfo(discordid = t[0][2]), \
+        "application_type": str(t[0][1]), "status": str(t[0][4]), "submit_timestamp": str(t[0][5]), \
+        "update_timestamp": str(t[0][7]), "last_update_staff": getUserInfo(userid = t[0][6])}}}
 
 @app.get(f"/{config.abbr}/application/list")
 async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
-        all_user: Optional[bool] = False, order: Optional[str] = "desc"):
-    rl = ratelimit(request.client.host, 'GET /application/list', 180, 90)
+        all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
+    rl = ratelimit(request.client.host, 'GET /application/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -130,7 +131,10 @@ async def getApplicationList(request: Request, response: Response, authorization
     if all_user == False:
         limit = ""
         if application_type != 0:
-            limit = f" AND application_type = {application_type}"
+            limit = f" AND application_type = {application_type} "
+
+        if status != -1 and status in [0,1,2]:
+            limit += f" AND status = {status} "
 
         cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
         t = cur.fetchall()
@@ -163,15 +167,22 @@ async def getApplicationList(request: Request, response: Response, authorization
 
         limit = ""
         if application_type == 0: # show all type
-            limit = " WHERE "
+            limit = " WHERE ("
             for tt in allowed_application_types:
                 limit += f"application_type = {tt} OR "
             limit = limit[:-3]
+            limit += ")"
         else:
             if not str(application_type) in allowed_application_types:
                 response.status_code = 403
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
             limit = f" WHERE application_type = {application_type} "
+        
+        if status != -1 and status in [0,1,2]:
+            if not "WHERE" in limit:
+                limit = f" WHERE status = {status} "
+            else:
+                limit += f" AND status = {status} "
 
         cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
         t = cur.fetchall()
@@ -484,7 +495,7 @@ async def updateApplication(request: Request, response: Response, authorization:
 # Management
 @app.patch(f"/{config.abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/status', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /application/status', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -599,7 +610,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 # Higher-management
 @app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/positions', 180, 10)
+    rl = ratelimit(request.client.host, 'PATCH /application/positions', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

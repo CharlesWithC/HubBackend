@@ -18,11 +18,7 @@ import multilang as ml
 
 def convert_quotation(s):
     s = str(s)
-    return s.replace("'", "\\'")
-
-def reverse_convert_quotation(s):
-    s = str(s)
-    return s.replace("\\'", "'")
+    return s.replace("\\'","'").replace("'", "\\'")
 
 def b64e(s):
     s = str(s)
@@ -457,20 +453,20 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
     return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
 
 async def AuditLog(userid, text):
-    conn = newconn()
-    cur = conn.cursor()
-    name = "Unknown User"
-    if userid != -999:
-        cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        if len(t) > 0:
-            name = t[0][0]
-    else:
-        name = "System"
-    cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
-    conn.commit()
-    if config.webhook_audit != "":
-        try:
+    try:
+        conn = newconn()
+        cur = conn.cursor()
+        name = "Unknown User"
+        if userid != -999:
+            cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
+            t = cur.fetchall()
+            if len(t) > 0:
+                name = t[0][0]
+        else:
+            name = "System"
+        cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
+        conn.commit()
+        if config.webhook_audit != "":
             async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_audit, session=session)
                 embed = Embed(description = text, color = config.rgbcolor)
@@ -480,9 +476,9 @@ async def AuditLog(userid, text):
                     embed.set_footer(text = f"{name}")
                 embed.timestamp = datetime.now()
                 await webhook.send(embed=embed)
-        except:
-            import traceback
-            traceback.print_exc()
+    except:
+        import traceback
+        traceback.print_exc()
 
 async def AutoMessage(meta, setvar):
     try:

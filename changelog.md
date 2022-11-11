@@ -1,5 +1,18 @@
 # Changelog
 
+**v1.19.4**  
+**[BanerGen]**  
+1.Reduced workers to 1 worker  
+2.Reduced resolution to 1700x300  
+3.General improvements on output  
+**[Bug fixes]**  
+1.*[Auth]* Fixed the bug that users whose names contain `'` fail to register  
+**[Minor changes]**  
+2.*[Application]* Added `status` request param to **GET** `/application/list`  
+3.Added item wrapper to **GET** `/announcement`, **GET** `/application`, **GET** `/challenge`, **GET** `/downloads`, **GET** `/event`, **GET** `/user`, **GET** `/dlog`  
+4.Changed integar response to string response for **GET** `/member/perms`  
+5.Loosened API rate limit  
+
 **v1.19.3**  
 *[Challenge]* Added new challenge type `Personal (Recurring)` (original `Personal` type renamed to `Personal (One-time)`), which supports single challenge being completed for multiple times and receiving multiple rewards  
 

@@ -30,7 +30,7 @@ def getUrl4MFA(token):
 # Password Auth
 @app.post(f'/{config.abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /auth/password', 180, 10)
+    rl = ratelimit(request.client.host, 'POST /auth/password', 60, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -115,9 +115,9 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
     if code == "":
         return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 150, 3)
+    rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 60, 3)
     if rl > 0:
-        return RedirectResponse(url=getUrl4Msg("Rate limit: Wait {rl} seconds"), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
 
     try:
         tokens = discord_auth.get_tokens(code)
@@ -198,6 +198,8 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
 
     except:
+        import traceback
+        traceback.print_exc()
         return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
 
 # Steam Auth (Only for connecting account)
@@ -234,7 +236,7 @@ async def getSteamCallback(request: Request, response: Response):
         url = 'https://steamcommunity.com/openid/login?' + encodedData
         return RedirectResponse(url=url, status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 150, 3)
+    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 60, 3)
     if rl > 0:
         return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
 
@@ -294,7 +296,7 @@ async def getSteamCallback(request: Request, response: Response):
 # Token Management
 @app.get(f'/{config.abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token', 180, 30)
+    rl = ratelimit(request.client.host, 'GET /token', 60, 120)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -310,7 +312,7 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
 @app.patch(f"/{config.abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token', 180, 10)
+    rl = ratelimit(request.client.host, 'PATCH /token', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -336,7 +338,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
 @app.delete(f'/{config.abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token', 180, 10)
+    rl = ratelimit(request.client.host, 'DELETE /token', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -358,7 +360,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
 @app.get(f'/{config.abbr}/token/all')
 async def getAllToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token/all', 180, 30)
+    rl = ratelimit(request.client.host, 'GET /token/all', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -384,7 +386,7 @@ async def getAllToken(request: Request, response: Response, authorization: str =
 
 @app.delete(f'/{config.abbr}/token/hash')
 async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/hash', 180, 10)
+    rl = ratelimit(request.client.host, 'DELETE /token/hash', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -427,7 +429,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
 
 @app.delete(f'/{config.abbr}/token/all')
 async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/all', 180, 3)
+    rl = ratelimit(request.client.host, 'DELETE /token/all', 60, 10)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -453,7 +455,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
 
 @app.patch(f'/{config.abbr}/token/application')
 async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token/application', 180, 15)
+    rl = ratelimit(request.client.host, 'PATCH /token/application', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -495,7 +497,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
 
 @app.delete(f'/{config.abbr}/token/application')
 async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/application', 180, 20)
+    rl = ratelimit(request.client.host, 'DELETE /token/application', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -582,7 +584,7 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
 # Multiple Factor Authentication
 @app.put(f"/{config.abbr}/auth/mfa")
 async def putMFA(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /auth/mfa', 10, 60)
+    rl = ratelimit(request.client.host, 'PUT /auth/mfa', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -635,7 +637,7 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
 
 @app.post(f"/{config.abbr}/auth/mfa")
 async def postMFA(request: Request, response: Response):
-    rl = ratelimit(request.client.host, 'POST /auth/mfa', 10, 60)
+    rl = ratelimit(request.client.host, 'POST /auth/mfa', 60, 3)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -692,7 +694,7 @@ async def postMFA(request: Request, response: Response):
 
 @app.delete(f"/{config.abbr}/auth/mfa")
 async def deleteMFA(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[str] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /auth/mfa', 10, 60)
+    rl = ratelimit(request.client.host, 'DELETE /auth/mfa', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

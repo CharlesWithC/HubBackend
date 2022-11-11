@@ -46,7 +46,7 @@ async def getDivisions(request: Request, response: Response):
 # Get division info
 @app.get(f"/{config.abbr}/division")
 async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /division', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /division', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -244,7 +244,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
         page: Optional[int] = 1, page_size: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /division/list/pending', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /division/list/pending', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -285,7 +285,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
 @app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /division', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /division', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

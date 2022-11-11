@@ -30,4 +30,4 @@ if __name__ == "__main__":
         os.mkdir("/tmp/hub/logo")
     if not os.path.exists("/tmp/hub/avatar"):
         os.mkdir("/tmp/hub/avatar")
-    uvicorn.run("app:app", host="127.0.0.1", port=8700, log_level="info", workers = 3)
+    uvicorn.run("app:app", host="127.0.0.1", port=8700, log_level="info", workers = 1)

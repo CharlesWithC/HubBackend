@@ -22,7 +22,7 @@ callusers_ts = 0
 
 @app.get(f"/{config.abbr}/dlog")
 async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /dlog', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -99,9 +99,9 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         if "is_deleted" in userinfo:
             userinfo = getUserInfo(-1)
 
-    return {"error": False, "response": {"logid": str(logid), "user": userinfo, \
+    return {"error": False, "response": {"dlog": {"logid": str(logid), "user": userinfo, \
         "distance": str(distance), "division": division, "challenge_record": challenge_record, \
-            "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}
+            "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}}
 
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
@@ -109,7 +109,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
-    rl = ratelimit(request.client.host, 'GET /dlog/list', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /dlog/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -287,7 +287,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 @app.get(f"/{config.abbr}/dlog/statistics/summary")
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog/statistics/summary', 180, 60)
+    rl = ratelimit(request.client.host, 'GET /dlog/statistics/summary', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -474,7 +474,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         scale: Optional[int] = 2, sum_up: Optional[bool] = False, userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog/statistics/chart', 180, 60)
+    rl = ratelimit(request.client.host, 'GET /dlog/statistics/chart', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -567,7 +567,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}

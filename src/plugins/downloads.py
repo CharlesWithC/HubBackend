@@ -14,7 +14,7 @@ import multilang as ml
 @app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /downloads', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /downloads', 60, 120)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -49,16 +49,16 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     conn.commit()
 
     if not isstaff:
-        return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}
+        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
     else:
-        return {"error": False, "response": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}
+        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
 
 @app.get(f"/{config.abbr}/downloads/list")
 async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
         title: Optional[str] = "", creator_userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /downloads/list', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /downloads/list', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -120,7 +120,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
 @app.get(f"/{config.abbr}/downloads/{{secret}}")
 async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
         secret: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /downloads/redirect', 180, 90)
+    rl = ratelimit(request.client.host, 'GET /downloads/redirect', 60, 60)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -154,7 +154,7 @@ async def redirectDownloads(request: Request, response: Response, authorization:
 
 @app.post(f"/{config.abbr}/downloads")
 async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /downloads', 180, 10)
+    rl = ratelimit(request.client.host, 'POST /downloads', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -204,7 +204,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /downloads', 180, 30)
+    rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
@@ -263,7 +263,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 @app.delete(f"/{config.abbr}/downloads")
 async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /downloads', 180, 30)
+    rl = ratelimit(request.client.host, 'DELETE /downloads', 60, 30)
     if rl > 0:
         response.status_code = 429
         return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
