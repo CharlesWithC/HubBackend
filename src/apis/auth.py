@@ -109,13 +109,13 @@ async def getAuthDiscordRedirect(request: Request):
 @app.get(f'/{config.abbr}/auth/discord/callback')
 async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
-    if referer == "":
+    if referer in ["", "-"]:
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
     if code == "":
         return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 60, 3)
+    rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 60, 10)
     if rl > 0:
         return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
 
@@ -218,7 +218,7 @@ async def getSteamOAuth(request: Request, response: Response, connect_account: O
 async def getSteamConnect(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    if referer == "" or data == "":
+    if referer in ["", "-"] or data == "":
         steamLogin = SteamSignIn()
         encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/connect')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
@@ -230,13 +230,13 @@ async def getSteamConnect(request: Request, response: Response):
 async def getSteamCallback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    if referer == "" or data == "":
+    if referer in ["", "-"] or data == "":
         steamLogin = SteamSignIn()
         encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/callback')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
         return RedirectResponse(url=url, status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 60, 3)
+    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 60, 10)
     if rl > 0:
         return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
 

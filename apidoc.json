@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.19.4"
+        "version": "1.19.5"
     },
     "paths": {
         "/abbr": {

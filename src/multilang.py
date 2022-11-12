@@ -21,6 +21,8 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Op
         lang = "en" 
     if force_en:
         lang = "en"
+    if not os.path.exists(langdir + "/" + lang + ".json"):
+        return ""
     langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
     if key in langdata:
         ret = langdata[key]

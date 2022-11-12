@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.19.5**  
+1.Fixed the bug that **GET** `/dlog/list` returns same delivery for multiple times due to challenge record  
+2.Added `public_details` to **GET** `/challenge` and **GET** `/challenge/list`  
+
 **v1.19.4**  
 **[BanerGen]**  
 1.Reduced workers to 1 worker  

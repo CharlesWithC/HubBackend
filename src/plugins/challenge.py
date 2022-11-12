@@ -714,7 +714,7 @@ async def getChallenge(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
     tt = t[0]
     public_details = tt[9]
-    jobreq = "private"
+    jobreq = {}
     if public_details or isstaff:
         p = json.loads(decompress(tt[10]))
         jobreq = {}
@@ -743,7 +743,7 @@ async def getChallenge(request: Request, response: Response, authorization: str 
             "start_time": str(tt[2]), "end_time": str(tt[3]), \
             "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
             "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), \
-            "job_requirements": jobreq, "completed": completed}}}
+            "public_details": TF[public_details], "job_requirements": jobreq, "completed": completed}}}
             
 # GET /challenge/list
 # REQUEST PARAM
@@ -833,7 +833,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     cur = conn.cursor()
 
     cur.execute(f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
-            required_distance, reward_points, description FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
+            required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     for tt in t:
         current_delivery_count = 0
@@ -868,7 +868,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         ret.append({"challengeid": str(tt[0]), "title": tt[1], "description": decompress(tt[9]), \
                 "start_time": str(tt[2]), "end_time": str(tt[3]),\
                 "challenge_type": str(tt[4]), "delivery_count": str(tt[5]), "current_delivery_count": str(current_delivery_count), \
-                "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), "completed": completed})
+                "required_roles": tt[6].split(",")[1:-1], "required_distance": str(tt[7]), "reward_points": str(tt[8]), "public_details": TF[tt[10]], "completed": completed})
     
     cur.execute(f"SELECT COUNT(*) FROM challenge {query_limit}")
     t = cur.fetchall()

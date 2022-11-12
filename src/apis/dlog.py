@@ -192,10 +192,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
+    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
-        LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
     ret = []
     t = cur.fetchall()
@@ -214,21 +212,16 @@ async def getDlogList(request: Request, response: Response, authorization: str =
                 division_name = divisiontxt[division_id]
             division = {"divisionid": str(division_id), "name": division_name}
 
-        challengeids = tt[9]
-        challengenames = tt[10]
-        if challengeids == None:
-            challengeids = []
-            challengenames = []
-        else:
-            challengeids = [str(tt[9])]
-            challengenames = [tt[10]]
-            while ti + 1 < len(t):
-                if t[ti + 1][0] == logid: # same log => multiple challenge id
-                    challengeids.append(str(t[ti+1][9]))
-                    challengenames.append(t[ti+1][10])
-                    ti += 1
-                else:
-                    break
+        cur.execute(f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
+            LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
+            LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
+            WHERE dlog.logid = {logid}")
+        p = cur.fetchall()
+        challengeids = []
+        challengenames = []
+        for pp in p:
+            challengeids.append(pp[1])
+            challengenames.append(pp[2])
         
         challenge = []
         for i in range(len(challengeids)):
