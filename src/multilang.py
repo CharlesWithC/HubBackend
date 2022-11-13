@@ -7,6 +7,132 @@ import os, json
 
 from app import config
 
+# Hard-coded English String Table
+EN_STRINGTABLE = {
+    "authorization_header_not_found": "Authorization Header Not Found",
+    "invalid_authorization_header": "Invalid Authorization Header",
+    "unauthorized": "Unauthorized",
+    "application_token_prohibited": "Application token prohibited",
+    "hash_does_not_match_any_token": "Hash does not match any token.",
+
+    "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
+    "discord_check_fail": "Failed to check if you are in Discord Server.",
+    "must_join_discord": "You must join Discord Server.",
+    "invalid_email": "Invalid email bound to Discord account. Connect your Discord account with an email address and login again.",
+    "access_sensitive_data": "You have to login with Discord or Steam, or enable MFA to access sensitive data.",
+    "too_many_user_with_same_email": "Too many user have the same email address. You are not allowed to use password login.",
+    "invalid_captcha": "Invalid captcha.",
+    "invalid_email_or_password": "Invalid email or password.",
+    "weak_password": "Password too weak.",
+    "invalid_token": "Invalid token",
+    "mfa_already_enabled": "MFA already enabled.",
+    "mfa_invalid_secret": "Invalid MFA secret.",
+    "mfa_invalid_otp": "Invalid OTP.",
+    "mfa_not_enabled": "MFA not enabled.",
+    "mfa_required": "You have to enable MFA before continuing.",
+
+    "invalid_discordid": "Invalid Discord ID.",
+    "dismiss_before_ban": "Dismiss member before banning.",
+    "dismiss_before_unbind": "Dismiss member before unbinding their connections.",
+    "dismiss_before_delete": "Dismiss member before deleting their account.",
+    "leave_company_before_delete": "Leave company before deleting account.",
+    "user_already_banned": "User already banned.",
+    "user_not_banned": "User not banned.",
+
+    "steam_api_error": "Steam API inaccessible. Failed to bind Steam account.",
+    "invalid_steam_auth": "Invalid Steam Authentication.",
+    "steam_bound_to_other_account": "Steam account already bound to another user.",
+    "steam_updated_within_7d": "Update rejected:<br>Last update within 7 days.",
+    "invalid_truckersmp_id": "Invalid TruckersMP ID.",
+    "truckersmp_api_error": "TruckersMP API inaccessible. Failed to bind TruckersMP account.",
+    "steam_not_bound_before_truckersmp": "You must bind your Steam Account before binding TruckersMP account.",
+    "truckersmp_steam_mismatch": "Steam account bound to TruckersMP user {truckersmp_name} ({truckersmpid}) does not match your Steam account.",
+
+    "not_a_member": "Not a member",
+    "member_not_found": "Member not found.",
+    "banned_user_cannot_be_accepted": "Banned user cannot be accepted as member.",
+    "user_not_found": "User not found.",
+    "user_must_register_first": "User must register with new Discord account first.",
+    "user_must_not_be_member": "User with new Discord account must not be a member.",
+    "already_member": "User is already a member.",
+    "steam_not_bound": "User must have bound their Steam Account.",
+    "truckersmp_not_bound": "User must have bound their TruckersMP account.",
+    "user_position_higher_or_equal": "User position is higher than or equal to you.",
+    "invalid_userid": "Invalid User ID",
+    "add_role_higher_or_equal": "Member role to add higher / equal.",
+    "remove_role_higher_or_equal": "Member role to remove higher / equal.",
+    "member_not_driver": "Member not driver",
+    "already_have_discord_role": "You already have the role.",
+    "discord_role_given": "You have been given the role.",
+    "member_update_title": "Member Update",
+    "member_update": "You are now a member of {company_name}!",
+    "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
+
+    "announcement_not_found": "Announcement not found.",
+    "event_staff_announcement_limit": "Event staff can only post event announcements.",
+    "announcement_only_creator_can_edit": "Only announcement creator can edit the announcement.",
+    "announcement_only_creator_can_delete": "Only announcement creator can delete the announcement.",
+
+    "unknown": "Unknown",
+    "driver": "Driver",
+    "staff": "Staff",
+    "loa": "Leave of Absence",
+    "division": "Division",
+    "application_id": "Application ID",
+    "unknown_application_type": "Unknown Application Type",
+    "status": "Status",
+    "creation": "Creation",
+    "time": "Time",
+    "responsible_staff": "Responsible Staff",
+    "message": "Message",
+    "no_message": "No Message",
+
+    "already_a_driver": "You are already a driver!",
+    "must_be_driver_to_submit_division_application": "You must be a driver to be able to submit division application!",
+    "already_driver_application": "You cannot make another driver application while there's a pending driver application!",
+    "already_division_application":  "You cannot make another division application while there's a pending division application!",
+    "no_multiple_application_2h": "You cannot create multiple applications within 2 hours!",
+    "no_loa_application": "You cannot submit a LOA application until you become a member.",
+    "must_verify_steam": "You must bind your Steam Account before submitting an application.",
+    "must_verify_truckersmp": "You must bind your TruckersMP account before submitting an application.",
+    "bot_application_received_title": "{application_type_text} Application Received",
+    "not_applicant": "You are not the applicant",
+    "application_already_accepted": "Application already accepted",
+    "application_already_declined": "Application already declined",
+    "application_already_processed": "Application already processed, status unknown.",
+    "application_not_found": "Application not found.",
+    "application_status_updated":"Application Status Updated",
+    "application_updated": "Application Updated",
+    "application_message_recorded": "This is a reminder that your message has been recorded.",
+
+    "delivery_log_not_found": "Delivery log not found.",
+    "division_already_requested": "You have already requested validation and please wait patiently until supervisor check your request.",
+    "division_already_validated": "The delivery has already been validated.",
+    "division_already_denied": "The delivery has been denied and you may not request validation again.",
+    "not_division_driver": "You are not a driver for the division.", 
+    "division_validation_not_found": "Delivery division validation request not found.",
+    "division_not_validated": "This delivery is not validated as a division delivery!",
+
+    "event_not_found": "Event not found.",
+
+    "invalid_distance_unit": "Invalid distance unit. Only 'metric' and 'imperial' is accepted.",
+    "invalid_value": "Invalid value for {key}",
+    "config_data_type_mismatch": "Data type of one or more keys does not match original data type.",
+
+    "invalid_time_range": "Start time must be earlier than end time.",
+    "invalid_challenge_type": "Invalid challenge type.",
+    "invalid_required_roles": "Invalid required roles.",
+    "invalid_reward_points": "Reward points must not be negative.",
+    "invalid_delivery_count": "Delivery count must not be negative or zero.",
+    "challenge_not_found": "Challenge not found.",
+    "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
+    "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
+    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time.",
+
+    "downloads_not_found": "Downloadable item not found.",
+    "downloads_invalid_link": "Invalid link."
+}
+
 def get_lang(request: Request):
     lang = request.headers.get('Accept-Language', 'en')
     lang = lang.split(',')[0]
@@ -21,9 +147,9 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Op
         lang = "en" 
     if force_en:
         lang = "en"
-    if not os.path.exists(langdir + "/" + lang + ".json"):
-        return ""
-    langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
+    langdata = EN_STRINGTABLE
+    if lang != "en":
+        langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
     if key in langdata:
         ret = langdata[key]
         for vkey in var.keys():

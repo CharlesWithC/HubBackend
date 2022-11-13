@@ -36,13 +36,13 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": "Event not found"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
 
     cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": "Event not found"}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
     tt = t[0]
     attendee = tt[9].split(",")
     vote = tt[10].split(",")
