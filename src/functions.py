@@ -401,7 +401,7 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
-            "retry_after": maxban - int(time.time()), "global": True}
+            "retry_after": str(maxban - int(time.time())), "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     cur.execute(f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
     t = cur.fetchall()
@@ -420,7 +420,7 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Reset-After"] = str(600)
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
-            "retry_after": 600, "global": True}
+            "retry_after": "600", "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     cur.execute(f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
     t = cur.fetchall()
@@ -461,7 +461,7 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
                 resp_headers["X-RateLimit-Reset-After"] = str(retry_after)
                 resp_headers["X-RateLimit-Global"] = "false"
                 resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
-                    "retry_after": retry_after, "global": False}
+                    "retry_after": str(retry_after), "global": False}
                 return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
             else:
                 cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")

@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.20.2**  
+Fixed the bug that program cannot shut down fully  
+
 **v1.20.1**  
 **[Bug fixes]**  
 1.*[Auth]* Fixed the bug that ban check is not performed on steam & password login  

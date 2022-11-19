@@ -83,21 +83,19 @@ if __name__ == "__main__":
         from plugins.event import EventNotification
         multiprocessing.Process(target = EventNotification, daemon = True).start()
     
-    def killer(pid = os.getpid()):
-        curpid = os.getpid()
-        parent = psutil.Process(pid)
-        children = parent.children(recursive=True)
-        for process in children:
-            if process.pid != curpid:
-                process.send_signal(signal.SIGKILL)
-        parent.send_signal(signal.SIGKILL)
-
     def killer_thread(pid):
+        curpid = os.getpid()
         while 1:
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
-                killer(pid)
+                parent = psutil.Process(pid)
+                children = parent.children(recursive=True)
+                for process in children:
+                    if process.pid != curpid:
+                        process.send_signal(signal.SIGKILL)
+                parent.send_signal(signal.SIGKILL)
+                break
     
     multiprocessing.Process(target = killer_thread, args = (os.getpid(),)).start()
 
