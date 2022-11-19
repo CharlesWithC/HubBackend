@@ -22,10 +22,11 @@ callusers_ts = 0
 
 @app.get(f"/{config.abbr}/dlog")
 async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -109,10 +110,11 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
-    rl = ratelimit(request.client.host, 'GET /dlog/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     quserid = userid
     
@@ -280,10 +282,11 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 @app.get(f"/{config.abbr}/dlog/statistics/summary")
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog/statistics/summary', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog/statistics/summary', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     if start_time == -1 or end_time == -1:
         start_time = 0
@@ -467,10 +470,11 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         scale: Optional[int] = 2, sum_up: Optional[bool] = False, userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /dlog/statistics/chart', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog/statistics/chart', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     quserid = userid
     if quserid != -1:
@@ -560,10 +564,11 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /dlog/leaderboard', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog/leaderboard', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -992,10 +997,11 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
-    rl = ratelimit(request.client.host, 'GET /dlog/export', 3600, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 3600, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
         
     au = auth(authorization, request)
     if au["error"]:

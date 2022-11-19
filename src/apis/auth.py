@@ -30,10 +30,11 @@ def getUrl4MFA(token):
 # Password Auth
 @app.post(f'/{config.abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /auth/password', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /auth/password', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     form = await request.form()
     try:
@@ -42,7 +43,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         hcaptcha_response = form["h-captcha-response"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
     d = json.loads(r.text)
@@ -64,8 +65,16 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_email_or_password")}
     
-    if config.in_guild_check:
-        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
+    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+
+    if config.in_guild_check and config.discord_bot_token != "":
+        try:
+            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+        except:
+            import traceback
+            traceback.print_exc()
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
         if r.status_code == 404:
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
         if r.status_code != 200:
@@ -84,14 +93,22 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         conn.commit()
         return {"error": False, "response": {"token": stoken, "mfa": True}}
 
+    cur.execute(f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    if len(t) > 0:
+        reason = t[0][0]
+        expire = t[0][1]
+        expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
+        
     stoken = str(uuid4())
     stoken = "e" + stoken[1:]
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]
-    if scnt >= 10:
-        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
-    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    if scnt >= 50:
+        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 49}")
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
 
     username = getUserInfo(discordid = discordid)["name"]
@@ -109,15 +126,15 @@ async def getAuthDiscordRedirect(request: Request):
 @app.get(f'/{config.abbr}/auth/discord/callback')
 async def getAuthDiscordCallback(request: Request, response: Response, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
-    if referer in ["", "-"]:
+    if referer in ["", "-", None]:
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
     if code == "":
         return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/discord/callback', 60, 10)
-    if rl > 0:
-        return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
+    rl = ratelimit(request, request.client.host, 'GET /auth/discord/callback', 60, 10)
+    if rl[0]:
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
     try:
         tokens = discord_auth.get_tokens(code)
@@ -129,7 +146,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             tokens = {**tokens, **user_data}
             conn = newconn()
             cur = conn.cursor()
-            cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 7}")
+            cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
             cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
             cur.execute(f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
             t = cur.fetchall()
@@ -157,8 +174,13 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
                 cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{discordid}'")
             conn.commit()
             
-            if config.in_guild_check:
-                r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            if config.in_guild_check and config.discord_bot_token != "":
+                try:
+                    r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                except:
+                    import traceback
+                    traceback.print_exc()
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
                 if r.status_code == 404:
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
                 if r.status_code != 200:
@@ -183,9 +205,9 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
             r = cur.fetchall()
             scnt = r[0][0]
-            if scnt >= 10:
-                cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
-            cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+            if scnt >= 50:
+                cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 49}")
+            cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             conn.commit()
             username = getUserInfo(discordid = discordid)["name"]
             await AuditLog(-999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
@@ -218,7 +240,7 @@ async def getSteamOAuth(request: Request, response: Response, connect_account: O
 async def getSteamConnect(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    if referer in ["", "-"] or data == "":
+    if referer in ["", "-", None] or data == "":
         steamLogin = SteamSignIn()
         encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/connect')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
@@ -230,15 +252,15 @@ async def getSteamConnect(request: Request, response: Response):
 async def getSteamCallback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    if referer in ["", "-"] or data == "":
+    if referer in ["", "-", None] or data == "":
         steamLogin = SteamSignIn()
         encodedData = steamLogin.ConstructURL(f'https://{config.apidomain}/{config.abbr}/auth/steam/callback')
         url = 'https://steamcommunity.com/openid/login?' + encodedData
         return RedirectResponse(url=url, status_code=302)
 
-    rl = ratelimit(request.client.host, 'GET /auth/steam/callback', 60, 10)
-    if rl > 0:
-        return RedirectResponse(url=getUrl4Msg(f"Rate limit: Wait {rl} seconds"), status_code=302)
+    rl = ratelimit(request, request.client.host, 'GET /auth/steam/callback', 60, 10)
+    if rl[0]:
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
     r = requests.get("https://steamcommunity.com/openid/login?" + data)
     if r.status_code != 200:
@@ -258,9 +280,24 @@ async def getSteamCallback(request: Request, response: Response):
         response.status_code = 401
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
     discordid = t[0][0]
+    
+    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
+    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+    cur.execute(f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    if len(t) > 0:
+        reason = t[0][0]
+        expire = t[0][1]
+        expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
 
-    if config.in_guild_check:
-        r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+    if config.in_guild_check and config.discord_bot_token != "":
+        try:
+            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+        except:
+            import traceback
+            traceback.print_exc()
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
         if r.status_code == 404:
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
         if r.status_code != 200:
@@ -283,9 +320,9 @@ async def getSteamCallback(request: Request, response: Response):
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]
-    if scnt >= 10:
-        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
-    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    if scnt >= 50:
+        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 49}")
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
@@ -296,10 +333,11 @@ async def getSteamCallback(request: Request, response: Response):
 # Token Management
 @app.get(f'/{config.abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /token', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False, allow_application_token = True)
     if au["error"]:
@@ -312,10 +350,11 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
 @app.patch(f"/{config.abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /token', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -332,16 +371,17 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     stoken = str(uuid4())
     while stoken[0] == "e":
         stoken = str(uuid4())
-    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
 
 @app.delete(f'/{config.abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /token', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -358,12 +398,15 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-@app.get(f'/{config.abbr}/token/all')
-async def getAllToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /token/all', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+@app.get(f'/{config.abbr}/token/list')
+async def getAllToken(request: Request, response: Response, authorization: str = Header(None), \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
+    rl = ratelimit(request, request.client.host, 'GET /token/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -371,25 +414,47 @@ async def getAllToken(request: Request, response: Response, authorization: str =
         return au
     discordid = au["discordid"]
     
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+
+    if not order_by in ["ip", "timestamp", "country_code", "user_agent", "last_used_timestamp"]:
+        order_by = "last_used_timestamp"
+        order = "desc"
+    if order_by == "country_code":
+        order_by = "country"
+    if not order in ["asc", "desc"]:
+        order = "asc"
+    order = order.upper()
+        
     conn = newconn()
     cur = conn.cursor()
 
     ret = []
-    cur.execute(f"SELECT token, ip, timestamp FROM session WHERE discordid = {discordid}")
+    cur.execute(f"SELECT token, ip, timestamp, country, user_agent, last_used_timestamp FROM session \
+        WHERE discordid = {discordid} ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = cur.fetchall()
     for tt in t:
         tk = tt[0]
         tk = sha256(tk.encode()).hexdigest()
-        ret.append({"hash": tk, "ip": tt[1], "timestamp": str(tt[2])})
+        ret.append({"hash": tk, "ip": tt[1], "country": getFullCountry(tt[3]), "user_agent": tt[4], "create_timestamp": str(tt[2]), "last_used_timestamp": str(tt[5])})
+    
+    cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = {discordid}")
+    t = cur.fetchall()
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret}}
+    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 @app.delete(f'/{config.abbr}/token/hash')
 async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/hash', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /token/hash', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -407,7 +472,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         hsh = form["hash"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     conn = newconn()
     cur = conn.cursor()
@@ -428,11 +493,13 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token")}
 
 @app.delete(f'/{config.abbr}/token/all')
-async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/all', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None), \
+        last_used_before: Optional[int] = -1):
+    rl = ratelimit(request, request.client.host, 'DELETE /token/all', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -448,17 +515,22 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
     conn = newconn()
     cur = conn.cursor()
 
-    cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
-    conn.commit()
+    if last_used_before == -1:
+        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
+        conn.commit()
+    else:
+        cur.execute(f"DELETE FROM session WHERE discordid = {discordid} AND last_used_timestamp <= {last_used_before}")
+        conn.commit()
 
     return {"error": False}
 
 @app.patch(f'/{config.abbr}/token/application')
 async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /token/application', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /token/application', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -497,10 +569,11 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
 
 @app.delete(f'/{config.abbr}/token/application')
 async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /token/application', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /token/application', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -538,10 +611,11 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
 # Temporary Identity Proof
 @app.put(f"/{config.abbr}/auth/tip")
 async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /auth/tip', 180, 20)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /auth/tip', 180, 20)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -562,10 +636,11 @@ async def putTemporaryIdentityProof(request: Request, response: Response, author
 
 @app.get(f"/{config.abbr}/auth/tip")
 async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /auth/tip', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /auth/tip', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     token = token.replace("'","")
 
@@ -584,10 +659,11 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
 # Multiple Factor Authentication
 @app.put(f"/{config.abbr}/auth/mfa")
 async def putMFA(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /auth/mfa', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /auth/mfa', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -610,7 +686,7 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
         otp = int(form["otp"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if len(secret) != 16 or not secret.isalnum():
         response.status_code = 400
@@ -637,10 +713,11 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
 
 @app.post(f"/{config.abbr}/auth/mfa")
 async def postMFA(request: Request, response: Response):
-    rl = ratelimit(request.client.host, 'POST /auth/mfa', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /auth/mfa', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     form = await request.form()
     try:
@@ -648,7 +725,7 @@ async def postMFA(request: Request, response: Response):
         otp = int(form["otp"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     
     conn = newconn()
     cur = conn.cursor()
@@ -675,6 +752,15 @@ async def postMFA(request: Request, response: Response):
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
 
     cur.execute(f"DELETE FROM temp_identity_proof WHERE token = '{tip}'")
+    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
+    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+    cur.execute(f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    t = cur.fetchall()
+    if len(t) > 0:
+        reason = t[0][0]
+        expire = t[0][1]
+        expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
 
     stoken = str(uuid4())
     while stoken.startswith("e"):
@@ -682,9 +768,9 @@ async def postMFA(request: Request, response: Response):
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]
-    if scnt >= 10:
-        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 9}")
-    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}')")
+    if scnt >= 50:
+        cur.execute(f"DELETE FROM session WHERE discordid = '{discordid}' LIMIT {scnt - 49}")
+    cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
@@ -694,10 +780,11 @@ async def postMFA(request: Request, response: Response):
 
 @app.delete(f"/{config.abbr}/auth/mfa")
 async def deleteMFA(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[str] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /auth/mfa', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /auth/mfa', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     if discordid == -1:
         # self-disable mfa

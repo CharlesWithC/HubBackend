@@ -95,10 +95,11 @@ async def getMemberList(request: Request, response: Response, authorization: str
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = -1,\
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
-    rl = ratelimit(request.client.host, 'GET /member/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /member/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
@@ -207,10 +208,11 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
 @app.get(f"/{config.abbr}/member/list/all")
 async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /member/list/all', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /member/list/all', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
@@ -233,8 +235,12 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     if not "banner" in config.enabled_plugins:
         response.status_code = 404
-        return {"error": True, "descriptor": f"Not Found"}
+        return {"error": True, "descriptor": "Not Found"}
     
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 60, 60)
+    if rl[0]:
+        return rl
+
     qu = ""
     if userid != -1:
         qu = f"userid = {userid}"
@@ -264,10 +270,11 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
     
-    rl = ratelimit(request.client.host, 'GET /member/banner', 10, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
             
     t = t[0]
     userid = t[5]
@@ -346,10 +353,11 @@ async def getUserBanner(request: Request, response: Response, authorization: str
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/roles/rank', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /member/roles/rank', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -440,8 +448,23 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     rank = point2rank(totalpnt)
 
     try:
+        if config.discord_bot_token != "":
+            response.status_code = 503
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
-        r=requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
+        try:
+            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
+        except:
+            response.status_code = 503
+            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+
+        if r.status_code == 401:
+            DisableDiscordIntegration()
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+        elif r.status_code != 200:
+            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+
         d = json.loads(r.text)
         if "roles" in d:
             roles = d["roles"]
@@ -467,7 +490,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     await AutoMessage(meta, setvar)
 
                 rankname = point2rankname(totalpnt)
-                notification(discordid, f"New rank: `{rankname}`")
+                notification(discordid, f"You have received a new rank: `{rankname}`")
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
@@ -480,10 +503,11 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 # Member Operation Section
 @app.put(f'/{config.abbr}/member')
 async def putMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /member', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /member', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
     if au["error"]:
@@ -499,7 +523,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -526,33 +550,17 @@ async def putMember(request: Request, response: Response, authorization: str = H
     await AuditLog(adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
     conn.commit()
 
-    if config.discord_bot_dm:
-        try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "member_update_title", force_en = True), 
-                    "description": ml.tr(request, "member_update", var = {"company_name": config.name}, force_en = True),
-                        "fields": [{"name": "User ID", "value": f"{userid}", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-
-        except:
-            import traceback
-            traceback.print_exc()
+    notification(discordid, f"You have been accepted as a member of **{config.name}**!\nYour User ID is `#{userid}`")
 
     return {"error": False, "response": {"userid": userid}}   
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/roles', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /member/roles', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
     if au["error"]:
@@ -586,7 +594,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         roles = str(form["roles"]).split(",")
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     if userid < 0:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
@@ -697,7 +705,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             meta = config.member_welcome
             await AutoMessage(meta, setvar)
         
-        if config.member_welcome.role_change != []:
+        if config.member_welcome.role_change != [] and config.discord_bot_token != "":
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
@@ -724,7 +732,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     conn.commit()
 
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, f"Roles updated: \n"+upd)
+    notification(discordid, f"Your roles have been updated: \n"+upd)
 
     if navio_error != "":
         return {"error": False, "response": {"navio_api_error": navio_error.replace("Navio API Error: ", "")}}
@@ -733,10 +741,11 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /member/point', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /member/point', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "update_member_points"])
     if au["error"]:
@@ -754,7 +763,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         mythpoint = int(form["mythpoint"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if distance != 0:
         if distance > 0:
@@ -772,16 +781,17 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     username = getUserInfo(userid = userid)["name"]
     await AuditLog(adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, f"You are given `{distance}km` and `{mythpoint}` myth points.")
+    notification(discordid, f"You have been given `{distance}km` and `{mythpoint}` myth points.")
 
     return {"error": False}
 
 @app.delete(f"/{config.abbr}/member/resign")
 async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /member/resign', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /member/resign', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request)
     if au["error"]:
@@ -828,10 +838,11 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
 @app.delete(f"/{config.abbr}/member/dismiss")
 async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /member/dismiss', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /member/dismiss', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
     if au["error"]:

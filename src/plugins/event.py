@@ -10,12 +10,79 @@ from db import newconn
 from functions import *
 import multilang as ml
 
+def EventNotification():
+    conn = newconn()
+    cur = conn.cursor()
+
+    notified = []
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'notified-event'")
+    t = cur.fetchall()
+    for tt in t:
+        notified.append(tt[0].split("-")[0])
+        
+    while 1:
+        try:
+            conn = newconn()
+            cur = conn.cursor()
+
+            tonotify = {}
+            cur.execute(f"SELECT discordid, sval FROM settings WHERE skey = 'event-notification'")
+            d = cur.fetchall()
+            for dd in d:
+                tonotify[str(dd[0])] = dd[1]
+
+            cur.execute(f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
+            t = cur.fetchall()
+            for tt in t:
+                if str(tt[0]) in notified:
+                    continue
+                
+                notified.append(tt[0])
+                cur.execute(f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
+                conn.commit()
+
+                title = tt[1] if tt[1] != "" else "N/A"
+                link = decompress(tt[2])
+                if not isurl(link):
+                    link = None
+                departure = tt[3] if tt[3] != "" else "N/A"
+                destination = tt[4] if tt[4] != "" else "N/A"
+                distance = tt[5] if tt[5] != "" else "N/A"
+                meetup_timestamp = tt[6]
+                departure_timestamp = tt[7]
+                vote = tt[8].split(",")
+
+                while "" in vote:
+                    vote.remove("")
+                for vt in vote:
+                    discordid = getUserInfo(userid = vt)["discordid"]
+                    if discordid in tonotify.keys():
+                        channelid = tonotify[discordid]
+                        QueueDiscordMessage(channelid, {"embed": {"title": f"Event Notification", "description": f"An event that you have voted is starting soon!", "url": link,
+                            "fields": [{"name": "Title", "value": title, "inline": False},
+                                {"name": "Departure", "value": departure, "inline": True},
+                                {"name": "Destination", "value": destination, "inline": True},
+                                {"name": "Distance", "value": distance, "inline": True},
+                                {"name": "Meetup Time", "value": f"<t:{meetup_timestamp}:R>", "inline": True},
+                                {"name": "Departure Time", "value": f"<t:{departure_timestamp}:R>", "inline": True}],
+                            "footer": {"text": config.name, "icon_url": config.logo_url},
+                            "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": config.intcolor}})
+                            
+                time.sleep(1)
+
+        except:
+            import traceback
+            traceback.print_exc()
+
+        time.sleep(60)
+
 @app.get(f"/{config.abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /event', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /event', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -70,10 +137,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 @app.get(f"/{config.abbr}/event/list")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /event/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /event/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -183,10 +251,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.abbr}/event/all")
 async def getAllEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /event/all', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /event/all', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -218,10 +287,11 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
 @app.put(f"/{config.abbr}/event/vote")
 async def putEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PUT /event/vote', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /event/vote', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -255,10 +325,11 @@ async def putEventVote(request: Request, response: Response, authorization: str 
 
 @app.post(f"/{config.abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /event', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /event', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
@@ -281,25 +352,25 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'departure' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"})}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'destination' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"})}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"})}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
     t = cur.fetchall()
@@ -313,10 +384,11 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
 @app.patch(f"/{config.abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /event', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /event', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
@@ -349,25 +421,25 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'departure' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"})}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'destination' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"})}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'distance' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"})}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     
     cur.execute(f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', \
         distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
@@ -378,10 +450,11 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
 @app.delete(f"/{config.abbr}/event")
 async def deleteEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /event', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /event', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
@@ -410,10 +483,11 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
 
 @app.patch(f"/{config.abbr}/event/attendee")
 async def patchEventAttendee(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /event/attendee', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /event/attendee', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
@@ -432,7 +506,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         points = int(form["points"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if int(eventid) < 0:
         response.status_code = 404

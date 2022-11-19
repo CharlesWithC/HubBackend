@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Charles All rights reserved.
 # Author: @CharlesWithC
 
-import os, sys, time, json
+import os, sys, time, json, multiprocessing, signal, psutil
 import uvicorn
 
 drivershub = """    ____       _                         __  __      __  
@@ -78,4 +78,27 @@ if __name__ == "__main__":
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
     if not version.endswith(".rc"):
         time.sleep(1)
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, workers = int(config.server_workers))
+
+    if "event" in config.enabled_plugins:
+        from plugins.event import EventNotification
+        multiprocessing.Process(target = EventNotification, daemon = True).start()
+    
+    def killer(pid = os.getpid()):
+        curpid = os.getpid()
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        for process in children:
+            if process.pid != curpid:
+                process.send_signal(signal.SIGKILL)
+        parent.send_signal(signal.SIGKILL)
+
+    def killer_thread(pid):
+        while 1:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                killer(pid)
+    
+    multiprocessing.Process(target = killer_thread, args = (os.getpid(),)).start()
+
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, workers = min(int(config.server_workers), 8))

@@ -10,3 +10,4 @@ numpy==1.23.1
 pillow==9.3.0
 mysqlclient==2.1.1
 iso3166==2.1.1
+psutil==5.9.4

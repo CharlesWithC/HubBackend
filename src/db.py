@@ -57,7 +57,8 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, se
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, \
     meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT, \
+        country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT, expire BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")

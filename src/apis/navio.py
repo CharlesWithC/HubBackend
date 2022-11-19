@@ -77,11 +77,11 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
                 continue
 
 @app.post(f"/{config.abbr}/navio")
-async def navio(request: Request, Navio_Signature: str = Header(None)):
+async def navio(respones: Response, request: Request, Navio_Signature: str = Header(None)):
     conn = newconn()
     cur = conn.cursor()
 
-    if request.client.host != "185.233.107.244":
+    if request.client.host not in config.allowed_navio_ips:
         response.status_code = 403
         await AuditLog(-999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
@@ -199,7 +199,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
             conn.commit()
 
             discordid = getUserInfo(userid = userid)["discordid"]
-            notification(discordid, f"New Delivery `#{logid}`")
+            notification(discordid, f"Job Submitted: `#{logid}`")
     except:
         pass
 
@@ -246,48 +246,49 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                 truck = truck["brand"]["name"] + " " + truck["name"]
             else:
                 truck = "Unknown Truck"
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
-            munit = "€"
-            if not game.startswith("e"):
-                munit = "$"
-            offence = -offence
-            if e == "job.delivered":
-                k = randint(0, len(GIFS)-1)
-                dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
-                dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
-                if config.distance_unit == "imperial":
-                    requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": dlglink,
-                            "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
-                                    {"name": "Truck", "value": truck, "inline": True},
-                                    {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                    {"name": "From", "value": source_company + ", " + source_city, "inline": True},
-                                    {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
-                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
-                                    {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                    {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
-                                "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
-                elif config.distance_unit == "metric":
-                    requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
-                            "url": dlglink,
-                            "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
-                                    {"name": "Truck", "value": truck, "inline": True},
-                                    {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                    {"name": "From", "value": source_company + ", " + source_city, "inline": True},
-                                    {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                    {"name": "Distance", "value": f"{tseparator(int(driven_distance))}km", "inline": True},
-                                    {"name": "Fuel", "value": f"{tseparator(int(fuel_used))} l", "inline": True},
-                                    {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                    {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
-                                "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
-                cur.execute(f"SELECT discordid FROM user WHERE userid = {userid}")
-                p = cur.fetchall()
-                udiscordid = p[0][0]
-
+            if config.discord_bot_token != "":
+                headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+                ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
+                munit = "€"
+                if not game.startswith("e"):
+                    munit = "$"
+                offence = -offence
+                if e == "job.delivered":
+                    k = randint(0, len(GIFS)-1)
+                    dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
+                    dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
+                    r = None
+                    if config.distance_unit == "imperial":
+                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                                "url": dlglink,
+                                "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": "Truck", "value": truck, "inline": True},
+                                        {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": "From", "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
+                                        {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
+                                        {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
+                                    "footer": {"text": multiplayer}, "color": config.intcolor,\
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                    elif config.distance_unit == "metric":
+                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                                "url": dlglink,
+                                "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": "Truck", "value": truck, "inline": True},
+                                        {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": "From", "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": "Distance", "value": f"{tseparator(int(driven_distance))}km", "inline": True},
+                                        {"name": "Fuel", "value": f"{tseparator(int(fuel_used))} l", "inline": True},
+                                        {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
+                                    "footer": {"text": multiplayer}, "color": config.intcolor,\
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                    if r.status_code == 401:
+                        DisableDiscordIntegration()
+                        
         except:
             import traceback
             traceback.print_exc()
@@ -432,7 +433,7 @@ async def navio(request: Request, Navio_Signature: str = Header(None)):
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
                             discordid = getUserInfo(userid = userid)["discordid"]
-                            notification(discordid, f"Ont-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
+                            notification(discordid, f"One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
                     elif challenge_type == 3:
                         cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                         t = cur.fetchall()

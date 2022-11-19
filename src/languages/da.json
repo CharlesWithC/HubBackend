@@ -4,6 +4,19 @@
     "unauthorized": "ikke bemyndiget",
     "application_token_prohibited": "Ansøgningstoken forbudt",
     "hash_does_not_match_any_token": "Hash matcher ikke noget token.",
+    "rate_limit": "Du bliver prisbegrænset.",
+    "bad_form": "Formularfelt mangler, eller data kan ikke parses",
+    "content_too_long": "Maksimal længde af \"{item}\" er {limit} tegn.",
+    "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
+    "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
+    "config_invalid_datatype_boolean": "Ugyldig datatype for \"{item}\": Skal være boolesk.",
+    "config_invalid_datatype_integar": "Ugyldig datatype for \"{item}\": Skal være integar.",
+    "config_invalid_hex_color": "Ugyldig værdi for \"hex_color\": Skal være en hex-streng på 6 tegn.",
+    "config_invalid_data_url": "Ugyldig datatype for \"{item}\": Skal være en gyldig URL.",
+    "config_invalid_permission_admin_not_found": "Ugyldig værdi for \"perms\": \"admin\"-tilladelse blev ikke fundet.",
+    "config_invalid_permission_admin_protection": "Tilladelsesopdatering afvist: Ny \"admin\"-tilladelse inkluderer ikke nogen rolle, som den nuværende bruger har.",
+    "discord_integrations_disabled": "Discord-integrationer er blevet deaktiveret midlertidigt på grund af ugyldigt Discord Bot-token.",
+    "discord_api_inaccessible": "Discord API er utilgængelig. Dette burde være et midlertidigt problem.",
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",
@@ -14,6 +27,7 @@
     "invalid_captcha": "Ugyldig captcha.",
     "invalid_email_or_password": "Ugyldig email eller kodeord.",
     "weak_password": "Adgangskode for svag.",
+    "invalid_token": "Ugyldig token",
     "mfa_already_enabled": "MFA allerede aktiveret.",
     "mfa_invalid_secret": "Ugyldig MFA-hemmelighed.",
     "mfa_invalid_otp": "Ugyldig engangskode.",
@@ -27,6 +41,7 @@
     "leave_company_before_delete": "Forlad virksomheden, før du sletter konto.",
     "user_already_banned": "Brugeren er allerede bannet.",
     "user_not_banned": "Brugen er ikke bannet.",
+    "unable_to_dm": "Vi kan ikke sende dig en DM i Discord.",
 
     "steam_api_error": "Steam API utilgængelig. Kunne ikke binde Steam konto.",
     "invalid_steam_auth": "Invalid Steam Authentication.",
@@ -104,7 +119,7 @@
 
     "event_not_found": "Begivenhed ikke fundet.",
 
-    "invalid_distance_unit": "Ugyldig afstandsenhed. Kun 'metric' og 'imperial' accepteres.",
+    "invalid_distance_unit": "Ugyldig afstandsenhed. Kun \"metric\" og \"imperial\" accepteres.",
     "invalid_value": "Ugyldig værdi for {key}",
     "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype.",
     

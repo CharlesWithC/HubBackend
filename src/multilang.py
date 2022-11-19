@@ -14,6 +14,19 @@ EN_STRINGTABLE = {
     "unauthorized": "Unauthorized",
     "application_token_prohibited": "Application token prohibited",
     "hash_does_not_match_any_token": "Hash does not match any token.",
+    "rate_limit": "You are being rate limited.",
+    "bad_form": "Form field missing or data cannot be parsed",
+    "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
+    "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
+    "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
+    "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
+    "config_invalid_datatype_integar": "Invalid data type for \"{item}\": Must be integar.",
+    "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
+    "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
+    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
+    "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
+    "discord_api_inaccessible": "Discord API is inaccessible. This should be a temporary issue.",
 
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",
@@ -38,6 +51,7 @@ EN_STRINGTABLE = {
     "leave_company_before_delete": "Leave company before deleting account.",
     "user_already_banned": "User already banned.",
     "user_not_banned": "User not banned.",
+    "unable_to_dm": "We are unable to DM you in Discord.",
 
     "steam_api_error": "Steam API inaccessible. Failed to bind Steam account.",
     "invalid_steam_auth": "Invalid Steam Authentication.",
@@ -115,7 +129,7 @@ EN_STRINGTABLE = {
 
     "event_not_found": "Event not found.",
 
-    "invalid_distance_unit": "Invalid distance unit. Only 'metric' and 'imperial' is accepted.",
+    "invalid_distance_unit": "Invalid distance unit. Only \"metric\" and \"imperial\" is accepted.",
     "invalid_value": "Invalid value for {key}",
     "config_data_type_mismatch": "Data type of one or more keys does not match original data type.",
 

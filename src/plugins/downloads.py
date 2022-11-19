@@ -14,10 +14,11 @@ import multilang as ml
 @app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /downloads', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /downloads', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -58,10 +59,11 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
         title: Optional[str] = "", creator_userid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /downloads/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /downloads/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -120,10 +122,11 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
 @app.get(f"/{config.abbr}/downloads/{{secret}}")
 async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
         secret: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /downloads/redirect', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /downloads/redirect', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     
     conn = newconn()
     cur = conn.cursor()
@@ -154,10 +157,11 @@ async def redirectDownloads(request: Request, response: Response, authorization:
 
 @app.post(f"/{config.abbr}/downloads")
 async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /downloads', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /downloads', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
@@ -173,19 +177,19 @@ async def postDownloads(request: Request, response: Response, authorization: str
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'link' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"})}
         orderid = int(form["orderid"])
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if not isurl(link):
         response.status_code = 400
@@ -204,10 +208,11 @@ async def postDownloads(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /downloads', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /downloads', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
@@ -236,19 +241,19 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'description' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'link' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"})}
         orderid = int(form["orderid"])
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if not isurl(link):
         response.status_code = 400
@@ -263,10 +268,11 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 @app.delete(f"/{config.abbr}/downloads")
 async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /downloads', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /downloads', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:

@@ -42,10 +42,11 @@ async def getApplicationPositions(request: Request, response: Response):
 # Get Application
 @app.get(f"/{config.abbr}/application")
 async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /application', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /application', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -97,10 +98,11 @@ async def getApplication(request: Request, response: Response, authorization: st
 async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
-    rl = ratelimit(request.client.host, 'GET /application/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /application/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     if page <= 0:
         page = 1
@@ -203,10 +205,11 @@ async def getApplicationList(request: Request, response: Response, authorization
 # Self-operation
 @app.post(f"/{config.abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /application', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /application', 180, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -224,7 +227,7 @@ async def postApplication(request: Request, response: Response, authorization: s
         data = json.loads(form["data"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     application_type_text = ""
     applicantrole = 0
@@ -301,27 +304,16 @@ async def postApplication(request: Request, response: Response, authorization: s
     cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
     conn.commit()
 
-    if applicantrole != 0:
+    if applicantrole != 0 and config.discord_bot_token != "":
         durl = f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
-        requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
-
-    if config.discord_bot_dm:
         try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "bot_application_received_title", var = {"application_type_text": application_type_text}),
-                        "fields": [{"name": ml.tr(request, "application_id"), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status"), "value": "Pending", "inline": True}, {"name": ml.tr(request, "creation"), "value": f"<t:{int(time.time())}>", "inline": True}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-
+            r = requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
+            if r.status_code == 401:
+                DisableDiscordIntegration()
         except:
-            import traceback
-            traceback.print_exc()
+            pass
+
+    notification(f"{application_type_text} application submitted.\nApplication ID: `#{applicationid}`")
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -364,10 +356,11 @@ async def postApplication(request: Request, response: Response, authorization: s
 
 @app.patch(f"/{config.abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /application', 180, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -386,10 +379,10 @@ async def updateApplication(request: Request, response: Response, authorization:
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"})}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if int(applicationid) < 0:
         response.status_code = 404
@@ -427,25 +420,6 @@ async def updateApplication(request: Request, response: Response, authorization:
     t = cur.fetchall()
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     msg += f"**New message**: \n{message}\n\n"
-
-    if config.discord_bot_dm:
-        try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_updated"),
-                    "description": ml.tr(request, "application_message_recorded"),
-                        "fields": [{"name": "Application ID", "value": applicationid, "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Creation", "value": f"<t:{int(time.time())}>", "inline": True}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-
-        except:
-            import traceback
-            traceback.print_exc()
 
     application_type_text = ""
     discord_message_content = ""
@@ -495,10 +469,11 @@ async def updateApplication(request: Request, response: Response, authorization:
 # Management
 @app.patch(f"/{config.abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/status', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /application/status', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -519,10 +494,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"})}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     statustxt = f"Unknown Status ({status})"
     if int(status) in STATUS.keys():
@@ -575,45 +550,22 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
-    notification(applicant_discordid, f"Application `#{applicationid}` {statustxt}")
+    notification(applicant_discordid, f"Application `#{applicationid}` status updated to `{statustxt}`")
     conn.commit()
 
     if message == "":
         message = f"*{ml.tr(request, 'no_message')}*"
-
-    if config.discord_bot_dm:
-        try:
-            STATUS = {0: "Pending", 1: "Accepted", 2: "Declined"}
-            statustxt = f"Unknown Status ({status})"
-            if int(status) in STATUS.keys():
-                statustxt = STATUS[int(status)]
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "application_status_updated", force_en = True),
-                    "description": f"[{ml.tr(request, 'message', force_en = True)}] {message}",
-                        "fields": [{"name": ml.tr(request, "application_id", force_en = True), "value": applicationid, "inline": True}, {"name": ml.tr(request, "status", force_en = True), "value": statustxt, "inline": True}, \
-                            {"name": ml.tr(request, "time", force_en = True), "value": f"<t:{int(time.time())}>", "inline": True}, {"name": ml.tr(request, "responsible_staff", force_en = True), "value": f"<@{admindiscord}> (`{admindiscord}`)", "inline": True}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-
-        except:
-            import traceback
-            traceback.print_exc()
 
     return {"error": False}
 
 # Higher-management
 @app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /application/positions', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /application/positions', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
     if au["error"]:

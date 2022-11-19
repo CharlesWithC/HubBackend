@@ -13,10 +13,11 @@ import multilang as ml
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /announcement', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /announcement', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -53,10 +54,11 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", order_by: Optional[str] = "announcementid", \
         title: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /announcement/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /announcement/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     stoken = "guest"
     if authorization != None:
@@ -115,10 +117,11 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'POST /announcement', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /announcement', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
@@ -142,10 +145,10 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"})}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -154,7 +157,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if not isAdmin and announcement_type != 1:
         response.status_code = 403
@@ -171,21 +174,28 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     await AuditLog(adminid, f"Created announcement `#{announcementid}`")
     conn.commit()
 
-    if channelid != 0:
+    if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-        requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+        try:
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
+            if r.status_code == 401:
+                DisableDiscordIntegration()
+        except:
+            import traceback
+            traceback.print_exc()
 
     return {"error": False, "response": {"announcementid": str(announcementid)}}
 
 @app.patch(f"/{config.abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /announcement', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /announcement', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
@@ -209,10 +219,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'title' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'content' is 2,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"})}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -221,7 +231,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if int(announcementid) < 0:
         response.status_code = 404
@@ -240,21 +250,28 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
     conn.commit()
 
-    if channelid != 0:
+    if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-        requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+        try:
+            requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor}}))
+            if r.status_code == 401:
+                DisableDiscordIntegration()
+        except:
+            import traceback
+            traceback.print_exc()
 
     return {"error": False}
 
 @app.delete(f"/{config.abbr}/announcement")
 async def deleteAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /announcement', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /announcement', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = 401

@@ -14,8 +14,8 @@ import multilang as ml
 
 config_whitelist = ['name', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
     'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
-    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', \
-    'discord_bot_token', 'discord_bot_dm', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
+    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", \
+    'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
     'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
@@ -28,10 +28,11 @@ backup_config = copy.deepcopy(tconfig)
 # get config
 @app.get(f"/{config.abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'GET /config', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /config', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
@@ -92,10 +93,11 @@ def reload():
 # update config
 @app.patch(f"/{config.abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /config', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /config', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
@@ -112,10 +114,10 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         formconfig = json.loads(form["config"])
         if len(form["config"]) > 150000:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'config' is 150,000 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "150,000"})}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     ttconfig = json.loads(open(config_path, "r").read())
 
@@ -125,17 +127,17 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
                 if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid value for "{tt}": Must not be empty.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt})}
 
             if tt == "distance_unit":
                 if not formconfig[tt] in ["metric", "imperial"]:
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid value for "distance_unit": Must be "metric" or "imperial".'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_distance_unit")}
             
             if tt in ["truckersmp_bind", "privacy", "in_guild_check"]:
                 if type(formconfig[tt]) != bool:
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid data type for "{tt}": Must be boolean.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt})}
 
             if tt in ["guild_id", "navio_company_id", "delivery_log_channel_id", "discord_client_id"]:
                 try:
@@ -145,7 +147,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         formconfig[tt] = "0"
                     else:
                         response.status_code = 400
-                        return {"error": True, "descriptor": f'Invalid data type for "{tt}": Must be integar.'}
+                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integar", var = {"item": tt})}
 
             if tt == "hex_color":
                 formconfig[tt] = formconfig[tt][-6:]
@@ -156,7 +158,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     intcolor = int(hex_color, 16)
                 except:
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid value for "hex_color": Must be a hex string of 6 characters.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_hex_color")}
 
             if tt == "delivery_post_gifs":
                 p = []
@@ -168,13 +170,13 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             if tt in ["logo_url", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
                 if formconfig[tt] != "" and not isurl(formconfig[tt]):
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid value for "{tt}": Must be a valid URL.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_data_url", var = {"item": tt})}
 
             if tt == "perms":
                 newperms = formconfig[tt]
                 if not "admin" in newperms:
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Invalid value for "perms": "admin" permission not found.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_not_found")}
                 ar = newperms["admin"]
                 adminroles = []
                 for arr in ar:
@@ -185,7 +187,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         ok = True
                 if not ok:
                     response.status_code = 400
-                    return {"error": True, "descriptor": f'Permission update rejected: New "admin" permission does not include any role the current user has.'}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_protection")}
 
             if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
                 ttconfig[tt] = copy.deepcopy(str(formconfig[tt]))
@@ -201,10 +203,11 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 # reload service
 @app.put(f"/{config.abbr}/reload")
 async def putReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /reload', 600, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /reload', 600, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "reload"])
     if au["error"]:
@@ -242,10 +245,11 @@ async def putReload(request: Request, response: Response, authorization: str = H
 @app.get(f"/{config.abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /audit', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /audit', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "audit"])
     if au["error"]:

@@ -14,10 +14,11 @@ import multilang as ml
 @app.get(f'/{config.abbr}/user')
 async def getUser(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /user', 60, 120)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /user', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     roles = []
     udiscordid = -1
@@ -120,10 +121,11 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 async def getUserNotificationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, content: Optional[str] = '', status: Optional[int] = -1, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
-    rl = ratelimit(request.client.host, 'GET /user/notification/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /user/notification/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -176,10 +178,11 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
 @app.put(f"/{config.abbr}/user/notification/status")
 async def putUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
         notificationids: Optional[str] = ""):
-    rl = ratelimit(request.client.host, 'GET /user/notification/status', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /user/notification/status', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
         
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -197,7 +200,7 @@ async def putUserNotificationStatus(request: Request, response: Response, author
             read = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if notificationids == "all":
         cur.execute(f"UPDATE user_notification SET status = {read} WHERE discordid = {discordid}")
@@ -216,14 +219,160 @@ async def putUserNotificationStatus(request: Request, response: Response, author
     
     return {"error": False}
 
+@app.get(f"/{config.abbr}/user/notification/settings")
+async def getNotificationSettings(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'GET /user/notification/settings', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    ret = {"drivershub": True, "discord": False, "event": False}
+
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT skey, sval FROM settings WHERE discordid = '{discordid}' AND skey LIKE '%-notification'")
+    t = cur.fetchall()
+    for tt in t:
+        if tt[0] == "drivershub-notification" and tt[1] == "disabled":
+            ret["drivershub"] = False
+        elif tt[0] in ["discord-notification", "event-notification"] and tt[1] != "disabled":
+            ret[tt[0].split("-")[0]] = True
+    
+    return {"error": False, "response": ret}
+
+@app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/enable")
+async def enableNotification(request: Request, response: Response, authorization: str = Header(None),
+        notification_type: Optional[str] = "discord"):
+    if notification_type not in ["discord", "event", "drivershub"]:
+        response.status_code = 404
+        return {"error": True, "descriptor": "Not Found"}
+
+    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/enable', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    if notification_type == "drivershub":
+        cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'drivershub-notification' AND sval = 'disabled'")
+        conn.commit()
+        return {"error": False}
+
+    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/enable', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    other_notification_type = "event"
+    if notification_type == "event":
+        other_notification_type = "discord"
+
+    if config.discord_bot_token == "":
+        response.status_code = 503
+        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+
+    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+    durl = "https://discord.com/api/v9/users/@me/channels"
+    try:
+        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+    except:
+        response.status_code = 503
+        return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+    if r.status_code == 401:
+        DisableDiscordIntegration()
+        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+    if r.status_code != 200:
+        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+    d = json.loads(r.text)
+    if "id" in d:
+        channelid = str(d["id"])
+
+        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        r = None
+        try:
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Notification", 
+            "description": f"You have enabled `{notification_type}` notifications!", \
+            "footer": {"text": config.name, "icon_url": config.logo_url}, \
+            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+        except:
+            import traceback
+            traceback.print_exc()
+
+        if r.status_code != 200:
+            return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+
+        cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
+        t = cur.fetchall()
+        if len(t) == 0:
+            cur.execute(f"INSERT INTO settings VALUES ({discordid}, '{notification_type}-notification', '{channelid}')")
+        elif t[0][0] != channelid:
+            cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
+        
+        cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = '{other_notification_type}-notification'")
+        t = cur.fetchall()
+        if len(t) > 0 and t[0][0] != channelid:
+            cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = '{other_notification_type}-notification'")
+        conn.commit()
+
+        return {"error": False}
+
+    else:
+        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+
+@app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/disable")
+async def disableNotification(request: Request, response: Response, authorization: str = Header(None),
+        notification_type: Optional[str] = "discord"):
+    if notification_type not in ["discord", "event", "drivershub"]:
+        response.status_code = 404
+        return {"error": True, "descriptor": "Not Found"}
+
+    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/disable', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = 401
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    if notification_type == "drivershub":
+        cur.execute(f"INSERT INTO settings VALUES ('{discordid}','drivershub-notification','disabled')")
+    else:
+        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
+    conn.commit()
+
+    return {"error": False}
+
 @app.get(f"/{config.abbr}/user/list")
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, name: Optional[str] = '', \
         order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
-    rl = ratelimit(request.client.host, 'GET /user/list', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /user/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
     if au["error"]:
@@ -274,10 +423,11 @@ async def getUserList(request: Request, response: Response, authorization: str =
 # Self-Operation Section
 @app.patch(f'/{config.abbr}/user/bio')
 async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/bio', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /user/bio', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -293,11 +443,11 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         bio = str(form["bio"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
         
     if len(bio) > 1000:
         response.status_code = 413
-        return {"error": True, "descriptor": "Maximum length of 'bio' is 1,000 characters."}
+        return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"})}
 
     cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
     conn.commit()
@@ -306,10 +456,11 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
 @app.patch(f'/{config.abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/password', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /user/password', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -348,7 +499,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
         password = str(form["password"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     if not "@" in email: # make sure it's not empty
         response.status_code = 403
@@ -380,10 +531,11 @@ async def patchPassword(request: Request, response: Response, authorization: str
     
 @app.delete(f'/{config.abbr}/user/password')
 async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /user/password', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /user/password', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -430,10 +582,11 @@ async def deletePassword(request: Request, response: Response, authorization: st
     
 @app.patch(f"/{config.abbr}/user/steam")
 async def patchSteam(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/steam', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /user/steam', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -449,7 +602,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         openid = str(form["callback"]).replace("openid.mode=id_res", "openid.mode=check_authentication")
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
         response.status_code = 503
@@ -506,10 +659,11 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
 
 @app.patch(f"/{config.abbr}/user/truckersmp")
 async def patchTruckersMP(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/truckersmp', 60, 3)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /user/truckersmp', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
@@ -525,7 +679,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         truckersmpid = form["truckersmpid"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     try:
         truckersmpid = int(truckersmpid)
     except:
@@ -561,10 +715,11 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
 # Manage User Section
 @app.put(f'/{config.abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PUT /user/ban', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PUT /user/ban', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
@@ -582,10 +737,10 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         reason = convert_quotation(form["reason"])
         if len(reason) > 256:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'reason' is 256 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "reason", "limit": "256"})}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     if expire == -1:
         expire = 9999999999999999
     try:
@@ -621,10 +776,11 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
 
 @app.delete(f'/{config.abbr}/user/ban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /user/ban', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /user/ban', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
@@ -640,7 +796,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
@@ -657,10 +813,11 @@ async def userUnban(request: Request, response: Response, authorization: str = H
 # Higher Management Section
 @app.patch(f"/{config.abbr}/user/discord")
 async def patchUserDiscord(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'PATCH /user/discord', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /user/discord', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
     if au["error"]:
@@ -682,7 +839,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         new_discord_id = int(form["new_discord_id"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
         
     if old_discord_id == new_discord_id:
         return {"error": False}
@@ -717,10 +874,11 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     
 @app.delete(f"/{config.abbr}/user/connections")
 async def deleteUserConnection(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request.client.host, 'DELETE /user/connections', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /user/connections', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
     if au["error"]:
@@ -741,7 +899,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -763,10 +921,11 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     
 @app.delete(f"/{config.abbr}/user")
 async def deleteUser(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'DELETE /user', 60, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'DELETE /user', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:

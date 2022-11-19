@@ -40,6 +40,7 @@
 
     "navio_api_token": "",
     "navio_company_id": "",
+    "allowed_navio_ips": ["185.233.107.244"],
     "delivery_rules": {
         "max_speed": "180",
         "max_profit": "1000000",
@@ -62,7 +63,6 @@
     "discord_oauth2_url": "",
     "discord_callback_url": "https://drivershub.charlws.com/{abbr}/auth/discord/callback",
     "discord_bot_token": "",
-    "discord_bot_dm": true,
 
     "team_update": {
         "webhook_url": "",

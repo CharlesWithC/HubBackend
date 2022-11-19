@@ -4,11 +4,11 @@
 from fastapi import FastAPI
 from discord import Colour
 from io import BytesIO
-import os, sys, json, requests, time, logging
+import os, sys, json, requests, time, threading
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-version = "v1.19.6"
+version = "v1.20.1"
 
 DH_START_TIME = int(time.time())
 
@@ -53,6 +53,9 @@ config["perms"] = perms
 
 if not "server_workers" in config.keys():
     config["server_workers"] = 1
+
+if not "allowed_navio_ips" in config.keys():
+    config["allowed_navio_ips"] = ["185.233.107.244"]
 
 tconfig = config
 config = Dict2Obj(config)

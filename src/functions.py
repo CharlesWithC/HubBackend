@@ -6,10 +6,11 @@ TF = [False, True]
 from base64 import b64encode, b64decode
 from discord import Webhook, Embed
 from aiohttp import ClientSession
+from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 import json, time, math, zlib, re
 import hmac, base64, struct, hashlib
-import ipaddress, requests
+import ipaddress, requests, threading
 from iso3166 import countries
 
 from db import newconn
@@ -173,15 +174,36 @@ def get_totp_token(secret):
 def valid_totp(otp, secret):
     return str(otp) in get_totp_token(secret)
 
-def getRequestCountry(request):
-    country = "Unknown Country"
+def getFullCountry(abbr):
+    try:
+        country = countries.get(abbr).name
+        return convert_quotation(country)
+    except:
+        return "Unknown Country"
+
+def getRequestCountry(request, abbr = False):
     if "cf-ipcountry" in request.headers.keys():
         country = request.headers["cf-ipcountry"]
         try:
-            country = countries.get(country).name
+            country = countries.get(country)
+            if abbr:
+                return convert_quotation(request.headers["cf-ipcountry"])
+            return country.name
         except:
-            pass
-    return country
+            if abbr:
+                return "unknown"
+            return "Unknown Country"
+    if abbr:
+        return "unknown"
+    return "Unknown Country"
+
+def getUserAgent(request):
+    if "user-agent" in request.headers.keys():
+        if len(request.headers["user-agent"]) <= 200:
+            return convert_quotation(request.headers["user-agent"])
+        return ""
+    else:
+        return ""
 
 cuserinfo = {} # user info cache
 
@@ -262,19 +284,99 @@ def activityUpdate(discordid, activity):
     else:
         cur.execute(f"INSERT INTO user_activity VALUES ({discordid}, '{activity}', {int(time.time())})")
     conn.commit()
+    
+discord_message_queue = []
 
-def notification(discordid, content):
+def QueueDiscordMessage(channelid, data):
+    global discord_message_queue
+    if config.discord_bot_token == "":
+        return
+    discord_message_queue.append((channelid, data))
+
+def SendDiscordMessage(channelid, data):
+    if config.discord_bot_token == "":
+        return -1
+    
+    ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+    requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+
+    return 0
+
+def ProcessDiscordMessage(): # thread
+    global discord_message_queue
+    global config
+    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+    while 1:
+        if config.discord_bot_token == "":
+            return
+        if len(discord_message_queue) == 0:
+            time.sleep(1)
+            continue
+
+        channelid = discord_message_queue[0][0]
+        data = discord_message_queue[0][1]
+
+        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        try:
+            r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+        except:
+            import traceback
+            traceback.print_exc()
+
+        if r.status_code == 429:
+            d = json.loads(r.text)
+            time.sleep(d["retry_after"])
+        elif r.status_code == 403:
+            conn = newconn()
+            cur = conn.cursor()
+            cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
+            cur.execute(f"DELETE FROM settings WHERE skey = 'event-notification' AND sval = '{channelid}'")
+            conn.commit()
+        elif r.status_code == 401:
+            DisableDiscordIntegration()
+        elif r.status_code == 200 or r.status_code >= 400 and r.status_code <= 499:
+            discord_message_queue = discord_message_queue[1:]
+
+        time.sleep(1)
+threading.Thread(target=ProcessDiscordMessage).start()
+
+def CheckDiscordNotification(discordid):
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return False
+    ret = t[0][0]
+    if ret == "disabled":
+        return False
+    return ret
+
+def SendDiscordNotification(discordid, data):
+    t = CheckDiscordNotification(discordid)
+    if t == False:
+        return
+    QueueDiscordMessage(t, data)
+
+def notification(discordid, content, no_discord_notification = False):
     content = convert_quotation(content)
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'drivershub-notification' AND sval = 'disabled'")
     t = cur.fetchall()
-    nxtnotificationid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
-    cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
-    conn.commit()
+    if len(t) == 0:
+        cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
+        t = cur.fetchall()
+        nxtnotificationid = int(t[0][0])
+        cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
+        cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
+        conn.commit()
+    if not no_discord_notification:
+        SendDiscordNotification(discordid, {"embed": {"title": "Notification", 
+            "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
+            "timestamp": str(datetime.now()), "color": config.intcolor}})
 
-def ratelimit(ip, endpoint, limittime, limitcnt):
+def ratelimit(request, ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {int(time.time() - 86400)}")
@@ -291,7 +393,16 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
             conn.commit()
             maxban = 0
     if maxban > 0:
-        return maxban - int(time.time())
+        resp_headers = {}
+        resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+        resp_headers["X-RateLimit-Remaining"] = str(0)
+        resp_headers["X-RateLimit-Reset"] = str(maxban)
+        resp_headers["Retry-After"] = str(maxban - int(time.time()))
+        resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
+        resp_headers["X-RateLimit-Global"] = "true"
+        resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+            "retry_after": maxban - int(time.time()), "global": True}
+        return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     cur.execute(f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
     t = cur.fetchall()
     if t[0][0] != None and t[0][0] > 150:
@@ -301,20 +412,35 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
         cur.execute(f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-600'")
         cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', 'ip-ban-600', {int(time.time())}, 0)")
         conn.commit()
-        return 600
+        resp_headers = {}
+        resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+        resp_headers["X-RateLimit-Remaining"] = str(0)
+        resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + 600)
+        resp_headers["Retry-After"] = str(600)
+        resp_headers["X-RateLimit-Reset-After"] = str(600)
+        resp_headers["X-RateLimit-Global"] = "true"
+        resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+            "retry_after": 600, "global": True}
+        return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     cur.execute(f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
     t = cur.fetchall()
     if len(t) == 0:
         cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '{endpoint}', {int(time.time())}, 1)")
         conn.commit()
-        return 0
+        resp_headers = {}
+        resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+        resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
+        return (False, resp_headers)
     else:
         first_request_timestamp = t[0][0]
         request_count = t[0][1]
         if int(time.time()) - first_request_timestamp > limittime:
             cur.execute(f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
             conn.commit()
-            return 0
+            resp_headers = {}
+            resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+            resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
+            return (False, resp_headers)
         else:
             if request_count + 1 > limitcnt:
                 cur.execute(f"SELECT request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '429-error'")
@@ -325,11 +451,25 @@ def ratelimit(ip, endpoint, limittime, limitcnt):
                 else:
                     cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '429-error', {int(time.time())}, 1)")
                     conn.commit()
-                return limittime - (int(time.time()) - first_request_timestamp)
+
+                retry_after = limittime - (int(time.time()) - first_request_timestamp)
+                resp_headers = {}
+                resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+                resp_headers["X-RateLimit-Remaining"] = str(0)
+                resp_headers["X-RateLimit-Reset"] = str(retry_after + int(time.time()))
+                resp_headers["Retry-After"] = str(retry_after)
+                resp_headers["X-RateLimit-Reset-After"] = str(retry_after)
+                resp_headers["X-RateLimit-Global"] = "false"
+                resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+                    "retry_after": retry_after, "global": False}
+                return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
             else:
                 cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
                 conn.commit()
-                return 0
+                resp_headers = {}
+                resp_headers["X-RateLimit-Limit"] = str(limitcnt)
+                resp_headers["X-RateLimit-Remaining"] = str(limitcnt - request_count - 1)
+                return (False, resp_headers)
 
 def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
     # authorization header basic check
@@ -345,6 +485,9 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
 
     conn = newconn()
     cur = conn.cursor()
+
+    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
+    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
     # application token
     if tokentype == "Application":
@@ -392,33 +535,30 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
 
     # bearer token
     elif tokentype == "Bearer":
-        cur.execute(f"SELECT discordid, ip FROM session WHERE token = '{stoken}'")
+        cur.execute(f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
             return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
         discordid = t[0][0]
         ip = t[0][1]
+        country = t[0][2]
+        last_used_timestamp = t[0][3]
+        user_agent = t[0][4]
 
-        # check ip
-        orgiptype = iptype(ip)
-        if orgiptype != 0:
-            curiptype = iptype(request.client.host)
-            if orgiptype != curiptype:
-                cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-                conn.commit()
-            else:
-                if curiptype == 6:
-                    curip = ipaddress.ip_address(request.client.host).exploded
-                    orgip = ipaddress.ip_address(ip).exploded
-                    if curip.split(":")[:4] != orgip.split(":")[:4]:
-                        cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                        conn.commit()
-                        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
-                elif curiptype == 4:
-                    if ip.split(".")[:3] != request.client.host.split(".")[:3]:
-                        cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-                        conn.commit()
-                        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        # check country
+        curCountry = getRequestCountry(request, abbr = True)
+        if curCountry != country and country not in ["unknown", ""]:
+            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
+            conn.commit()
+            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        if ip != request.client.host:
+            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+        if curCountry != country and not curCountry in ["unknown", ""] and country in ["unknown", ""]:
+            cur.execute(f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
+        if getUserAgent(request) != user_agent:
+            cur.execute(f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
+        conn.commit()
         
         # additional check
         
@@ -447,6 +587,10 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
             
             if not ok:
                 return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+
+        if int(time.time()) - last_used_timestamp >= 5:
+            cur.execute(f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            conn.commit()
 
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
     
@@ -480,7 +624,13 @@ async def AuditLog(userid, text):
         import traceback
         traceback.print_exc()
 
+def DisableDiscordIntegration():
+    global config
+    config.discord_bot_token = ""
+    r = requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and reloading API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+
 async def AutoMessage(meta, setvar):
+    global config
     try:
         if meta.webhook_url != "":
             async with ClientSession() as session:
@@ -495,12 +645,15 @@ async def AutoMessage(meta, setvar):
                 await webhook.send(content = setvar(meta.content), embed=embed)
 
         elif meta.channel_id != "":
+            if config.discord_bot_token == "":
+                return
+
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v9/channels/{meta.channel_id}/messages"
             timestamp = ""
             if meta.embed.timestamp:
                 timestamp = str(datetime.now())
-            requests.post(ddurl, headers=headers, data=json.dumps({
+            r = requests.post(ddurl, headers=headers, data=json.dumps({
                 "content": setvar(meta.content),
                 "embed":{
                     "title": setvar(meta.embed.title), 
@@ -515,6 +668,8 @@ async def AutoMessage(meta, setvar):
                     "timestamp": timestamp,
                     "color": config.intcolor
                 }}))
+            if r.status_code == 401:
+                DisableDiscordIntegration()
     except:
         import traceback
         traceback.print_exc()

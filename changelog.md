@@ -1,5 +1,29 @@
 # Changelog
 
+**v1.20.1**  
+**[Bug fixes]**  
+1.*[Auth]* Fixed the bug that ban check is not performed on steam & password login  
+2.*[Auth]* Fixed the bug that referrer check does not work  
+**[Minor changes]**  
+2.*[Auth]* Increased session life to 30 days  
+3.*[Auth]* Increased max session count to 50  
+4.*[Auth]* Removed endpoint **GET** `/token/all`, added endpoint **GET** `/token/list`  
+5.*[Auth]* Added `country`, `user_agent` and `last_used_timestamp` to session table  
+6.*[Auth]* Changed session IP check to country check  
+7.*[Auth]* Added `last_used_before` request param to **DELETE** `/token/all`  
+8.Added Discord Bot Token Validation to prevent invalid tokens from being used  
+9.Added `config.allowed_navio_ips`  
+**[Major changes]**  
+10.Added translation for all endpoints (except Navio Webhook)  
+11.Added Russian, Turkish and Italian translation  
+12.Improved rate limit response  
+13.Added user-controllable Discord Notification and removed `discord_bot_dm` from config  
+i) Added endpoint **PATCH** `/user/notification/{str:notification_type}/enable`, **PATCH** `/user/notification/{str:notification_type}/disable`,   **GET** `/user/notification/settings`  
+ii) Discord Notifications use the same content as Drivers Hub Notifications  
+iii) Notifications are queued up to prevent Drivers Hub being rate limited by Discord API.  
+iv) If Drivers Hub fails to send a DM, Discord Notification (including Event Notification) will be disabled.  
+v) All previously enabled-by-default Discord DMs have been disabled. User will have to manually enable Discord Notification to make DMs work  
+
 **v1.19.6**  
 Hard-coded English String Table  
 

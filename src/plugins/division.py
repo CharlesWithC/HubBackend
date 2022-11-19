@@ -46,10 +46,11 @@ async def getDivisions(request: Request, response: Response):
 # Get division info
 @app.get(f"/{config.abbr}/division")
 async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'GET /division', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /division', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -131,10 +132,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
 # Self-operation
 @app.post(f"/{config.abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'POST /division', 180, 10)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'POST /division', 180, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
@@ -151,7 +153,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
         logid = int(form["logid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
@@ -196,23 +198,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
     
-    if config.discord_bot_dm:
-        try:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Received",
-                    "description": f"Division supervisor will check your request and you will receive an update soon.",
-                        "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": "Pending", "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-        except:
-            import traceback
-            traceback.print_exc()
+    notification(f"Division Validation Request for Delivery `#{logid}` submitted.")
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
@@ -244,10 +230,11 @@ async def postDivision(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
         page: Optional[int] = 1, page_size: Optional[int] = 10):
-    rl = ratelimit(request.client.host, 'GET /division/list/pending', 60, 60)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'GET /division/list/pending', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
@@ -285,10 +272,11 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
 @app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    rl = ratelimit(request.client.host, 'PATCH /division', 60, 30)
-    if rl > 0:
-        response.status_code = 429
-        return {"error": True, "descriptor": f"Rate limit: Wait {rl} seconds"}
+    rl = ratelimit(request, request.client.host, 'PATCH /division', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
@@ -306,10 +294,10 @@ async def patchDivision(request: Request, response: Response, authorization: str
         status = int(form["status"])
         if len(form["message"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": "Maximum length of 'message' is 200 characters."}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"})}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": "Form field missing or data cannot be parsed"}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
     
     cur.execute(f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
@@ -329,25 +317,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
     discordid = getUserInfo(userid = userid)["discordid"]
     adiscordid = getUserInfo(userid = adminid)["discordid"]
 
-    if config.discord_bot_dm:
-        try:
-            STATUS = {0: "Pending", 1: "Accepted", 2: "Rejected"}
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            durl = "https://discord.com/api/v9/users/@me/channels"
-            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-            d = json.loads(r.text)
-            if "id" in d:
-                channelid = d["id"]
-                ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-                notification(discordid, f"Division Validation Request for Delivery `#{logid}` {STATUS[status]}")
-                requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Division Validation Request for Delivery #{logid} Updated",
-                    "description": message,
-                        "fields": [{"name": "Division", "value": divisiontxt[divisionid], "inline": True}, {"name": "Status", "value": STATUS[status], "inline": True}, {"name": "Time", "value": f"<t:{int(time.time())}>", "inline": True},\
-                            {"name": "Division Supervisor", "value": f"<@{adiscordid}> (`{adiscordid}`)", "inline": False}],
-                        "footer": {"text": config.name, "icon_url": config.logo_url}, "thumbnail": {"url": config.logo_url},\
-                            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
-        except:
-            import traceback
-            traceback.print_exc()
+    STATUS = {0: "pending", 1: "accepted", 2: "rejected"}
+    notification(discordid, f"Division Validation Request for Delivery `#{logid}` status updated to `{STATUS[status]}`")
 
     return {"error": False}
