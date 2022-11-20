@@ -4,6 +4,7 @@
     "unauthorized": "Unauthorized",
     "application_token_prohibited": "Application token prohibited",
     "hash_does_not_match_any_token": "Hash does not match any token.",
+    "unknown_error": "Unknown Error",
     "rate_limit": "You are being rate limited.",
     "bad_form": "Form field missing or data cannot be parsed",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",

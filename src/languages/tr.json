@@ -4,6 +4,7 @@
     "unauthorized": "Yetkisiz erişim!",
     "application_token_prohibited": "Uygulama jetonu (tokeni) yasaklandı",
     "hash_does_not_match_any_token": "Etiket (hash), herhangi bir jeton (token) ile eşleşmiyor.",
+    "unknown_error": "Bilinmeyen Hata",
     "rate_limit": "Oturumunuza hız sınırlandırması uygulandı. Lütfen daha yavaş işlem yapınız..",
     "bad_form": "Form alanına eksik veri(ler) girdiniz veya girmiş olduğunuz veri(ler) sistem tarafından tanınamıyor/ayrıştırılamıyor.",
     "content_too_long": "Maksimum \"{item}\" uzunluğu {limit} karakter ile sınırlıdır.",

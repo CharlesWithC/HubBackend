@@ -313,7 +313,7 @@ async def postApplication(request: Request, response: Response, authorization: s
         except:
             pass
 
-    notification(f"{application_type_text} application submitted.\nApplication ID: `#{applicationid}`")
+    notification(discordid, f"{application_type_text} application submitted.\nApplication ID: `#{applicationid}`")
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()

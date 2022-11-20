@@ -10,20 +10,21 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-def EventNotification():
-    conn = newconn()
-    cur = conn.cursor()
-
-    notified = []
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'notified-event'")
-    t = cur.fetchall()
-    for tt in t:
-        notified.append(tt[0].split("-")[0])
-        
+def EventNotification():        
     while 1:
         try:
             conn = newconn()
             cur = conn.cursor()
+
+            notified = []
+            cur.execute(f"SELECT sval FROM settings WHERE skey = 'notified-event'")
+            t = cur.fetchall()
+            for tt in t:
+                if int(time.time()) - int(tt[0].split("-")[1]) > 3600:
+                    cur.execute(f"DELETE FROM settings WHERE skey = 'notified-event' AND sval = '{tt[0]}'")
+                else:
+                    notified.append(tt[0].split("-")[0])
+            conn.commit()
 
             tonotify = {}
             cur.execute(f"SELECT discordid, sval FROM settings WHERE skey = 'event-notification'")
@@ -37,7 +38,7 @@ def EventNotification():
                 if str(tt[0]) in notified:
                     continue
                 
-                notified.append(tt[0])
+                notified.append(str(tt[0]))
                 cur.execute(f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
                 conn.commit()
 
@@ -55,7 +56,7 @@ def EventNotification():
                 while "" in vote:
                     vote.remove("")
                 for vt in vote:
-                    discordid = getUserInfo(userid = vt)["discordid"]
+                    discordid = str(getUserInfo(userid = vt)["discordid"])
                     if discordid in tonotify.keys():
                         channelid = tonotify[discordid]
                         QueueDiscordMessage(channelid, {"embed": {"title": f"Event Notification", "description": f"An event that you have voted is starting soon!", "url": link,

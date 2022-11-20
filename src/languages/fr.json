@@ -4,6 +4,7 @@
     "unauthorized": "Non autorisé",
     "application_token_prohibited": "Jeton d'application interdit",
     "hash_does_not_match_any_token": "Le hachage ne correspond à aucun jeton.",
+    "unknown_error": "Erreur inconnue",
     "rate_limit": "Vous êtes limité en débit.",
     "bad_form": "Le champ du formulaire est manquant ou les données ne peuvent pas être analysées",
     "content_too_long": "La longueur maximale de \"{item}\" est de {limit} caractères.",

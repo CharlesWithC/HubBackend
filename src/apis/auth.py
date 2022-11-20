@@ -217,12 +217,12 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
         if 'error_description' in tokens.keys():
             return RedirectResponse(url=getUrl4Msg(tokens['error_description']), status_code=302)
         else:
-            return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(ml.tr("unknown_error")), status_code=302)
 
     except:
         import traceback
         traceback.print_exc()
-        return RedirectResponse(url=getUrl4Msg("Unknown Error"), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(ml.tr("unknown_error")), status_code=302)
 
 # Steam Auth (Only for connecting account)
 @app.get(f"/{config.abbr}/auth/steam/redirect")

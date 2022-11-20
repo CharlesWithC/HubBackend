@@ -4,6 +4,7 @@
     "unauthorized": "Non autorizzato!",
     "application_token_prohibited": "Il token dell'app è privato",
     "hash_does_not_match_any_token": "Il tag (hash) non corrisponde ad alcun token.",
+    "unknown_error": "Errore sconosciuto",
     "rate_limit": "Ti è stata applicata una tariffa limitata.",
     "bad_form": "Campo modulo mancante o impossibile analizzare i dati",
     "content_too_long": "La lunghezza massima di \"{item}\" è di {limit} caratteri.",

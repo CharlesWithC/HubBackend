@@ -198,7 +198,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
     
-    notification(f"Division Validation Request for Delivery `#{logid}` submitted.")
+    notification(discordid, f"Division Validation Request for Delivery `#{logid}` submitted.")
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")

@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Charles All rights reserved.
 # Author: @CharlesWithC
 
-import os, sys, time, json, multiprocessing, signal, psutil
+import os, sys, time, json, threading
 import uvicorn
 
 drivershub = """    ____       _                         __  __      __  
@@ -81,22 +81,6 @@ if __name__ == "__main__":
 
     if "event" in config.enabled_plugins:
         from plugins.event import EventNotification
-        multiprocessing.Process(target = EventNotification, daemon = True).start()
-    
-    def killer_thread(pid):
-        curpid = os.getpid()
-        while 1:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                parent = psutil.Process(pid)
-                children = parent.children(recursive=True)
-                for process in children:
-                    if process.pid != curpid:
-                        process.send_signal(signal.SIGKILL)
-                parent.send_signal(signal.SIGKILL)
-                break
-    
-    multiprocessing.Process(target = killer_thread, args = (os.getpid(),)).start()
+        threading.Thread(target = EventNotification, daemon = True).start()
 
     uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, workers = min(int(config.server_workers), 8))

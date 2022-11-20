@@ -338,7 +338,7 @@ def ProcessDiscordMessage(): # thread
             discord_message_queue = discord_message_queue[1:]
 
         time.sleep(1)
-threading.Thread(target=ProcessDiscordMessage).start()
+threading.Thread(target=ProcessDiscordMessage, daemon = True).start()
 
 def CheckDiscordNotification(discordid):
     conn = newconn()

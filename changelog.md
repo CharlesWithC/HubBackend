@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.20.3**  
+1.Fixed **GET** `/config` 500 error when content related to disabled plugins are not in config  
+2.Fixed event notification sending more than one  
+3.Made it possible to send event notification for delayed event  
+4.Added translation for `Unknown Error`  
+5.Enabled thread daemon to make shutdowns faster  
+
 **v1.20.2**  
 Fixed the bug that program cannot shut down fully  
 

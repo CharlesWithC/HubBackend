@@ -1,6 +1,5 @@
 fastapi==0.78.0
 uvicorn==0.17.6
-py-cord==2.0.0b7
 discord_oauth2==0.2
 steamsignin==1.0.1
 python-dateutil==2.8.2
@@ -10,4 +9,3 @@ numpy==1.23.1
 pillow==9.3.0
 mysqlclient==2.1.1
 iso3166==2.1.1
-psutil==5.9.4

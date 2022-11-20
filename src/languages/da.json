@@ -4,6 +4,7 @@
     "unauthorized": "ikke bemyndiget",
     "application_token_prohibited": "Ansøgningstoken forbudt",
     "hash_does_not_match_any_token": "Hash matcher ikke noget token.",
+    "unknown_error": "Ukendt fejl",
     "rate_limit": "Du bliver prisbegrænset.",
     "bad_form": "Formularfelt mangler, eller data kan ikke parses",
     "content_too_long": "Maksimal længde af \"{item}\" er {limit} tegn.",

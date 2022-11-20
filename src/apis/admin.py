@@ -60,7 +60,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     # remove disabled plugins
     for t in config_plugins.keys():
         if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t]:
+            for tt in config_plugins[t] and tt in ffconfig.keys():
                 del ffconfig[tt]
     
     # old config
@@ -79,7 +79,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     # remove disabled plugins
     for t in config_plugins.keys():
         if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t]:
+            for tt in config_plugins[t] and tt in ffconfig.keys():
                 del ttconfig[tt]
 
     return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
