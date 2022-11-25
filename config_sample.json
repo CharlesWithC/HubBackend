@@ -3,6 +3,7 @@
     "name": "",
     "distance_unit": "metric",
     "truckersmp_bind": true,
+    "language": "en",
     "privacy": false,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",

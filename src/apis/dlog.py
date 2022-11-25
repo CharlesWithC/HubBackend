@@ -38,7 +38,8 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     else:
         au = auth(authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         userid = au["userid"]
         discordid = au["discordid"]
@@ -127,7 +128,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     else:
         au = auth(authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         userid = au["userid"]
         activityUpdate(au["discordid"], "Viewing Delivery Logs")
@@ -297,7 +299,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
         if config.privacy:
             au = auth(authorization, request, allow_application_token = True)
             if au["error"]:
-                response.status_code = 401
+                response.status_code = au["code"]
+                del au["code"]
                 return au
         quser = f"userid = {userid} AND"
 
@@ -480,7 +483,8 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     if quserid != -1:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
 
     conn = newconn()
@@ -572,7 +576,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     activityUpdate(au["discordid"], "Viewing Leaderboard")
 
@@ -1005,7 +1010,8 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         
     au = auth(authorization, request)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     
     conn = newconn()

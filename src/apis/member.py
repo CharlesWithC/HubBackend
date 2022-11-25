@@ -104,7 +104,8 @@ async def getMemberList(request: Request, response: Response, authorization: str
     if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         activityUpdate(au["discordid"], f"Viewing Members")
     
@@ -217,7 +218,8 @@ async def getAllMemberList(request: Request, response: Response, authorization: 
     if config.privacy:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
     
     conn = newconn()
@@ -361,7 +363,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -448,7 +451,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     rank = point2rank(totalpnt)
 
     try:
-        if config.discord_bot_token != "":
+        if config.discord_bot_token == "":
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
 
@@ -458,11 +461,13 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         except:
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
-
+            
         if r.status_code == 401:
             DisableDiscordIntegration()
+            response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
         elif r.status_code != 200:
+            response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
 
         d = json.loads(r.text)
@@ -511,7 +516,8 @@ async def putMember(request: Request, response: Response, authorization: str = H
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     
@@ -564,7 +570,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
@@ -640,11 +647,11 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         for add in addedroles:
             if add not in divisionroles:
                 response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                return {"error": True, "descriptor": "Forbidden"}
         for remove in removedroles:
             if remove not in divisionroles:
                 response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                return {"error": True, "descriptor": "Forbidden"}
 
     if isAdmin and adminid == userid: # check if user will lose admin permission
         ok = False
@@ -749,7 +756,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "update_member_points"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     
@@ -795,7 +803,8 @@ async def deleteMember(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -846,7 +855,8 @@ async def dismissMember(request: Request, response: Response, authorization: str
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     adminid = au["userid"]

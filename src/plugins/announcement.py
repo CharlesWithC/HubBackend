@@ -125,7 +125,8 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
@@ -199,7 +200,8 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
@@ -274,7 +276,8 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         response.headers[k] = rl[1][k]
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     adminroles = au["roles"]

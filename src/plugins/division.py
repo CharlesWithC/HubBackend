@@ -54,7 +54,8 @@ async def getDivision(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -140,7 +141,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -163,7 +165,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     luserid = t[0][0]
     if userid != luserid:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return {"error": True, "descriptor": ml.tr(request, "Forbidden")}
 
     cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
@@ -238,7 +240,8 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
         
     if page <= 0:
@@ -280,7 +283,8 @@ async def patchDivision(request: Request, response: Response, authorization: str
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         

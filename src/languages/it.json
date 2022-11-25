@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Nessun collegamento di autorizzazione trovato",
-    "invalid_authorization_header": "Autorizzazione non valida",
-    "unauthorized": "Non autorizzato!",
     "application_token_prohibited": "Il token dell'app è privato",
     "hash_does_not_match_any_token": "Il tag (hash) non corrisponde ad alcun token.",
     "unknown_error": "Errore sconosciuto",

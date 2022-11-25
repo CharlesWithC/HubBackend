@@ -25,8 +25,9 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
         au = auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
-            response.status_code = 401
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             discordid = au["discordid"]
             roles = au["roles"]
@@ -36,7 +37,8 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
             if config.privacy:
-                response.status_code = 401
+                response.status_code = au["code"]
+                del au["code"]
                 return au
         else:
             udiscordid = au["discordid"]
@@ -129,7 +131,8 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -186,7 +189,8 @@ async def putUserNotificationStatus(request: Request, response: Response, author
         
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -229,7 +233,8 @@ async def getNotificationSettings(request: Request, response: Response, authoriz
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -262,7 +267,8 @@ async def enableNotification(request: Request, response: Response, authorization
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -296,6 +302,7 @@ async def enableNotification(request: Request, response: Response, authorization
         return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
     if r.status_code == 401:
         DisableDiscordIntegration()
+        response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
     if r.status_code != 200:
         return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
@@ -350,7 +357,8 @@ async def disableNotification(request: Request, response: Response, authorizatio
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -376,7 +384,8 @@ async def getUserList(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     activityUpdate(au["discordid"], f"Viewing Pending Users")
     
@@ -431,7 +440,8 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -464,7 +474,8 @@ async def patchPassword(request: Request, response: Response, authorization: str
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -539,7 +550,8 @@ async def deletePassword(request: Request, response: Response, authorization: st
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -590,7 +602,8 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -667,7 +680,8 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -723,7 +737,8 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     
@@ -784,7 +799,8 @@ async def userUnban(request: Request, response: Response, authorization: str = H
 
     au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     
@@ -821,7 +837,8 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -882,7 +899,8 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -929,7 +947,8 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     auth_discordid = au["discordid"]
     if discordid == auth_discordid:
@@ -943,7 +962,8 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     if discordid != -1:
         au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         adminid = au["userid"]
 

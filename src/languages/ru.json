@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Заголовок авторизации не найден",
-    "invalid_authorization_header": "Неверный заголовок авторизации",
-    "unauthorized": "Неавторизованный",
     "application_token_prohibited": "Токен приложения запрещен",
     "hash_does_not_match_any_token": "Хэш не соответствует ни одному токену.",
     "unknown_error": "Неизвестная ошибка",

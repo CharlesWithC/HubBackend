@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Encabezado de autorización no encontrado",
-    "invalid_authorization_header": "Encabezado de autorización no válido",
-    "unauthorized": "No autorizado",
     "application_token_prohibited": "Token de solicitud prohibido",
     "hash_does_not_match_any_token": "Hash no coincide con ningún token.",
     "unknown_error": "Error desconocido",

@@ -341,7 +341,8 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
     au = auth(authorization, request, check_member = False, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
 
     token_type = authorization.split(" ")[0].lower()
@@ -358,7 +359,8 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -385,7 +387,8 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     
     conn = newconn()
@@ -410,7 +413,8 @@ async def getAllToken(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -458,7 +462,8 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -503,7 +508,8 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -534,7 +540,8 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -577,7 +584,8 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     
@@ -619,7 +627,8 @@ async def putTemporaryIdentityProof(request: Request, response: Response, author
 
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -667,7 +676,8 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
     
     au = auth(authorization, request, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
 
@@ -790,7 +800,8 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         # self-disable mfa
         au = auth(authorization, request, check_member = False)
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         discordid = au["discordid"]
         
@@ -827,7 +838,8 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         # admin / hrm disable user mfa
         au = auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
         if au["error"]:
-            response.status_code = 401
+            response.status_code = au["code"]
+            del au["code"]
             return au
         adminid = au["userid"]
 

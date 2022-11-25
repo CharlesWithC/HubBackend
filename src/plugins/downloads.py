@@ -22,7 +22,8 @@ async def getDownloads(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
     isstaff = False
@@ -67,7 +68,8 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
     isstaff = False
@@ -165,7 +167,8 @@ async def postDownloads(request: Request, response: Response, authorization: str
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -216,7 +219,8 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         
@@ -276,7 +280,8 @@ async def deleteDownloads(request: Request, response: Response, authorization: s
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         

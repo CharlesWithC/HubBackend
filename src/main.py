@@ -50,21 +50,25 @@ if __name__ == "__main__":
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
     print("")
 
-    if os.path.exists(f"./upgrade.py"):
-        print("Detected upgrade")
-        import upgrade
-        try:
-            if upgrade.target_version == version or upgrade.target_version + ".rc" == version:
-                upgrade.run()
-                print("Upgrade completed\n")
-            else:
-                print("Version mismatch, aborted\n")
-        except:
-            import traceback
-            traceback.print_exc()
-            print("Upgrade failed due to errors above, main program exited")
+    if "upgrade" in sys.argv:
+        if os.path.exists(f"./upgrade.py"):
+            print("Detected upgrade")
+            import upgrade
+            try:
+                if upgrade.target_version == version or upgrade.target_version + ".rc" == version:
+                    upgrade.run()
+                    print("Upgrade completed\n")
+                else:
+                    print("Version mismatch, aborted\n")
+            except:
+                import traceback
+                traceback.print_exc()
+                print("Upgrade failed due to errors above, main program exited")
+                sys.exit(1)
+        else:
+            print("Upgrade failed due to upgrade.py not found.")
             sys.exit(1)
-    
+        
     conn = newconn()
     cur = conn.cursor()
     cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")

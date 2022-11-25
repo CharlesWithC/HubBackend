@@ -296,7 +296,8 @@ async def putEventVote(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     userid = au["userid"]
         
@@ -334,7 +335,8 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         
@@ -393,7 +395,8 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         
@@ -459,7 +462,8 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         
@@ -492,7 +496,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
         

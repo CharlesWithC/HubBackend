@@ -65,7 +65,8 @@ async def postChallenge(request: Request, response: Response, authorization: str
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -172,7 +173,8 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -400,7 +402,8 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -441,7 +444,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -556,7 +560,8 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 
     au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -695,7 +700,8 @@ async def getChallenge(request: Request, response: Response, authorization: str 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     if userid == -1:
         userid = au["userid"]
@@ -786,7 +792,8 @@ async def getChallengeList(request: Request, response: Response, authorization: 
 
     au = auth(authorization, request, allow_application_token = True)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     activityUpdate(au["discordid"], f"Viewing Challenges")
     

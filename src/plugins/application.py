@@ -50,7 +50,8 @@ async def getApplication(request: Request, response: Response, authorization: st
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -87,7 +88,7 @@ async def getApplication(request: Request, response: Response, authorization: st
                         break
         if not ok:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Forbidden"}
 
     return {"error": False, "response": {"application": {"applicationid": str(t[0][0]), \
         "detail": json.loads(decompress(t[0][3])), "creator": getUserInfo(discordid = t[0][2]), \
@@ -113,7 +114,8 @@ async def getApplicationList(request: Request, response: Response, authorization
         
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -165,7 +167,7 @@ async def getApplicationList(request: Request, response: Response, authorization
 
         if len(allowed_application_types) == 0:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Forbidden"}
 
         limit = ""
         if application_type == 0: # show all type
@@ -177,7 +179,7 @@ async def getApplicationList(request: Request, response: Response, authorization
         else:
             if not str(application_type) in allowed_application_types:
                 response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                return {"error": True, "descriptor": "Forbidden"}
             limit = f" WHERE application_type = {application_type} "
         
         if status != -1 and status in [0,1,2]:
@@ -213,7 +215,8 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -364,7 +367,8 @@ async def updateApplication(request: Request, response: Response, authorization:
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
@@ -477,7 +481,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     admindiscord = au["discordid"]
     adminid = au["userid"]
@@ -532,7 +537,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
                         break
         if not ok:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Forbidden"}
 
     discordid = t[0][2]
     data = json.loads(decompress(t[0][3]))
@@ -569,7 +574,8 @@ async def patchApplicationPositions(request: Request, response: Response, author
 
     au = auth(authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 

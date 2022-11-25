@@ -36,7 +36,8 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
     au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     activityUpdate(au["discordid"], f"Viewing Configuration")
@@ -101,7 +102,8 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     au = auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     userroles = au["roles"]
@@ -211,7 +213,8 @@ async def putReload(request: Request, response: Response, authorization: str = H
 
     au = auth(authorization, request, required_permission = ["admin", "reload"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
 
@@ -253,7 +256,8 @@ async def getAudit(request: Request, response: Response, authorization: str = He
 
     au = auth(authorization, request, required_permission = ["admin", "audit"])
     if au["error"]:
-        response.status_code = 401
+        response.status_code = au["code"]
+        del au["code"]
         return au
     adminid = au["userid"]
     activityUpdate(au["discordid"], f"Viewing Audit Log")

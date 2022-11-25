@@ -474,14 +474,14 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
 def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
     # authorization header basic check
     if authorization is None:
-        return {"error": True, "descriptor": ml.tr(request, "authorization_header_not_found")}
+        return {"error": True, "descriptor": "Unauthorized", "code": 401}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        return {"error": True, "descriptor": ml.tr(request, "invalid_authorization_header")}
+        return {"error": True, "descriptor": "Unauthorized", "code": 401}
     
     tokentype = authorization.split(" ")[0]
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
     conn = newconn()
     cur = conn.cursor()
@@ -493,13 +493,13 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
     if tokentype == "Application":
         # check if allowed
         if not allow_application_token:
-            return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited")}
+            return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited"), "code": 401}
 
         # validate token
         cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
         discordid = t[0][0]
 
         # application token will skip ip check
@@ -510,12 +510,12 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and check_member:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
             roles.remove("")
@@ -529,7 +529,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
                         ok = True
             
             if not ok:
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                return {"error": True, "descriptor": "Forbidden", "code": 403}
 
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": True}
 
@@ -538,7 +538,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         cur.execute(f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
         t = cur.fetchall()
         if len(t) == 0:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
         discordid = t[0][0]
         ip = t[0][1]
         country = t[0][2]
@@ -550,7 +550,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         if curCountry != country and country not in ["unknown", ""]:
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         if ip != request.client.host:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -566,12 +566,12 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
         t = cur.fetchall()
         if len(t) == 0:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and check_member:
-            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+            return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
             roles.remove("")
@@ -586,7 +586,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
                         ok = True
             
             if not ok:
-                return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                return {"error": True, "descriptor": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
             cur.execute(f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
@@ -594,7 +594,7 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
 
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
     
-    return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+    return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
 async def AuditLog(userid, text):
     try:

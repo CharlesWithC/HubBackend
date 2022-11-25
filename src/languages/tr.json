@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Yetkilendirme Bağlantısı Bulunamadı",
-    "invalid_authorization_header": "Geçersiz Yetkilendirme Bağlantısı",
-    "unauthorized": "Yetkisiz erişim!",
     "application_token_prohibited": "Uygulama jetonu (tokeni) yasaklandı",
     "hash_does_not_match_any_token": "Etiket (hash), herhangi bir jeton (token) ile eşleşmiyor.",
     "unknown_error": "Bilinmeyen Hata",

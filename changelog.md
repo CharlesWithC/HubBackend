@@ -1,5 +1,12 @@
 # Changelog
 
+**v1.20.4**  
+**[Bug fixes]**  
+1.Fixed the bug that **PATCH** `/member/roles/rank` is always returning `discord_integrations_disabled` response  
+**[Minor changes]**  
+2.Changed `unauthorized` responses due to insufficient permission to `forbidden`  
+3.Updated upgrader to require `upgrade` parameter in `sys.argv`  
+
 **v1.20.3**  
 1.Fixed **GET** `/config` 500 error when content related to disabled plugins are not in config  
 2.Fixed event notification sending more than one  

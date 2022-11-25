@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Autorisationsoverskrift blev ikke fundet",
-    "invalid_authorization_header": "Invalid bemyndigelse",
-    "unauthorized": "ikke bemyndiget",
     "application_token_prohibited": "Ansøgningstoken forbudt",
     "hash_does_not_match_any_token": "Hash matcher ikke noget token.",
     "unknown_error": "Ukendt fejl",

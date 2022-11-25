@@ -1,7 +1,4 @@
 {
-    "authorization_header_not_found": "Authorization Header Not Found",
-    "invalid_authorization_header": "Invalid Authorization Header",
-    "unauthorized": "Unauthorized",
     "application_token_prohibited": "Application token prohibited",
     "hash_does_not_match_any_token": "Hash does not match any token.",
     "unknown_error": "Unknown Error",
