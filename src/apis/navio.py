@@ -199,7 +199,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             conn.commit()
 
             discordid = getUserInfo(userid = userid)["discordid"]
-            notification(discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")))
+            notification(discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")), no_discord_notification = True)
     except:
         pass
 
@@ -231,16 +231,25 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 cargo = d["data"]["object"]["cargo"]["name"]
             if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
                 cargo_mass = d["data"]["object"]["cargo"]["mass"]
-            multiplayer = d["data"]["object"]["multiplayer"]
-            if multiplayer is None:
+            omultiplayer = d["data"]["object"]["multiplayer"]
+            multiplayer = ""
+            umultiplayer = ""
+            if omultiplayer is None:
                 multiplayer = ml.ctr("single_player")
             else:
-                if multiplayer["type"] == "truckersmp":
-                    multiplayer = "TruckersMP (" + multiplayer["server"] +")"
-                elif multiplayer["type"] == "scs_convoy":
+                if omultiplayer["type"] == "truckersmp":
+                    multiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                elif omultiplayer["type"] == "scs_convoy":
                     multiplayer = ml.ctr("scs_convoy")
-                else:
-                    multiplayer = ""
+            discordid = getUserInfo(userid = userid)["discordid"]
+            language = GetUserLanguage(discordid, "en")
+            if omultiplayer is None:
+                umultiplayer = ml.tr(None, "single_player", force_lang = language)
+            else:
+                if omultiplayer["type"] == "truckersmp":
+                    umultiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                elif omultiplayer["type"] == "scs_convoy":
+                    umultiplayer = ml.tr(None, "scs_convoy", force_lang = language)
             truck = d["data"]["object"]["truck"]
             if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
                 truck = truck["brand"]["name"] + " " + truck["name"]
@@ -257,9 +266,9 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     k = randint(0, len(GIFS)-1)
                     dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
                     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
-                    r = None
+                    data = "{}"
                     if config.distance_unit == "imperial":
-                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                        data = {"embed": {"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr("truck"), "value": truck, "inline": True},
@@ -271,9 +280,9 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
                     elif config.distance_unit == "metric":
-                        r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
+                        data = {"embed": {"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr("truck"), "value": truck, "inline": True},
@@ -285,9 +294,43 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                    r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
                     if r.status_code == 401:
                         DisableDiscordIntegration()
+                    
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    language = GetUserLanguage(discordid, "en")
+                    data = {}
+                    if config.distance_unit == "imperial":
+                        data = {"embed": {"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                                "url": dlglink,
+                                "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
+                                        {"name": ml.tr(None, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.tr(None, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.tr(None, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.tr(None, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
+                                        {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
+                                        {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                    "footer": {"text": umultiplayer}, "color": config.intcolor,\
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                    elif config.distance_unit == "metric":
+                        data = {"embed": {"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                                "url": dlglink,
+                                "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
+                                        {"name": ml.tr(None, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.tr(None, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.tr(None, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.tr(None, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
+                                        {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
+                                        {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                    "footer": {"text": umultiplayer}, "color": config.intcolor,\
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                    SendDiscordNotification(discordid, data)
                         
         except:
             import traceback

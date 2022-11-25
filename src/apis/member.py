@@ -107,7 +107,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
             response.status_code = au["code"]
             del au["code"]
             return au
-        activityUpdate(au["discordid"], f"Viewing Members")
+        activityUpdate(au["discordid"], f"members")
     
     conn = newconn()
     cur = conn.cursor()
@@ -254,7 +254,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         qu = f"truckersmpid = {truckersmpid}"
     else:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
     conn = newconn()
     cur = conn.cursor()
@@ -263,7 +263,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
     if userid == -1:
         return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={t[0][5]}", status_code=302)
@@ -495,7 +495,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     await AutoMessage(meta, setvar)
 
                 rankname = point2rankname(totalpnt)
-                notification(discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = GetUserLanguage(discordid)))
+                notification(discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = GetUserLanguage(discordid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = GetUserLanguage(discordid)), "description": f"**{rankname}**", "fields": []})
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
@@ -901,5 +901,5 @@ async def dismissMember(request: Request, response: Response, authorization: str
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
     await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
-    notification(discordid, ml.tr(request, "member_dismissed", force_lang = GetUserLanguage(discordid, "en")))
+    notification(udiscordid, ml.tr(request, "member_dismissed", force_lang = GetUserLanguage(udiscordid, "en")))
     return {"error": False}

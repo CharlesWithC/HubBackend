@@ -40,7 +40,6 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         del au["code"]
         return au
     adminid = au["userid"]
-    activityUpdate(au["discordid"], f"Viewing Configuration")
 
     conn = newconn()
     cur = conn.cursor()
@@ -260,7 +259,6 @@ async def getAudit(request: Request, response: Response, authorization: str = He
         del au["code"]
         return au
     adminid = au["userid"]
-    activityUpdate(au["discordid"], f"Viewing Audit Log")
     
     conn = newconn()
     cur = conn.cursor()

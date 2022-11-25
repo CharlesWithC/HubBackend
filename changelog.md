@@ -1,17 +1,19 @@
 # Changelog
 
-**v1.20.4**  
+**v1.21.1**  
 **[Bug fixes]**  
 1.Fixed the bug that **PATCH** `/member/roles/rank` is always returning `discord_integrations_disabled` response  
 **[Minor changes]**  
 2.Changed `unauthorized` responses due to insufficient permission to `forbidden`  
 3.Updated upgrader to require `upgrade` parameter in `sys.argv`  
 4.Added `config.language` to set company language for delivery log embed (audit log will always be in English)  
+5.Updated activity info to program-friendly (frontend need to be updated to parse it)  
 **[Major changes]**  
-5.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
-6.*[User]* Added endpoint to set and get language: **GET**, **PATCH** `/user/language`  
-7.Updated `ml.translate` to consider user language if set (if not, then fall back to `Accept-Language`)  
-8.Added full multilang support for all notification  
+6.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
+7.*[User]* Added endpoint to set and get language: **GET**, **PATCH** `/user/language`  
+8.Updated `ml.translate` to consider user language if set (if not, then fall back to `Accept-Language`)  
+9.Added full multilang support for all notification  
+10.Polished Discord Notification of Login & Application & Division (better using embed)  
 0.Added `multilang_helper` to better manage translations internally  
 
 **v1.20.3**  

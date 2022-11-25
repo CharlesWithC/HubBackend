@@ -29,7 +29,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    activityUpdate(au["discordid"], "Viewing Downloads")
+    activityUpdate(au["discordid"], "downloads")
 
     if downloadsid <= 0:
         response.status_code = 404
@@ -75,7 +75,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    activityUpdate(au["discordid"], "Viewing Downloads")
+    activityUpdate(au["discordid"], "downloads")
         
     limit = ""
     if title != "":

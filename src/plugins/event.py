@@ -102,7 +102,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], f"Viewing Events")
+            activityUpdate(au["discordid"], f"events")
     
     conn = newconn()
     cur = conn.cursor()
@@ -165,7 +165,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], f"Viewing Events")
+            activityUpdate(au["discordid"], f"events")
     
     conn = newconn()
     cur = conn.cursor()

@@ -35,7 +35,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], "Viewing Announcements")
+            activityUpdate(au["discordid"], "announcements")
 
     if int(announcementid) < 0:
         response.status_code = 404
@@ -80,7 +80,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], "Viewing Announcements")
+            activityUpdate(au["discordid"], "announcements")
     
     conn = newconn()
     cur = conn.cursor()

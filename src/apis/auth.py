@@ -112,8 +112,17 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     conn.commit()
 
     username = getUserInfo(discordid = discordid)["name"]
+    language = GetUserLanguage(discordid)
     await AuditLog(-999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
+    notification(discordid, \
+        ml.tr(request, "new_login", \
+            var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
+            "description": "", \
+            "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
+                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+        }
+    )
 
     return {"error": False, "response": {"token": stoken, "mfa": False}}
 
@@ -210,8 +219,17 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             conn.commit()
             username = getUserInfo(discordid = discordid)["name"]
+            language = GetUserLanguage(discordid)
             await AuditLog(-999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-            notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
+            notification(discordid, \
+                ml.tr(request, "new_login", \
+                    var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
+                discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
+                    "description": "", \
+                    "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
+                            {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+                }
+            )
             return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
         
         if 'error_description' in tokens.keys():
@@ -325,8 +343,17 @@ async def getSteamCallback(request: Request, response: Response):
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
+    language = GetUserLanguage(discordid)
     await AuditLog(-999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
+    notification(discordid, \
+        ml.tr(request, "new_login", \
+            var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
+            "description": "", \
+            "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
+                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+        }
+    )
 
     return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
@@ -782,8 +809,17 @@ async def postMFA(request: Request, response: Response):
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
+    language = GetUserLanguage(discordid)
     await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
+    notification(discordid, \
+        ml.tr(request, "new_login", \
+            var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
+            "description": "", \
+            "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
+                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
+        }
+    )
 
     return {"error": False, "response": {"token": stoken}}
 

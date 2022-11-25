@@ -716,6 +716,8 @@ async def getChallenge(request: Request, response: Response, authorization: str 
 
     conn = newconn()
     cur = conn.cursor()
+    
+    activityUpdate(au["discordid"], f"challenges")
 
     cur.execute(f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
             required_distance, reward_points, public_details, job_requirements, description FROM challenge WHERE challengeid = {challengeid} \
@@ -795,7 +797,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         response.status_code = au["code"]
         del au["code"]
         return au
-    activityUpdate(au["discordid"], f"Viewing Challenges")
+    activityUpdate(au["discordid"], f"challenges")
     
     if page <= 0:
         page = 1

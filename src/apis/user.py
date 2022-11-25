@@ -95,9 +95,9 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         mfa_enabled = True
 
     if userid != -1:
-        activityUpdate(udiscordid, f"Viewing {t[0][1]}'s Profile (User ID: {userid})")
+        activityUpdate(udiscordid, f"user_{userid})")
     else:
-        activityUpdate(udiscordid, f"Viewing {t[0][1]}'s Profile")
+        activityUpdate(udiscordid, f"user_self")
 
     activity_last_seen = 0
     activity_name = "Offline"
@@ -447,7 +447,6 @@ async def getUserList(request: Request, response: Response, authorization: str =
         response.status_code = au["code"]
         del au["code"]
         return au
-    activityUpdate(au["discordid"], f"Viewing Pending Users")
     
     conn = newconn()
     cur = conn.cursor()

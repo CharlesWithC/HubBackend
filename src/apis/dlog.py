@@ -56,7 +56,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-    activityUpdate(discordid, f"Viewing Delivery Log #{logid}")
+    activityUpdate(discordid, f"dlog_{logid}")
     data = {}
     if t[0][1] != "":
         data = json.loads(decompress(t[0][1]))
@@ -175,7 +175,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             del au["code"]
             return au
         userid = au["userid"]
-        activityUpdate(au["discordid"], "Viewing Delivery Logs")
+        activityUpdate(au["discordid"], "dlogs")
     
     conn = newconn()
     cur = conn.cursor()
@@ -622,7 +622,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         response.status_code = au["code"]
         del au["code"]
         return au
-    activityUpdate(au["discordid"], "Viewing Leaderboard")
+    activityUpdate(au["discordid"], "leaderboard")
 
     limittype = point_types
     limituser = userids

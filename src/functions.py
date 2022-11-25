@@ -367,7 +367,7 @@ def GetUserLanguage(discordid, default_language = ""):
         return default_language
     return t[0][0]
 
-def notification(discordid, content, no_discord_notification = False):
+def notification(discordid, content, no_discord_notification = False, discord_embed = {}):
     content = convert_quotation(content)
     conn = newconn()
     cur = conn.cursor()
@@ -381,9 +381,14 @@ def notification(discordid, content, no_discord_notification = False):
         cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
         conn.commit()
     if not no_discord_notification:
-        SendDiscordNotification(discordid, {"embed": {"title": ml.tr(None, "notification", force_lang = GetUserLanguage(discordid, "en")), 
-            "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
-            "timestamp": str(datetime.now()), "color": config.intcolor}})
+        if discord_embed != {}:
+            SendDiscordNotification(discordid, {"embed": {"title": discord_embed["title"], 
+                "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": config.name, "icon_url": config.logo_url}, \
+                "timestamp": str(datetime.now()), "color": config.intcolor}})
+        else:
+            SendDiscordNotification(discordid, {"embed": {"title": ml.tr(None, "notification", force_lang = GetUserLanguage(discordid, "en")), 
+                "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
+                "timestamp": str(datetime.now()), "color": config.intcolor}})
 
 def ratelimit(request, ip, endpoint, limittime, limitcnt):
     conn = newconn()

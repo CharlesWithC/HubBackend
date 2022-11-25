@@ -120,7 +120,7 @@ async def getApplicationList(request: Request, response: Response, authorization
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-    activityUpdate(au["discordid"], f"Viewing Applications")
+    activityUpdate(au["discordid"], f"applications")
 
     conn = newconn()
     cur = conn.cursor()
@@ -316,7 +316,12 @@ async def postApplication(request: Request, response: Response, authorization: s
         except:
             pass
 
-    notification(discordid, ml.tr(request, "application_submitted", var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = GetUserLanguage(discordid)))
+    language = GetUserLanguage(discordid)
+    notification(discordid, ml.tr(request, "application_submitted", \
+            var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language), \
+        discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "", \
+            "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
+                       {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -504,7 +509,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    statustxt = f"Unknown Status ({status})"
+    statustxt = f"N/A"
     if int(status) in STATUS.keys():
         statustxt = STATUS[int(status)]
 
@@ -520,6 +525,11 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     
     application_type = t[0][1]
     applicant_discordid = t[0][2]
+
+    language = GetUserLanguage(applicant_discordid)
+    STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
+        2: ml.tr(request, "declined", force_lang = language)}
+    statustxtTR = STATUSTR[int(status)]
 
     isAdmin = False
     for i in roles:
@@ -555,7 +565,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
-    notification(applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxt}, force_lang = GetUserLanguage(discordid, "en")))
+    notification(applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+        discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", \
+            "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
+                       {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     conn.commit()
 
     if message == "":

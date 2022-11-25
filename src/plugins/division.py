@@ -105,7 +105,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         else:
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status)}}
 
-    activityUpdate(au["discordid"], f"Viewing Divisions")
+    activityUpdate(au["discordid"], f"divisions")
     
     stats = []
     for division in divisions:
@@ -200,7 +200,12 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
     
-    notification(discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid)))
+    language = GetUserLanguage(discordid)
+    notification(discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
+        discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
+                       {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
+                       {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
@@ -315,13 +320,21 @@ async def patchDivision(request: Request, response: Response, authorization: str
     cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     conn.commit()
 
-    STATUS = {0: "pending", 1: "validated", 2: "denied"}
+    STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     await AuditLog(adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
 
     discordid = getUserInfo(userid = userid)["discordid"]
     adiscordid = getUserInfo(userid = adminid)["discordid"]
 
-    STATUS = {0: "pending", 1: "accepted", 2: "rejected"}
-    notification(discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": STATUS[status]}, force_lang = GetUserLanguage(discordid, "en")))
+    language = GetUserLanguage(discordid)
+    STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
+        2: ml.tr(request, "declined", force_lang = language)}
+    statustxtTR = STATUSTR[int(status)]
+
+    notification(discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+        discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
+                       {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
+                       {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
 
     return {"error": False}
