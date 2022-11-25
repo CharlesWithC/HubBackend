@@ -59,13 +59,14 @@ def EventNotification():
                     discordid = str(getUserInfo(userid = vt)["discordid"])
                     if discordid in tonotify.keys():
                         channelid = tonotify[discordid]
-                        QueueDiscordMessage(channelid, {"embed": {"title": f"Event Notification", "description": f"An event that you have voted is starting soon!", "url": link,
-                            "fields": [{"name": "Title", "value": title, "inline": False},
-                                {"name": "Departure", "value": departure, "inline": True},
-                                {"name": "Destination", "value": destination, "inline": True},
-                                {"name": "Distance", "value": distance, "inline": True},
-                                {"name": "Meetup Time", "value": f"<t:{meetup_timestamp}:R>", "inline": True},
-                                {"name": "Departure Time", "value": f"<t:{departure_timestamp}:R>", "inline": True}],
+                        language = GetUserLanguage(discordid, "en")
+                        QueueDiscordMessage(channelid, {"embed": {"title": ml.tr(request, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
+                            "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
+                                {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
+                                {"name": ml.tr(None, "destination", force_lang = language), "value": destination, "inline": True},
+                                {"name": ml.tr(None, "distance", force_lang = language), "value": distance, "inline": True},
+                                {"name": ml.tr(None, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
+                                {"name": ml.tr(None, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
                             "footer": {"text": config.name, "icon_url": config.logo_url},
                             "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": config.intcolor}})
                             
@@ -547,7 +548,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         attendee = int(attendee)
         name = getUserInfo(userid = attendee)["name"]
         discordid = getUserInfo(userid = attendee)["discordid"]
-        notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{tseparator(points)}` points.")
+        notification(discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
         ret1 += f"{name} ({attendee}), "
         cnt += 1
     ret1 = ret1[:-2]
@@ -564,7 +565,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             attendee = int(attendee)
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
-            notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{tseparator(points)}` points.")
+            notification(discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             ret2 += f"{name} ({attendee}), "
             cnt += 1
     ret2 = ret2[:-2]
@@ -585,9 +586,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
             if gap > 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` points. You got `{points}` points from the event in total.")
+                notification(discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             elif gap < 0:
-                notification(discordid, f"Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You still got `{points}` points from the event.")
+                notification(discordid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]

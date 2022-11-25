@@ -196,7 +196,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             else:
                 ttconfig[tt] = copy.deepcopy(formconfig[tt])
 
-    open(config_path, "w").write(json.dumps(ttconfig, indent=4, ensure_ascii=False))
+    open(config_path, "w", encoding="utf-8").write(json.dumps(ttconfig, indent=4, ensure_ascii=False))
 
     await AuditLog(adminid, "Updated config")
 

@@ -11,6 +11,7 @@
 5.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
 6.*[User]* Added endpoint to set and get language: **GET**, **PATCH** `/user/language`  
 7.Updated `ml.translate` to consider user language if set (if not, then fall back to `Accept-Language`)  
+8.Added full multilang support for all notification  
 0.Added `multilang_helper` to better manage translations internally  
 
 **v1.20.3**  

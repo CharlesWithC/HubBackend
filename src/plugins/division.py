@@ -200,7 +200,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
     
-    notification(discordid, f"Division Validation Request for Delivery `#{logid}` submitted.")
+    notification(discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid)))
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
     cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
@@ -322,6 +322,6 @@ async def patchDivision(request: Request, response: Response, authorization: str
     adiscordid = getUserInfo(userid = adminid)["discordid"]
 
     STATUS = {0: "pending", 1: "accepted", 2: "rejected"}
-    notification(discordid, f"Division Validation Request for Delivery `#{logid}` status updated to `{STATUS[status]}`")
+    notification(discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": STATUS[status]}, force_lang = GetUserLanguage(discordid, "en")))
 
     return {"error": False}

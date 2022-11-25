@@ -125,7 +125,6 @@ EN_STRINGTABLE = {
     "application_already_declined": "Application already declined",
     "application_already_processed": "Application already processed, status unknown.",
     "application_not_found": "Application not found.",
-    "application_status_updated":"Application Status Updated",
     "application_updated": "Application Updated",
     "application_message_recorded": "This is a reminder that your message has been recorded.",
 
@@ -149,7 +148,53 @@ EN_STRINGTABLE = {
     "downloads_not_found": "Downloadable item not found.",
     "downloads_invalid_link": "Invalid link.",
 
-    "event_not_found": "Event not found."
+    "event_not_found": "Event not found.",
+    "event_notification": "Event Notification",
+    "event_notification_description": "An event that you have voted is starting soon!",
+    "title": "Title",
+    "departure": "Departure",
+    "destination": "Destination",
+    "meetup_time": "Meetup Time",
+    "departure_time": "Departure Time",
+
+    "notification": "Notification",
+    "discord_notification_enabled": "You have enabled Discord Notifications!",
+    "new_login": "New login from `{country}` (`{ip}`)",
+    "job_submitted": "Job Submitted: `#{logid}`",
+    "job_deleted": "Job Deleted: `#{logid}`",
+    "new_rank": "You have received a new rank: `{rankname}`",
+    "member_accepted": "You have been accepted as a member!\nYour User ID is `#{userid}`",
+    "role_updated": "Your roles have been updated:\n{detail}",
+    "point_updated": "You have been given `{distance}km` and `{mythpoint}` myth points.",
+    "member_resigned": "You have resigned.",
+    "member_dismissed": "You have been dismissed.",
+    "application_submitted": "{application_type} application submitted.\nApplication ID: `#{applicationid}`",
+    "application_status_updated": "Application `#{applicationid}` status updated to `{status}`",
+    "division_validation_request_submitted": "Division Validation Request for Delivery `#{logid}` submitted.",
+    "division_validation_request_status_updated": "Division Validation Request for Delivery `#{logid}` status updated to `{status}`",
+    "event_updated_received_points": "Event `{title}` (Event ID: `{eventid}`) updated: You received `{points}` points.",
+    "event_updated_lost_points": "Event `{title}` (Event ID: `{eventid}`) updated: You lost `{points}` points.",
+    "event_updated_received_more_points": "Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` points. You got `{points}` points from the event in total.",
+    "event_updated_lost_more_points": "Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You still got `{points}` points from the event.",
+    "delivery_accepted_by_challenge": "Delivery `#{logid}` accepted by challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "delivery_added_to_challenge": "Delivery `#{logid}` added to challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "delivery_removed_from_challenge": "Delivery `#{logid}` removed from challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "one_time_personal_challenge_completed": "One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "recurring_challenge_completed_status_added": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "company_challenge_completed": "Company challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "challenge_uncompleted_increased_delivery_count": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost `{points}` points.",
+    "challenge_completed_decreased_delivery_count": "Challenge `{title}` (Challenge ID: `{challengeid}`) completed due to decreased delivery count: You received `{points}` points.",
+    "n_personal_recurring_challenge_uncompelted_increased_delivery_count": "{count}x completed statuses of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) are lost due to increased delivery count: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "one_personal_recurring_challenge_uncompelted_increased_delivery_count": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed due to increased delivery count: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "n_personal_recurring_challenge_compelted_decreased_delivery_count": "{count}x completed statuses of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added due to decreased delivery count: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "one_personal_recurring_challenge_compelted_decreased_delivery_count": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added due to decreased delivery count: You received `{reward_points}` points. You got `{tseparator(left_cnt * reward_points)}` points from the challenge in total.",
+    "personal_onetime_challenge_completed": "One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "challenge_updated_received_more_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "challenge_updated_lost_more_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "challenge_updated_lost_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{points}` points.",
+    "challenge_uncompleted_lost_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed: You lost `{points}` points.",
+    "one_personal_recurring_challenge_uncompleted": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points.",
+    "one_personal_recurring_challenge_uncompleted_still_have_points": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points. You still got `{total_points}` points from the challenge."
 }
 
 def get_lang(request: Request):
@@ -160,12 +205,14 @@ def get_lang(request: Request):
     return lang
 
 def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
-    lang = get_lang(request)
+    lang = "en"
+    if force_lang != "":
+        lang = force_lang
+    else:
+        lang = get_lang(request)
     langdir = config.language_dir
     if not os.path.exists(langdir + "/" + lang + ".json"): # no translation for language
         lang = "en" 
-    if force_lang != "":
-        lang = force_lang
     langdata = EN_STRINGTABLE
     if lang != "en":
         langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())

@@ -43,14 +43,18 @@ elif sys.argv[1] == "compare":
 
         print(ll)
         
+        cnt = 0
         t = json.loads(open(f"{pre}/{ll}","r",encoding="utf-8").read())
         u = t.keys()
         for kk in k:
             if kk in u:
                 if d[kk] == t[kk]:
                     print(f"Not translated: {kk}")
+                    cnt += 1
             else:
                 print(f"Not found: {kk}")
+                cnt += 1
+        print(f"Total Errors: {cnt}")
         
         print("")
 

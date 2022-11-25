@@ -144,7 +144,7 @@ async def deleteDlog(request: Request, response: Response, authorization: str = 
     await AuditLog(adminid, f"Deleted delivery `#{logid}`")
 
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, f"Job Deleted: `#{logid}`")
+    notification(discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")))
 
     return {"error": False}
 

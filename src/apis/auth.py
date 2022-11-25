@@ -113,7 +113,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
+    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
 
     return {"error": False, "response": {"token": stoken, "mfa": False}}
 
@@ -211,7 +211,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             conn.commit()
             username = getUserInfo(discordid = discordid)["name"]
             await AuditLog(-999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-            notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
+            notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
             return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
         
         if 'error_description' in tokens.keys():
@@ -326,7 +326,7 @@ async def getSteamCallback(request: Request, response: Response):
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
+    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
 
     return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
 
@@ -717,7 +717,6 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
         
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
-    notification(discordid, f"MFA enabled.")
 
     return {"error": False}
 
@@ -784,7 +783,7 @@ async def postMFA(request: Request, response: Response):
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, f"New login from `{getRequestCountry(request)}` (`{request.client.host}`).")
+    notification(discordid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = GetUserLanguage(discordid)))
 
     return {"error": False, "response": {"token": stoken}}
 
@@ -830,7 +829,6 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         
         username = getUserInfo(discordid = discordid)["name"]
         await AuditLog(-999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
-        notification(discordid, f"MFA disabled.")
 
         return {"error": False}
     
@@ -860,6 +858,5 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         
         username = getUserInfo(discordid = discordid)["name"]
         await AuditLog(adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
-        notification(discordid, f"MFA disabled.")
 
         return {"error": False}

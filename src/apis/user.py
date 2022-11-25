@@ -316,10 +316,10 @@ async def enableNotification(request: Request, response: Response, authorization
         ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
         r = None
         try:
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Notification", 
-            "description": f"You have enabled `{notification_type}` notifications!", \
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
+            "description": ml.tr(request, "discord_notification_enabled", force_lang = GetUserLanguage(discordid)), \
             "footer": {"text": config.name, "icon_url": config.logo_url}, \
-            "timestamp": str(datetime.now()), "color": config.intcolor}}, ensure_ascii=False), timeout=3)
+            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
         except:
             import traceback
             traceback.print_exc()

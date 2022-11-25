@@ -199,7 +199,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             conn.commit()
 
             discordid = getUserInfo(userid = userid)["discordid"]
-            notification(discordid, f"Job Submitted: `#{logid}`")
+            notification(discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")))
     except:
         pass
 
@@ -271,7 +271,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}, ensure_ascii=False), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                     elif config.distance_unit == "metric":
                         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                                 "url": dlglink,
@@ -285,7 +285,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}, ensure_ascii=False), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
                     if r.status_code == 401:
                         DisableDiscordIntegration()
                         
@@ -411,7 +411,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     continue
                 
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, f"Delivery `#{logid}` accepted by challenge `{title}` (Challenge ID: `{challengeid}`)")
+                notification(discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
                 cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                 conn.commit()
 
@@ -433,7 +433,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
                             discordid = getUserInfo(userid = userid)["discordid"]
-                            notification(discordid, f"One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward_points)}` points.")
+                            notification(discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                     elif challenge_type == 3:
                         cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                         t = cur.fetchall()
@@ -441,7 +441,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
                             discordid = getUserInfo(userid = userid)["discordid"]
-                            notification(discordid, f"1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added: You received `{tseparator(reward_points)}` points. You got `{tseparator((len(t)+1) * reward_points)}` points from the challenge in total.")
+                            notification(discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                     elif challenge_type == 2:
                         cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                         t = cur.fetchall()
@@ -461,7 +461,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                 reward = round(reward_points * s / delivery_count)
                                 cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                                 discordid = getUserInfo(userid = uid)["discordid"]
-                                notification(discordid, f"Company challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{tseparator(reward)}` points.")
+                                notification(discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                             conn.commit()
                 
     except:

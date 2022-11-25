@@ -316,7 +316,7 @@ async def postApplication(request: Request, response: Response, authorization: s
         except:
             pass
 
-    notification(discordid, f"{application_type_text} application submitted.\nApplication ID: `#{applicationid}`")
+    notification(discordid, ml.tr(request, "application_submitted", var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = GetUserLanguage(discordid)))
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -555,7 +555,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
-    notification(applicant_discordid, f"Application `#{applicationid}` status updated to `{statustxt}`")
+    notification(applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxt}, force_lang = GetUserLanguage(discordid, "en")))
     conn.commit()
 
     if message == "":

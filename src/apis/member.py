@@ -495,7 +495,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     await AutoMessage(meta, setvar)
 
                 rankname = point2rankname(totalpnt)
-                notification(discordid, f"You have received a new rank: `{rankname}`")
+                notification(discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = GetUserLanguage(discordid)))
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
@@ -556,7 +556,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
     await AuditLog(adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
     conn.commit()
 
-    notification(discordid, f"You have been accepted as a member of **{config.name}**!\nYour User ID is `#{userid}`")
+    notification(discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = GetUserLanguage(discordid, "en")))
 
     return {"error": False, "response": {"userid": userid}}   
 
@@ -739,7 +739,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     conn.commit()
 
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, f"Your roles have been updated: \n"+upd)
+    notification(discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = GetUserLanguage(discordid, "en")))
 
     if navio_error != "":
         return {"error": False, "response": {"navio_api_error": navio_error.replace("Navio API Error: ", "")}}
@@ -789,7 +789,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     username = getUserInfo(userid = userid)["name"]
     await AuditLog(adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, f"You have been given `{distance}km` and `{mythpoint}` myth points.")
+    notification(discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = GetUserLanguage(discordid, "en")))
 
     return {"error": False}
 
@@ -841,7 +841,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
 
     await AuditLog(-999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
-    notification(discordid, f"You have resigned.")
+    notification(discordid, ml.tr(request, "member_resigned", force_lang = GetUserLanguage(discordid)))
     
     return {"error": False}
 
@@ -901,5 +901,5 @@ async def dismissMember(request: Request, response: Response, authorization: str
     r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
     
     await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
-    notification(udiscordid, f"You have been dismissed.")
+    notification(discordid, ml.tr(request, "member_dismissed", force_lang = GetUserLanguage(discordid, "en")))
     return {"error": False}
