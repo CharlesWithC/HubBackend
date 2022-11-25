@@ -6,6 +6,10 @@
 **[Minor changes]**  
 2.Changed `unauthorized` responses due to insufficient permission to `forbidden`  
 3.Updated upgrader to require `upgrade` parameter in `sys.argv`  
+**[Major changes]**  
+4.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
+5.Added `config.language` to set company language for delivery log embed (audit log will always be in English)  
+0.Added `multilang_helper` to better manage translations internally  
 
 **v1.20.3**  
 1.Fixed **GET** `/config` 500 error when content related to disabled plugins are not in config  

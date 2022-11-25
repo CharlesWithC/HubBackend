@@ -132,14 +132,32 @@
 
     "perms": {
         "admin": ["0"],
+        "config": [],
+        "reload": [],
+
+        "hrm": [],
+        "disable_user_mfa": [],
+        "update_user_discord": [],
+        "delete_account_connections": [],
+        "delete_user": [],
+        "update_application_positions": [],
+        "delete_dlog": [],
+
+        "hr": [],
+        "add_member": [],
+        "update_member_roles": [],
+        "update_member_points": [],
+        "dismiss_member": [],
+        "get_pending_user_list": [],
+        "ban_user": [],
+
         "audit": [],
         "announcement": [],
-        "hr": [],
-        "hrm": [],
-        "division": [],
-        "event": [],
         "challenge": [],
+        "division": [],
         "downloads": [],
+        "event": [],
+        
         "driver": ["100"]
     },
 

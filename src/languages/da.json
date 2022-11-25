@@ -70,17 +70,24 @@
     "member_update": "Du er nu medlem af {company_name}!",
     "losing_admin_permission": "Rolleopdatering afvist: Nye roller fjerner administratortilladelse fra den nuværende bruger.",
 
+    "driver": "chauffør",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Leverings log blev ikke fundet.",
+
     "announcement_not_found": "Bekendtgørelse ikke funder.",
     "event_staff_announcement_limit": "Kun Event staff kan poste event bekendtgørelser.",
     "announcement_only_creator_can_edit": "Kun bekendtgørelses ejeren kan lave ændringer.",
     "announcement_only_creator_can_delete": "Kun bekendtgørelses ejeren kan slette bekendtgørelsen.",
 
-    "unknown": "Ukendt",
-    "driver": "chauffør",
-    "staff": "Staff/Medarbjeder",
-    "loa": "Fraværgs årgsag",
-    "division": "Division",
-    "application_id": "Ansøgning ID",
     "unknown_application_type": "Ukendt applikationstype",
     "status": "Status",
     "creation": "Oprettels",
@@ -92,7 +99,7 @@
     "already_a_driver": "Du er allerede en chauffør!",
     "must_be_driver_to_submit_division_application": "Du skal være chauffør for at kunne indsende delingsansøgning!",
     "already_driver_application": "Du kan ikke lave en anden Chaffufør ansøgning når der allerede er en afventende ansøgning!",
-    "already_division_application":  "Du kan ikke lave en anden Divisions ansøgning når der allerede er en afventende ansøgning!",
+    "already_division_application": "Du kan ikke lave en anden Divisions ansøgning når der allerede er en afventende ansøgning!",
     "no_multiple_application_2h": "Du kan ikke lave flere ansøgninger indenfor 2 timer!",
     "no_loa_application": "Du kan ikke sende en LOA ansøgning indtil du er blevet medlem.",
     "must_verify_steam": "Du skal verifisere din Steam konto inden du kan blive medlem.",
@@ -103,24 +110,26 @@
     "application_already_declined": "Ansøgningen er allerede afvist",
     "application_already_processed": "Ansøgningen er allerede bearbejdet, status ukendt.",
     "application_not_found": "Ansøgningen ikke fundet.",
-    "application_status_updated":"Ansøgnings status er opdateret",
+    "application_status_updated": "Ansøgnings status er opdateret",
     "application_updated": "Ansøgning opdateret",
     "application_message_recorded": "Dette er en påmindelse om at din besked er blevet optaget.",
 
-    "delivery_log_not_found": "Leverings log blev ikke fundet.",
     "division_already_requested": "Du har allerede anmodet om validering, vent venligst tålmodigt indtil en supervisor tjekker din anmodning.",
     "division_already_validated": "Leveringen er blevet valideret.",
     "division_already_denied": "Leveringen er blevet afvist, og du kan ikke anmode om validering igen.",
-    "not_division_driver": "Du er ikke en chauffør for divisionen.", 
+    "not_division_driver": "Du er ikke en chauffør for divisionen.",
     "division_validation_not_found": "Anmodning om validering af en divisions levering blev ikke fundet.",
     "division_not_validated": "Denne leverance er ikke valideret som en divisions levering!",
+
+    "downloads_not_found": "Downloadbar element blev ikke fundet.",
+    "downloads_invalid_link": "Ugyldigt link.",
 
     "event_not_found": "Begivenhed ikke fundet.",
 
     "invalid_distance_unit": "Ugyldig afstandsenhed. Kun \"metric\" og \"imperial\" accepteres.",
     "invalid_value": "Ugyldig værdi for {key}",
     "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype.",
-    
+
     "invalid_time_range": "Starttidspunktet skal være tidligere end sluttidspunktet.",
     "invalid_challenge_type": "Ugyldig udfordringstype.",
     "invalid_required_roles": "Ugyldige påkrævede roller.",
@@ -129,8 +138,5 @@
     "challenge_not_found": "Udfordring ikke fundet.",
     "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
     "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
-    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid.",
-    
-    "downloads_not_found": "Downloadbar element blev ikke fundet.",
-    "downloads_invalid_link": "Ugyldigt link."
+    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid."
 }

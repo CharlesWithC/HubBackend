@@ -44,6 +44,10 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         userid = au["userid"]
         discordid = au["discordid"]
     
+    if logid < 0:
+        response.status_code = 404
+        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
+
     conn = newconn()
     cur = conn.cursor()
 
@@ -104,6 +108,45 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     return {"error": False, "response": {"dlog": {"logid": str(logid), "user": userinfo, \
         "distance": str(distance), "division": division, "challenge_record": challenge_record, \
             "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}}
+
+@app.delete(f"/{config.abbr}/dlog")
+async def deleteDlog(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+    rl = ratelimit(request, request.client.host, 'DELETE /dlog', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    adminid = au["userid"]
+
+    if logid < 0:
+        response.status_code = 404
+        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
+
+    conn = newconn()
+    cur = conn.cursor()
+    
+    cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
+    t = cur.fetchall()
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
+    userid = t[0][0]
+    
+    cur.execute(f"DELETE FROM dlog WHERE logid = {logid}")
+    conn.commit()
+
+    await AuditLog(adminid, f"Deleted delivery `#{logid}`")
+
+    discordid = getUserInfo(userid = userid)["discordid"]
+    notification(discordid, f"Job Deleted: `#{logid}`")
+
+    return {"error": False}
 
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \

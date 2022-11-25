@@ -70,17 +70,24 @@
     "member_update": "You are now a member of {company_name}!",
     "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
 
+    "driver": "Driver",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Delivery log not found.",
+
     "announcement_not_found": "Announcement not found.",
     "event_staff_announcement_limit": "Event staff can only post event announcements.",
     "announcement_only_creator_can_edit": "Only announcement creator can edit the announcement.",
     "announcement_only_creator_can_delete": "Only announcement creator can delete the announcement.",
 
-    "unknown": "Unknown",
-    "driver": "Driver",
-    "staff": "Staff",
-    "loa": "Leave of Absence",
-    "division": "Division",
-    "application_id": "Application ID",
     "unknown_application_type": "Unknown Application Type",
     "status": "Status",
     "creation": "Creation",
@@ -107,13 +114,15 @@
     "application_updated": "Application Updated",
     "application_message_recorded": "This is a reminder that your message has been recorded.",
 
-    "delivery_log_not_found": "Delivery log not found.",
     "division_already_requested": "You have already requested validation and please wait patiently until supervisor check your request.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you may not request validation again.",
     "not_division_driver": "You are not a driver for the division.", 
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated as a division delivery!",
+
+    "downloads_not_found": "Downloadable item not found.",
+    "downloads_invalid_link": "Invalid link.",
 
     "event_not_found": "Event not found.",
 
@@ -129,8 +138,5 @@
     "challenge_not_found": "Challenge not found.",
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
-    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time.",
-
-    "downloads_not_found": "Downloadable item not found.",
-    "downloads_invalid_link": "Invalid link."
+    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time."
 }

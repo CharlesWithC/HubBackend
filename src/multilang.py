@@ -80,17 +80,24 @@ EN_STRINGTABLE = {
     "member_update": "You are now a member of {company_name}!",
     "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
 
+    "driver": "Driver",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Delivery log not found.",
+
     "announcement_not_found": "Announcement not found.",
     "event_staff_announcement_limit": "Event staff can only post event announcements.",
     "announcement_only_creator_can_edit": "Only announcement creator can edit the announcement.",
     "announcement_only_creator_can_delete": "Only announcement creator can delete the announcement.",
 
-    "unknown": "Unknown",
-    "driver": "Driver",
-    "staff": "Staff",
-    "loa": "Leave of Absence",
-    "division": "Division",
-    "application_id": "Application ID",
     "unknown_application_type": "Unknown Application Type",
     "status": "Status",
     "creation": "Creation",
@@ -117,13 +124,15 @@ EN_STRINGTABLE = {
     "application_updated": "Application Updated",
     "application_message_recorded": "This is a reminder that your message has been recorded.",
 
-    "delivery_log_not_found": "Delivery log not found.",
     "division_already_requested": "You have already requested validation and please wait patiently until supervisor check your request.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you may not request validation again.",
     "not_division_driver": "You are not a driver for the division.", 
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated as a division delivery!",
+
+    "downloads_not_found": "Downloadable item not found.",
+    "downloads_invalid_link": "Invalid link.",
 
     "event_not_found": "Event not found.",
 
@@ -139,10 +148,7 @@ EN_STRINGTABLE = {
     "challenge_not_found": "Challenge not found.",
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
-    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time.",
-
-    "downloads_not_found": "Downloadable item not found.",
-    "downloads_invalid_link": "Invalid link."
+    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time."
 }
 
 def get_lang(request: Request):
@@ -182,3 +188,34 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Op
 
 def tr(request: Request, key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False): # abbreviation of translate
     return translate(request, key, var, force_en)
+
+def company_translate(key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
+    lang = config.language
+    langdir = config.language_dir
+    if not os.path.exists(langdir + "/" + lang + ".json"): # no translation for language
+        lang = "en" 
+    if force_en:
+        lang = "en"
+    langdata = EN_STRINGTABLE
+    if lang != "en":
+        langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
+    if key in langdata:
+        ret = langdata[key]
+        for vkey in var.keys():
+            ret = ret.replace("{" + vkey + "}", str(var[vkey]))
+        return ret
+    else: # no translation for key
+        if lang != "en": # try english
+            langdata = json.loads(open(langdir + "/en.json", "r").read())
+            if key in langdata:
+                ret = langdata[key]
+                for vkey in var.keys():
+                    ret = ret.replace("{" + vkey + "}", str(var[vkey]))
+                return ret
+            else: # invalid key
+                return ""
+        else: # invalid key
+            return ""
+
+def ctr(key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
+    return company_translate(key, var, force_en)

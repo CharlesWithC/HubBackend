@@ -316,7 +316,7 @@ async def enableNotification(request: Request, response: Response, authorization
             r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": "Notification", 
             "description": f"You have enabled `{notification_type}` notifications!", \
             "footer": {"text": config.name, "icon_url": config.logo_url}, \
-            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+            "timestamp": str(datetime.now()), "color": config.intcolor}}, ensure_ascii=False), timeout=3)
         except:
             import traceback
             traceback.print_exc()

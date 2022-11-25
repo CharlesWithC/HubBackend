@@ -1,5 +1,5 @@
-fastapi==0.78.0
-uvicorn==0.17.6
+fastapi==0.87.0
+uvicorn==0.20.0
 discord_oauth2==0.2
 steamsignin==1.0.1
 python-dateutil==2.8.2

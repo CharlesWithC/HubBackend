@@ -210,22 +210,22 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             destination_city = d["data"]["object"]["destination_city"]
             destination_company = d["data"]["object"]["destination_company"]
             if source_city is None or source_city["name"] is None:
-                source_city = "Unknown City"
+                source_city = "N/A"
             else:
                 source_city = source_city["name"]
             if source_company is None or source_company["name"] is None:
-                source_company = "Unknown Company"
+                source_company = "N/A"
             else:
                 source_company = source_company["name"]
             if destination_city is None or destination_city["name"] is None:
-                destination_city = "Unknown City"
+                destination_city = "N/A"
             else:
                 destination_city = destination_city["name"]
             if destination_company is None or destination_company["name"] is None:
-                destination_company = "Unknown Company"
+                destination_company = "N/A"
             else:
                 destination_company = destination_company["name"]
-            cargo = "Unknown Cargo"
+            cargo = "N/A"
             cargo_mass = 0
             if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["name"] is None:
                 cargo = d["data"]["object"]["cargo"]["name"]
@@ -233,19 +233,19 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 cargo_mass = d["data"]["object"]["cargo"]["mass"]
             multiplayer = d["data"]["object"]["multiplayer"]
             if multiplayer is None:
-                multiplayer = "Single Player"
+                multiplayer = ml.ctr("single_player")
             else:
                 if multiplayer["type"] == "truckersmp":
                     multiplayer = "TruckersMP (" + multiplayer["server"] +")"
                 elif multiplayer["type"] == "scs_convoy":
-                    multiplayer = "SCS Convoy"
+                    multiplayer = ml.ctr("scs_convoy")
                 else:
-                    multiplayer = "Unknown Multiplayer Mode"
+                    multiplayer = ""
             truck = d["data"]["object"]["truck"]
             if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
                 truck = truck["brand"]["name"] + " " + truck["name"]
             else:
-                truck = "Unknown Truck"
+                truck = "N/A"
             if config.discord_bot_token != "":
                 headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
                 ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
@@ -261,31 +261,31 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     if config.distance_unit == "imperial":
                         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                                 "url": dlglink,
-                                "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
-                                        {"name": "Truck", "value": truck, "inline": True},
-                                        {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                        {"name": "From", "value": source_company + ", " + source_city, "inline": True},
-                                        {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                        {"name": "Distance", "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
-                                        {"name": "Fuel", "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
-                                        {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
+                                "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.ctr("truck"), "value": truck, "inline": True},
+                                        {"name": ml.ctr("cargo"), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.ctr("from"), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.ctr("to"), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.ctr("distance"), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
+                                        {"name": ml.ctr("fuel"), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
+                                        {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}, ensure_ascii=False), timeout=3)
                     elif config.distance_unit == "metric":
                         r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": f"Delivery #{logid}", 
                                 "url": dlglink,
-                                "fields": [{"name": "Driver", "value": f"[{username}]({dhulink})", "inline": True},
-                                        {"name": "Truck", "value": truck, "inline": True},
-                                        {"name": "Cargo", "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                        {"name": "From", "value": source_company + ", " + source_city, "inline": True},
-                                        {"name": "To", "value": destination_company + ", " + destination_city, "inline": True},
-                                        {"name": "Distance", "value": f"{tseparator(int(driven_distance))}km", "inline": True},
-                                        {"name": "Fuel", "value": f"{tseparator(int(fuel_used))} l", "inline": True},
-                                        {"name": "Net Profit", "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": "XP Earned", "value": f"{tseparator(xp)}", "inline": True}],
+                                "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.ctr("truck"), "value": truck, "inline": True},
+                                        {"name": ml.ctr("cargo"), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.ctr("from"), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.ctr("to"), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.ctr("distance"), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
+                                        {"name": ml.ctr("fuel"), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
+                                        {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}), timeout=3)
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}, ensure_ascii=False), timeout=3)
                     if r.status_code == 401:
                         DisableDiscordIntegration()
                         

@@ -181,7 +181,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         try:
             r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
+                        "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}, ensure_ascii=False))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -258,7 +258,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         try:
             requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor}}))
+                        "timestamp": str(datetime.now()), "color": config.intcolor}}, ensure_ascii=False))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:

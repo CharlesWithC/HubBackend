@@ -298,7 +298,7 @@ def SendDiscordMessage(channelid, data):
         return -1
     
     ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-    requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+    requests.post(ddurl, headers=headers, data=json.dumps(data, ensure_ascii=False), timeout=3)
 
     return 0
 
@@ -318,7 +318,7 @@ def ProcessDiscordMessage(): # thread
 
         ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
         try:
-            r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+            r = requests.post(ddurl, headers=headers, data=json.dumps(data, ensure_ascii=False), timeout=3)
         except:
             import traceback
             traceback.print_exc()
@@ -627,7 +627,7 @@ async def AuditLog(userid, text):
 def DisableDiscordIntegration():
     global config
     config.discord_bot_token = ""
-    r = requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and reloading API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+    r = requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and reloading API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}, ensure_ascii=False), headers={"Content-Type": "application/json"})
 
 async def AutoMessage(meta, setvar):
     global config
@@ -667,7 +667,7 @@ async def AutoMessage(meta, setvar):
                     },
                     "timestamp": timestamp,
                     "color": config.intcolor
-                }}))
+                }}, ensure_ascii=False))
             if r.status_code == 401:
                 DisableDiscordIntegration()
     except:

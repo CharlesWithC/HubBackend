@@ -70,17 +70,24 @@
     "member_update": "Ora sei un membro di {company_name}!",
     "losing_admin_permission": "Aggiornamento del ruolo negato: i nuovi ruoli rimuoveranno l'autorizzazione di amministratore dell'utente esistente.",
 
+    "driver": "Autista",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Registro di consegna non trovato.",
+
     "announcement_not_found": "Annuncio non trovato.",
     "event_staff_announcement_limit": "Solo lo Staff degli eventi può pubblicare annunci di eventi.",
     "announcement_only_creator_can_edit": "Solo il creatore dell'annuncio può modificare l'annuncio.",
     "announcement_only_creator_can_delete": "Solo il creatore dell'annuncio può eliminare l'annuncio.",
 
-    "unknown": "Sconosciuto/a",
-    "driver": "Autista",
-    "staff": "Staff",
-    "loa": "Congedo",
-    "division": "Divisione",
-    "application_id": "ID dell'applicazione",
     "unknown_application_type": "Tipo di applicazione sconosciuto",
     "status": "Stato",
     "creation": "Creazione",
@@ -92,7 +99,7 @@
     "already_a_driver": "Sei già un autista di questa VTC!",
     "must_be_driver_to_submit_division_application": "Devi essere un autista per poter presentare la tua domanda di divisione!",
     "already_driver_application": "Non puoi creare un'altra domanda, mentre c'è un'applicazione di assunzione in sospeso!",
-    "already_division_application":  "Non puoi fare un'altra domanda di divisione mentre c'è già una domanda di divisione in sospeso!",
+    "already_division_application": "Non puoi fare un'altra domanda di divisione mentre c'è già una domanda di divisione in sospeso!",
     "no_multiple_application_2h": "Non puoi creare più di un'applicazione in 2 ore!",
     "no_loa_application": "Non puoi presentare una domanda di congedo fino a quando non diventi un membro!",
     "must_verify_steam": "Devi collegare il tuo account Steam prima di inviare una domanda.",
@@ -103,17 +110,19 @@
     "application_already_declined": "Domanda già rifiutata",
     "application_already_processed": "Domanda già elaborata, stato: sconosciuto.",
     "application_not_found": "Richiesta non trovata.",
-    "application_status_updated":"Stato dell'applicazione aggiornato",
+    "application_status_updated": "Stato dell'applicazione aggiornato",
     "application_updated": "Applicazione aggiornata",
     "application_message_recorded": "Questo è un promemoria che il tuo messaggio è stato registrato.",
 
-    "delivery_log_not_found": "Registro di consegna non trovato.",
     "division_already_requested": "Hai già richiesto la convalida e attendi pazientemente fino a quando il supervisore non verificherà la tua richiesta.",
     "division_already_validated": "La consegna è già stata confermata",
     "division_already_denied": "La conferma di consegna è stata rifiutata e non è possibile richiedere una riconferma.",
-    "not_division_driver": "Non sei un autista per la divisione.", 
+    "not_division_driver": "Non sei un autista per la divisione.",
     "division_validation_not_found": "Non è stata trovata alcuna richiesta di conferma della partizione per la consegna.",
     "division_not_validated": "Questa consegna non è convalidata come consegna della divisione!",
+
+    "downloads_not_found": "Articolo scaricabile non trovato.",
+    "downloads_invalid_link": "Link non valido!",
 
     "event_not_found": "Evento non trovato.",
 
@@ -129,8 +138,5 @@
     "challenge_not_found": "Sfida non trovata.",
     "challenge_delivery_not_found": "La consegna non è accettata per la sfida.",
     "challenge_delivery_already_accepted": "La consegna è già accettata per la sfida.",
-    "maximum_15_active_challenge": "Sono consentite al massimo 15 sfide attive contemporaneamente.",
-
-    "downloads_not_found": "Articolo scaricabile non trovato.",
-    "downloads_invalid_link": "Link non valido!"
+    "maximum_15_active_challenge": "Sono consentite al massimo 15 sfide attive contemporaneamente."
 }

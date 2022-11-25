@@ -54,6 +54,9 @@ config["perms"] = perms
 if not "server_workers" in config.keys():
     config["server_workers"] = 1
 
+if not "language" in config.keys():
+    config["language"] = "en"
+
 if not "allowed_navio_ips" in config.keys():
     config["allowed_navio_ips"] = ["185.233.107.244"]
 

@@ -70,17 +70,24 @@
     "member_update": "Artık bir {company_name} üyesisiniz!",
     "losing_admin_permission": "Rol güncellemesi reddedildi: Yeni roller, mevcut kullanıcının yönetici iznini kaldıracaktır.",
 
+    "driver": "Sürücü",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Teslimat günlüğü bulunamadı.",
+
     "announcement_not_found": "Duyuru bulunamadı.",
     "event_staff_announcement_limit": "Etkinlik personeli yalnızca etkinlik duyuruları paylaşabilir.",
     "announcement_only_creator_can_edit": "Duyuruyu yalnızca, duyuruyu oluşturan kişi düzenleyebilir.",
     "announcement_only_creator_can_delete": "Duyuruyu yalnızca, duyuruyu oluşturan kişi silebilir.",
 
-    "unknown": "Bilinmeyen",
-    "driver": "Sürücü",
-    "staff": "Personel/Yetkili",
-    "loa": "İzin",
-    "division": "Bölüm",
-    "application_id": "Başvuru Kimliği (ID)",
     "unknown_application_type": "Bilinmeyen Başvuru Türü",
     "status": "Durum",
     "creation": "Oluşturma",
@@ -92,7 +99,7 @@
     "already_a_driver": "Sen zaten bir sürücüsün!",
     "must_be_driver_to_submit_division_application": "Bölüm başvurusu yapabilmek için bir sürücü olmalısınız!",
     "already_driver_application": "Bekleyen bir sürücü başvurunuz varken başka bir sürücü başvurusu yapamazsınız!",
-    "already_division_application":  "Bekleyen bir bölüm başvurunuz varken başka bir bölüm başvurusu yapamazsınız!",
+    "already_division_application": "Bekleyen bir bölüm başvurunuz varken başka bir bölüm başvurusu yapamazsınız!",
     "no_multiple_application_2h": "2 saat içinde birden fazla başvuru oluşturamazsınız!",
     "no_loa_application": "Üye olana kadar bir LOA (izin) başvurusu yapamazsınız.",
     "must_verify_steam": "Bir başvuru göndermeden önce Steam Hesabınızı ilişkilendirmeniz gerekir.",
@@ -103,17 +110,19 @@
     "application_already_declined": "Başvuru zaten reddedildi",
     "application_already_processed": "Başvuru zaten incelendi, durum bilinmiyor.",
     "application_not_found": "Başvuru bulunamadı.",
-    "application_status_updated":"Başvuru Durumu Güncellendi",
+    "application_status_updated": "Başvuru Durumu Güncellendi",
     "application_updated": "Başvuru Güncellendi",
     "application_message_recorded": "Bu, mesajınızın kaydedildiğinin bir hatırlatıcısıdır.",
 
-    "delivery_log_not_found": "Teslimat günlüğü bulunamadı.",
     "division_already_requested": "Zaten bir teslimat onaylama talebinde bulundunuz ve lütfen denetmen talebinizi kontrol edene kadar sabırla bekleyiniz.",
     "division_already_validated": "Teslimat zaten onaylandı.",
     "division_already_denied": "Teslimat onayı reddedildi ve tekrar onaylama talebinde bulunamazsınız.",
-    "not_division_driver": "Bir bölüm sürücüsü değilsiniz.", 
+    "not_division_driver": "Bir bölüm sürücüsü değilsiniz.",
     "division_validation_not_found": "Teslimat için bölüm onaylama isteği bulunamadı.",
     "division_not_validated": "Bu teslimat, bir bölüm teslimatı olarak onaylanmadı!",
+
+    "downloads_not_found": "İndirilebilir öğe bulunamadı.",
+    "downloads_invalid_link": "Geçersiz indirme bağlantısı linki.",
 
     "event_not_found": "Etkinlik bulunamadı.",
 
@@ -129,8 +138,5 @@
     "challenge_not_found": "Mücadele bulunamadı.",
     "challenge_delivery_not_found": "Teslimat mücadele için kabul edilmedi.",
     "challenge_delivery_already_accepted": "Teslimat mücadele için zaten kabul edildi.",
-    "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif mücadeleye izin verilmektedir.",
-
-    "downloads_not_found": "İndirilebilir öğe bulunamadı.",
-    "downloads_invalid_link": "Geçersiz indirme bağlantısı linki."
+    "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif mücadeleye izin verilmektedir."
 }

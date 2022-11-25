@@ -70,17 +70,24 @@
     "member_update": "Теперь вы являетесь участником {имя_компании}!",
     "losing_admin_permission": "Обновление ролей отклонено: Новые роли удаляют права администратора у текущего пользователя.",
 
+    "driver": "Водитель",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Журнал доставки не найден.",
+
     "announcement_not_found": "Объявление не найдено.",
     "event_staff_announcement_limit": "Evant Staff может размещать только объявления о мероприятиях.",
     "announcement_only_creator_can_edit": "Редактировать объявление может только создатель объявления.",
     "announcement_only_creator_can_delete": "Удалить объявление может только создатель объявления.",
 
-    "unknown": "Неизвестно",
-    "driver": "Водитель",
-    "staff": "Персонал",
-    "loa": "Отпуск",
-    "division": "Подразделение",
-    "application_id": "Application ID",
     "unknown_application_type": "Неизвестный тип приложения",
     "status": "Статус",
     "creation": "Создатель",
@@ -92,7 +99,7 @@
     "already_a_driver": "Вы уже водитель!",
     "must_be_driver_to_submit_division_application": "Вы должны быть водителем, чтобы иметь возможность подать заявку на подразделение!",
     "already_driver_application": "Вы не можете подать другое заявление на водителя, пока есть незавершенное заявление на водитель!",
-    "already_division_application":  "Вы не можете подать другое заявление на подразделение, пока заявление на подразделение находится на рассмотрении!",
+    "already_division_application": "Вы не можете подать другое заявление на подразделение, пока заявление на подразделение находится на рассмотрении!",
     "no_multiple_application_2h": "Вы не можете создать несколько приложений в течение 2 часов!",
     "no_loa_application": "Вы не можете подать заявление на отпуск, пока не станете участником клуба.",
     "must_verify_steam": "Перед подачей заявки вы должны привязать свою учетную запись Steam.",
@@ -103,17 +110,19 @@
     "application_already_declined": "Заявка уже отклонена",
     "application_already_processed": "Заявка уже обработана, статус неизвестен.",
     "application_not_found": "Заявление не найдено.",
-    "application_status_updated":"Обновление статуса заявки",
+    "application_status_updated": "Обновление статуса заявки",
     "application_updated": "Обновление заявки",
     "application_message_recorded": "Это напоминание о том, что ваше сообщение было записано.",
 
-    "delivery_log_not_found": "Журнал доставки не найден.",
     "division_already_requested": "Вы уже запросили валидацию и, пожалуйста, терпеливо ждите, пока руководитель проверит ваш запрос.",
     "division_already_validated": "Доставка уже подтверждена.",
     "division_already_denied": "Доставка была отклонена, и вы не можете повторно запрашивать подтверждение.",
-    "not_division_driver": "Вы не являетесь водителем подразделения.", 
+    "not_division_driver": "Вы не являетесь водителем подразделения.",
     "division_validation_not_found": "Запрос на валидацию подразделения доставки не найден.",
     "division_not_validated": "Эта поставка не подтверждается как поставка подразделения!",
+
+    "downloads_not_found": "Загружаемый элемент не найден.",
+    "downloads_invalid_link": "Неверная ссылка.",
 
     "event_not_found": "Событие не найдено.",
 
@@ -129,8 +138,5 @@
     "challenge_not_found": "Вызов не найден.",
     "challenge_delivery_not_found": "Доставка не принимается для вызова.",
     "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
-    "maximum_15_active_challenge": "Одновременно разрешено не более 15 активных вызовов.",
-
-    "downloads_not_found": "Загружаемый элемент не найден.",
-    "downloads_invalid_link": "Неверная ссылка."
+    "maximum_15_active_challenge": "Одновременно разрешено не более 15 активных вызовов."
 }

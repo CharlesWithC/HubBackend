@@ -70,17 +70,24 @@
     "member_update": "¡Ahora eres miembro de {company_name}!",
     "losing_admin_permission": "Actualización de rol rechazada: los nuevos roles eliminarán el permiso de administrador del usuario actual.",
 
+    "driver": "Conductor",
+    "truck":"Camión",
+    "cargo":"Carga",
+    "from": "De",
+    "to": "A",
+    "distance": "Distancia",
+    "fuel": "Combustible",
+    "net_profit": "Beneficio neto",
+    "xp_earned": "Experiencia ganada",
+    "single_player": "Un jugador",
+    "scs_convoy": "Convoy SCS",
+    "delivery_log_not_found": "No se ha encontrado el registro de entrega.",
+
     "announcement_not_found": "Anuncio no encontrado.",
     "event_staff_announcement_limit": "El personal de eventos solo puede publicar anuncios de eventos.",
     "announcement_only_creator_can_edit": "Solo el creador de anuncios puede editar el anuncio.",
     "announcement_only_creator_can_delete": "Solo el creador del anuncio puede eliminar el anuncio.",
 
-    "unknown": "Desconocido",
-    "driver": "Conductor",
-    "staff": "Personal",
-    "loa": "Permiso de ausencia",
-    "division": "Division",
-    "application_id": "ID de solicitud",
     "unknown_application_type": "Tipo de aplicación desconocido",
     "status": "Estado",
     "creation": "Creación",
@@ -92,7 +99,7 @@
     "already_a_driver": "¡Ya eres conductor!",
     "must_be_driver_to_submit_division_application": "¡Debes ser un conductor para poder presentar la solicitud de división!",
     "already_driver_application": "¡No puedes hacer otra solicitud de controlador mientras haya una solicitud de controlador pendiente!",
-    "already_division_application":  "¡No puedes hacer otra solicitud de división mientras haya una solicitud de división pendiente!",
+    "already_division_application": "¡No puedes hacer otra solicitud de división mientras haya una solicitud de división pendiente!",
     "no_multiple_application_2h": "¡No puedes crear varias aplicaciones en 2 horas!",
     "no_loa_application": "No puedes enviar una solicitud de LOA hasta que te conviertas en miembro.",
     "must_verify_steam": "Debes vincular tu cuenta de Steam antes de enviar una solicitud.",
@@ -103,24 +110,26 @@
     "application_already_declined": "La solicitud ya ha sido rechazada",
     "application_already_processed": "Solicitud ya procesada, estado desconocido.",
     "application_not_found": "Solicitud no encontrada.",
-    "application_status_updated":"Estado de la solicitud actualizado",
+    "application_status_updated": "Estado de la solicitud actualizado",
     "application_updated": "Aplicación actualizada",
     "application_message_recorded": "Este es un recordatorio de que su mensaje ha sido grabado.",
 
-    "delivery_log_not_found": "No se ha encontrado el registro de entrega.",
     "division_already_requested": "Ya ha solicitado la validación y espere pacientemente hasta que el supervisor compruebe su solicitud.",
     "division_already_validated": "La entrega ya ha sido validada.",
     "division_already_denied": "La entrega ha sido denegada y es posible que no vuelva a solicitar la validación.",
-    "not_division_driver": "No eres un conductor de la división.", 
+    "not_division_driver": "No eres un conductor de la división.",
     "division_validation_not_found": "No se ha encontrado la solicitud de validación de la división de entrega.",
     "division_not_validated": "¡Esta entrega no está validada como una entrega de división!",
+
+    "downloads_not_found": "Elemento descargable no encontrado.",
+    "downloads_invalid_link": "Enlace no válido.",
 
     "event_not_found": "Evento no encontrado.",
 
     "invalid_distance_unit": "Unidad de distancia no válida. Solo se aceptan “métricos” e “imperial”.",
     "invalid_value": "Valor no válido para {key}",
     "config_data_type_mismatch": "El tipo de datos de una o más claves no coincide con el tipo de datos original.",
-    
+
     "invalid_time_range": "La hora de inicio debe ser anterior a la hora de finalización.",
     "invalid_challenge_type": "Tipo de desafío no válido.",
     "invalid_required_roles": "Roles requeridos no válidos.",
@@ -129,8 +138,5 @@
     "challenge_not_found": "Desafío no encontrado.",
     "challenge_delivery_not_found": "La entrega no se acepta para el desafío.",
     "challenge_delivery_already_accepted": "La entrega ya se aceptó para el desafío.",
-    "maximum_15_active_challenge": "Se permiten como máximo 15 desafíos activos al mismo tiempo.",
-
-    "downloads_not_found": "Elemento descargable no encontrado.",
-    "downloads_invalid_link": "Enlace no válido."
+    "maximum_15_active_challenge": "Se permiten como máximo 15 desafíos activos al mismo tiempo."
 }

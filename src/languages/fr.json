@@ -70,17 +70,24 @@
     "member_update": "Vous êtes maintenant membre de {company_name} !",
     "losing_admin_permission": "Mise à jour du rôle rejetée : les nouveaux rôles supprimeront l'autorisation d'administration de l'utilisateur actuel.",
 
+    "driver": "Chauffeur",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Journal de livraison introuvable.",
+
     "announcement_not_found": "Annonce introuvable.",
     "event_staff_announcement_limit": "Le personnel de l'événement ne peut publier que des annonces d'événement.",
     "announcement_only_creator_can_edit": "Seul le créateur de l'annonce peut modifier l'annonce.",
     "announcement_only_creator_can_delete": "Seul le créateur de l'annonce peut supprimer l'annonce.",
 
-    "unknown": "Inconnu",
-    "driver": "Chauffeur",
-    "staff": "Staff",
-    "loa": "Congé autorisé",
-    "division": "Division",
-    "application_id": "ID d'application",
     "unknown_application_type": "Type de demande inconnu",
     "status": "Statut",
     "creation": "Creation",
@@ -92,7 +99,7 @@
     "already_a_driver": "Vous êtes déjà chauffeur !",
     "must_be_driver_to_submit_division_application": "Vous devez être un chauffeur pour pouvoir soumettre une demande de division !",
     "already_driver_application": "Vous ne pouvez pas créer une autre demande de chauffeur tant qu'il y a une demande de chauffeur en attente !",
-    "already_division_application":  "Vous ne pouvez pas faire une autre demande de division pendant qu'il y a une demande de division en attente !",
+    "already_division_application": "Vous ne pouvez pas faire une autre demande de division pendant qu'il y a une demande de division en attente !",
     "no_multiple_application_2h": "Vous ne pouvez pas créer plusieurs applications en moins de 2 heures !",
     "no_loa_application": "Vous ne pouvez pas soumettre une demande de LOA tant que vous n'êtes pas membre.",
     "must_verify_steam": "Vous devez vérifier votre compte Steam avant de soumettre une candidature.",
@@ -103,24 +110,26 @@
     "application_already_declined": "Candidature déjà refusée",
     "application_already_processed": "Demande déjà traitée, statut inconnu.",
     "application_not_found": "Candidature non trouvée.",
-    "application_status_updated":"État de la candidature mis à jour",
+    "application_status_updated": "État de la candidature mis à jour",
     "application_updated": "Candidature mise à jour",
     "application_message_recorded": "Ceci est un rappel que votre message a été enregistré.",
 
-    "delivery_log_not_found": "Journal de livraison introuvable.",
     "division_already_requested": "Vous avez déjà demandé la validation et veuillez patienter jusqu'à ce que le superviseur vérifie votre demande.",
     "division_already_validated": "La livraison a déjà été validée.",
     "division_already_denied": "La livraison a été refusée et vous ne pouvez plus demander de validation.",
-    "not_division_driver": "Vous n'êtes pas chauffeur pour la division.", 
+    "not_division_driver": "Vous n'êtes pas chauffeur pour la division.",
     "division_validation_not_found": "Demande de validation de livraison de division introuvable.",
     "division_not_validated": "Cette livraison n'est pas validée comme une livraison en division !",
+
+    "downloads_not_found": "Élément téléchargeable introuvable.",
+    "downloads_invalid_link": "Lien invalide.",
 
     "event_not_found": "Evénement introuvable.",
 
     "invalid_distance_unit": "Unité de distance invalide. Seuls « metric » et « imperial » sont acceptés.",
     "invalid_value": "Valeur invalide pour {key}",
     "config_data_type_mismatch": "Le type de données d'une ou plusieurs clés ne correspond pas au type de données d'origine.",
-    
+
     "invalid_time_range": "L'heure de début doit être antérieure à l'heure de fin.",
     "invalid_challenge_type": "Type de défi invalide.",
     "invalid_required_roles": "Rôles requis non valides.",
@@ -129,8 +138,5 @@
     "challenge_not_found": "Défi introuvable.",
     "challenge_delivery_not_found": "La livraison n'est pas acceptée pour le défi.",
     "challenge_delivery_already_accepted": "La livraison est déjà acceptée pour le défi.",
-    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps.",
-    
-    "downloads_not_found": "Élément téléchargeable introuvable.",
-    "downloads_invalid_link": "Lien invalide."
+    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps."
 }
