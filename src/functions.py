@@ -531,7 +531,13 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
             if not ok:
                 return {"error": True, "descriptor": "Forbidden", "code": 403}
 
-        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": True}
+        cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+        t = cur.fetchall()
+        language = ""
+        if len(t) != 0:
+            language = t[0][0]
+
+        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": True}
 
     # bearer token
     elif tokentype == "Bearer":
@@ -592,7 +598,13 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
             cur.execute(f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             conn.commit()
 
-        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "application_token": False}
+        cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+        t = cur.fetchall()
+        language = ""
+        if len(t) != 0:
+            language = t[0][0]
+            
+        return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": False}
     
     return {"error": True, "descriptor": "Unauthorized", "code": 401}
 

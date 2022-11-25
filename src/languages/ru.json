@@ -5,16 +5,6 @@
     "rate_limit": "Вы ограничены в скорости.",
     "bad_form": "Поле формы отсутствует или данные не могут быть проанализированы",
     "content_too_long": "Максимальная длина \"{item}\" – {limit} символов.",
-    "config_invalid_value": "Неверное значение для \"{item}\": не должно быть пустым.",
-    "config_invalid_distance_unit": "Неверное значение для \"distance_unit\": должно быть \"metric\" или \"imperial\".",
-    "config_invalid_datatype_boolean": "Недопустимый тип данных для \"{item}\": должен быть логическим значением.",
-    "config_invalid_datatype_integar": "Недопустимый тип данных для \"{item}\": Должен быть целым числом.",
-    "config_invalid_hex_color": "Недопустимое значение для \"hex_color\": должно быть шестнадцатеричной строкой из 6 символов.",
-    "config_invalid_data_url": "Неверный тип данных для \"{item}\": Должен быть действительный URL.",
-    "config_invalid_permission_admin_not_found": "Недопустимое значение для \"perms\": разрешение \"admin\" не найдено.",
-    "config_invalid_permission_admin_protection": "Обновление разрешений отклонено: новое разрешение \"admin\" не включает ни одной роли, которую имеет текущий пользователь.",
-    "discord_integrations_disabled": "Интеграции Discord были временно отключены из-за недействительного Discord бот токен.",
-    "discord_api_inaccessible": "API Discord недоступен. Это должно быть временной проблемой.",
 
     "ban_with_reason_expire": "Вы заблокированы по {причина} до {истечения} UTC",
     "discord_check_fail": "Не удалось проверить, находитесь ли вы на сервере Discord.",
@@ -31,6 +21,7 @@
     "mfa_invalid_otp": "Недействительный ОТП.",
     "mfa_not_enabled": "MFA не включена.",
     "mfa_required": "Перед продолжением необходимо включить MFA.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "Неверный DiscordID.",
     "dismiss_before_ban": "Откажитесь от участника перед запретом.",
@@ -83,6 +74,20 @@
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Журнал доставки не найден.",
 
+    "invalid_distance_unit": "Неверная единица измерения расстояния. Принимаются только \"метрические\" и \"имперские\".",
+    "invalid_value": "Недопустимое значение для {ключей}",
+    "config_data_type_mismatch": "Тип данных одного или нескольких ключей не соответствует исходному типу данных.",
+    "config_invalid_value": "Неверное значение для \"{item}\": не должно быть пустым.",
+    "config_invalid_distance_unit": "Неверное значение для \"distance_unit\": должно быть \"metric\" или \"imperial\".",
+    "config_invalid_datatype_boolean": "Недопустимый тип данных для \"{item}\": должен быть логическим значением.",
+    "config_invalid_datatype_integar": "Недопустимый тип данных для \"{item}\": Должен быть целым числом.",
+    "config_invalid_hex_color": "Недопустимое значение для \"hex_color\": должно быть шестнадцатеричной строкой из 6 символов.",
+    "config_invalid_data_url": "Неверный тип данных для \"{item}\": Должен быть действительный URL.",
+    "config_invalid_permission_admin_not_found": "Недопустимое значение для \"perms\": разрешение \"admin\" не найдено.",
+    "config_invalid_permission_admin_protection": "Обновление разрешений отклонено: новое разрешение \"admin\" не включает ни одной роли, которую имеет текущий пользователь.",
+    "discord_integrations_disabled": "Интеграции Discord были временно отключены из-за недействительного Discord бот токен.",
+    "discord_api_inaccessible": "API Discord недоступен. Это должно быть временной проблемой.",
+
     "announcement_not_found": "Объявление не найдено.",
     "event_staff_announcement_limit": "Evant Staff может размещать только объявления о мероприятиях.",
     "announcement_only_creator_can_edit": "Редактировать объявление может только создатель объявления.",
@@ -114,6 +119,16 @@
     "application_updated": "Обновление заявки",
     "application_message_recorded": "Это напоминание о том, что ваше сообщение было записано.",
 
+    "invalid_time_range": "Время начала должно быть раньше времени окончания.",
+    "invalid_challenge_type": "Неверный тип вызова.",
+    "invalid_required_roles": "Неверные требуемые роли.",
+    "invalid_reward_points": "Поощрительные баллы не должны быть отрицательными.",
+    "invalid_delivery_count": "Количество доставок не должно быть отрицательным или нулевым.",
+    "challenge_not_found": "Вызов не найден.",
+    "challenge_delivery_not_found": "Доставка не принимается для вызова.",
+    "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
+    "maximum_15_active_challenge": "Одновременно разрешено не более 15 активных вызовов.",
+
     "division_already_requested": "Вы уже запросили валидацию и, пожалуйста, терпеливо ждите, пока руководитель проверит ваш запрос.",
     "division_already_validated": "Доставка уже подтверждена.",
     "division_already_denied": "Доставка была отклонена, и вы не можете повторно запрашивать подтверждение.",
@@ -124,19 +139,5 @@
     "downloads_not_found": "Загружаемый элемент не найден.",
     "downloads_invalid_link": "Неверная ссылка.",
 
-    "event_not_found": "Событие не найдено.",
-
-    "invalid_distance_unit": "Неверная единица измерения расстояния. Принимаются только \"метрические\" и \"имперские\".",
-    "invalid_value": "Недопустимое значение для {ключей}",
-    "config_data_type_mismatch": "Тип данных одного или нескольких ключей не соответствует исходному типу данных.",
-
-    "invalid_time_range": "Время начала должно быть раньше времени окончания.",
-    "invalid_challenge_type": "Неверный тип вызова.",
-    "invalid_required_roles": "Неверные требуемые роли.",
-    "invalid_reward_points": "Поощрительные баллы не должны быть отрицательными.",
-    "invalid_delivery_count": "Количество доставок не должно быть отрицательным или нулевым.",
-    "challenge_not_found": "Вызов не найден.",
-    "challenge_delivery_not_found": "Доставка не принимается для вызова.",
-    "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
-    "maximum_15_active_challenge": "Одновременно разрешено не более 15 активных вызовов."
+    "event_not_found": "Событие не найдено."
 }

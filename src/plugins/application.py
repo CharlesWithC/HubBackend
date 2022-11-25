@@ -62,13 +62,13 @@ async def getApplication(request: Request, response: Response, authorization: st
 
     if int(applicationid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     application_type = t[0][1]
     
@@ -230,7 +230,7 @@ async def postApplication(request: Request, response: Response, authorization: s
         data = json.loads(form["data"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     application_type_text = ""
     applicantrole = 0
@@ -246,7 +246,7 @@ async def postApplication(request: Request, response: Response, authorization: s
             note = o["note"]
     if application_type_text == "":
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
+        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
 
     if note == "driver":
         cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
@@ -257,12 +257,12 @@ async def postApplication(request: Request, response: Response, authorization: s
         for r in config.perms.driver:
             if str(r) in roles:
                 response.status_code = 409
-                return {"error": True, "descriptor": ml.tr(request, "already_a_driver")}
+                return {"error": True, "descriptor": ml.tr(request, "already_a_driver", force_lang = au["language"])}
         cur.execute(f"SELECT * FROM application WHERE application_type = 1 AND discordid = {discordid} AND status = 0")
         p = cur.fetchall()
         if len(p) > 0:
             response.status_code = 409
-            return {"error": True, "descriptor": ml.tr(request, "already_driver_application")}
+            return {"error": True, "descriptor": ml.tr(request, "already_driver_application", force_lang = au["language"])}
 
     if note == "division":
         cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
@@ -276,26 +276,26 @@ async def postApplication(request: Request, response: Response, authorization: s
                 ok = True
         if not ok:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "must_be_driver_to_submit_division_application")}        
+            return {"error": True, "descriptor": ml.tr(request, "must_be_driver_to_submit_division_application", force_lang = au["language"])}        
 
     cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submit_timestamp >= {int(time.time()) - 7200}")
     p = cur.fetchall()
     if len(p) > 0:
         response.status_code = 429
-        return {"error": True, "descriptor": ml.tr(request, "no_multiple_application_2h")}
+        return {"error": True, "descriptor": ml.tr(request, "no_multiple_application_2h", force_lang = au["language"])}
 
     if userid == -1 and application_type == 3:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "no_loa_application")}
+        return {"error": True, "descriptor": ml.tr(request, "no_loa_application", force_lang = au["language"])}
 
     cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if t[0][4] <= 0:
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "must_verify_steam")}
+        return {"error": True, "descriptor": ml.tr(request, "must_verify_steam", force_lang = au["language"])}
     if t[0][3] <= 0 and config.truckersmp_bind:
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp")}
+        return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp", force_lang = au["language"])}
     userid = t[0][5]
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
@@ -383,28 +383,28 @@ async def updateApplication(request: Request, response: Response, authorization:
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if int(applicationid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT discordid, data, status, application_type FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if discordid != t[0][0]:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "not_applicant")}
+        return {"error": True, "descriptor": ml.tr(request, "not_applicant", force_lang = au["language"])}
     if t[0][2] != 0:
         response.status_code = 409
         if t[0][2] == 1:
-            return {"error": True, "descriptor": ml.tr(request, "application_already_accepted")}
+            return {"error": True, "descriptor": ml.tr(request, "application_already_accepted", force_lang = au["language"])}
         elif t[0][2] == 2:
-            return {"error": True, "descriptor": ml.tr(request, "application_already_declined")}
+            return {"error": True, "descriptor": ml.tr(request, "application_already_declined", force_lang = au["language"])}
         else:
-            return {"error": True, "descriptor": ml.tr(request, "application_already_processed")}
+            return {"error": True, "descriptor": ml.tr(request, "application_already_processed", force_lang = au["language"])}
 
     discordid = t[0][0]
     data = json.loads(decompress(t[0][1]))
@@ -435,7 +435,7 @@ async def updateApplication(request: Request, response: Response, authorization:
             webhookurl = o["webhook"]
     if application_type < 1 and application_type > 4 and application_type_text == "":
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type")}
+        return {"error": True, "descriptor": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
 
     if webhookurl != "":
         try:
@@ -499,10 +499,10 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         message = str(form["message"])
         if len(form["message"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     statustxt = f"Unknown Status ({status})"
     if int(status) in STATUS.keys():
@@ -510,13 +510,13 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     if int(applicationid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "application_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
     
     application_type = t[0][1]
     applicant_discordid = t[0][2]

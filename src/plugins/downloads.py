@@ -33,7 +33,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
 
     if downloadsid <= 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -42,7 +42,7 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     tt = t[0]
 
     secret = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -142,14 +142,14 @@ async def redirectDownloads(request: Request, response: Response, authorization:
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     downloadsid = t[0][0]
 
     cur.execute(f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     link = t[0][0]
 
     cur.execute(f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")
@@ -180,23 +180,23 @@ async def postDownloads(request: Request, response: Response, authorization: str
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         orderid = int(form["orderid"])
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid'")
     t = cur.fetchall()
@@ -229,7 +229,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 
     if downloadsid <= 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -238,30 +238,30 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     form = await request.form()
     try:
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         orderid = int(form["orderid"])
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     cur.execute(f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
     await AuditLog(adminid, f"Updated downloadable item `#{downloadsid}`")
@@ -290,13 +290,13 @@ async def deleteDownloads(request: Request, response: Response, authorization: s
 
     if int(downloadsid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
     await AuditLog(adminid, f"Deleted downloadable item `#{downloadsid}`")

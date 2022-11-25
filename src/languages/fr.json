@@ -5,16 +5,6 @@
     "rate_limit": "Vous êtes limité en débit.",
     "bad_form": "Le champ du formulaire est manquant ou les données ne peuvent pas être analysées",
     "content_too_long": "La longueur maximale de \"{item}\" est de {limit} caractères.",
-    "config_invalid_value": "Valeur invalide pour \"{item}\": Ne doit pas être vide.",
-    "config_invalid_distance_unit": "Valeur invalide pour \"distance_unit\": Doit être \"metric\" ou \"imperial\".",
-    "config_invalid_datatype_boolean": "Type de données invalide pour \"{item}\": Doit être booléen.",
-    "config_invalid_datatype_integar": "Type de données invalide pour \"{item}\": Doit être entier.",
-    "config_invalid_hex_color": "Valeur invalide pour \"hex_color\": Doit être une chaîne hexadécimale de 6 caractères.",
-    "config_invalid_data_url": "Type de données invalide pour \"{item}\": Doit être une URL valide.",
-    "config_invalid_permission_admin_not_found": "Valeur invalide pour \"perms\": \"admin\" permission introuvable.",
-    "config_invalid_permission_admin_protection": "Mise à jour des autorisations rejetée : La nouvelle autorisation \"admin\" n'inclut aucun rôle de l'utilisateur actuel.",
-    "discord_integrations_disabled": "Les intégrations Discord ont été temporairement désactivées en raison d'un jeton de bot Discord invalide.",
-    "discord_api_inaccessible": "L'API Discord est inaccessible. Cela devrait être un problème temporaire.",
 
     "ban_with_reason_expire": "Vous êtes banni pour {reason} jusqu'au {expire} UTC",
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",
@@ -31,6 +21,7 @@
     "mfa_invalid_otp": "OTP invalide.",
     "mfa_not_enabled": "MFA non activé.",
     "mfa_required": "Vous devez activer MFA avant de continuer.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "Identifiant Discord invalide.",
     "dismiss_before_ban": "Renvoyer le membre avant de le bannir.",
@@ -83,6 +74,20 @@
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Journal de livraison introuvable.",
 
+    "invalid_distance_unit": "Unité de distance invalide. Seuls « metric » et « imperial » sont acceptés.",
+    "invalid_value": "Valeur invalide pour {key}",
+    "config_data_type_mismatch": "Le type de données d'une ou plusieurs clés ne correspond pas au type de données d'origine.",
+    "config_invalid_value": "Valeur invalide pour \"{item}\": Ne doit pas être vide.",
+    "config_invalid_distance_unit": "Valeur invalide pour \"distance_unit\": Doit être \"metric\" ou \"imperial\".",
+    "config_invalid_datatype_boolean": "Type de données invalide pour \"{item}\": Doit être booléen.",
+    "config_invalid_datatype_integar": "Type de données invalide pour \"{item}\": Doit être entier.",
+    "config_invalid_hex_color": "Valeur invalide pour \"hex_color\": Doit être une chaîne hexadécimale de 6 caractères.",
+    "config_invalid_data_url": "Type de données invalide pour \"{item}\": Doit être une URL valide.",
+    "config_invalid_permission_admin_not_found": "Valeur invalide pour \"perms\": \"admin\" permission introuvable.",
+    "config_invalid_permission_admin_protection": "Mise à jour des autorisations rejetée : La nouvelle autorisation \"admin\" n'inclut aucun rôle de l'utilisateur actuel.",
+    "discord_integrations_disabled": "Les intégrations Discord ont été temporairement désactivées en raison d'un jeton de bot Discord invalide.",
+    "discord_api_inaccessible": "L'API Discord est inaccessible. Cela devrait être un problème temporaire.",
+
     "announcement_not_found": "Annonce introuvable.",
     "event_staff_announcement_limit": "Le personnel de l'événement ne peut publier que des annonces d'événement.",
     "announcement_only_creator_can_edit": "Seul le créateur de l'annonce peut modifier l'annonce.",
@@ -114,6 +119,16 @@
     "application_updated": "Candidature mise à jour",
     "application_message_recorded": "Ceci est un rappel que votre message a été enregistré.",
 
+    "invalid_time_range": "L'heure de début doit être antérieure à l'heure de fin.",
+    "invalid_challenge_type": "Type de défi invalide.",
+    "invalid_required_roles": "Rôles requis non valides.",
+    "invalid_reward_points": "Les points de récompense ne doivent pas être négatifs.",
+    "invalid_delivery_count": "Le nombre de livraisons ne doit pas être négatif ou nul.",
+    "challenge_not_found": "Défi introuvable.",
+    "challenge_delivery_not_found": "La livraison n'est pas acceptée pour le défi.",
+    "challenge_delivery_already_accepted": "La livraison est déjà acceptée pour le défi.",
+    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps.",
+
     "division_already_requested": "Vous avez déjà demandé la validation et veuillez patienter jusqu'à ce que le superviseur vérifie votre demande.",
     "division_already_validated": "La livraison a déjà été validée.",
     "division_already_denied": "La livraison a été refusée et vous ne pouvez plus demander de validation.",
@@ -124,19 +139,5 @@
     "downloads_not_found": "Élément téléchargeable introuvable.",
     "downloads_invalid_link": "Lien invalide.",
 
-    "event_not_found": "Evénement introuvable.",
-
-    "invalid_distance_unit": "Unité de distance invalide. Seuls « metric » et « imperial » sont acceptés.",
-    "invalid_value": "Valeur invalide pour {key}",
-    "config_data_type_mismatch": "Le type de données d'une ou plusieurs clés ne correspond pas au type de données d'origine.",
-
-    "invalid_time_range": "L'heure de début doit être antérieure à l'heure de fin.",
-    "invalid_challenge_type": "Type de défi invalide.",
-    "invalid_required_roles": "Rôles requis non valides.",
-    "invalid_reward_points": "Les points de récompense ne doivent pas être négatifs.",
-    "invalid_delivery_count": "Le nombre de livraisons ne doit pas être négatif ou nul.",
-    "challenge_not_found": "Défi introuvable.",
-    "challenge_delivery_not_found": "La livraison n'est pas acceptée pour le défi.",
-    "challenge_delivery_already_accepted": "La livraison est déjà acceptée pour le défi.",
-    "maximum_15_active_challenge": "Au plus 15 défis actifs sont autorisés en même temps."
+    "event_not_found": "Evénement introuvable."
 }

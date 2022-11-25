@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import json, time, requests, math, bcrypt
+import os, json, time, requests, math, bcrypt
 
 from app import app, config
 from db import newconn
@@ -22,6 +22,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 
     roles = []
     udiscordid = -1
+    aulanguage = ""
     if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
         au = auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
@@ -33,6 +34,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
             roles = au["roles"]
             udiscordid = discordid
             selfq = True
+            aulanguage = au["language"]
     else:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
@@ -43,6 +45,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         else:
             udiscordid = au["discordid"]
             roles = au["roles"]
+            aulanguage = au["language"]
     
     conn = newconn()
     cur = conn.cursor()
@@ -66,13 +69,13 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         qu = f"truckersmpid = {truckersmpid}"
     else:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
 
     cur.execute(f"SELECT userid, discordid FROM user WHERE {qu}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
     userid = t[0][0]
     discordid = t[0][1]
     
@@ -80,7 +83,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
     roles = t[0][3].split(",")
     while "" in roles:
         roles.remove("")
@@ -204,7 +207,7 @@ async def putUserNotificationStatus(request: Request, response: Response, author
             read = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if notificationids == "all":
         cur.execute(f"UPDATE user_notification SET status = {read} WHERE discordid = {discordid}")
@@ -291,7 +294,7 @@ async def enableNotification(request: Request, response: Response, authorization
 
     if config.discord_bot_token == "":
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
     headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
     durl = "https://discord.com/api/v9/users/@me/channels"
@@ -299,13 +302,13 @@ async def enableNotification(request: Request, response: Response, authorization
         r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
     except:
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+        return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
     if r.status_code == 401:
         DisableDiscordIntegration()
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
     if r.status_code != 200:
-        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
     d = json.loads(r.text)
     if "id" in d:
         channelid = str(d["id"])
@@ -322,7 +325,7 @@ async def enableNotification(request: Request, response: Response, authorization
             traceback.print_exc()
 
         if r.status_code != 200:
-            return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+            return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
         cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
         t = cur.fetchall()
@@ -340,7 +343,7 @@ async def enableNotification(request: Request, response: Response, authorization
         return {"error": False}
 
     else:
-        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm")}
+        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
 @app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/disable")
 async def disableNotification(request: Request, response: Response, authorization: str = Header(None),
@@ -368,6 +371,63 @@ async def disableNotification(request: Request, response: Response, authorizatio
         cur.execute(f"INSERT INTO settings VALUES ('{discordid}','drivershub-notification','disabled')")
     else:
         cur.execute(f"DELETE FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
+    conn.commit()
+
+    return {"error": False}
+
+@app.get(f"/{config.abbr}/user/language")
+async def getUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'GET /user/language', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    discordid = au["discordid"]
+
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+    t = cur.fetchall()
+    if len(t) == 0:
+        return {"error": False, "response": {"language": "en"}}
+    return {"error": False, "response": {"language": t[0][0]}}
+
+@app.patch(f"/{config.abbr}/user/language")
+async def patchUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'PATCH /user/language', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    discordid = au["discordid"]
+
+    form = await request.form()
+    try:
+        language = convert_quotation(form["language"])
+    except:
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+
+    if not os.path.exists(config.language_dir + "/" + language + ".json"):
+        response.status_code = 400
+        return {"error": True, "descriptor": ml.tr(request, "language_not_supported", force_lang = au["language"])}
+    
+    conn = newconn()
+    cur = conn.cursor()
+    cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+    cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'language', '{language}')")
     conn.commit()
 
     return {"error": False}
@@ -453,11 +513,11 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         bio = str(form["bio"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
         
     if len(bio) > 1000:
         response.status_code = 413
-        return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"})}
+        return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
 
     cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
     conn.commit()
@@ -482,7 +542,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -496,10 +556,10 @@ async def patchPassword(request: Request, response: Response, authorization: str
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -510,24 +570,24 @@ async def patchPassword(request: Request, response: Response, authorization: str
         password = str(form["password"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if not "@" in email: # make sure it's not empty
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "invalid_email")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_email", force_lang = au["language"])}
         
     cur.execute(f"SELECT userid FROM user WHERE email = '{email}'")
     t = cur.fetchall()
     if len(t) > 1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email")}
+        return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email", force_lang = au["language"])}
         
     if len(password) >= 8:
         if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
             (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
-            return {"error": True, "descriptor": ml.tr(request, "weak_password")}
+            return {"error": True, "descriptor": ml.tr(request, "weak_password", force_lang = au["language"])}
     else:
-        return {"error": True, "descriptor": ml.tr(request, "weak_password")}
+        return {"error": True, "descriptor": ml.tr(request, "weak_password", force_lang = au["language"])}
 
     password = password.encode('utf-8')
     salt = bcrypt.gensalt()
@@ -558,7 +618,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
@@ -572,10 +632,10 @@ async def deletePassword(request: Request, response: Response, authorization: st
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -584,7 +644,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
     cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
@@ -615,14 +675,14 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         openid = str(form["callback"]).replace("openid.mode=id_res", "openid.mode=check_authentication")
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
     if r.status_code != 200:
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "steam_api_error")}
+        return {"error": True, "descriptor": ml.tr(request, "steam_api_error", force_lang = au["language"])}
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_steam_auth")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_steam_auth", force_lang = au["language"])}
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
@@ -630,7 +690,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     t = cur.fetchall()
     if len(t) > 0:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "steam_bound_to_other_account")}
+        return {"error": True, "descriptor": ml.tr(request, "steam_bound_to_other_account", force_lang = au["language"])}
 
     cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -644,7 +704,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         p = cur.fetchall()
         if len(p) > 0:
             response.status_code = 429
-            return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_7d")}
+            return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_7d", force_lang = au["language"])}
 
         for role in roles:
             if role == "100":
@@ -693,34 +753,34 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         truckersmpid = form["truckersmpid"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     try:
         truckersmpid = int(truckersmpid)
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
     r = requests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
     if r.status_code != 200:
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error")}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
     d = json.loads(r.text)
     if d["error"]:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound_before_truckersmp")}
+        return {"error": True, "descriptor": ml.tr(request, "steam_not_bound_before_truckersmp", force_lang = au["language"])}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]
     truckersmp_name = d["response"]["name"]
     if tmpsteamid != steamid:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)})}
+        return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)}, force_lang = au["language"])}
 
     cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
     conn.commit()
@@ -752,17 +812,17 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         reason = convert_quotation(form["reason"])
         if len(reason) > 256:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "reason", "limit": "256"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "reason", "limit": "256"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     if expire == -1:
         expire = 9999999999999999
     try:
         discordid = int(discordid)
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_discordid")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_discordid", force_lang = au["language"])}
 
     cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -772,7 +832,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         username = t[0][1]
         if userid != -1:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "dismiss_before_ban")}
+            return {"error": True, "descriptor": ml.tr(request, "dismiss_before_ban", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -787,7 +847,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         return {"error": False}
     else:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "user_already_banned")}
+        return {"error": True, "descriptor": ml.tr(request, "user_already_banned", force_lang = au["language"])}
 
 @app.delete(f'/{config.abbr}/user/ban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
@@ -812,12 +872,12 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "user_not_banned")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_banned", force_lang = au["language"])}
     else:
         cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
         conn.commit()
@@ -845,7 +905,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -856,7 +916,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         new_discord_id = int(form["new_discord_id"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
         
     if old_discord_id == new_discord_id:
         return {"error": False}
@@ -865,19 +925,19 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "user_must_register_first")}
+        return {"error": True, "descriptor": ml.tr(request, "user_must_register_first", force_lang = au["language"])}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {new_discord_id}")
     t = cur.fetchall()
     if len(t) > 0 and t[0][0] != -1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member")}
+        return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member", force_lang = au["language"])}
 
     cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
     cur.execute(f"DELETE FROM session WHERE discordid = {old_discord_id}")
@@ -907,7 +967,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -917,17 +977,17 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
     userid = t[0][0]
     if userid != -1:
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "dismiss_before_unbind")}
+        return {"error": True, "descriptor": ml.tr(request, "dismiss_before_unbind", force_lang = au["language"])}
     
     cur.execute(f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
     conn.commit()
@@ -957,7 +1017,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     if discordid != -1:
         au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
@@ -974,11 +1034,11 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         t = cur.fetchall()
         if len(t) == 0:
             response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+            return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
         userid = t[0][0]
         if userid != -1:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete")}
+            return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         
         username = getUserInfo(discordid = discordid)["name"]
         cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
@@ -1001,7 +1061,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         name = t[0][1]
         if userid != -1:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "leave_company_before_delete")}
+            return {"error": True, "descriptor": ml.tr(request, "leave_company_before_delete", force_lang = au["language"])}
         
         username = getUserInfo(discordid = discordid)["name"]
         cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")

@@ -23,19 +23,23 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if authorization != None:
         stoken = authorization.split(" ")[1]
     userid = -1
+    aulanguage = ""
     if stoken == "guest":
         userid = -1
     else:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            userid = -1
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             userid = au["userid"]
+            aulanguage = au["language"]
             activityUpdate(au["discordid"], "Viewing Announcements")
 
     if int(announcementid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
         
     conn = newconn()
     cur = conn.cursor()
@@ -44,7 +48,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
     return {"error": False, "response": {"announcement": {"announcementid": str(tt[5]), \
         "title": tt[0], "content": decompress(tt[1]), "author": getUserInfo(userid = tt[4]), \
@@ -64,14 +68,18 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if authorization != None:
         stoken = authorization.split(" ")[1]
     userid = -1
+    aulanguage = ""
     if stoken == "guest":
         userid = -1
     else:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            userid = -1
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             userid = au["userid"]
+            aulanguage = au["language"]
             activityUpdate(au["discordid"], "Viewing Announcements")
     
     conn = newconn()
@@ -146,10 +154,10 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -158,11 +166,11 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if not isAdmin and announcement_type != 1:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit")}
+        return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit", force_lang = au["language"])}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
     t = cur.fetchall()
@@ -221,10 +229,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         content = compress(form["content"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["content"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
         channelid = int(form["channelid"])
@@ -233,20 +241,20 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if int(announcementid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     creator = t[0][0]
     if creator != adminid and not isAdmin:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
     
     cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
     await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
@@ -292,16 +300,16 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
 
     if int(announcementid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     creator = t[0][0]
     if creator != adminid and not isAdmin: # creator or leadership
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete")}
+        return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM announcement WHERE announcementid = {announcementid}")
     await AuditLog(adminid, f"Deleted announcement `#{announcementid}`")

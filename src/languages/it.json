@@ -5,16 +5,6 @@
     "rate_limit": "Ti è stata applicata una tariffa limitata.",
     "bad_form": "Campo modulo mancante o impossibile analizzare i dati",
     "content_too_long": "La lunghezza massima di \"{item}\" è di {limit} caratteri.",
-    "config_invalid_value": "Valore non valido per \"{item}\": Non deve essere vuoto.",
-    "config_invalid_distance_unit": "Valore non valido per \"distance_unit\": Deve essere \"metric\" o \"imperial\".",
-    "config_invalid_datatype_boolean": "Tipo di dati non valido per \"{item}\": Deve essere booleano.",
-    "config_invalid_datatype_integar": "Tipo di dati non valido per \"{item}\": Deve essere intero.",
-    "config_invalid_hex_color": "Valore non valido per \"hex_color\": Deve essere una stringa esadecimale di 6 caratteri.",
-    "config_invalid_data_url": "Tipo di dati non valido per \"{item}\": Deve essere un URL valido.",
-    "config_invalid_permission_admin_not_found": "Valore non valido per \"perms\": \"admin\" permesso non trovato.",
-    "config_invalid_permission_admin_protection": "Aggiornamento dell'autorizzazione rifiutato: La nuova autorizzazione \"admin\" non include alcun ruolo dell'utente corrente.",
-    "discord_integrations_disabled": "Le integrazioni Discord sono state temporaneamente disabilitate a causa di un token Bot Discord non valido.",
-    "discord_api_inaccessible": "L'API Discord è inaccessibile. Questo dovrebbe essere un problema temporaneo.",
 
     "ban_with_reason_expire": "Sei stato bannato per {reason} fino alle {expire} UTC",
     "discord_check_fail": "Impossibile verificare se ti trovi nel server di Discord.",
@@ -31,6 +21,7 @@
     "mfa_invalid_otp": "OTP non valido.",
     "mfa_not_enabled": "MFA (autenticazione a più fattori) non è abilitato.",
     "mfa_required": "Devi abilitare MFA (autenticazione a più fattori) prima di continuare.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "ID di Discord non valido.",
     "dismiss_before_ban": "Rimuovi il membro dall'azienda prima di bannarlo.",
@@ -83,6 +74,20 @@
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Registro di consegna non trovato.",
 
+    "invalid_distance_unit": "Unità di distanza non valida. Sono accettati solo 'metrico' (km/h) e 'imperiale' (mi/h).",
+    "invalid_value": "Valore non valido {key}.",
+    "config_data_type_mismatch": "Il tipo di dati di una o più chiavi non corrisponde al tipo di dati originale.",
+    "config_invalid_value": "Valore non valido per \"{item}\": Non deve essere vuoto.",
+    "config_invalid_distance_unit": "Valore non valido per \"distance_unit\": Deve essere \"metric\" o \"imperial\".",
+    "config_invalid_datatype_boolean": "Tipo di dati non valido per \"{item}\": Deve essere booleano.",
+    "config_invalid_datatype_integar": "Tipo di dati non valido per \"{item}\": Deve essere intero.",
+    "config_invalid_hex_color": "Valore non valido per \"hex_color\": Deve essere una stringa esadecimale di 6 caratteri.",
+    "config_invalid_data_url": "Tipo di dati non valido per \"{item}\": Deve essere un URL valido.",
+    "config_invalid_permission_admin_not_found": "Valore non valido per \"perms\": \"admin\" permesso non trovato.",
+    "config_invalid_permission_admin_protection": "Aggiornamento dell'autorizzazione rifiutato: La nuova autorizzazione \"admin\" non include alcun ruolo dell'utente corrente.",
+    "discord_integrations_disabled": "Le integrazioni Discord sono state temporaneamente disabilitate a causa di un token Bot Discord non valido.",
+    "discord_api_inaccessible": "L'API Discord è inaccessibile. Questo dovrebbe essere un problema temporaneo.",
+
     "announcement_not_found": "Annuncio non trovato.",
     "event_staff_announcement_limit": "Solo lo Staff degli eventi può pubblicare annunci di eventi.",
     "announcement_only_creator_can_edit": "Solo il creatore dell'annuncio può modificare l'annuncio.",
@@ -114,6 +119,16 @@
     "application_updated": "Applicazione aggiornata",
     "application_message_recorded": "Questo è un promemoria che il tuo messaggio è stato registrato.",
 
+    "invalid_time_range": "L'ora di inizio deve essere un valore precedente all'ora di fine.",
+    "invalid_challenge_type": "Tipo di sfida non valido.",
+    "invalid_required_roles": "Ruoli obbligatori non validi.",
+    "invalid_reward_points": "I punti premio non devono essere negativi.",
+    "invalid_delivery_count": "Il conteggio delle consegne non deve essere negativo o pari a zero.",
+    "challenge_not_found": "Sfida non trovata.",
+    "challenge_delivery_not_found": "La consegna non è accettata per la sfida.",
+    "challenge_delivery_already_accepted": "La consegna è già accettata per la sfida.",
+    "maximum_15_active_challenge": "Sono consentite al massimo 15 sfide attive contemporaneamente.",
+
     "division_already_requested": "Hai già richiesto la convalida e attendi pazientemente fino a quando il supervisore non verificherà la tua richiesta.",
     "division_already_validated": "La consegna è già stata confermata",
     "division_already_denied": "La conferma di consegna è stata rifiutata e non è possibile richiedere una riconferma.",
@@ -124,19 +139,5 @@
     "downloads_not_found": "Articolo scaricabile non trovato.",
     "downloads_invalid_link": "Link non valido!",
 
-    "event_not_found": "Evento non trovato.",
-
-    "invalid_distance_unit": "Unità di distanza non valida. Sono accettati solo 'metrico' (km/h) e 'imperiale' (mi/h).",
-    "invalid_value": "Valore non valido {key}.",
-    "config_data_type_mismatch": "Il tipo di dati di una o più chiavi non corrisponde al tipo di dati originale.",
-
-    "invalid_time_range": "L'ora di inizio deve essere un valore precedente all'ora di fine.",
-    "invalid_challenge_type": "Tipo di sfida non valido.",
-    "invalid_required_roles": "Ruoli obbligatori non validi.",
-    "invalid_reward_points": "I punti premio non devono essere negativi.",
-    "invalid_delivery_count": "Il conteggio delle consegne non deve essere negativo o pari a zero.",
-    "challenge_not_found": "Sfida non trovata.",
-    "challenge_delivery_not_found": "La consegna non è accettata per la sfida.",
-    "challenge_delivery_already_accepted": "La consegna è già accettata per la sfida.",
-    "maximum_15_active_challenge": "Sono consentite al massimo 15 sfide attive contemporaneamente."
+    "event_not_found": "Evento non trovato."
 }

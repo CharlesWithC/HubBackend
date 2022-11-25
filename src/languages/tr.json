@@ -5,16 +5,6 @@
     "rate_limit": "Oturumunuza hız sınırlandırması uygulandı. Lütfen daha yavaş işlem yapınız..",
     "bad_form": "Form alanına eksik veri(ler) girdiniz veya girmiş olduğunuz veri(ler) sistem tarafından tanınamıyor/ayrıştırılamıyor.",
     "content_too_long": "Maksimum \"{item}\" uzunluğu {limit} karakter ile sınırlıdır.",
-    "config_invalid_value": "\"{item}\" için geçersiz değer: Boş olmamalıdır.",
-    "config_invalid_distance_unit": "\"Mesafe Birimi\" için geçersiz değer: \"metrik\" (km/h) veya \"emperyal\" (mi/h) olmalıdır.",
-    "config_invalid_datatype_boolean": "\"{item}\" için geçersiz veri türü: İlgili alan sadece 2 değer alabilir. Sadece Evet veya Hayır kabul edilir.",
-    "config_invalid_datatype_integar": "\"{item}\" için geçersiz veri türü: İlgili değer, bir Tamsayı değeri olmalıdır.",
-    "config_invalid_hex_color": "\"HEX kodu/rengi\" için geçersiz değer: Gireceğiniz değer, 6 karakterden oluşan HEX kodu tipinde bir hex kodu dizesi olmalıdır.",
-    "config_invalid_data_url": "\"{item}\" için geçersiz veri türü: İlgili URL, geçerli bir URL olmalıdır.",
-    "config_invalid_permission_admin_not_found": "\"izinleri\" için geçersiz değer: \"yönetici(admin)\" izni bulunamadı.",
-    "config_invalid_permission_admin_protection": "İzin güncellemesi reddedildi: Yeni \"yönetici(admin)\" izni, geçerli kullanıcının sahip olduğu herhangi bir rolü içermiyor.",
-    "discord_integrations_disabled": "Discord Entegrasyonları, geçersiz Discord Bot Tokeni sebebiyle geçici olarak devre dışı bırakıldı.",
-    "discord_api_inaccessible": "Discord APIsine şu anda erişilemiyor. Bu geçici bir sorun olmalıdır.",
 
     "ban_with_reason_expire": "{reason} sebebiye, {expire} UTC tarihine kadar yasaklandınız",
     "discord_check_fail": "Discord sunucusunda olup olmadığınız kontrol edilemedi.",
@@ -31,6 +21,7 @@
     "mfa_invalid_otp": "Geçersiz OTP. (Tek seferlik şifre)",
     "mfa_not_enabled": "MFA (çok faktörlü doğrulama) etkinleştirilmedi.",
     "mfa_required": "Devam etmeden önce MFA'yı (çok faktörlü doğrulama) etkinleştirmeniz gerekir.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "Geçersiz Discord kimliği. (ID)",
     "dismiss_before_ban": "Yasaklamadan önce üyeyi şirketten çıkart.",
@@ -83,6 +74,20 @@
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Teslimat günlüğü bulunamadı.",
 
+    "invalid_distance_unit": "Geçersiz mesafe birimi. Yalnızca 'metrik' (km/h) ve 'emperyal' (mi/h) kabul edilir.",
+    "invalid_value": "{key} için geçersiz değer.",
+    "config_data_type_mismatch": "Bir veya daha fazla anahtarın (key) veri türü, orijinal veri türüyle eşleşmiyor.",
+    "config_invalid_value": "\"{item}\" için geçersiz değer: Boş olmamalıdır.",
+    "config_invalid_distance_unit": "\"Mesafe Birimi\" için geçersiz değer: \"metrik\" (km/h) veya \"emperyal\" (mi/h) olmalıdır.",
+    "config_invalid_datatype_boolean": "\"{item}\" için geçersiz veri türü: İlgili alan sadece 2 değer alabilir. Sadece Evet veya Hayır kabul edilir.",
+    "config_invalid_datatype_integar": "\"{item}\" için geçersiz veri türü: İlgili değer, bir Tamsayı değeri olmalıdır.",
+    "config_invalid_hex_color": "\"HEX kodu/rengi\" için geçersiz değer: Gireceğiniz değer, 6 karakterden oluşan HEX kodu tipinde bir hex kodu dizesi olmalıdır.",
+    "config_invalid_data_url": "\"{item}\" için geçersiz veri türü: İlgili URL, geçerli bir URL olmalıdır.",
+    "config_invalid_permission_admin_not_found": "\"izinleri\" için geçersiz değer: \"yönetici(admin)\" izni bulunamadı.",
+    "config_invalid_permission_admin_protection": "İzin güncellemesi reddedildi: Yeni \"yönetici(admin)\" izni, geçerli kullanıcının sahip olduğu herhangi bir rolü içermiyor.",
+    "discord_integrations_disabled": "Discord Entegrasyonları, geçersiz Discord Bot Tokeni sebebiyle geçici olarak devre dışı bırakıldı.",
+    "discord_api_inaccessible": "Discord APIsine şu anda erişilemiyor. Bu geçici bir sorun olmalıdır.",
+
     "announcement_not_found": "Duyuru bulunamadı.",
     "event_staff_announcement_limit": "Etkinlik personeli yalnızca etkinlik duyuruları paylaşabilir.",
     "announcement_only_creator_can_edit": "Duyuruyu yalnızca, duyuruyu oluşturan kişi düzenleyebilir.",
@@ -114,6 +119,16 @@
     "application_updated": "Başvuru Güncellendi",
     "application_message_recorded": "Bu, mesajınızın kaydedildiğinin bir hatırlatıcısıdır.",
 
+    "invalid_time_range": "Başlangıç zamanı, bitiş zamanından önceki bir tarih değeri olmalıdır.",
+    "invalid_challenge_type": "Geçersiz mücadele türü.",
+    "invalid_required_roles": "Geçersiz gerekli roller.",
+    "invalid_reward_points": "Ödül puanları negatif bir sayı olmamalıdır.",
+    "invalid_delivery_count": "Teslimat sayısı negatif veya 0 (sıfır) olmamalıdır.",
+    "challenge_not_found": "Mücadele bulunamadı.",
+    "challenge_delivery_not_found": "Teslimat mücadele için kabul edilmedi.",
+    "challenge_delivery_already_accepted": "Teslimat mücadele için zaten kabul edildi.",
+    "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif mücadeleye izin verilmektedir.",
+
     "division_already_requested": "Zaten bir teslimat onaylama talebinde bulundunuz ve lütfen denetmen talebinizi kontrol edene kadar sabırla bekleyiniz.",
     "division_already_validated": "Teslimat zaten onaylandı.",
     "division_already_denied": "Teslimat onayı reddedildi ve tekrar onaylama talebinde bulunamazsınız.",
@@ -124,19 +139,5 @@
     "downloads_not_found": "İndirilebilir öğe bulunamadı.",
     "downloads_invalid_link": "Geçersiz indirme bağlantısı linki.",
 
-    "event_not_found": "Etkinlik bulunamadı.",
-
-    "invalid_distance_unit": "Geçersiz mesafe birimi. Yalnızca 'metrik' (km/h) ve 'emperyal' (mi/h) kabul edilir.",
-    "invalid_value": "{key} için geçersiz değer.",
-    "config_data_type_mismatch": "Bir veya daha fazla anahtarın (key) veri türü, orijinal veri türüyle eşleşmiyor.",
-
-    "invalid_time_range": "Başlangıç zamanı, bitiş zamanından önceki bir tarih değeri olmalıdır.",
-    "invalid_challenge_type": "Geçersiz mücadele türü.",
-    "invalid_required_roles": "Geçersiz gerekli roller.",
-    "invalid_reward_points": "Ödül puanları negatif bir sayı olmamalıdır.",
-    "invalid_delivery_count": "Teslimat sayısı negatif veya 0 (sıfır) olmamalıdır.",
-    "challenge_not_found": "Mücadele bulunamadı.",
-    "challenge_delivery_not_found": "Teslimat mücadele için kabul edilmedi.",
-    "challenge_delivery_already_accepted": "Teslimat mücadele için zaten kabul edildi.",
-    "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif mücadeleye izin verilmektedir."
+    "event_not_found": "Etkinlik bulunamadı."
 }

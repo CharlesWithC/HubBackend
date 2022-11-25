@@ -470,14 +470,14 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     form = await request.form()
     try:
         hsh = form["hash"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
@@ -495,7 +495,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": False}
     else:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token")}
+        return {"error": True, "descriptor": ml.tr(request, "hash_does_not_match_any_token", force_lang = au["language"])}
 
 @app.delete(f'/{config.abbr}/token/all')
 async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None), \
@@ -516,7 +516,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -548,7 +548,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -562,10 +562,10 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
     stoken = str(uuid4())
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
@@ -592,7 +592,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -606,10 +606,10 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     conn.commit()
@@ -688,7 +688,7 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
     secret = t[0][0]
     if secret != "":
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "mfa_already_enabled")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_already_enabled", force_lang = au["language"])}
     
     form = await request.form()
     try:
@@ -696,21 +696,21 @@ async def putMFA(request: Request, response: Response, authorization: str = Head
         otp = int(form["otp"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if len(secret) != 16 or not secret.isalnum():
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
     
     try:
         base64.b32decode(secret)
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
 
     if not valid_totp(otp, secret):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
     cur.execute(f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
     conn.commit()
@@ -812,18 +812,18 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         secret = t[0][0]
         if secret == "":
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "mfa_not_enabled")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_not_enabled", force_lang = au["language"])}
     
         form = await request.form()
         try:
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         
         if not valid_totp(otp, secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         
         cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         conn.commit()
@@ -849,7 +849,7 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         t = cur.fetchall()
         if len(t) == 0:
             response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+            return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
         secret = t[0][0]
         if secret == "":
             response.status_code = 428

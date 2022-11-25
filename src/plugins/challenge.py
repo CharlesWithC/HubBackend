@@ -78,7 +78,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
     tot = 0 if tot is None else int(tot)
     if tot >= 15:
         response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "maximum_15_active_challenge")}
+        return {"error": True, "descriptor": ml.tr(request, "maximum_15_active_challenge", force_lang = au["language"])}
 
     form = await request.form()
     try:
@@ -86,10 +86,10 @@ async def postChallenge(request: Request, response: Response, authorization: str
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         challenge_type = int(form["challenge_type"])
@@ -103,15 +103,15 @@ async def postChallenge(request: Request, response: Response, authorization: str
         job_requirements = json.loads(form["job_requirements"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
     if start_time >= end_time:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_time_range")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_time_range", force_lang = au["language"])}
 
     if not challenge_type in [1, 2, 3]:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_challenge_type")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_challenge_type", force_lang = au["language"])}
     
     roles = required_roles.split(",")
     rolereq = []
@@ -122,20 +122,20 @@ async def postChallenge(request: Request, response: Response, authorization: str
             rolereq.append(str(int(role)))
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "invalid_required_roles")}
+            return {"error": True, "descriptor": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
     rolereq = rolereq[:20]
     required_roles = "," + ",".join(rolereq) + ","
 
     if delivery_count <= 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
 
     if required_distance < 0:
         required_distance = 0
 
     if reward_points < 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_reward_points")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
 
     jobreq = []
     for req in JOB_REQUIREMENTS:
@@ -183,13 +183,13 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 
     if int(challengeid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT delivery_count, challenge_type FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     org_delivery_count = t[0][0]
     challenge_type = t[0][1]
 
@@ -199,10 +199,10 @@ async def patchChallenge(request: Request, response: Response, authorization: st
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         delivery_count = int(form["delivery_count"])
@@ -215,11 +215,11 @@ async def patchChallenge(request: Request, response: Response, authorization: st
         job_requirements = json.loads(form["job_requirements"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
     if start_time >= end_time:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_time_range")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_time_range", force_lang = au["language"])}
     
     roles = required_roles.split(",")
     rolereq = []
@@ -230,20 +230,20 @@ async def patchChallenge(request: Request, response: Response, authorization: st
             rolereq.append(str(int(role)))
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "invalid_required_roles")}
+            return {"error": True, "descriptor": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
     rolereq = rolereq[:20]
     required_roles = "," + ",".join(rolereq) + ","
 
     if delivery_count <= 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
 
     if required_distance < 0:
         required_distance = 0
 
     if reward_points < 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_reward_points")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
 
     jobreq = []
     for req in JOB_REQUIREMENTS:
@@ -412,13 +412,13 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 
     if int(challengeid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM challenge WHERE challengeid = {challengeid}")
     cur.execute(f"DELETE FROM challenge_record WHERE challengeid = {challengeid}")
@@ -454,20 +454,20 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
         logid = int(form["logid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
 
     if int(challengeid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     delivery_count = t[0][0]
     challenge_type = t[0][1]
     reward_points = t[0][2]
@@ -477,13 +477,13 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     t = cur.fetchall()
     if len(t) != 0:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "challenge_delivery_already_accepted")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_delivery_already_accepted", force_lang = au["language"])}
     
     cur.execute(f"SELECT userid, timestamp FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
     userid = t[0][0]
     timestamp = t[0][1]
     cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")    
@@ -570,13 +570,13 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 
     if int(challengeid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     delivery_count = t[0][0]
     challenge_type = t[0][1]
     reward_points = t[0][2]
@@ -586,7 +586,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_delivery_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_delivery_not_found", force_lang = au["language"])}
     userid = t[0][0]
     
     cur.execute(f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
@@ -706,13 +706,13 @@ async def getChallenge(request: Request, response: Response, authorization: str 
     if userid == -1:
         userid = au["userid"]
     isstaff = False
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
-    if not au["error"]:
+    staffau = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    if not staffau["error"]:
         isstaff = True
 
     if int(challengeid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
@@ -723,7 +723,7 @@ async def getChallenge(request: Request, response: Response, authorization: str 
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     tt = t[0]
     public_details = tt[9]
     jobreq = {}

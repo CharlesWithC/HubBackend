@@ -116,10 +116,10 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         formconfig = json.loads(form["config"])
         if len(form["config"]) > 150000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "150,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "150,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     ttconfig = json.loads(open(config_path, "r").read())
 
@@ -129,17 +129,17 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
                 if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt})}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "distance_unit":
                 if not formconfig[tt] in ["metric", "imperial"]:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_distance_unit")}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
             
             if tt in ["truckersmp_bind", "privacy", "in_guild_check"]:
                 if type(formconfig[tt]) != bool:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt})}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
             if tt in ["guild_id", "navio_company_id", "delivery_log_channel_id", "discord_client_id"]:
                 try:
@@ -149,7 +149,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         formconfig[tt] = "0"
                     else:
                         response.status_code = 400
-                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integar", var = {"item": tt})}
+                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integar", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "hex_color":
                 formconfig[tt] = formconfig[tt][-6:]
@@ -160,7 +160,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     intcolor = int(hex_color, 16)
                 except:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_hex_color")}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_hex_color", force_lang = au["language"])}
 
             if tt == "delivery_post_gifs":
                 p = []
@@ -172,13 +172,13 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             if tt in ["logo_url", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
                 if formconfig[tt] != "" and not isurl(formconfig[tt]):
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_data_url", var = {"item": tt})}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_data_url", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "perms":
                 newperms = formconfig[tt]
                 if not "admin" in newperms:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_not_found")}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
                 ar = newperms["admin"]
                 adminroles = []
                 for arr in ar:
@@ -189,7 +189,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         ok = True
                 if not ok:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_protection")}
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_protection", force_lang = au["language"])}
 
             if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
                 ttconfig[tt] = copy.deepcopy(str(formconfig[tt]))
@@ -226,17 +226,17 @@ async def putReload(request: Request, response: Response, authorization: str = H
     mfa_secret = t[0][0]
     if mfa_secret == "":
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "mfa_required")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_required", force_lang = au["language"])}
     
     form = await request.form()
     try:
         otp = int(form["otp"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     if not valid_totp(otp, mfa_secret):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     await AuditLog(adminid, "Reloaded service")
 

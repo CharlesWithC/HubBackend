@@ -254,7 +254,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         qu = f"truckersmpid = {truckersmpid}"
     else:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
@@ -263,7 +263,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     if userid == -1:
         return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={t[0][5]}", status_code=302)
@@ -453,22 +453,22 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     try:
         if config.discord_bot_token == "":
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         try:
             r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         except:
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
             
         if r.status_code == 401:
             DisableDiscordIntegration()
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled")}
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         elif r.status_code != 200:
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible")}
+            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
 
         d = json.loads(r.text)
         if "roles" in d:
@@ -479,7 +479,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     curroles.append(int(role))
             if rank in curroles:
                 response.status_code = 409
-                return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role")}
+                return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
             else:
                 requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
                 for role in curroles:
@@ -499,7 +499,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "must_join_discord")}
+            return {"error": True, "descriptor": ml.tr(request, "must_join_discord", force_lang = au["language"])}
 
     except:
         import traceback
@@ -529,13 +529,13 @@ async def putMember(request: Request, response: Response, authorization: str = H
         discordid = int(form["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = cur.fetchall()
     if len(t) > 0:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted")}
+        return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
     t = cur.fetchall()
@@ -545,10 +545,10 @@ async def putMember(request: Request, response: Response, authorization: str = H
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
     if t[0][0] != -1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "already_member")}
+        return {"error": True, "descriptor": ml.tr(request, "already_member", force_lang = au["language"])}
 
     name = t[0][1]
     cur.execute(f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
@@ -601,10 +601,10 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         roles = str(form["roles"]).split(",")
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     if userid < 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_userid")}
+        return {"error": True, "descriptor": ml.tr(request, "invalid_userid", force_lang = au["language"])}
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
@@ -612,7 +612,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "member_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "member_not_found", force_lang = au["language"])}
     username = t[0][0]
     oldroles = t[0][1].split(",")
     steamid = t[0][2]
@@ -633,12 +633,12 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     for add in addedroles:
         if add <= adminhighest:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal")}
+            return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
     
     for remove in removedroles:
         if remove <= adminhighest:
             response.status_code = 403
-            return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal")}
+            return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
 
     if len(addedroles) + len(removedroles) == 0:
         return {"error": False}
@@ -660,15 +660,15 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                 ok = True
         if not ok:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "losing_admin_permission")}
+            return {"error": True, "descriptor": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
 
     if config.perms.driver[0] in addedroles:
         if steamid <= 0:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "steam_not_bound")}
+            return {"error": True, "descriptor": ml.tr(request, "steam_not_bound", force_lang = au["language"])}
         if truckersmpid <= 0 and config.truckersmp_bind:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound")}
+            return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
 
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
@@ -771,7 +771,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         mythpoint = int(form["mythpoint"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if distance != 0:
         if distance > 0:
@@ -813,7 +813,7 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     conn = newconn()
     cur = conn.cursor()
@@ -827,10 +827,10 @@ async def deleteMember(request: Request, response: Response, authorization: str 
             otp = int(form["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp")}
+            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
@@ -865,7 +865,7 @@ async def dismissMember(request: Request, response: Response, authorization: str
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data")}
+        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     conn = newconn()
     cur = conn.cursor()
@@ -879,7 +879,7 @@ async def dismissMember(request: Request, response: Response, authorization: str
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
     userid = t[0][0]
     steamid = t[0][1]
     name = t[0][2]
@@ -893,7 +893,7 @@ async def dismissMember(request: Request, response: Response, authorization: str
             highest = int(i)
     if adminhighest >= highest:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal")}
+        return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()

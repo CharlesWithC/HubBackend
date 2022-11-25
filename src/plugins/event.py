@@ -89,14 +89,18 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if authorization != None:
         stoken = authorization.split(" ")[1]
     userid = -1
+    aulanguage = ""
     if stoken == "guest":
         userid = -1
     else:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            userid = -1
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             userid = au["userid"]
+            aulanguage = au["language"]
             activityUpdate(au["discordid"], f"Viewing Events")
     
     conn = newconn()
@@ -104,13 +108,13 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = aulanguage)}
 
     cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = aulanguage)}
     tt = t[0]
     attendee = tt[9].split(",")
     vote = tt[10].split(",")
@@ -148,14 +152,18 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if authorization != None:
         stoken = authorization.split(" ")[1]
     userid = -1
+    aulanguage = ""
     if stoken == "guest":
         userid = -1
     else:
         au = auth(authorization, request, allow_application_token = True)
         if au["error"]:
-            userid = -1
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             userid = au["userid"]
+            aulanguage = au["language"]
             activityUpdate(au["discordid"], f"Viewing Events")
     
     conn = newconn()
@@ -306,13 +314,13 @@ async def putEventVote(request: Request, response: Response, authorization: str 
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     vote = t[0][0].split(",")
     if str(userid) in vote:
         vote.remove(str(userid))
@@ -355,25 +363,25 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
     t = cur.fetchall()
@@ -405,13 +413,13 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
         
     cur.execute(f"SELECT userid FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
     form = await request.form()
     try:
@@ -425,25 +433,25 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         description = compress(form["description"])
         if len(form["title"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["departure"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
         if len(form["destination"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
         if len(form["distance"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         is_private = 0
         if form["is_private"] == "true":
             is_private = 1
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
     cur.execute(f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', \
         distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
@@ -472,13 +480,13 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
     cur.execute(f"DELETE FROM event WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Deleted event `#{eventid}`")
@@ -512,17 +520,17 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         points = int(form["points"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if int(eventid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
     cur.execute(f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "event_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     orgattendees = t[0][0].split(",")
     while "" in orgattendees:
         orgattendees.remove("")

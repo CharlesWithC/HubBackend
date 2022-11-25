@@ -72,11 +72,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
             t = cur.fetchall()
             if len(t) == 0:
                 response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated", force_lang = au["language"])}
             duserid = t[0][0]
             if duserid != userid:
                 response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated", force_lang = au["language"])}
             else:
                 return {"error": False, "response": {"divisionid": "-1", "status": "-1"}}
         tt = t[0]
@@ -96,7 +96,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         if not ok:
             if userid != duserid and status != 1:
                 response.status_code = 404
-                return {"error": True, "descriptor": ml.tr(request, "division_not_validated")}
+                return {"error": True, "descriptor": ml.tr(request, "division_not_validated", force_lang = au["language"])}
 
         if userid == duserid or ok: # delivery driver check division / division staff check delivery
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
@@ -155,17 +155,17 @@ async def postDivision(request: Request, response: Response, authorization: str 
         logid = int(form["logid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
     luserid = t[0][0]
     if userid != luserid:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "Forbidden")}
+        return {"error": True, "descriptor": ml.tr(request, "Forbidden", force_lang = au["language"])}
 
     cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
@@ -173,11 +173,11 @@ async def postDivision(request: Request, response: Response, authorization: str 
         response.status_code = 409
         status = t[0][0]
         if status == 0:
-            return {"error": True, "descriptor": ml.tr(request, "division_already_requested")}
+            return {"error": True, "descriptor": ml.tr(request, "division_already_requested", force_lang = au["language"])}
         elif status == 1:
-            return {"error": True, "descriptor": ml.tr(request, "division_already_validated")}
+            return {"error": True, "descriptor": ml.tr(request, "division_already_validated", force_lang = au["language"])}
         elif status == 2:
-            return {"error": True, "descriptor": ml.tr(request, "division_already_denied")}
+            return {"error": True, "descriptor": ml.tr(request, "division_already_denied", force_lang = au["language"])}
     
     cur.execute(f"SELECT roles FROM user WHERE userid = {userid}")
     t = cur.fetchall()
@@ -195,7 +195,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
                     pass
     if not divisionid in udivisions:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "not_division_driver")}
+        return {"error": True, "descriptor": ml.tr(request, "not_division_driver", force_lang = au["language"])}
     
     cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     conn.commit()
@@ -298,16 +298,16 @@ async def patchDivision(request: Request, response: Response, authorization: str
         status = int(form["status"])
         if len(form["message"]) > 200:
             response.status_code = 413
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"})}
+            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form")}
+        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
     cur.execute(f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found")}
+        return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found", force_lang = au["language"])}
     if not divisionid in divisiontxt.keys():
         divisionid = t[0][0]
     userid = t[0][2]

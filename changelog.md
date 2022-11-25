@@ -6,9 +6,11 @@
 **[Minor changes]**  
 2.Changed `unauthorized` responses due to insufficient permission to `forbidden`  
 3.Updated upgrader to require `upgrade` parameter in `sys.argv`  
+4.Added `config.language` to set company language for delivery log embed (audit log will always be in English)  
 **[Major changes]**  
-4.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
-5.Added `config.language` to set company language for delivery log embed (audit log will always be in English)  
+5.*[Dlog]* Added endpoint to delete deivery log: **DELETE** `/dlog`  
+6.*[User]* Added endpoint to set and get language: **GET**, **PATCH** `/user/language`  
+7.Updated `ml.translate` to consider user language if set (if not, then fall back to `Accept-Language`)  
 0.Added `multilang_helper` to better manage translations internally  
 
 **v1.20.3**  

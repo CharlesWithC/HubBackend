@@ -15,16 +15,6 @@ EN_STRINGTABLE = {
     "rate_limit": "You are being rate limited.",
     "bad_form": "Form field missing or data cannot be parsed",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
-    "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
-    "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
-    "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
-    "config_invalid_datatype_integar": "Invalid data type for \"{item}\": Must be integar.",
-    "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
-    "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
-    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
-    "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
-    "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
-    "discord_api_inaccessible": "Discord API is inaccessible. This should be a temporary issue.",
 
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",
@@ -41,6 +31,7 @@ EN_STRINGTABLE = {
     "mfa_invalid_otp": "Invalid OTP.",
     "mfa_not_enabled": "MFA not enabled.",
     "mfa_required": "You have to enable MFA before continuing.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "Invalid Discord ID.",
     "dismiss_before_ban": "Dismiss member before banning.",
@@ -93,6 +84,20 @@ EN_STRINGTABLE = {
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Delivery log not found.",
 
+    "invalid_distance_unit": "Invalid distance unit. Only \"metric\" and \"imperial\" is accepted.",
+    "invalid_value": "Invalid value for {key}",
+    "config_data_type_mismatch": "Data type of one or more keys does not match original data type.",
+    "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
+    "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
+    "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
+    "config_invalid_datatype_integar": "Invalid data type for \"{item}\": Must be integar.",
+    "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
+    "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
+    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
+    "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
+    "discord_api_inaccessible": "Discord API is inaccessible. This should be a temporary issue.",
+
     "announcement_not_found": "Announcement not found.",
     "event_staff_announcement_limit": "Event staff can only post event announcements.",
     "announcement_only_creator_can_edit": "Only announcement creator can edit the announcement.",
@@ -124,6 +129,16 @@ EN_STRINGTABLE = {
     "application_updated": "Application Updated",
     "application_message_recorded": "This is a reminder that your message has been recorded.",
 
+    "invalid_time_range": "Start time must be earlier than end time.",
+    "invalid_challenge_type": "Invalid challenge type.",
+    "invalid_required_roles": "Invalid required roles.",
+    "invalid_reward_points": "Reward points must not be negative.",
+    "invalid_delivery_count": "Delivery count must not be negative or zero.",
+    "challenge_not_found": "Challenge not found.",
+    "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
+    "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
+    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time.",
+
     "division_already_requested": "You have already requested validation and please wait patiently until supervisor check your request.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you may not request validation again.",
@@ -134,21 +149,7 @@ EN_STRINGTABLE = {
     "downloads_not_found": "Downloadable item not found.",
     "downloads_invalid_link": "Invalid link.",
 
-    "event_not_found": "Event not found.",
-
-    "invalid_distance_unit": "Invalid distance unit. Only \"metric\" and \"imperial\" is accepted.",
-    "invalid_value": "Invalid value for {key}",
-    "config_data_type_mismatch": "Data type of one or more keys does not match original data type.",
-
-    "invalid_time_range": "Start time must be earlier than end time.",
-    "invalid_challenge_type": "Invalid challenge type.",
-    "invalid_required_roles": "Invalid required roles.",
-    "invalid_reward_points": "Reward points must not be negative.",
-    "invalid_delivery_count": "Delivery count must not be negative or zero.",
-    "challenge_not_found": "Challenge not found.",
-    "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
-    "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
-    "maximum_15_active_challenge": "At most 15 active challenges is allowed at the same time."
+    "event_not_found": "Event not found."
 }
 
 def get_lang(request: Request):
@@ -158,13 +159,13 @@ def get_lang(request: Request):
     lang = lang.split('-')[0]
     return lang
 
-def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
+def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
     lang = get_lang(request)
     langdir = config.language_dir
     if not os.path.exists(langdir + "/" + lang + ".json"): # no translation for language
         lang = "en" 
-    if force_en:
-        lang = "en"
+    if force_lang != "":
+        lang = force_lang
     langdata = EN_STRINGTABLE
     if lang != "en":
         langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
@@ -186,16 +187,16 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_en: Op
         else: # invalid key
             return ""
 
-def tr(request: Request, key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False): # abbreviation of translate
-    return translate(request, key, var, force_en)
+def tr(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""): # abbreviation of translate
+    return translate(request, key, var, force_lang)
 
-def company_translate(key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
+def company_translate(key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
     lang = config.language
     langdir = config.language_dir
     if not os.path.exists(langdir + "/" + lang + ".json"): # no translation for language
         lang = "en" 
-    if force_en:
-        lang = "en"
+    if force_lang != "":
+        lang = force_lang
     langdata = EN_STRINGTABLE
     if lang != "en":
         langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
@@ -217,5 +218,5 @@ def company_translate(key: str, var: Optional[dict] = {}, force_en: Optional[boo
         else: # invalid key
             return ""
 
-def ctr(key: str, var: Optional[dict] = {}, force_en: Optional[bool] = False):
-    return company_translate(key, var, force_en)
+def ctr(key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
+    return company_translate(key, var, force_lang)

@@ -5,16 +5,6 @@
     "rate_limit": "Du bliver prisbegrænset.",
     "bad_form": "Formularfelt mangler, eller data kan ikke parses",
     "content_too_long": "Maksimal længde af \"{item}\" er {limit} tegn.",
-    "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
-    "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
-    "config_invalid_datatype_boolean": "Ugyldig datatype for \"{item}\": Skal være boolesk.",
-    "config_invalid_datatype_integar": "Ugyldig datatype for \"{item}\": Skal være integar.",
-    "config_invalid_hex_color": "Ugyldig værdi for \"hex_color\": Skal være en hex-streng på 6 tegn.",
-    "config_invalid_data_url": "Ugyldig datatype for \"{item}\": Skal være en gyldig URL.",
-    "config_invalid_permission_admin_not_found": "Ugyldig værdi for \"perms\": \"admin\"-tilladelse blev ikke fundet.",
-    "config_invalid_permission_admin_protection": "Tilladelsesopdatering afvist: Ny \"admin\"-tilladelse inkluderer ikke nogen rolle, som den nuværende bruger har.",
-    "discord_integrations_disabled": "Discord-integrationer er blevet deaktiveret midlertidigt på grund af ugyldigt Discord Bot-token.",
-    "discord_api_inaccessible": "Discord API er utilgængelig. Dette burde være et midlertidigt problem.",
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",
@@ -31,6 +21,7 @@
     "mfa_invalid_otp": "Ugyldig engangskode.",
     "mfa_not_enabled": "MFA ikke aktiv.",
     "mfa_required": "Du skal aktivere MFA, før du fortsætter.",
+    "language_not_supported": "Language is not supported.",
 
     "invalid_discordid": "Invalid Discord ID.",
     "dismiss_before_ban": "Afsig medlemet for ban.",
@@ -83,6 +74,20 @@
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Leverings log blev ikke fundet.",
 
+    "invalid_distance_unit": "Ugyldig afstandsenhed. Kun \"metric\" og \"imperial\" accepteres.",
+    "invalid_value": "Ugyldig værdi for {key}",
+    "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype.",
+    "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
+    "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
+    "config_invalid_datatype_boolean": "Ugyldig datatype for \"{item}\": Skal være boolesk.",
+    "config_invalid_datatype_integar": "Ugyldig datatype for \"{item}\": Skal være integar.",
+    "config_invalid_hex_color": "Ugyldig værdi for \"hex_color\": Skal være en hex-streng på 6 tegn.",
+    "config_invalid_data_url": "Ugyldig datatype for \"{item}\": Skal være en gyldig URL.",
+    "config_invalid_permission_admin_not_found": "Ugyldig værdi for \"perms\": \"admin\"-tilladelse blev ikke fundet.",
+    "config_invalid_permission_admin_protection": "Tilladelsesopdatering afvist: Ny \"admin\"-tilladelse inkluderer ikke nogen rolle, som den nuværende bruger har.",
+    "discord_integrations_disabled": "Discord-integrationer er blevet deaktiveret midlertidigt på grund af ugyldigt Discord Bot-token.",
+    "discord_api_inaccessible": "Discord API er utilgængelig. Dette burde være et midlertidigt problem.",
+
     "announcement_not_found": "Bekendtgørelse ikke funder.",
     "event_staff_announcement_limit": "Kun Event staff kan poste event bekendtgørelser.",
     "announcement_only_creator_can_edit": "Kun bekendtgørelses ejeren kan lave ændringer.",
@@ -114,6 +119,16 @@
     "application_updated": "Ansøgning opdateret",
     "application_message_recorded": "Dette er en påmindelse om at din besked er blevet optaget.",
 
+    "invalid_time_range": "Starttidspunktet skal være tidligere end sluttidspunktet.",
+    "invalid_challenge_type": "Ugyldig udfordringstype.",
+    "invalid_required_roles": "Ugyldige påkrævede roller.",
+    "invalid_reward_points": "Belønningspoint må ikke være negative.",
+    "invalid_delivery_count": "Leveringsantallet må ikke være negativt eller nul.",
+    "challenge_not_found": "Udfordring ikke fundet.",
+    "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
+    "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
+    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid.",
+
     "division_already_requested": "Du har allerede anmodet om validering, vent venligst tålmodigt indtil en supervisor tjekker din anmodning.",
     "division_already_validated": "Leveringen er blevet valideret.",
     "division_already_denied": "Leveringen er blevet afvist, og du kan ikke anmode om validering igen.",
@@ -124,19 +139,5 @@
     "downloads_not_found": "Downloadbar element blev ikke fundet.",
     "downloads_invalid_link": "Ugyldigt link.",
 
-    "event_not_found": "Begivenhed ikke fundet.",
-
-    "invalid_distance_unit": "Ugyldig afstandsenhed. Kun \"metric\" og \"imperial\" accepteres.",
-    "invalid_value": "Ugyldig værdi for {key}",
-    "config_data_type_mismatch": "Datatypen for en eller flere nøgler matcher ikke den oprindelige datatype.",
-
-    "invalid_time_range": "Starttidspunktet skal være tidligere end sluttidspunktet.",
-    "invalid_challenge_type": "Ugyldig udfordringstype.",
-    "invalid_required_roles": "Ugyldige påkrævede roller.",
-    "invalid_reward_points": "Belønningspoint må ikke være negative.",
-    "invalid_delivery_count": "Leveringsantallet må ikke være negativt eller nul.",
-    "challenge_not_found": "Udfordring ikke fundet.",
-    "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
-    "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
-    "maximum_15_active_challenge": "Maksimalt 15 aktive udfordringer er tilladt på samme tid."
+    "event_not_found": "Begivenhed ikke fundet."
 }

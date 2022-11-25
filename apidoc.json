@@ -1163,6 +1163,81 @@
                 }
             }
         },
+        "/abbr/user/language": {
+            "get": {
+                "summary": "Get User Language",
+                "tags": ["user"],
+                "operationId": "get_user_language",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update User Language",
+                "tags": ["user"],
+                "operationId": "patch_user_language",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "language": {
+                                        "description": "Language Code",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["language"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/user/bio": {
             "patch": {
                 "summary": "Edit Bio",
@@ -1180,7 +1255,7 @@
                                 "properties": {
                                     "bio": {
                                         "description": "Bio (Maximum number of characters: 1000)",
-                                        "type": "integer"
+                                        "type": "string"
                                     }
                                 }
                             },
