@@ -367,20 +367,34 @@ def GetUserLanguage(discordid, default_language = ""):
         return default_language
     return t[0][0]
 
-def notification(discordid, content, no_discord_notification = False, discord_embed = {}):
+def notification(notification_type, discordid, content, no_drivershub_notification = False, \
+        no_discord_notification = False, discord_embed = {}):
     content = convert_quotation(content)
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'drivershub-notification' AND sval = 'disabled'")
+    
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
     t = cur.fetchall()
-    if len(t) == 0:
+    if len(t) != 0:
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
+
+    if notification_type in settings.keys() and not settings[notification_type]:
+        return
+
+    if settings["drivershub"] and not no_drivershub_notification:
         cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
         t = cur.fetchall()
         nxtnotificationid = int(t[0][0])
         cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
         cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
         conn.commit()
-    if not no_discord_notification:
+    
+    if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
             SendDiscordNotification(discordid, {"embed": {"title": discord_embed["title"], 
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": config.name, "icon_url": config.logo_url}, \

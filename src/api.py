@@ -60,6 +60,16 @@ async def ping():
     up_time_second = int(time.time()) - DH_START_TIME
     return {"error": False, "response": {"status": "active", "uptime": str(timedelta(seconds = up_time_second))}}
 
+# supported languages
+@app.get(f'/{config.abbr}/languages')
+async def languages():
+    l = os.listdir(config.language_dir)
+    t = []
+    for ll in l:
+        t.append(ll.split(".")[0])
+    t = sorted(t)
+    return {"error": False, "response": {"company": config.language, "supported": t}}
+
 # error handler to uniform error response
 @app.exception_handler(StarletteHTTPException)
 async def errorHandler(request: Request, exc: StarletteHTTPException):

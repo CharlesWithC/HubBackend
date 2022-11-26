@@ -241,24 +241,24 @@ async def getNotificationSettings(request: Request, response: Response, authoriz
         return au
     discordid = au["discordid"]
 
-    ret = {"drivershub": True, "discord": False, "event": False}
-
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT skey, sval FROM settings WHERE discordid = '{discordid}' AND skey LIKE '%-notification'")
+
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
     t = cur.fetchall()
-    for tt in t:
-        if tt[0] == "drivershub-notification" and tt[1] == "disabled":
-            ret["drivershub"] = False
-        elif tt[0] in ["discord-notification", "event-notification"] and tt[1] != "disabled":
-            ret[tt[0].split("-")[0]] = True
+    if len(t) != 0:
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
     
-    return {"error": False, "response": ret}
+    return {"error": False, "response": settings}
 
 @app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/enable")
-async def enableNotification(request: Request, response: Response, authorization: str = Header(None),
-        notification_type: Optional[str] = "discord"):
-    if notification_type not in ["discord", "event", "drivershub"]:
+async def enableNotification(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
+    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
@@ -277,78 +277,96 @@ async def enableNotification(request: Request, response: Response, authorization
 
     conn = newconn()
     cur = conn.cursor()
-    if notification_type == "drivershub":
-        cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'drivershub-notification' AND sval = 'disabled'")
-        conn.commit()
+
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settingsok = False
+
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = cur.fetchall()
+    if len(t) != 0:
+        settingsok = True
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
+    
+    if settings[notification_type] == True:
         return {"error": False}
+    
+    if notification_type != "discord":
+        settings[notification_type] = True
 
-    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/enable', 60, 5)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
+    if notification_type == "discord":
+        if config.discord_bot_token == "":
+            response.status_code = 503
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
-    other_notification_type = "event"
-    if notification_type == "event":
-        other_notification_type = "discord"
+        rl = ratelimit(request, request.client.host, 'PATCH /user/notification/discord/enable', 60, 5)
+        if rl[0]:
+            return rl[1]
+        for k in rl[1].keys():
+            response.headers[k] = rl[1][k]
 
-    if config.discord_bot_token == "":
-        response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
-
-    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-    durl = "https://discord.com/api/v9/users/@me/channels"
-    try:
-        r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
-    except:
-        response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
-    if r.status_code == 401:
-        DisableDiscordIntegration()
-        response.status_code = 503
-        return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
-    if r.status_code != 200:
-        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
-    d = json.loads(r.text)
-    if "id" in d:
-        channelid = str(d["id"])
-
-        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
-        r = None
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+        durl = "https://discord.com/api/v9/users/@me/channels"
         try:
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
-            "description": ml.tr(request, "discord_notification_enabled", force_lang = GetUserLanguage(discordid)), \
-            "footer": {"text": config.name, "icon_url": config.logo_url}, \
-            "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+            r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         except:
-            import traceback
-            traceback.print_exc()
-
+            response.status_code = 503
+            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+        if r.status_code == 401:
+            DisableDiscordIntegration()
+            response.status_code = 503
+            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         if r.status_code != 200:
             return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
+        d = json.loads(r.text)
+        if "id" in d:
+            channelid = str(d["id"])
 
-        cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
-        t = cur.fetchall()
-        if len(t) == 0:
-            cur.execute(f"INSERT INTO settings VALUES ({discordid}, '{notification_type}-notification', '{channelid}')")
-        elif t[0][0] != channelid:
-            cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
-        
-        cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = '{other_notification_type}-notification'")
-        t = cur.fetchall()
-        if len(t) > 0 and t[0][0] != channelid:
-            cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = '{other_notification_type}-notification'")
-        conn.commit()
+            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            r = None
+            try:
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
+                "description": ml.tr(request, "discord_notification_enabled", force_lang = GetUserLanguage(discordid)), \
+                "footer": {"text": config.name, "icon_url": config.logo_url}, \
+                "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+            except:
+                import traceback
+                traceback.print_exc()
 
-        return {"error": False}
+            if r.status_code != 200:
+                return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
+            cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = 'discord-notification'")
+            t = cur.fetchall()
+            if len(t) == 0:
+                cur.execute(f"INSERT INTO settings VALUES ({discordid}, 'discord-notification', '{channelid}')")
+            elif t[0][0] != channelid:
+                cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = 'discord-notification'")
+            conn.commit()
+
+            settings["discord"] = True
+
+        else:
+            return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
+
+    res = ""
+    for tt in settings.keys():
+        if settings[tt]:
+            res += tt + ","
+    res = res[:-1]
+    if settingsok:
+        cur.execute(f"UPDATE settings SET sval = ',{res},' WHERE discordid = '{discordid}' AND skey = 'notification'")
     else:
-        return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
+        cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', ',{res},')")
+    conn.commit()
+
+    return {"error": False}
 
 @app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/disable")
-async def disableNotification(request: Request, response: Response, authorization: str = Header(None),
-        notification_type: Optional[str] = "discord"):
-    if notification_type not in ["discord", "event", "drivershub"]:
+async def disableNotification(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
+    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
@@ -367,12 +385,35 @@ async def disableNotification(request: Request, response: Response, authorizatio
 
     conn = newconn()
     cur = conn.cursor()
-    if notification_type == "drivershub":
-        cur.execute(f"INSERT INTO settings VALUES ('{discordid}','drivershub-notification','disabled')")
-    else:
-        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid} AND skey = '{notification_type}-notification'")
-    conn.commit()
 
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settingsok = False
+
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = cur.fetchall()
+    if len(t) != 0:
+        settingsok = True
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
+    
+    settings[notification_type] = False
+
+    if notification_type == "discord":
+        cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
+
+    res = ""
+    for tt in settings.keys():
+        if settings[tt]:
+            res += tt + ","
+    res = res[:-1]
+    if settingsok:
+        cur.execute(f"UPDATE settings SET sval = '{res}' WHERE discordid = '{discordid}' AND skey = 'notification'")
+    else:
+        cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', '{res}')")
+    conn.commit()
+    
     return {"error": False}
 
 @app.get(f"/{config.abbr}/user/language")
@@ -938,10 +979,27 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member", force_lang = au["language"])}
 
-    cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
+    # delete account of new discord, and both sessions
     cur.execute(f"DELETE FROM session WHERE discordid = {old_discord_id}")
+    cur.execute(f"DELETE FROM appsession WHERE discordid = {old_discord_id}")
+    cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {old_discord_id}")
+
+    cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
     cur.execute(f"DELETE FROM session WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM appsession WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM user_password WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM user_activity WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM user_notification WHERE discordid = {new_discord_id}")
+    cur.execute(f"DELETE FROM settings WHERE discordid = {new_discord_id}")
+
+    # update discord binding
     cur.execute(f"UPDATE user SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    cur.execute(f"UPDATE user_password SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    cur.execute(f"UPDATE user_activity SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    cur.execute(f"UPDATE user_notification SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    cur.execute(f"UPDATE application SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    cur.execute(f"UPDATE settings SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
     conn.commit()
 
     await AuditLog(adminid, f"Updated Discord ID from `{old_discord_id}` to `{new_discord_id}`")
@@ -1041,7 +1099,13 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         
         username = getUserInfo(discordid = discordid)["name"]
         cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_activity WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_notification WHERE discordid = {discordid}")
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid}")
         conn.commit()
 
         await AuditLog(adminid, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
@@ -1064,7 +1128,13 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         
         username = getUserInfo(discordid = discordid)["name"]
         cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_activity WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM user_notification WHERE discordid = {discordid}")
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
+        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid}")
         conn.commit()
 
         await AuditLog(-999, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")

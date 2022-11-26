@@ -144,7 +144,7 @@ async def deleteDlog(request: Request, response: Response, authorization: str = 
     await AuditLog(adminid, f"Deleted delivery `#{logid}`")
 
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")))
+    notification("dlog", discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")))
 
     return {"error": False}
 
@@ -335,7 +335,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 
     if start_time == -1 or end_time == -1:
         start_time = 0
-        end_time = int(time.time())
+        end_time = max(int(time.time()), 32503651200)
 
     quser = ""
     if userid != -1:
@@ -717,7 +717,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     # validate parameter
     page = max(page, 1)
     page_size = max(min(page_size, 250), 1)
-    (start_time, end_time) = (0, int(time.time())) if start_time == -1 or end_time == -1 else (min(start_time, end_time), max(start_time, end_time))
+    (start_time, end_time) = (0, max(int(time.time()), 32503651200)) if start_time == -1 or end_time == -1 else (min(start_time, end_time), max(start_time, end_time))
 
     # set limits
     limituser = limituser.split(",")
@@ -1062,7 +1062,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
     if start_time == -1 or end_time == -1:
         start_time = 0
-        end_time = int(time.time())
+        end_time = max(int(time.time()), 32503651200)
 
     f = BytesIO()
     if not include_ids:

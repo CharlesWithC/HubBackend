@@ -261,7 +261,13 @@ async def patchChallenge(request: Request, response: Response, authorization: st
     conn.commit()
 
     if challenge_type == 1:
+        original_points = {}
+        cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid} AND points != {reward_points}")
+        t = cur.fetchall()
+        for tt in t:
+            original_points[tt[0]] = tt[1]
         cur.execute(f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
+        conn.commit()
         
         if org_delivery_count < delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} \
@@ -274,7 +280,8 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 if len(p) > 0:
                     cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                     discordid = getUserInfo(userid = userid)["discordid"]
-                    notification(discordid, ml.tr(request, "challenge_uncompleted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
+                    notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
         elif org_delivery_count > delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} \
                 GROUP BY userid HAVING COUNT(*) >= {delivery_count} AND COUNT(*) < {org_delivery_count}")
@@ -286,11 +293,30 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                 if len(p) == 0:
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                     discordid = getUserInfo(userid = userid)["discordid"]
-                    notification(discordid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
-        conn.commit()
+                    notification("challenge", discordid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
+        else:
+            for userid in original_points.keys():
+                discordid = getUserInfo(userid = userid)["discordid"]
+                if original_points[userid] < reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                elif original_points[userid] > reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(- reward_points + original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
 
     elif challenge_type == 3:
+        original_points = {}
+        cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid} AND points != {reward_points}")
+        t = cur.fetchall()
+        for tt in t:
+            original_points[tt[0]] = tt[1]
+        completed_count = {}
+        cur.execute(f"SELECT userid, COUNT(*) FROM challenge_completed WHERE challengeid = {challengeid} GROUP BY userid")
+        t = cur.fetchall()
+        for tt in t:
+            completed_count[tt[0]] = tt[1]
+        
         cur.execute(f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
+        conn.commit()
         
         if org_delivery_count < delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid}")
@@ -309,12 +335,12 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                     left_cnt = int(current_delivery_count / delivery_count)
                     if delete_cnt > 0:
                         cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid} ORDER BY timestamp DESC LIMIT {delete_cnt}")
-                        conn.commit()
                         discordid = getUserInfo(userid = userid)["discordid"]
                         if delete_cnt > 1:
-                            notification(discordid, ml.tr(request, "n_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": delete_cnt, "points": tseparator(p[0][0] * delete_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "n_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": delete_cnt, "points": tseparator(p[0][0] * delete_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                         else:
-                            notification(discordid, ml.tr(request, "one_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0]), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "one_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0]), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
             
         elif org_delivery_count > delivery_count:
             cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid}")
@@ -334,12 +360,20 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                     if add_cnt > 0:
                         for _ in range(add_cnt):
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                        conn.commit()
                         discordid = getUserInfo(userid = userid)["discordid"]
                         if add_cnt > 1:
-                            notification(discordid, ml.tr(request, "n_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": add_cnt, "points": tseparator(reward_points * add_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "n_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": add_cnt, "points": tseparator(reward_points * add_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                         else:
-                            notification(discordid, ml.tr(request, "one_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "one_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator(left_cnt * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
+
+        else:
+            for userid in original_points.keys():
+                discordid = getUserInfo(userid = userid)["discordid"]
+                if original_points[userid] < reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator((reward_points - original_points[userid]) * completed_count[userid]), "total_points": tseparator(reward_points * completed_count[userid])}, force_lang = GetUserLanguage(discordid, "en")))
+                elif original_points[userid] > reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator((- reward_points + original_points[userid]) * completed_count[userid]), "total_points": tseparator(reward_points * completed_count[userid])}, force_lang = GetUserLanguage(discordid, "en")))
 
     elif challenge_type == 2:
         curtime = int(time.time())
@@ -373,9 +407,9 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                     gap = reward - previously_completed[uid][0]
                     discordid = getUserInfo(userid = uid)["discordid"]
                     if gap > 0:
-                        notification(discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                     elif gap < 0:
-                        notification(discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                     del previously_completed[uid]
                 else:
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
@@ -383,7 +417,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
         for uid in previously_completed.keys():
             reward = previously_completed[uid][0]
             discordid = getUserInfo(userid = uid)["discordid"]
-            notification(discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+            notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
 
     await AuditLog(adminid, f"Updated challenge `#{challengeid}`")
 
@@ -489,7 +523,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")    
     conn.commit()
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, ml.tr(request, "delivery_added_to_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
+    notification("challenge", discordid, ml.tr(request, "delivery_added_to_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
 
     current_delivery_count = 0
     if challenge_type in [1,3]:
@@ -509,7 +543,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                 cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 conn.commit()
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
         elif challenge_type == 3:
             cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
             t = cur.fetchall()
@@ -517,7 +551,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                 cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 conn.commit()
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
         elif challenge_type == 2:
             cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = cur.fetchall()
@@ -537,7 +571,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                     reward = round(reward_points * s / delivery_count)
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                     discordid = getUserInfo(userid = uid)["discordid"]
-                    notification(discordid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                    notification("challenge", discordid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                 conn.commit()
 
     await AuditLog(adminid, f"Added delivery `#{logid}` to challenge `#{challengeid}`")
@@ -592,7 +626,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     cur.execute(f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     conn.commit()
     discordid = getUserInfo(userid = userid)["discordid"]
-    notification(discordid, ml.tr(request, "delivery_removed_from_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
+    notification("challenge", discordid, ml.tr(request, "delivery_removed_from_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
 
     current_delivery_count = 0
     if challenge_type in [1,3]:
@@ -611,7 +645,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
             if len(p) > 0:
                 cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
       
     elif challenge_type == 3:
         cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
@@ -621,9 +655,9 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
             conn.commit()
             discordid = getUserInfo(userid = userid)["discordid"]
             if len(p) <= 1:
-                notification(discordid, ml.tr(request, "one_personal_recurring_challenge_uncompleted", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "one_personal_recurring_challenge_uncompleted", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
             elif len(p) > 1:
-                notification(discordid, ml.tr(request, "one_personal_recurring_challenge_uncompleted_still_have_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0]), "total_points": tseparator(p[0][0] * (len(p) - 1))}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "one_personal_recurring_challenge_uncompleted_still_have_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0]), "total_points": tseparator(p[0][0] * (len(p) - 1))}, force_lang = GetUserLanguage(discordid, "en")))
 
     elif challenge_type == 2:
         if current_delivery_count < delivery_count:
@@ -633,7 +667,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
                 userid = p[0][0]
                 points = p[0][1]
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             conn.commit()
         
@@ -668,9 +702,9 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
                         gap = reward - previously_completed[uid][0]
                         discordid = getUserInfo(userid = uid)["discordid"]
                         if gap > 0:
-                            notification(discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                         elif gap < 0:
-                            notification(discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                         del previously_completed[uid]
                     else:
                         cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
@@ -678,7 +712,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
             for uid in previously_completed.keys():
                 reward = previously_completed[uid][0]
                 discordid = getUserInfo(userid = uid)["discordid"]
-                notification(discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
 
     await AuditLog(adminid, f"Removed delivery `#{logid}` from challenge `#{challengeid}`")
 

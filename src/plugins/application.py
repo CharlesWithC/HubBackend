@@ -317,7 +317,7 @@ async def postApplication(request: Request, response: Response, authorization: s
             pass
 
     language = GetUserLanguage(discordid)
-    notification(discordid, ml.tr(request, "application_submitted", \
+    notification("application", discordid, ml.tr(request, "application_submitted", \
             var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
@@ -565,7 +565,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 
     cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
-    notification(applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+    notification("application", applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
         discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})

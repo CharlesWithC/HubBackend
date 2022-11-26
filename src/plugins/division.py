@@ -201,7 +201,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
     conn.commit()
     
     language = GetUserLanguage(discordid)
-    notification(discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
+    notification("division", discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
@@ -331,7 +331,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[int(status)]
 
-    notification(discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+    notification("division", discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \

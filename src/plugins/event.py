@@ -26,11 +26,17 @@ def EventNotification():
                     notified.append(tt[0].split("-")[0])
             conn.commit()
 
+            notification_enabled = []
             tonotify = {}
-            cur.execute(f"SELECT discordid, sval FROM settings WHERE skey = 'event-notification'")
+            cur.execute(f"SELECT discordid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
             d = cur.fetchall()
             for dd in d:
-                tonotify[str(dd[0])] = dd[1]
+                notification_enabled.append(dd[0])
+            cur.execute(f"SELECT discordid, sval FROM settings WHERE skey = 'discord-notification'")
+            d = cur.fetchall()
+            for dd in d:
+                if dd[0] in notification_enabled:
+                    tonotify[dd[0]] = dd[1]
 
             cur.execute(f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
             t = cur.fetchall()
@@ -548,7 +554,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         attendee = int(attendee)
         name = getUserInfo(userid = attendee)["name"]
         discordid = getUserInfo(userid = attendee)["discordid"]
-        notification(discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+        notification("event", discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
         ret1 += f"{name} ({attendee}), "
         cnt += 1
     ret1 = ret1[:-2]
@@ -565,7 +571,7 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             attendee = int(attendee)
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
-            notification(discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+            notification("event", discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             ret2 += f"{name} ({attendee}), "
             cnt += 1
     ret2 = ret2[:-2]
@@ -586,9 +592,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
             name = getUserInfo(userid = attendee)["name"]
             discordid = getUserInfo(userid = attendee)["discordid"]
             if gap > 0:
-                notification(discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("event", discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             elif gap < 0:
-                notification(discordid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("event", discordid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]

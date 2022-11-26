@@ -39,6 +39,23 @@
                 }
             }
         },
+        "/abbr/languages": {
+            "get": {
+                "summary": "Get company & supported languages",
+                "tags": ["index"],
+                "operationId": "get_languages",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/auth/password": {
             "post": {
                 "summary": "Password Login",
@@ -920,6 +937,81 @@
                 }]
             }
         },
+        "/abbr/user/language": {
+            "get": {
+                "summary": "Get User Language",
+                "tags": ["user"],
+                "operationId": "get_user_language",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "summary": "Update User Language",
+                "tags": ["user"],
+                "operationId": "patch_user_language",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "language": {
+                                        "description": "Language Code",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["language"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/user/notification/list": {
             "get": {
                 "summary": "Get User Notification List",
@@ -1141,81 +1233,6 @@
                     "name": "notification_type",
                     "in": "path"
                 }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/abbr/user/language": {
-            "get": {
-                "summary": "Get User Language",
-                "tags": ["user"],
-                "operationId": "get_user_language",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "summary": "Update User Language",
-                "tags": ["user"],
-                "operationId": "patch_user_language",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "language": {
-                                        "description": "Language Code",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["language"]
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",

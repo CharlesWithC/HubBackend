@@ -114,7 +114,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     username = getUserInfo(discordid = discordid)["name"]
     language = GetUserLanguage(discordid)
     await AuditLog(-999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, \
+    notification("login", discordid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -177,6 +177,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             if len(t) == 0:
                 cur.execute(f"INSERT INTO user VALUES (-1, {discordid}, '{username}', '{avatar}', '',\
                     '{email}', -1, -1, '', {int(time.time())}, '')")
+                cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
                 await AuditLog(-999, f"User register: `{username}` (Discord ID: `{discordid}`)")
             else:
                 cur.execute(f"UPDATE user_password SET email = '{email}' WHERE discordid = '{discordid}'")
@@ -221,7 +222,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             username = getUserInfo(discordid = discordid)["name"]
             language = GetUserLanguage(discordid)
             await AuditLog(-999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-            notification(discordid, \
+            notification("login", discordid, \
                 ml.tr(request, "new_login", \
                     var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
                 discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -345,7 +346,7 @@ async def getSteamCallback(request: Request, response: Response):
     username = getUserInfo(discordid = discordid)["name"]
     language = GetUserLanguage(discordid)
     await AuditLog(-999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, \
+    notification("login", discordid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -811,7 +812,7 @@ async def postMFA(request: Request, response: Response):
     username = getUserInfo(discordid = discordid)["name"]
     language = GetUserLanguage(discordid)
     await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    notification(discordid, \
+    notification("login", discordid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \

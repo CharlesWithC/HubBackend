@@ -199,7 +199,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             conn.commit()
 
             discordid = getUserInfo(userid = userid)["discordid"]
-            notification(discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")), no_discord_notification = True)
+            notification("dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")), no_discord_notification = True)
     except:
         pass
 
@@ -454,7 +454,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     continue
                 
                 discordid = getUserInfo(userid = userid)["discordid"]
-                notification(discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
+                notification("challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
                 cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                 conn.commit()
 
@@ -476,7 +476,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
                             discordid = getUserInfo(userid = userid)["discordid"]
-                            notification(discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                     elif challenge_type == 3:
                         cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                         t = cur.fetchall()
@@ -484,7 +484,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                             cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                             conn.commit()
                             discordid = getUserInfo(userid = userid)["discordid"]
-                            notification(discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                            notification("challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                     elif challenge_type == 2:
                         cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                         t = cur.fetchall()
@@ -504,7 +504,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                 reward = round(reward_points * s / delivery_count)
                                 cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                                 discordid = getUserInfo(userid = uid)["discordid"]
-                                notification(discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                                notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                             conn.commit()
                 
     except:
