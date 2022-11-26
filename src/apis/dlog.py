@@ -515,8 +515,9 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
-        scale: Optional[int] = 2, sum_up: Optional[bool] = False, userid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /dlog/statistics/chart', 60, 60)
+        ranges: Optional[int] = 30, interval: Optional[int] = 86400, \
+        sum_up: Optional[bool] = False, userid: Optional[int] = -1):
+    rl = ratelimit(request, request.client.host, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -533,23 +534,22 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     conn = newconn()
     cur = conn.cursor()
 
+    if ranges > 100:
+        ranges = 100
+    elif ranges <= 0:
+        ranges = 30
+    
+    if interval > 31536000: # a year
+        interval = 31536000
+    elif interval < 60:
+        interval = 60
+
     ret = []
     timerange = []
-    if scale == 1:
-        for i in range(24):
-            start_time = int(time.time()) - ((i+1)*3600)
-            end_time = start_time + 3600
-            timerange.append((start_time, end_time))
-    elif scale == 2:
-        for i in range(7):
-            start_time = int(time.time()) - ((i+1)*86400)
-            end_time = start_time + 86400
-            timerange.append((start_time, end_time))
-    elif scale == 3:
-        for i in range(30):
-            start_time = int(time.time()) - ((i+1)*86400)
-            end_time = start_time + 86400
-            timerange.append((start_time, end_time))
+    for i in range(ranges):
+        start_time = int(time.time()) - ((i+1)*interval)
+        end_time = start_time + interval
+        timerange.append((start_time, end_time))
     timerange = timerange[::-1]
 
     limit = ""

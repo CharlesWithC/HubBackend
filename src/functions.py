@@ -226,7 +226,7 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = Fal
         return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
         
     if privacy:
-        return {"name": "[Removed]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        return {"name": "[Protected]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
 
     if userid == -1 and discordid == -1:
         if not tell_deleted:

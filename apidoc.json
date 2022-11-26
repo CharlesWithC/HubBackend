@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.1"
+        "version": "1.21.2"
     },
     "paths": {
         "/abbr": {
@@ -2635,10 +2635,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Scale (1: 24h / 2: 7d / 3: 30d)",
+                        "title": "Number of ranges",
                         "type": "integer"
                     },
-                    "name": "scale",
+                    "name": "ranges",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Interval of ranges",
+                        "type": "integer"
+                    },
+                    "name": "interval",
                     "in": "query"
                 }, {
                     "required": false,

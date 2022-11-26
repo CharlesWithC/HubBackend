@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.21.2**  
+Improved **GET** `/dlog/statistics/chart`, removed `scale` param, added `ranges` and `interval` params for better customizability  
+
 **v1.21.1**  
 **[Bug fixes]**  
 1.Fixed the bug that **PATCH** `/member/roles/rank` is always returning `discord_integrations_disabled` response  
