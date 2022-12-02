@@ -2,23 +2,42 @@
 # Author: @CharlesWithC
 
 from PIL import Image, ImageFont, ImageDraw
-import requests, os, time
+import requests, os, time, string, unicodedata
 from io import BytesIO
 from datetime import datetime
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import StreamingResponse
+from fontTools.ttLib import TTFont
+from fontTools.unicode import Unicode
 
 app = FastAPI()
+
+tt_namefont = TTFont("./fonts/ConsolaBold.ttf")
+def has_glyph(glyph):
+    for table in tt_namefont['cmap'].tables:
+        if ord(glyph) in table.cmap.keys():
+            return True
+    return False
+
+# Due to the nature of Consola font family has same width for all characters
+# We can preload its wsize to prevent using .getsize() which is slow
+# NOTE that non-printable characters from Sans Serif will still need .getsize()
+consola_bold_font_wsize = []
+for i in range(81):
+    font = ImageFont.truetype("./fonts/ConsolaBold.ttf", i)
+    wsize = font.getsize("a")[0]
+    consola_bold_font_wsize.append(wsize)
 
 @app.post("/banner")
 async def banner(request: Request, response: Response):
     form = await request.form()
     company_abbr = form["company_abbr"]
     company_name = form["company_name"]
+    company_name = unicodedata.normalize('NFKC', company_name)
     logo_url = form["logo_url"]
     hex_color = form["hex_color"][-6:]
     discordid = form["discordid"]
-
+    
     l = os.listdir(f"/tmp/hub/banner")
     for ll in l:
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 7200:
@@ -35,40 +54,64 @@ async def banner(request: Request, response: Response):
             return response
 
     logo = Image.new("RGBA", (200,200),(255,255,255))
-    logobg = Image.new("RGB", (1700,1700),(255,255,255))
+    banner = Image.new("RGB", (1700,300),(255,255,255))
 
-    if os.path.exists(f"/tmp/hub/logo/{company_abbr}.png"):
-        logo = Image.open(f"/tmp/hub/logo/{company_abbr}.png").convert("RGBA")
-        logobg = Image.open(f"/tmp/hub/logo/{company_abbr}_bg.png").convert("RGB")
+    if os.path.exists(f"/tmp/hub/logo/{company_abbr}.png") and os.path.exists(f"/tmp/hub/template/{company_abbr}.png"):
+        logo = Image.open(f"/tmp/hub/logo/{company_abbr}.png")
+        banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:
         r = requests.get(logo_url, timeout = 3)
         if r.status_code == 200:
             logo = r.content
             try: # in case image is invalid
                 logo = Image.open(BytesIO(logo)).convert("RGBA")
-                logo = logo
-                logobg = logo
-                lnd = []
-                lbnd = []
-                datas = logo.getdata()
-                for item in datas:
-                    lnd.append(item) # use original logo for small one
+                logo_large = logo # to copy properties
+                logo_datas = logo.getdata()
+                logo_large_datas = []
+                for item in logo_datas:
                     if item[3] == 0:
-                        lbnd.append((255,255,255,255))
+                        logo_large_datas.append((255,255,255))
                     else:
-                        lbnd.append((int(0.85*255+0.15*item[3]/255*item[0]), \
-                            int(0.85*255+0.15*item[3]/255*item[1]), int(0.85*255+0.15*item[3]/255*item[2]), 255))
+                        logo_large_datas.append((int(0.85*255+0.15*item[3]/255*item[0]), \
+                            int(0.85*255+0.15*item[3]/255*item[1]), int(0.85*255+0.15*item[3]/255*item[2])))
                     # use 85% transparent logo for background (with white background)
-                logo.putdata(lnd)
                 logo = logo.resize((200, 200), resample=Image.ANTIALIAS).convert("RGBA")
-                logobg.putdata(lbnd)
-                logobg = logobg.resize((1700, 1700), resample=Image.ANTIALIAS).convert("RGB")
-
                 logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
-                logobg.save(f"/tmp/hub/logo/{company_abbr}_bg.png", optimize = True)
+                logo_datas = logo.getdata()
+                
+                logo_large.putdata(logo_large_datas)
+                logo_large = logo_large.resize((1700, 1700), resample=Image.ANTIALIAS).convert("RGB")
+
+                # render logo
+                banner = logo_large.crop((0, 700, 1700, 1000))
+                logo_bg = banner.crop((1475, 25, 1675, 225))
+                datas = list(logo_bg.getdata())
+                for i in range(0,200):
+                    for j in range(0,200):
+                        # paste avatar
+                        if logo_datas[i*200+j][3] == 255:
+                            datas[i*200+j] = logo_datas[i*200+j]
+                        elif logo_datas[i*200+j][3] != 0:
+                            bg_a = 1 - logo_datas[i*200+j][3] / 255
+                            fg_a = logo_datas[i*200+j][3] / 255
+                            bg = datas[i*200+j]
+                            fg = logo_datas[i*200+j]
+                            datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
+                logo_bg.putdata(datas)
+                Image.Image.paste(banner, logo_bg, (1475, 25, 1675, 225))
+                
+                # draw company name
+                draw = ImageDraw.Draw(banner)
+                usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
+                theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                company_name_len = usH45.getsize(f"{company_name}")[0]
+                draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
+
+                banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)                
+
             except:
                 pass
-
+    
     avatar = form["avatar"]
     avatarid = avatar
     if os.path.exists(f"/tmp/hub/avatar/{discordid}_{avatar}.png"):
@@ -106,105 +149,94 @@ async def banner(request: Request, response: Response):
             pass
     avatar = avatar.getdata()
 
-    # render logobg, banner, logo
-    banner = Image.new("RGB", (1700,300),(255,255,255))
-    Image.Image.paste(banner, logobg, (0,-650)) # paste background logo directly
-    datas = banner.getdata()
-    logod = logo.getdata()
-    newData = []
-    for i in range(0,300):
-        for j in range(0,1700):
-            if i >= 25 and i < 275 and j >= 35 and j < 285:
-                # paste avatar
-                bg_a = 1 - avatar[(i-25)*250+(j-35)][3] / 255
-                fg_a = avatar[(i-25)*250+(j-35)][3] / 255
-                bg = datas[i*1700+j]
-                fg = avatar[(i-25)*250+(j-35)]
-                newData.append((int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a)))
-            elif i >= 25 and i < 225 and j >= 1475 and j < 1675:
-                # paste logo
-                bg_a = 1 - logod[(i-25)*200+(j-1475)][3] / 255
-                fg_a = logod[(i-25)*200+(j-1475)][3] / 255
-                bg = datas[i*1700+j]
-                fg = logod[(i-25)*200+(j-1475)]
-                newData.append((int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a)))
-            else:
-                newData.append(datas[i*1700+j][:3])
-    banner.putdata(newData)
+    # render avatar
+    avatar_bg = banner.crop((35, 25, 285, 275))
+    datas = list(avatar_bg.getdata())
+    for i in range(0,250):
+        for j in range(0,250):
+            # paste avatar
+            if avatar[i*250+j][3] == 255:
+                datas[i*250+j] = avatar[i*250+j]
+            elif avatar[i*250+j][3] != 0:
+                bg_a = 1 - avatar[i*250+j][3] / 255
+                fg_a = avatar[i*250+j][3] / 255
+                bg = datas[i*250+j]
+                fg = avatar[i*250+j]
+                datas[i*250+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
+    avatar_bg.putdata(datas)
+    Image.Image.paste(banner, avatar_bg, (35, 25, 285, 275))
 
     # draw text
     draw = ImageDraw.Draw(banner)
-    # load font
-    usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
-    coH40 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 40)
-    # set color
     theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    # company name
-    company_name_len = usH45.getsize(f"{company_name}")[0]
-    draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
 
+    # draw name
     name = form["name"]
-    for _ in range(10):
-        if name.startswith(" "):
-            name = name[1:]
-        else:
-            break
+    name = unicodedata.normalize('NFKC', name).lstrip(" ")
+    tname = ""
+    all_printable = True
+    for i in range(len(name)):
+        if name[i] in string.printable:
+            tname += name[i]
+        elif has_glyph(name[i]):
+            tname += name[i]
+            all_printable = False
+    name = tname
+
+    l = 0
+    r = 80
     fontsize = 80
-    offset = 0
-    offsetp = 0
-    namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-    namesize = namefont.getsize(f"{name}")[0]
-    for _ in range(10):
-        if namesize > 450:
-            fontsize -= 10
-            if offset <= 20:
-                offset += 5
-            else:
-                offsetp += 5
+    while r - l > 1:
+        fontsize = (l + r) // 2
+        if all_printable:
+            namew = consola_bold_font_wsize[fontsize] * len(name)
+        else:
             namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-            namesize = namefont.getsize(f"{name}")[0]
-    draw.text((325, 50 + offset), f"{name}", fill=(0,0,0), font=namefont)
+            namew = namefont.getsize(f"{name}")[0]
+        if namew > 450:
+            r = fontsize - 1
+        else:
+            l = fontsize + 1
+    namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
+    nameh = namefont.getsize(f"{name}")[1]
+    offset = min(fontsize * 0.05, 20)
+    draw.text((325, 50 + offset), name, fill=(0,0,0), font=namefont)
     # y = 50 ~ 70
 
     fontsize -= 10
     highest_role = form["highest_role"]
-    for _ in range(10):
-        if highest_role.startswith(" "):
-            highest_role = highest_role[1:]
-        else:
-            break
-    if fontsize >= 70:
-        fontsize -= 10
-    elif fontsize >= 60:
-        fontsize -= 10
-        offset -= 10
-    else:
-        offset -= 10
-        offset += int(offsetp / 2)
+    highest_role = unicodedata.normalize('NFKC', highest_role).lstrip(" ")
     hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-    hrolesize = hrolefont.getsize(f"{highest_role}")[0]
-    for _ in range(10):
-        if hrolesize > 450:
-            fontsize -= 10
-            offset += 5
+    hrolew = hrolefont.getsize(f"{highest_role}")[0]
+    for _ in range(100):
+        if hrolew > 450:
+            fontsize -= 1
             hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-            hrolesize = hrolefont.getsize(f"{highest_role}")[0]
-    draw.text((325, 125 + offset), f"{highest_role}", fill=theme_color, font=hrolefont)
+            hrolew = hrolefont.getsize(f"{highest_role}")[0]
+    hroleh = hrolefont.getsize(f"{highest_role}")[1]
+
+    nameb = 50 + offset + nameh
+    sincet = 210
+    draw.text((325, (sincet + nameb - hroleh) / 2 - 10), f"{highest_role}", fill=theme_color, font=hrolefont)
     # y = 115 ~ 155
 
     since = form["since"]
     division = form["division"]
+    division = unicodedata.normalize('NFKC', division).lstrip(" ")
     distance = form["distance"]
     profit = form["profit"]
     sincefont = ImageFont.truetype("./fonts/Consola.ttf", 40)
     draw.text((325, 210), f"Since {since}", fill=(0,0,0), font=sincefont)
+
     # separate line
+    coH40 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 40)
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
-    for _ in range(10):
-        if division.startswith(" "):
-            division = division[1:]
-        else:
-            break
+    divisionw = coH40.getsize(f"Division: {division}")[0]
+    if divisionw > 550:
+        division += "..."
+    while divisionw > 550:
+        division = division[:-4] + "..."
+        divisionw = coH40.getsize(f"Division: {division}")[0]
     draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
     draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
     draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)

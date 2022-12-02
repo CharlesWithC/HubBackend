@@ -1,5 +1,14 @@
 # Changelog
 
+**v1.21.3**  
+**[BannerGen]**  
+1.Merged `ConsolaBold` with `SansSerif` to support a larger character set  
+2.Added unicode normalization to remove decoration to make more characters drawable  
+3.Added division text length limiter to prevent overflowing into logo image  
+4.Increased precision of changing `username` and `highest role` font size to 1 (originally 5)  
+5.Improved `highest role` positioning algorithm  
+6.Optimization (avg. 98ms/banner, originally 460ms/banner)  
+
 **v1.21.2**  
 Improved **GET** `/dlog/statistics/chart`, removed `scale` param, added `ranges` and `interval` params for better customizability  
 

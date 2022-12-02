@@ -28,6 +28,8 @@ if __name__ == "__main__":
         os.mkdir("/tmp/hub/banner")
     if not os.path.exists("/tmp/hub/logo"):
         os.mkdir("/tmp/hub/logo")
+    if not os.path.exists("/tmp/hub/template"):
+        os.mkdir("/tmp/hub/template")
     if not os.path.exists("/tmp/hub/avatar"):
         os.mkdir("/tmp/hub/avatar")
     uvicorn.run("app:app", host="127.0.0.1", port=8700, log_level="info", workers = 1)

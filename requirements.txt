@@ -4,6 +4,7 @@ discord_oauth2==0.2
 steamsignin==1.0.1
 python-dateutil==2.8.2
 python-multipart==0.0.5
+fonttools==4.38.0
 bcrypt==3.2.2
 numpy==1.23.1
 pillow==9.3.0

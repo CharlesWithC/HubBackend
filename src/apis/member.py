@@ -272,7 +272,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
     
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 3)
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -281,10 +281,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     t = t[0]
     userid = t[5]
     name = t[0]
-    tname = ""
-    for i in range(len(name)):
-        if name[i] in string.printable:
-            tname += name[i]
+    tname = name
     while tname.startswith(" "):
         tname = tname[1:]
     name = tname
