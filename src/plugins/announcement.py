@@ -185,11 +185,11 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
         try:
-            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+            r = requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}}))
+                        "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -262,11 +262,11 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
         try:
-            requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embed": {"title": title, "description": decompress(content), 
+            requests.post(ddurl, headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
-                        "timestamp": str(datetime.now()), "color": config.intcolor}}))
+                        "timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:

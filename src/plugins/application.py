@@ -308,7 +308,7 @@ async def postApplication(request: Request, response: Response, authorization: s
     conn.commit()
 
     if applicantrole != 0 and config.discord_bot_token != "":
-        durl = f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
+        durl = f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
         try:
             r = requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
             if r.status_code == 401:

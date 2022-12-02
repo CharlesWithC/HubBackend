@@ -150,8 +150,9 @@ async def deleteDlog(request: Request, response: Response, authorization: str = 
 
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        order: Optional[str] = "desc", speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
+        speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
     rl = ratelimit(request, request.client.host, 'GET /dlog/list', 60, 60)
@@ -188,8 +189,13 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     elif page_size >= 250:
         page_size = 250
 
+    if not order_by in ["logid", "max_speed", "profit", "fuel", "distance"]:
+        order_by = "logid"
+        order = "desc"
     if not order in ["asc", "desc"]:
-        order = "asc"
+        order = "desc"
+    if order_by == "max_speed":
+        order_by = "topspeed"
     order = order.upper()
 
     limit = ""
@@ -239,9 +245,9 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid FROM dlog \
+    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.logid {order} LIMIT {(page - 1) * page_size}, {page_size}")
+        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     ret = []
     t = cur.fetchall()
     for ti in range(len(t)):
@@ -267,6 +273,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         challengeids = []
         challengenames = []
         for pp in p:
+            if pp[1] is None or pp[2] is None:
+                continue
             challengeids.append(pp[1])
             challengenames.append(pp[2])
         
@@ -305,16 +313,17 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         if userid == -1 and config.privacy:
             userinfo = getUserInfo(privacy = True)
 
-        status = 1
+        status = "1"
         if tt[7] == 0:
-            status = 2
+            status = "2"
 
         ret.append({"logid": str(logid), "user": userinfo, "distance": str(distance), \
+            "max_speed": str(tt[9]), "fuel": str(tt[10]), \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
                         "division": division, "challenge": challenge, \
-                            "status": str(status), "timestamp": str(tt[2])})
+                            "status": status, "timestamp": str(tt[2])})
 
     cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = cur.fetchall()

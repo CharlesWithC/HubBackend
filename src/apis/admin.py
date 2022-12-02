@@ -7,12 +7,12 @@ from discord import Colour
 import json, copy, math, os, time
 import threading
 
-from app import app, config, tconfig, config_path
+from app import app, config, tconfig, config_path, validateConfig
 from db import newconn
 from functions import *
 import multilang as ml
 
-config_whitelist = ['name', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
+config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
     'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
     'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", \
     'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
@@ -45,7 +45,8 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     cur = conn.cursor()
     
     # current config
-    f = copy.deepcopy(json.loads(open(config_path, "r").read()))
+    orgcfg = validateConfig(json.loads(open(config_path, "r").read()))
+    f = copy.deepcopy(orgcfg)
     ffconfig = {}
 
     # process whitelist
@@ -120,7 +121,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    ttconfig = json.loads(open(config_path, "r").read())
+    ttconfig = validateConfig(json.loads(open(config_path, "r").read()))
 
     for tt in formconfig.keys():
         if tt in config_whitelist:

@@ -297,7 +297,7 @@ def SendDiscordMessage(channelid, data):
     if config.discord_bot_token == "":
         return -1
     
-    ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+    ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
     requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
 
     return 0
@@ -316,7 +316,7 @@ def ProcessDiscordMessage(): # thread
         channelid = discord_message_queue[0][0]
         data = discord_message_queue[0][1]
 
-        ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+        ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
         try:
             r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
         except:
@@ -396,13 +396,13 @@ def notification(notification_type, discordid, content, no_drivershub_notificati
     
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            SendDiscordNotification(discordid, {"embed": {"title": discord_embed["title"], 
+            SendDiscordNotification(discordid, {"embeds": [{"title": discord_embed["title"], 
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}})
+                "timestamp": str(datetime.now()), "color": config.intcolor}]})
         else:
-            SendDiscordNotification(discordid, {"embed": {"title": ml.tr(None, "notification", force_lang = GetUserLanguage(discordid, "en")), 
+            SendDiscordNotification(discordid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = GetUserLanguage(discordid, "en")), 
                 "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}})
+                "timestamp": str(datetime.now()), "color": config.intcolor}]})
 
 def ratelimit(request, ip, endpoint, limittime, limitcnt):
     conn = newconn()
@@ -689,13 +689,13 @@ async def AutoMessage(meta, setvar):
                 return
 
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v9/channels/{meta.channel_id}/messages"
+            ddurl = f"https://discord.com/api/v10/channels/{meta.channel_id}/messages"
             timestamp = ""
             if meta.embed.timestamp:
                 timestamp = str(datetime.now())
             r = requests.post(ddurl, headers=headers, data=json.dumps({
                 "content": setvar(meta.content),
-                "embed":{
+                "embeds": [{
                     "title": setvar(meta.embed.title), 
                     "description": setvar(meta.embed.description), 
                     "footer": {
@@ -707,7 +707,7 @@ async def AutoMessage(meta, setvar):
                     },
                     "timestamp": timestamp,
                     "color": config.intcolor
-                }}))
+                }]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
     except:

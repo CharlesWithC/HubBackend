@@ -70,7 +70,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
     if config.in_guild_check and config.discord_bot_token != "":
         try:
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
             import traceback
             traceback.print_exc()
@@ -186,7 +186,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             
             if config.in_guild_check and config.discord_bot_token != "":
                 try:
-                    r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                    r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
                 except:
                     import traceback
                     traceback.print_exc()
@@ -312,7 +312,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     if config.in_guild_check and config.discord_bot_token != "":
         try:
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
             import traceback
             traceback.print_exc()

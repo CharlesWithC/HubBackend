@@ -257,7 +257,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 truck = "N/A"
             if config.discord_bot_token != "":
                 headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-                ddurl = f"https://discord.com/api/v9/channels/{config.delivery_log_channel_id}/messages"
+                ddurl = f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages"
                 munit = "€"
                 if not game.startswith("e"):
                     munit = "$"
@@ -268,7 +268,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
                     data = "{}"
                     if config.distance_unit == "imperial":
-                        data = {"embed": {"title": f"{ml.ctr('delivery')} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr("truck"), "value": truck, "inline": True},
@@ -280,9 +280,9 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
                     elif config.distance_unit == "metric":
-                        data = {"embed": {"title": f"{ml.ctr('delivery')} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr("truck"), "value": truck, "inline": True},
@@ -294,7 +294,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
                     r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
                     if r.status_code == 401:
                         DisableDiscordIntegration()
@@ -303,7 +303,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     language = GetUserLanguage(discordid, "en")
                     data = {}
                     if config.distance_unit == "imperial":
-                        data = {"embed": {"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
@@ -315,9 +315,9 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
                     elif config.distance_unit == "metric":
-                        data = {"embed": {"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
@@ -329,7 +329,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}}
+                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
                     SendDiscordNotification(discordid, data)
                         
         except:

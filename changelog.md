@@ -8,6 +8,14 @@
 4.Increased precision of changing `username` and `highest role` font size to 1 (originally 5)  
 5.Improved `highest role` positioning algorithm  
 6.Optimization (avg. 98ms/banner, originally 460ms/banner)  
+**[Bug fixes]**  
+1.Fixed **PATCH** `/config` cannot update `config.language`  
+2.*[User]* Fixed **GET** `/user` activity adding a trailing ")"  
+**[Minor changes]**  
+3.Added config keys sorter to better organize config file  
+4.*[Member]* Added `already_have_discord_role` response for **PATCH** `/member/roles/rank` when member is under distance required by lowest rank  
+5.*[Dlog]* Added `order_by` (`logid`, `max_speed`, `profit`, `fuel`, `distance`) request param to **GET** `/dlog/list`  
+6.Added support to Discord API v10  
 
 **v1.21.2**  
 Improved **GET** `/dlog/statistics/chart`, removed `scale` param, added `ranges` and `interval` params for better customizability  

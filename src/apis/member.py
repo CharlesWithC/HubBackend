@@ -447,6 +447,10 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     totalpnt = distance + challengepnt + eventpnt + divisionpnt + mythpnt
     rank = point2rank(totalpnt)
 
+    if rank == -1:
+        response.status_code = 409
+        return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
+
     try:
         if config.discord_bot_token == "":
             response.status_code = 503
@@ -454,7 +458,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         try:
-            r = requests.get(f"https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
+            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         except:
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
@@ -478,9 +482,9 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                 response.status_code = 409
                 return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
             else:
-                requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
+                requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
                 for role in curroles:
-                    requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                    requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                 
                 usermention = f"<@{discordid}>"
                 rankmention = f"<@&{rank}>"
@@ -713,9 +717,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
-                        requests.delete(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
                     elif int(role) > 0:
-                        requests.put(f'https://discord.com/api/v9/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
                 except:
                     import traceback
                     traceback.print_exc()

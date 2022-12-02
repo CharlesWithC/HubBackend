@@ -2469,6 +2469,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Order by (logid, max_speed, profit, fuel, distance)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Order (asc, desc)",
                         "type": "string"
                     },

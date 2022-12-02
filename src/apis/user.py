@@ -94,10 +94,8 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     if mfa_secret != "":
         mfa_enabled = True
 
-    if userid != -1:
-        activityUpdate(udiscordid, f"user_{userid})")
-    else:
-        activityUpdate(udiscordid, f"user_self")
+    if userid >= 0:
+        activityUpdate(udiscordid, f"user_{userid}")
 
     activity_last_seen = 0
     activity_name = "Offline"
@@ -308,7 +306,7 @@ async def enableNotification(request: Request, response: Response, notification_
             response.headers[k] = rl[1][k]
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-        durl = "https://discord.com/api/v9/users/@me/channels"
+        durl = "https://discord.com/api/v10/users/@me/channels"
         try:
             r = requests.post(durl, headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         except:
@@ -324,13 +322,13 @@ async def enableNotification(request: Request, response: Response, notification_
         if "id" in d:
             channelid = str(d["id"])
 
-            ddurl = f"https://discord.com/api/v9/channels/{channelid}/messages"
+            ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
             r = None
             try:
-                r = requests.post(ddurl, headers=headers, data=json.dumps({"embed": {"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
+                r = requests.post(ddurl, headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = GetUserLanguage(discordid)), \
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}}), timeout=3)
+                "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
             except:
                 import traceback
                 traceback.print_exc()
