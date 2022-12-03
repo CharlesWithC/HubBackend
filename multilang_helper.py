@@ -1,6 +1,7 @@
 import os, sys, json
 
 pre = "./src/languages"
+ignore = ["ip"]
 
 if sys.argv[1] == "distribute":
     d = json.loads(open(f"{pre}/en.json","r",encoding="utf-8").read())
@@ -48,7 +49,7 @@ elif sys.argv[1] == "compare":
         u = t.keys()
         for kk in k:
             if kk in u:
-                if d[kk] == t[kk]:
+                if d[kk] == t[kk] and not kk in ignore:
                     print(f"Not translated: {kk}")
                     cnt += 1
             else:

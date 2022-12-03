@@ -238,7 +238,10 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 multiplayer = ml.ctr("single_player")
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    multiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    if not omultiplayer["server"] is None:
+                        multiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    else:
+                        multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     multiplayer = ml.ctr("scs_convoy")
             discordid = getUserInfo(userid = userid)["discordid"]
@@ -247,7 +250,10 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 umultiplayer = ml.tr(None, "single_player", force_lang = language)
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    umultiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    if not omultiplayer["server"] is None:
+                        umultiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    else:
+                        umultiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     umultiplayer = ml.tr(None, "scs_convoy", force_lang = language)
             truck = d["data"]["object"]["truck"]
@@ -330,7 +336,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
-                    SendDiscordNotification(discordid, data)
+                    if CheckNotificationEnabled("dlog", discordid):
+                        SendDiscordNotification(discordid, data)
                         
         except:
             import traceback
@@ -459,17 +466,23 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 conn.commit()
 
                 current_delivery_count = 0
-                if challenge_type == 1:
+                if challenge_type == [1,3]:
                     cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-                    current_delivery_count = cur.fetchone()[0]
-                    current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
                 elif challenge_type == 2:
                     cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
-                    current_delivery_count = cur.fetchone()[0]
-                    current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+                elif challenge_type == 4:
+                    cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                        WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
+                elif challenge_type == 5:
+                    cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                        WHERE challenge_record.challengeid = {challengeid}")
+                current_delivery_count = cur.fetchone()
+                current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
                 
                 if current_delivery_count >= delivery_count:
-                    if challenge_type == 1:
+                    if challenge_type in [1,4]:
                         cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                         t = cur.fetchall()
                         if len(t) == 0:
@@ -499,6 +512,34 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                     usercnt[uid] = 1
                                 else:
                                     usercnt[uid] += 1
+                            for uid in usercnt.keys():
+                                s = usercnt[uid]
+                                reward = round(reward_points * s / delivery_count)
+                                cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                discordid = getUserInfo(userid = uid)["discordid"]
+                                notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                            conn.commit()
+                    elif challenge_type == 5:
+                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                        t = cur.fetchall()
+                        if len(t) == 0:
+                            curtime = int(time.time())
+                            cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                                WHERE challenge_record.challengeid = {challengeid} \
+                                GROUP BY dlog.userid, challenge_record.userid")
+                            t = cur.fetchall()
+                            usercnt = {}
+                            totalcnt = 0
+                            for tt in t:
+                                totalcnt += tt[1]
+                                uid = tt[0]
+                                if not uid in usercnt.keys():
+                                    usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                                else:
+                                    usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                                if totalcnt >= delivery_count:
+                                    break
                             for uid in usercnt.keys():
                                 s = usercnt[uid]
                                 reward = round(reward_points * s / delivery_count)

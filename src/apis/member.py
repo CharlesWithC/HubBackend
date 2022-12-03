@@ -341,6 +341,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": r.text}
             
         response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
+        for k in rl[1].keys():
+            response.headers[k] = rl[1][k]
         response.headers["Cache-Control"] = "public, max-age=7200, stale-if-error=604800"
         return response
         

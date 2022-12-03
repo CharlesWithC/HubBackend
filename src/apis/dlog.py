@@ -1054,7 +1054,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
-    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 3600, 3)
+    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -1277,6 +1277,8 @@ async def getDlogExport(request: Request, response: Response, authorization: str
     f.seek(0)
     
     response = StreamingResponse(iter([f.getvalue()]), media_type="text/csv")
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
     response.headers["Content-Disposition"] = "attachment; filename=export.csv"
 
     return response
