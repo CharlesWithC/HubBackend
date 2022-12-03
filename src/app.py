@@ -10,7 +10,7 @@ config_path = os.environ["HUB_CONFIG_FILE"]
 
 config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
-version = "v1.21.3"
+version = "v1.21.4"
 
 DH_START_TIME = int(time.time())
 

@@ -25,7 +25,7 @@ def has_glyph(glyph):
 consola_bold_font_wsize = []
 for i in range(81):
     font = ImageFont.truetype("./fonts/ConsolaBold.ttf", i)
-    wsize = font.getsize("a")[0]
+    wsize = font.getlength("a")
     consola_bold_font_wsize.append(wsize)
 
 @app.post("/banner")
@@ -98,13 +98,13 @@ async def banner(request: Request, response: Response):
                             fg = logo_datas[i*200+j]
                             datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
                 logo_bg.putdata(datas)
-                Image.Image.paste(banner, logo_bg, (1475, 25, 1675, 225))
+                banner.paste(logo_bg, (1475, 25, 1675, 225))
                 
                 # draw company name
                 draw = ImageDraw.Draw(banner)
                 usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
                 theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                company_name_len = usH45.getsize(f"{company_name}")[0]
+                company_name_len = usH45.getlength(f"{company_name}")
                 draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
 
                 banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)                
@@ -164,7 +164,7 @@ async def banner(request: Request, response: Response):
                 fg = avatar[i*250+j]
                 datas[i*250+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
     avatar_bg.putdata(datas)
-    Image.Image.paste(banner, avatar_bg, (35, 25, 285, 275))
+    banner.paste(avatar_bg, (35, 25, 285, 275))
 
     # draw text
     draw = ImageDraw.Draw(banner)
@@ -192,32 +192,34 @@ async def banner(request: Request, response: Response):
             namew = consola_bold_font_wsize[fontsize] * len(name)
         else:
             namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-            namew = namefont.getsize(f"{name}")[0]
+            namew = namefont.getlength(f"{name}")
         if namew > 450:
             r = fontsize - 1
         else:
             l = fontsize + 1
     namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
-    nameh = namefont.getsize(f"{name}")[1]
+    namebb = namefont.getbbox(f"{name}")
+    nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
-    draw.text((325, 50 + offset), name, fill=(0,0,0), font=namefont)
+    draw.text((325, 50 + offset - namebb[1]), name, fill=(0,0,0), font=namefont)
     # y = 50 ~ 70
 
     fontsize -= 10
     highest_role = form["highest_role"]
     highest_role = unicodedata.normalize('NFKC', highest_role).lstrip(" ")
     hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-    hrolew = hrolefont.getsize(f"{highest_role}")[0]
+    hrolew = hrolefont.getlength(f"{highest_role}")
     for _ in range(100):
         if hrolew > 450:
             fontsize -= 1
             hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
-            hrolew = hrolefont.getsize(f"{highest_role}")[0]
-    hroleh = hrolefont.getsize(f"{highest_role}")[1]
+            hrolew = hrolefont.getlength(f"{highest_role}")
+    hrolebb = hrolefont.getbbox(f"{highest_role}")
+    hroleh = hrolebb[3] - hrolebb[1]
 
     nameb = 50 + offset + nameh
     sincet = 210
-    draw.text((325, (sincet + nameb - hroleh) / 2 - 10), f"{highest_role}", fill=theme_color, font=hrolefont)
+    draw.text((325, (sincet + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
     # y = 115 ~ 155
 
     since = form["since"]
@@ -226,17 +228,17 @@ async def banner(request: Request, response: Response):
     distance = form["distance"]
     profit = form["profit"]
     sincefont = ImageFont.truetype("./fonts/Consola.ttf", 40)
-    draw.text((325, 210), f"Since {since}", fill=(0,0,0), font=sincefont)
+    draw.text((325, 220), f"Since {since}", fill=(0,0,0), font=sincefont)
 
     # separate line
     coH40 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 40)
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
-    divisionw = coH40.getsize(f"Division: {division}")[0]
+    divisionw = coH40.getlength(f"Division: {division}")
     if divisionw > 550:
         division += "..."
     while divisionw > 550:
         division = division[:-4] + "..."
-        divisionw = coH40.getsize(f"Division: {division}")[0]
+        divisionw = coH40.getlength(f"Division: {division}")
     draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
     draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
     draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)

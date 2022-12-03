@@ -307,37 +307,64 @@ def ProcessDiscordMessage(): # thread
     global config
     headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
     while 1:
-        if config.discord_bot_token == "":
-            return
-        if len(discord_message_queue) == 0:
-            time.sleep(1)
-            continue
-
-        channelid = discord_message_queue[0][0]
-        data = discord_message_queue[0][1]
-
-        ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
         try:
-            r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+            if config.discord_bot_token == "":
+                return
+            if len(discord_message_queue) == 0:
+                time.sleep(1)
+                continue
+            
+            # get first in queue
+            channelid = discord_message_queue[0][0]
+            data = discord_message_queue[0][1]
+
+            # see if there's any more embed to send to the channel
+            to_delete = [0]
+            for i in range(1, len(discord_message_queue)):
+                (chnid, d) = discord_message_queue[i]
+                if chnid == channelid and \
+                        not "content" in d.keys() and "embeds" in d.keys():
+                    # not a text message but a rich embed
+                    if len(str(data["embeds"])) + len(str(d["embeds"])) > 5000:
+                        break # make sure this will not exceed character limit
+                    for j in range(len(d["embeds"])):
+                        data["embeds"].append(d["embeds"][j])
+                    to_delete.append(i)
+
+            ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
+            try:
+                r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+            except:
+                import traceback
+                traceback.print_exc()
+                time.sleep(5)
+                continue
+
+            if r.status_code == 429:
+                d = json.loads(r.text)
+                time.sleep(d["retry_after"])
+            elif r.status_code == 403:
+                conn = newconn()
+                cur = conn.cursor()
+                cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
+                cur.execute(f"DELETE FROM settings WHERE skey = 'event-notification' AND sval = '{channelid}'")
+                conn.commit()
+                for i in to_delete[::-1]:
+                    discord_message_queue.pop(i)
+            elif r.status_code == 401:
+                DisableDiscordIntegration()
+                return
+            elif r.status_code == 200 or r.status_code >= 400 and r.status_code <= 499:
+                for i in to_delete[::-1]:
+                    discord_message_queue.pop(i)
+
+            time.sleep(1)
+            
         except:
             import traceback
             traceback.print_exc()
+            time.sleep(1)
 
-        if r.status_code == 429:
-            d = json.loads(r.text)
-            time.sleep(d["retry_after"])
-        elif r.status_code == 403:
-            conn = newconn()
-            cur = conn.cursor()
-            cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
-            cur.execute(f"DELETE FROM settings WHERE skey = 'event-notification' AND sval = '{channelid}'")
-            conn.commit()
-        elif r.status_code == 401:
-            DisableDiscordIntegration()
-        elif r.status_code == 200 or r.status_code >= 400 and r.status_code <= 499:
-            discord_message_queue = discord_message_queue[1:]
-
-        time.sleep(1)
 threading.Thread(target=ProcessDiscordMessage, daemon = True).start()
 
 def CheckDiscordNotification(discordid):
@@ -366,6 +393,24 @@ def GetUserLanguage(discordid, default_language = ""):
     if len(t) == 0:
         return default_language
     return t[0][0]
+
+def CheckNotificationEnabled(notification_type, discordid):
+    conn = newconn()
+    cur = conn.cursor()
+    
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+
+    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = cur.fetchall()
+    if len(t) != 0:
+        d = t[0][0].split(",")
+        for dd in d:
+            if dd in settings.keys():
+                settings[dd] = True
+    
+    if notification_type in settings.keys() and not settings[notification_type]:
+        return False
+    return True
 
 def notification(notification_type, discordid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):

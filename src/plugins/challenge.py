@@ -29,7 +29,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # - string: title
 # - integar: start_time
 # - integar: end_time
-# - integar: challenge_type (1 = personal (one-time) | 2 = company | 3 = personal (recurring))
+# - integar: challenge_type (1 = personal (one-time) | 2 = company | 3 = personal (recurring) | 4 = personal (distance-based) | 5 = company (distance-based))
 # - integar: delivery_count
 # - string: required_roles (or) (separate with ',' | default = 'any')
 # - integar: required_distance
@@ -109,7 +109,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_time_range", force_lang = au["language"])}
 
-    if not challenge_type in [1, 2, 3]:
+    if not challenge_type in [1, 2, 3, 4, 5]:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_challenge_type", force_lang = au["language"])}
     
@@ -128,7 +128,10 @@ async def postChallenge(request: Request, response: Response, authorization: str
 
     if delivery_count <= 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
+        if challenge_type in [1, 2, 3]:
+            return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
+        elif challenge_type in [4, 5]:
+            return {"error": True, "descriptor": ml.tr(request, "invalid_distance_sum", force_lang = au["language"])}
 
     if required_distance < 0:
         required_distance = 0
@@ -236,7 +239,10 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 
     if delivery_count <= 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
+        if challenge_type in [1, 2, 3]:
+            return {"error": True, "descriptor": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
+        elif challenge_type in [4, 5]:
+            return {"error": True, "descriptor": ml.tr(request, "invalid_distance_sum", force_lang = au["language"])}
 
     if required_distance < 0:
         required_distance = 0
@@ -294,6 +300,55 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                     discordid = getUserInfo(userid = userid)["discordid"]
                     notification("challenge", discordid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
+        else:
+            for userid in original_points.keys():
+                discordid = getUserInfo(userid = userid)["discordid"]
+                if original_points[userid] < reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                elif original_points[userid] > reward_points:
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(- reward_points + original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+
+    elif challenge_type == 4:
+        original_points = {}
+        cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid} AND points != {reward_points}")
+        t = cur.fetchall()
+        for tt in t:
+            original_points[tt[0]] = tt[1]
+        cur.execute(f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
+        conn.commit()
+        
+        if org_delivery_count < delivery_count:
+            cur.execute(f"SELECT challenge_record.userid FROM challenge_record \
+                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                WHERE challenge_record.challengeid = {challengeid} \
+                GROUP BY dlog.userid, challenge_record.userid \
+                HAVING SUM(dlog.distance) >= {org_delivery_count} AND SUM(dlog.distance) < {delivery_count}")
+            t = cur.fetchall()
+            for tt in t:
+                userid = tt[0]
+                cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                p = cur.fetchall()
+                if len(p) > 0:
+                    cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_increased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
+        elif org_delivery_count > delivery_count:
+            cur.execute(f"SELECT challenge_record.userid FROM challenge_record \
+                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                WHERE challenge_record.challengeid = {challengeid} \
+                GROUP BY dlog.userid, challenge_record.userid \
+                HAVING SUM(dlog.distance) >= {delivery_count} AND SUM(dlog.distance) < {org_delivery_count}")
+            t = cur.fetchall()
+            for tt in t:
+                userid = tt[0]
+                cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                p = cur.fetchall()
+                if len(p) == 0:
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    notification("challenge", discordid, ml.tr(request, "challenge_completed_decreased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
             conn.commit()
         else:
             for userid in original_points.keys():
@@ -413,6 +468,68 @@ async def patchChallenge(request: Request, response: Response, authorization: st
                     del previously_completed[uid]
                 else:
                     cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+            conn.commit()
+        for uid in previously_completed.keys():
+            reward = previously_completed[uid][0]
+            discordid = getUserInfo(userid = uid)["discordid"]
+            notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+
+    elif challenge_type == 5:
+        curtime = int(time.time())
+
+        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
+        t = cur.fetchall()
+        previously_completed = {}
+        if len(t) != 0:
+            cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid}")
+            p = cur.fetchall()
+            for pp in p:
+                previously_completed[pp[0]] = (pp[1], pp[2])
+            cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+            conn.commit()
+
+        current_delivery_count = 0
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid}")
+        current_delivery_count = cur.fetchone()
+        current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
+        
+        if current_delivery_count >= delivery_count:
+            cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                WHERE challenge_record.challengeid = {challengeid} \
+                GROUP BY dlog.userid, challenge_record.userid")
+            t = cur.fetchall()
+            usercnt = {}
+            totalcnt = 0
+            for tt in t:
+                totalcnt += tt[1]
+                uid = tt[0]
+                if not uid in usercnt.keys():
+                    usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                else:
+                    usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                if totalcnt >= delivery_count:
+                    break
+            for uid in usercnt.keys():
+                s = usercnt[uid]
+                reward = round(reward_points * s / delivery_count)
+                if uid in previously_completed.keys():
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
+                    gap = reward - previously_completed[uid][0]
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    if gap > 0:
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                    elif gap < 0:
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                    del previously_completed[uid]
+                else:
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    notification("challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
             conn.commit()
         for uid in previously_completed.keys():
             reward = previously_completed[uid][0]
@@ -528,15 +645,21 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     current_delivery_count = 0
     if challenge_type in [1,3]:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
     elif challenge_type == 2:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
-    
+    elif challenge_type == 4:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
+    elif challenge_type == 5:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid}")
+    current_delivery_count = cur.fetchone()
+    current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
+
     if current_delivery_count >= delivery_count:
-        if challenge_type == 1:
+        if challenge_type in [1, 4]:
             cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
             t = cur.fetchall()
             if len(t) == 0:
@@ -544,6 +667,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                 conn.commit()
                 discordid = getUserInfo(userid = userid)["discordid"]
                 notification("challenge", discordid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+        
         elif challenge_type == 3:
             cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
             t = cur.fetchall()
@@ -552,6 +676,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                 conn.commit()
                 discordid = getUserInfo(userid = userid)["discordid"]
                 notification("challenge", discordid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+
         elif challenge_type == 2:
             cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = cur.fetchall()
@@ -566,6 +691,35 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
                         usercnt[uid] = 1
                     else:
                         usercnt[uid] += 1
+                for uid in usercnt.keys():
+                    s = usercnt[uid]
+                    reward = round(reward_points * s / delivery_count)
+                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                    discordid = getUserInfo(userid = uid)["discordid"]
+                    notification("challenge", discordid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                conn.commit()
+
+        elif challenge_type == 5:
+            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
+            t = cur.fetchall()
+            if len(t) == 0:
+                curtime = int(time.time())
+                cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                    INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                    WHERE challenge_record.challengeid = {challengeid} \
+                    GROUP BY dlog.userid, challenge_record.userid")
+                t = cur.fetchall()
+                usercnt = {}
+                totalcnt = 0
+                for tt in t:
+                    totalcnt += tt[1]
+                    uid = tt[0]
+                    if not uid in usercnt.keys():
+                        usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                    else:
+                        usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                    if totalcnt >= delivery_count:
+                        break
                 for uid in usercnt.keys():
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
@@ -631,19 +785,26 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
     current_delivery_count = 0
     if challenge_type in [1,3]:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
     elif challenge_type == 2:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+    elif challenge_type == 4:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
+    elif challenge_type == 5:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid}")
+    current_delivery_count = cur.fetchone()
+    current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
-    if challenge_type == 1:
+    if challenge_type in [1, 4]:
         if current_delivery_count < delivery_count:
             cur.execute(f"SELECT points FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
             p = cur.fetchall()
             if len(p) > 0:
                 cur.execute(f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
+                conn.commit()
                 discordid = getUserInfo(userid = userid)["discordid"]
                 notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = GetUserLanguage(discordid, "en")))
       
@@ -708,6 +869,72 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
                         del previously_completed[uid]
                     else:
                         cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                        discordid = getUserInfo(userid = uid)["discordid"]
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                conn.commit()
+            for uid in previously_completed.keys():
+                reward = previously_completed[uid][0]
+                discordid = getUserInfo(userid = uid)["discordid"]
+                notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+
+    elif challenge_type == 5:
+        if current_delivery_count < delivery_count:
+            cur.execute(f"SELECT userid, points FROM challenge_completed WHERE challengeid = {challengeid}")
+            p = cur.fetchall()
+            if len(p) > 0:
+                userid = p[0][0]
+                points = p[0][1]
+                discordid = getUserInfo(userid = userid)["discordid"]
+                notification("challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+            cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+            conn.commit()
+        
+        else:
+            curtime = int(time.time())
+            
+            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
+            t = cur.fetchall()
+            previously_completed = {}
+            if len(t) != 0:
+                cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid}")
+                p = cur.fetchall()
+                for pp in p:
+                    previously_completed[pp[0]] = (pp[1], pp[2])
+                cur.execute(f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
+                conn.commit()
+
+                cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                    INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                    WHERE challenge_record.challengeid = {challengeid} \
+                    GROUP BY dlog.userid, challenge_record.userid")
+                t = cur.fetchall()
+                usercnt = {}
+                totalcnt = 0
+                for tt in t:
+                    totalcnt += tt[1]
+                    uid = tt[0]
+                    if not uid in usercnt.keys():
+                        usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                    else:
+                        usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                    if totalcnt >= delivery_count:
+                        break
+                for uid in usercnt.keys():
+                    s = usercnt[uid]
+                    reward = round(reward_points * s / delivery_count)
+                    if uid in previously_completed.keys():
+                        cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
+                        gap = reward - previously_completed[uid][0]
+                        discordid = getUserInfo(userid = uid)["discordid"]
+                        if gap > 0:
+                            notification("challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                        elif gap < 0:
+                            notification("challenge", discordid, ml.tr(request, "challenge_updated_lost_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(-gap), "total_points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                        del previously_completed[uid]
+                    else:
+                        cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                        discordid = getUserInfo(userid = uid)["discordid"]
+                        notification("challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
                 conn.commit()
             for uid in previously_completed.keys():
                 reward = previously_completed[uid][0]
@@ -772,12 +999,18 @@ async def getChallenge(request: Request, response: Response, authorization: str 
     current_delivery_count = 0
     if tt[4] in [1,3]:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
     elif tt[4] == 2:
         cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
-        current_delivery_count = cur.fetchone()[0]
-        current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+    elif tt[4] == 4:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
+    elif tt[4] == 5:
+        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+            WHERE challenge_record.challengeid = {challengeid}")
+    current_delivery_count = cur.fetchone()
+    current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
     
     completed = []
     cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, timestamp ASC, userid ASC")
@@ -889,12 +1122,18 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         current_delivery_count = 0
         if tt[4] in [1,3]:
             cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]} AND userid = {userid}")
-            current_delivery_count = cur.fetchone()[0]
-            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
         elif tt[4] == 2:
             cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]}")
-            current_delivery_count = cur.fetchone()[0]
-            current_delivery_count = 0 if current_delivery_count is None else int(current_delivery_count)
+        elif tt[4] == 4:
+            cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                WHERE challenge_record.challengeid = {tt[0]} AND challenge_record.userid = {userid}")
+        elif tt[4] == 5:
+            cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                WHERE challenge_record.challengeid = {tt[0]}")
+        current_delivery_count = cur.fetchone()
+        current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
         completed = []
         cur.execute(f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, timestamp ASC, userid ASC")
@@ -904,12 +1143,12 @@ async def getChallengeList(request: Request, response: Response, authorization: 
             completed.append({"userid": str(pp[0]), "name": username, "points": str(pp[1]), "timestamp": str(pp[2])})
 
         if must_have_completed:
-            if tt[4] in [1,3]:
+            if tt[4] in [1,3,4]:
                 cur.execute(f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]} AND userid = {userid}")
                 p = cur.fetchall()
                 if len(p) == 0:
                     continue
-            elif tt[4] == 2:
+            elif tt[4] == [2,5]:
                 cur.execute(f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]}")
                 p = cur.fetchall()
                 if len(p) == 0:

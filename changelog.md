@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.21.4**  
+1.Improved Discord Notification to send batched embeds (less messages, more embeds)  
+2.Added distance-based challenge  
+3.Fixed various bugs of challenge plugin  
+
 **v1.21.3**  
 **[BannerGen]**  
 1.Merged `ConsolaBold` with `SansSerif` to support a larger character set  
