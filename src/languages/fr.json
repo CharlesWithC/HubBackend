@@ -9,6 +9,8 @@
     "ban_with_reason_expire": "Vous êtes banni pour {reason} jusqu'au {expire} UTC",
     "discord_check_fail": "Impossible de vérifier si vous êtes sur le serveur Discord.",
     "must_join_discord": "Vous devez rejoindre le serveur Discord.",
+    "user_discord_check_failed": "Échec de la vérification si l'utilisateur est sur le serveur Discord.",
+    "user_not_in_discord": "L'utilisateur n'a pas rejoint le serveur Discord.",
     "invalid_email": "E-mail invalide lié au compte Discord. Connectez votre compte Discord avec une adresse e-mail et reconnectez-vous.",
     "access_sensitive_data": "Vous devez vous connecter avec Discord ou Steam, ou activer MFA pour accéder aux données sensibles.",
     "too_many_user_with_same_email": "Trop d'utilisateurs ont la même adresse e-mail. Vous n'êtes pas autorisé à utiliser la connexion par mot de passe.",

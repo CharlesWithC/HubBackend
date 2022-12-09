@@ -1,5 +1,28 @@
 # Changelog
 
+**v1.21.5**  
+**[BannerGen]**  
+1.Prevented sending request to BannerGen when cache exists  
+2.Improved avatar caching mechanism  
+**[Minor changes]**  
+1.User activity: Changed `user_{userid}` to `member_{userid}`  
+2.Rate limit: Added `X-RateLimit-Reset` and `X-RateLimit-Reset-After` header for non-429 responses  
+3.User: Added **PATCH** `/user/name` to update username to latest Discord user name / server nickname  
+4.Event: Added `first_event_after` request param for better ordering  
+5.Discord Integration: Added error notification when fails to update roles  
+6.Discord Integration: Added `config.use_server_nickname`, if `true`, then use nickname in Discord server  
+7.Configuration: Added config validator to use default value for missing fields  
+8.Endpoint Route & Methods: Updated for better readability  
+|Old|New|  
+--|--|
+|**PUT** `/reload`|**POST** `/reload`|
+|**PUT** `/auth/tip`|**POST** `/user/tip`|
+|**GET** `/auth/tip`|**GET** `/user/tip`|
+|**PUT** `/auth/mfa`|**POST** `/user/mfa`|
+|**DELETE** `/auth/mfa`|**DELETE** `/user/mfa`|
+|**DELETE** `/member/resign`|**POST** `/member/resign`|
+|**DELETE** `/member/dismiss`|**POST** `/member/dismiss`|
+
 **v1.21.4**  
 1.Improved Discord Notification to send batched embeds (less messages, more embeds)  
 2.Added distance-based challenge  

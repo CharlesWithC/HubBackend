@@ -61,8 +61,9 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     # remove disabled plugins
     for t in config_plugins.keys():
         if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t] and tt in ffconfig.keys():
-                del ffconfig[tt]
+            for tt in config_plugins[t]:
+                if tt in ffconfig.keys():
+                    del ffconfig[tt]
     
     # old config
     t = copy.deepcopy(backup_config)
@@ -80,8 +81,9 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     # remove disabled plugins
     for t in config_plugins.keys():
         if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t] and tt in ffconfig.keys():
-                del ttconfig[tt]
+            for tt in config_plugins[t]:
+                if tt in ffconfig.keys():
+                    del ttconfig[tt]
 
     return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
 
@@ -203,9 +205,9 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     return {"error": False}
 
 # reload service
-@app.put(f"/{config.abbr}/reload")
-async def putReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /reload', 600, 3)
+@app.post(f"/{config.abbr}/reload")
+async def postReload(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

@@ -43,11 +43,6 @@ async def banner(request: Request, response: Response):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 7200:
             os.remove(f"/tmp/hub/banner/{ll}")
 
-    l = os.listdir(f"/tmp/hub/avatar")
-    for ll in l:
-        if time.time() - os.path.getmtime(f"/tmp/hub/avatar/{ll}") > 86400:
-            os.remove(f"/tmp/hub/avatar/{ll}")
-
     if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{discordid}.png"):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{discordid}.png") <= 3600:
             response = StreamingResponse(iter([open(f"/tmp/hub/banner/{company_abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
@@ -114,39 +109,59 @@ async def banner(request: Request, response: Response):
     
     avatar = form["avatar"]
     avatarid = avatar
+
+    l = os.listdir(f"/tmp/hub/avatar")
+    for ll in l:
+        ldiscordid = ll.split("_")[0]
+        lavatarid = "_".join(ll.split("_")[1:]).split(".")[0]
+        if ldiscordid == discordid and lavatarid != avatarid:
+            # user changed avatar
+            os.remove(f"/tmp/hub/avatar/{ll}")
+            continue
+        if ldiscordid == discordid and lavatarid == avatarid:
+            # user didn't change avatar, and user is active, preserve avatar longer
+            mtime = os.path.getmtime(f"/tmp/hub/avatar/{ll}")
+            os.utime(f"/tmp/hub/avatar/{ll}", (time.time(), mtime))
+        if time.time() - os.path.getatime(f"/tmp/hub/avatar/{ll}") > 86400 * 7:
+            os.remove(f"/tmp/hub/avatar/{ll}")
+            continue
+
     if os.path.exists(f"/tmp/hub/avatar/{discordid}_{avatar}.png"):
         avatar = Image.open(f"/tmp/hub/avatar/{discordid}_{avatar}.png")
     else:
-        # pre-process avatar
-        avatarurl = ""
-        if avatar.startswith("a_"):
-            avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
+        if str(avatar) == "None":
+            avatar = logo.resize((250, 250)).convert("RGBA")
         else:
-            avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
-        r = requests.get(avatarurl, timeout=3)
-        try: # in case image is invalid
-            usedefault = False
-            if r.status_code == 200:
-                try:
-                    avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
-                except:
-                    avatar = logo.resize((250, 250)).convert("RGBA")
+            # pre-process avatar
+            avatarurl = ""
+            if avatar.startswith("a_"):
+                avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
             else:
-                avatar = logo.resize((250, 250)).convert("RGBA")
-            def dist(a,b,c,d):
-                return (c-a)*(c-a)+(b-d)*(b-d)
-            data = avatar.getdata()
-            newData = []
-            for i in range(0,250):
-                for j in range(0,250):
-                    if dist(i,j,125,125) > 125*125:
-                        newData.append((255,255,255,0))
-                    else:
-                        newData.append(data[i*250+j])
-            avatar.putdata(newData)
-            avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
-        except:
-            pass
+                avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
+            r = requests.get(avatarurl, timeout=3)
+            try: # in case image is invalid
+                usedefault = False
+                if r.status_code == 200:
+                    try:
+                        avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
+                    except:
+                        avatar = logo.resize((250, 250)).convert("RGBA")
+                else:
+                    avatar = logo.resize((250, 250)).convert("RGBA")
+                def dist(a,b,c,d):
+                    return (c-a)*(c-a)+(b-d)*(b-d)
+                data = avatar.getdata()
+                newData = []
+                for i in range(0,250):
+                    for j in range(0,250):
+                        if dist(i,j,125,125) > 125*125:
+                            newData.append((255,255,255,0))
+                        else:
+                            newData.append(data[i*250+j])
+                avatar.putdata(newData)
+                avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
+            except:
+                pass
     avatar = avatar.getdata()
 
     # render avatar

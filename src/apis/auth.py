@@ -68,20 +68,25 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    if config.in_guild_check and config.discord_bot_token != "":
+    if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
             r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
             import traceback
             traceback.print_exc()
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "discord_check_fail")}
         if r.status_code == 404:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "must_join_discord")}
         if r.status_code != 200:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
+            response.status_code = 428
+            return {"error": True, "descriptor": ml.tr(request, "discord_check_fail")}
         d = json.loads(r.text)
-        if not "user" in d.keys():
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+        if config.use_server_nickname and d["nick"] != None:
+            username = d["nick"]
+            cur.execute(f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+            conn.commit()
 
     cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -99,7 +104,8 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         reason = t[0][0]
         expire = t[0][1]
         expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         
     stoken = str(uuid4())
     stoken = "e" + stoken[1:]
@@ -184,7 +190,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
                 cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{discordid}'")
             conn.commit()
             
-            if config.in_guild_check and config.discord_bot_token != "":
+            if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
                 try:
                     r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
                 except:
@@ -196,8 +202,10 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
                 if r.status_code != 200:
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
                 d = json.loads(r.text)
-                if not "user" in d.keys():
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+                if config.use_server_nickname and d["nick"] != None:
+                    username = d["nick"]
+                    cur.execute(f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+                    conn.commit()
 
             cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
             t = cur.fetchall()
@@ -236,12 +244,12 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
         if 'error_description' in tokens.keys():
             return RedirectResponse(url=getUrl4Msg(tokens['error_description']), status_code=302)
         else:
-            return RedirectResponse(url=getUrl4Msg(ml.tr("unknown_error")), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
 
     except:
         import traceback
         traceback.print_exc()
-        return RedirectResponse(url=getUrl4Msg(ml.tr("unknown_error")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
 
 # Steam Auth (Only for connecting account)
 @app.get(f"/{config.abbr}/auth/steam/redirect")
@@ -310,7 +318,7 @@ async def getSteamCallback(request: Request, response: Response):
         expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
 
-    if config.in_guild_check and config.discord_bot_token != "":
+    if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
             r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
@@ -322,8 +330,10 @@ async def getSteamCallback(request: Request, response: Response):
         if r.status_code != 200:
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
         d = json.loads(r.text)
-        if not "user" in d.keys():
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
+        if config.use_server_nickname and d["nick"] != None:
+            username = d["nick"]
+            cur.execute(f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+            conn.commit()
 
     cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
     t = cur.fetchall()
@@ -644,110 +654,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
     
     return {"error": False}
 
-# Temporary Identity Proof
-@app.put(f"/{config.abbr}/auth/tip")
-async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /auth/tip', 180, 20)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    au = auth(authorization, request, check_member = False)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    discordid = au["discordid"]
-
-    conn = newconn()
-    cur = conn.cursor()
-    stoken = str(uuid4())
-    while stoken[0] == "f":
-        stoken = str(uuid4())
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
-    cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+180})")
-    conn.commit()
-
-    return {"error": False, "response": {"token": stoken}}
-
-@app.get(f"/{config.abbr}/auth/tip")
-async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /auth/tip', 60, 120)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    token = token.replace("'","")
-
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
-    cur.execute(f"SELECT discordid FROM temp_identity_proof WHERE token = '{token}'")
-    t = cur.fetchall()
-    if len(t) == 0:
-        response.status_code = 401
-        return {"error": True, "descriptor": ml.tr(request, "invalid_token")}
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
-    conn.commit()
-    return {"error": False, "response": {"user": getUserInfo(discordid = t[0][0])}}
-
 # Multiple Factor Authentication
-@app.put(f"/{config.abbr}/auth/mfa")
-async def putMFA(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /auth/mfa', 60, 30)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-    
-    au = auth(authorization, request, check_member = False)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    discordid = au["discordid"]
-
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
-    secret = t[0][0]
-    if secret != "":
-        response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "mfa_already_enabled", force_lang = au["language"])}
-    
-    form = await request.form()
-    try:
-        secret = form["secret"]
-        otp = int(form["otp"])
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
-
-    if len(secret) != 16 or not secret.isalnum():
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
-    
-    try:
-        base64.b32decode(secret)
-    except:
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
-
-    if not valid_totp(otp, secret):
-        response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
-    
-    cur.execute(f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
-    conn.commit()
-        
-    username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(-999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
-
-    return {"error": False}
-
 @app.post(f"/{config.abbr}/auth/mfa")
 async def postMFA(request: Request, response: Response):
     rl = ratelimit(request, request.client.host, 'POST /auth/mfa', 60, 3)
@@ -797,7 +704,8 @@ async def postMFA(request: Request, response: Response):
         reason = t[0][0]
         expire = t[0][1]
         expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
+        response.status_code = 403
+        return {"error": True, "descriptor": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
 
     stoken = str(uuid4())
     while stoken.startswith("e"):
@@ -823,77 +731,3 @@ async def postMFA(request: Request, response: Response):
     )
 
     return {"error": False, "response": {"token": stoken}}
-
-@app.delete(f"/{config.abbr}/auth/mfa")
-async def deleteMFA(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[str] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /auth/mfa', 60, 30)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-    
-    if discordid == -1:
-        # self-disable mfa
-        au = auth(authorization, request, check_member = False)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-        discordid = au["discordid"]
-        
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
-        secret = t[0][0]
-        if secret == "":
-            response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "mfa_not_enabled", force_lang = au["language"])}
-    
-        form = await request.form()
-        try:
-            otp = int(form["otp"])
-        except:
-            response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
-        
-        if not valid_totp(otp, secret):
-            response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
-        
-        cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
-        conn.commit()
-        
-        username = getUserInfo(discordid = discordid)["name"]
-        await AuditLog(-999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
-
-        return {"error": False}
-    
-    else:
-        # admin / hrm disable user mfa
-        au = auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-        adminid = au["userid"]
-
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
-        secret = t[0][0]
-        if secret == "":
-            response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "mfa_not_enabled")}
-        
-        cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
-        conn.commit()
-        
-        username = getUserInfo(discordid = discordid)["name"]
-        await AuditLog(adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
-
-        return {"error": False}

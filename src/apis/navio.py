@@ -263,7 +263,6 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 truck = "N/A"
             if config.discord_bot_token != "":
                 headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
-                ddurl = f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages"
                 munit = "€"
                 if not game.startswith("e"):
                     munit = "$"
@@ -301,7 +300,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
-                    r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+                    r = requests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
                     if r.status_code == 401:
                         DisableDiscordIntegration()
                     

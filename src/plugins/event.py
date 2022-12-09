@@ -148,7 +148,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.abbr}/event/list")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = ""):
+    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
+        first_event_after: Optional[int] = -1):
     rl = ratelimit(request, request.client.host, 'GET /event/list', 60, 60)
     if rl[0]:
         return rl[1]
@@ -173,6 +174,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             aulanguage = au["language"]
             activityUpdate(au["discordid"], f"events")
     
+    if first_event_after < 0:
+        first_event_after = int(time.time()) - 86400
+
     conn = newconn()
     cur = conn.cursor()
 
@@ -191,7 +195,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
+    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
     t = cur.fetchall()
     ret = []
     for tt in t:
@@ -225,13 +229,13 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 "departure_timestamp": str(tt[6]), "points": str(tt[12]), "is_private": TF[tt[11]], \
                     "attendees": attendee_ret, "votes": vote_ret})
     
-    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {int(time.time()) - 86400} {limit}")
+    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
     t = cur.fetchall()
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {int(time.time()) - 86400} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
+    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
     t = cur.fetchall()
     for tt in t:
         attendee = tt[9].split(",")

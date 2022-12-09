@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.4"
+        "version": "1.21.5"
     },
     "paths": {
         "/abbr": {
@@ -1255,9 +1255,48 @@
                 }
             }
         },
+        "/abbr/user/name": {
+            "patch": {
+                "summary": "Update Username (Using data from Discord)",
+                "tags": ["user"],
+                "operationId": "patch_user_name",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Discord ID (To update another user's username)",
+                        "type": "integar"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/user/bio": {
             "patch": {
-                "summary": "Edit Bio",
+                "summary": "Update Bio",
                 "tags": ["user"],
                 "operationId": "patch_user_bio",
                 "security": [{
@@ -2221,7 +2260,7 @@
                 }
             },
             "patch": {
-                "summary": "Edit Config",
+                "summary": "Update Config",
                 "tags": ["admin"],
                 "operationId": "patch_config",
                 "security": [{
@@ -2994,7 +3033,7 @@
                 }
             },
             "post": {
-                "summary": "Post Announcement",
+                "summary": "Create Announcement",
                 "tags": ["announcement"],
                 "operationId": "post_announcement",
                 "security": [{
@@ -3055,7 +3094,7 @@
                 }
             },
             "patch": {
-                "summary": "Edit Announcement",
+                "summary": "Update Announcement",
                 "tags": ["announcement"],
                 "operationId": "patch_announcement",
                 "security": [{
@@ -3379,7 +3418,7 @@
                 }
             },
             "post": {
-                "summary": "Post Application",
+                "summary": "Create Application",
                 "tags": ["application"],
                 "operationId": "post_application",
                 "security": [{
@@ -3579,7 +3618,7 @@
                 }
             },
             "post": {
-                "summary": "Post Challenge",
+                "summary": "Create Challenge",
                 "tags": ["challenge"],
                 "operationId": "post_challenge",
                 "security": [{
@@ -4096,7 +4135,7 @@
                 }
             },
             "post": {
-                "summary": "Post Division Delivery Validation Request",
+                "summary": "Create Division Delivery Validation Request",
                 "tags": ["division"],
                 "operationId": "post_division",
                 "security": [{
@@ -4442,7 +4481,7 @@
                 }
             },
             "patch": {
-                "summary": "Edit Downloadable Item",
+                "summary": "Update Downloadable Item",
                 "tags": ["downloads"],
                 "operationId": "patch_downloads",
                 "security": [{
@@ -4616,6 +4655,14 @@
                     },
                     "name": "title",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "First Event After Timestamp",
+                        "type": "integar"
+                    },
+                    "name": "first_event_after",
+                    "in": "query"
                 }],
                 "responses": {
                     "200": {
@@ -4678,7 +4725,7 @@
                 }
             },
             "post": {
-                "summary": "Post Event",
+                "summary": "Create Event",
                 "tags": ["event"],
                 "operationId": "post_event",
                 "security": [{
@@ -4755,7 +4802,7 @@
                 }
             },
             "patch": {
-                "summary": "Edit Event",
+                "summary": "Update Event",
                 "tags": ["event"],
                 "operationId": "patch_event",
                 "security": [{

@@ -19,6 +19,8 @@ EN_STRINGTABLE = {
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",
     "must_join_discord": "You must join Discord Server.",
+    "user_discord_check_failed": "Failed to check if user is in Discord Server.",
+    "user_not_in_discord": "User didn't join Discord Server.",
     "invalid_email": "Invalid email bound to Discord account. Connect your Discord account with an email address and login again.",
     "access_sensitive_data": "You have to login with Discord or Steam, or enable MFA to access sensitive data.",
     "too_many_user_with_same_email": "Too many user have the same email address. You are not allowed to use password login.",

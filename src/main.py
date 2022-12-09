@@ -48,9 +48,9 @@ if __name__ == "__main__":
     print(drivershub)
     print(f"Drivers Hub: Backend ({version})")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
-    print("")
 
     if "upgrade" in sys.argv:
+        print("")
         if os.path.exists(f"./upgrade.py"):
             print("Detected upgrade")
             import upgrade
@@ -76,6 +76,7 @@ if __name__ == "__main__":
 
 import api
 if __name__ == "__main__":
+    print("")
     print(f"Company Name: {config.name}")
     print(f"Company Abbreviation: {config.abbr}\n")
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}.png")

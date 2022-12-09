@@ -8,9 +8,183 @@ import os, sys, json, requests, time, threading
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
-version = "v1.21.4"
+config_sample = {
+    "abbr": "",
+    "name": "",
+    "distance_unit": "metric",
+    "truckersmp_bind": True,
+    "language": "en",
+    "privacy": False,
+    "hex_color": "FFFFFF",
+    "logo_url": "https://{domain}/images/logo.png",
+
+    "apidoc": "./apidoc.json",
+    "language_dir": "./languages",
+    "frontend_urls": {
+        "steam_callback": "https://{domain}/steam",
+        "auth_message": "https://{domain}/auth?message={message}",
+        "auth_token": "https://{domain}/auth?token={token}",
+        "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
+        "member": "https://{domain}/member?userid={userid}",
+        "delivery": "https://{domain}/delivery?logid={logid}"
+    },
+
+    "apidomain": "drivershub.charlws.com",
+    "domain": "",
+    "server_ip": "127.0.0.1",
+    "server_port": "7777",
+    "server_workers": "3",
+
+    "database": "mysql",
+    "mysql_host": "localhost",
+    "mysql_user": "",
+    "mysql_passwd": "",
+    "mysql_db": "_drivershub",
+    "mysql_ext": "/var/lib/mysqlext/",
+    "hcaptcha_secret": "",
+
+    "enabled_plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
+    "external_plugins": ["rework_member"],
+
+    "guild_id": "",
+    "in_guild_check": True,
+    "use_server_nickname": False,
+
+    "navio_api_token": "",
+    "navio_company_id": "",
+    "allowed_navio_ips": ["185.233.107.244"],
+    "delivery_rules": {
+        "max_speed": "180",
+        "max_profit": "1000000",
+        "action": "block"
+    },
+    "delivery_log_channel_id": "",
+    "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+        "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
+        "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
+        "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",
+        "https://c.tenor.com/jEW-3JELMG4AAAAM/skidding-white-pick-up.gif",
+        "https://c.tenor.com/JGw-jxHDAGoAAAAC/truck-lol.gif",
+        "https://c.tenor.com/2B9tkbj7CVEAAAAM/explode-truck.gif",
+        "https://c.tenor.com/Tl6l934qO70AAAAC/driving-truck.gif",
+        "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
+        "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
+
+    "discord_client_id": "",
+    "discord_client_secret": "",
+    "discord_oauth2_url": "",
+    "discord_callback_url": "https://drivershub.charlws.com/{abbr}/auth/discord/callback",
+    "discord_bot_token": "",
+
+    "team_update": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "{name} has joined **VTC** as a **Driver**.",
+            "image_url": "",
+            "footer": {
+                "text": "",
+                "icon_url": ""
+            },
+            "timestamp": True
+        }
+    },
+
+    "member_welcome": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "Welcome {name}.",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "You are our #{userid} driver",
+                "icon_url": ""
+            },
+            "timestamp": True
+        },
+        "role_change": ["+1237912873213", "-43953495734"]
+    },
+
+    "rank_up": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "GG {mention}! You have ranked up to {rank}!",
+            "image_url": "",
+            "footer": {
+                "text": "",
+                "icon_url": ""
+            },
+            "timestamp": True
+        }
+    },
+    "ranks": [
+        {"distance": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+    ],
+
+    "application_types": [
+        {"id": "1", "name": "Driver", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": "driver"},
+        {"id": "2", "name": "Staff", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
+        {"id": "3", "name": "LOA", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
+        {"id": "4", "name": "Division", "discord_role_id": "", "staff_role_id": ["40"], "message": "", "webhook": "", "note": ""}
+    ],
+
+    "webhook_division": "",
+    "webhook_division_message": "",
+    "divisions": [
+        {"id": "1", "name": "Construction", "role_id": "251", "point": "500"}
+    ],
+
+    "perms": {
+        "admin": ["0"],
+        "config": [],
+        "reload": [],
+
+        "hrm": [],
+        "disable_user_mfa": [],
+        "update_user_discord": [],
+        "delete_account_connections": [],
+        "delete_user": [],
+        "update_application_positions": [],
+        "delete_dlog": [],
+
+        "hr": [],
+        "patch_username": [],
+        "add_member": [],
+        "update_member_roles": [],
+        "update_member_points": [],
+        "dismiss_member": [],
+        "get_pending_user_list": [],
+        "ban_user": [],
+
+        "audit": [],
+        "announcement": [],
+        "challenge": [],
+        "division": [],
+        "downloads": [],
+        "event": [],
+        
+        "driver": ["100"]
+    },
+
+    "roles": [
+        {"id": "0", "name": "root", "color": "#000000"},
+        {"id": "100", "name": "Driver", "color": "#000000"},
+        {"id": "251", "name": "Construction Division", "color": "#000000"}
+    ],
+
+    "webhook_audit": ""
+}
+
+version = "v1.21.5"
 
 DH_START_TIME = int(time.time())
 
@@ -29,7 +203,7 @@ class Dict2Obj(object):
 
 def validateConfig(cfg):
     if not "perms" in cfg.keys():
-        perms = {"admin": "0"}
+        perms = config_sample["perms"]
     perms = cfg["perms"]
     for perm in perms.keys():
         roles = perms[perm]
@@ -42,26 +216,19 @@ def validateConfig(cfg):
         perms[perm] = newroles
     cfg["perms"] = perms
 
-    if not "server_workers" in cfg.keys():
-        cfg["server_workers"] = 1
-
-    if not "language" in cfg.keys():
-        cfg["language"] = "en"
-
-    if not "allowed_navio_ips" in cfg.keys():
-        cfg["allowed_navio_ips"] = ["185.233.107.244"]
-
     tcfg = {}
     for key in config_keys_order:
         if key in cfg.keys():
             tcfg[key] = cfg[key]
+        else:
+            tcfg[key] = config_sample[key]
 
     return tcfg
 
 config_txt = open(config_path, "r").read()
-config = json.loads(config_txt)
-config = validateConfig(config)
+config = validateConfig(json.loads(config_txt))
 tconfig = config
+
 if not "hex_color" in config.keys():
     config["hex_color"] = "#2fc1f7"
 hex_color = config["hex_color"][-6:]
@@ -74,6 +241,7 @@ except:
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)
+
 config = Dict2Obj(config)
 
 if os.path.exists(config.apidoc):

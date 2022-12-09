@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 from typing import Optional
 from datetime import datetime
 from io import BytesIO
-import json, time, requests, math
+import os, json, time, requests, math
 import collections, string
 
 from app import app, config, tconfig
@@ -52,7 +52,7 @@ for perm in tconfig["perms"].keys():
     for role in tconfig["perms"][perm]:
         PERMS_STR[perm].append(str(role))
 
-def point2rank(point):
+def point2rankroleid(point):
     keys = list(RANKROLE.keys())
     if point < keys[0]:
         return -1
@@ -271,12 +271,10 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     for param in request.query_params:
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
-    
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 5)
+
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 60, 30)
     if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
+        return rl
             
     t = t[0]
     userid = t[5]
@@ -300,6 +298,17 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         highest_role = ROLES[highest]
     joined = datetime.fromtimestamp(join_timestamp)
     since = f"{joined.year}/{joined.month}/{joined.day}"
+
+    if os.path.exists(f"/tmp/hub/banner/{config.abbr}_{discordid}.png"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{config.abbr}_{discordid}.png") <= 3600:
+            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{config.abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
+            return response
+
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     division = ""
     for i in roles:
@@ -447,9 +456,9 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         mythpnt = usermyth[userid]
 
     totalpnt = distance + challengepnt + eventpnt + divisionpnt + mythpnt
-    rank = point2rank(totalpnt)
+    rankroleid = point2rankroleid(totalpnt)
 
-    if rank == -1:
+    if rankroleid == -1:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
 
@@ -480,16 +489,26 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             for role in roles:
                 if int(role) in list(RANKROLE.values()):
                     curroles.append(int(role))
-            if rank in curroles:
+            if rankroleid in curroles:
                 response.status_code = 409
                 return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
             else:
-                requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rank}', headers=headers, timeout = 3)
-                for role in curroles:
-                    requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                try:
+                    r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3)
+                    if r.status_code != 200:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
+                    else:
+                        for role in curroles:
+                            r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                            if r.status_code != 200:
+                                err = json.loads(r.text)
+                                await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+                except:
+                    pass
                 
                 usermention = f"<@{discordid}>"
-                rankmention = f"<@&{rank}>"
+                rankmention = f"<@&{rankroleid}>"
                 def setvar(msg):
                     return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention)
 
@@ -719,9 +738,15 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
-                        requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        if r.status_code != 200:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        if r.status_code != 200:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
                 except:
                     import traceback
                     traceback.print_exc()
@@ -796,9 +821,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     return {"error": False}
 
-@app.delete(f"/{config.abbr}/member/resign")
-async def deleteMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'DELETE /member/resign', 60, 10)
+@app.post(f"/{config.abbr}/member/resign")
+async def postMemberResign(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'POST /member/resign', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -848,9 +873,9 @@ async def deleteMember(request: Request, response: Response, authorization: str 
     
     return {"error": False}
 
-@app.delete(f"/{config.abbr}/member/dismiss")
-async def dismissMember(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /member/dismiss', 60, 10)
+@app.post(f"/{config.abbr}/member/dismiss")
+async def postMemberDismiss(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
+    rl = ratelimit(request, request.client.host, 'POST /member/dismiss', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

@@ -452,8 +452,8 @@ def notification(notification_type, discordid, content, no_drivershub_notificati
 def ratelimit(request, ip, endpoint, limittime, limitcnt):
     conn = newconn()
     cur = conn.cursor()
-    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {int(time.time() - 86400)}")
-    cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {int(time.time() - 60)}")
+    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 86400)}")
+    cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")
     cur.execute(f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE ip = '{ip}' AND endpoint LIKE 'ip-ban-%'")
     t = cur.fetchall()
     maxban = 0
@@ -467,10 +467,10 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
             maxban = 0
     if maxban > 0:
         resp_headers = {}
+        resp_headers["Retry-After"] = str(maxban - int(time.time()))
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(0)
         resp_headers["X-RateLimit-Reset"] = str(maxban)
-        resp_headers["Retry-After"] = str(maxban - int(time.time()))
         resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
@@ -486,10 +486,10 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', 'ip-ban-600', {int(time.time())}, 0)")
         conn.commit()
         resp_headers = {}
+        resp_headers["Retry-After"] = str(600)
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(0)
         resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + 600)
-        resp_headers["Retry-After"] = str(600)
         resp_headers["X-RateLimit-Reset-After"] = str(600)
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
@@ -503,6 +503,8 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         resp_headers = {}
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
+        resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
+        resp_headers["X-RateLimit-Reset-After"] = str(limittime)
         return (False, resp_headers)
     else:
         first_request_timestamp = t[0][0]
@@ -513,6 +515,8 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
             resp_headers = {}
             resp_headers["X-RateLimit-Limit"] = str(limitcnt)
             resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
+            resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
+            resp_headers["X-RateLimit-Reset-After"] = str(limittime)
             return (False, resp_headers)
         else:
             if request_count + 1 > limitcnt:
@@ -527,10 +531,10 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
 
                 retry_after = limittime - (int(time.time()) - first_request_timestamp)
                 resp_headers = {}
+                resp_headers["Retry-After"] = str(retry_after)
                 resp_headers["X-RateLimit-Limit"] = str(limitcnt)
                 resp_headers["X-RateLimit-Remaining"] = str(0)
                 resp_headers["X-RateLimit-Reset"] = str(retry_after + int(time.time()))
-                resp_headers["Retry-After"] = str(retry_after)
                 resp_headers["X-RateLimit-Reset-After"] = str(retry_after)
                 resp_headers["X-RateLimit-Global"] = "false"
                 resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
@@ -542,6 +546,8 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
                 resp_headers = {}
                 resp_headers["X-RateLimit-Limit"] = str(limitcnt)
                 resp_headers["X-RateLimit-Remaining"] = str(limitcnt - request_count - 1)
+                resp_headers["X-RateLimit-Reset"] = str(first_request_timestamp + limittime)
+                resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
                 return (False, resp_headers)
 
 def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
@@ -686,20 +692,23 @@ async def AuditLog(userid, text):
         conn = newconn()
         cur = conn.cursor()
         name = "Unknown User"
-        if userid != -999:
+        if userid == -999:
+            name = "System"
+        elif userid == -998:
+            name = "Discord API"
+        else:
             cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
             t = cur.fetchall()
             if len(t) > 0:
                 name = t[0][0]
-        else:
-            name = "System"
-        cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
-        conn.commit()
+        if userid != -998:
+            cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
+            conn.commit()
         if config.webhook_audit != "":
             async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_audit, session=session)
                 embed = Embed(description = text, color = config.rgbcolor)
-                if userid != -999:
+                if userid not in [-999, -998]:
                     embed.set_footer(text = f"{name} (ID {userid})", icon_url = getAvatarSrc(userid))
                 else:
                     embed.set_footer(text = f"{name}")

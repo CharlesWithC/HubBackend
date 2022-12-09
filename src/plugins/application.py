@@ -308,11 +308,13 @@ async def postApplication(request: Request, response: Response, authorization: s
     conn.commit()
 
     if applicantrole != 0 and config.discord_bot_token != "":
-        durl = f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}'
         try:
-            r = requests.put(durl, headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
+            r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
             if r.status_code == 401:
                 DisableDiscordIntegration()
+            if r.status_code != 200:
+                err = json.loads(r.text)
+                await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{applicantrole}> to <@!{discordid}>: `{err["message"]}`')
         except:
             pass
 

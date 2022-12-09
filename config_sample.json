@@ -38,6 +38,7 @@
 
     "guild_id": "",
     "in_guild_check": true,
+    "use_server_nickname": false,
 
     "navio_api_token": "",
     "navio_company_id": "",
@@ -144,6 +145,7 @@
         "delete_dlog": [],
 
         "hr": [],
+        "patch_username": [],
         "add_member": [],
         "update_member_roles": [],
         "update_member_points": [],
