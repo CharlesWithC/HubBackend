@@ -7,6 +7,7 @@ from random import randint
 from dateutil import parser
 import json, time, requests
 import threading
+import traceback
 
 from app import app, config, tconfig
 from db import newconn
@@ -300,9 +301,12 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
-                    r = requests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
-                    if r.status_code == 401:
-                        DisableDiscordIntegration()
+                    try:
+                        r = requests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
+                        if r.status_code == 401:
+                            DisableDiscordIntegration()
+                    except:
+                        traceback.print_exc()
                     
                     discordid = getUserInfo(userid = userid)["discordid"]
                     language = GetUserLanguage(discordid, "en")
@@ -339,7 +343,6 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                         SendDiscordNotification(discordid, data)
                         
         except:
-            import traceback
             traceback.print_exc()
 
     try:
@@ -548,7 +551,6 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                             conn.commit()
                 
     except:
-        import traceback
         traceback.print_exc()
 
     return {"error": False, "response": "Logged"}

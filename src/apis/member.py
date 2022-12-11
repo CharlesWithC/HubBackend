@@ -10,6 +10,7 @@ from datetime import datetime
 from io import BytesIO
 import os, json, time, requests, math
 import collections, string
+import traceback
 
 from app import app, config, tconfig
 from db import newconn
@@ -32,10 +33,10 @@ RANKNAME = {}
 for t in RANKS:
     try:
         if t["discord_role_id"] != "":
-            RANKROLE[int(t["distance"])] = int(t["discord_role_id"])
+            RANKROLE[int(t["points"])] = int(t["discord_role_id"])
         else:
-            RANKROLE[int(t["distance"])] = 0
-        RANKNAME[int(t["distance"])] = t["name"]
+            RANKROLE[int(t["points"])] = 0
+        RANKNAME[int(t["points"])] = t["name"]
     except:
         pass
 RANKROLE = dict(collections.OrderedDict(sorted(RANKROLE.items())))
@@ -345,7 +346,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
             "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
             "discordid": discordid, "since": since, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 10)
-        if r.status_code != 200:
+        if r.status_code // 100 != 2:
             response.status_code = r.status_code
             return {"error": True, "descriptor": r.text}
             
@@ -356,7 +357,6 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         return response
         
     except:
-        import traceback
         traceback.print_exc()
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
@@ -471,6 +471,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         try:
             r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         except:
+            traceback.print_exc()
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
             
@@ -478,7 +479,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             DisableDiscordIntegration()
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
-        elif r.status_code != 200:
+        elif r.status_code // 100 != 2:
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
 
@@ -495,17 +496,17 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             else:
                 try:
                     r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3)
-                    if r.status_code != 200:
+                    if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
                     else:
                         for role in curroles:
                             r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
-                            if r.status_code != 200:
+                            if r.status_code // 100 != 2:
                                 err = json.loads(r.text)
                                 await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
                 except:
-                    pass
+                    traceback.print_exc()
                 
                 usermention = f"<@{discordid}>"
                 rankmention = f"<@&{rankroleid}>"
@@ -524,7 +525,6 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
             return {"error": True, "descriptor": ml.tr(request, "must_join_discord", force_lang = au["language"])}
 
     except:
-        import traceback
         traceback.print_exc()
 
 # Member Operation Section
@@ -702,7 +702,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
         if r.status_code == 401:
             navio_error = "Navio API Error: Invalid API Token"
-        elif r.status_code != 200:
+        elif r.status_code // 100 != 2:
             try:
                 err = json.loads(r.text)["error"]
                 if err is None:
@@ -739,16 +739,15 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                 try:
                     if int(role) < 0:
                         r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
-                        if r.status_code != 200:
+                        if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
                         r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
-                        if r.status_code != 200:
+                        if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
                 except:
-                    import traceback
                     traceback.print_exc()
 
     if config.perms.driver[0] in removedroles:
@@ -797,6 +796,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         userid = int(form["userid"])
         distance = int(form["distance"])
         mythpoint = int(form["mythpoint"])
+        if mythpoint > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "mythpoint", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}

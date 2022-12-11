@@ -10,6 +10,7 @@ from uuid import uuid4
 from hashlib import sha256
 import json, time, requests
 import bcrypt, re, base64
+import traceback
 
 from app import app, config
 from db import newconn
@@ -72,14 +73,13 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         try:
             r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
-            import traceback
             traceback.print_exc()
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "discord_check_fail")}
         if r.status_code == 404:
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "must_join_discord")}
-        if r.status_code != 200:
+        if r.status_code // 100 != 2:
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "discord_check_fail")}
         d = json.loads(r.text)
@@ -194,12 +194,11 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
                 try:
                     r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
                 except:
-                    import traceback
                     traceback.print_exc()
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
                 if r.status_code == 404:
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
-                if r.status_code != 200:
+                if r.status_code // 100 != 2:
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
                 d = json.loads(r.text)
                 if config.use_server_nickname and d["nick"] != None:
@@ -247,7 +246,6 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
 
     except:
-        import traceback
         traceback.print_exc()
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
 
@@ -290,7 +288,7 @@ async def getSteamCallback(request: Request, response: Response):
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
     r = requests.get("https://steamcommunity.com/openid/login?" + data)
-    if r.status_code != 200:
+    if r.status_code // 100 != 2:
         response.status_code = 503
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)
     if r.text.find("is_valid:true") == -1:
@@ -322,12 +320,11 @@ async def getSteamCallback(request: Request, response: Response):
         try:
             r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
-            import traceback
             traceback.print_exc()
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
         if r.status_code == 404:
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
-        if r.status_code != 200:
+        if r.status_code // 100 != 2:
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
         d = json.loads(r.text)
         if config.use_server_nickname and d["nick"] != None:

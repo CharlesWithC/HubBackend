@@ -4,6 +4,7 @@
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
 import json, time, requests, math
+import traceback
 
 from app import app, config
 from db import newconn
@@ -79,7 +80,6 @@ def EventNotification():
                 time.sleep(1)
 
         except:
-            import traceback
             traceback.print_exc()
 
         time.sleep(60)
@@ -373,19 +373,19 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         departure_timestamp = int(form["departure_timestamp"])
         description = compress(form["description"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["departure"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
         if len(form["destination"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
         if len(form["distance"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         is_private = 0
         if form["is_private"] == "true":
@@ -443,19 +443,19 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         departure_timestamp = int(form["departure_timestamp"])
         description = compress(form["description"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["departure"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
         if len(form["destination"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
         if len(form["distance"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         is_private = 0
         if form["is_private"] == "true":
@@ -529,6 +529,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         while "" in attendees:
             attendees.remove("")
         points = int(form["points"])
+        if points > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "points", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}

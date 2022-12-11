@@ -15,14 +15,14 @@ cur = conn.cursor()
 
 # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT, name TEXT, avatar TEXT, bio TEXT, \
+cur.execute(f"CREATE TABLE IF NOT EXISTS user (userid INT, discordid BIGINT UNSIGNED, name TEXT, avatar TEXT, bio TEXT, \
     email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT, email TEXT, password TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (discordid BIGINT, activity TEXT, timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT, discordid BIGINT, content TEXT, \
+cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (discordid BIGINT UNSIGNED, email TEXT, password TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (discordid BIGINT UNSIGNED, activity TEXT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT, discordid BIGINT UNSIGNED, content TEXT, \
     timestamp BIGINT, status INT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT, expire_timestamp BIGINT, reason TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp INT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
     isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar
@@ -34,13 +34,13 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT, useri
     announcement_type INT, timestamp BIGINT, is_private INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # atype = 0: info | 1: event | 2: warning | 3: critical
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, application_type INT, discordid BIGINT, data TEXT,\
+cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT, application_type INT, discordid BIGINT UNSIGNED, data TEXT,\
     status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # status = 0: pending | 1: accepted | 2: declined
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT, userid INT, title TEXT, description TEXT, \
     start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, \
-    reward_points BIGINT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
+    reward_points INT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) \
             DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) \
@@ -57,13 +57,13 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, se
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, \
     meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT, timestamp BIGINT, ip TEXT, \
+cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGINT UNSIGNED, timestamp BIGINT, ip TEXT, \
         country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT, expire BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT UNSIGNED, expire BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT UNSIGNED, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT, skey TEXT, sval TEXT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
 cur.execute(f"SELECT skey FROM settings")
 t = cur.fetchall()

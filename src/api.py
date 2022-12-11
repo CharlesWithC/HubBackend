@@ -18,7 +18,6 @@ from importlib.machinery import SourceFileLoader
 for external_plugin in config.external_plugins:
     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
         SourceFileLoader(external_plugin, f"./external_plugins/{external_plugin}.py").load_module()
-        print("Loaded external plugin: " + external_plugin)
 
 # import basic api
 import apis.admin

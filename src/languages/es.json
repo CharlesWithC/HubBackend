@@ -5,6 +5,7 @@
     "rate_limit": "Estás siendo limitado por la tasa.",
     "bad_form": "Falta un campo de formulario o no se pueden analizar los datos",
     "content_too_long": "La longitud máxima de \"{item}\" es de {limit} caracteres.",
+    "value_too_large": "El valor máximo de \"{elemento}\" es {límite}.",
 
     "ban_with_reason_expire": "Estás prohibido por {reason} hasta {expire} UTC",
     "discord_check_fail": "No se pudo comprobar si está en Discord Server.",

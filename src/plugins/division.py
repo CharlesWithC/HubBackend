@@ -7,6 +7,7 @@ from discord import Webhook, Embed
 from datetime import datetime
 from aiohttp import ClientSession
 import json, time, requests
+import traceback
 
 from app import app, config
 from db import newconn
@@ -229,7 +230,6 @@ async def postDivision(request: Request, response: Response, authorization: str 
                 embed.timestamp = datetime.now()
                 await webhook.send(content = config.webhook_division_message, embed = embed)
         except:
-            import traceback
             traceback.print_exc()
         
     return {"error": False}
@@ -302,7 +302,7 @@ async def patchDivision(request: Request, response: Response, authorization: str
         message = str(form["message"])
         status = int(form["status"])
         if len(form["message"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"}, force_lang = au["language"])}
     except:
         response.status_code = 400

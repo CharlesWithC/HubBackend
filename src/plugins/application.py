@@ -7,6 +7,7 @@ from datetime import datetime
 from discord import Webhook, Embed
 from aiohttp import ClientSession
 import json, time, requests, math
+import traceback
 
 from app import app, config
 from db import newconn
@@ -312,11 +313,11 @@ async def postApplication(request: Request, response: Response, authorization: s
             r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
             if r.status_code == 401:
                 DisableDiscordIntegration()
-            if r.status_code != 200:
+            if r.status_code // 100 != 2:
                 err = json.loads(r.text)
                 await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{applicantrole}> to <@!{discordid}>: `{err["message"]}`')
         except:
-            pass
+            traceback.print_exc()
 
     language = GetUserLanguage(discordid)
     notification("application", discordid, ml.tr(request, "application_submitted", \
@@ -359,7 +360,6 @@ async def postApplication(request: Request, response: Response, authorization: s
                     embed.timestamp = datetime.now()
                     await webhook.send(content = discord_message_content, embed = embed)
             except:
-                import traceback
                 traceback.print_exc()
 
     return {"error": False, "response": {"applicationid": str(applicationid)}}
@@ -389,7 +389,7 @@ async def updateApplication(request: Request, response: Response, authorization:
         applicationid = int(form["applicationid"])
         message = str(form["message"])
         if len(form["message"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400
@@ -472,7 +472,6 @@ async def updateApplication(request: Request, response: Response, authorization:
                     embed.timestamp = datetime.now()
                     await webhook.send(content = discord_message_content, embed = embed)
             except:
-                import traceback
                 traceback.print_exc()
 
     return {"error": False}
@@ -505,7 +504,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         status = int(form["status"])
         message = str(form["message"])
         if len(form["message"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "2,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400

@@ -85,18 +85,24 @@ async def postChallenge(request: Request, response: Response, authorization: str
         title = convert_quotation(form["title"])
         description = compress(form["description"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         challenge_type = int(form["challenge_type"])
         delivery_count = int(form["delivery_count"])
+        if delivery_count > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
         required_roles = form["required_roles"]
         required_distance = int(form["required_distance"])
         reward_points = int(form["reward_points"])
+        if reward_points > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
         public_details = 0
         if form["public_details"] == "true":
             public_details = 1
@@ -201,17 +207,23 @@ async def patchChallenge(request: Request, response: Response, authorization: st
         title = convert_quotation(form["title"])
         description = compress(form["description"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         start_time = int(form["start_time"])
         end_time = int(form["end_time"])
         delivery_count = int(form["delivery_count"])
+        if delivery_count > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
         required_roles = form["required_roles"]
         required_distance = int(form["required_distance"])
         reward_points = int(form["reward_points"])
+        if reward_points > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
         public_details = 0
         if form["public_details"] == "true":
             public_details = 1

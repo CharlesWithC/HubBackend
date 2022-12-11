@@ -35,7 +35,7 @@ config_sample = {
     "domain": "",
     "server_ip": "127.0.0.1",
     "server_port": "7777",
-    "server_workers": "3",
+    "server_workers": "1",
 
     "database": "mysql",
     "mysql_host": "localhost",
@@ -127,7 +127,7 @@ config_sample = {
         }
     },
     "ranks": [
-        {"distance": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],
 
     "application_types": [
@@ -184,7 +184,7 @@ config_sample = {
     "webhook_audit": ""
 }
 
-version = "v1.21.5"
+version = "v1.21.6"
 
 DH_START_TIME = int(time.time())
 
@@ -215,6 +215,16 @@ def validateConfig(cfg):
                 pass
         perms[perm] = newroles
     cfg["perms"] = perms
+
+    ranks = cfg["ranks"]
+    newranks = []
+    for i in range(len(ranks)):
+        rank = ranks[i]
+        if "distance" in rank.keys():
+            rank["points"] = rank["distance"]
+            del rank["distance"]
+        newranks.append(rank)
+    cfg["ranks"] = newranks
 
     tcfg = {}
     for key in config_keys_order:

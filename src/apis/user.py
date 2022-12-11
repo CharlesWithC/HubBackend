@@ -4,6 +4,7 @@
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
 import os, json, time, requests, math, bcrypt
+import traceback
 
 from app import app, config
 from db import newconn
@@ -309,13 +310,14 @@ async def enableNotification(request: Request, response: Response, notification_
         try:
             r = requests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         except:
+            traceback.print_exc()
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
         if r.status_code == 401:
             DisableDiscordIntegration()
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
-        if r.status_code != 200:
+        if r.status_code // 100 != 2:
             return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
         d = json.loads(r.text)
         if "id" in d:
@@ -328,10 +330,9 @@ async def enableNotification(request: Request, response: Response, notification_
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
             except:
-                import traceback
                 traceback.print_exc()
 
-            if r is None or r.status_code != 200:
+            if r is None or r.status_code // 100 != 2:
                 return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
             cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = 'discord-notification'")
@@ -568,7 +569,6 @@ async def patchUserName(request: Request, response: Response, authorization: str
     try:
         r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
     except:
-        import traceback
         traceback.print_exc()
         if not staffmode:
             return {"error": True, "descriptor": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
@@ -579,7 +579,7 @@ async def patchUserName(request: Request, response: Response, authorization: str
             return {"error": True, "descriptor": ml.tr(request, "must_join_discord", force_lang = au["language"])}
         else:
             return {"error": True, "descriptor": ml.tr(request, "user_not_in_discord", force_lang = au["language"])}
-    if r.status_code != 200:
+    if r.status_code // 100 != 2:
         if not staffmode:
             return {"error": True, "descriptor": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
         else:
@@ -620,7 +620,7 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
         
     if len(bio) > 1000:
-        response.status_code = 413
+        response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
 
     cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
@@ -957,7 +957,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     r = requests.get("https://steamcommunity.com/openid/login?" + openid)
-    if r.status_code != 200:
+    if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "steam_api_error", force_lang = au["language"])}
     if r.text.find("is_valid:true") == -1:
@@ -1041,7 +1041,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
     r = requests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
-    if r.status_code != 200:
+    if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
     d = json.loads(r.text)
@@ -1091,13 +1091,13 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         expire = int(form["expire"])
         reason = convert_quotation(form["reason"])
         if len(reason) > 256:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "reason", "limit": "256"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     if expire == -1:
-        expire = 9999999999999999
+        expire = 253402272000
     try:
         discordid = int(discordid)
     except:
@@ -1121,7 +1121,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
         conn.commit()
         duration = "forever"
-        if expire != 9999999999999999:
+        if expire != 253402272000:
             duration = f'until `{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))}` UTC'
         await AuditLog(adminid, f"Banned `{username}` (Discord ID: `{discordid}`) {duration}.")
         return {"error": False}

@@ -179,17 +179,20 @@ async def postDownloads(request: Request, response: Response, authorization: str
     try:
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         orderid = int(form["orderid"])
+        if orderid > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:        
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
@@ -244,17 +247,20 @@ async def patchDownloads(request: Request, response: Response, authorization: st
     try:
         title = convert_quotation(form["title"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         description = compress(form["description"])
         if len(form["description"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         link = convert_quotation(form["link"])
         if len(form["link"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         orderid = int(form["orderid"])
+        if orderid > 2147483647:
+            response.status_code = 400
+            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:        
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}

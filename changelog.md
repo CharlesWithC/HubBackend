@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.6**  
+1.Fixed the bug being unable to parse `204` response which led to errors  
+2.Added numeric value check to prevent large value being rejected by database  
+3.Updated database datatype (mainly `discordid` to `BIGINT UNSIGNED`)  
+4.Changed `distance` in `config.ranks` to `points`  
+
 **v1.21.5**  
 **[BannerGen]**  
 1.Prevented sending request to BannerGen when cache exists  

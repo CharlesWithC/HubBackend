@@ -5,6 +5,7 @@
 
 import os, sys, time, json, threading
 import uvicorn
+import traceback
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -57,11 +58,10 @@ if __name__ == "__main__":
             try:
                 if upgrade.target_version == version or upgrade.target_version + ".rc" == version:
                     upgrade.run()
-                    print("Upgrade completed\n")
+                    print("Upgrade completed")
                 else:
-                    print("Version mismatch, aborted\n")
+                    print("Version mismatch, aborted")
             except:
-                import traceback
                 traceback.print_exc()
                 print("Upgrade failed due to errors above, main program exited")
                 sys.exit(1)
@@ -78,7 +78,8 @@ import api
 if __name__ == "__main__":
     print("")
     print(f"Company Name: {config.name}")
-    print(f"Company Abbreviation: {config.abbr}\n")
+    print(f"Company Abbreviation: {config.abbr}")
+    print("")
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}.png")
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
     if not version.endswith(".rc"):

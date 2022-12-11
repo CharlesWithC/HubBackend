@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from typing import Optional
 from io import BytesIO
 import json, time, math
+import traceback
 
 from app import app, config
 from db import newconn
@@ -1260,7 +1261,6 @@ async def getDlogExport(request: Request, response: Response, authorization: str
                     multiplayer = data["multiplayer"]["type"]
 
             except:
-                import traceback
                 traceback.print_exc()
 
         if not include_ids:

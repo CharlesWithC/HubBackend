@@ -23,7 +23,7 @@
     "domain": "",
     "server_ip": "127.0.0.1",
     "server_port": "7777",
-    "server_workers": "3",
+    "server_workers": "1",
 
     "database": "mysql",
     "mysql_host": "localhost",
@@ -115,7 +115,7 @@
         }
     },
     "ranks": [
-        {"distance": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],
 
     "application_types": [

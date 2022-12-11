@@ -5,6 +5,7 @@
     "rate_limit": "Ti è stata applicata una tariffa limitata.",
     "bad_form": "Campo modulo mancante o impossibile analizzare i dati",
     "content_too_long": "La lunghezza massima di \"{item}\" è di {limit} caratteri.",
+    "value_too_large": "Il valore massimo di \"{item}\" è {limit}.",
 
     "ban_with_reason_expire": "Sei stato bannato per {reason} fino alle {expire} UTC",
     "discord_check_fail": "Impossibile verificare se ti trovi nel server di Discord.",

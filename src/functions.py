@@ -12,6 +12,7 @@ import json, time, math, zlib, re
 import hmac, base64, struct, hashlib
 import ipaddress, requests, threading
 from iso3166 import countries
+import traceback
 
 from db import newconn
 from app import config, tconfig
@@ -271,6 +272,8 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = Fal
     return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
 
 def activityUpdate(discordid, activity):
+    if int(discordid) <= 0:
+        return
     conn = newconn()
     cur = conn.cursor()
     activity = convert_quotation(activity)
@@ -335,7 +338,6 @@ def ProcessDiscordMessage(): # thread
             try:
                 r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
             except:
-                import traceback
                 traceback.print_exc()
                 time.sleep(5)
                 continue
@@ -361,7 +363,6 @@ def ProcessDiscordMessage(): # thread
             time.sleep(1)
             
         except:
-            import traceback
             traceback.print_exc()
             time.sleep(1)
 
@@ -414,6 +415,9 @@ def CheckNotificationEnabled(notification_type, discordid):
 
 def notification(notification_type, discordid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):
+    if int(discordid) <= 0:
+        return
+        
     content = convert_quotation(content)
     conn = newconn()
     cur = conn.cursor()
@@ -715,7 +719,6 @@ async def AuditLog(userid, text):
                 embed.timestamp = datetime.now()
                 await webhook.send(embed=embed)
     except:
-        import traceback
         traceback.print_exc()
 
 def DisableDiscordIntegration():
@@ -765,5 +768,4 @@ async def AutoMessage(meta, setvar):
             if r.status_code == 401:
                 DisableDiscordIntegration()
     except:
-        import traceback
         traceback.print_exc()

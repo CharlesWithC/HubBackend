@@ -5,6 +5,7 @@
     "rate_limit": "Du bliver prisbegrænset.",
     "bad_form": "Formularfelt mangler, eller data kan ikke parses",
     "content_too_long": "Maksimal længde af \"{item}\" er {limit} tegn.",
+    "value_too_large": "Maksimal værdi af \"{item}\" er {limit}.",
 
     "ban_with_reason_expire": "Du er banned for {reason} indtil {expire} UTC",
     "discord_check_fail": "Fejlede at teste din tilstedeværelse på Discord Servern.",

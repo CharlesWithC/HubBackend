@@ -13,9 +13,8 @@ from functions import *
 import multilang as ml
 
 config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
-    'guild_id', 'in_guild_check', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
-    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", \
-    'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
+    'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
+    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
     'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
@@ -117,7 +116,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     try:
         formconfig = json.loads(form["config"])
         if len(form["config"]) > 150000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "150,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400

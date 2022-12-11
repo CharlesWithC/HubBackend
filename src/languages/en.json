@@ -5,6 +5,7 @@
     "rate_limit": "You are being rate limited.",
     "bad_form": "Form field missing or data cannot be parsed",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
+    "value_too_large": "Maximum value of \"{item}\" is {limit}.",
 
     "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
     "discord_check_fail": "Failed to check if you are in Discord Server.",

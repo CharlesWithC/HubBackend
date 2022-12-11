@@ -5,6 +5,7 @@ from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
 from datetime import datetime
 import json, time, requests, math
+import traceback
 
 from app import app, config
 from db import newconn
@@ -153,10 +154,10 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         title = convert_quotation(form["title"])
         content = compress(form["content"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["content"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
@@ -192,7 +193,6 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
-            import traceback
             traceback.print_exc()
 
     return {"error": False, "response": {"announcementid": str(announcementid)}}
@@ -227,10 +227,10 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         title = convert_quotation(form["title"])
         content = compress(form["content"])
         if len(form["title"]) > 200:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if len(form["content"]) > 2000:
-            response.status_code = 413
+            response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         discord_message_content = str(form["discord_message_content"])
         announcement_type = int(form["announcement_type"])
@@ -268,7 +268,6 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
-            import traceback
             traceback.print_exc()
 
     return {"error": False}
