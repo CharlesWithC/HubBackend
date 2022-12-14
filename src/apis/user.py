@@ -3,7 +3,7 @@
 
 from fastapi import FastAPI, Response, Request, Header
 from typing import Optional
-import os, json, time, requests, math, bcrypt
+import os, json, time, requests, uuid, math, bcrypt
 import traceback
 
 from app import app, config
@@ -180,10 +180,10 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
         tot = t[0][0]
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
-@app.put(f"/{config.abbr}/user/notification/status")
-async def putUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
+@app.patch(f"/{config.abbr}/user/notification/status")
+async def patchUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
         notificationids: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /user/notification/status', 60, 30)
+    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -255,13 +255,13 @@ async def getNotificationSettings(request: Request, response: Response, authoriz
     
     return {"error": False, "response": settings}
 
-@app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/enable")
+@app.post(f"/{config.abbr}/user/notification/{{notification_type}}/enable")
 async def enableNotification(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/enable', 60, 30)
+    rl = ratelimit(request, request.client.host, 'POST /user/notification/notification_type/enable', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -361,13 +361,13 @@ async def enableNotification(request: Request, response: Response, notification_
 
     return {"error": False}
 
-@app.patch(f"/{config.abbr}/user/notification/{{notification_type}}/disable")
+@app.post(f"/{config.abbr}/user/notification/{{notification_type}}/disable")
 async def disableNotification(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/notification_type/disable', 60, 60)
+    rl = ratelimit(request, request.client.host, 'POST /user/notification/notification_type/disable', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -756,9 +756,9 @@ async def deletePassword(request: Request, response: Response, authorization: st
 
     return {"error": False}
 
-@app.put(f"/{config.abbr}/user/tip")
-async def putTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /user/tip', 180, 20)
+@app.post(f"/{config.abbr}/user/tip")
+async def postTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
+    rl = ratelimit(request, request.client.host, 'POST /user/tip', 180, 20)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -773,9 +773,9 @@ async def putTemporaryIdentityProof(request: Request, response: Response, author
 
     conn = newconn()
     cur = conn.cursor()
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     while stoken[0] == "f":
-        stoken = str(uuid4())
+        stoken = str(uuid.uuid4())
     cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
     cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+180})")
     conn.commit()

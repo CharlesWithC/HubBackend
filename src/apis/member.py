@@ -580,7 +580,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
 
     notification("member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = GetUserLanguage(discordid, "en")))
 
-    return {"error": False, "response": {"userid": userid}}   
+    return {"error": False, "response": {"userid": str(userid)}}   
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):

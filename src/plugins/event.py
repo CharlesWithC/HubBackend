@@ -305,9 +305,9 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"list": ret}}
 
-@app.put(f"/{config.abbr}/event/vote")
-async def putEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PUT /event/vote', 60, 30)
+@app.patch(f"/{config.abbr}/event/vote")
+async def patchEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
+    rl = ratelimit(request, request.client.host, 'PATCH /event/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

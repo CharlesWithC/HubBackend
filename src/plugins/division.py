@@ -110,24 +110,18 @@ async def getDivision(request: Request, response: Response, authorization: str =
     
     stats = []
     for division in divisions:
+        division_id = division["id"]
+        division_role_id = division["role_id"]
+        division_point = int(division["point"])
         tstats = []
-        cur.execute(f"SELECT userid FROM user WHERE roles LIKE '%,{division['role_id']},%'")
-        t = cur.fetchall()
-        userpnt = {}
-        for tt in t:
-            divisionpnt = 0
-            cur.execute(f"SELECT divisionid, COUNT(*) FROM division WHERE userid = {tt[0]} AND status = 1 AND logid >= 0 GROUP BY divisionid, userid")
-            o = cur.fetchall()
-            for oo in o:
-                if o[0][0] in DIVISIONPNT.keys():
-                    divisionpnt += o[0][1] * DIVISIONPNT[o[0][0]]
-            userpnt[tt[0]] = divisionpnt
-        userpnt = dict(sorted(userpnt.items(), key=lambda item: item[1]))
-        totalpnt = 0
-        for uid in userpnt.keys():
-            totalpnt += userpnt[uid]
-            # tstats.append({"user": getUserInfo(userid = uid), "points": str(userpnt[uid])})
-        stats.append({"divisionid": str(division['id']), "name": division['name'], "total_drivers": len(userpnt), "total_points": totalpnt})
+        cur.execute(f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
+        usertot = cur.fetchone()[0]
+        usertot = 0 if usertot is None else int(usertot)
+        cur.execute(f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id}")
+        pointtot = cur.fetchone()[0]
+        pointtot = 0 if pointtot is None else int(pointtot)
+        pointtot *= division_point
+        stats.append({"divisionid": str(division['id']), "name": division['name'], "total_drivers": str(usertot), "total_points": str(pointtot)})
     
     return {"error": False, "response": stats}   
 

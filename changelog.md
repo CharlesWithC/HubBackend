@@ -1,5 +1,17 @@
 # Changelog
 
+**v1.21.7**  
+1.Fixed **POST** `/user/tip` 500 error  
+2.Fixed **GET** `/division` returns incorrect data  
+3.Endpoint Route & Methods: Updated for better readability  
+|Old|New|  
+--|--|
+|**PUT** `/auth/tip`|**POST** `/user/tip`|  
+|**PUT** `/user/notification/status`|**PATCH** `/user/notification/status`|  
+|**PATCH** `/user/notification/{{notification_type}}/enable`|**POST** `/user/notification/{{notification_type}}/enable`|  
+|**PATCH** `/user/notification/{{notification_type}}/disable`|**POST** `/user/notification/{{notification_type}}/disable`|  
+|**PUT** `/event/vote`|**PATCH** `/event/vote`|  
+
 **v1.21.6**  
 1.Fixed the bug being unable to parse `204` response which led to errors  
 2.Added numeric value check to prevent large value being rejected by database  

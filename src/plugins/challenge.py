@@ -165,7 +165,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 
     await AuditLog(adminid, f"Created challenge `#{nxtchallengeid}`")
 
-    return {"error": False, "response": {"challengeid": nxtchallengeid}}
+    return {"error": False, "response": {"challengeid": str(nxtchallengeid)}}
 
 # PATCH /challenge
 # REQUEST PARAM

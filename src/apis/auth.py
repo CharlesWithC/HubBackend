@@ -6,9 +6,8 @@ from typing import Optional
 from fastapi.responses import RedirectResponse
 from discord_oauth2 import DiscordAuth
 from pysteamsignin.steamsignin import SteamSignIn
-from uuid import uuid4
 from hashlib import sha256
-import json, time, requests
+import json, time, requests, uuid
 import bcrypt, re, base64
 import traceback
 
@@ -92,7 +91,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     t = cur.fetchall()
     mfa_secret = t[0][0]
     if mfa_secret != "":
-        stoken = str(uuid4())
+        stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
         cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
         conn.commit()
@@ -107,7 +106,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     stoken = "e" + stoken[1:]
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
@@ -210,15 +209,15 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             t = cur.fetchall()
             mfa_secret = t[0][0]
             if mfa_secret != "":
-                stoken = str(uuid4())
+                stoken = str(uuid.uuid4())
                 stoken = "f" + stoken[1:]
                 cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
                 conn.commit()
                 return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
-            stoken = str(uuid4())
+            stoken = str(uuid.uuid4())
             while stoken[0] == "e":
-                stoken = str(uuid4())
+                stoken = str(uuid.uuid4())
             cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
             r = cur.fetchall()
             scnt = r[0][0]
@@ -336,13 +335,13 @@ async def getSteamCallback(request: Request, response: Response):
     t = cur.fetchall()
     mfa_secret = t[0][0]
     if mfa_secret != "":
-        stoken = str(uuid4())
+        stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
         cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
         conn.commit()
         return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]
@@ -405,9 +404,9 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     stoken = authorization.split(" ")[1]
 
     cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     while stoken[0] == "e":
-        stoken = str(uuid4())
+        stoken = str(uuid.uuid4())
     cur.execute(f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     conn.commit()
     return {"error": False, "response": {"token": stoken}}
@@ -602,7 +601,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
     cur.execute(f"INSERT INTO appsession VALUES ('{stoken}', {discordid}, {int(time.time())})")
     conn.commit()
@@ -704,9 +703,9 @@ async def postMFA(request: Request, response: Response):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
 
-    stoken = str(uuid4())
+    stoken = str(uuid.uuid4())
     while stoken.startswith("e"):
-        stoken = str(uuid4()) # All MFA logins won't be counted as unsafe
+        stoken = str(uuid.uuid4()) # All MFA logins won't be counted as unsafe
     cur.execute(f"SELECT COUNT(*) FROM session WHERE discordid = '{discordid}'")
     r = cur.fetchall()
     scnt = r[0][0]

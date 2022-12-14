@@ -89,4 +89,4 @@ if __name__ == "__main__":
         from plugins.event import EventNotification
         threading.Thread(target = EventNotification, daemon = True).start()
 
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, workers = min(int(config.server_workers), 8))
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(int(config.server_workers), 8))

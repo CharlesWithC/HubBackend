@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.6"
+        "version": "1.21.7"
     },
     "paths": {
         "/abbr": {
@@ -83,6 +83,54 @@
                                 }
                             },
                             "required": ["email", "password", "h-captcha-response"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/auth/mfa": {
+            "post": {
+                "summary": "MFA Login",
+                "tags": ["auth"],
+                "operationId": "post_auth_mfa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tip": {
+                                        "description": "Temporary Identity Proof Token",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["tip", "otp"]
                         }
                     }
                 },
@@ -373,45 +421,6 @@
                 }
             }
         },
-        "/abbr/token/all": {
-            "delete": {
-                "summary": "Revoke All Token",
-                "tags": ["auth"],
-                "operationId": "delete_token_all",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "parameters": [{
-                    "required": false,
-                    "schema": {
-                        "title": "Last Used Before",
-                        "type": "integar"
-                    },
-                    "name": "last_used_before",
-                    "in": "query"
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/abbr/token/hash": {
             "delete": {
                 "summary": "Revoke Specific Token (Hash)",
@@ -459,291 +468,23 @@
                 }
             }
         },
-        "/abbr/token/application": {
-            "patch": {
-                "summary": "Reset Application Token",
-                "tags": ["user"],
-                "operationId": "patch_token_application",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "otp": {
-                                        "description": "OTP",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": []
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+        "/abbr/token/all": {
             "delete": {
-                "summary": "Disable Application Token",
-                "tags": ["user"],
-                "operationId": "delete_token_application",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "otp": {
-                                        "description": "OTP",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": []
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/abbr/auth/tip": {
-            "put": {
-                "summary": "Generate Temporary Identity Proof Token",
+                "summary": "Revoke All Token",
                 "tags": ["auth"],
-                "operationId": "put_auth_tip",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "get": {
-                "summary": "Validate Temporary Identity Proof Token",
-                "tags": ["auth"],
-                "operationId": "get_auth_tip",
-                "parameters": [{
-                    "required": true,
-                    "schema": {
-                        "title": "Token",
-                        "type": "string"
-                    },
-                    "name": "token",
-                    "in": "query"
-                }],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/abbr/auth/mfa": {
-            "put": {
-                "summary": "Enable MFA",
-                "tags": ["auth"],
-                "operationId": "put_auth_mfa",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "secret": {
-                                        "description": "Secret",
-                                        "type": "string"
-                                    },
-                                    "otp": {
-                                        "description": "OTP",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["secret", "otp"]
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "summary": "Check MFA",
-                "tags": ["auth"],
-                "operationId": "post_auth_mfa",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "tip": {
-                                        "description": "Temporary Identity Proof Token",
-                                        "type": "string"
-                                    },
-                                    "otp": {
-                                        "description": "OTP",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["tip", "otp"]
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "summary": "Disable MFA",
-                "tags": ["auth"],
-                "operationId": "delete_auth_mfa",
+                "operationId": "delete_token_all",
                 "security": [{
                     "bearerAuth": []
                 }],
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Discord ID (Required when disabling MFA for another user)",
+                        "title": "Last Used Before",
                         "type": "integar"
                     },
-                    "name": "discordid",
+                    "name": "last_used_before",
                     "in": "query"
                 }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "otp": {
-                                        "description": "OTP (Required when disabling MFA for current user)",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": []
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1092,10 +833,10 @@
             }
         },
         "/abbr/user/notification/status": {
-            "put": {
+            "patch": {
                 "summary": "Update User Notification Status",
                 "tags": ["user"],
-                "operationId": "put_user_notification_status",
+                "operationId": "patch_user_notification_status",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1178,10 +919,10 @@
             }
         },
         "/abbr/user/notification/{notification_type}/enable": {
-            "patch": {
+            "post": {
                 "summary": "Enable Notification",
                 "tags": ["user"],
-                "operationId": "patch_user_notification_enable",
+                "operationId": "post_user_notification_enable",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1217,10 +958,10 @@
             }
         },
         "/abbr/user/notification/{notification_type}/disable": {
-            "patch": {
+            "post": {
                 "summary": "Disable Notification",
                 "tags": ["user"],
-                "operationId": "patch_user_notification_disable",
+                "operationId": "post_user_notification_disable",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1407,6 +1148,111 @@
                                 "properties": {
                                     "otp": {
                                         "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/user/mfa": {
+            "post": {
+                "summary": "Enable MFA",
+                "tags": ["user"],
+                "operationId": "post_user_mfa",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "secret": {
+                                        "description": "Secret",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["secret", "otp"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Disable MFA",
+                "tags": ["user"],
+                "operationId": "delete_user_mfa",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Discord ID (Required when disabling MFA for another user)",
+                        "type": "integar"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP (Required when disabling MFA for current user)",
                                         "type": "string"
                                     }
                                 }
@@ -1690,6 +1536,162 @@
                         }
                     }
                 },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/token/application": {
+            "patch": {
+                "summary": "Reset Application Token",
+                "tags": ["user"],
+                "operationId": "patch_token_application",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Disable Application Token",
+                "tags": ["user"],
+                "operationId": "delete_token_application",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/user/tip": {
+            "post": {
+                "summary": "Generate Temporary Identity Proof Token",
+                "tags": ["user"],
+                "operationId": "post_user_tip",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "Validate Temporary Identity Proof Token",
+                "tags": ["user"],
+                "operationId": "get_user_tip",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Token",
+                        "type": "string"
+                    },
+                    "name": "token",
+                    "in": "query"
+                }],
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -2155,10 +2157,10 @@
             }
         },
         "/abbr/member/resign": {
-            "delete": {
+            "post": {
                 "summary": "Member Resign",
                 "tags": ["member"],
-                "operationId": "delete_member_resign",
+                "operationId": "post_member_resign",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -2202,10 +2204,10 @@
             }
         },
         "/abbr/member/dismiss": {
-            "delete": {
+            "post": {
                 "summary": "Dismiss Member",
                 "tags": ["member"],
-                "operationId": "delete_member_dismiss",
+                "operationId": "post_member_dismiss",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -4956,10 +4958,10 @@
             }
         },
         "/abbr/event/vote": {
-            "put": {
+            "patch": {
                 "summary": "Event Vote / Unvote",
                 "tags": ["event"],
-                "operationId": "put_event_vote",
+                "operationId": "patch_event_vote",
                 "security": [{
                     "bearerAuth": []
                 }],
