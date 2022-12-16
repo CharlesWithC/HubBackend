@@ -99,6 +99,23 @@
         "role_change": ["+1237912873213", "-43953495734"]
     },
 
+    "member_leave": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "{name} left.",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "Goodbye!",
+                "icon_url": ""
+            },
+            "timestamp": true
+        },
+        "role_change": ["-1237912873213", "+43953495734"]
+    },
+
     "rank_up": {
         "webhook_url": "",
         "channel_id": "",

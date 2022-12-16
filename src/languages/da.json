@@ -38,7 +38,7 @@
     "steam_api_error": "Steam API utilgængelig. Kunne ikke binde Steam konto.",
     "invalid_steam_auth": "Ugyldig Steam-godkendelse.",
     "steam_bound_to_other_account": "Steam konto er allerede bundet til en anden bruger.",
-    "steam_updated_within_7d": "Update afslåget:<br>Sidste updatering inden 7 dage.",
+    "steam_updated_within_3d": "Update afslåget:<br>Sidste updatering inden 3 dage.",
     "invalid_truckersmp_id": "Ugyldigt TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API utilgængelig.e. Kunne ikke binde TruckersMP konto",
     "steam_not_bound_before_truckersmp": "Du skal binde din Steam-konto, før du binder TruckersMP-kontoen.",

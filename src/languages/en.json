@@ -38,7 +38,7 @@
     "steam_api_error": "Steam API inaccessible. Failed to bind Steam account.",
     "invalid_steam_auth": "Invalid Steam Authentication.",
     "steam_bound_to_other_account": "Steam account already bound to another user.",
-    "steam_updated_within_7d": "Update rejected:<br>Last update within 7 days.",
+    "steam_updated_within_3d": "Update rejected:<br>Last update within 3 days.",
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API inaccessible. Failed to bind TruckersMP account.",
     "steam_not_bound_before_truckersmp": "You must bind your Steam Account before binding TruckersMP account.",

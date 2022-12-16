@@ -240,7 +240,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
     
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 60, 60)
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 10)
     if rl[0]:
         return rl
 
@@ -273,7 +273,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
 
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 60, 30)
+    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 10)
     if rl[0]:
         return rl
             
@@ -345,7 +345,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         r = requests.post("http://127.0.0.1:8700/banner", data={"company_abbr": config.abbr, \
             "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
             "discordid": discordid, "since": since, "highest_role": highest_role, \
-                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 10)
+                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = r.status_code
             return {"error": True, "descriptor": r.text}
@@ -697,34 +697,37 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     conn.commit()
 
     navio_error = ""
+        
+    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    userdiscordid = t[0][0]
+    username = t[0][1]
+    usermention = f"<@{userdiscordid}>"
+
+    def setvar(msg):
+        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
 
     if config.perms.driver[0] in addedroles:
-        r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
-        if r.status_code == 401:
-            navio_error = "Navio API Error: Invalid API Token"
-        elif r.status_code // 100 != 2:
-            try:
-                err = json.loads(r.text)["error"]
-                if err is None:
+        try:
+            r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
+            if r.status_code == 401:
+                navio_error = "Navio API Error: Invalid API Token"
+            elif r.status_code // 100 != 2:
+                try:
+                    err = json.loads(r.text)["error"]
+                    if err is None:
+                        navio_error = "Navio API Error: `Unknown Error`"
+                    elif "message" in err.keys():
+                        navio_error = "Navio API Error: `" + err["message"] + "`"
+                except:
                     navio_error = "Navio API Error: `Unknown Error`"
-                elif "message" in err.keys():
-                    navio_error = "Navio API Error: `" + err["message"] + "`"
-            except:
-                navio_error = "Navio API Error: `Unknown Error`"
-        
-        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
-        userdiscordid = t[0][0]
-        username = t[0][1]
-        usermention = f"<@{userdiscordid}>"
+        except:
+            navio_error = "Navio API Timeout"
 
         if navio_error != "":
             await AuditLog(adminid, f"Failed to add `{username}` (User ID: `{userid}`) to Navio Company.  \n"+navio_error)
         else:
             await AuditLog(adminid, f"Added `{username}` (User ID: `{userid}`) to Navio Company.")
-        
-        def setvar(msg):
-            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
 
         if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
             meta = config.team_update
@@ -738,12 +741,12 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
-                        r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 1)
+                        r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -751,7 +754,46 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                     traceback.print_exc()
 
     if config.perms.driver[0] in removedroles:
-        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+        try:
+            r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+            if r.status_code == 401:
+                navio_error = "Navio API Error: Invalid API Token"
+            elif r.status_code // 100 != 2:
+                try:
+                    err = json.loads(r.text)["error"]
+                    if err is None:
+                        navio_error = "Navio API Error: `Unknown Error`"
+                    elif "message" in err.keys():
+                        navio_error = "Navio API Error: `" + err["message"] + "`"
+                except:
+                    navio_error = "Navio API Error: `Unknown Error`"
+        except:
+            navio_error = "Navio API Timeout"
+
+        if navio_error != "":
+            await AuditLog(adminid, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+        else:
+            await AuditLog(adminid, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+
+        if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
+            meta = config.member_leave
+            await AutoMessage(meta, setvar)
+        
+        if config.member_leave.role_change != [] and config.discord_bot_token != "":
+            for role in config.member_leave.role_change:
+                try:
+                    if int(role) < 0:
+                        r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                    elif int(role) > 0:
+                        r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                except:
+                    traceback.print_exc()
     
     audit = f"Updated `{username}` (User ID: `{userid}`) roles:  \n"
     upd = ""
@@ -781,7 +823,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "update_member_points"])
+    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_member_points"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -862,13 +904,79 @@ async def postMemberResign(request: Request, response: Response, authorization: 
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
+    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    userdiscordid = t[0][0]
+    username = t[0][1]
+    usermention = f"<@{userdiscordid}>"
+
     cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
     t = cur.fetchall()
     steamid = t[0][0]
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+    try:
+        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+        if r.status_code == 401:
+            navio_error = "Navio API Error: Invalid API Token"
+        elif r.status_code // 100 != 2:
+            try:
+                err = json.loads(r.text)["error"]
+                if err is None:
+                    navio_error = "Navio API Error: `Unknown Error`"
+                elif "message" in err.keys():
+                    navio_error = "Navio API Error: `" + err["message"] + "`"
+            except:
+                navio_error = "Navio API Error: `Unknown Error`"
+    except:
+        navio_error = "Navio API Timeout"
+
+    if navio_error != "":
+        await AuditLog(-999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+    else:
+        await AuditLog(-999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+
+    def setvar(msg):
+        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+
+    if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
+        meta = config.member_leave
+        await AutoMessage(meta, setvar)
+    
+    if config.member_leave.role_change != [] and config.discord_bot_token != "":
+        for role in config.member_leave.role_change:
+            try:
+                if int(role) < 0:
+                    r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                elif int(role) > 0:
+                    r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+            except:
+                traceback.print_exc()
+    
+    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
+    try:
+        r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
+        d = json.loads(r.text)
+        if "roles" in d:
+            roles = d["roles"]
+            curroles = []
+            for role in roles:
+                if int(role) in list(RANKROLE.values()):
+                    curroles.append(int(role))
+            for role in curroles:
+                r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                if r.status_code // 100 != 2:
+                    err = json.loads(r.text)
+                    await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+    except:
+        pass
 
     await AuditLog(-999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
     notification("member", discordid, ml.tr(request, "member_resigned", force_lang = GetUserLanguage(discordid)))
@@ -925,11 +1033,77 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
+    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = cur.fetchall()
+    userdiscordid = t[0][0]
+    username = t[0][1]
+    usermention = f"<@{userdiscordid}>"
+
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
-    r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+    try:
+        r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+        if r.status_code == 401:
+            navio_error = "Navio API Error: Invalid API Token"
+        elif r.status_code // 100 != 2:
+            try:
+                err = json.loads(r.text)["error"]
+                if err is None:
+                    navio_error = "Navio API Error: `Unknown Error`"
+                elif "message" in err.keys():
+                    navio_error = "Navio API Error: `" + err["message"] + "`"
+            except:
+                navio_error = "Navio API Error: `Unknown Error`"
+    except:
+        navio_error = "Navio API Timeout"
+
+    if navio_error != "":
+        await AuditLog(-999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+    else:
+        await AuditLog(-999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+
+    def setvar(msg):
+        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+
+    if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
+        meta = config.member_leave
+        await AutoMessage(meta, setvar)
     
+    if config.member_leave.role_change != [] and config.discord_bot_token != "":
+        for role in config.member_leave.role_change:
+            try:
+                if int(role) < 0:
+                    r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{udiscordid}>: `{err["message"]}`')
+                elif int(role) > 0:
+                    r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{udiscordid}>: `{err["message"]}`')
+            except:
+                traceback.print_exc() 
+    
+    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
+    try:
+        r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}", headers=headers, timeout = 3)
+        d = json.loads(r.text)
+        if "roles" in d:
+            roles = d["roles"]
+            curroles = []
+            for role in roles:
+                if int(role) in list(RANKROLE.values()):
+                    curroles.append(int(role))
+            for role in curroles:
+                r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{role}', headers=headers, timeout = 3)
+                if r.status_code // 100 != 2:
+                    err = json.loads(r.text)
+                    await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{udiscordid}>: `{err["message"]}`')
+    except:
+        pass   
+        
     await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
     notification("member", udiscordid, ml.tr(request, "member_dismissed", force_lang = GetUserLanguage(udiscordid, "en")))
     return {"error": False}

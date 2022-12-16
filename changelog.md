@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.8**  
+1.Improved internal / external API handling to prevent 500 errors when request failed  
+2.Added `config.member_leave` to automate Discord message & role updates when driver leaves  
+3.Added automatic rank role removal when driver leaves  
+*Note: "leave" is defined by either driver role is removed, driver resigns, or driver is dismissed.  
+
 **v1.21.7**  
 1.Fixed **POST** `/user/tip` 500 error  
 2.Fixed **GET** `/division` returns incorrect data  

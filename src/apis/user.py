@@ -956,7 +956,12 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
-    r = requests.get("https://steamcommunity.com/openid/login?" + openid)
+    r = None
+    try:
+        r = requests.get("https://steamcommunity.com/openid/login?" + openid)
+    except:
+        response.status_code = 503
+        return {"error": True, "descriptor": ml.tr(request, "steam_api_error", force_lang = au["language"])}
     if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "steam_api_error", force_lang = au["language"])}
@@ -980,29 +985,35 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid != 0 and userid >= 0:
-        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 7)}")
+        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 3)}")
         p = cur.fetchall()
         if len(p) > 0:
             response.status_code = 429
-            return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_7d", force_lang = au["language"])}
+            return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_3d", force_lang = au["language"])}
 
         for role in roles:
             if role == "100":
-                requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
-                requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
+                try:
+                    requests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
+                    requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
+                except:
+                    traceback.print_exc()
                 await AuditLog(userid, f"Updated Steam ID to `{steamid}`")
 
     cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     conn.commit()
 
-    r = requests.get(f"https://api.truckersmp.com/v2/player/{steamid}")
-    if r.status_code == 200:
-        d = json.loads(r.text)
-        if not d["error"]:
-            truckersmpid = d["response"]["id"]
-            cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
-            conn.commit()
-            return {"error": False}
+    try:
+        r = requests.get(f"https://api.truckersmp.com/v2/player/{steamid}")
+        if r.status_code == 200:
+            d = json.loads(r.text)
+            if not d["error"]:
+                truckersmpid = d["response"]["id"]
+                cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
+                conn.commit()
+                return {"error": False}
+    except:
+        traceback.print_exc()
 
     # in case user changed steam
     cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")

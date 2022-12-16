@@ -8,7 +8,7 @@ import os, sys, json, requests, time, threading
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -45,8 +45,8 @@ config_sample = {
     "mysql_ext": "/var/lib/mysqlext/",
     "hcaptcha_secret": "",
 
-    "enabled_plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
-    "external_plugins": ["rework_member"],
+    "enabled_plugins": [],
+    "external_plugins": [],
 
     "guild_id": "",
     "in_guild_check": True,
@@ -108,7 +108,24 @@ config_sample = {
             },
             "timestamp": True
         },
-        "role_change": ["+1237912873213", "-43953495734"]
+        "role_change": []
+    },
+    
+    "member_leave": {
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "Welcome {name}.",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "You are our #{userid} driver",
+                "icon_url": ""
+            },
+            "timestamp": True
+        },
+        "role_change": []
     },
 
     "rank_up": {
@@ -139,9 +156,7 @@ config_sample = {
 
     "webhook_division": "",
     "webhook_division_message": "",
-    "divisions": [
-        {"id": "1", "name": "Construction", "role_id": "251", "point": "500"}
-    ],
+    "divisions": [],
 
     "perms": {
         "admin": ["0"],
@@ -176,15 +191,13 @@ config_sample = {
     },
 
     "roles": [
-        {"id": "0", "name": "root", "color": "#000000"},
-        {"id": "100", "name": "Driver", "color": "#000000"},
-        {"id": "251", "name": "Construction Division", "color": "#000000"}
+        {"id": "0", "name": "root", "color": "#000000"}
     ],
 
     "webhook_audit": ""
 }
 
-version = "v1.21.7"
+version = "v1.21.8"
 
 DH_START_TIME = int(time.time())
 

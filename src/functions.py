@@ -300,8 +300,11 @@ def SendDiscordMessage(channelid, data):
     if config.discord_bot_token == "":
         return -1
     
-    ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
-    requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+    try:
+        requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", \
+                headers=headers, data=json.dumps(data))
+    except:
+        pass
 
     return 0
 
@@ -334,9 +337,9 @@ def ProcessDiscordMessage(): # thread
                         data["embeds"].append(d["embeds"][j])
                     to_delete.append(i)
 
-            ddurl = f"https://discord.com/api/v10/channels/{channelid}/messages"
             try:
-                r = requests.post(ddurl, headers=headers, data=json.dumps(data), timeout=3)
+                r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", \
+                    headers=headers, data=json.dumps(data))
             except:
                 traceback.print_exc()
                 time.sleep(5)
@@ -554,7 +557,7 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
                 resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
                 return (False, resp_headers)
 
-def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = ["admin", "driver"]):
+def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = []):
     # authorization header basic check
     if authorization is None:
         return {"error": True, "descriptor": "Unauthorized", "code": 401}
@@ -597,13 +600,13 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
-        if userid == -1 and check_member:
+        if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
             roles.remove("")
 
-        if check_member:
+        if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
             ok = False
             for role in roles:
@@ -659,13 +662,13 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
-        if userid == -1 and check_member:
+        if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
             roles.remove("")
 
-        if check_member:
+        if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
             ok = False
             
@@ -724,7 +727,10 @@ async def AuditLog(userid, text):
 def DisableDiscordIntegration():
     global config
     config.discord_bot_token = ""
-    r = requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and reloading API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+    try:
+        requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and reloading API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+    except:
+        pass
 
 async def AutoMessage(meta, setvar):
     global config

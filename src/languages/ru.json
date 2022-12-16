@@ -38,7 +38,7 @@
     "steam_api_error": "API Steam недоступен. Не удалось привязать учетную запись Steam.",
     "invalid_steam_auth": "Неверная аутентификация Steam.",
     "steam_bound_to_other_account": "Учетная запись Steam уже привязана к другому пользователю.",
-    "steam_updated_within_7d": "Обновление отклонено:<br> Последнее обновление в течение 7 дней.",
+    "steam_updated_within_3d": "Обновление отклонено:<br> Последнее обновление в течение 3 дней.",
     "invalid_truckersmp_id": "Недействительный TruckersMP ID.",
     "truckersmp_api_error": "API TruckersMP недоступен. Не удалось привязать учетную запись TruckersMP.",
     "steam_not_bound_before_truckersmp": "Вы должны привязать свой аккаунт Steam перед привязкой аккаунта TruckersMP.",

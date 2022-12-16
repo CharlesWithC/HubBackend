@@ -38,7 +38,7 @@
     "steam_api_error": "API Steam inaccessible. Impossible de lier le compte steam.",
     "invalid_steam_auth": "Authentification Steam invalide.",
     "steam_bound_to_other_account": "Le compte Steam est déjà lié à un autre utilisateur.",
-    "steam_updated_within_7d": "Mise à jour rejetée :<br>Dernière mise à jour dans les 7 jours.",
+    "steam_updated_within_3d": "Mise à jour rejetée :<br>Dernière mise à jour dans les 3 jours.",
     "invalid_truckersmp_id": "Identifiant TruckersMP non valide.",
     "truckersmp_api_error": "API TruckersMP inaccessible. Impossible de lier le compte TruckersMP.",
     "steam_not_bound_before_truckersmp": "Vous devez lier votre compte Steam avant de lier votre compte TruckersMP.",

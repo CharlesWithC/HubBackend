@@ -45,11 +45,16 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
-    r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
-    d = json.loads(r.text)
-    if not d["success"]:
-        response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "invalid_captcha")}
+    try:
+        r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
+        d = json.loads(r.text)
+        if not d["success"]:
+            response.status_code = 403
+            return {"error": True, "descriptor": ml.tr(request, "invalid_captcha")}
+    except:
+        traceback.print_exc()
+        response.status_code = 503
+        return {"error": True, "descriptor": "Service Unavailable"}
     
     conn = newconn()
     cur = conn.cursor()
@@ -286,7 +291,13 @@ async def getSteamCallback(request: Request, response: Response):
     if rl[0]:
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
-    r = requests.get("https://steamcommunity.com/openid/login?" + data)
+    r = None
+    try:
+        r = requests.get("https://steamcommunity.com/openid/login?" + data)
+    except:
+        traceback.print_exc()
+        response.status_code = 503
+        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)
     if r.status_code // 100 != 2:
         response.status_code = 503
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)

@@ -38,7 +38,7 @@
     "steam_api_error": "Steam API'sine erişilemiyor. Steam hesabınız ilişkilendirilemedi.",
     "invalid_steam_auth": "Geçersiz Steam Kimlik Doğrulaması.",
     "steam_bound_to_other_account": "Steam hesabı zaten başka bir kullanıcının hesabı ile ilişkilendirilmiş.",
-    "steam_updated_within_7d": "Güncelleme reddedildi:<br>Son güncelleme 7 gün içinde yapıldı.",
+    "steam_updated_within_3d": "Güncelleme reddedildi:<br>Son güncelleme 3 gün içinde yapıldı.",
     "invalid_truckersmp_id": "Geçersiz TruckersMP kimliği. (TMPID)",
     "truckersmp_api_error": "TruckersMP API'sine erişilemiyor. TruckersMP hesabınız ilişkilendirilemedi.",
     "steam_not_bound_before_truckersmp": "TruckersMP hesabınızı ilişkilendirmeden önce Steam hesabınızı ilişkilendirmeniz gerekir.",

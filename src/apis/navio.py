@@ -101,8 +101,55 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         name = convert_quotation(t[0][1])
         discordid = t[0][2]
         await AuditLog(-999, f"Member resigned: `{name}` (Discord ID: `{discordid}`)")
+        
+        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
+        t = cur.fetchall()
+        userdiscordid = t[0][0]
+        username = t[0][1]
+        usermention = f"<@{userdiscordid}>"
         cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         conn.commit()
+
+        def setvar(msg):
+            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+
+        if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
+            meta = config.member_leave
+            await AutoMessage(meta, setvar)
+        
+        if config.member_leave.role_change != [] and config.discord_bot_token != "":
+            for role in config.member_leave.role_change:
+                try:
+                    if int(role) < 0:
+                        r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                    elif int(role) > 0:
+                        r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                except:
+                    traceback.print_exc()
+    
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
+        try:
+            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
+            d = json.loads(r.text)
+            if "roles" in d:
+                roles = d["roles"]
+                curroles = []
+                for role in roles:
+                    if int(role) in list(RANKROLE.values()):
+                        curroles.append(int(role))
+                for role in curroles:
+                    r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+        except:
+            pass
         
         return {"error": False, "response": "User resigned."}
 

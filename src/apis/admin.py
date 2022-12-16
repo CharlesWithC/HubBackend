@@ -12,10 +12,7 @@ from db import newconn
 from functions import *
 import multilang as ml
 
-config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', \
-    'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', \
-    'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", 'discord_bot_token', 'team_update', 'member_welcome', 'rank_up', 'ranks', 'application_types', \
-    'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url',  'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
@@ -206,7 +203,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 # reload service
 @app.post(f"/{config.abbr}/reload")
 async def postReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
+    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 300)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -218,6 +215,12 @@ async def postReload(request: Request, response: Response, authorization: str = 
         del au["code"]
         return au
     adminid = au["userid"]
+
+    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
 
     conn = newconn()
     cur = conn.cursor()

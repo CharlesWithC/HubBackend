@@ -55,10 +55,11 @@ async def banner(request: Request, response: Response):
         logo = Image.open(f"/tmp/hub/logo/{company_abbr}.png")
         banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:
-        r = requests.get(logo_url, timeout = 3)
-        if r.status_code == 200:
-            logo = r.content
-            try: # in case image is invalid
+        try:
+            r = requests.get(logo_url, timeout = 5)
+
+            if r.status_code == 200:
+                logo = r.content
                 logo = Image.open(BytesIO(logo)).convert("RGBA")
                 logo_large = logo # to copy properties
                 logo_datas = logo.getdata()
@@ -93,19 +94,19 @@ async def banner(request: Request, response: Response):
                             fg = logo_datas[i*200+j]
                             datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
                 logo_bg.putdata(datas)
-                banner.paste(logo_bg, (1475, 25, 1675, 225))
-                
-                # draw company name
-                draw = ImageDraw.Draw(banner)
-                usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
-                theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                company_name_len = usH45.getlength(f"{company_name}")
-                draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
+                banner.paste(logo_bg, (1475, 25, 1675, 225))              
 
-                banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)                
+        except:
+            pass
 
-            except:
-                pass
+        # draw company name
+        draw = ImageDraw.Draw(banner)
+        usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
+        theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        company_name_len = usH45.getlength(f"{company_name}")
+        draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
+
+        banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
     
     avatar = form["avatar"]
     avatarid = avatar
@@ -138,8 +139,8 @@ async def banner(request: Request, response: Response):
                 avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
             else:
                 avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
-            r = requests.get(avatarurl, timeout=3)
             try: # in case image is invalid
+                r = requests.get(avatarurl, timeout = 5)
                 usedefault = False
                 if r.status_code == 200:
                     try:

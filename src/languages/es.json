@@ -38,7 +38,7 @@
     "steam_api_error": "API de Steam inaccesible. No se pudo vincular la cuenta de Steam.",
     "invalid_steam_auth": "Autenticación de Steam no válida.",
     "steam_bound_to_other_account": "La cuenta de Steam ya está vinculada a otro usuario.",
-    "steam_updated_within_7d": "Actualización rechazada:<br>Última actualización en un plazo de 7 días.",
+    "steam_updated_within_3d": "Actualización rechazada:<br>Última actualización en un plazo de 3 días.",
     "invalid_truckersmp_id": "ID de TruckersMP no válido.",
     "truckersmp_api_error": "API de TruckersMP inaccesible. No se pudo vincular la cuenta TruckersMP.",
     "steam_not_bound_before_truckersmp": "Debes vincular tu cuenta de Steam antes de vincular la cuenta de TruckersMP.",
