@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.21.9**  
+Removed unncessary `convert_quotation` that led to `\'` visible by user  
+
 **v1.21.8**  
 1.Improved internal / external API handling to prevent 500 errors when request failed  
 2.Added `config.member_leave` to automate Discord message & role updates when driver leaves  

@@ -421,7 +421,6 @@ def notification(notification_type, discordid, content, no_drivershub_notificati
     if int(discordid) <= 0:
         return
         
-    content = convert_quotation(content)
     conn = newconn()
     cur = conn.cursor()
     
@@ -443,7 +442,7 @@ def notification(notification_type, discordid, content, no_drivershub_notificati
         t = cur.fetchall()
         nxtnotificationid = int(t[0][0])
         cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
-        cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{content}', {int(time.time())}, 0)")
+        cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{convert_quotation(content)}', {int(time.time())}, 0)")
         conn.commit()
     
     if settings["discord"] and not no_discord_notification:

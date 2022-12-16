@@ -98,7 +98,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         if len(t) == 0:
             return {"error": True, "descriptor": "User not found."}
         userid = t[0][0]
-        name = convert_quotation(t[0][1])
+        name = t[0][1]
         discordid = t[0][2]
         await AuditLog(-999, f"Member resigned: `{name}` (Discord ID: `{discordid}`)")
         

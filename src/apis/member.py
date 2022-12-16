@@ -803,7 +803,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     for remove in removedroles:
         upd += f"`- {ROLES[remove]}`  \n"
         audit += f"`- {ROLES[remove]}`  \n"
-    audit = convert_quotation(audit[:-1])
+    audit = audit[:-1]
     await AuditLog(adminid, audit)
     conn.commit()
 

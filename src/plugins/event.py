@@ -615,6 +615,5 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     if ret == f"Updated event #{eventid} attendees  \n":
         return {"error": False, "response": {"message": "No changes made."}}
 
-    ret = convert_quotation(ret)
     await AuditLog(adminid, ret)
     return {"error": False, "response": {"message": ret}}
