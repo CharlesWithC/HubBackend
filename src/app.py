@@ -197,7 +197,7 @@ config_sample = {
     "webhook_audit": ""
 }
 
-version = "v1.21.9"
+version = "v1.21.10"
 
 DH_START_TIME = int(time.time())
 

@@ -406,196 +406,199 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
             t = cur.fetchall()
             for tt in t:
-                challengeid = tt[0]
-                challenge_type = tt[1]
-                delivery_count = tt[2]
-                required_roles = tt[3].split(",")[:20]
-                reward_points = tt[4]
-                job_requirements = tt[5]
-                title = tt[6]
+                try:
+                    challengeid = tt[0]
+                    challenge_type = tt[1]
+                    delivery_count = tt[2]
+                    required_roles = tt[3].split(",")[:20]
+                    reward_points = tt[4]
+                    job_requirements = tt[5]
+                    title = tt[6]
 
-                rolesok = False
-                if len(required_roles) == 0:
-                    roleok = True
-                for r in required_roles:
-                    if r == "":
+                    rolesok = False
+                    if len(required_roles) == 0:
+                        roleok = True
+                    for r in required_roles:
+                        if r == "":
+                            continue
+                        if r in roles:
+                            rolesok = True
+                    if not rolesok:
                         continue
-                    if r in roles:
-                        rolesok = True
-                if not rolesok:
-                    continue
 
-                p = json.loads(decompress(job_requirements))
-                jobreq = {}
-                for i in range(0,len(p)):
-                    jobreq[JOB_REQUIREMENTS[i]] = p[i]
-                
-                if jobreq["minimum_distance"] != -1 and driven_distance < jobreq["minimum_distance"]:
-                    continue
+                    p = json.loads(decompress(job_requirements))
+                    jobreq = {}
+                    for i in range(0,len(p)):
+                        jobreq[JOB_REQUIREMENTS[i]] = p[i]
+                    
+                    if jobreq["minimum_distance"] != -1 and driven_distance < jobreq["minimum_distance"]:
+                        continue
 
-                source_city = d["data"]["object"]["source_city"]
-                source_company = d["data"]["object"]["source_company"]
-                destination_city = d["data"]["object"]["destination_city"]
-                destination_company = d["data"]["object"]["destination_company"]
-                if source_city is None or source_city["unique_id"] is None:
-                    source_city = "[unknown]"
-                else:
-                    source_city = source_city["unique_id"]
-                if source_company is None or source_company["unique_id"] is None:
-                    source_company = "[unknown]"
-                else:
-                    source_company = source_company["unique_id"]
-                if destination_city is None or destination_city["unique_id"] is None:
-                    destination_city = "[unknown]"
-                else:
-                    destination_city = destination_city["unique_id"]
-                if destination_company is None or destination_company["unique_id"] is None:
-                    destination_company = "[unknown]"
-                else:
-                    destination_company = destination_company["unique_id"]
-                if jobreq["source_city_id"] != "" and not source_city in jobreq["source_city_id"].split(","):
-                    continue
-                if jobreq["source_company_id"] != "" and not source_company in jobreq["source_company_id"].split(","):
-                    continue
-                if jobreq["destination_city_id"] != "" and not destination_city in jobreq["destination_city_id"].split(","):
-                    continue
-                if jobreq["destination_company_id"] != "" and not destination_company in jobreq["destination_company_id"].split(","):
-                    continue
+                    source_city = d["data"]["object"]["source_city"]
+                    source_company = d["data"]["object"]["source_company"]
+                    destination_city = d["data"]["object"]["destination_city"]
+                    destination_company = d["data"]["object"]["destination_company"]
+                    if source_city is None or source_city["unique_id"] is None:
+                        source_city = "[unknown]"
+                    else:
+                        source_city = source_city["unique_id"]
+                    if source_company is None or source_company["unique_id"] is None:
+                        source_company = "[unknown]"
+                    else:
+                        source_company = source_company["unique_id"]
+                    if destination_city is None or destination_city["unique_id"] is None:
+                        destination_city = "[unknown]"
+                    else:
+                        destination_city = destination_city["unique_id"]
+                    if destination_company is None or destination_company["unique_id"] is None:
+                        destination_company = "[unknown]"
+                    else:
+                        destination_company = destination_company["unique_id"]
+                    if jobreq["source_city_id"] != "" and not source_city in jobreq["source_city_id"].split(","):
+                        continue
+                    if jobreq["source_company_id"] != "" and not source_company in jobreq["source_company_id"].split(","):
+                        continue
+                    if jobreq["destination_city_id"] != "" and not destination_city in jobreq["destination_city_id"].split(","):
+                        continue
+                    if jobreq["destination_company_id"] != "" and not destination_company in jobreq["destination_company_id"].split(","):
+                        continue
 
-                cargo = "[unknown]"
-                cargo_mass = 0
-                cargo_damage = 0
-                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["unique_id"] is None:
-                    cargo = d["data"]["object"]["cargo"]["unique_id"]
-                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
-                    cargo_mass = d["data"]["object"]["cargo"]["mass"]
-                if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["damage"] is None:
-                    cargo_mass = d["data"]["object"]["cargo"]["damage"]
-                
-                if jobreq["cargo_id"] != "" and not cargo in jobreq["cargo_id"].split(","):
-                    continue
-                if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
-                    continue
-                if jobreq["maximum_cargo_damage"] != -1 and cargo_damage > jobreq["maximum_cargo_damage"]:
-                    continue
-                
-                if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
-                    continue
-                if jobreq["maximum_fuel"] != -1 and fuel_used > jobreq["maximum_fuel"]:
-                    continue
-                
-                profit = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
-                if jobreq["minimum_profit"] != -1 and profit < jobreq["minimum_profit"]:
-                    continue
-                if jobreq["maximum_profit"] != -1 and profit > jobreq["maximum_profit"]:
-                    continue
-                if jobreq["maximum_offence"] != -1 and abs(offence) > jobreq["maximum_offence"]:
-                    continue
-                
-                if not jobreq["allow_overspeed"] and has_overspeed:
-                    continue
+                    cargo = "[unknown]"
+                    cargo_mass = 0
+                    cargo_damage = 0
+                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["unique_id"] is None:
+                        cargo = d["data"]["object"]["cargo"]["unique_id"]
+                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
+                        cargo_mass = d["data"]["object"]["cargo"]["mass"]
+                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["damage"] is None:
+                        cargo_mass = d["data"]["object"]["cargo"]["damage"]
+                    
+                    if jobreq["cargo_id"] != "" and not cargo in jobreq["cargo_id"].split(","):
+                        continue
+                    if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
+                        continue
+                    if jobreq["maximum_cargo_damage"] != -1 and cargo_damage > jobreq["maximum_cargo_damage"]:
+                        continue
+                    
+                    if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
+                        continue
+                    if jobreq["maximum_fuel"] != -1 and fuel_used > jobreq["maximum_fuel"]:
+                        continue
+                    
+                    profit = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
+                    if jobreq["minimum_profit"] != -1 and profit < jobreq["minimum_profit"]:
+                        continue
+                    if jobreq["maximum_profit"] != -1 and profit > jobreq["maximum_profit"]:
+                        continue
+                    if jobreq["maximum_offence"] != -1 and abs(offence) > jobreq["maximum_offence"]:
+                        continue
+                    
+                    if not jobreq["allow_overspeed"] and has_overspeed:
+                        continue
 
-                auto_park = d["data"]["object"]["events"][-1]["meta"]["auto_park"]
-                auto_load = d["data"]["object"]["events"][-1]["meta"]["auto_load"]
-                if not jobreq["allow_auto_park"] and auto_park:
-                    continue
-                if not jobreq["allow_auto_load"] and auto_load:
-                    continue
+                    auto_park = d["data"]["object"]["events"][-1]["meta"]["auto_park"]
+                    auto_load = d["data"]["object"]["events"][-1]["meta"]["auto_load"]
+                    if not jobreq["allow_auto_park"] and auto_park:
+                        continue
+                    if not jobreq["allow_auto_load"] and auto_load:
+                        continue
 
-                is_late = d["data"]["object"]["is_late"]
-                is_special = d["data"]["object"]["is_special"]
-                if jobreq["must_not_be_late"] and is_late:
-                    continue
-                if jobreq["must_be_special"] and not is_special:
-                    continue
-                
-                discordid = getUserInfo(userid = userid)["discordid"]
-                notification("challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
-                cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
-                conn.commit()
+                    is_late = d["data"]["object"]["is_late"]
+                    is_special = d["data"]["object"]["is_special"]
+                    if jobreq["must_not_be_late"] and is_late:
+                        continue
+                    if jobreq["must_be_special"] and not is_special:
+                        continue
+                    
+                    discordid = getUserInfo(userid = userid)["discordid"]
+                    notification("challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
+                    cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
+                    conn.commit()
 
-                current_delivery_count = 0
-                if challenge_type == [1,3]:
-                    cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
-                elif challenge_type == 2:
-                    cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
-                elif challenge_type == 4:
-                    cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
-                        INNER JOIN dlog ON dlog.logid = challenge_record.logid \
-                        WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
-                elif challenge_type == 5:
-                    cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
-                        INNER JOIN dlog ON dlog.logid = challenge_record.logid \
-                        WHERE challenge_record.challengeid = {challengeid}")
-                current_delivery_count = cur.fetchone()
-                current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
-                
-                if current_delivery_count >= delivery_count:
-                    if challenge_type in [1,4]:
-                        cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                        t = cur.fetchall()
-                        if len(t) == 0:
-                            cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                            conn.commit()
-                            discordid = getUserInfo(userid = userid)["discordid"]
-                            notification("challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
-                    elif challenge_type == 3:
-                        cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                        t = cur.fetchall()
-                        if current_delivery_count >= (len(t) + 1) * delivery_count:
-                            cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                            conn.commit()
-                            discordid = getUserInfo(userid = userid)["discordid"]
-                            notification("challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                    current_delivery_count = 0
+                    if challenge_type in [1,3]:
+                        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
                     elif challenge_type == 2:
-                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                        t = cur.fetchall()
-                        if len(t) == 0:
-                            curtime = int(time.time())
-                            cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
-                            t = cur.fetchall()
-                            usercnt = {}
-                            for tt in t:
-                                uid = tt[0]
-                                if not uid in usercnt.keys():
-                                    usercnt[uid] = 1
-                                else:
-                                    usercnt[uid] += 1
-                            for uid in usercnt.keys():
-                                s = usercnt[uid]
-                                reward = round(reward_points * s / delivery_count)
-                                cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                discordid = getUserInfo(userid = uid)["discordid"]
-                                notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
-                            conn.commit()
+                        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
+                    elif challenge_type == 4:
+                        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
                     elif challenge_type == 5:
-                        cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                        t = cur.fetchall()
-                        if len(t) == 0:
-                            curtime = int(time.time())
-                            cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
-                                INNER JOIN dlog ON dlog.logid = challenge_record.logid \
-                                WHERE challenge_record.challengeid = {challengeid} \
-                                GROUP BY dlog.userid, challenge_record.userid")
+                        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                            INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                            WHERE challenge_record.challengeid = {challengeid}")
+                    current_delivery_count = cur.fetchone()
+                    current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
+
+                    if current_delivery_count >= delivery_count:
+                        if challenge_type in [1,4]:
+                            cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                             t = cur.fetchall()
-                            usercnt = {}
-                            totalcnt = 0
-                            for tt in t:
-                                totalcnt += tt[1]
-                                uid = tt[0]
-                                if not uid in usercnt.keys():
-                                    usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
-                                else:
-                                    usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
-                                if totalcnt >= delivery_count:
-                                    break
-                            for uid in usercnt.keys():
-                                s = usercnt[uid]
-                                reward = round(reward_points * s / delivery_count)
-                                cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                discordid = getUserInfo(userid = uid)["discordid"]
-                                notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
-                            conn.commit()
+                            if len(t) == 0:
+                                cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                conn.commit()
+                                discordid = getUserInfo(userid = userid)["discordid"]
+                                notification("challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                        elif challenge_type == 3:
+                            cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                            t = cur.fetchall()
+                            if current_delivery_count >= (len(t) + 1) * delivery_count:
+                                cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                conn.commit()
+                                discordid = getUserInfo(userid = userid)["discordid"]
+                                notification("challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
+                        elif challenge_type == 2:
+                            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = cur.fetchall()
+                            if len(t) == 0:
+                                curtime = int(time.time())
+                                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
+                                t = cur.fetchall()
+                                usercnt = {}
+                                for tt in t:
+                                    uid = tt[0]
+                                    if not uid in usercnt.keys():
+                                        usercnt[uid] = 1
+                                    else:
+                                        usercnt[uid] += 1
+                                for uid in usercnt.keys():
+                                    s = usercnt[uid]
+                                    reward = round(reward_points * s / delivery_count)
+                                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                    discordid = getUserInfo(userid = uid)["discordid"]
+                                    notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                                conn.commit()
+                        elif challenge_type == 5:
+                            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = cur.fetchall()
+                            if len(t) == 0:
+                                curtime = int(time.time())
+                                cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                                    INNER JOIN dlog ON dlog.logid = challenge_record.logid \
+                                    WHERE challenge_record.challengeid = {challengeid} \
+                                    GROUP BY dlog.userid, challenge_record.userid")
+                                t = cur.fetchall()
+                                usercnt = {}
+                                totalcnt = 0
+                                for tt in t:
+                                    totalcnt += tt[1]
+                                    uid = tt[0]
+                                    if not uid in usercnt.keys():
+                                        usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                                    else:
+                                        usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                                    if totalcnt >= delivery_count:
+                                        break
+                                for uid in usercnt.keys():
+                                    s = usercnt[uid]
+                                    reward = round(reward_points * s / delivery_count)
+                                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                    discordid = getUserInfo(userid = uid)["discordid"]
+                                    notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
+                                conn.commit()
+                except:
+                    traceback.print_exc()
                 
     except:
         traceback.print_exc()

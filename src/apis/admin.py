@@ -203,7 +203,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 # reload service
 @app.post(f"/{config.abbr}/reload")
 async def postReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 300)
+    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -215,12 +215,6 @@ async def postReload(request: Request, response: Response, authorization: str = 
         del au["code"]
         return au
     adminid = au["userid"]
-
-    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
 
     conn = newconn()
     cur = conn.cursor()

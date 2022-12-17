@@ -357,7 +357,6 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         return response
         
     except:
-        traceback.print_exc()
         response.status_code = 503
         return {"error": True, "descriptor": "Service Unavailable"}
 

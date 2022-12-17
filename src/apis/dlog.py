@@ -783,15 +783,15 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                     userevent[attendee] += tt[1]
         
         # calculate division
-        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC")
+        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
         t = cur.fetchall()
-        firstlogid = 0
+        firstlogid = -1
         if len(t) > 0:
             firstlogid = t[0][0]
 
-        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC")
+        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
         t = cur.fetchall()
-        lastlogid = 100000000
+        lastlogid = -1
         if len(t) > 0:
             lastlogid = t[0][0]
         
@@ -1055,7 +1055,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
-    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 600, 300)
+    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -1066,12 +1066,6 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         response.status_code = au["code"]
         del au["code"]
         return au
-    
-    rl = ratelimit(request, request.client.host, 'GET /dlog/export', 600, 3)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
         
     conn = newconn()
     cur = conn.cursor()

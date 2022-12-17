@@ -1160,7 +1160,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
                 p = cur.fetchall()
                 if len(p) == 0:
                     continue
-            elif tt[4] == [2,5]:
+            elif tt[4] in [2,5]:
                 cur.execute(f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]}")
                 p = cur.fetchall()
                 if len(p) == 0:
