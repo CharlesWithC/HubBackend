@@ -16,7 +16,7 @@ cp languages/ build/ -r
 cp bannergen/fonts build/ -r
 mkdir build/config
 cp ../config_sample.json build/config/
-cp ../apidoc.json build/
+cp ../openapi.json build/
 cd build/
 7z a hub.zip ./*
 mv hub.zip ../

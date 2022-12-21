@@ -8,7 +8,7 @@ import os, sys, json, requests, time, threading
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'apidoc', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -20,7 +20,7 @@ config_sample = {
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
 
-    "apidoc": "./apidoc.json",
+    "openapi": "./openapi.json",
     "language_dir": "./languages",
     "frontend_urls": {
         "steam_callback": "https://{domain}/steam",
@@ -197,7 +197,7 @@ config_sample = {
     "webhook_audit": ""
 }
 
-version = "v1.21.10"
+version = "v1.21.11"
 
 DH_START_TIME = int(time.time())
 
@@ -239,6 +239,10 @@ def validateConfig(cfg):
         newranks.append(rank)
     cfg["ranks"] = newranks
 
+    if "apidoc" in cfg.keys():
+        cfg["openapi"] = cfg["apidoc"]
+        del cfg["apidoc"]
+
     tcfg = {}
     for key in config_keys_order:
         if key in cfg.keys():
@@ -267,12 +271,11 @@ except:
 
 config = Dict2Obj(config)
 
-if os.path.exists(config.apidoc):
+if os.path.exists(config.openapi):
     app = FastAPI(openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
+    openapi_data = json.loads(open(config.openapi, "r").read().replace("/abbr", f"/{config.abbr}"))
     def openapi():
-        f = open(config.apidoc, "r")
-        d = f.read().replace("/abbr", f"/{config.abbr}")
-        return json.loads(d)
+        return openapi_data
     app.openapi = openapi
 else:
     app = FastAPI()

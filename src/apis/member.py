@@ -187,11 +187,11 @@ async def getMemberList(request: Request, response: Response, authorization: str
         activity_last_seen = tt[7]
         if activity_last_seen != None:
             if int(time.time()) - activity_last_seen >= 300:
-                activity_name = "Offline"
+                activity_name = "offline"
             elif int(time.time()) - activity_last_seen >= 120:
-                activity_name = "Online"
+                activity_name = "online"
         else:
-            activity_name = "Offline"
+            activity_name = "offline"
             activity_last_seen = ""
         hrole[str(tt[0])] = highestrole
         rret[str(tt[0])] = {"name": tt[1], "userid": str(tt[0]), "discordid": f"{tt[2]}", "avatar": tt[4], "roles": roles, \

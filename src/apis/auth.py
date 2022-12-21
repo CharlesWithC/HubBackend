@@ -726,7 +726,7 @@ async def postMFA(request: Request, response: Response):
     conn.commit()
     username = getUserInfo(discordid = discordid)["name"]
     language = GetUserLanguage(discordid)
-    await AuditLog(-999, f"2FA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(-999, f"MFA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
     notification("login", discordid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \

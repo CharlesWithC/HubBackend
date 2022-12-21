@@ -99,16 +99,16 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         activityUpdate(udiscordid, f"member_{userid}")
 
     activity_last_seen = 0
-    activity_name = "Offline"
+    activity_name = "offline"
     cur.execute(f"SELECT activity, timestamp FROM user_activity WHERE discordid = {t[0][0]}")
     ac = cur.fetchall()
     if len(ac) != 0:
         activity_name = ac[0][0]
         activity_last_seen = ac[0][1]
         if int(time.time()) - activity_last_seen >= 300:
-            activity_name = "Offline"
+            activity_name = "offline"
         elif int(time.time()) - activity_last_seen >= 120:
-            activity_name = "Online"
+            activity_name = "online"
 
     if isAdmin or isHR or udiscordid == t[0][0]:
         return {"error": False, "response": {"user": {"name": t[0][1], "userid": str(userid), \

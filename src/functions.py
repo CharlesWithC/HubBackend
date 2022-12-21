@@ -180,7 +180,7 @@ def getFullCountry(abbr):
         country = countries.get(abbr).name
         return convert_quotation(country)
     except:
-        return "Unknown Country"
+        return ""
 
 def getRequestCountry(request, abbr = False):
     if "cf-ipcountry" in request.headers.keys():
@@ -192,11 +192,11 @@ def getRequestCountry(request, abbr = False):
             return country.name
         except:
             if abbr:
-                return "unknown"
-            return "Unknown Country"
+                return ""
+            return ""
     if abbr:
-        return "unknown"
-    return "Unknown Country"
+        return ""
+    return ""
 
 def getUserAgent(request):
     if "user-agent" in request.headers.keys():
@@ -638,14 +638,14 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
 
         # check country
         curCountry = getRequestCountry(request, abbr = True)
-        if curCountry != country and country not in ["unknown", ""]:
+        if curCountry != country and country != "":
             cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
             conn.commit()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         if ip != request.client.host:
             cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        if curCountry != country and not curCountry in ["unknown", ""] and country in ["unknown", ""]:
+        if curCountry != country and not curCountry != "" and country != "":
             cur.execute(f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
         if getUserAgent(request) != user_agent:
             cur.execute(f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")

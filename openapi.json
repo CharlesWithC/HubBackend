@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.10"
+        "version": "1.21.11"
     },
     "paths": {
         "/abbr": {
@@ -2696,6 +2696,14 @@
                         "type": "integer"
                     },
                     "name": "interval",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "End Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "end_time",
                     "in": "query"
                 }, {
                     "required": false,

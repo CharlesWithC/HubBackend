@@ -8,7 +8,7 @@
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
 
-    "apidoc": "./apidoc.json",
+    "openapi": "./openapi.json",
     "language_dir": "./languages",
     "frontend_urls": {
         "steam_callback": "https://{domain}/steam",

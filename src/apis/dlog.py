@@ -286,10 +286,10 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         data = {}
         if tt[1] != "":
             data = json.loads(decompress(tt[1]))
-        source_city = "Unknown City"
-        source_company = "Unknown Company"
-        destination_city = "Unknown City"
-        destination_company = "Unknown Company"
+        source_city = "N/A"
+        source_company = "N/A"
+        destination_city = "N/A"
+        destination_company = "N/A"
         if "data" in data.keys() and data["data"]["object"]["source_city"] != None:
             source_city = data["data"]["object"]["source_city"]["name"]
         if "data" in data.keys() and data["data"]["object"]["source_company"] != None:
@@ -298,7 +298,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             destination_city = data["data"]["object"]["destination_city"]["name"]
         if "data" in data.keys() and data["data"]["object"]["destination_company"] != None:
             destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = "Unknown Cargo"
+        cargo = "N/A"
         cargo_mass = 0
         if "data" in data.keys() and data["data"]["object"]["cargo"] != None:
             cargo = data["data"]["object"]["cargo"]["name"]
@@ -525,7 +525,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
-        ranges: Optional[int] = 30, interval: Optional[int] = 86400, \
+        ranges: Optional[int] = 30, interval: Optional[int] = 86400, end_time: Optional[int] = -1, \
         sum_up: Optional[bool] = False, userid: Optional[int] = -1):
     rl = ratelimit(request, request.client.host, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
@@ -553,13 +553,18 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
         interval = 31536000
     elif interval < 60:
         interval = 60
+    
+    if end_time < 0:
+        end_time = int(time.time())
 
     ret = []
     timerange = []
     for i in range(ranges):
-        start_time = int(time.time()) - ((i+1)*interval)
-        end_time = start_time + interval
-        timerange.append((start_time, end_time))
+        r_start_time = end_time - ((i+1)*interval)
+        if r_start_time <= 0:
+            break
+        r_end_time = r_start_time + interval
+        timerange.append((r_start_time, r_end_time))
     timerange = timerange[::-1]
 
     limit = ""

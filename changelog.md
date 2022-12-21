@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.21.11**  
+Added `end_time` request param to **GET** `/dlog/statistics/chart`  
+
 **v1.21.10**  
 1.Fixed manually-added distance leading to inaccurate result of leaderboard division point  
 2.Fixed challenge completed status not adding to personal one-time / recurring challenge  

@@ -16,7 +16,7 @@ cp languages/ ../build/ -r
 cp bannergen/fonts ../build/ -r
 mkdir ../build/config
 cp ../config_sample.json ../build/config/
-cp ../apidoc.json ../build/""".split("\n")
+cp ../openapi.json ../build/""".split("\n")
     for cmd in cmds:
         os.system(cmd)
 
@@ -47,28 +47,28 @@ def build_launcher():
 
 req = 4
 os.chdir("src")
-if "rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.exists("main.dist"):
+if "--rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.exists("main.dist"):
     threading.Thread(target = build_main, daemon = True).start()
     time.sleep(1)
 else:
     req -= 1
     print("skipped main")
 
-if "rebuild-tracker" in sys.argv and os.path.exists("tracker.dist") or not os.path.exists("tracker.dist"):
+if "--rebuild-tracker" in sys.argv and os.path.exists("tracker.dist") or not os.path.exists("tracker.dist"):
     threading.Thread(target = build_tracker, daemon = True).start()
     time.sleep(1)
 else:
     req -= 1
     print("skipped tracker")
 
-if "rebuild-launcher" in sys.argv and os.path.exists("launcher.dist") or not os.path.exists("launcher.dist"):
+if "--rebuild-launcher" in sys.argv and os.path.exists("launcher.dist") or not os.path.exists("launcher.dist"):
     threading.Thread(target = build_launcher, daemon = True).start()
     time.sleep(1)
 else:
     req -= 1
     print("skipped launcher")
 
-if "rebuild-bannergen" in sys.argv and os.path.exists("bannergen/main.dist") or not os.path.exists("bannergen/main.dist"):
+if "--rebuild-bannergen" in sys.argv and os.path.exists("bannergen/main.dist") or not os.path.exists("bannergen/main.dist"):
     threading.Thread(target = build_bannergen, daemon = True).start()
     time.sleep(1)
 else:
