@@ -37,6 +37,11 @@ async def banner(request: Request, response: Response):
     logo_url = form["logo_url"]
     hex_color = form["hex_color"][-6:]
     discordid = form["discordid"]
+
+    try:
+        rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    except:
+        hex_color = "2fc1f7"
     
     l = os.listdir(f"/tmp/hub/banner")
     for ll in l:

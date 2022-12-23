@@ -15,8 +15,14 @@ from functions import *
 import multilang as ml
 
 application_types = config.application_types
+to_delete = []
 for i in range(len(application_types)):
-    application_types[i]["id"] = int(application_types[i]["id"])
+    try:
+        application_types[i]["id"] = int(application_types[i]["id"])
+    except:
+        to_delete.append(i)
+for i in to_delete[::-1]:
+    application_types.remove(i)
 
 # Basic Info
 @app.get(f"/{config.abbr}/application/types")

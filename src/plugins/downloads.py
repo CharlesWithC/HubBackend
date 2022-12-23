@@ -142,14 +142,14 @@ async def redirectDownloads(request: Request, response: Response, authorization:
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
     downloadsid = t[0][0]
 
     cur.execute(f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
     t = cur.fetchall()
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
     link = t[0][0]
 
     cur.execute(f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")

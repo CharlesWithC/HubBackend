@@ -16,12 +16,16 @@ import multilang as ml
 
 divisions = config.divisions
 divisionsGET = divisions
+to_delete = []
 for i in range(len(divisions)):
     try:
         divisions[i]["id"] = int(divisions[i]["id"])
         divisionsGET[i]["id"] = str(divisions[i]["id"])
     except:
-        pass
+        to_delete.append(i)
+for i in to_delete[::-1]:
+    divisions.remove(i)
+    divisionsGET.remove(i)
     
 divisionroles = []
 divisiontxt = {}

@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.21.12**  
+1.Prevented crash on certain types of invalid config  
+2.Fixed **GET** `/downloads/redirect` 500 error when downloadable item not found  
+3.Other bug fixes and minor improvements  
+
 **v1.21.11**  
 Added `end_time` request param to **GET** `/dlog/statistics/chart`  
 

@@ -7,7 +7,7 @@ from base64 import b64encode, b64decode
 from discord import Webhook, Embed
 from aiohttp import ClientSession
 from fastapi.responses import JSONResponse
-from datetime import datetime, timedelta
+from datetime import datetime
 import json, time, math, zlib, re
 import hmac, base64, struct, hashlib
 import ipaddress, requests, threading
@@ -49,12 +49,15 @@ def compress(s):
 def decompress(s):
     if s == "":
         return ""
-    if type(s) == str:
-        s = s.encode()
-    t = b64decode(s)
-    t = zlib.decompress(t)
-    t = t.decode()
-    return t
+    try:
+        if type(s) == str:
+            s = s.encode()
+        t = b64decode(s)
+        t = zlib.decompress(t)
+        t = t.decode()
+        return t
+    except:
+        return s
 
 def b62encode(d):
     ret = ""

@@ -45,13 +45,19 @@ RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
 divisions = config.divisions
 divisionroles = []
 for division in divisions:
-    divisionroles.append(division["role_id"])
+    try:
+        divisionroles.append(division["role_id"])
+    except:
+        pass
 
 PERMS_STR = {}
 for perm in tconfig["perms"].keys():
     PERMS_STR[perm] = []
     for role in tconfig["perms"][perm]:
-        PERMS_STR[perm].append(str(role))
+        try:
+            PERMS_STR[perm].append(str(int(role)))
+        except:
+            pass
 
 def point2rankroleid(point):
     keys = list(RANKROLE.keys())

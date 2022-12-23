@@ -93,10 +93,10 @@ async def work(uri):
                 else:
                     mods = ""
                 if d["job"] is None:
-                    print(f"Received telemetry update for {steamid} in game {game} free roaming at {x}, {y}, {z}")
+                    # print(f"Received telemetry update for {steamid} in game {game} free roaming at {x}, {y}, {z}")
                     continue
                 uuid = d["job"]["uuid"]
-                print(f"Received telemetry update for {steamid} in game {game} regarding job {uuid} at {x}, {y}, {z}")
+                # print(f"Received telemetry update for {steamid} in game {game} regarding job {uuid} at {x}, {y}, {z}")
                 try:
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                 except:
@@ -104,11 +104,11 @@ async def work(uri):
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
             if int(time.time()) - lasthandshake >= 30:
-                print("Commit")
+                # print("Commit")
                 conn.commit() # less commit
                 conn = newconn()
                 cur = conn.cursor()
-                print("Heartbeat")
+                # print("Heartbeat")
                 await websocket.send(json.dumps({"op": 2}))
                 lasthandshake = int(time.time())
                 try:

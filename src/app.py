@@ -197,7 +197,7 @@ config_sample = {
     "webhook_audit": ""
 }
 
-version = "v1.21.11"
+version = "v1.21.12"
 
 DH_START_TIME = int(time.time())
 
@@ -221,11 +221,14 @@ def validateConfig(cfg):
     for perm in perms.keys():
         roles = perms[perm]
         newroles = []
-        for role in roles:
-            try:
-                newroles.append(int(role))
-            except:
-                pass
+        try:
+            for role in roles:
+                try:
+                    newroles.append(int(role))
+                except:
+                    pass
+        except:
+            pass
         perms[perm] = newroles
     cfg["perms"] = perms
 
@@ -236,8 +239,38 @@ def validateConfig(cfg):
         if "distance" in rank.keys():
             rank["points"] = rank["distance"]
             del rank["distance"]
-        newranks.append(rank)
+        if "discord_role_id" in rank.keys() and "points" in rank.keys() and "name" in rank.keys():
+            newranks.append(rank)
     cfg["ranks"] = newranks
+
+    divisions = cfg["divisions"]
+    newdivisions = []
+    for i in range(len(divisions)):
+        division = divisions[i]
+        if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "point" in division.keys():
+            newdivisions.append(division)
+    cfg["divisions"] = newdivisions
+
+    roles = cfg["roles"]
+    newroles = []
+    for i in range(len(roles)):
+        role = roles[i]
+        if "id" in role.keys() and "name" in role.keys():
+            newroles.append(role)
+    cfg["roles"] = newroles
+
+    application_types = cfg["application_types"]
+    new_application_types = []
+    reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "webhook", "note"]
+    for i in range(len(application_types)):
+        application_type = application_types[i]
+        ok = True
+        for req in reqs:
+            if not req in application_type.keys():
+                ok = False
+        if ok:
+            new_application_types.append(application_type)
+    cfg["application_types"] = new_application_types
 
     if "apidoc" in cfg.keys():
         cfg["openapi"] = cfg["apidoc"]
@@ -264,7 +297,8 @@ try:
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)
 except:
-    hex_color = "FFFFFF"
+    hex_color = "#2fc1f7"
+    config["hex_color"] = "#2fc1f7"
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)
