@@ -36,9 +36,6 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         del au["code"]
         return au
     adminid = au["userid"]
-
-    conn = newconn()
-    cur = conn.cursor()
     
     # current config
     orgcfg = validateConfig(json.loads(open(config_path, "r").read()))
@@ -105,9 +102,6 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         return au
     adminid = au["userid"]
     userroles = au["roles"]
-
-    conn = newconn()
-    cur = conn.cursor()
 
     form = await request.form()
     try:

@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 import MySQLdb
-import json, os
+import json, os, time
 
 from app import app, config, version
 
@@ -121,9 +121,32 @@ for idx in indexes:
         pass
     
 conn.commit()
-del cur
+cur.close()
+conn.close()
 
-def newconn():
+def genconn():
     conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
     conn.ping()
     return conn
+
+gconn = genconn()
+gconnexp = 0
+
+def newconn():
+    global gconn
+    global gconnexp
+    try:
+        if gconnexp < time.time(): # expire gconn
+            try:
+                gconn.close() # force close
+            except:
+                pass
+            gconn = genconn()
+            gconnexp = time.time() + 5
+        else: # gconn not expired, try ping
+            gconn.ping()
+        return gconn
+    except:
+        gconn = genconn()
+        gconnexp = time.time() + 5
+        return gconn

@@ -47,8 +47,6 @@ host = config.mysql_host
 user = config.mysql_user
 passwd = config.mysql_passwd
 dbname = config.mysql_db
-conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
-cur = conn.cursor()
 
 def newconn():
     conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
@@ -103,9 +101,13 @@ async def work(uri):
                     conn = newconn()
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
-            if int(time.time()) - lasthandshake >= 30:
+            if int(time.time()) - lasthandshake >= 15:
                 # print("Commit")
                 conn.commit() # less commit
+                try:
+                    conn.close()
+                except:
+                    pass
                 conn = newconn()
                 cur = conn.cursor()
                 # print("Heartbeat")

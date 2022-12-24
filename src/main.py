@@ -73,6 +73,8 @@ if __name__ == "__main__":
     cur = conn.cursor()
     cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
     conn.commit()
+    cur.close()
+    conn.close()
 
 import api
 if __name__ == "__main__":
