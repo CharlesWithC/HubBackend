@@ -23,7 +23,7 @@ if len(GIFS) == 0:
     GIFS = [""]
 
 def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
-    conn = newconn()
+    conn = genconn()
     cur = conn.cursor()
     
     cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
@@ -54,9 +54,10 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
                 data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
             lastx = round(tt[0])
             lastz = round(tt[2])
+        conn.close()
         for _ in range(3):
             try:
-                conn = newconn()
+                conn = genconn()
                 cur = conn.cursor()
                 cur.execute(f"SELECT logid FROM telemetry WHERE logid = {logid}")
                 p = cur.fetchall()
@@ -65,15 +66,17 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
                     
                 cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
                 conn.commit()
+                conn.close()
                 break
             except:
                 continue
         for _ in range(5):
             try:
-                conn = newconn()
+                conn = genconn()
                 cur = conn.cursor()
                 cur.execute(f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
                 conn.commit()
+                conn.close()
             except:
                 continue
 

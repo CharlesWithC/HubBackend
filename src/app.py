@@ -3,10 +3,9 @@
 
 from fastapi import FastAPI
 from discord import Colour
-from io import BytesIO
-import os, sys, json, requests, time, threading
+import os, sys, json, time
 
-version = "v1.21.13"
+version = "v1.21.14"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -290,15 +289,15 @@ config = validateConfig(json.loads(config_txt))
 tconfig = config
 
 if not "hex_color" in config.keys():
-    config["hex_color"] = "#2fc1f7"
+    config["hex_color"] = "2fc1f7"
 hex_color = config["hex_color"][-6:]
 try:
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)
 except:
-    hex_color = "#2fc1f7"
-    config["hex_color"] = "#2fc1f7"
+    hex_color = "2fc1f7"
+    config["hex_color"] = "2fc1f7"
     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
     config["intcolor"] = int(hex_color, 16)

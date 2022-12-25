@@ -7,14 +7,14 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import newconn
+from db import newconn, genconn
 from functions import *
 import multilang as ml
 
 def EventNotification():        
     while 1:
         try:
-            conn = newconn()
+            conn = genconn()
             cur = conn.cursor()
 
             notified = []
@@ -78,7 +78,7 @@ def EventNotification():
                             "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": config.intcolor}]})
                             
                 time.sleep(1)
-
+            conn.close()
         except:
             traceback.print_exc()
 
