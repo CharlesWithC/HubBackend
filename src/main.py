@@ -38,8 +38,13 @@ if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] =
     os.environ["HUB_CONFIG_FILE"] = config_path
 
 from app import app, config, version
-from db import newconn
+from db import genconn
 import multilang
+
+for external_plugin in config.external_plugins:
+    if not os.path.exists(f"./external_plugins/{external_plugin}.py"):
+        print(f"Error: External plugin \"{external_plugin}\" not found, exited.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     from datetime import datetime
@@ -69,7 +74,7 @@ if __name__ == "__main__":
             print("Upgrade failed due to upgrade.py not found.")
             sys.exit(1)
         
-    conn = newconn()
+    conn = genconn()
     cur = conn.cursor()
     cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
     conn.commit()
@@ -81,14 +86,26 @@ if __name__ == "__main__":
     print("")
     print(f"Company Name: {config.name}")
     print(f"Company Abbreviation: {config.abbr}")
+    if len(config.enabled_plugins) != 0:
+        print(f"Plugins: {', '.join(sorted(config.enabled_plugins))}")
+    else:
+        print(f"Plugins: /")
+    if len(config.external_plugins) != 0:
+        print(f"External Plugins: {', '.join(sorted(config.external_plugins))}")
+    else:
+        print("External Plugins: /")
     print("")
+
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}.png")
     os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
-    if not version.endswith(".rc"):
-        time.sleep(1)
 
     if "event" in config.enabled_plugins:
         from plugins.event import EventNotification
         threading.Thread(target = EventNotification, daemon = True).start()
 
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(int(config.server_workers), 8))
+    workers = 1
+    try:
+        workers = int(config.server_workers)
+    except:
+        pass
+    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))

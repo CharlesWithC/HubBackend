@@ -5,7 +5,7 @@ from fastapi import Request, Header, Response
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timedelta
-import json, os
+import json, os, sys
 
 from app import app, config, version, DH_START_TIME
 from db import newconn
@@ -18,6 +18,9 @@ from importlib.machinery import SourceFileLoader
 for external_plugin in config.external_plugins:
     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
         SourceFileLoader(external_plugin, f"./external_plugins/{external_plugin}.py").load_module()
+    else:
+        print(f"Error: External plugin \"{external_plugin}\" not found, exited.")
+        sys.exit(1)
 
 # import basic api
 import apis.admin

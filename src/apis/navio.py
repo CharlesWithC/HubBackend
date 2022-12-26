@@ -82,14 +82,14 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
 
 @app.post(f"/{config.abbr}/navio")
 async def navio(respones: Response, request: Request, Navio_Signature: str = Header(None)):
-    conn = newconn()
-    cur = conn.cursor()
-
     if request.client.host not in config.allowed_navio_ips:
         response.status_code = 403
         await AuditLog(-999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
     
+    conn = newconn()
+    cur = conn.cursor()
+
     d = await request.json()
     if d["object"] != "event":
         return {"error": True, "descriptor": "Only events are accepted."}
@@ -157,8 +157,6 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         return {"error": False, "response": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    conn = newconn()
-    cur = conn.cursor()
     cur.execute(f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
     t = cur.fetchall()
     if len(t) == 0:
@@ -320,6 +318,9 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 offence = -offence
                 if e == "job.delivered":
                     k = randint(0, len(GIFS)-1)
+                    gifurl = GIFS[k]
+                    if not isurl(gifurl):
+                        gifurl = ""
                     dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
                     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
                     data = "{}"
@@ -336,7 +337,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     elif config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
@@ -350,7 +351,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     try:
                         r = requests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
                         if r.status_code == 401:
@@ -374,7 +375,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     elif config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
@@ -388,7 +389,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
-                                    "timestamp": str(datetime.now()), "image": {"url": GIFS[k]}, "color": config.intcolor}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     if CheckNotificationEnabled("dlog", discordid):
                         SendDiscordNotification(discordid, data)
                         

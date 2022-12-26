@@ -1,7 +1,8 @@
 # Changelog
 
 **v1.21.14**  
-Fixed database connection issue caused by v1.21.13  
+1.Fixed database connection issue caused by v1.21.13  
+2.Improved code base  
 
 **v1.21.13**  
 Improved database connection management and reduced resource consumption  

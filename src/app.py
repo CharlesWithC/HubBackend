@@ -274,6 +274,13 @@ def validateConfig(cfg):
     if "apidoc" in cfg.keys():
         cfg["openapi"] = cfg["apidoc"]
         del cfg["apidoc"]
+    
+    external_plugins = cfg["external_plugins"]
+    new_external_plugins = []
+    for plugin in external_plugins:
+        if plugin.replace(" ","") != "":
+            new_external_plugins.append(plugin)
+    cfg["external_plugins"] = new_external_plugins
 
     tcfg = {}
     for key in config_keys_order:
