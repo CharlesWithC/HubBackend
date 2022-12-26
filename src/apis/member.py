@@ -700,8 +700,6 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     roles = [str(i) for i in roles]
     cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
     conn.commit()
-
-    navio_error = ""
         
     cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
     t = cur.fetchall()
@@ -713,6 +711,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
 
     if config.perms.driver[0] in addedroles:
+        navio_error = ""
         try:
             r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
             if r.status_code == 401:
@@ -759,6 +758,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                     traceback.print_exc()
 
     if config.perms.driver[0] in removedroles:
+        navio_error = ""
         try:
             r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
             if r.status_code == 401:
@@ -921,6 +921,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
+    navio_error = ""
     try:
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
         if r.status_code == 401:
@@ -1047,6 +1048,7 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     conn.commit()
 
+    navio_error = ""
     try:
         r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
         if r.status_code == 401:

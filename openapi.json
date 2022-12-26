@@ -996,11 +996,11 @@
                 }
             }
         },
-        "/abbr/user/name": {
+        "/abbr/user/profile": {
             "patch": {
-                "summary": "Update Username (Using data from Discord)",
+                "summary": "Update Profile (Name, Avatar) (Using data from Discord)",
                 "tags": ["user"],
-                "operationId": "patch_user_name",
+                "operationId": "patch_user_profile",
                 "security": [{
                     "bearerAuth": []
                 }],

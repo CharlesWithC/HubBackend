@@ -2,7 +2,9 @@
 
 **v1.21.14**  
 1.Fixed database connection issue caused by v1.21.13  
-2.Improved code base  
+2.Fixed bug `navio_api_error` not declared  
+3.Changed **PATCH** `/user/name` to **PATCH** `/user/profile`, added avatar update on **PATCH** `/user/profile`  
+4.Improved code base  
 
 **v1.21.13**  
 Improved database connection management and reduced resource consumption  

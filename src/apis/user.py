@@ -527,10 +527,10 @@ async def getUserList(request: Request, response: Response, authorization: str =
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 # Self-Operation Section
-@app.patch(f"/{config.abbr}/user/name")
-async def patchUserName(request: Request, response: Response, authorization: str = Header(None), \
+@app.patch(f"/{config.abbr}/user/profile")
+async def patchUserProfile(request: Request, response: Response, authorization: str = Header(None), \
         discordid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/name', 60, 15)
+    rl = ratelimit(request, request.client.host, 'PATCH /user/profile', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -585,11 +585,14 @@ async def patchUserName(request: Request, response: Response, authorization: str
         else:
             return {"error": True, "descriptor": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
     d = json.loads(r.text)
-    username = d["user"]["username"]
+    username = convert_quotation(d["user"]["username"])
+    avatar = ""
     if config.use_server_nickname and d["nick"] != None:
-        username = d["nick"]
+        username = convert_quotation(d["nick"])
+    if d["user"]["avatar"] != None:
+        avatar = convert_quotation(d["user"]["avatar"])
         
-    cur.execute(f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+    cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}' WHERE discordid = '{discordid}'")
     conn.commit()
 
     return {"error": False}
