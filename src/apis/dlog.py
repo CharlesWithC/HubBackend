@@ -181,6 +181,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     if page <= 0:
         page = 1
@@ -373,6 +374,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     ret = {}
     # driver
@@ -573,6 +575,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     if ranges > 100:
         ranges = 100
@@ -733,6 +736,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     global callusers, callusers_ts
     if int(time.time()) - callusers_ts <= 300:

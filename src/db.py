@@ -163,34 +163,67 @@ class AIOSQL:
         self.passwd = passwd
         self.dbname = dbname
         self.conns = {}
+        self.pool = None
+        self.shutdown_lock = False
 
     async def new_conn(self, dhrid):
-        self.loop = asyncio.get_event_loop()
+        while self.shutdown_lock:
+            await asyncio.sleep(0.1)
 
-        conn = await aiomysql.connect(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, loop = self.loop)
-        cur = await conn.cursor()
-
-        await cur.execute("SET session wait_timeout=5;")
+        if self.pool is None: # init pool
+            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5)
 
         conns = self.conns
-        conns[dhrid] = [conn, cur]
+        to_delete = []
+        for tdhrid in conns.keys():
+            (tconn, tcur, start_time) = conns[tdhrid]
+            if time.time() - start_time >= 1:
+                to_delete.append(tdhrid)
+                try:
+                    self.pool.release(tconn)
+                except:
+                    traceback.print_exc()
+                    pass
+        for tdhrid in to_delete:
+            del conns[tdhrid]
+
+        conn = await self.pool.acquire()
+        cur = await conn.cursor()
+        conns[dhrid] = [conn, cur, time.time()]
         self.conns = conns
 
         return conn
 
+    async def create_pool(self):
+        if self.pool is None: # init pool
+            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5)
+
+    async def shutdown(self):
+        self.shutdown_lock = True
+        self.pool.close()
+
+    async def close_conn(self, dhrid):
+        self.pool.release(self.conns[dhrid][0])
+        del self.conns[dhrid]
+
     async def commit(self, dhrid):
         await self.conns[dhrid][0].commit()
+        self.conns[dhrid][2] = time.time()
 
     async def execute(self, dhrid, sql):
         await self.conns[dhrid][1].execute(sql)
+        self.conns[dhrid][2] = time.time()
 
     async def fetchone(self, dhrid):
         ret = await self.conns[dhrid][1].fetchone()
+        self.conns[dhrid][2] = time.time()
         return ret
 
     async def fetchall(self, dhrid):
         ret = await self.conns[dhrid][1].fetchall()
+        self.conns[dhrid][2] = time.time()
         return ret
 
 aiosql = AIOSQL(host = host, user = user, passwd = passwd, dbname = dbname)

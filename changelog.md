@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.21.16**  
+Implemented database connection pool for better stability  
+
 **v1.21.15**  
 1.Added asyncio support to database operation  
 2.Added `shutdown` event handler  

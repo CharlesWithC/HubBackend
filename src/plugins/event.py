@@ -210,19 +210,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             vote.remove("")
         attendee_ret = []
         for at in attendee:
-            name = "Unknown"
-            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {at}")
-            t = await aiosql.fetchall(dhrid)
-            if len(t) != 0:
-                name = t[0][0]
+            name = getUserInfo(userid = at)["name"]
             attendee_ret.append({"userid": at, "name": name})
         vote_ret = []
         for vt in vote:
-            name = "Unknown"
-            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {vt}")
-            t = await aiosql.fetchall(dhrid)
-            if len(t) != 0:
-                name = t[0][0]
+            name = getUserInfo(userid = vt)["name"]
             vote_ret.append({"userid": vt, "name": name})
         ret.append({"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": str(tt[5]), \

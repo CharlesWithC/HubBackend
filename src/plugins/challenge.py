@@ -190,6 +190,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -624,6 +625,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -770,6 +772,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -1129,6 +1132,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
 
     dhrid = genrid() # conn = await aiosql.new_conn()
     conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    aiosql.conns[dhrid][2] = time.time() + 1
 
     await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
             required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")

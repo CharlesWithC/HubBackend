@@ -76,3 +76,11 @@ async def languages():
 @app.exception_handler(StarletteHTTPException)
 async def errorHandler(request: Request, exc: StarletteHTTPException):
     return JSONResponse({"error": True, "descriptor": exc.detail}, status_code = exc.status_code)
+
+@app.on_event("startup")
+async def startUpEvent():
+    await aiosql.create_pool()
+
+@app.on_event("shutdown")
+async def shutdownEvent():
+    await aiosql.shutdown()
