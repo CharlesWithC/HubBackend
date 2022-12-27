@@ -1,7 +1,7 @@
 import asyncio, json, time, os, sys
 from websockets import connect
 from datetime import datetime
-import MySQLdb
+import MySQLdb, traceback
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -50,11 +50,13 @@ dbname = config.mysql_db
 
 def newconn():
     conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
-    conn.ping()
+    cur = conn.cursor()
+    cur.execute("SET session wait_timeout=10;")
     return conn
 
 async def work(uri):
     lasthandshake = 0
+    lastcommit = 0
     conn = newconn()
     cur = conn.cursor()
     async with connect(uri, ping_interval=30) as websocket:
@@ -99,25 +101,31 @@ async def work(uri):
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                 except:
                     conn = newconn()
+                    cur = conn.cursor()
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
-            if int(time.time()) - lasthandshake >= 15:
+            if int(time.time()) - lasthandshake >= 30:
+                # print("Heartbeat")
+                lasthandshake = int(time.time())
+                await websocket.send(json.dumps({"op": 2}))
+            if int(time.time()) - lastcommit >= 2:
+                lastcommit = int(time.time())
                 # print("Commit")
                 conn.commit() # less commit
+                if int(time.time()) - lasthandshake >= 20:
+                    try:
+                        cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 3)}") # cache for 3 days
+                        conn.commit()
+                    except:
+                        traceback.print_exc()
                 try:
+                    cur.close()
                     conn.close()
                 except:
-                    pass
+                    traceback.print_exc()
+
                 conn = newconn()
                 cur = conn.cursor()
-                # print("Heartbeat")
-                await websocket.send(json.dumps({"op": 2}))
-                lasthandshake = int(time.time())
-                try:
-                    cur.execute(f"DELETE FROM temptelemetry WHERE timestamp < {int(time.time() - 86400 * 3)}") # cache for 3 days
-                    conn.commit()
-                except:
-                    pass
             await asyncio.sleep(0.01)
 
 if not "tracker" in config.enabled_plugins:

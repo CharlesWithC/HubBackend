@@ -10,7 +10,7 @@ import json, time, requests
 import traceback
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -66,15 +66,15 @@ async def getDivision(request: Request, response: Response, authorization: str =
     userid = au["userid"]
     roles = au["roles"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if logid != -1:
-        cur.execute(f"SELECT divisionid, userid, request_timestamp, status, update_timestamp, update_staff_userid, message FROM division WHERE logid = {logid} AND logid >= 0")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT divisionid, userid, request_timestamp, status, update_timestamp, update_staff_userid, message FROM division WHERE logid = {logid} AND logid >= 0")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
-            t = cur.fetchall()
+            await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+            t = await aiosql.fetchall(dhrid)
             if len(t) == 0:
                 response.status_code = 404
                 return {"error": True, "descriptor": ml.tr(request, "division_not_validated", force_lang = au["language"])}
@@ -118,11 +118,13 @@ async def getDivision(request: Request, response: Response, authorization: str =
         division_role_id = division["role_id"]
         division_point = int(division["point"])
         tstats = []
-        cur.execute(f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
-        usertot = cur.fetchone()[0]
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
+        usertot = await aiosql.fetchone(dhrid)
+        usertot = usertot[0]
         usertot = 0 if usertot is None else int(usertot)
-        cur.execute(f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id}")
-        pointtot = cur.fetchone()[0]
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id}")
+        pointtot = await aiosql.fetchone(dhrid)
+        pointtot = pointtot[0]
         pointtot = 0 if pointtot is None else int(pointtot)
         pointtot *= division_point
         stats.append({"divisionid": str(division['id']), "name": division['name'], "total_drivers": str(usertot), "total_points": str(pointtot)})
@@ -146,8 +148,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
     discordid = au["discordid"]
     userid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -156,8 +158,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
@@ -166,8 +168,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "Forbidden", force_lang = au["language"])}
 
-    cur.execute(f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
+    t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         status = t[0][0]
@@ -178,8 +180,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
         elif status == 2:
             return {"error": True, "descriptor": ml.tr(request, "division_already_denied", force_lang = au["language"])}
     
-    cur.execute(f"SELECT roles FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT roles FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     roles = t[0][0].split(",")
     while "" in roles:
         roles.remove("")
@@ -196,8 +198,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_division_driver", force_lang = au["language"])}
     
-    cur.execute(f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
-    conn.commit()
+    await aiosql.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
+    await aiosql.commit(dhrid)
     
     language = GetUserLanguage(discordid)
     notification("division", discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
@@ -207,8 +209,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
-    cur.execute(f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     tt = t[0]
     msg = f"**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
     msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {divisiontxt[divisionid]}"
@@ -255,21 +257,21 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     elif page_size >= 250:
         page_size = 250
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     limit = ""
     if divisionid != -1:
         limit = f"AND divisionid = {divisionid}"
-    cur.execute(f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
+    await aiosql.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
         LIMIT {(page - 1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": getUserInfo(userid = tt[1])})
     
-    cur.execute(f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -291,8 +293,8 @@ async def patchDivision(request: Request, response: Response, authorization: str
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -306,8 +308,8 @@ async def patchDivision(request: Request, response: Response, authorization: str
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
-    cur.execute(f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "division_validation_not_found", force_lang = au["language"])}
@@ -315,8 +317,8 @@ async def patchDivision(request: Request, response: Response, authorization: str
         divisionid = t[0][0]
     userid = t[0][2]
         
-    cur.execute(f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
+    await aiosql.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     await AuditLog(adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")

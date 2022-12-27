@@ -8,7 +8,7 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -42,11 +42,11 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
-    cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid = {announcementid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid = {announcementid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
@@ -83,8 +83,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             aulanguage = au["language"]
             activityUpdate(au["discordid"], "announcements")
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     limit = ""
     if userid == -1:
@@ -108,16 +108,16 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if page <= 0:
         page = 1
 
-    cur.execute(f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"announcementid": str(tt[5]), "title": tt[0], "content": decompress(tt[1]), \
             "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
                 "timestamp": str(tt[3])})
         
-    cur.execute(f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -141,8 +141,8 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     adminroles = au["roles"]
     adminname = au["name"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     isAdmin = False
     for i in adminroles:
@@ -173,16 +173,16 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit", force_lang = au["language"])}
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
+    t = await aiosql.fetchall(dhrid)
     announcementid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")
+    await aiosql.commit(dhrid)
     timestamp = int(time.time())
 
-    cur.execute(f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
+    await aiosql.execute(dhrid, f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
     await AuditLog(adminid, f"Created announcement `#{announcementid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
@@ -214,8 +214,8 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     adminroles = au["roles"]
     adminname = au["name"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     isAdmin = False
     for i in adminroles:
@@ -245,8 +245,8 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     if int(announcementid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
-    cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
@@ -255,9 +255,9 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
     
-    cur.execute(f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
+    await aiosql.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
     await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
@@ -287,8 +287,8 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     adminid = au["userid"]
     adminroles = au["roles"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     isAdmin = False
     for i in adminroles:
@@ -298,8 +298,8 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     if int(announcementid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
-    cur.execute(f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
@@ -308,8 +308,8 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
     
-    cur.execute(f"DELETE FROM announcement WHERE announcementid = {announcementid}")
+    await aiosql.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
     await AuditLog(adminid, f"Deleted announcement `#{announcementid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False}

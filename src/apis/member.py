@@ -13,7 +13,7 @@ import collections, string
 import traceback
 
 from app import app, config, tconfig
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 from plugins.division import DIVISIONPNT
@@ -116,8 +116,8 @@ async def getMemberList(request: Request, response: Response, authorization: str
             return au
         activityUpdate(au["discordid"], f"members")
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     if page <= 0:
         page = 1
@@ -167,10 +167,10 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
     hrole = {}
     if order_by_last_seen:
-        cur.execute(f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
+        await aiosql.execute(dhrid, f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
     else:
-        cur.execute(f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
-    t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
+    t = await aiosql.fetchall(dhrid)
     rret = {}
     for tt in t:
         if str(tt[0]) in hrole.keys(): # prevent duplicate result from SQL query
@@ -229,11 +229,11 @@ async def getAllMemberList(request: Request, response: Response, authorization: 
             del au["code"]
             return au
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
-    cur.execute(f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"name": tt[1], "userid": str(tt[2]), "steamid": str(tt[0])})
@@ -263,11 +263,11 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         
-    cur.execute(f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
@@ -327,8 +327,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         division = "N/A"
 
     distance = 0
-    cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     for tt in t:
         distance = 0 if t[0][0] is None else int(t[0][0])
         if config.distance_unit == "imperial":
@@ -337,14 +337,16 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         else:
             distance = f"{distance}km"
     
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
+    t = await aiosql.fetchall(dhrid)
+    europrofit = 0
     if len(t) > 0:
-        europrofit = 0 if t[0][0] is None else int(t[0][0])
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
-    t = cur.fetchall()
+        europrofit = 0 if t[0][0] is None else nint(t[0][0])
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 2")
+    t = await aiosql.fetchall(dhrid)
+    dollarprofit = 0
     if len(t) > 0:
-        dollarprofit = 0 if t[0][0] is None else int(t[0][0])
+        dollarprofit = 0 if t[0][0] is None else nint(t[0][0])
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
     try:
@@ -383,8 +385,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     userid = au["userid"]
     username = au["name"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     ratio = 1
     if config.distance_unit == "imperial":
@@ -392,19 +394,19 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
     # calculate distance
     userdistance = {}
-    cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
+    t = await aiosql.fetchall(dhrid)
     for tt in t:
         if not tt[0] in userdistance.keys():
-            userdistance[tt[0]] = tt[1]
+            userdistance[tt[0]] = nint(tt[1])
         else:
-            userdistance[tt[0]] += tt[1]
+            userdistance[tt[0]] += nint(tt[1])
         userdistance[tt[0]] = int(userdistance[tt[0]])
 
     # calculate challenge
     userchallenge = {}
-    cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
-    o = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
+    o = await aiosql.fetchall(dhrid)
     for oo in o:
         if not oo[0] in userchallenge.keys():
             userchallenge[oo[0]] = 0
@@ -412,8 +414,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
     # calculate event
     userevent = {}
-    cur.execute(f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
+    t = await aiosql.fetchall(dhrid)
     for tt in t:
         attendees = tt[0].split(",")
         while "" in attendees:
@@ -427,8 +429,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     
     # calculate division
     userdivision = {}
-    cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
-    o = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
+    o = await aiosql.fetchall(dhrid)
     for oo in o:
         if not oo[0] in userdivision.keys():
             userdivision[oo[0]] = 0
@@ -437,8 +439,8 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     
     # calculate myth
     usermyth = {}
-    cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
-    o = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
+    o = await aiosql.fetchall(dhrid)
     for oo in o:
         if not oo[0] in usermyth.keys():
             usermyth[oo[0]] = 0
@@ -548,8 +550,8 @@ async def putMember(request: Request, response: Response, authorization: str = H
         return au
     adminid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -558,18 +560,18 @@ async def putMember(request: Request, response: Response, authorization: str = H
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
+    t = await aiosql.fetchall(dhrid)
     userid = int(t[0][0])
     
-    cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -578,10 +580,10 @@ async def putMember(request: Request, response: Response, authorization: str = H
         return {"error": True, "descriptor": ml.tr(request, "already_member", force_lang = au["language"])}
 
     name = t[0][1]
-    cur.execute(f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
-    cur.execute(f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
+    await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     notification("member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = GetUserLanguage(discordid, "en")))
 
@@ -603,8 +605,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     adminid = au["userid"]
     adminroles = au["roles"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     adminhighest = 99999
     for i in adminroles:
@@ -635,8 +637,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     while "" in roles:
         roles.remove("")
     roles = [int(i) for i in roles]
-    cur.execute(f"SELECT name, roles, steamid, discordid, truckersmpid FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "member_not_found", force_lang = au["language"])}
@@ -698,11 +700,11 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
 
     roles = [str(i) for i in roles]
-    cur.execute(f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
+    await aiosql.commit(dhrid)
         
-    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     userdiscordid = t[0][0]
     username = t[0][1]
     usermention = f"<@{userdiscordid}>"
@@ -810,7 +812,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         audit += f"`- {ROLES[remove]}`  \n"
     audit = audit[:-1]
     await AuditLog(adminid, audit)
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     discordid = getUserInfo(userid = userid)["discordid"]
     notification("member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = GetUserLanguage(discordid, "en")))
@@ -835,8 +837,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         return au
     adminid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -852,13 +854,13 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     if distance != 0:
         if distance > 0:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
         else:
-            cur.execute(f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
-        conn.commit()
+            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
+        await aiosql.commit(dhrid)
     if mythpoint != 0:
-        cur.execute(f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
-        conn.commit()
+        await aiosql.execute(dhrid, f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
+        await aiosql.commit(dhrid)
     
     if int(distance) > 0:
         distance = "+" + form["distance"]
@@ -892,11 +894,11 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         form = await request.form()
@@ -909,17 +911,17 @@ async def postMemberResign(request: Request, response: Response, authorization: 
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     userdiscordid = t[0][0]
     username = t[0][1]
     usermention = f"<@{userdiscordid}>"
 
-    cur.execute(f"SELECT steamid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     steamid = t[0][0]
-    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    await aiosql.commit(dhrid)
 
     navio_error = ""
     try:
@@ -1011,16 +1013,16 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     adminhighest = 99999
     for i in adminroles:
         if int(i) < adminhighest:
             adminhighest = int(i)
 
-    cur.execute(f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -1039,14 +1041,14 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
-    cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     userdiscordid = t[0][0]
     username = t[0][1]
     usermention = f"<@{userdiscordid}>"
 
-    cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    await aiosql.commit(dhrid)
 
     navio_error = ""
     try:

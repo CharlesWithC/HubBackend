@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.15**  
+1.Added asyncio support to database operation  
+2.Added `shutdown` event handler  
+3.Removed dependency `fonttools` and improved code to check if glyph is in a static font file  
+4.Removed dependency `iso3166` and included dict `ISO3166_COUNTRIES`  
+
 **v1.21.14**  
 1.Fixed database connection issue caused by v1.21.13  
 2.Fixed bug `navio_api_error` not declared  

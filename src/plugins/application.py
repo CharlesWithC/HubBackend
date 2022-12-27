@@ -10,7 +10,7 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -34,10 +34,10 @@ async def getApplicationTypes(request: Request, response: Response):
 
 @app.get(f"/{config.abbr}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
-    t = cur.fetchall()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return {"error": False, "response": []}
     else:
@@ -64,15 +64,15 @@ async def getApplication(request: Request, response: Response, authorization: st
     userid = au["userid"]
     roles = au["roles"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(applicationid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
@@ -129,8 +129,8 @@ async def getApplicationList(request: Request, response: Response, authorization
     roles = au["roles"]
     activityUpdate(au["discordid"], f"applications")
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if page_size <= 1:
         page_size = 1
@@ -147,11 +147,11 @@ async def getApplicationList(request: Request, response: Response, authorization
         if status != -1 and status in [0,1,2]:
             limit += f" AND status = {status} "
 
-        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE discordid = {discordid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        t = await aiosql.fetchall(dhrid)
         
-        cur.execute(f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE discordid = {discordid} {limit}")
+        p = await aiosql.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
     else:
@@ -195,11 +195,11 @@ async def getApplicationList(request: Request, response: Response, authorization
             else:
                 limit += f" AND status = {status} "
 
-        cur.execute(f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT applicationid, application_type, discordid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
+        t = await aiosql.fetchall(dhrid)
         
-        cur.execute(f"SELECT COUNT(*) FROM application {limit}")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")
+        p = await aiosql.fetchall(dhrid)
         if len(t) > 0:
             tot = p[0][0]
 
@@ -228,8 +228,8 @@ async def postApplication(request: Request, response: Response, authorization: s
     discordid = au["discordid"]
     userid = au["userid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -256,8 +256,8 @@ async def postApplication(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
 
     if note == "driver":
-        cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT roles FROM user WHERE discordid = '{discordid}'")
+        p = await aiosql.fetchall(dhrid)
         roles = p[0][0].split(",")
         while "" in roles:
             roles.remove("")
@@ -265,15 +265,15 @@ async def postApplication(request: Request, response: Response, authorization: s
             if str(r) in roles:
                 response.status_code = 409
                 return {"error": True, "descriptor": ml.tr(request, "already_a_driver", force_lang = au["language"])}
-        cur.execute(f"SELECT * FROM application WHERE application_type = 1 AND discordid = {discordid} AND status = 0")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT * FROM application WHERE application_type = 1 AND discordid = {discordid} AND status = 0")
+        p = await aiosql.fetchall(dhrid)
         if len(p) > 0:
             response.status_code = 409
             return {"error": True, "descriptor": ml.tr(request, "already_driver_application", force_lang = au["language"])}
 
     if note == "division":
-        cur.execute(f"SELECT roles FROM user WHERE discordid = '{discordid}'")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT roles FROM user WHERE discordid = '{discordid}'")
+        p = await aiosql.fetchall(dhrid)
         roles = p[0][0].split(",")
         while "" in roles:
             roles.remove("")
@@ -285,8 +285,8 @@ async def postApplication(request: Request, response: Response, authorization: s
             response.status_code = 403
             return {"error": True, "descriptor": ml.tr(request, "must_be_driver_to_submit_division_application", force_lang = au["language"])}        
 
-    cur.execute(f"SELECT * FROM application WHERE discordid = {discordid} AND submit_timestamp >= {int(time.time()) - 7200}")
-    p = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM application WHERE discordid = {discordid} AND submit_timestamp >= {int(time.time()) - 7200}")
+    p = await aiosql.fetchall(dhrid)
     if len(p) > 0:
         response.status_code = 429
         return {"error": True, "descriptor": ml.tr(request, "no_multiple_application_2h", force_lang = au["language"])}
@@ -295,8 +295,8 @@ async def postApplication(request: Request, response: Response, authorization: s
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "no_loa_application", force_lang = au["language"])}
 
-    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if t[0][4] <= 0:
         response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "must_verify_steam", force_lang = au["language"])}
@@ -305,14 +305,14 @@ async def postApplication(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp", force_lang = au["language"])}
     userid = t[0][5]
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
+    t = await aiosql.fetchall(dhrid)
     applicationid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")
+    await aiosql.commit(dhrid)
 
-    cur.execute(f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
-    conn.commit()
+    await aiosql.execute(dhrid, f"INSERT INTO application VALUES ({applicationid}, {application_type}, {discordid}, '{compress(json.dumps(data,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
+    await aiosql.commit(dhrid)
 
     if applicantrole != 0 and config.discord_bot_token != "":
         try:
@@ -332,8 +332,8 @@ async def postApplication(request: Request, response: Response, authorization: s
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
-    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     for d in data.keys():
         msg += f"**{d}**:\n{data[d]}\n\n"
@@ -387,8 +387,8 @@ async def updateApplication(request: Request, response: Response, authorization:
     userid = au["userid"]
     name = au["name"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -405,8 +405,8 @@ async def updateApplication(request: Request, response: Response, authorization:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT discordid, data, status, application_type FROM application WHERE applicationid = {applicationid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid, data, status, application_type FROM application WHERE applicationid = {applicationid}")
+    t = await aiosql.fetchall(dhrid)
     if discordid != t[0][0]:
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "not_applicant", force_lang = au["language"])}
@@ -430,11 +430,11 @@ async def updateApplication(request: Request, response: Response, authorization:
         
     data[f"[Message] {name} ({userid}) #{i}"] = message
 
-    cur.execute(f"UPDATE application SET data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE application SET data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await aiosql.commit(dhrid)
 
-    cur.execute(f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     msg = f"**Applicant**: <@{discordid}> (`{discordid}`)\n**Email**: {t[0][2]}\n**User ID**: {userid}\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n\n"
     msg += f"**New message**: \n{message}\n\n"
 
@@ -501,8 +501,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     adminname = au["name"]
     roles = au["roles"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -524,8 +524,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM application WHERE applicationid = {applicationid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "application_not_found", force_lang = au["language"])}
@@ -570,13 +570,13 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     if status != 0:
         update_timestamp = int(time.time())
 
-    cur.execute(f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
     notification("application", applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
         discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     if message == "":
         message = f"*{ml.tr(request, 'no_message')}*"
@@ -599,19 +599,19 @@ async def patchApplicationPositions(request: Request, response: Response, author
         return au
     adminid = au["userid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     positions = convert_quotation(form["positions"])
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        cur.execute(f"INSERT INTO settings VALUES (0, 'applicationpositions', '{positions}')")
+        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES (0, 'applicationpositions', '{positions}')")
     else:
-        cur.execute(f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
-    conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
+    await aiosql.commit(dhrid)
 
     await AuditLog(adminid, f"Updated staff positions to: `{positions}`")
 

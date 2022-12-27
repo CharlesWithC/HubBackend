@@ -8,7 +8,7 @@ import json, copy, math, os, time
 import threading
 
 from app import app, config, tconfig, config_path, validateConfig
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -210,11 +210,11 @@ async def postReload(request: Request, response: Response, authorization: str = 
         return au
     adminid = au["userid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT mfa_secret FROM user WHERE userid = {adminid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {adminid}")
+    t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret == "":
         response.status_code = 428
@@ -253,8 +253,8 @@ async def getAudit(request: Request, response: Response, authorization: str = He
         return au
     adminid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if page <= 0:
         page = 1
@@ -270,14 +270,14 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     elif page_size >= 500:
         page_size = 500
 
-    cur.execute(f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"user": getUserInfo(userid = tt[0]), "operation": tt[1], "timestamp": str(tt[2])})
 
-    cur.execute(f"SELECT COUNT(*) FROM auditlog")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
+    t = await aiosql.fetchall(dhrid)
     tot = t[0][0]
 
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}

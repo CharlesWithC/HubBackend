@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json, os, sys
 
 from app import app, config, version, DH_START_TIME
-from db import newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 

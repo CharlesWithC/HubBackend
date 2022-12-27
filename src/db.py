@@ -2,7 +2,9 @@
 # Author: @CharlesWithC
 
 import MySQLdb
-import json, os, time
+import asyncio, aiomysql
+import json, os, time, copy
+import traceback, threading
 
 from app import app, config, version
 
@@ -124,6 +126,7 @@ conn.commit()
 cur.close()
 conn.close()
 
+# LEGACY MySQLdb
 def genconn():
     conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
     conn.ping()
@@ -142,11 +145,52 @@ def newconn():
             except:
                 pass
             gconn = genconn()
-            gconnexp = time.time() + 5
+            gconnexp = time.time() + 15
         else: # gconn not expired, try ping
             gconn.ping()
         return gconn
     except:
         gconn = genconn()
-        gconnexp = time.time() + 5
+        gconnexp = time.time() + 15
         return gconn
+
+# ASYNCIO aiomysql
+
+class AIOSQL:
+    def __init__(self, host, user, passwd, dbname):
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.dbname = dbname
+        self.conns = {}
+
+    async def new_conn(self, dhrid):
+        self.loop = asyncio.get_event_loop()
+
+        conn = await aiomysql.connect(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, loop = self.loop)
+        cur = await conn.cursor()
+
+        await cur.execute("SET session wait_timeout=5;")
+
+        conns = self.conns
+        conns[dhrid] = [conn, cur]
+        self.conns = conns
+
+        return conn
+
+    async def commit(self, dhrid):
+        await self.conns[dhrid][0].commit()
+
+    async def execute(self, dhrid, sql):
+        await self.conns[dhrid][1].execute(sql)
+
+    async def fetchone(self, dhrid):
+        ret = await self.conns[dhrid][1].fetchone()
+        return ret
+
+    async def fetchall(self, dhrid):
+        ret = await self.conns[dhrid][1].fetchall()
+        return ret
+
+aiosql = AIOSQL(host = host, user = user, passwd = passwd, dbname = dbname)

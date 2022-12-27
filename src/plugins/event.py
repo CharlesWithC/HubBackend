@@ -7,7 +7,7 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import newconn, genconn
+from db import aiosql, genconn
 from functions import *
 import multilang as ml
 
@@ -110,15 +110,15 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             aulanguage = au["language"]
             activityUpdate(au["discordid"], f"events")
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = aulanguage)}
 
-    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = aulanguage)}
@@ -177,8 +177,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if first_event_after < 0:
         first_event_after = int(time.time()) - 86400
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     limit = ""
     if userid == -1:
@@ -195,8 +195,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         attendee = tt[9].split(",")
@@ -211,16 +211,16 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         attendee_ret = []
         for at in attendee:
             name = "Unknown"
-            cur.execute(f"SELECT name FROM user WHERE userid = {at}")
-            t = cur.fetchall()
+            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {at}")
+            t = await aiosql.fetchall(dhrid)
             if len(t) != 0:
                 name = t[0][0]
             attendee_ret.append({"userid": at, "name": name})
         vote_ret = []
         for vt in vote:
             name = "Unknown"
-            cur.execute(f"SELECT name FROM user WHERE userid = {vt}")
-            t = cur.fetchall()
+            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {vt}")
+            t = await aiosql.fetchall(dhrid)
             if len(t) != 0:
                 name = t[0][0]
             vote_ret.append({"userid": vt, "name": name})
@@ -229,14 +229,14 @@ async def getEvent(request: Request, response: Response, authorization: str = He
                 "departure_timestamp": str(tt[6]), "points": str(tt[12]), "is_private": TF[tt[11]], \
                     "attendees": attendee_ret, "votes": vote_ret})
     
-    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    cur.execute(f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     for tt in t:
         attendee = tt[9].split(",")
         vote = tt[10].split(",")
@@ -260,8 +260,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             "distance": tt[4], "meetup_timestamp": str(tt[5]), "departure_timestamp": str(tt[6]), \
                 "points": str(tt[12]), "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret})
     
-    cur.execute(f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -290,15 +290,15 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
         else:
             userid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0"
 
-    cur.execute(f"SELECT eventid, title, meetup_timestamp FROM event WHERE eventid >= 0 {limit} ORDER BY meetup_timestamp")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT eventid, title, meetup_timestamp FROM event WHERE eventid >= 0 {limit} ORDER BY meetup_timestamp")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"eventid": str(tt[0]), "title": tt[1], "meetup_timestamp": str(tt[2])})
@@ -320,28 +320,28 @@ async def patchEventVote(request: Request, response: Response, authorization: st
         return au
     userid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT vote FROM event WHERE eventid = {eventid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     vote = t[0][0].split(",")
     if str(userid) in vote:
         vote.remove(str(userid))
-        cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
+        await aiosql.commit(dhrid)
         return {"error": False}
     else:
         vote.append(str(userid))
-        cur.execute(f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
+        await aiosql.commit(dhrid)
         return {"error": False}
 
 @app.post(f"/{config.abbr}/event")
@@ -359,8 +359,8 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -394,13 +394,13 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
+    t = await aiosql.fetchall(dhrid)
     nxteventid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {nxteventid+1} WHERE skey = 'nxteventid'")
-    cur.execute(f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
+    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxteventid+1} WHERE skey = 'nxteventid'")
+    await aiosql.execute(dhrid, f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
     await AuditLog(adminid, f"Created event `#{nxteventid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False, "response": {"eventid": str(nxteventid)}}
 
@@ -419,15 +419,15 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
         
-    cur.execute(f"SELECT userid FROM event WHERE eventid = {eventid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM event WHERE eventid = {eventid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -464,10 +464,10 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     
-    cur.execute(f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', \
+    await aiosql.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', \
         distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Updated event `#{eventid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -486,22 +486,22 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM event WHERE eventid = {eventid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
-    cur.execute(f"DELETE FROM event WHERE eventid = {eventid}")
+    await aiosql.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
     await AuditLog(adminid, f"Deleted event `#{eventid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -520,8 +520,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -540,8 +540,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -609,8 +609,8 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         if cnt > 0:
             ret = ret + ret3
 
-    cur.execute(f"UPDATE event SET attendee = ',{','.join(attendees)},', points = {points} WHERE eventid = {eventid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE event SET attendee = ',{','.join(attendees)},', points = {points} WHERE eventid = {eventid}")
+    await aiosql.commit(dhrid)
 
     if ret == f"Updated event #{eventid} attendees  \n":
         return {"error": False, "response": {"message": "No changes made."}}

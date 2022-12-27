@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 import json, time, requests, random, string
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -35,20 +35,20 @@ async def getDownloads(request: Request, response: Response, authorization: str 
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     tt = t[0]
 
     secret = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-    cur.execute(f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
-    cur.execute(f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
+    await aiosql.commit(dhrid)
 
     if not isstaff:
         return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
@@ -99,11 +99,11 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
         order = "asc"
     order = order.upper()    
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
-    cur.execute(f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         if not isstaff:
@@ -111,8 +111,8 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
         else:
             ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "orderid": str(tt[6]), "click_count": str(tt[5])})
         
-    cur.execute(f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -130,30 +130,30 @@ async def redirectDownloads(request: Request, response: Response, authorization:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
+    await aiosql.commit(dhrid)
 
     secret = convert_quotation(secret)
 
-    cur.execute(f"SELECT downloadsid FROM downloads_templink WHERE secret = '{secret}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT downloadsid FROM downloads_templink WHERE secret = '{secret}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
     downloadsid = t[0][0]
 
-    cur.execute(f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
     link = t[0][0]
 
-    cur.execute(f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")
+    await aiosql.commit(dhrid)
 
     return RedirectResponse(url=link, status_code=302)
 
@@ -172,8 +172,8 @@ async def postDownloads(request: Request, response: Response, authorization: str
         return au
     adminid = au["userid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -201,13 +201,13 @@ async def postDownloads(request: Request, response: Response, authorization: str
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid'")
+    t = await aiosql.fetchall(dhrid)
     nxtdownloadsid = int(t[0][0])
-    cur.execute(f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")
-    cur.execute(f"INSERT INTO downloads VALUES ({nxtdownloadsid}, {adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
+    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")
+    await aiosql.execute(dhrid, f"INSERT INTO downloads VALUES ({nxtdownloadsid}, {adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
     await AuditLog(adminid, f"Created downloadable item `#{nxtdownloadsid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False, "response": {"downloadsid": str(nxtdownloadsid)}}
 
@@ -227,18 +227,18 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if downloadsid <= 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
@@ -269,9 +269,9 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
-    cur.execute(f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
+    await aiosql.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
     await AuditLog(adminid, f"Updated downloadable item `#{downloadsid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False}
     
@@ -291,21 +291,21 @@ async def deleteDownloads(request: Request, response: Response, authorization: s
         return au
     adminid = au["userid"]
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(downloadsid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    cur.execute(f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
+    await aiosql.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
     await AuditLog(adminid, f"Deleted downloadable item `#{downloadsid}`")
-    conn.commit()
+    await aiosql.commit(dhrid)
 
     return {"error": False}

@@ -9,7 +9,7 @@ import json, time, math
 import traceback
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 from plugins.division import divisiontxt, DIVISIONPNT
@@ -49,11 +49,11 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT userid, data, timestamp, distance FROM dlog WHERE logid >= 0 AND logid = {logid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, data, timestamp, distance FROM dlog WHERE logid >= 0 AND logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
@@ -65,8 +65,8 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         del data["data"]["object"]["driver"]
     distance = t[0][3]
 
-    cur.execute(f"SELECT data FROM telemetry WHERE logid = {logid}")
-    p = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT data FROM telemetry WHERE logid = {logid}")
+    p = await aiosql.fetchall(dhrid)
     telemetry = ""
     if len(p) > 0:
         telemetry = decompress(p[0][0])
@@ -87,14 +87,14 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         telemetry = ver + orgt
 
     division = ""
-    cur.execute(f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
-    p = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
+    p = await aiosql.fetchall(dhrid)
     if len(p) != 0:
         division = str(p[0][0])
 
     challenge_record = []
-    cur.execute(f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
-    o = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
+    o = await aiosql.fetchall(dhrid)
     for oo in o:
         challenge_record.append(oo[0])
 
@@ -129,18 +129,18 @@ async def deleteDlog(request: Request, response: Response, authorization: str = 
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
-    cur.execute(f"SELECT userid FROM dlog WHERE logid = {logid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
     userid = t[0][0]
     
-    cur.execute(f"DELETE FROM dlog WHERE logid = {logid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
+    await aiosql.commit(dhrid)
 
     await AuditLog(adminid, f"Deleted delivery `#{logid}`")
 
@@ -179,8 +179,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         userid = au["userid"]
         activityUpdate(au["discordid"], "dlogs")
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if page <= 0:
         page = 1
@@ -246,11 +246,11 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    cur.execute(f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel FROM dlog \
+    await aiosql.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     ret = []
-    t = cur.fetchall()
+    t = await aiosql.fetchall(dhrid)
     for ti in range(len(t)):
         tt = t[ti]
 
@@ -266,15 +266,15 @@ async def getDlogList(request: Request, response: Response, authorization: str =
                 division_name = divisiontxt[division_id]
             division = {"divisionid": str(division_id), "name": division_name}
 
-        cur.execute(f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
+        await aiosql.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
             LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
             LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
             WHERE dlog.logid = {logid}")
-        p = cur.fetchall()
+        p = await aiosql.fetchall(dhrid)
         challengeids = []
         challengenames = []
         for pp in p:
-            if pp[1] is None or pp[2] is None:
+            if len(pp) <= 2 or pp[1] is None or pp[2] is None:
                 continue
             challengeids.append(pp[1])
             challengenames.append(pp[2])
@@ -326,8 +326,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
                         "division": division, "challenge": challenge, \
                             "status": status, "timestamp": str(tt[2])})
 
-    cur.execute(f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -371,8 +371,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
                     ret["cache"] = str(ll)
                     return {"error": False, "response": ret}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     ret = {}
     # driver
@@ -381,14 +381,14 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     totdrivers = 0
     newdrivers = 0
     for rid in config.perms.driver:
-        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             if not tt[0] in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
-        cur.execute(f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             if not tt[0] in newdid:
                 newdid.append(tt[0])
@@ -399,62 +399,80 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     # job / delivered / cancelled
     item = {"job": "COUNT(*)", "distance": "SUM(distance)", "fuel": "SUM(fuel)"}
     for key in item.keys():
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp <= {end_time}")
-        tot = cur.fetchone()[0]
-        tot = 0 if tot is None else int(tot)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp >= {start_time} AND timestamp <= {end_time}")
-        new = cur.fetchone()[0]
-        new = 0 if new is None else int(new)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp <= {end_time}")
-        totets2 = cur.fetchone()[0]
-        totets2 = 0 if totets2 is None else int(totets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newets2 = cur.fetchone()[0]
-        newets2 = 0 if newets2 is None else int(newets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp <= {end_time}")
-        totats = cur.fetchone()[0]
-        totats = 0 if totats is None else int(totats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newats = cur.fetchone()[0]
-        newats = 0 if newats is None else int(newats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp <= {end_time}")
+        tot = await aiosql.fetchone(dhrid)
+        tot = tot[0]
+        tot = 0 if tot is None else nint(tot)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} timestamp >= {start_time} AND timestamp <= {end_time}")
+        new = await aiosql.fetchone(dhrid)
+        new = new[0]
+        new = 0 if new is None else nint(new)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp <= {end_time}")
+        totets2 = await aiosql.fetchone(dhrid)
+        totets2 = totets2[0]
+        totets2 = 0 if totets2 is None else nint(totets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newets2 = await aiosql.fetchone(dhrid)
+        newets2 = newets2[0]
+        newets2 = 0 if newets2 is None else nint(newets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp <= {end_time}")
+        totats = await aiosql.fetchone(dhrid)
+        totats = totats[0]
+        totats = 0 if totats is None else nint(totats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newats = await aiosql.fetchone(dhrid)
+        newats = newats[0]
+        newats = 0 if newats is None else nint(newats)
 
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp <= {end_time}")
-        totdelivered = cur.fetchone()[0]
-        totdelivered = 0 if totdelivered is None else int(totdelivered)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newdelivered = cur.fetchone()[0]
-        newdelivered = 0 if newdelivered is None else int(newdelivered)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
-        totdelivered_ets2 = cur.fetchone()[0]
-        totdelivered_ets2 = 0 if totdelivered_ets2 is None else int(totdelivered_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newdelivered_ets2 = cur.fetchone()[0]
-        newdelivered_ets2 = 0 if newdelivered_ets2 is None else int(newdelivered_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
-        totdelivered_ats = cur.fetchone()[0]
-        totdelivered_ats = 0 if totdelivered_ats is None else int(totdelivered_ats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newdelivered_ats = cur.fetchone()[0]
-        newdelivered_ats = 0 if newdelivered_ats is None else int(newdelivered_ats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp <= {end_time}")
+        totdelivered = await aiosql.fetchone(dhrid)
+        totdelivered = totdelivered[0]
+        totdelivered = 0 if totdelivered is None else nint(totdelivered)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newdelivered = await aiosql.fetchone(dhrid)
+        newdelivered = newdelivered[0]
+        newdelivered = 0 if newdelivered is None else nint(newdelivered)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
+        totdelivered_ets2 = await aiosql.fetchone(dhrid)
+        totdelivered_ets2 = totdelivered_ets2[0]
+        totdelivered_ets2 = 0 if totdelivered_ets2 is None else nint(totdelivered_ets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newdelivered_ets2 = await aiosql.fetchone(dhrid)
+        newdelivered_ets2 = newdelivered_ets2[0]
+        newdelivered_ets2 = 0 if newdelivered_ets2 is None else nint(newdelivered_ets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
+        totdelivered_ats = await aiosql.fetchone(dhrid)
+        totdelivered_ats = totdelivered_ats[0]
+        totdelivered_ats = 0 if totdelivered_ats is None else nint(totdelivered_ats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newdelivered_ats = await aiosql.fetchone(dhrid)
+        newdelivered_ats = newdelivered_ats[0]
+        newdelivered_ats = 0 if newdelivered_ats is None else nint(newdelivered_ats)
 
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp <= {end_time}")
-        totcancelled = cur.fetchone()[0]
-        totcancelled = 0 if totcancelled is None else int(totcancelled)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newcancelled = cur.fetchone()[0]
-        newcancelled = 0 if newcancelled is None else int(newcancelled)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
-        totcancelled_ets2 = cur.fetchone()[0]
-        totcancelled_ets2 = 0 if totcancelled_ets2 is None else int(totcancelled_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newcancelled_ets2 = cur.fetchone()[0]
-        newcancelled_ets2 = 0 if newcancelled_ets2 is None else int(newcancelled_ets2)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
-        totcancelled_ats = cur.fetchone()[0]
-        totcancelled_ats = 0 if totcancelled_ats is None else int(totcancelled_ats)
-        cur.execute(f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-        newcancelled_ats = cur.fetchone()[0]
-        newcancelled_ats = 0 if newcancelled_ats is None else int(newcancelled_ats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp <= {end_time}")
+        totcancelled = await aiosql.fetchone(dhrid)
+        totcancelled = totcancelled[0]
+        totcancelled = 0 if totcancelled is None else nint(totcancelled)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newcancelled = await aiosql.fetchone(dhrid)
+        newcancelled = newcancelled[0]
+        newcancelled = 0 if newcancelled is None else nint(newcancelled)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
+        totcancelled_ets2 = await aiosql.fetchone(dhrid)
+        totcancelled_ets2 = totcancelled_ets2[0]
+        totcancelled_ets2 = 0 if totcancelled_ets2 is None else nint(totcancelled_ets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newcancelled_ets2 = await aiosql.fetchone(dhrid)
+        newcancelled_ets2 = newcancelled_ets2[0]
+        newcancelled_ets2 = 0 if newcancelled_ets2 is None else nint(newcancelled_ets2)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
+        totcancelled_ats = await aiosql.fetchone(dhrid)
+        totcancelled_ats = totcancelled_ats[0]
+        totcancelled_ats = 0 if totcancelled_ats is None else nint(totcancelled_ats)
+        await aiosql.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        newcancelled_ats = await aiosql.fetchone(dhrid)
+        newcancelled_ats = newcancelled_ats[0]
+        newcancelled_ats = 0 if newcancelled_ats is None else nint(newcancelled_ats)
 
         ret[key] = {"all": {"sum": {"tot": str(tot), "new": str(new)}, \
             "ets2": {"tot": str(totets2), "new": str(newets2)}, \
@@ -467,48 +485,60 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
                     "ats": {"tot": str(totcancelled_ats), "new": str(newcancelled_ats)}}}
 
     # profit
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp <= {end_time}")
-    toteuroprofit = cur.fetchone()[0]
-    toteuroprofit = 0 if toteuroprofit is None else int(toteuroprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    neweuroprofit = cur.fetchone()[0]
-    neweuroprofit = 0 if neweuroprofit is None else int(neweuroprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp <= {end_time}")
-    totdollarprofit = cur.fetchone()[0]
-    totdollarprofit = 0 if totdollarprofit is None else int(totdollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    newdollarprofit = cur.fetchone()[0]
-    newdollarprofit = 0 if newdollarprofit is None else int(newdollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp <= {end_time}")
+    toteuroprofit = await aiosql.fetchone(dhrid)
+    toteuroprofit = toteuroprofit[0]
+    toteuroprofit = 0 if toteuroprofit is None else nint(toteuroprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    neweuroprofit = await aiosql.fetchone(dhrid)
+    neweuroprofit = neweuroprofit[0]
+    neweuroprofit = 0 if neweuroprofit is None else nint(neweuroprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp <= {end_time}")
+    totdollarprofit = await aiosql.fetchone(dhrid)
+    totdollarprofit = totdollarprofit[0]
+    totdollarprofit = 0 if totdollarprofit is None else nint(totdollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    newdollarprofit = await aiosql.fetchone(dhrid)
+    newdollarprofit = newdollarprofit[0]
+    newdollarprofit = 0 if newdollarprofit is None else nint(newdollarprofit)
     allprofit = {"tot": {"euro": str(toteuroprofit), "dollar": str(totdollarprofit)}, \
         "new": {"euro": str(neweuroprofit), "dollar": str(newdollarprofit)}}
 
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
-    totdelivered_europrofit = cur.fetchone()[0]
-    totdelivered_europrofit = 0 if totdelivered_europrofit is None else int(totdelivered_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    newdelivered_europrofit = cur.fetchone()[0]
-    newdelivered_europrofit = 0 if newdelivered_europrofit is None else int(newdelivered_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
-    totdelivered_dollarprofit = cur.fetchone()[0]
-    totdelivered_dollarprofit = 0 if totdelivered_dollarprofit is None else int(totdelivered_dollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    newdelivered_dollarprofit = cur.fetchone()[0]
-    newdelivered_dollarprofit = 0 if newdelivered_dollarprofit is None else int(newdelivered_dollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
+    totdelivered_europrofit = await aiosql.fetchone(dhrid)
+    totdelivered_europrofit = totdelivered_europrofit[0]
+    totdelivered_europrofit = 0 if totdelivered_europrofit is None else nint(totdelivered_europrofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    newdelivered_europrofit = await aiosql.fetchone(dhrid)
+    newdelivered_europrofit = newdelivered_europrofit[0]
+    newdelivered_europrofit = 0 if newdelivered_europrofit is None else nint(newdelivered_europrofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
+    totdelivered_dollarprofit = await aiosql.fetchone(dhrid)
+    totdelivered_dollarprofit = totdelivered_dollarprofit[0]
+    totdelivered_dollarprofit = 0 if totdelivered_dollarprofit is None else nint(totdelivered_dollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    newdelivered_dollarprofit = await aiosql.fetchone(dhrid)
+    newdelivered_dollarprofit = newdelivered_dollarprofit[0]
+    newdelivered_dollarprofit = 0 if newdelivered_dollarprofit is None else nint(newdelivered_dollarprofit)
     deliveredprofit = {"tot": {"euro": str(totdelivered_europrofit), "dollar": str(totdelivered_dollarprofit)}, \
         "new": {"euro": str(newdelivered_europrofit), "dollar": str(newdelivered_dollarprofit)}}
     
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
-    totcancelled_europrofit = cur.fetchone()[0]
-    totcancelled_europrofit = 0 if totcancelled_europrofit is None else int(totcancelled_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    newcancelled_europrofit = cur.fetchone()[0]
-    newcancelled_europrofit = 0 if newcancelled_europrofit is None else int(newcancelled_europrofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
-    totcancelled_dollarprofit = cur.fetchone()[0]
-    totcancelled_dollarprofit = 0 if totcancelled_dollarprofit is None else int(totcancelled_dollarprofit)
-    cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
-    newcancelled_dollarprofit = cur.fetchone()[0]
-    newcancelled_dollarprofit = 0 if newcancelled_dollarprofit is None else int(newcancelled_dollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
+    totcancelled_europrofit = await aiosql.fetchone(dhrid)
+    totcancelled_europrofit = totcancelled_europrofit[0]
+    totcancelled_europrofit = 0 if totcancelled_europrofit is None else nint(totcancelled_europrofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    newcancelled_europrofit = await aiosql.fetchone(dhrid)
+    newcancelled_europrofit = newcancelled_europrofit[0]
+    newcancelled_europrofit = 0 if newcancelled_europrofit is None else nint(newcancelled_europrofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
+    totcancelled_dollarprofit = await aiosql.fetchone(dhrid)
+    totcancelled_dollarprofit = totcancelled_dollarprofit[0]
+    totcancelled_dollarprofit = 0 if totcancelled_dollarprofit is None else nint(totcancelled_dollarprofit)
+    await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    newcancelled_dollarprofit = await aiosql.fetchone(dhrid)
+    newcancelled_dollarprofit = newcancelled_dollarprofit[0]
+    newcancelled_dollarprofit = 0 if newcancelled_dollarprofit is None else nint(newcancelled_dollarprofit)
     cancelledprofit = {"tot": {"euro": str(totcancelled_europrofit), "dollar": str(totcancelled_dollarprofit)}, \
         "new": {"euro": str(newcancelled_europrofit), "dollar": str(newcancelled_dollarprofit)}}
     
@@ -541,8 +571,8 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
             del au["code"]
             return au
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if ranges > 100:
         ranges = 100
@@ -577,38 +607,38 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     basedollar = 0
     if sum_up:
         end_time = timerange[0][0]
-        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time}")
+        t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
-            basedistance = int(t[0][0])
-            basefuel = int(t[0][1])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time} AND unit = 1")
-        t = cur.fetchall()
+            basedistance = nint(t[0][0])
+            basefuel = nint(t[0][1])
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time} AND unit = 1")
+        t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
-            baseeuro = int(t[0][0])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time} AND unit = 2")
-        t = cur.fetchall()
+            baseeuro = nint(t[0][0])
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= 0 AND timestamp < {end_time} AND unit = 2")
+        t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
-            basedollar = int(t[0][0])
+            basedollar = nint(t[0][0])
 
     for (start_time, end_time) in timerange:
-        cur.execute(f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time}")
+        t = await aiosql.fetchall(dhrid)
         distance = basedistance
         fuel = basefuel
-        if len(t) > 0 and t[0][0] != None:
-            distance += int(t[0][0])
-            fuel += int(t[0][1])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time} AND unit = 1")
-        t = cur.fetchall()
+        if len(t) > 0 and t[0][0] != None and len(t[0]) > 1:
+            distance += nint(t[0][0])
+            fuel += nint(t[0][1])
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time} AND unit = 1")
+        t = await aiosql.fetchall(dhrid)
         euro = baseeuro
         if len(t) > 0 and t[0][0] != None:
-            euro += int(t[0][0])
-        cur.execute(f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time} AND unit = 2")
-        t = cur.fetchall()
+            euro += nint(t[0][0])
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} timestamp >= {start_time} AND timestamp < {end_time} AND unit = 2")
+        t = await aiosql.fetchall(dhrid)
         dollar = basedollar
         if len(t) > 0 and t[0][0] != None:
-            dollar += int(t[0][0])
+            dollar += nint(t[0][0])
         profit = {"euro": str(euro), "dollar": str(dollar)}
         ret.append({"start_time": str(start_time), "end_time": str(end_time), "distance": str(distance), "fuel": str(fuel), "profit": profit})
     
@@ -701,16 +731,16 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nlrank = t["nlrank"]
             nluserrank = t["nluserrank"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     global callusers, callusers_ts
     if int(time.time()) - callusers_ts <= 300:
         allusers = callusers
     else:
         allusers = []
-        cur.execute(f"SELECT userid, roles FROM user WHERE userid >= 0")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, roles FROM user WHERE userid >= 0")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             roles = tt[1].split(",")
             while "" in roles:
@@ -750,8 +780,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     if not usecache:
         ##### WITH LIMIT (Parameter)
         # calculate distance
-        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             if not tt[0] in allusers:
                 continue
@@ -762,8 +792,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             userdistance[tt[0]] = int(userdistance[tt[0]])
         
         # calculate challenge
-        cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -772,8 +802,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             userchallenge[oo[0]] += oo[1]
 
         # calculate event
-        cur.execute(f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
             while "" in attendees:
@@ -788,20 +818,20 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                     userevent[attendee] += tt[1]
         
         # calculate division
-        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
+        t = await aiosql.fetchall(dhrid)
         firstlogid = -1
         if len(t) > 0:
             firstlogid = t[0][0]
 
-        cur.execute(f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
+        t = await aiosql.fetchall(dhrid)
         lastlogid = -1
         if len(t) > 0:
             lastlogid = t[0][0]
         
-        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -811,8 +841,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                 userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
         
         # calculate myth
-        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -868,8 +898,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     if not nlusecache:
         ##### WITHOUT LIMIT
         # calculate distance
-        cur.execute(f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             if not tt[0] in allusers:
                 continue
@@ -880,8 +910,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
 
         # calculate challenge
-        cur.execute(f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -890,8 +920,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nluserchallenge[oo[0]] += oo[1]
 
         # calculate event
-        cur.execute(f"SELECT attendee, points FROM event")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT attendee, points FROM event")
+        t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
             while "" in attendees:
@@ -906,8 +936,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                     nluserevent[attendee] += tt[1]
         
         # calculate division    
-        cur.execute(f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -917,8 +947,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
                 nluserdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
         
         # calculate myth
-        cur.execute(f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
-        o = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
+        o = await aiosql.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -1072,8 +1102,8 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         del au["code"]
         return au
         
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if start_time == -1 or end_time == -1:
         start_time = 0
@@ -1084,12 +1114,12 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         f.write(b"logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
     else:
         f.write(b"logid, navioid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
-    cur.execute(f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
+    await aiosql.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time} AND dlog.logid >= 0")
-    d = cur.fetchall()
+    d = await aiosql.fetchall(dhrid)
     for di in range(len(d)):
         dd = d[di]
         logid = dd[0]

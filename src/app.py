@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.14"
+version = "v1.21.15"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 

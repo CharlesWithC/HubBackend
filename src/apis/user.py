@@ -7,7 +7,7 @@ import os, json, time, requests, uuid, math, bcrypt
 import traceback
 
 from app import app, config
-from db import newconn
+from db import aiosql, newconn
 from functions import *
 import multilang as ml
 
@@ -48,8 +48,8 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
             roles = au["roles"]
             aulanguage = au["language"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     isAdmin = False
     isHR = False
@@ -72,16 +72,16 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
 
-    cur.execute(f"SELECT userid, discordid FROM user WHERE {qu}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, discordid FROM user WHERE {qu}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
     userid = t[0][0]
     discordid = t[0][1]
     
-    cur.execute(f"SELECT discordid, name, avatar, roles, join_timestamp, truckersmpid, steamid, bio, email, mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid, name, avatar, roles, join_timestamp, truckersmpid, steamid, bio, email, mfa_secret FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = aulanguage)}
@@ -100,8 +100,8 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 
     activity_last_seen = 0
     activity_name = "offline"
-    cur.execute(f"SELECT activity, timestamp FROM user_activity WHERE discordid = {t[0][0]}")
-    ac = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE discordid = {t[0][0]}")
+    ac = await aiosql.fetchall(dhrid)
     if len(ac) != 0:
         activity_name = ac[0][0]
         activity_last_seen = ac[0][1]
@@ -138,8 +138,8 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     if page <= 0:
         page = 1
@@ -168,13 +168,13 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
     elif status == 1:
         limit += f"AND status = 1"
 
-    cur.execute(f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"notificationid": str(tt[0]), "content": tt[1], "timestamp": str(tt[2]), "read": TF[tt[3]]})
-    cur.execute(f"SELECT COUNT(*) FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM user_notification WHERE discordid = {discordid} {limit} AND LOWER(content) LIKE '%{content}%'")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -196,8 +196,8 @@ async def patchUserNotificationStatus(request: Request, response: Response, auth
         return au
     discordid = au["discordid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -209,8 +209,8 @@ async def patchUserNotificationStatus(request: Request, response: Response, auth
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
     if notificationids == "all":
-        cur.execute(f"UPDATE user_notification SET status = {read} WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE user_notification SET status = {read} WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
         return {"error": False}
 
     notificationids = notificationids.split(",")
@@ -218,10 +218,10 @@ async def patchUserNotificationStatus(request: Request, response: Response, auth
     for notificationid in notificationids:
         try:
             notificationid = int(notificationid)
-            cur.execute(f"UPDATE user_notification SET status = {read} WHERE notificationid = {notificationid} AND discordid = {discordid}")
+            await aiosql.execute(dhrid, f"UPDATE user_notification SET status = {read} WHERE notificationid = {notificationid} AND discordid = {discordid}")
         except:
             pass
-    conn.commit()
+    await aiosql.commit(dhrid)
     
     return {"error": False}
 
@@ -240,13 +240,13 @@ async def getNotificationSettings(request: Request, response: Response, authoriz
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
         for dd in d:
@@ -274,14 +274,14 @@ async def enableNotification(request: Request, response: Response, notification_
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
 
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         settingsok = True
         d = t[0][0].split(",")
@@ -335,13 +335,13 @@ async def enableNotification(request: Request, response: Response, notification_
             if r is None or r.status_code // 100 != 2:
                 return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
-            cur.execute(f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = 'discord-notification'")
-            t = cur.fetchall()
+            await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = 'discord-notification'")
+            t = await aiosql.fetchall(dhrid)
             if len(t) == 0:
-                cur.execute(f"INSERT INTO settings VALUES ({discordid}, 'discord-notification', '{channelid}')")
+                await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ({discordid}, 'discord-notification', '{channelid}')")
             elif t[0][0] != channelid:
-                cur.execute(f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = 'discord-notification'")
-            conn.commit()
+                await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{channelid}' WHERE discordid = {discordid} AND skey = 'discord-notification'")
+            await aiosql.commit(dhrid)
 
             settings["discord"] = True
 
@@ -354,10 +354,10 @@ async def enableNotification(request: Request, response: Response, notification_
             res += tt + ","
     res = res[:-1]
     if settingsok:
-        cur.execute(f"UPDATE settings SET sval = ',{res},' WHERE discordid = '{discordid}' AND skey = 'notification'")
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = ',{res},' WHERE discordid = '{discordid}' AND skey = 'notification'")
     else:
-        cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', ',{res},')")
-    conn.commit()
+        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{discordid}', 'notification', ',{res},')")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -380,14 +380,14 @@ async def disableNotification(request: Request, response: Response, notification
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
 
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         settingsok = True
         d = t[0][0].split(",")
@@ -398,7 +398,7 @@ async def disableNotification(request: Request, response: Response, notification
     settings[notification_type] = False
 
     if notification_type == "discord":
-        cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
+        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
 
     res = ""
     for tt in settings.keys():
@@ -406,10 +406,10 @@ async def disableNotification(request: Request, response: Response, notification
             res += tt + ","
     res = res[:-1]
     if settingsok:
-        cur.execute(f"UPDATE settings SET sval = '{res}' WHERE discordid = '{discordid}' AND skey = 'notification'")
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{res}' WHERE discordid = '{discordid}' AND skey = 'notification'")
     else:
-        cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', '{res}')")
-    conn.commit()
+        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{discordid}', 'notification', '{res}')")
+    await aiosql.commit(dhrid)
     
     return {"error": False}
 
@@ -428,10 +428,10 @@ async def getUserLanguage(request: Request, response: Response, authorization: s
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
-    t = cur.fetchall()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return {"error": False, "response": {"language": "en"}}
     return {"error": False, "response": {"language": t[0][0]}}
@@ -462,11 +462,11 @@ async def patchUserLanguage(request: Request, response: Response, authorization:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "language_not_supported", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
-    cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'language', '{language}')")
-    conn.commit()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+    await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{discordid}', 'language', '{language}')")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -486,8 +486,8 @@ async def getUserList(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     if page <= 0:
         page = 1
@@ -509,8 +509,8 @@ async def getUserList(request: Request, response: Response, authorization: str =
         order = "asc"
     order = order.upper()
     
-    cur.execute(f"SELECT user.userid, user.name, user.discordid, user.join_timestamp, user.avatar, banned.reason FROM user LEFT JOIN banned ON banned.discordid = user.discordid WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT user.userid, user.name, user.discordid, user.join_timestamp, user.avatar, banned.reason FROM user LEFT JOIN banned ON banned.discordid = user.discordid WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         banreason = ""
@@ -519,8 +519,8 @@ async def getUserList(request: Request, response: Response, authorization: str =
             banned = True
             banreason = tt[5]
         ret.append({"name": tt[1], "discordid": f"{tt[2]}", "avatar": tt[4], "ban": {"is_banned": TF[banned], "reason": banreason}, "join_timestamp": tt[3]})
-    cur.execute(f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
+    t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
@@ -536,8 +536,8 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     au = auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -555,8 +555,8 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
             response.status_code = au["code"]
             del au["code"]
             return au
-        cur.execute(f"SELECT discordid FROM user WHERE discordid = '{discordid}'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE discordid = '{discordid}'")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
@@ -592,8 +592,8 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
     if d["user"]["avatar"] != None:
         avatar = convert_quotation(d["user"]["avatar"])
         
-    cur.execute(f"UPDATE user SET name = '{username}', avatar = '{avatar}' WHERE discordid = '{discordid}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}' WHERE discordid = '{discordid}'")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
     
@@ -612,8 +612,8 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         return au
     discordid = au["discordid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -626,8 +626,8 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
 
-    cur.execute(f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET bio = '{b64e(bio)}' WHERE discordid = {discordid}")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -651,11 +651,11 @@ async def patchPassword(request: Request, response: Response, authorization: str
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         form = await request.form()
@@ -668,8 +668,8 @@ async def patchPassword(request: Request, response: Response, authorization: str
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
     form = await request.form()
@@ -683,8 +683,8 @@ async def patchPassword(request: Request, response: Response, authorization: str
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "invalid_email", force_lang = au["language"])}
         
-    cur.execute(f"SELECT userid FROM user WHERE email = '{email}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) > 1:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "too_many_user_with_same_email", force_lang = au["language"])}
@@ -700,10 +700,10 @@ async def patchPassword(request: Request, response: Response, authorization: str
     salt = bcrypt.gensalt()
     pwdhash = bcrypt.hashpw(password, salt).decode()
 
-    cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
-    cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
-    cur.execute(f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
+    await aiosql.execute(dhrid, f"INSERT INTO user_password VALUES ({discordid}, '{email}', '{b64e(pwdhash)}')")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
     
@@ -727,11 +727,11 @@ async def deletePassword(request: Request, response: Response, authorization: st
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
-    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         form = await request.form()
@@ -744,8 +744,8 @@ async def deletePassword(request: Request, response: Response, authorization: st
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    cur.execute(f"SELECT email FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
     stoken = authorization.split(" ")[1]
@@ -753,9 +753,9 @@ async def deletePassword(request: Request, response: Response, authorization: st
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
-    cur.execute(f"DELETE FROM user_password WHERE email = '{email}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
+    await aiosql.commit(dhrid)
 
     return {"error": False}
 
@@ -774,14 +774,14 @@ async def postTemporaryIdentityProof(request: Request, response: Response, autho
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     stoken = str(uuid.uuid4())
     while stoken[0] == "f":
         stoken = str(uuid.uuid4())
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
-    cur.execute(f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+180})")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+180})")
+    await aiosql.commit(dhrid)
 
     return {"error": False, "response": {"token": stoken}}
 
@@ -795,16 +795,16 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
 
     token = token.replace("'","")
 
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
-    cur.execute(f"SELECT discordid FROM temp_identity_proof WHERE token = '{token}'")
-    t = cur.fetchall()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"SELECT discordid FROM temp_identity_proof WHERE token = '{token}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 401
         return {"error": True, "descriptor": ml.tr(request, "invalid_token")}
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
+    await aiosql.commit(dhrid)
     return {"error": False, "response": {"user": getUserInfo(discordid = t[0][0])}}
 
 @app.post(f"/{config.abbr}/user/mfa")
@@ -822,10 +822,10 @@ async def postMFA(request: Request, response: Response, authorization: str = Hea
         return au
     discordid = au["discordid"]
 
-    conn = newconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     secret = t[0][0]
     if secret != "":
         response.status_code = 409
@@ -853,8 +853,8 @@ async def postMFA(request: Request, response: Response, authorization: str = Hea
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
-    cur.execute(f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
+    await aiosql.commit(dhrid)
         
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(-999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
@@ -878,10 +878,10 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
             return au
         discordid = au["discordid"]
         
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        dhrid = genrid() # conn = await aiosql.new_conn()
+        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+        await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         secret = t[0][0]
         if secret == "":
             response.status_code = 428
@@ -898,8 +898,8 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
             response.status_code = 400
             return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         
-        cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
         
         username = getUserInfo(discordid = discordid)["name"]
         await AuditLog(-999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
@@ -915,10 +915,10 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
             return au
         adminid = au["userid"]
 
-        conn = newconn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        dhrid = genrid() # conn = await aiosql.new_conn()
+        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+        await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -927,8 +927,8 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "mfa_not_enabled")}
         
-        cur.execute(f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
         
         username = getUserInfo(discordid = discordid)["name"]
         await AuditLog(adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
@@ -950,8 +950,8 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         return au
     discordid = au["discordid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -974,22 +974,22 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
-    cur.execute(f"SELECT * FROM user WHERE discordid != '{discordid}' AND steamid = {steamid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM user WHERE discordid != '{discordid}' AND steamid = {steamid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "steam_bound_to_other_account", force_lang = au["language"])}
 
-    cur.execute(f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE discordid = '{discordid}'")
+    t = await aiosql.fetchall(dhrid)
     roles = t[0][0].split(",")
     while "" in roles:
         roles.remove("")
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid != 0 and userid >= 0:
-        cur.execute(f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 3)}")
-        p = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 3)}")
+        p = await aiosql.fetchall(dhrid)
         if len(p) > 0:
             response.status_code = 429
             return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_3d", force_lang = au["language"])}
@@ -1003,8 +1003,8 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
                     traceback.print_exc()
                 await AuditLog(userid, f"Updated Steam ID to `{steamid}`")
 
-    cur.execute(f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
+    await aiosql.commit(dhrid)
 
     try:
         r = requests.get(f"https://api.truckersmp.com/v2/player/{steamid}")
@@ -1012,15 +1012,15 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
             d = json.loads(r.text)
             if not d["error"]:
                 truckersmpid = d["response"]["id"]
-                cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
-                conn.commit()
+                await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
+                await aiosql.commit(dhrid)
                 return {"error": False}
     except:
         traceback.print_exc()
 
     # in case user changed steam
-    cur.execute(f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = 0 WHERE discordid = '{discordid}'")
+    await aiosql.commit(dhrid)
     
     return {"error": False}
 
@@ -1039,8 +1039,8 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         return au
     discordid = au["discordid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -1063,8 +1063,8 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    cur.execute(f"SELECT steamid FROM user WHERE discordid = '{discordid}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE discordid = '{discordid}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "steam_not_bound_before_truckersmp", force_lang = au["language"])}
@@ -1076,8 +1076,8 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)}, force_lang = au["language"])}
 
-    cur.execute(f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE discordid = '{discordid}'")
+    await aiosql.commit(dhrid)
     return {"error": False}
 
 # Manage User Section
@@ -1096,8 +1096,8 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         return au
     adminid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1118,8 +1118,8 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_discordid", force_lang = au["language"])}
 
-    cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     username = "Unknown User"
     if len(t) > 0:
         userid = t[0][0]
@@ -1128,12 +1128,12 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "dismiss_before_ban", force_lang = au["language"])}
 
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        cur.execute(f"INSERT INTO banned VALUES ({discordid}, {expire}, '{reason}')")
-        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"INSERT INTO banned VALUES ({discordid}, {expire}, '{reason}')")
+        await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
         duration = "forever"
         if expire != 253402272000:
             duration = f'until `{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))}` UTC'
@@ -1158,8 +1158,8 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         return au
     adminid = au["userid"]
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1167,14 +1167,14 @@ async def userUnban(request: Request, response: Response, authorization: str = H
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
-    cur.execute(f"SELECT * FROM banned WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_not_banned", force_lang = au["language"])}
     else:
-        cur.execute(f"DELETE FROM banned WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"DELETE FROM banned WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
         
         username = getUserInfo(discordid = discordid)["name"]
         await AuditLog(adminid, f"Unbanned `{username}` (Discord ID: `{discordid}`)")
@@ -1201,8 +1201,8 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1215,46 +1215,46 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     if old_discord_id == new_discord_id:
         return {"error": False}
 
-    cur.execute(f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE discordid = {old_discord_id}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    cur.execute(f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE discordid = {new_discord_id}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "user_must_register_first", force_lang = au["language"])}
 
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {new_discord_id}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE discordid = {new_discord_id}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) > 0 and t[0][0] != -1:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "user_must_not_be_member", force_lang = au["language"])}
 
     # delete account of new discord, and both sessions
-    cur.execute(f"DELETE FROM session WHERE discordid = {old_discord_id}")
-    cur.execute(f"DELETE FROM appsession WHERE discordid = {old_discord_id}")
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {old_discord_id}")
 
-    cur.execute(f"DELETE FROM user WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM session WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM appsession WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM user_password WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM user_activity WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM user_notification WHERE discordid = {new_discord_id}")
-    cur.execute(f"DELETE FROM settings WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {new_discord_id}")
 
     # update discord binding
-    cur.execute(f"UPDATE user SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    cur.execute(f"UPDATE user_password SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    cur.execute(f"UPDATE user_activity SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    cur.execute(f"UPDATE user_notification SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    cur.execute(f"UPDATE application SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    cur.execute(f"UPDATE settings SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"UPDATE user_password SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"UPDATE user_activity SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"UPDATE user_notification SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"UPDATE application SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"UPDATE settings SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
+    await aiosql.commit(dhrid)
 
     await AuditLog(adminid, f"Updated Discord ID from `{old_discord_id}` to `{new_discord_id}`")
 
@@ -1280,8 +1280,8 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1290,8 +1290,8 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -1300,8 +1300,8 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
         response.status_code = 428
         return {"error": True, "descriptor": ml.tr(request, "dismiss_before_unbind", force_lang = au["language"])}
     
-    cur.execute(f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
-    conn.commit()
+    await aiosql.execute(dhrid, f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
+    await aiosql.commit(dhrid)
 
     username = getUserInfo(discordid = discordid)["name"]
     await AuditLog(adminid, f"Deleted connections of `{username}` (Discord ID: `{discordid}`)")
@@ -1338,11 +1338,11 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             return au
         adminid = au["userid"]
 
-        conn = newconn()
-        cur = conn.cursor()
+        dhrid = genrid() # conn = await aiosql.new_conn()
+        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         
-        cur.execute(f"SELECT userid FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -1352,15 +1352,15 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         
         username = getUserInfo(discordid = discordid)["name"]
-        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_activity WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_notification WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
 
         await AuditLog(adminid, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
 
@@ -1369,11 +1369,11 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
     else:
         discordid = auth_discordid
         
-        conn = newconn()
-        cur = conn.cursor()
+        dhrid = genrid() # conn = await aiosql.new_conn()
+        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         
-        cur.execute(f"SELECT userid, name FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         userid = t[0][0]
         name = t[0][1]
         if userid != -1:
@@ -1381,15 +1381,15 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             return {"error": True, "descriptor": ml.tr(request, "leave_company_before_delete", force_lang = au["language"])}
         
         username = getUserInfo(discordid = discordid)["name"]
-        cur.execute(f"DELETE FROM user WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_password WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_activity WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM user_notification WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM session WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM appsession WHERE discordid = {discordid}")
-        cur.execute(f"DELETE FROM settings WHERE discordid = {discordid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
+        await aiosql.commit(dhrid)
 
         await AuditLog(-999, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
 

@@ -10,7 +10,7 @@ import threading
 import traceback
 
 from app import app, config, tconfig
-from db import newconn
+from db import aiosql, genconn
 from functions import *
 import multilang as ml
 
@@ -87,8 +87,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         await AuditLog(-999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
     
-    conn = newconn()
-    cur = conn.cursor()
+    dhrid = genrid() # conn = await aiosql.new_conn()
+    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     d = await request.json()
     if d["object"] != "event":
@@ -96,8 +96,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        cur.execute(f"SELECT userid, name, discordid FROM user WHERE steamid = '{steamid}'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE steamid = '{steamid}'")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             return {"error": True, "descriptor": "User not found."}
         userid = t[0][0]
@@ -105,13 +105,13 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         discordid = t[0][2]
         await AuditLog(-999, f"Member resigned: `{name}` (Discord ID: `{discordid}`)")
         
-        cur.execute(f"SELECT discordid, name FROM user WHERE userid = {userid}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
+        t = await aiosql.fetchall(dhrid)
         userdiscordid = t[0][0]
         username = t[0][1]
         usermention = f"<@{userdiscordid}>"
-        cur.execute(f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-        conn.commit()
+        await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+        await aiosql.commit(dhrid)
 
         def setvar(msg):
             return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
@@ -157,8 +157,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         return {"error": False, "response": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    cur.execute(f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return {"error": True, "descriptor": "User not found."}
     userid = t[0][0]
@@ -167,8 +167,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
 
     duplicate = False
     logid = -1
-    cur.execute(f"SELECT logid FROM dlog WHERE navioid = {navioid}")
-    o = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE navioid = {navioid}")
+    o = await aiosql.fetchall(dhrid)
     if len(o) > 0:
         duplicate = True # only for debugging purpose
         logid = o[0][0]
@@ -214,8 +214,8 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
     start_time = parser.parse(d["data"]["object"]["start_time"]).timestamp()
     end_time = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
     if not duplicate:
-        cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
+        t = await aiosql.fetchall(dhrid)
         logid = int(t[0][0])
 
     delivery_rule_ok = True
@@ -242,10 +242,10 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             if "tracker" in config.enabled_plugins:
                 threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
             
-            cur.execute(f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-            cur.execute(f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
+            await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
                 {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
-            conn.commit()
+            await aiosql.commit(dhrid)
 
             discordid = getUserInfo(userid = userid)["discordid"]
             notification("dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = GetUserLanguage(discordid, "en")), no_discord_notification = True)
@@ -398,17 +398,18 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
 
     try:
         if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered and not duplicate:
-            cur.execute(f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
-            current_distance = cur.fetchone()[0]
+            await aiosql.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+            current_distance = await aiosql.fetchone(dhrid)
+            current_distance = current_distance[0]
             current_distance = 0 if current_distance is None else int(current_distance)
 
             userinfo = getUserInfo(userid = userid)
             roles = userinfo["roles"]
 
-            cur.execute(f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
+            await aiosql.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
                 FROM challenge \
                 WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
-            t = cur.fetchall()
+            t = await aiosql.fetchall(dhrid)
             for tt in t:
                 try:
                     challengeid = tt[0]
@@ -516,49 +517,49 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                     
                     discordid = getUserInfo(userid = userid)["discordid"]
                     notification("challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = GetUserLanguage(discordid, "en")))
-                    cur.execute(f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
-                    conn.commit()
+                    await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
+                    await aiosql.commit(dhrid)
 
                     current_delivery_count = 0
                     if challenge_type in [1,3]:
-                        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
+                        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
                     elif challenge_type == 2:
-                        cur.execute(f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
+                        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
                     elif challenge_type == 4:
-                        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        await aiosql.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                             INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                             WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
                     elif challenge_type == 5:
-                        cur.execute(f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        await aiosql.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                             INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                             WHERE challenge_record.challengeid = {challengeid}")
-                    current_delivery_count = cur.fetchone()
+                    current_delivery_count = await aiosql.fetchone(dhrid)
                     current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
                     if current_delivery_count >= delivery_count:
                         if challenge_type in [1,4]:
-                            cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                            t = cur.fetchall()
+                            await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                            t = await aiosql.fetchall(dhrid)
                             if len(t) == 0:
-                                cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                                conn.commit()
+                                await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                await aiosql.commit(dhrid)
                                 discordid = getUserInfo(userid = userid)["discordid"]
                                 notification("challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                         elif challenge_type == 3:
-                            cur.execute(f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                            t = cur.fetchall()
+                            await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                            t = await aiosql.fetchall(dhrid)
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
-                                cur.execute(f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                                conn.commit()
+                                await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                await aiosql.commit(dhrid)
                                 discordid = getUserInfo(userid = userid)["discordid"]
                                 notification("challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = GetUserLanguage(discordid, "en")))
                         elif challenge_type == 2:
-                            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                            t = cur.fetchall()
+                            await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = await aiosql.fetchall(dhrid)
                             if len(t) == 0:
                                 curtime = int(time.time())
-                                cur.execute(f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
-                                t = cur.fetchall()
+                                await aiosql.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
+                                t = await aiosql.fetchall(dhrid)
                                 usercnt = {}
                                 for tt in t:
                                     uid = tt[0]
@@ -569,20 +570,20 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                 for uid in usercnt.keys():
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
-                                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                                     discordid = getUserInfo(userid = uid)["discordid"]
                                     notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
-                                conn.commit()
+                                await aiosql.commit(dhrid)
                         elif challenge_type == 5:
-                            cur.execute(f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                            t = cur.fetchall()
+                            await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = await aiosql.fetchall(dhrid)
                             if len(t) == 0:
                                 curtime = int(time.time())
-                                cur.execute(f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                                await aiosql.execute(dhrid, f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
                                     INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                                     WHERE challenge_record.challengeid = {challengeid} \
                                     GROUP BY dlog.userid, challenge_record.userid")
-                                t = cur.fetchall()
+                                t = await aiosql.fetchall(dhrid)
                                 usercnt = {}
                                 totalcnt = 0
                                 for tt in t:
@@ -597,10 +598,10 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                                 for uid in usercnt.keys():
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
-                                    cur.execute(f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
+                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
                                     discordid = getUserInfo(userid = uid)["discordid"]
                                     notification("challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = GetUserLanguage(discordid, "en")))
-                                conn.commit()
+                                await aiosql.commit(dhrid)
                 except:
                     traceback.print_exc()
                 
