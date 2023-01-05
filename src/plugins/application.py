@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -10,7 +10,7 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
@@ -34,8 +34,8 @@ async def getApplicationTypes(request: Request, response: Response):
 
 @app.get(f"/{config.abbr}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -49,13 +49,16 @@ async def getApplicationPositions(request: Request, response: Response):
 # Get Application
 @app.get(f"/{config.abbr}/application")
 async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /application', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /application', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -63,9 +66,6 @@ async def getApplication(request: Request, response: Response, authorization: st
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if int(applicationid) < 0:
         response.status_code = 404
@@ -98,15 +98,18 @@ async def getApplication(request: Request, response: Response, authorization: st
             return {"error": True, "descriptor": "Forbidden"}
 
     return {"error": False, "response": {"application": {"applicationid": str(t[0][0]), \
-        "detail": json.loads(decompress(t[0][3])), "creator": getUserInfo(discordid = t[0][2]), \
+        "detail": json.loads(decompress(t[0][3])), "creator": await getUserInfo(dhrid, discordid = t[0][2]), \
         "application_type": str(t[0][1]), "status": str(t[0][4]), "submit_timestamp": str(t[0][5]), \
-        "update_timestamp": str(t[0][7]), "last_update_staff": getUserInfo(userid = t[0][6])}}}
+        "update_timestamp": str(t[0][7]), "last_update_staff": await getUserInfo(dhrid, userid = t[0][6])}}}
 
 @app.get(f"/{config.abbr}/application/list")
 async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
-    rl = ratelimit(request, request.client.host, 'GET /application/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /application/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -119,7 +122,7 @@ async def getApplicationList(request: Request, response: Response, authorization
         order = "asc"
     order = order.upper()
         
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -127,10 +130,7 @@ async def getApplicationList(request: Request, response: Response, authorization
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-    activityUpdate(au["discordid"], f"applications")
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+    await activityUpdate(dhrid, au["discordid"], f"applications")
 
     if page_size <= 1:
         page_size = 1
@@ -205,31 +205,31 @@ async def getApplicationList(request: Request, response: Response, authorization
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": str(tt[0]), "creator": getUserInfo(discordid = tt[2]), "application_type": str(tt[1]), \
+        ret.append({"applicationid": str(tt[0]), "creator": await getUserInfo(dhrid, discordid = tt[2]), "application_type": str(tt[1]), \
                 "status": str(tt[4]), "submit_timestamp": str(tt[3]), "update_timestamp": str(tt[5]), \
-                    "last_update_staff": getUserInfo(userid = tt[6])})
+                    "last_update_staff": await getUserInfo(dhrid, userid = tt[6])})
 
     return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
 
 # Self-operation
 @app.post(f"/{config.abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /application', 180, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /application', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
     userid = au["userid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -321,12 +321,12 @@ async def postApplication(request: Request, response: Response, authorization: s
                 DisableDiscordIntegration()
             if r.status_code // 100 != 2:
                 err = json.loads(r.text)
-                await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{applicantrole}> to <@!{discordid}>: `{err["message"]}`')
+                await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{applicantrole}> to <@!{discordid}>: `{err["message"]}`')
         except:
             traceback.print_exc()
 
-    language = GetUserLanguage(discordid)
-    notification("application", discordid, ml.tr(request, "application_submitted", \
+    language = await GetUserLanguage(dhrid, discordid)
+    await notification(dhrid, "application", discordid, ml.tr(request, "application_submitted", \
             var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
@@ -372,13 +372,16 @@ async def postApplication(request: Request, response: Response, authorization: s
 
 @app.patch(f"/{config.abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /application', 180, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -386,9 +389,6 @@ async def updateApplication(request: Request, response: Response, authorization:
     discordid = au["discordid"]
     userid = au["userid"]
     name = au["name"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -485,13 +485,16 @@ async def updateApplication(request: Request, response: Response, authorization:
 # Management
 @app.patch(f"/{config.abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /application/status', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -500,9 +503,6 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     adminid = au["userid"]
     adminname = au["name"]
     roles = au["roles"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -533,7 +533,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
     application_type = t[0][1]
     applicant_discordid = t[0][2]
 
-    language = GetUserLanguage(applicant_discordid)
+    language = await GetUserLanguage(dhrid, applicant_discordid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[int(status)]
@@ -571,8 +571,8 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
         update_timestamp = int(time.time())
 
     await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
-    notification("application", applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+    await AuditLog(dhrid, adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
+    await notification(dhrid, "application", applicant_discordid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), \
         discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
@@ -586,21 +586,21 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 # Higher-management
 @app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /application/positions', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/positions', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     positions = convert_quotation(form["positions"])
@@ -613,6 +613,6 @@ async def patchApplicationPositions(request: Request, response: Response, author
         await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     await aiosql.commit(dhrid)
 
-    await AuditLog(adminid, f"Updated staff positions to: `{positions}`")
+    await AuditLog(dhrid, adminid, f"Updated staff positions to: `{positions}`")
 
     return {"error": False}

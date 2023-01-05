@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from base64 import b64encode, b64decode
@@ -11,7 +11,7 @@ import hmac, base64, struct, hashlib
 import ipaddress, requests, threading
 import traceback
 
-from db import genconn
+from db import genconn, aiosql
 from app import config, tconfig
 import multilang as ml
 
@@ -217,11 +217,9 @@ def getUserAgent(request):
 
 cuserinfo = {} # user info cache
 
-def getAvatarSrc(userid):
-    conn = genconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT discordid, avatar FROM user WHERE userid = {userid}")
-    t = cur.fetchall()
+async def getAvatarSrc(dhrid, userid):
+    await aiosql.execute(dhrid, f"SELECT discordid, avatar FROM user WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
     discordid = str(t[0][0])
     avatar = str(t[0][1])
     src = ""
@@ -229,10 +227,9 @@ def getAvatarSrc(userid):
         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif"
     else:
         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png"
-    conn.close()
     return src
 
-def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = False):
+async def getUserInfo(dhrid, userid = -1, discordid = -1, privacy = False, tell_deleted = False):
     if userid == -999:
         return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
         
@@ -259,18 +256,13 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = Fal
         query = f"userid = '{userid}'"
     elif discordid != -1:
         query = f"discordid = '{discordid}'"
-
-    conn = genconn()
-    cur = conn.cursor()
     
-    cur.execute(f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
-    p = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
+    p = await aiosql.fetchall(dhrid)
     if len(p) == 0:
         if not tell_deleted:
-            conn.close()
             return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
         else:
-            conn.close()
             return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": [], "is_deleted": True}
 
     roles = p[0][4].split(",")
@@ -281,27 +273,72 @@ def getUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = Fal
         cuserinfo[f"userid={p[0][1]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
     cuserinfo[f"discordid={p[0][2]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
 
-    conn.close()
     return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
 
-def activityUpdate(discordid, activity):
-    if int(discordid) <= 0:
-        return
+def bGetUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = False):
+    if userid == -999:
+        return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        
+    if privacy:
+        return {"name": "[Protected]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+
+    if userid == -1 and discordid == -1:
+        if not tell_deleted:
+            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        else:
+            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": [], "is_deleted": True}
+
+    global cuserinfo
+    
+    if userid != -1 and f"userid={userid}" in cuserinfo.keys():
+        if int(time.time()) < cuserinfo[f"userid={userid}"]["expire"]:
+            return cuserinfo[f"userid={userid}"]["data"]
+    if discordid != -1 and f"discordid={discordid}" in cuserinfo.keys():
+        if int(time.time()) < cuserinfo[f"discordid={discordid}"]["expire"]:
+            return cuserinfo[f"discordid={discordid}"]["data"]
+
+    query = ""
+    if userid != -1:
+        query = f"userid = '{userid}'"
+    elif discordid != -1:
+        query = f"discordid = '{discordid}'"
+    
     conn = genconn()
     cur = conn.cursor()
+    cur.execute(f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
+    p = cur.fetchall()
+    cur.close()
+    conn.close()
+    if len(p) == 0:
+        if not tell_deleted:
+            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+        else:
+            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": [], "is_deleted": True}
+
+    roles = p[0][4].split(",")
+    while "" in roles:
+        roles.remove("")
+
+    if p[0][1] != -1:
+        cuserinfo[f"userid={p[0][1]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+
+    return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
+
+async def activityUpdate(dhrid, discordid, activity):
+    if int(discordid) <= 0:
+        return
     activity = convert_quotation(activity)
-    cur.execute(f"SELECT timestamp FROM user_activity WHERE discordid = {discordid}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE discordid = {discordid}")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         last_timestamp = t[0][0]
         if int(time.time()) - last_timestamp <= 3:
-            conn.close()
             return
-        cur.execute(f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE discordid = {discordid}")
     else:
-        cur.execute(f"INSERT INTO user_activity VALUES ({discordid}, '{activity}', {int(time.time())})")
-    conn.commit()
-    conn.close()
+        await aiosql.execute(dhrid, f"INSERT INTO user_activity VALUES ({discordid}, '{activity}', {int(time.time())})")
+    await aiosql.commit(dhrid)
     
 discord_message_queue = []
 
@@ -311,24 +348,31 @@ def QueueDiscordMessage(channelid, data):
         return
     discord_message_queue.append((channelid, data))
 
-def SendDiscordMessage(channelid, data):
-    if config.discord_bot_token == "":
-        return -1
-    
-    try:
-        requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", \
-                headers=headers, data=json.dumps(data))
-    except:
-        pass
-
-    return 0
-
 def ProcessDiscordMessage(): # thread
     global discord_message_queue
     global config
+    lastRLAclear = 0
     headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
     while 1:
         try:
+            # combined thread
+            try:
+                if time.time() - lastRLAclear > 30:
+                    aiosql.release()
+                    
+                    conn = genconn()
+                    cur = conn.cursor()
+                    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 86400)}")
+                    cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")
+                    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
+                    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+                    lastRLAclear = time.time()
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+            except:
+                pass
+
             if config.discord_bot_token == "":
                 return
             if len(discord_message_queue) == 0:
@@ -369,6 +413,7 @@ def ProcessDiscordMessage(): # thread
                 cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
                 cur.execute(f"DELETE FROM settings WHERE skey = 'event-notification' AND sval = '{channelid}'")
                 conn.commit()
+                cur.close()
                 conn.close()
                 for i in to_delete[::-1]:
                     discord_message_queue.pop(i)
@@ -387,12 +432,9 @@ def ProcessDiscordMessage(): # thread
 
 threading.Thread(target=ProcessDiscordMessage, daemon = True).start()
 
-def CheckDiscordNotification(discordid):
-    conn = genconn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
-    t = cur.fetchall()
-    conn.close()
+async def CheckDiscordNotification(dhrid, discordid):
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'discord-notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return False
     ret = t[0][0]
@@ -400,54 +442,54 @@ def CheckDiscordNotification(discordid):
         return False
     return ret
 
-def SendDiscordNotification(discordid, data):
-    t = CheckDiscordNotification(discordid)
+async def SendDiscordNotification(dhrid, discordid, data):
+    t = await CheckDiscordNotification(dhrid, discordid)
     if t == False:
         return
     QueueDiscordMessage(t, data)
 
-def GetUserLanguage(discordid, default_language = ""):
+async def GetUserLanguage(dhrid, discordid, default_language = ""):
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        return default_language
+    return t[0][0]
+
+def bGetUserLanguage(discordid, default_language = ""):
     conn = genconn()
     cur = conn.cursor()
     cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
     t = cur.fetchall()
+    cur.close()
     conn.close()
     if len(t) == 0:
         return default_language
     return t[0][0]
 
-def CheckNotificationEnabled(notification_type, discordid):
-    conn = genconn()
-    cur = conn.cursor()
-    
+async def CheckNotificationEnabled(dhrid, notification_type, discordid):
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
         for dd in d:
             if dd in settings.keys():
                 settings[dd] = True
-    
-    conn.close()
 
     if notification_type in settings.keys() and not settings[notification_type]:
         return False
     return True
 
-def notification(notification_type, discordid, content, no_drivershub_notification = False, \
+async def notification(dhrid, notification_type, discordid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):
     if int(discordid) <= 0:
         return
-        
-    conn = genconn()
-    cur = conn.cursor()
     
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
         for dd in d:
@@ -455,43 +497,37 @@ def notification(notification_type, discordid, content, no_drivershub_notificati
                 settings[dd] = True
 
     if notification_type in settings.keys() and not settings[notification_type]:
-        conn.close()
         return
 
     if settings["drivershub"] and not no_drivershub_notification:
-        cur.execute(f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
+        t = await aiosql.fetchall(dhrid)
         nxtnotificationid = int(t[0][0])
-        cur.execute(f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
-        cur.execute(f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{convert_quotation(content)}', {int(time.time())}, 0)")
-        conn.commit()
-    conn.close()
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
+        await aiosql.execute(dhrid, f"INSERT INTO user_notification VALUES ({nxtnotificationid}, {discordid}, '{convert_quotation(content)}', {int(time.time())}, 0)")
+        await aiosql.commit(dhrid)
     
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            SendDiscordNotification(discordid, {"embeds": [{"title": discord_embed["title"], 
+            await SendDiscordNotification(dhrid, discordid, {"embeds": [{"title": discord_embed["title"], 
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]})
         else:
-            SendDiscordNotification(discordid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = GetUserLanguage(discordid, "en")), 
+            await SendDiscordNotification(dhrid, discordid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(dhrid, discordid, "en")), 
                 "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]})
 
-def ratelimit(request, ip, endpoint, limittime, limitcnt):
-    conn = genconn()
-    cur = conn.cursor()
-    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 86400)}")
-    cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")
-    cur.execute(f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE ip = '{ip}' AND endpoint LIKE 'ip-ban-%'")
-    t = cur.fetchall()
+async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
+    await aiosql.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE ip = '{ip}' AND endpoint LIKE 'ip-ban-%'")
+    t = await aiosql.fetchall(dhrid)
     maxban = 0
     for tt in t:
         frt = tt[0]
         bansec = int(tt[1].split("-")[-1])
         maxban = max(frt + bansec, maxban)
         if maxban < int(time.time()):
-            cur.execute(f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-{bansec}'")
-            conn.commit()
+            await aiosql.execute(dhrid, f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-{bansec}'")
+            await aiosql.commit(dhrid)
             maxban = 0
     if maxban > 0:
         resp_headers = {}
@@ -503,17 +539,16 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
             "retry_after": str(maxban - int(time.time())), "global": True}
-        conn.close()
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-    cur.execute(f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
+    t = await aiosql.fetchall(dhrid)
     if t[0][0] != None and t[0][0] > 150:
         # more than 150r/m combined
         # including 429 requests
         # 10min ip ban
-        cur.execute(f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-600'")
-        cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', 'ip-ban-600', {int(time.time())}, 0)")
-        conn.commit()
+        await aiosql.execute(dhrid, f"DELETE FROM ratelimit WHERE ip = '{ip}' AND endpoint = 'ip-ban-600'")
+        await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{ip}', 'ip-ban-600', {int(time.time())}, 0)")
+        await aiosql.commit(dhrid)
         resp_headers = {}
         resp_headers["Retry-After"] = str(600)
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
@@ -523,43 +558,40 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Global"] = "true"
         resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
             "retry_after": "600", "global": True}
-        conn.close()
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-    cur.execute(f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
-    t = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+    t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '{endpoint}', {int(time.time())}, 1)")
-        conn.commit()
+        await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{ip}', '{endpoint}', {int(time.time())}, 1)")
+        await aiosql.commit(dhrid)
         resp_headers = {}
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
         resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
         resp_headers["X-RateLimit-Reset-After"] = str(limittime)
-        conn.close()
         return (False, resp_headers)
     else:
         first_request_timestamp = t[0][0]
         request_count = t[0][1]
         if int(time.time()) - first_request_timestamp > limittime:
-            cur.execute(f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
-            conn.commit()
+            await aiosql.execute(dhrid, f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+            await aiosql.commit(dhrid)
             resp_headers = {}
             resp_headers["X-RateLimit-Limit"] = str(limitcnt)
             resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
             resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + limittime)
             resp_headers["X-RateLimit-Reset-After"] = str(limittime)
-            conn.close()
             return (False, resp_headers)
         else:
             if request_count + 1 > limitcnt:
-                cur.execute(f"SELECT request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '429-error'")
-                t = cur.fetchall()
+                await aiosql.execute(dhrid, f"SELECT request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '429-error'")
+                t = await aiosql.fetchall(dhrid)
                 if len(t) > 0:
-                    cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '429-error'")
-                    conn.commit()
+                    await aiosql.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '429-error'")
+                    await aiosql.commit(dhrid)
                 else:
-                    cur.execute(f"INSERT INTO ratelimit VALUES ('{ip}', '429-error', {int(time.time())}, 1)")
-                    conn.commit()
+                    await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{ip}', '429-error', {int(time.time())}, 1)")
+                    await aiosql.commit(dhrid)
 
                 retry_after = limittime - (int(time.time()) - first_request_timestamp)
                 resp_headers = {}
@@ -571,20 +603,18 @@ def ratelimit(request, ip, endpoint, limittime, limitcnt):
                 resp_headers["X-RateLimit-Global"] = "false"
                 resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
                     "retry_after": str(retry_after), "global": False}
-                conn.close()
                 return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
             else:
-                cur.execute(f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
-                conn.commit()
+                await aiosql.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
+                await aiosql.commit(dhrid)
                 resp_headers = {}
                 resp_headers["X-RateLimit-Limit"] = str(limitcnt)
                 resp_headers["X-RateLimit-Remaining"] = str(limitcnt - request_count - 1)
                 resp_headers["X-RateLimit-Reset"] = str(first_request_timestamp + limittime)
                 resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
-                conn.close()
                 return (False, resp_headers)
 
-def auth(authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = []):
+async def auth(dhrid, authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = []):
     # authorization header basic check
     if authorization is None:
         return {"error": True, "descriptor": "Unauthorized", "code": 401}
@@ -596,24 +626,16 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
     if not stoken.replace("-","").isalnum():
         return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
-    conn = genconn()
-    cur = conn.cursor()
-
-    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
-    cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
-
     # application token
     if tokentype == "Application":
         # check if allowed
         if not allow_application_token:
-            conn.close()
             return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited"), "code": 401}
 
         # validate token
-        cur.execute(f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
         discordid = t[0][0]
 
@@ -622,16 +644,14 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         # additional check
         
         # this should not happen but just in case
-        cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
@@ -646,24 +666,21 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
                         ok = True
             
             if not ok:
-                conn.close()
                 return {"error": True, "descriptor": "Forbidden", "code": 403}
 
-        cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+        t = await aiosql.fetchall(dhrid)
         language = ""
         if len(t) != 0:
             language = t[0][0]
 
-        conn.close()
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": True}
 
     # bearer token
     elif tokentype == "Bearer":
-        cur.execute(f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
         discordid = t[0][0]
         ip = t[0][1]
@@ -674,32 +691,29 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
         # check country
         curCountry = getRequestCountry(request, abbr = True)
         if curCountry != country and country != "":
-            cur.execute(f"DELETE FROM session WHERE token = '{stoken}'")
-            conn.commit()
-            conn.close()
+            await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
+            await aiosql.commit(dhrid)
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         if ip != request.client.host:
-            cur.execute(f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            await aiosql.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
         if curCountry != country and not curCountry != "" and country != "":
-            cur.execute(f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
+            await aiosql.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
         if getUserAgent(request) != user_agent:
-            cur.execute(f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
-        conn.commit()
+            await aiosql.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
+        await aiosql.commit(dhrid)
         
         # additional check
         
         # this should not happen but just in case
-        cur.execute(f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
+        t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            conn.close()
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
         while "" in roles:
@@ -715,49 +729,43 @@ def auth(authorization, request, check_ip_address = True, allow_application_toke
                         ok = True
             
             if not ok:
-                conn.close()
                 return {"error": True, "descriptor": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
-            cur.execute(f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
-            conn.commit()
+            await aiosql.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            await aiosql.commit(dhrid)
 
-        cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
+        t = await aiosql.fetchall(dhrid)
         language = ""
         if len(t) != 0:
             language = t[0][0]
             
-        conn.close()
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": False}
     
-    conn.close()
     return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
-async def AuditLog(userid, text):
+async def AuditLog(dhrid, userid, text):
     try:
-        conn = genconn()
-        cur = conn.cursor()
         name = "Unknown User"
         if userid == -999:
             name = "System"
         elif userid == -998:
             name = "Discord API"
         else:
-            cur.execute(f"SELECT name FROM user WHERE userid = {userid}")
-            t = cur.fetchall()
+            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {userid}")
+            t = await aiosql.fetchall(dhrid)
             if len(t) > 0:
                 name = t[0][0]
         if userid != -998:
-            cur.execute(f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
-            conn.commit()
-        conn.close()
+            await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
+            await aiosql.commit(dhrid)
         if config.webhook_audit != "":
             async with ClientSession() as session:
                 webhook = Webhook.from_url(config.webhook_audit, session=session)
                 embed = Embed(description = text, color = config.rgbcolor)
                 if userid not in [-999, -998]:
-                    embed.set_footer(text = f"{name} (ID {userid})", icon_url = getAvatarSrc(userid))
+                    embed.set_footer(text = f"{name} (ID {userid})", icon_url = await getAvatarSrc(dhrid, userid))
                 else:
                     embed.set_footer(text = f"{name}")
                 embed.timestamp = datetime.now()

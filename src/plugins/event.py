@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -44,7 +44,6 @@ def EventNotification():
             for tt in t:
                 if str(tt[0]) in notified:
                     continue
-                
                 notified.append(str(tt[0]))
                 cur.execute(f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
                 conn.commit()
@@ -63,11 +62,11 @@ def EventNotification():
                 while "" in vote:
                     vote.remove("")
                 for vt in vote:
-                    discordid = str(getUserInfo(userid = vt)["discordid"])
+                    discordid = int(bGetUserInfo(userid = vt)["discordid"])
                     if discordid in tonotify.keys():
                         channelid = tonotify[discordid]
-                        language = GetUserLanguage(discordid, "en")
-                        QueueDiscordMessage(channelid, {"embeds": [{"title": ml.tr(request, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
+                        language = bGetUserLanguage(discordid, "en")
+                        QueueDiscordMessage(channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
                             "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
                                 {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
                                 {"name": ml.tr(None, "destination", force_lang = language), "value": destination, "inline": True},
@@ -78,6 +77,7 @@ def EventNotification():
                             "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": config.intcolor}]})
                             
                 time.sleep(1)
+            cur.close()
             conn.close()
         except:
             traceback.print_exc()
@@ -86,7 +86,10 @@ def EventNotification():
 
 @app.get(f"/{config.abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /event', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /event', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -100,7 +103,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if stoken == "guest":
         userid = -1
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -108,11 +111,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], f"events")
+            await activityUpdate(dhrid, au["discordid"], f"events")
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = aulanguage)}
@@ -134,11 +134,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         vote.remove("")
     attendee_ret = []
     for at in attendee:
-        name = getUserInfo(userid = at)["name"]
+        name = (await getUserInfo(dhrid, userid = at))["name"]
         attendee_ret.append({"userid": at, "name": name})
     vote_ret = []
     for vt in vote:
-        name = getUserInfo(userid = vt)["name"]
+        name = (await getUserInfo(dhrid, userid = vt))["name"]
         vote_ret.append({"userid": vt, "name": name})
 
     return {"error": False, "response": {"event": {"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]),\
@@ -150,7 +150,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
         first_event_after: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /event/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /event/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -164,7 +167,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     if stoken == "guest":
         userid = -1
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -172,13 +175,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], f"events")
+            await activityUpdate(dhrid, au["discordid"], f"events")
     
     if first_event_after < 0:
         first_event_after = int(time.time()) - 86400
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     limit = ""
     if userid == -1:
@@ -210,11 +210,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             vote.remove("")
         attendee_ret = []
         for at in attendee:
-            name = getUserInfo(userid = at)["name"]
+            name = (await getUserInfo(dhrid, userid = at))["name"]
             attendee_ret.append({"userid": at, "name": name})
         vote_ret = []
         for vt in vote:
-            name = getUserInfo(userid = vt)["name"]
+            name = (await getUserInfo(dhrid, userid = vt))["name"]
             vote_ret.append({"userid": vt, "name": name})
         ret.append({"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": str(tt[5]), \
@@ -241,11 +241,11 @@ async def getEvent(request: Request, response: Response, authorization: str = He
             vote.remove("")
         attendee_ret = []
         for at in attendee:
-            name = getUserInfo(userid = at)["name"]
+            name = (await getUserInfo(dhrid, userid = at))["name"]
             attendee_ret.append({"userid": at, "name": name})
         vote_ret = []
         for vt in vote:
-            name = getUserInfo(userid = vt)["name"]
+            name = (await getUserInfo(dhrid, userid = vt))["name"]
             vote_ret.append({"userid": vt, "name": name})
         ret.append({"eventid": str(tt[0]), "title": tt[8], "description": decompress(tt[7]), \
             "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3],\
@@ -263,7 +263,10 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.abbr}/event/all")
 async def getAllEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'GET /event/all', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /event/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -276,15 +279,12 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
     if stoken == "guest":
         userid = -1
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             userid = -1
         else:
             userid = au["userid"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0"
@@ -299,22 +299,22 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
 @app.patch(f"/{config.abbr}/event/vote")
 async def patchEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /event/vote', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     userid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -325,6 +325,8 @@ async def patchEventVote(request: Request, response: Response, authorization: st
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     vote = t[0][0].split(",")
+    while "" in vote:
+        vote.remove("")
     if str(userid) in vote:
         vote.remove(str(userid))
         await aiosql.execute(dhrid, f"UPDATE event SET vote = '{','.join(vote)}' WHERE eventid = {eventid}")
@@ -338,22 +340,22 @@ async def patchEventVote(request: Request, response: Response, authorization: st
 
 @app.post(f"/{config.abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /event', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         title = convert_quotation(form["title"])
@@ -391,29 +393,29 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     nxteventid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxteventid+1} WHERE skey = 'nxteventid'")
     await aiosql.execute(dhrid, f"INSERT INTO event VALUES ({nxteventid}, {adminid}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
-    await AuditLog(adminid, f"Created event `#{nxteventid}`")
+    await AuditLog(dhrid, adminid, f"Created event `#{nxteventid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False, "response": {"eventid": str(nxteventid)}}
 
 @app.patch(f"/{config.abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /event', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -458,29 +460,29 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
     
     await aiosql.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', \
         distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
-    await AuditLog(adminid, f"Updated event `#{eventid}`")
+    await AuditLog(dhrid, adminid, f"Updated event `#{eventid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False}
 
 @app.delete(f"/{config.abbr}/event")
 async def deleteEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /event', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if int(eventid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -492,29 +494,29 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
         return {"error": True, "descriptor": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
-    await AuditLog(adminid, f"Deleted event `#{eventid}`")
+    await AuditLog(dhrid, adminid, f"Deleted event `#{eventid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False}
 
 @app.patch(f"/{config.abbr}/event/attendee")
 async def patchEventAttendee(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /event/attendee', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event/attendee', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-    
     form = await request.form()
     try:
         attendees = str(form["attendees"]).replace(" ","").split(",")
@@ -551,9 +553,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         if attendee in orgattendees:
             continue
         attendee = int(attendee)
-        name = getUserInfo(userid = attendee)["name"]
-        discordid = getUserInfo(userid = attendee)["discordid"]
-        notification("event", discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+        name = (await getUserInfo(dhrid, userid = attendee))["name"]
+        discordid = (await getUserInfo(dhrid, userid = attendee))["discordid"]
+        await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
         ret1 += f"{name} ({attendee}), "
         cnt += 1
     ret1 = ret1[:-2]
@@ -568,9 +570,9 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         if not attendee in attendees:
             toremove.append(attendee)
             attendee = int(attendee)
-            name = getUserInfo(userid = attendee)["name"]
-            discordid = getUserInfo(userid = attendee)["discordid"]
-            notification("event", discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+            name = (await getUserInfo(dhrid, userid = attendee))["name"]
+            discordid = (await getUserInfo(dhrid, userid = attendee))["discordid"]
+            await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             ret2 += f"{name} ({attendee}), "
             cnt += 1
     ret2 = ret2[:-2]
@@ -588,12 +590,12 @@ async def patchEventAttendee(request: Request, response: Response, authorization
         cnt = 0
         for attendee in orgattendees:
             attendee = int(attendee)
-            name = getUserInfo(userid = attendee)["name"]
-            discordid = getUserInfo(userid = attendee)["discordid"]
+            name = (await getUserInfo(dhrid, userid = attendee))["name"]
+            discordid = (await getUserInfo(dhrid, userid = attendee))["discordid"]
             if gap > 0:
-                notification("event", discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+                await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             elif gap < 0:
-                notification("event", discordid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = GetUserLanguage(discordid, "en")))
+                await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             ret3 += f"{name} ({attendee}), "
             cnt += 1
         ret3 = ret3[:-2]
@@ -607,5 +609,5 @@ async def patchEventAttendee(request: Request, response: Response, authorization
     if ret == f"Updated event #{eventid} attendees  \n":
         return {"error": False, "response": {"message": "No changes made."}}
 
-    await AuditLog(adminid, ret)
+    await AuditLog(dhrid, adminid, ret)
     return {"error": False, "response": {"message": ret}}

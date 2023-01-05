@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import os, sys, time, json, threading

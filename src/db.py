@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 import MySQLdb
@@ -132,30 +132,7 @@ def genconn():
     conn.ping()
     return conn
 
-gconn = genconn()
-gconnexp = 0
-
-def newconn():
-    global gconn
-    global gconnexp
-    try:
-        if gconnexp < time.time(): # expire gconn
-            try:
-                gconn.close() # force close
-            except:
-                pass
-            gconn = genconn()
-            gconnexp = time.time() + 15
-        else: # gconn not expired, try ping
-            gconn.ping()
-        return gconn
-    except:
-        gconn = genconn()
-        gconnexp = time.time() + 15
-        return gconn
-
 # ASYNCIO aiomysql
-
 class AIOSQL:
     def __init__(self, host, user, passwd, dbname):
         self.host = host
@@ -166,14 +143,7 @@ class AIOSQL:
         self.pool = None
         self.shutdown_lock = False
 
-    async def new_conn(self, dhrid):
-        while self.shutdown_lock:
-            await asyncio.sleep(0.1)
-
-        if self.pool is None: # init pool
-            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 5)
-
+    def release(self):
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
@@ -187,9 +157,21 @@ class AIOSQL:
                     pass
         for tdhrid in to_delete:
             del conns[tdhrid]
+        self.conns = conns
+
+    async def new_conn(self, dhrid):
+        while self.shutdown_lock:
+            await asyncio.sleep(0.1)
+
+        if self.pool is None: # init pool
+            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5)
+
+        self.release()
 
         conn = await self.pool.acquire()
         cur = await conn.cursor()
+        conns = self.conns
         conns[dhrid] = [conn, cur, time.time()]
         self.conns = conns
 
@@ -208,22 +190,36 @@ class AIOSQL:
         self.pool.release(self.conns[dhrid][0])
         del self.conns[dhrid]
 
+    async def refresh(self, dhrid):
+        conns = self.conns
+        try:
+            conns[dhrid][2] = time.time()
+        except:
+            try:
+                conn = await self.pool.acquire()
+                cur = await conn.cursor()
+                conns = self.conns
+                conns[dhrid] = [conn, cur, time.time()]
+            except:
+                pass
+        self.conns = conns
+
     async def commit(self, dhrid):
+        await self.refresh(dhrid)
         await self.conns[dhrid][0].commit()
-        self.conns[dhrid][2] = time.time()
 
     async def execute(self, dhrid, sql):
+        await self.refresh(dhrid)
         await self.conns[dhrid][1].execute(sql)
-        self.conns[dhrid][2] = time.time()
 
     async def fetchone(self, dhrid):
+        await self.refresh(dhrid)
         ret = await self.conns[dhrid][1].fetchone()
-        self.conns[dhrid][2] = time.time()
         return ret
 
     async def fetchall(self, dhrid):
+        await self.refresh(dhrid)
         ret = await self.conns[dhrid][1].fetchall()
-        self.conns[dhrid][2] = time.time()
         return ret
 
 aiosql = AIOSQL(host = host, user = user, passwd = passwd, dbname = dbname)

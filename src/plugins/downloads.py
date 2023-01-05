@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -7,37 +7,37 @@ from fastapi.responses import RedirectResponse
 import json, time, requests, random, string
 
 from app import app, config
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
 @app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /downloads', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
+    staffau = await auth(dhrid, authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    activityUpdate(au["discordid"], "downloads")
+    await activityUpdate(dhrid, au["discordid"], "downloads")
 
     if downloadsid <= 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -51,31 +51,34 @@ async def getDownloads(request: Request, response: Response, authorization: str 
     await aiosql.commit(dhrid)
 
     if not isstaff:
-        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
+        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
     else:
-        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
+        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
 
 @app.get(f"/{config.abbr}/downloads/list")
 async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
         title: Optional[str] = "", creator_userid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /downloads/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffau = auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
+    staffau = await auth(dhrid, authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    activityUpdate(au["discordid"], "downloads")
+    await activityUpdate(dhrid, au["discordid"], "downloads")
         
     limit = ""
     if title != "":
@@ -99,17 +102,14 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
         order = "asc"
     order = order.upper()    
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-    
     await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
         if not isstaff:
-            ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "orderid": str(tt[6]), "click_count": str(tt[5])})
+            ret.append({"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "orderid": str(tt[6]), "click_count": str(tt[5])})
         else:
-            ret.append({"downloadsid": str(tt[0]), "creator": getUserInfo(userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "orderid": str(tt[6]), "click_count": str(tt[5])})
+            ret.append({"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "orderid": str(tt[6]), "click_count": str(tt[5])})
         
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
@@ -124,15 +124,15 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
 @app.get(f"/{config.abbr}/downloads/{{secret}}")
 async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
         secret: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /downloads/redirect', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/redirect', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
     await aiosql.commit(dhrid)
 
@@ -159,22 +159,22 @@ async def redirectDownloads(request: Request, response: Response, authorization:
 
 @app.post(f"/{config.abbr}/downloads")
 async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /downloads', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-    
     form = await request.form()
     try:
         title = convert_quotation(form["title"])
@@ -206,7 +206,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
     nxtdownloadsid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")
     await aiosql.execute(dhrid, f"INSERT INTO downloads VALUES ({nxtdownloadsid}, {adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
-    await AuditLog(adminid, f"Created downloadable item `#{nxtdownloadsid}`")
+    await AuditLog(dhrid, adminid, f"Created downloadable item `#{nxtdownloadsid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False, "response": {"downloadsid": str(nxtdownloadsid)}}
@@ -214,29 +214,26 @@ async def postDownloads(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /downloads', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if downloadsid <= 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     await aiosql.execute(dhrid, f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -270,7 +267,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
-    await AuditLog(adminid, f"Updated downloadable item `#{downloadsid}`")
+    await AuditLog(dhrid, adminid, f"Updated downloadable item `#{downloadsid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False}
@@ -278,22 +275,22 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 @app.delete(f"/{config.abbr}/downloads")
 async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /downloads', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if int(downloadsid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
@@ -305,7 +302,7 @@ async def deleteDownloads(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
-    await AuditLog(adminid, f"Deleted downloadable item `#{downloadsid}`")
+    await AuditLog(dhrid, adminid, f"Deleted downloadable item `#{downloadsid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False}

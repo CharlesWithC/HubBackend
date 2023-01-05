@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -10,7 +10,7 @@ import json, time, requests
 import traceback
 
 from app import app, config
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
@@ -51,13 +51,16 @@ async def getDivisions(request: Request, response: Response):
 # Get division info
 @app.get(f"/{config.abbr}/division")
 async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /division', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /division', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -66,9 +69,6 @@ async def getDivision(request: Request, response: Response, authorization: str =
     userid = au["userid"]
     roles = au["roles"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     if logid != -1:
         await aiosql.execute(dhrid, f"SELECT divisionid, userid, request_timestamp, status, update_timestamp, update_staff_userid, message FROM division WHERE logid = {logid} AND logid >= 0")
         t = await aiosql.fetchall(dhrid)
@@ -106,11 +106,11 @@ async def getDivision(request: Request, response: Response, authorization: str =
         if userid == duserid or ok: # delivery driver check division / division staff check delivery
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status), \
                 "request_timestamp": str(request_timestamp), "update_timestamp": str(update_timestamp), \
-                    "update_staff": getUserInfo(userid = update_staff_userid), "update_message": message}}
+                    "update_staff": await getUserInfo(dhrid, userid = update_staff_userid), "update_message": message}}
         else:
             return {"error": False, "response": {"divisionid": str(divisionid), "status": str(status)}}
 
-    activityUpdate(au["discordid"], f"divisions")
+    await activityUpdate(dhrid, au["discordid"], f"divisions")
     
     stats = []
     for division in divisions:
@@ -134,13 +134,16 @@ async def getDivision(request: Request, response: Response, authorization: str =
 # Self-operation
 @app.post(f"/{config.abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'POST /division', 180, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /division', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -148,9 +151,6 @@ async def postDivision(request: Request, response: Response, authorization: str 
     discordid = au["discordid"]
     userid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         logid = int(form["logid"])
@@ -201,8 +201,8 @@ async def postDivision(request: Request, response: Response, authorization: str 
     await aiosql.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     await aiosql.commit(dhrid)
     
-    language = GetUserLanguage(discordid)
-    notification("division", discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
+    language = await GetUserLanguage(dhrid, discordid)
+    await notification(dhrid, "division", discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
@@ -237,13 +237,16 @@ async def postDivision(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
         page: Optional[int] = 1, page_size: Optional[int] = 10):
-    rl = ratelimit(request, request.client.host, 'GET /division/list/pending', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /division/list/pending', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -257,9 +260,6 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     elif page_size >= 250:
         page_size = 250
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     limit = ""
     if divisionid != -1:
         limit = f"AND divisionid = {divisionid}"
@@ -268,7 +268,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": getUserInfo(userid = tt[1])})
+        ret.append({"logid": str(tt[0]), "divisionid": str(tt[2]), "user": await getUserInfo(dhrid, userid = tt[1])})
     
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
     t = await aiosql.fetchall(dhrid)
@@ -280,22 +280,22 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
 @app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /division', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /division', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         logid = int(form["logid"])
@@ -321,17 +321,17 @@ async def patchDivision(request: Request, response: Response, authorization: str
     await aiosql.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    await AuditLog(adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
+    await AuditLog(dhrid, adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
 
-    discordid = getUserInfo(userid = userid)["discordid"]
-    adiscordid = getUserInfo(userid = adminid)["discordid"]
+    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+    adiscordid = (await getUserInfo(dhrid, userid = adminid))["discordid"]
 
-    language = GetUserLanguage(discordid)
+    language = await GetUserLanguage(dhrid, discordid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[int(status)]
 
-    notification("division", discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = GetUserLanguage(discordid, "en")), \
+    await notification(dhrid, "division", discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \

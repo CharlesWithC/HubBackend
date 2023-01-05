@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import Request, Header, Response
@@ -47,9 +47,11 @@ if "event" in config.enabled_plugins:
 # basic info
 @app.get(f'/{config.abbr}')
 async def index(request: Request, authorization: str = Header(None)):
-    au = auth(authorization, request, check_member = False)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if not au["error"]:
-        activityUpdate(au["discordid"], "index")
+        await activityUpdate(dhrid, au["discordid"], "index")
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")

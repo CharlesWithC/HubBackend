@@ -1,5 +1,8 @@
 # Changelog
 
+**v1.21.17**  
+Optimized database connection management  
+
 **v1.21.16**  
 Implemented database connection pool for better stability  
 

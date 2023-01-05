@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import Request, Header, Response
@@ -8,7 +8,7 @@ import json, copy, math, os, time
 import threading
 
 from app import app, config, tconfig, config_path, validateConfig
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
@@ -23,14 +23,17 @@ backup_config = copy.deepcopy(tconfig)
 
 # get config
 @app.get(f"/{config.abbr}/config")
-async def getConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'GET /config', 60, 60)
+async def getConfig(request: Request, response: Response, authorization: str = Header(None)):    
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "config"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -88,14 +91,17 @@ def reload():
 
 # update config
 @app.patch(f"/{config.abbr}/config")
-async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /config', 60, 60)
+async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):    
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "config"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -190,28 +196,28 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     open(config_path, "w", encoding="utf-8").write(json.dumps(ttconfig, indent=4, ensure_ascii=False))
 
-    await AuditLog(adminid, "Updated config")
+    await AuditLog(dhrid, adminid, "Updated config")
 
     return {"error": False}
 
 # reload service
 @app.post(f"/{config.abbr}/reload")
-async def postReload(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /reload', 600, 3)
+async def postReload(request: Request, response: Response, authorization: str = Header(None)):    
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /reload', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "reload"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "reload"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {adminid}")
     t = await aiosql.fetchall(dhrid)
@@ -230,7 +236,7 @@ async def postReload(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(adminid, "Reloaded service")
+    await AuditLog(dhrid, adminid, "Reloaded service")
 
     threading.Thread(target=reload).start()
 
@@ -239,22 +245,22 @@ async def postReload(request: Request, response: Response, authorization: str = 
 # get audit log (require audit / admin permission)
 @app.get(f"/{config.abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /audit', 60, 60)
+    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):    
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /audit', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "audit"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "audit"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     if page <= 0:
         page = 1
@@ -274,7 +280,7 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": getUserInfo(userid = tt[0]), "operation": tt[1], "timestamp": str(tt[2])})
+        ret.append({"user": await getUserInfo(dhrid, userid = tt[0]), "operation": tt[1], "timestamp": str(tt[2])})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
     t = await aiosql.fetchall(dhrid)

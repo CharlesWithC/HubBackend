@@ -1,11 +1,11 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.16"
+version = "v1.21.17"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 

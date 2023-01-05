@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -13,7 +13,7 @@ import collections, string
 import traceback
 
 from app import app, config, tconfig
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 from plugins.division import DIVISIONPNT
@@ -102,22 +102,22 @@ async def getMemberList(request: Request, response: Response, authorization: str
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = -1,\
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
-    rl = ratelimit(request, request.client.host, 'GET /member/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     
     if config.privacy:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
-        activityUpdate(au["discordid"], f"members")
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
+        await activityUpdate(dhrid, au["discordid"], f"members")
     
     if page <= 0:
         page = 1
@@ -216,21 +216,21 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
 @app.get(f"/{config.abbr}/member/list/all")
 async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'GET /member/list/all', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
     if config.privacy:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     await aiosql.execute(dhrid, f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
     t = await aiosql.fetchall(dhrid)
@@ -246,9 +246,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
     
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 10)
-    if rl[0]:
-        return rl
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
 
     qu = ""
     if userid != -1:
@@ -263,9 +262,6 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-        
     await aiosql.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -278,10 +274,6 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     for param in request.query_params:
         if param != "userid":
             return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={userid}", status_code=302)
-
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 10)
-    if rl[0]:
-        return rl
             
     t = t[0]
     userid = t[5]
@@ -311,7 +303,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
             response = StreamingResponse(iter([open(f"/tmp/hub/banner/{config.abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
             return response
 
-    rl = ratelimit(request, request.client.host, 'GET /member/banner', 10, 5)
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/banner', 10, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -370,13 +362,16 @@ async def getUserBanner(request: Request, response: Response, authorization: str
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /member/roles/rank', 60, 3)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles/rank', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -384,9 +379,6 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     discordid = au["discordid"]
     userid = au["userid"]
     username = au["name"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     ratio = 1
     if config.distance_unit == "imperial":
@@ -505,13 +497,13 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
                     else:
                         for role in curroles:
                             r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                             if r.status_code // 100 != 2:
                                 err = json.loads(r.text)
-                                await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+                                await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
                 except:
                     traceback.print_exc()
                 
@@ -525,7 +517,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     await AutoMessage(meta, setvar)
 
                 rankname = point2rankname(totalpnt)
-                notification("member", discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = GetUserLanguage(discordid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = GetUserLanguage(discordid)), "description": f"**{rankname}**", "fields": []})
+                await notification(dhrid, "member", discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(dhrid, discordid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(dhrid, discordid)), "description": f"**{rankname}**", "fields": []})
                 return {"error": False, "response": ml.tr(request, "discord_role_given")}
         else:
             response.status_code = 428
@@ -537,21 +529,21 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 # Member Operation Section
 @app.put(f'/{config.abbr}/member')
 async def putMember(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /member', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PUT /member', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -582,31 +574,31 @@ async def putMember(request: Request, response: Response, authorization: str = H
     name = t[0][1]
     await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
+    await AuditLog(dhrid, adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
     await aiosql.commit(dhrid)
 
-    notification("member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = GetUserLanguage(discordid, "en")))
+    await notification(dhrid, "member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     return {"error": False, "response": {"userid": str(userid)}}   
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /member/roles', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
     adminroles = au["roles"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     adminhighest = 99999
     for i in adminroles:
@@ -712,8 +704,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     def setvar(msg):
         return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
 
+    navio_error = ""
     if config.perms.driver[0] in addedroles:
-        navio_error = ""
         try:
             r = requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
             if r.status_code == 401:
@@ -731,9 +723,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             navio_error = "Navio API Timeout"
 
         if navio_error != "":
-            await AuditLog(adminid, f"Failed to add `{username}` (User ID: `{userid}`) to Navio Company.  \n"+navio_error)
+            await AuditLog(dhrid, adminid, f"Failed to add `{username}` (User ID: `{userid}`) to Navio Company.  \n"+navio_error)
         else:
-            await AuditLog(adminid, f"Added `{username}` (User ID: `{userid}`) to Navio Company.")
+            await AuditLog(dhrid, adminid, f"Added `{username}` (User ID: `{userid}`) to Navio Company.")
 
         if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
             meta = config.team_update
@@ -750,17 +742,16 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                         r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
-                            await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                            await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
                         r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
-                            await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                            await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
                 except:
                     traceback.print_exc()
 
     if config.perms.driver[0] in removedroles:
-        navio_error = ""
         try:
             r = requests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.navio_api_token})
             if r.status_code == 401:
@@ -778,9 +769,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             navio_error = "Navio API Timeout"
 
         if navio_error != "":
-            await AuditLog(adminid, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+            await AuditLog(dhrid, adminid, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
         else:
-            await AuditLog(adminid, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+            await AuditLog(dhrid, adminid, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
 
         if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
             meta = config.member_leave
@@ -793,12 +784,12 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                         r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
-                            await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                            await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
                         r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
-                            await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                            await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
                 except:
                     traceback.print_exc()
     
@@ -811,11 +802,11 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         upd += f"`- {ROLES[remove]}`  \n"
         audit += f"`- {ROLES[remove]}`  \n"
     audit = audit[:-1]
-    await AuditLog(adminid, audit)
+    await AuditLog(dhrid, adminid, audit)
     await aiosql.commit(dhrid)
 
-    discordid = getUserInfo(userid = userid)["discordid"]
-    notification("member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = GetUserLanguage(discordid, "en")))
+    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+    await notification(dhrid, "member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     if navio_error != "":
         return {"error": False, "response": {"navio_api_error": navio_error.replace("Navio API Error: ", "")}}
@@ -824,22 +815,22 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /member/point', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/point', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_member_points"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_member_points"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         userid = int(form["userid"])
@@ -865,22 +856,25 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     if int(distance) > 0:
         distance = "+" + form["distance"]
     
-    username = getUserInfo(userid = userid)["name"]
-    await AuditLog(adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
-    discordid = getUserInfo(userid = userid)["discordid"]
-    notification("member", discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = GetUserLanguage(discordid, "en")))
+    username = (await getUserInfo(dhrid, userid = userid))["name"]
+    await AuditLog(dhrid, adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
+    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+    await notification(dhrid, "member", discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     return {"error": False}
 
 @app.post(f"/{config.abbr}/member/resign")
 async def postMemberResign(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /member/resign', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/resign', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request)
+    au = await auth(dhrid, authorization, request)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -894,9 +888,6 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
@@ -941,9 +932,9 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         navio_error = "Navio API Timeout"
 
     if navio_error != "":
-        await AuditLog(-999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+        await AuditLog(dhrid, -999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
     else:
-        await AuditLog(-999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+        await AuditLog(dhrid, -999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
 
     def setvar(msg):
         return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
@@ -959,12 +950,12 @@ async def postMemberResign(request: Request, response: Response, authorization: 
                     r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                 elif int(role) > 0:
                     r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
             except:
                 traceback.print_exc()
     
@@ -982,24 +973,27 @@ async def postMemberResign(request: Request, response: Response, authorization: 
                 r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                 if r.status_code // 100 != 2:
                     err = json.loads(r.text)
-                    await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+                    await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
     except:
         pass
 
-    await AuditLog(-999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
-    notification("member", discordid, ml.tr(request, "member_resigned", force_lang = GetUserLanguage(discordid)))
+    await AuditLog(dhrid, -999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
+    await notification(dhrid, "member", discordid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, discordid)))
     
     return {"error": False}
 
 @app.post(f"/{config.abbr}/member/dismiss")
 async def postMemberDismiss(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'POST /member/dismiss', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/dismiss', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1012,9 +1006,6 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     if stoken.startswith("e"):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     adminhighest = 99999
     for i in adminroles:
@@ -1068,9 +1059,9 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         navio_error = "Navio API Timeout"
 
     if navio_error != "":
-        await AuditLog(-999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
+        await AuditLog(dhrid, -999, f"Failed to remove `{username}` (User ID: `{userid}`) from Navio Company.  \n"+navio_error)
     else:
-        await AuditLog(-999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
+        await AuditLog(dhrid, -999, f"Removed `{username}` (User ID: `{userid}`) from Navio Company.")
 
     def setvar(msg):
         return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
@@ -1086,12 +1077,12 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
                     r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{udiscordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{udiscordid}>: `{err["message"]}`')
                 elif int(role) > 0:
                     r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(-998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{udiscordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{udiscordid}>: `{err["message"]}`')
             except:
                 traceback.print_exc() 
     
@@ -1109,10 +1100,10 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
                 r = requests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{role}', headers=headers, timeout = 3)
                 if r.status_code // 100 != 2:
                     err = json.loads(r.text)
-                    await AuditLog(-998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{udiscordid}>: `{err["message"]}`')
+                    await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{udiscordid}>: `{err["message"]}`')
     except:
         pass   
         
-    await AuditLog(adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
-    notification("member", udiscordid, ml.tr(request, "member_dismissed", force_lang = GetUserLanguage(udiscordid, "en")))
+    await AuditLog(dhrid, adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
+    await notification(dhrid, "member", udiscordid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(dhrid, udiscordid, "en")))
     return {"error": False}

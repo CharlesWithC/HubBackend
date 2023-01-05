@@ -48,7 +48,7 @@ user = config.mysql_user
 passwd = config.mysql_passwd
 dbname = config.mysql_db
 
-def newconn():
+def genconn():
     conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
     cur = conn.cursor()
     cur.execute("SET session wait_timeout=10;")
@@ -57,7 +57,7 @@ def newconn():
 async def work(uri):
     lasthandshake = 0
     lastcommit = 0
-    conn = newconn()
+    conn = genconn()
     cur = conn.cursor()
     async with connect(uri, ping_interval=30) as websocket:
         print(f"Company Name: {config.name}")
@@ -100,7 +100,7 @@ async def work(uri):
                 try:
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                 except:
-                    conn = newconn()
+                    conn = genconn()
                     cur = conn.cursor()
                     cur.execute(f"INSERT INTO temptelemetry VALUES ({steamid}, '{uuid}', {game}, {x}, {y}, {z}, '{mods}', {int(time.time())})")
                     pass
@@ -124,7 +124,7 @@ async def work(uri):
                 except:
                     traceback.print_exc()
 
-                conn = newconn()
+                conn = genconn()
                 cur = conn.cursor()
             await asyncio.sleep(0.01)
 

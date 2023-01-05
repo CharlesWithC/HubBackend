@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -7,7 +7,7 @@ import os, json, time, requests, uuid, math, bcrypt
 import traceback
 
 from app import app, config
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
@@ -15,7 +15,10 @@ import multilang as ml
 @app.get(f'/{config.abbr}/user')
 async def getUser(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /user', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -25,7 +28,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     udiscordid = -1
     aulanguage = ""
     if userid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
-        au = auth(authorization, request, check_member = False, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -37,7 +40,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
             selfq = True
             aulanguage = au["language"]
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             if config.privacy:
                 response.status_code = au["code"]
@@ -48,9 +51,6 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
             roles = au["roles"]
             aulanguage = au["language"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     isAdmin = False
     isHR = False
     for i in roles:
@@ -96,7 +96,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
         mfa_enabled = True
 
     if userid >= 0:
-        activityUpdate(udiscordid, f"member_{userid}")
+        await activityUpdate(dhrid, udiscordid, f"member_{userid}")
 
     activity_last_seen = 0
     activity_name = "offline"
@@ -125,22 +125,22 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 async def getUserNotificationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, content: Optional[str] = '', status: Optional[int] = -1, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
-    rl = ratelimit(request, request.client.host, 'GET /user/notification/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-    
     if page <= 0:
         page = 1
 
@@ -183,22 +183,22 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
 @app.patch(f"/{config.abbr}/user/notification/status")
 async def patchUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
         notificationids: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/notification/status', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/notification/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
         
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         read = 0
@@ -227,21 +227,21 @@ async def patchUserNotificationStatus(request: Request, response: Response, auth
 
 @app.get(f"/{config.abbr}/user/notification/settings")
 async def getNotificationSettings(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'GET /user/notification/settings', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/settings', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
@@ -261,21 +261,21 @@ async def enableNotification(request: Request, response: Response, notification_
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    rl = ratelimit(request, request.client.host, 'POST /user/notification/notification_type/enable', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/notification_type/enable', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
@@ -300,7 +300,7 @@ async def enableNotification(request: Request, response: Response, notification_
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
-        rl = ratelimit(request, request.client.host, 'PATCH /user/notification/discord/enable', 60, 5)
+        rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/notification/discord/enable', 60, 5)
         if rl[0]:
             return rl[1]
         for k in rl[1].keys():
@@ -325,8 +325,8 @@ async def enableNotification(request: Request, response: Response, notification_
 
             r = None
             try:
-                r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = GetUserLanguage(discordid)), 
-                "description": ml.tr(request, "discord_notification_enabled", force_lang = GetUserLanguage(discordid)), \
+                r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid)), 
+                "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, discordid)), \
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
             except:
@@ -367,21 +367,21 @@ async def disableNotification(request: Request, response: Response, notification
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    rl = ratelimit(request, request.client.host, 'POST /user/notification/notification_type/disable', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/notification_type/disable', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
@@ -415,21 +415,22 @@ async def disableNotification(request: Request, response: Response, notification
 
 @app.get(f"/{config.abbr}/user/language")
 async def getUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'GET /user/language', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/language', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -438,13 +439,16 @@ async def getUserLanguage(request: Request, response: Response, authorization: s
 
 @app.patch(f"/{config.abbr}/user/language")
 async def patchUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/language', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/language', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -462,8 +466,6 @@ async def patchUserLanguage(request: Request, response: Response, authorization:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "language_not_supported", force_lang = au["language"])}
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
     await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{discordid}', 'language', '{language}')")
     await aiosql.commit(dhrid)
@@ -474,20 +476,20 @@ async def patchUserLanguage(request: Request, response: Response, authorization:
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, name: Optional[str] = '', \
         order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
-    rl = ratelimit(request, request.client.host, 'GET /user/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     if page <= 0:
         page = 1
@@ -530,16 +532,16 @@ async def getUserList(request: Request, response: Response, authorization: str =
 @app.patch(f"/{config.abbr}/user/profile")
 async def patchUserProfile(request: Request, response: Response, authorization: str = Header(None), \
         discordid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/profile', 60, 15)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/profile', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -550,7 +552,7 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
     if discordid == -1 or discordid == au["discordid"]:
         discordid = au["discordid"]
     else:
-        au = auth(authorization, request, required_permission = ["admin", "hrm", "hr", "patch_username"])
+        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "patch_username"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -598,22 +600,22 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
     return {"error": False}
     
 @app.patch(f'/{config.abbr}/user/bio')
-async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/bio', 60, 30)
+async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):    
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/bio', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     form = await request.form()
     try:
@@ -633,13 +635,16 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
 @app.patch(f'/{config.abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/password', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/password', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -651,9 +656,6 @@ async def patchPassword(request: Request, response: Response, authorization: str
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
@@ -709,13 +711,16 @@ async def patchPassword(request: Request, response: Response, authorization: str
     
 @app.delete(f'/{config.abbr}/user/password')
 async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'DELETE /user/password', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/password', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -726,9 +731,6 @@ async def deletePassword(request: Request, response: Response, authorization: st
     if stoken.startswith("e"):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
 
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
@@ -761,21 +763,22 @@ async def deletePassword(request: Request, response: Response, authorization: st
 
 @app.post(f"/{config.abbr}/user/tip")
 async def postTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /user/tip', 180, 20)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/tip', 180, 20)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     stoken = str(uuid.uuid4())
     while stoken[0] == "f":
         stoken = str(uuid.uuid4())
@@ -787,7 +790,10 @@ async def postTemporaryIdentityProof(request: Request, response: Response, autho
 
 @app.get(f"/{config.abbr}/user/tip")
 async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /user/tip', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/tip', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -795,8 +801,6 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
 
     token = token.replace("'","")
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
     await aiosql.execute(dhrid, f"SELECT discordid FROM temp_identity_proof WHERE token = '{token}'")
     t = await aiosql.fetchall(dhrid)
@@ -805,25 +809,26 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
         return {"error": True, "descriptor": ml.tr(request, "invalid_token")}
     await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
     await aiosql.commit(dhrid)
-    return {"error": False, "response": {"user": getUserInfo(discordid = t[0][0])}}
+    return {"error": False, "response": {"user": await getUserInfo(dhrid, discordid = t[0][0])}}
 
 @app.post(f"/{config.abbr}/user/mfa")
 async def postMFA(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /user/mfa', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/mfa', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
 
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     secret = t[0][0]
@@ -856,14 +861,17 @@ async def postMFA(request: Request, response: Response, authorization: str = Hea
     await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
     await aiosql.commit(dhrid)
         
-    username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(-999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
+    username = (await getUserInfo(dhrid, discordid = discordid))["name"]
+    await AuditLog(dhrid, -999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
     return {"error": False}
 
 @app.delete(f"/{config.abbr}/user/mfa")
 async def deleteMFA(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[str] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /user/mfa', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/mfa', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -871,15 +879,13 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
     
     if discordid == -1:
         # self-disable mfa
-        au = auth(authorization, request, check_member = False)
+        au = await auth(dhrid, authorization, request, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
         discordid = au["discordid"]
         
-        dhrid = genrid() # conn = await aiosql.new_conn()
-        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
         secret = t[0][0]
@@ -901,22 +907,20 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = getUserInfo(discordid = discordid)["name"]
-        await AuditLog(-999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
+        username = (await getUserInfo(dhrid, discordid = discordid))["name"]
+        await AuditLog(dhrid, -999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
         return {"error": False}
     
     else:
         # admin / hrm disable user mfa
-        au = auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
+        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
         adminid = au["userid"]
 
-        dhrid = genrid() # conn = await aiosql.new_conn()
-        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
@@ -930,29 +934,29 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = getUserInfo(discordid = discordid)["name"]
-        await AuditLog(adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
+        username = (await getUserInfo(dhrid, discordid = discordid))["name"]
+        await AuditLog(dhrid, adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
         return {"error": False}
         
 @app.patch(f"/{config.abbr}/user/steam")
 async def patchSteam(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/steam', 60, 3)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/steam', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         openid = str(form["callback"]).replace("openid.mode=id_res", "openid.mode=check_authentication")
@@ -1001,7 +1005,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
                     requests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.navio_api_token})
                 except:
                     traceback.print_exc()
-                await AuditLog(userid, f"Updated Steam ID to `{steamid}`")
+                await AuditLog(dhrid, userid, f"Updated Steam ID to `{steamid}`")
 
     await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE discordid = '{discordid}'")
     await aiosql.commit(dhrid)
@@ -1026,22 +1030,22 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
 
 @app.patch(f"/{config.abbr}/user/truckersmp")
 async def patchTruckersMP(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/truckersmp', 60, 3)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/truckersmp', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     discordid = au["discordid"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     form = await request.form()
     try:
         truckersmpid = form["truckersmpid"]
@@ -1083,21 +1087,21 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
 # Manage User Section
 @app.put(f'/{config.abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PUT /user/ban', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PUT /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1137,7 +1141,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
         duration = "forever"
         if expire != 253402272000:
             duration = f'until `{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))}` UTC'
-        await AuditLog(adminid, f"Banned `{username}` (Discord ID: `{discordid}`) {duration}.")
+        await AuditLog(dhrid, adminid, f"Banned `{username}` (Discord ID: `{discordid}`) {duration}.")
         return {"error": False}
     else:
         response.status_code = 409
@@ -1145,21 +1149,21 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
 
 @app.delete(f'/{config.abbr}/user/ban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'DELETE /user/ban', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     adminid = au["userid"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1176,20 +1180,23 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"DELETE FROM banned WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = getUserInfo(discordid = discordid)["name"]
-        await AuditLog(adminid, f"Unbanned `{username}` (Discord ID: `{discordid}`)")
+        username = (await getUserInfo(dhrid, discordid = discordid))["name"]
+        await AuditLog(dhrid, adminid, f"Unbanned `{username}` (Discord ID: `{discordid}`)")
         return {"error": False}
 
 # Higher Management Section
 @app.patch(f"/{config.abbr}/user/discord")
 async def patchUserDiscord(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'PATCH /user/discord', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/discord', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1200,9 +1207,6 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     if stoken.startswith("e"):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1256,19 +1260,22 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     await aiosql.execute(dhrid, f"UPDATE settings SET discordid = {new_discord_id} WHERE discordid = {old_discord_id}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(adminid, f"Updated Discord ID from `{old_discord_id}` to `{new_discord_id}`")
+    await AuditLog(dhrid, adminid, f"Updated Discord ID from `{old_discord_id}` to `{new_discord_id}`")
 
     return {"error": False}
     
 @app.delete(f"/{config.abbr}/user/connections")
 async def deleteUserConnection(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'DELETE /user/connections', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/connections', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1279,9 +1286,6 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     if stoken.startswith("e"):
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     form = await request.form()
     try:
@@ -1303,20 +1307,23 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     await aiosql.execute(dhrid, f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
     await aiosql.commit(dhrid)
 
-    username = getUserInfo(discordid = discordid)["name"]
-    await AuditLog(adminid, f"Deleted connections of `{username}` (Discord ID: `{discordid}`)")
+    username = (await getUserInfo(dhrid, discordid = discordid))["name"]
+    await AuditLog(dhrid, adminid, f"Deleted connections of `{username}` (Discord ID: `{discordid}`)")
 
     return {"error": False}
     
 @app.delete(f"/{config.abbr}/user")
 async def deleteUser(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /user', 60, 10)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, check_member = False)
+    au = await auth(dhrid, authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1331,16 +1338,13 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     if discordid != -1:
-        au = auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
+        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "delete_user"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
         adminid = au["userid"]
 
-        dhrid = genrid() # conn = await aiosql.new_conn()
-        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-        
         await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
@@ -1351,7 +1355,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         
-        username = getUserInfo(discordid = discordid)["name"]
+        username = (await getUserInfo(dhrid, discordid = discordid))["name"]
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")
@@ -1362,15 +1366,12 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
 
-        await AuditLog(adminid, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
+        await AuditLog(dhrid, adminid, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
 
         return {"error": False}
     
     else:
         discordid = auth_discordid
-        
-        dhrid = genrid() # conn = await aiosql.new_conn()
-        conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
         
         await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
@@ -1380,7 +1381,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "leave_company_before_delete", force_lang = au["language"])}
         
-        username = getUserInfo(discordid = discordid)["name"]
+        username = (await getUserInfo(dhrid, discordid = discordid))["name"]
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")
@@ -1391,6 +1392,6 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
 
-        await AuditLog(-999, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
+        await AuditLog(dhrid, -999, f"Deleted account: `{username}` (Discord ID: `{discordid}`)")
 
         return {"error": False}

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Charles All rights reserved.
+# Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
 from fastapi import FastAPI, Response, Request, Header
@@ -8,13 +8,16 @@ import json, time, requests, math
 import traceback
 
 from app import app, config
-from db import aiosql, newconn
+from db import aiosql
 from functions import *
 import multilang as ml
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'GET /announcement', 60, 120)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -28,7 +31,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if stoken == "guest":
         userid = -1
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -36,15 +39,12 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], "announcements")
+            await activityUpdate(dhrid, au["discordid"], "announcements")
 
     if int(announcementid) < 0:
         response.status_code = 404
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
         
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-    
     await aiosql.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid = {announcementid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -52,14 +52,17 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
     return {"error": False, "response": {"announcement": {"announcementid": str(tt[5]), \
-        "title": tt[0], "content": decompress(tt[1]), "author": getUserInfo(userid = tt[4]), \
+        "title": tt[0], "content": decompress(tt[1]), "author": await getUserInfo(dhrid, userid = tt[4]), \
             "announcement_type": str(tt[2]), "is_private": TF[tt[6]], "timestamp": str(tt[3])}}}
 
 @app.get(f"/{config.abbr}/announcement/list")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", order_by: Optional[str] = "announcementid", \
         title: Optional[str] = ""):
-    rl = ratelimit(request, request.client.host, 'GET /announcement/list', 60, 60)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -73,7 +76,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     if stoken == "guest":
         userid = -1
     else:
-        au = auth(authorization, request, allow_application_token = True)
+        au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -81,11 +84,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            activityUpdate(au["discordid"], "announcements")
+            await activityUpdate(dhrid, au["discordid"], "announcements")
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0 "
@@ -113,7 +113,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     ret = []
     for tt in t:
         ret.append({"announcementid": str(tt[5]), "title": tt[0], "content": decompress(tt[1]), \
-            "author": getUserInfo(userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
+            "author": await getUserInfo(dhrid, userid = tt[4]), "announcement_type": str(tt[2]), "is_private": TF[tt[6]], \
                 "timestamp": str(tt[3])})
         
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
@@ -126,13 +126,16 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    rl = ratelimit(request, request.client.host, 'POST /announcement', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -140,9 +143,6 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     adminid = au["userid"]
     adminroles = au["roles"]
     adminname = au["name"]
-    
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
     
     isAdmin = False
     for i in adminroles:
@@ -181,14 +181,14 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     timestamp = int(time.time())
 
     await aiosql.execute(dhrid, f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
-    await AuditLog(adminid, f"Created announcement `#{announcementid}`")
+    await AuditLog(dhrid, adminid, f"Created announcement `#{announcementid}`")
     await aiosql.commit(dhrid)
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
             r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
-                "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
+                "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
@@ -199,13 +199,16 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'PATCH /announcement', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -214,9 +217,6 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     adminroles = au["roles"]
     adminname = au["name"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     isAdmin = False
     for i in adminroles:
         if int(i) in config.perms.admin or int(i) in config.perms.announcement:
@@ -256,14 +256,14 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
-    await AuditLog(adminid, f"Updated announcement `#{announcementid}`")
+    await AuditLog(dhrid, adminid, f"Updated announcement `#{announcementid}`")
     await aiosql.commit(dhrid)
 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
             requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
-                "footer": {"text": f"{adminname}", "icon_url": getAvatarSrc(adminid)}, "thumbnail": {"url": config.logo_url},\
+                "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
@@ -274,12 +274,15 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
 @app.delete(f"/{config.abbr}/announcement")
 async def deleteAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    rl = ratelimit(request, request.client.host, 'DELETE /announcement', 60, 30)
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    au = auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
+    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event", "announcement"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -287,9 +290,6 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
     adminid = au["userid"]
     adminroles = au["roles"]
     
-    dhrid = genrid() # conn = await aiosql.new_conn()
-    conn = await aiosql.new_conn(dhrid) # # cur = await conn.cursor()
-
     isAdmin = False
     for i in adminroles:
         if int(i) in config.perms.admin or int(i) in config.perms.announcement:
@@ -309,7 +309,7 @@ async def deleteAnnouncement(request: Request, response: Response, authorization
         return {"error": True, "descriptor": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
-    await AuditLog(adminid, f"Deleted announcement `#{announcementid}`")
+    await AuditLog(dhrid, adminid, f"Deleted announcement `#{announcementid}`")
     await aiosql.commit(dhrid)
 
     return {"error": False}
