@@ -1,4 +1,4 @@
-fastapi==0.88.0
+fastapi==0.89.1
 uvicorn==0.20.0
 mysqlclient==2.1.1
 aiomysql==0.1.1

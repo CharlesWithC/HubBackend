@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.21.18**  
+1.Fixed file encoding error  
+2.Fixed duplicate ID issue  
+
 **v1.21.17**  
 Optimized database connection management  
 

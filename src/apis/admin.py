@@ -41,7 +41,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     adminid = au["userid"]
     
     # current config
-    orgcfg = validateConfig(json.loads(open(config_path, "r").read()))
+    orgcfg = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
     f = copy.deepcopy(orgcfg)
     ffconfig = {}
 
@@ -119,7 +119,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    ttconfig = validateConfig(json.loads(open(config_path, "r").read()))
+    ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
 
     for tt in formconfig.keys():
         if tt in config_whitelist:

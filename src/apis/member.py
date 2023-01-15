@@ -557,10 +557,6 @@ async def putMember(request: Request, response: Response, authorization: str = H
     if len(t) > 0:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
-
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid'")
-    t = await aiosql.fetchall(dhrid)
-    userid = int(t[0][0])
     
     await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
@@ -570,8 +566,12 @@ async def putMember(request: Request, response: Response, authorization: str = H
     if t[0][0] != -1:
         response.status_code = 409
         return {"error": True, "descriptor": ml.tr(request, "already_member", force_lang = au["language"])}
-
     name = t[0][1]
+
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
+    t = await aiosql.fetchall(dhrid)
+    userid = int(t[0][0])
+
     await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(dhrid, adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')

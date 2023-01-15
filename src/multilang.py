@@ -237,7 +237,7 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: 
         lang = "en" 
     langdata = EN_STRINGTABLE
     if lang != "en":
-        langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
+        langdata = json.loads(open(langdir + "/" + lang + ".json", "r", encoding="utf-8").read())
     if key in langdata:
         ret = langdata[key]
         for vkey in var.keys():
@@ -245,7 +245,7 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: 
         return ret
     else: # no translation for key
         if lang != "en": # try english
-            langdata = json.loads(open(langdir + "/en.json", "r").read())
+            langdata = json.loads(open(langdir + "/en.json", "r", encoding="utf-8").read())
             if key in langdata:
                 ret = langdata[key]
                 for vkey in var.keys():
@@ -268,7 +268,7 @@ def company_translate(key: str, var: Optional[dict] = {}, force_lang: Optional[s
         lang = force_lang
     langdata = EN_STRINGTABLE
     if lang != "en":
-        langdata = json.loads(open(langdir + "/" + lang + ".json", "r").read())
+        langdata = json.loads(open(langdir + "/" + lang + ".json", "r", encoding="utf-8").read())
     if key in langdata:
         ret = langdata[key]
         for vkey in var.keys():
@@ -276,7 +276,7 @@ def company_translate(key: str, var: Optional[dict] = {}, force_lang: Optional[s
         return ret
     else: # no translation for key
         if lang != "en": # try english
-            langdata = json.loads(open(langdir + "/en.json", "r").read())
+            langdata = json.loads(open(langdir + "/en.json", "r", encoding="utf-8").read())
             if key in langdata:
                 ret = langdata[key]
                 for vkey in var.keys():

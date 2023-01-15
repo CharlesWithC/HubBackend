@@ -388,7 +388,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxteventid'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxteventid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
     nxteventid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxteventid+1} WHERE skey = 'nxteventid'")

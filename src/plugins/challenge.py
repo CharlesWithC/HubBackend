@@ -155,7 +155,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
             jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
     jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtchallengeid'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtchallengeid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
     nxtchallengeid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxtchallengeid+1} WHERE skey = 'nxtchallengeid'")
@@ -176,7 +176,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/challenge")
 async def patchChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /challenge', 60, 30)
     if rl[0]:
@@ -190,8 +190,6 @@ async def patchChallenge(request: Request, response: Response, authorization: st
         del au["code"]
         return au
     adminid = au["userid"]
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -605,7 +603,7 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 @app.put(f"/{config.abbr}/challenge/delivery")
 async def putChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PUT /challenge/delivery', 60, 30)
     if rl[0]:
@@ -626,8 +624,6 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
     except:
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -760,7 +756,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 async def deleteChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, logid: Optional[int] = -1):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge/delivery', 60, 30)
     if rl[0]:
@@ -774,8 +770,6 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
         del au["code"]
         return au
     adminid = au["userid"]
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -1075,7 +1069,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
 
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge/list', 60, 60)
     if rl[0]:
@@ -1135,8 +1129,6 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     query_limit += f"ORDER BY {order_by} {order.upper()}"
 
     ret = []
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
             required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")

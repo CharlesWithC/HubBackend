@@ -39,7 +39,7 @@ class Dict2Obj(object):
             else:
                 setattr(self, key, d[key])
 
-config_txt = open(config_path, "r").read()
+config_txt = open(config_path, "r", encoding="utf-8").read()
 config = json.loads(config_txt)
 config = Dict2Obj(config)
 

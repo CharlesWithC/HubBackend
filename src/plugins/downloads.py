@@ -201,7 +201,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
     nxtdownloadsid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")

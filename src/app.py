@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.17"
+version = "v1.21.18"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -291,7 +291,7 @@ def validateConfig(cfg):
 
     return tcfg
 
-config_txt = open(config_path, "r").read()
+config_txt = open(config_path, "r", encoding="utf-8").read()
 config = validateConfig(json.loads(config_txt))
 tconfig = config
 
@@ -313,7 +313,7 @@ config = Dict2Obj(config)
 
 if os.path.exists(config.openapi):
     app = FastAPI(openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
-    openapi_data = json.loads(open(config.openapi, "r").read().replace("/abbr", f"/{config.abbr}"))
+    openapi_data = json.loads(open(config.openapi, "r", encoding="utf-8").read().replace("/abbr", f"/{config.abbr}"))
     def openapi():
         return openapi_data
     app.openapi = openapi

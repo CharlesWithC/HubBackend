@@ -220,7 +220,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
     start_time = parser.parse(d["data"]["object"]["start_time"]).timestamp()
     end_time = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
     if not duplicate:
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtlogid'")
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtlogid' FOR UPDATE")
         t = await aiosql.fetchall(dhrid)
         logid = int(t[0][0])
 

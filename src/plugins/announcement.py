@@ -173,7 +173,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": True, "descriptor": ml.tr(request, "event_staff_announcement_limit", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtannid'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtannid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
     announcementid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")

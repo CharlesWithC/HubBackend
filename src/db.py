@@ -147,7 +147,7 @@ class AIOSQL:
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
-            (tconn, tcur, start_time) = conns[tdhrid]
+            (tconn, tcur, start_time, extra_time) = conns[tdhrid]
             if time.time() - start_time >= 1:
                 to_delete.append(tdhrid)
                 try:
@@ -159,7 +159,7 @@ class AIOSQL:
             del conns[tdhrid]
         self.conns = conns
 
-    async def new_conn(self, dhrid):
+    async def new_conn(self, dhrid, extra_time = 0):
         while self.shutdown_lock:
             await asyncio.sleep(0.1)
 
@@ -172,7 +172,7 @@ class AIOSQL:
         conn = await self.pool.acquire()
         cur = await conn.cursor()
         conns = self.conns
-        conns[dhrid] = [conn, cur, time.time()]
+        conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
         self.conns = conns
 
         return conn
@@ -193,13 +193,13 @@ class AIOSQL:
     async def refresh(self, dhrid):
         conns = self.conns
         try:
-            conns[dhrid][2] = time.time()
+            conns[dhrid][2] = time.time() + conns[dhrid][3]
         except:
             try:
                 conn = await self.pool.acquire()
                 cur = await conn.cursor()
                 conns = self.conns
-                conns[dhrid] = [conn, cur, time.time()]
+                conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
             except:
                 pass
         self.conns = conns

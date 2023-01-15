@@ -305,7 +305,7 @@ async def postApplication(request: Request, response: Response, authorization: s
         return {"error": True, "descriptor": ml.tr(request, "must_verify_truckersmp", force_lang = au["language"])}
     userid = t[0][5]
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtappid'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtappid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
     applicationid = int(t[0][0])
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {applicationid+1} WHERE skey = 'nxtappid'")

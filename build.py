@@ -6,17 +6,17 @@
 import os, threading, time, sys
 
 def finalize():
-    cmds = """rm -rf ../build
-mkdir ../build
-cp main.dist/* ../build/ -r
-cp bannergen/main.dist/* ../build/ -r
-cp tracker.dist/* ../build/ -r
-cp launcher.dist/* ../build/ -r
-cp languages/ ../build/ -r
-cp bannergen/fonts ../build/ -r
-mkdir ../build/config
-cp ../config_sample.json ../build/config/
-cp ../openapi.json ../build/""".split("\n")
+    cmds = """rm -rf ../releases
+mkdir ../releases
+cp main.dist/* ../releases/ -r
+cp bannergen/main.dist/* ../releases/ -r
+cp tracker.dist/* ../releases/ -r
+cp launcher.dist/* ../releases/ -r
+cp languages/ ../releases/ -r
+cp bannergen/fonts ../releases/ -r
+mkdir ../releases/config
+cp ../config_sample.json ../releases/config/
+cp ../openapi.json ../releases/""".split("\n")
     for cmd in cmds:
         os.system(cmd)
 
@@ -78,7 +78,7 @@ else:
 while 1:
     if done == req:
         finalize()
-        os.chdir("../build")
+        os.chdir("../releases")
         os.system("7z a hub.zip ./*")
         os.system("mv hub.zip ../")
         break

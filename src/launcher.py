@@ -101,7 +101,7 @@ abbr = args[2]
 if not os.path.exists(cf + "/" + abbr + ".json"):
     print("Config file not found")
     sys.exit(1)
-conf = open(cf + "/" + abbr + ".json", "r").read()
+conf = open(cf + "/" + abbr + ".json", "r", encoding="utf-8").read()
 conf = json.loads(conf)
 name = conf["name"]
 

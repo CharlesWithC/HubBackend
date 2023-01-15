@@ -157,7 +157,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/list', 60, 60)
     if rl[0]:
@@ -181,8 +181,6 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             return au
         userid = au["userid"]
         await activityUpdate(dhrid, au["discordid"], "dlogs")
-    
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     if page <= 0:
         page = 1
@@ -340,7 +338,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/summary', 60, 60)
     if rl[0]:
@@ -375,8 +373,6 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
                     ret = t["result"]
                     ret["cache"] = str(ll)
                     return {"error": False, "response": ret}
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     ret = {}
     # driver
@@ -562,7 +558,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
         ranges: Optional[int] = 30, interval: Optional[int] = 86400, end_time: Optional[int] = -1, \
         sum_up: Optional[bool] = False, userid: Optional[int] = -1):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
@@ -577,8 +573,6 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
             response.status_code = au["code"]
             del au["code"]
             return au
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     if ranges > 100:
         ranges = 100
@@ -663,7 +657,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid)
+    await aiosql.new_conn(dhrid, extra_time = 2)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/leaderboard', 60, 60)
     if rl[0]:
@@ -739,8 +733,6 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             nlusertot_id = list(nlusertot.keys())[::-1]
             nlrank = t["nlrank"]
             nluserrank = t["nluserrank"]
-
-    aiosql.conns[dhrid][2] = time.time() + 2
 
     global callusers, callusers_ts
     if int(time.time()) - callusers_ts <= 300:

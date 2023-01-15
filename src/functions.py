@@ -500,7 +500,7 @@ async def notification(dhrid, notification_type, discordid, content, no_driversh
         return
 
     if settings["drivershub"] and not no_drivershub_notification:
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid'")
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtnotificationid' FOR UPDATE")
         t = await aiosql.fetchall(dhrid)
         nxtnotificationid = int(t[0][0])
         await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{nxtnotificationid + 1}' WHERE skey = 'nxtnotificationid'")
