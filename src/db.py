@@ -171,6 +171,7 @@ class AIOSQL:
 
         conn = await self.pool.acquire()
         cur = await conn.cursor()
+        await cur.execute(f"SET wait_timeout={3+extra_time}, lock_wait_timeout=3;")
         conns = self.conns
         conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
         self.conns = conns

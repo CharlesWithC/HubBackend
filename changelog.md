@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.19**  
+1.Added `500 Internal Server Error` handler  
+2.Added auto-restart on too many errors  
+3.Added `wait_timeout` and `lock_wait_timeout` for db connections  
+4.Improved **GET** `/dlog/statistics/chart`  
+
 **v1.21.18**  
 1.Fixed file encoding error  
 2.Fixed duplicate ID issue  

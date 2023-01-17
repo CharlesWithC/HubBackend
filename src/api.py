@@ -5,7 +5,7 @@ from fastapi import Request, Header, Response
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timedelta
-import json, os, sys
+import json, os, sys, time
 
 from app import app, config, version, DH_START_TIME
 from db import aiosql
@@ -74,11 +74,36 @@ async def languages():
     t = sorted(t)
     return {"error": False, "response": {"company": config.language, "supported": t}}
 
+cnt500 = []
+
+# thread to reload service
+def reload():
+    time.sleep(1)
+    os.system(f"./launcher hub restart {config.abbr} &")
+
 # error handler to uniform error response
 @app.exception_handler(StarletteHTTPException)
 async def errorHandler(request: Request, exc: StarletteHTTPException):
     return JSONResponse({"error": True, "descriptor": exc.detail}, status_code = exc.status_code)
 
+@app.exception_handler(500)
+async def error500Handler(request: Request, exc: Exception):
+    global cnt500
+    if not -1 in cnt500:
+        cnt500.append(time.time())
+        for i in range(len(cnt500)):
+            if cnt500[i] <= time.time() - 300:
+                cnt500.remove(cnt500[i])
+        if len(cnt500) >= 5:
+            try:
+                requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "System detected too many `500 Internal Server Error`. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+            except:
+                pass
+            threading.Thread(target=reload).start()
+            cnt500.append(-1)
+
+    return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
+        
 @app.on_event("startup")
 async def startUpEvent():
     await aiosql.create_pool()
