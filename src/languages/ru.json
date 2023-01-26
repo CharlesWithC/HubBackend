@@ -84,7 +84,7 @@
     "config_invalid_value": "Неверное значение для \"{item}\": не должно быть пустым.",
     "config_invalid_distance_unit": "Неверное значение для \"distance_unit\": должно быть \"metric\" или \"imperial\".",
     "config_invalid_datatype_boolean": "Недопустимый тип данных для \"{item}\": должен быть логическим значением.",
-    "config_invalid_datatype_integar": "Недопустимый тип данных для \"{item}\": Должен быть целым числом.",
+    "config_invalid_datatype_integer": "Недопустимый тип данных для \"{item}\": Должен быть целым числом.",
     "config_invalid_hex_color": "Недопустимое значение для \"hex_color\": должно быть шестнадцатеричной строкой из 6 символов.",
     "config_invalid_data_url": "Неверный тип данных для \"{item}\": Должен быть действительный URL.",
     "config_invalid_permission_admin_not_found": "Недопустимое значение для \"perms\": разрешение \"admin\" не найдено.",

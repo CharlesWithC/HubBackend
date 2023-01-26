@@ -84,7 +84,7 @@
     "config_invalid_value": "Valor no válido para \"{item}\": no debe estar vacío.",
     "config_invalid_distance_unit": "Valor no válido para \"distance_unit\": debe ser \"métrico\" o \"imperial\".",
     "config_invalid_datatype_boolean": "Tipo de datos no válido para \"{item}\": debe ser booleano.",
-    "config_invalid_datatype_integar": "Tipo de datos no válido para \"{item}\": debe ser un número entero.",
+    "config_invalid_datatype_integer": "Tipo de datos no válido para \"{item}\": debe ser un número entero.",
     "config_invalid_hex_color": "Valor no válido para \"hex_color\": debe ser una cadena hexadecimal de 6 caracteres.",
     "config_invalid_data_url": "Tipo de datos no válido para \"{item}\": debe ser una URL válida.",
     "config_invalid_permission_admin_not_found": "Valor no válido para \"perms\": no se encontró el permiso \"admin\".",

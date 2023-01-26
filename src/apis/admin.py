@@ -147,7 +147,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         formconfig[tt] = "0"
                     else:
                         response.status_code = 400
-                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integar", var = {"item": tt}, force_lang = au["language"])}
+                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integer", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "hex_color":
                 formconfig[tt] = formconfig[tt][-6:]

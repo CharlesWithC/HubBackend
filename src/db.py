@@ -4,7 +4,7 @@
 import MySQLdb
 import asyncio, aiomysql
 import json, os, time, copy
-import traceback, threading
+import traceback
 
 from app import app, config, version
 
@@ -143,6 +143,15 @@ class AIOSQL:
         self.pool = None
         self.shutdown_lock = False
 
+    async def create_pool(self):
+        if self.pool is None: # init pool
+            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5)
+
+    async def close_pool(self):
+        self.shutdown_lock = True
+        self.pool.close()
+
     def release(self):
         conns = self.conns
         to_delete = []
@@ -178,20 +187,7 @@ class AIOSQL:
 
         return conn
 
-    async def create_pool(self):
-        if self.pool is None: # init pool
-            self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 5)
-
-    async def shutdown(self):
-        self.shutdown_lock = True
-        self.pool.close()
-
-    async def close_conn(self, dhrid):
-        self.pool.release(self.conns[dhrid][0])
-        del self.conns[dhrid]
-
-    async def refresh(self, dhrid):
+    async def refresh_conn(self, dhrid):
         conns = self.conns
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
@@ -205,21 +201,29 @@ class AIOSQL:
                 pass
         self.conns = conns
 
+    async def close_conn(self, dhrid):
+        if dhrid in self.conns.keys():
+            try:
+                self.pool.release(self.conns[dhrid][0])
+                del self.conns[dhrid]
+            except:
+                pass
+
     async def commit(self, dhrid):
-        await self.refresh(dhrid)
+        await self.refresh_conn(dhrid)
         await self.conns[dhrid][0].commit()
 
     async def execute(self, dhrid, sql):
-        await self.refresh(dhrid)
+        await self.refresh_conn(dhrid)
         await self.conns[dhrid][1].execute(sql)
 
     async def fetchone(self, dhrid):
-        await self.refresh(dhrid)
+        await self.refresh_conn(dhrid)
         ret = await self.conns[dhrid][1].fetchone()
         return ret
 
     async def fetchall(self, dhrid):
-        await self.refresh(dhrid)
+        await self.refresh_conn(dhrid)
         ret = await self.conns[dhrid][1].fetchall()
         return ret
 

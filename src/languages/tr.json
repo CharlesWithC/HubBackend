@@ -84,7 +84,7 @@
     "config_invalid_value": "\"{item}\" için geçersiz değer: Boş olmamalıdır.",
     "config_invalid_distance_unit": "\"Mesafe Birimi\" için geçersiz değer: \"metrik\" (km/h) veya \"emperyal\" (mi/h) olmalıdır.",
     "config_invalid_datatype_boolean": "\"{item}\" için geçersiz veri türü: İlgili alan sadece 2 değer alabilir. Sadece Evet veya Hayır kabul edilir.",
-    "config_invalid_datatype_integar": "\"{item}\" için geçersiz veri türü: İlgili değer, bir Tamsayı değeri olmalıdır.",
+    "config_invalid_datatype_integer": "\"{item}\" için geçersiz veri türü: İlgili değer, bir Tamsayı değeri olmalıdır.",
     "config_invalid_hex_color": "\"HEX kodu/rengi\" için geçersiz değer: Gireceğiniz değer, 6 karakterden oluşan HEX kodu tipinde bir hex kodu dizesi olmalıdır.",
     "config_invalid_data_url": "\"{item}\" için geçersiz veri türü: İlgili URL, geçerli bir URL olmalıdır.",
     "config_invalid_permission_admin_not_found": "\"izinleri\" için geçersiz değer: \"yönetici(admin)\" izni bulunamadı.",

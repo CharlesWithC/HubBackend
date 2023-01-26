@@ -11,9 +11,9 @@ from db import aiosql
 from functions import *
 import multilang as ml
 
-JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special"]
-JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int}
-JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0}
+JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
+JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int, "minimum_average_speed": int, "maximum_average_speed": int, "minimum_average_fuel": float, "maximum_average_fuel": float}
+JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
 # PLANS
 
@@ -27,33 +27,37 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # Note: Check if there're at most 15 active challenges
 # FORM DATA:
 # - string: title
-# - integar: start_time
-# - integar: end_time
-# - integar: challenge_type (1 = personal (one-time) | 2 = company | 3 = personal (recurring) | 4 = personal (distance-based) | 5 = company (distance-based))
-# - integar: delivery_count
+# - integer: start_time
+# - integer: end_time
+# - integer: challenge_type (1 = personal (one-time) | 2 = company | 3 = personal (recurring) | 4 = personal (distance-based) | 5 = company (distance-based))
+# - integer: delivery_count
 # - string: required_roles (or) (separate with ',' | default = 'any')
-# - integar: required_distance
-# - integar: reward_points
+# - integer: required_distance
+# - integer: reward_points
 # - boolean: public_details
 # - string(json): job_requirements
-#   - integar: minimum_distance
+#   - integer: minimum_distance
 #   - string: source_city_id
 #   - string: source_company_id
 #   - string: destination_city_id
 #   - string: destination_company_id
 #   - string: cargo_id
-#   - integar: minimum_cargo_mass
+#   - integer: minimum_cargo_mass
 #   - float: maximum_cargo_damage
-#   - integar: maximum_speed
-#   - integar: maximum_fuel
-#   - integar: minimum_profit
-#   - integar: maximum_profit
-#   - integar: maximum_offence
+#   - integer: maximum_speed
+#   - integer: maximum_fuel
+#   - integer: minimum_profit
+#   - integer: maximum_profit
+#   - integer: maximum_offence
 #   - boolean: allow_overspeed
 #   - boolean: allow_auto_park
 #   - boolean: allow_auto_load
 #   - boolean: must_not_be_late
 #   - boolean: must_be_special
+#   - integer: minimum_average_speed
+#   - integer: maximum_average_speed
+#   - float: minimum_average_fuel (L/100km)
+#   - float: maximum_average_fuel (L/100km)
 
 @app.post(f"/{config.abbr}/challenge")
 async def postChallenge(request: Request, response: Response, authorization: str = Header(None)):
@@ -170,7 +174,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 
 # PATCH /challenge
 # REQUEST PARAM
-# - integar: challengeid
+# - integer: challengeid
 # FORM DATA
 # *Same as POST /challenge
 @app.patch(f"/{config.abbr}/challenge")
@@ -557,7 +561,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 
 # DELETE /challenge
 # REQUEST PARAM
-# - integar: challengeid
+# - integer: challengeid
 @app.delete(f"/{config.abbr}/challenge")
 async def deleteChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
     dhrid = genrid()
@@ -597,8 +601,8 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 
 # PUT /challenge/delivery
 # REQUEST PARAM
-# - integar: challengeid
-# - integar: logid
+# - integer: challengeid
+# - integer: logid
 # => manually accept a delivery as challenge
 @app.put(f"/{config.abbr}/challenge/delivery")
 async def putChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
@@ -749,8 +753,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 
 # DELETE /challenge/delivery
 # REQUEST PARAM
-# - integar: challengeid
-# - integar: logid
+# - integer: challengeid
+# - integer: logid
 # => denies a delivery as challenge
 @app.delete(f"/{config.abbr}/challenge/delivery")
 async def deleteChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), \
@@ -962,7 +966,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 
 # GET /challenge
 # REQUEST PARAM
-# - integar: challengeid
+# - integer: challengeid
 # returns requirement if public_details = true and user is not staff
 #                     or if public_details = false
 @app.get(f"/{config.abbr}/challenge")
@@ -1044,19 +1048,19 @@ async def getChallenge(request: Request, response: Response, authorization: str 
 # GET /challenge/list
 # REQUEST PARAM
 # - string: title (search)
-# - integar: start_time
-# - integar: end_time
-# - integar: challenge_type
-# - integar: required_role
-# - integar: minimum_required_distance
-# - integar: maximum_required_distance
-# - integar: userid - to show challenges that user participated
+# - integer: start_time
+# - integer: end_time
+# - integer: challenge_type
+# - integer: required_role
+# - integer: minimum_required_distance
+# - integer: maximum_required_distance
+# - integer: userid - to show challenges that user participated
 # - boolean: must_have_completed (if userid is specified, show challenges that user completed, including completed company challenge)
 #                       otherwise show all completed challenges
 # - string: order (asc / desc)
 # - string: order_by (start_time / end_time / title / required_distance / reward_points / delivery_count)
-# - integar: page
-# - integar: page_size (max = 100)
+# - integer: page
+# - integer: page_size (max = 100)
 # RETURN
 # challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points
 # if userid is specified, then add "finished_delivery_count"

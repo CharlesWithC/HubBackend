@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.20**  
+1.Converted database error to `503` error  
+2.Fixed `500` error handler exception  
+3.Added `422` error handler  
+4.Added `minimum/maximum_average_distance/fuel` to challenge plugin  
+
 **v1.21.19**  
 1.Added `500 Internal Server Error` handler  
 2.Added auto-restart on too many errors  
@@ -187,7 +193,7 @@ Hard-coded English String Table
 **[Minor changes]**  
 2.*[Application]* Added `status` request param to **GET** `/application/list`  
 3.Added item wrapper to **GET** `/announcement`, **GET** `/application`, **GET** `/challenge`, **GET** `/downloads`, **GET** `/event`, **GET** `/user`, **GET** `/dlog`  
-4.Changed integar response to string response for **GET** `/member/perms`  
+4.Changed integer response to string response for **GET** `/member/perms`  
 5.Loosened API rate limit  
 
 **v1.19.3**  
@@ -614,7 +620,7 @@ Added `limituser` argument for `/dlog/leaderboard`
 4.Changed to use official TruckersMP API to get TruckersMP ID with Steam ID  
 5.Changed query parameter from `search` to `query` for **GET** `/members`  
 6.Updated endpoint path (details in table below)  
-7.Improved fault-tolerance (integar / string) for config (except `config.perms`)  
+7.Improved fault-tolerance (integer / string) for config (except `config.perms`)  
 8.Improved and simplified code structure by using authentication API (in [functions.py](/src/functions.py))  
 |Endpoint Name|Old Path|New Path|  
 ---|---|---|

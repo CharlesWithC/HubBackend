@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.19"
+version = "v1.21.20"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -312,10 +312,11 @@ except:
 config = Dict2Obj(config)
 
 if os.path.exists(config.openapi):
-    app = FastAPI(openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
+    app = FastAPI(title="Drivers Hub", version=version[1:], \
+            openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
     openapi_data = json.loads(open(config.openapi, "r", encoding="utf-8").read().replace("/abbr", f"/{config.abbr}"))
     def openapi():
         return openapi_data
     app.openapi = openapi
 else:
-    app = FastAPI()
+    app = FastAPI(title="Drivers Hub", version=version[1:])

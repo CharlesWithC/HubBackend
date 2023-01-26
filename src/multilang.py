@@ -94,7 +94,7 @@ EN_STRINGTABLE = {
     "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
     "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
     "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
-    "config_invalid_datatype_integar": "Invalid data type for \"{item}\": Must be integar.",
+    "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
     "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
     "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
     "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",

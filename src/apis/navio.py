@@ -5,8 +5,7 @@ from fastapi import FastAPI, Response, Request, Header
 from datetime import datetime
 from random import randint
 from dateutil import parser
-import json, time, requests
-import threading
+import json, time, requests, asyncio
 import traceback
 
 from app import app, config, tconfig
@@ -14,24 +13,23 @@ from db import aiosql, genconn
 from functions import *
 import multilang as ml
 
-JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special"]
-JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int}
-JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0}
+JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
+JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
 GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
-def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
-    conn = genconn()
-    cur = conn.cursor()
+async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid, extra_time = 5)
     
-    cur.execute(f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
-    p = cur.fetchall()
+    await aiosql.execute(dhrid, f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
+    p = await aiosql.fetchall(dhrid)
     if len(p) > 0:
         jobuuid = p[0][0]
-        cur.execute(f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
-        t = cur.fetchall()
+        await aiosql.execute(dhrid, f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
+        t = await aiosql.fetchall(dhrid)
         data = f"{t[0][3]},{t[0][4]},v5;"
         lastx = 0
         lastz = 0
@@ -54,37 +52,37 @@ def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
                 data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
             lastx = round(tt[0])
             lastz = round(tt[2])
-        cur.close()
-        conn.close()
+        await aiosql.close_conn(dhrid)
+
         for _ in range(3):
             try:
-                conn = genconn()
-                cur = conn.cursor()
-                cur.execute(f"SELECT logid FROM telemetry WHERE logid = {logid}")
-                p = cur.fetchall()
+                dhrid = genrid()
+                await aiosql.new_conn(dhrid, extra_time = 5)
+    
+                await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+                p = await aiosql.fetchall(dhrid)
                 if len(p) > 0:
                     break
                     
-                cur.execute(f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
-                conn.commit()
-                cur.close()
-                conn.close()
+                await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
+                await aiosql.commit()
+                await aiosql.close_conn(dhrid)
                 break
             except:
                 continue
+
         for _ in range(5):
             try:
-                conn = genconn()
-                cur = conn.cursor()
-                cur.execute(f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
-                conn.commit()
-                cur.close()
-                conn.close()
+                dhrid = genrid()
+                await aiosql.new_conn(dhrid, extra_time = 5)
+                await aiosql.execute(dhrid, f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
+                await aiosql.commit()
+                await aiosql.close_conn(dhrid)
+                break
             except:
                 continue
     else:
-        cur.close()
-        conn.close()
+        await aiosql.close_conn(dhrid)
 
 @app.post(f"/{config.abbr}/navio")
 async def navio(respones: Response, request: Request, Navio_Signature: str = Header(None)):
@@ -246,7 +244,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                 pass
         if delivery_rule_ok and not duplicate:
             if "tracker" in config.enabled_plugins:
-                threading.Thread(target=UpdateTelemetry,args=(steamid, userid, logid, start_time, end_time, )).start()
+                asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
             
             await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
             await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
@@ -438,7 +436,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                         continue
 
                     p = json.loads(decompress(job_requirements))
-                    jobreq = {}
+                    jobreq = JOB_REQUIREMENT_DEFAULT
                     for i in range(0,len(p)):
                         jobreq[JOB_REQUIREMENTS[i]] = p[i]
                     
@@ -520,6 +518,19 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
                         continue
                     if jobreq["must_be_special"] and not is_special:
                         continue
+
+                    average_speed = int(d["data"]["object"]["truck"]["average_speed"])
+                    if jobreq["minimum_average_speed"] != -1 and jobreq["minimum_average_speed"] > average_speed:
+                        continue
+                    if jobreq["maximum_average_speed"] != -1 and jobreq["maximum_average_speed"] < average_speed:
+                        continue
+
+                    if d["data"]["object"]["driven_distance"] != 0:
+                        average_fuel = d["data"]["object"]["fuel_used"] / d["data"]["object"]["driven_distance"]
+                        if int(jobreq["minimum_average_fuel"]) != -1 and jobreq["minimum_average_fuel"] > average_fuel:
+                            continue
+                        if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
+                            continue
                     
                     discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))

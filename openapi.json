@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.19"
+        "version": "1.21.20"
     },
     "paths": {
         "/abbr": {
@@ -378,7 +378,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -480,7 +480,7 @@
                     "required": false,
                     "schema": {
                         "title": "Last Used Before",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "last_used_before",
                     "in": "query"
@@ -519,7 +519,7 @@
                     "required": false,
                     "schema": {
                         "title": "User ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "userid",
                     "in": "query"
@@ -527,7 +527,7 @@
                     "required": false,
                     "schema": {
                         "title": "Discord Snowflake",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "discordid",
                     "in": "query"
@@ -535,7 +535,7 @@
                     "required": false,
                     "schema": {
                         "title": "Steam ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "steamid",
                     "in": "query"
@@ -543,7 +543,7 @@
                     "required": false,
                     "schema": {
                         "title": "TruckersMP User ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "truckersmpid",
                     "in": "query"
@@ -580,7 +580,7 @@
                     "required": false,
                     "schema": {
                         "title": "Discord Snowflake",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "discordid",
                     "in": "query"
@@ -624,7 +624,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -773,7 +773,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -805,7 +805,7 @@
                     "required": false,
                     "schema": {
                         "title": "Status (-1 = all | 0 = unread | 1 = read)",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "status",
                     "in": "query"
@@ -1008,7 +1008,7 @@
                     "required": false,
                     "schema": {
                         "title": "Discord ID (To update another user's username)",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "discordid",
                     "in": "query"
@@ -1239,7 +1239,7 @@
                     "required": false,
                     "schema": {
                         "title": "Discord ID (Required when disabling MFA for another user)",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "discordid",
                     "in": "query"
@@ -1864,7 +1864,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -1904,7 +1904,7 @@
                     "required": false,
                     "schema": {
                         "title": "Last seen after (timestamp)",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "last_seen_after",
                     "in": "query"
@@ -2364,7 +2364,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -2372,7 +2372,7 @@
                     "required": false,
                     "schema": {
                         "title": "User ID of Responsible Staff",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "staff_userid",
                     "in": "query"
@@ -2503,7 +2503,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -2756,7 +2756,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -2953,7 +2953,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -3330,7 +3330,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -3651,19 +3651,19 @@
                                     },
                                     "start_time": {
                                         "description": "Start Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "end_time": {
                                         "description": "End Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "challenge_type": {
                                         "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "delivery_count": {
                                         "description": "Delivery Count",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "required_roles": {
                                         "description": "Required Roles (Use Role ID, Required Any, Max 20, Separate with ',')",
@@ -3671,11 +3671,11 @@
                                     },
                                     "required_distance": {
                                         "description": "Required Distance (of User Statistics)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "reward_points": {
                                         "description": "Reward Points",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "public_details": {
                                         "description": "Make Details Public?",
@@ -3745,19 +3745,19 @@
                                     },
                                     "start_time": {
                                         "description": "Start Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "end_time": {
                                         "description": "End Timestamp",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "challenge_type": {
                                         "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "delivery_count": {
                                         "description": "Delivery Count",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "required_roles": {
                                         "description": "Required Roles (Use Role ID, Required Any, Max 20, Separate with ',')",
@@ -3765,11 +3765,11 @@
                                     },
                                     "required_distance": {
                                         "description": "Required Distance (of User Statistics)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "reward_points": {
                                         "description": "Reward Points",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "public_details": {
                                         "description": "Make Details Public?",
@@ -3863,7 +3863,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -4004,7 +4004,7 @@
                                 "properties": {
                                     "logid": {
                                         "description": "Delivery Log ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     }
                                 }
                             },
@@ -4169,7 +4169,7 @@
                                 "properties": {
                                     "logid": {
                                         "description": "Delivery Log ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     }
                                 }
                             },
@@ -4223,11 +4223,11 @@
                                 "properties": {
                                     "logid": {
                                         "description": "Delivery Log ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "status": {
                                         "description": "Status (0: Pending | 1: Accepted | 2: Denied)",
-                                        "type": "integar"
+                                        "type": "integer"
                                     },
                                     "message": {
                                         "description": "Message",
@@ -4281,7 +4281,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -4336,7 +4336,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -4368,7 +4368,7 @@
                     "required": false,
                     "schema": {
                         "title": "Creator User ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "creator_userid",
                     "in": "query"
@@ -4461,7 +4461,7 @@
                                     },
                                     "orderid": {
                                         "description": "Order ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     }
                                 }
                             },
@@ -4527,7 +4527,7 @@
                                     },
                                     "orderid": {
                                         "description": "Order ID",
-                                        "type": "integar"
+                                        "type": "integer"
                                     }
                                 }
                             },
@@ -4653,7 +4653,7 @@
                     "required": false,
                     "schema": {
                         "title": "Page Size",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "page_size",
                     "in": "query"
@@ -4669,7 +4669,7 @@
                     "required": false,
                     "schema": {
                         "title": "First Event After Timestamp",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "first_event_after",
                     "in": "query"
@@ -4977,7 +4977,7 @@
                     "required": true,
                     "schema": {
                         "title": "Event ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "eventid",
                     "in": "query"
@@ -5016,7 +5016,7 @@
                     "required": true,
                     "schema": {
                         "title": "Event ID",
-                        "type": "integar"
+                        "type": "integer"
                     },
                     "name": "eventid",
                     "in": "query"

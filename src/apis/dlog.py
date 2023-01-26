@@ -346,8 +346,9 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if start_time == -1 or end_time == -1:
+    if start_time == -1:
         start_time = 0
+    if end_time == -1:
         end_time = max(int(time.time()), 32503651200)
 
     quser = ""
@@ -796,7 +797,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     # validate parameter
     page = max(page, 1)
     page_size = max(min(page_size, 250), 1)
-    (start_time, end_time) = (0, max(int(time.time()), 32503651200)) if start_time == -1 or end_time == -1 else (min(start_time, end_time), max(start_time, end_time))
+    if start_time == -1:
+        start_time = 0
+    if end_time == -1:
+        end_time = max(int(time.time()), 32503651200)
 
     # set limits
     limituser = limituser.split(",")
@@ -1139,8 +1143,9 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         del au["code"]
         return au
 
-    if start_time == -1 or end_time == -1:
+    if start_time == -1:
         start_time = 0
+    if end_time == -1:
         end_time = max(int(time.time()), 32503651200)
 
     f = BytesIO()
