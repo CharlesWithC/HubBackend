@@ -4,7 +4,7 @@
 from fastapi import Request, Header, Response
 from typing import Optional
 from discord import Colour
-import json, copy, math, os, time
+import json, copy, math, os, time, signal
 import threading
 
 from app import app, config, tconfig, config_path, validateConfig
@@ -83,11 +83,16 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
     return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
 
-# thread to reload service
-def reload():
-    os.system(f"./launcher tracker restart {config.abbr} &")
+# thread to restart service
+def restart():
+    os.system(f"./launcher tracker restart {config.abbr}")
+    time.sleep(3)
+    os.system(f"./launcher hub restart {config.abbr}")
+    # in case restart fails
+    time.sleep(2)
+    aiosql.close_pool()
     time.sleep(5)
-    os.system(f"./launcher hub restart {config.abbr} &")
+    os.kill(os.getppid(), signal.SIGKILL)
 
 # update config
 @app.patch(f"/{config.abbr}/config")
@@ -200,19 +205,19 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     return {"error": False}
 
-# reload service
-@app.post(f"/{config.abbr}/reload")
-async def postReload(request: Request, response: Response, authorization: str = Header(None)):    
+# restart service
+@app.post(f"/{config.abbr}/restart")
+async def postRestart(request: Request, response: Response, authorization: str = Header(None)):    
     dhrid = genrid()
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /reload', 600, 3)
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /restart', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "reload"])
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "restart"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -236,9 +241,9 @@ async def postReload(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(dhrid, adminid, "Reloaded service")
+    await AuditLog(dhrid, adminid, "Restarted service")
 
-    threading.Thread(target=reload).start()
+    threading.Thread(target=restart).start()
 
     return {"error": False}
 

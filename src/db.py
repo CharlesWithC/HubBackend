@@ -26,7 +26,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT, 
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
-    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, navioid BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -88,7 +88,7 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX mythpoint_idx ON banned (userid, timestamp)",
 "CREATE INDEX dlog_logid ON dlog (logid)",
 "CREATE INDEX dlog_userid ON dlog (userid)",
-"CREATE INDEX dlog_navioid ON dlog (navioid)",
+"CREATE INDEX dlog_trackerid ON dlog (trackerid)",
 "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
 "CREATE INDEX telemetry_logid ON telemetry (logid)",
 "CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid)",
@@ -148,7 +148,7 @@ class AIOSQL:
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.dbname, autocommit = False, pool_recycle = 5)
 
-    async def close_pool(self):
+    def close_pool(self):
         self.shutdown_lock = True
         self.pool.close()
 

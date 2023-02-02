@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.21**  
+1.Improved error handler  
+2.Prevented index to connect to database when `Authorization` header is not provided  
+3.Renamed `reload` to `restart`  
+4.Preparations for switching tracker  
+
 **v1.21.20**  
 1.Converted database error to `503` error  
 2.Fixed `500` error handler exception  

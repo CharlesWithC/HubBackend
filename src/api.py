@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from datetime import datetime, timedelta
-import json, os, sys, time
+import json, os, sys, time, signal, pymysql
 
 from app import app, config, version, DH_START_TIME
 from db import aiosql
@@ -48,22 +48,23 @@ if "event" in config.enabled_plugins:
 # basic info
 @app.get(f'/{config.abbr}')
 async def index(request: Request, authorization: str = Header(None)):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid)
-    au = await auth(dhrid, authorization, request, check_member = False)
-    if not au["error"]:
-        await activityUpdate(dhrid, au["discordid"], "index")
+    if not authorization is None:
+        dhrid = genrid()
+        await aiosql.new_conn(dhrid)
+        au = await auth(dhrid, authorization, request, check_member = False)
+        if not au["error"]:
+            await activityUpdate(dhrid, au["discordid"], "index")
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
     return {"error": False, "response": {"name": config.name, "abbr": config.abbr, \
         "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}}
 
-# ping
-@app.get(f'/{config.abbr}/ping')
-async def ping():
+# uptime
+@app.get(f'/{config.abbr}/uptime')
+async def uptime():
     up_time_second = int(time.time()) - DH_START_TIME
-    return {"error": False, "response": {"status": "active", "uptime": str(timedelta(seconds = up_time_second))}}
+    return {"error": False, "response": {"uptime": str(timedelta(seconds = up_time_second))}}
 
 # supported languages
 @app.get(f'/{config.abbr}/languages')
@@ -75,10 +76,15 @@ async def languages():
     t = sorted(t)
     return {"error": False, "response": {"company": config.language, "supported": t}}
 
-# thread to reload service
-def reload():
-    time.sleep(1)
-    os.system(f"./launcher hub restart {config.abbr} &")
+# thread to restart service
+def restart():
+    time.sleep(3)
+    os.system(f"./launcher hub restart {config.abbr}")
+    # in case restart fails
+    time.sleep(2)
+    aiosql.close_pool()
+    time.sleep(5)
+    os.kill(os.getppid(), signal.SIGKILL)
 
 # error handler to format error response
 @app.exception_handler(StarletteHTTPException)
@@ -90,22 +96,24 @@ async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": True, "descriptor": "Unprocessable Entity"}, status_code = 422)
 
 err500 = []
+pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.exception_handler(500)
 async def error500Handler(request: Request, exc: Exception):
     global err500
-    if not -1 in err500:
+    if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
         err500.append(time.time())
-        err500[:] = [i for i in err500 if i > time.time() - 300]
-        if len(err500) >= 5:
+        err500[:] = [i for i in err500 if i > time.time() - 3600] # 5 error / 60 minutes = restart
+        if len(err500) > 5:
             try:
-                requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "System detected too many `500 Internal Server Error`. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many `500 Internal Server Error`. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
             except:
                 pass
-            threading.Thread(target=reload).start()
+            threading.Thread(target=restart).start()
             err500.append(-1)
 
-    if str(exc).lower().find("mysql") != -1: # probably lost connection
-        return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
+    for err in pymysql_errs:
+        if isinstance(exc, err):
+            return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
     else:
         return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
         
@@ -115,4 +123,4 @@ async def startupEvent():
 
 @app.on_event("shutdown")
 async def shutdownEvent():
-    await aiosql.close_pool()
+    aiosql.close_pool()

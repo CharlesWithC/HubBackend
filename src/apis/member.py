@@ -845,9 +845,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     if distance != 0:
         if distance > 0:
-            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1)")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0)")
         else:
-            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1)")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0)")
         await aiosql.commit(dhrid)
     if mythpoint != 0:
         await aiosql.execute(dhrid, f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")

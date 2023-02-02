@@ -167,11 +167,11 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
         return {"error": True, "descriptor": "User not found."}
     userid = t[0][0]
     username = t[0][1]
-    navioid = d["data"]["object"]["id"]
+    trackerid = d["data"]["object"]["id"]
 
     duplicate = False
     logid = -1
-    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE navioid = {navioid}")
+    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid}")
     o = await aiosql.fetchall(dhrid)
     if len(o) > 0:
         duplicate = True # only for debugging purpose
@@ -248,7 +248,7 @@ async def navio(respones: Response, request: Request, Navio_Signature: str = Hea
             
             await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
             await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
-                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {navioid})")
+                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 1)")
             await aiosql.commit(dhrid)
 
             discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]

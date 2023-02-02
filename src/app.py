@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.20"
+version = "v1.21.21"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -162,7 +162,7 @@ config_sample = {
     "perms": {
         "admin": ["0"],
         "config": [],
-        "reload": [],
+        "restart": [],
 
         "hrm": [],
         "disable_user_mfa": [],

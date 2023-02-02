@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.20"
+        "version": "1.21.21"
     },
     "paths": {
         "/abbr": {
@@ -22,11 +22,11 @@
                 }
             }
         },
-        "/abbr/ping": {
+        "/abbr/uptime": {
             "get": {
-                "summary": "Ping it!",
+                "summary": "Get Uptime",
                 "tags": ["index"],
-                "operationId": "get_ping",
+                "operationId": "get_uptime",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -2307,11 +2307,11 @@
                 }
             }
         },
-        "/abbr/reload": {
+        "/abbr/restart": {
             "post": {
-                "summary": "Reload API Service",
+                "summary": "Restart API Service",
                 "tags": ["admin"],
-                "operationId": "post_reload",
+                "operationId": "post_restart",
                 "security": [{
                     "bearerAuth": []
                 }],

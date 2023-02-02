@@ -151,7 +151,7 @@
     "perms": {
         "admin": ["0"],
         "config": [],
-        "reload": [],
+        "restart": [],
 
         "hrm": [],
         "disable_user_mfa": [],
