@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from datetime import datetime, timedelta
-import json, os, sys, time, signal, pymysql
+import json, os, sys, time, psutil, pymysql
 
 from app import app, config, version, DH_START_TIME
 from db import aiosql
@@ -79,12 +79,23 @@ async def languages():
 # thread to restart service
 def restart():
     time.sleep(3)
-    os.system(f"./launcher hub restart {config.abbr}")
-    # in case restart fails
+    os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
+    aiosql.shutdown_lock = True
     time.sleep(2)
     aiosql.close_pool()
     time.sleep(5)
-    os.kill(os.getppid(), signal.SIGKILL)
+    if "HUB_KILLING" in os.environ.keys():
+        sys.exit(1)
+    os.environ["HUB_KILLING"] = "true"
+    pid = os.getpid()
+    ppid = os.getppid()
+    parent = psutil.Process(ppid)
+    children = parent.children(recursive=True)
+    for child in children:
+        if child.pid != pid:
+            child.kill()
+    os.kill(ppid, 15)
+    sys.exit(1)
 
 # error handler to format error response
 @app.exception_handler(StarletteHTTPException)

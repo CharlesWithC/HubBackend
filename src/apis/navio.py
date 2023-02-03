@@ -86,7 +86,7 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
 
 @app.post(f"/{config.abbr}/navio")
 async def navio(respones: Response, request: Request, Navio_Signature: str = Header(None)):
-    if request.client.host not in config.allowed_navio_ips:
+    if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(dhrid, -999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}

@@ -4,7 +4,7 @@
 from fastapi import Request, Header, Response
 from typing import Optional
 from discord import Colour
-import json, copy, math, os, time, signal
+import json, copy, math, os, sys, time, psutil
 import threading
 
 from app import app, config, tconfig, config_path, validateConfig
@@ -12,7 +12,7 @@ from db import aiosql
 from functions import *
 import multilang as ml
 
-config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url',  'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', "allowed_navio_ips", 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', "allowed_tracker_ips", 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
@@ -85,14 +85,25 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
 # thread to restart service
 def restart():
-    os.system(f"./launcher tracker restart {config.abbr}")
+    os.system(f"nohup ./launcher tracker restart {config.abbr} > /dev/null")
     time.sleep(3)
-    os.system(f"./launcher hub restart {config.abbr}")
-    # in case restart fails
+    os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
+    aiosql.shutdown_lock = True
     time.sleep(2)
     aiosql.close_pool()
     time.sleep(5)
-    os.kill(os.getppid(), signal.SIGKILL)
+    if "HUB_KILLING" in os.environ.keys():
+        sys.exit(0)
+    os.environ["HUB_KILLING"] = "true"
+    pid = os.getpid()
+    ppid = os.getppid()
+    parent = psutil.Process(ppid)
+    children = parent.children(recursive=True)
+    for child in children:
+        if child.pid != pid:
+            child.kill()
+    os.kill(ppid, 15)
+    sys.exit(1)
 
 # update config
 @app.patch(f"/{config.abbr}/config")

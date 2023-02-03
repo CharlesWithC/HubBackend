@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.21.22**  
+1.Improved restart handler  
+2.Added `config.mysql_pool_size`  
+3.Changed `config.allowed_navio_ips` to `config.allowed_tracker_ips`  
+4.Added `delivery_rules` to config whitelist  
+
 **v1.21.21**  
 1.Improved error handler  
 2.Prevented index to connect to database when `Authorization` header is not provided  

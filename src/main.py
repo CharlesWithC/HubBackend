@@ -108,4 +108,5 @@ if __name__ == "__main__":
         workers = int(config.server_workers)
     except:
         pass
+    
     uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))

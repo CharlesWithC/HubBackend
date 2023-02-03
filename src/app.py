@@ -5,18 +5,18 @@ from fastapi import FastAPI
 from discord import Colour
 import os, sys, json, time
 
-version = "v1.21.21"
+version = "v1.21.22"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'distance_unit', 'truckersmp_bind', 'language', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_navio_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
     "name": "",
+    "language": "en",
     "distance_unit": "metric",
     "truckersmp_bind": True,
-    "language": "en",
     "privacy": False,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
@@ -44,6 +44,7 @@ config_sample = {
     "mysql_passwd": "",
     "mysql_db": "_drivershub",
     "mysql_ext": "/var/lib/mysqlext/",
+    "mysql_pool_size": "10",
     "hcaptcha_secret": "",
 
     "enabled_plugins": [],
@@ -55,7 +56,7 @@ config_sample = {
 
     "navio_api_token": "",
     "navio_company_id": "",
-    "allowed_navio_ips": ["185.233.107.244"],
+    "allowed_tracker_ips": ["185.233.107.244"],
     "delivery_rules": {
         "max_speed": "180",
         "max_profit": "1000000",
@@ -281,6 +282,15 @@ def validateConfig(cfg):
         if plugin.replace(" ","") != "":
             new_external_plugins.append(plugin)
     cfg["external_plugins"] = new_external_plugins
+
+    try:
+        cfg["mysql_pool_size"] = int(cfg["mysql_pool_size"])
+    except:
+        cfg["mysql_pool_size"] = 10
+
+    if "allowed_navio_ips" in cfg.keys():
+        cfg["allowed_tracker_ips"] = cfg["allowed_navio_ips"]
+        del cfg["allowed_navio_ips"]
 
     tcfg = {}
     for key in config_keys_order:

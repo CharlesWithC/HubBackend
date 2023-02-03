@@ -2,7 +2,7 @@
 # Author: @CharlesWithC
 
 import MySQLdb
-import asyncio, aiomysql
+import asyncio, aiomysql, pymysql
 import json, os, time, copy
 import traceback
 
@@ -146,7 +146,8 @@ class AIOSQL:
     async def create_pool(self):
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 5)
+                                        db = self.dbname, autocommit = False, pool_recycle = 5, \
+                                        maxsize = min(20, config.mysql_pool_size))
 
     def close_pool(self):
         self.shutdown_lock = True
@@ -170,24 +171,30 @@ class AIOSQL:
 
     async def new_conn(self, dhrid, extra_time = 0):
         while self.shutdown_lock:
-            await asyncio.sleep(0.1)
+            raise pymysql.err.OperationalError(f"Shutting down")
 
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 5)
+                                        db = self.dbname, autocommit = False, pool_recycle = 5, \
+                                        maxsize = min(20, config.mysql_pool_size))
 
         self.release()
 
-        conn = await self.pool.acquire()
-        cur = await conn.cursor()
-        await cur.execute(f"SET wait_timeout={3+extra_time}, lock_wait_timeout=3;")
-        conns = self.conns
-        conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
-        self.conns = conns
-
-        return conn
+        try:
+            conn = await self.pool.acquire()
+            cur = await conn.cursor()
+            await cur.execute(f"SET wait_timeout={5+extra_time}, lock_wait_timeout=5;")
+            conns = self.conns
+            conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
+            self.conns = conns
+            return conn
+        except:
+            raise pymysql.err.OperationalError(f"Failed to create connection ({dhrid})")
 
     async def refresh_conn(self, dhrid):
+        while self.shutdown_lock:
+            raise pymysql.err.OperationalError(f"Shutting down")
+
         conns = self.conns
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
@@ -211,20 +218,30 @@ class AIOSQL:
 
     async def commit(self, dhrid):
         await self.refresh_conn(dhrid)
-        await self.conns[dhrid][0].commit()
+        if dhrid in self.conns.keys():
+            await self.conns[dhrid][0].commit()
+        else:
+            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
 
     async def execute(self, dhrid, sql):
         await self.refresh_conn(dhrid)
-        await self.conns[dhrid][1].execute(sql)
+        if dhrid in self.conns.keys():
+            await self.conns[dhrid][1].execute(sql)
+        else:
+            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
 
     async def fetchone(self, dhrid):
         await self.refresh_conn(dhrid)
-        ret = await self.conns[dhrid][1].fetchone()
-        return ret
+        if dhrid in self.conns.keys():
+            return await self.conns[dhrid][1].fetchone()
+        else:
+            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
 
     async def fetchall(self, dhrid):
         await self.refresh_conn(dhrid)
-        ret = await self.conns[dhrid][1].fetchall()
-        return ret
+        if dhrid in self.conns.keys():
+            return await self.conns[dhrid][1].fetchall()
+        else:
+            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
 
 aiosql = AIOSQL(host = host, user = user, passwd = passwd, dbname = dbname)
