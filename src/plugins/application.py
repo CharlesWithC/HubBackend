@@ -1,18 +1,22 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from datetime import datetime
-from discord import Webhook, Embed
-from aiohttp import ClientSession
-import json, time, requests, math
+import json
+import math
+import time
 import traceback
+from datetime import datetime
+from typing import Optional
 
+import requests
+from aiohttp import ClientSession
+from discord import Embed, Webhook
+from fastapi import FastAPI, Header, Request, Response
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
 
 application_types = config.application_types
 to_delete = []
@@ -316,7 +320,7 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     if applicantrole != 0 and config.discord_bot_token != "":
         try:
-            r = requests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
+            r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, dhrid = dhrid)
             if r.status_code == 401:
                 DisableDiscordIntegration()
             if r.status_code // 100 != 2:

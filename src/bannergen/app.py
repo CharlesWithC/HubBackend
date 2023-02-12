@@ -1,11 +1,17 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from PIL import Image, ImageFont, ImageDraw
-import requests, os, time, string, unicodedata
+import os
+import string
+import time
+import unicodedata
 from io import BytesIO
+
+import aiohttp
+import requests
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import StreamingResponse
+from PIL import Image, ImageDraw, ImageFont
 
 app = FastAPI()
 
@@ -32,6 +38,15 @@ for i in range(81):
     font = ImageFont.truetype("./fonts/ConsolaBold.ttf", i)
     wsize = font.getlength("a")
     consola_bold_font_wsize.append(wsize)
+
+class arequests():
+    async def get(url, data = {}, headers = {}, timeout = 10):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.read()
+                return r
 
 @app.post("/banner")
 async def banner(request: Request, response: Response):
@@ -66,7 +81,7 @@ async def banner(request: Request, response: Response):
         banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:
         try:
-            r = requests.get(logo_url, timeout = 5)
+            r = await arequests.get(logo_url, timeout = 5)
 
             if r.status_code == 200:
                 logo = r.content
@@ -150,7 +165,7 @@ async def banner(request: Request, response: Response):
             else:
                 avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
             try: # in case image is invalid
-                r = requests.get(avatarurl, timeout = 5)
+                r = await arequests.get(avatarurl, timeout = 5)
                 usedefault = False
                 if r.status_code == 200:
                     try:

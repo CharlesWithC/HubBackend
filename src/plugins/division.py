@@ -1,18 +1,21 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from discord import Webhook, Embed
-from datetime import datetime
-from aiohttp import ClientSession
-import json, time, requests
+import json
+import time
 import traceback
+from datetime import datetime
+from typing import Optional
 
+import requests
+from aiohttp import ClientSession
+from discord import Embed, Webhook
+from fastapi import FastAPI, Header, Request, Response
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
 
 divisions = config.divisions
 divisionsGET = divisions

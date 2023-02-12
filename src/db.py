@@ -1,10 +1,16 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import MySQLdb
-import asyncio, aiomysql, pymysql
-import json, os, time, copy
+import asyncio
+import copy
+import json
+import os
+import time
 import traceback
+
+import aiomysql
+import MySQLdb
+import pymysql
 
 from app import app, config, version
 
@@ -26,7 +32,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT, 
 cur.execute(f"CREATE TABLE IF NOT EXISTS banned (discordid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, \
-    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT) DATA DIRECTORY = '{config.mysql_ext}'")
+    isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # unit = 1: euro | 2: dollar
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -157,8 +163,8 @@ class AIOSQL:
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
-            (tconn, tcur, start_time, extra_time) = conns[tdhrid]
-            if time.time() - start_time >= 1:
+            (tconn, tcur, expire_time, extra_time) = conns[tdhrid]
+            if time.time() - expire_time >= 1:
                 to_delete.append(tdhrid)
                 try:
                     self.pool.release(tconn)
@@ -206,6 +212,16 @@ class AIOSQL:
                 conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
             except:
                 pass
+        self.conns = conns
+    
+    def extend_conn(self, dhrid, seconds):
+        if not dhrid in self.conns.keys():
+            return
+        conns = self.conns
+        try:
+            conns[dhrid][2] = time.time() + seconds
+        except:
+            pass
         self.conns = conns
 
     async def close_conn(self, dhrid):

@@ -1,15 +1,21 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
+import json
+import random
+import string
+import time
 from typing import Optional
-from fastapi.responses import RedirectResponse
-import json, time, requests, random, string
 
+import requests
+from fastapi import FastAPI, Header, Request, Response
+from fastapi.responses import RedirectResponse
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
+
 
 @app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \

@@ -1,16 +1,21 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from datetime import datetime
-import json, time, requests, math
+import json
+import math
+import time
 import traceback
+from datetime import datetime
+from typing import Optional
 
+import requests
+from fastapi import FastAPI, Header, Request, Response
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
+
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
@@ -187,7 +192,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor, "color": config.intcolor}]}))
             if r.status_code == 401:
@@ -262,7 +267,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
     if channelid != 0 and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
+            await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), 
                 "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},\
                         "timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:

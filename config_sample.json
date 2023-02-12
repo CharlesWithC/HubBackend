@@ -41,9 +41,11 @@
     "in_guild_check": true,
     "use_server_nickname": false,
 
-    "navio_api_token": "",
-    "navio_company_id": "",
-    "allowed_tracker_ips": ["185.233.107.244"],
+    "tracker": "tracksim",
+    "tracker_company_id": "",
+    "tracker_api_token": "",
+    "tracker_webhook_secret": "",
+    "allowed_tracker_ips": ["109.106.1.243"],
     "delivery_rules": {
         "max_speed": "180",
         "max_profit": "1000000",

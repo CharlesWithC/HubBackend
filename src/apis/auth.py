@@ -1,20 +1,26 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
-from typing import Optional
-from fastapi.responses import RedirectResponse
-from discord_oauth2 import DiscordAuth
-from pysteamsignin.steamsignin import SteamSignIn
-from hashlib import sha256
-import json, time, requests, uuid
-import bcrypt, re, base64
+import base64
+import json
+import re
+import time
 import traceback
+import uuid
+from hashlib import sha256
+from typing import Optional
 
+import bcrypt
+import requests
+from discord_oauth2 import DiscordAuth
+from fastapi import FastAPI, Header, Request, Response
+from fastapi.responses import RedirectResponse
+from pysteamsignin.steamsignin import SteamSignIn
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
 
 discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, config.discord_callback_url)
 
@@ -49,7 +55,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     try:
-        r = requests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
+        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -75,7 +81,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 428
@@ -197,7 +203,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             
             if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
                 try:
-                    r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
                 except:
                     traceback.print_exc()
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
@@ -297,7 +303,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     r = None
     try:
-        r = requests.get("https://steamcommunity.com/openid/login?" + data)
+        r = await arequests.get("https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -330,7 +336,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = requests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)

@@ -1,19 +1,32 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from base64 import b64encode, b64decode
-from discord import Webhook, Embed
-from aiohttp import ClientSession
-from fastapi.responses import JSONResponse
-from datetime import datetime
-import json, time, math, zlib, re, random
-import hmac, base64, struct, hashlib
-import ipaddress, requests, threading
+import base64
+import collections
+import hashlib
+import hmac
+import ipaddress
+import json
+import math
+import random
+import re
+import struct
+import threading
+import time
 import traceback
+import zlib
+from base64 import b64decode, b64encode
+from datetime import datetime
 
-from db import genconn, aiosql
-from app import config, tconfig
+import aiohttp
+import requests
+from aiohttp import ClientSession
+from discord import Embed, Webhook
+from fastapi.responses import JSONResponse
+
 import multilang as ml
+from app import config, tconfig
+from db import aiosql, genconn
 
 ISO3166_COUNTRIES = {'AF': 'Afghanistan', 'AX': 'Åland Islands', 'AL': 'Albania', 'DZ': 'Algeria', 'AS': 'American Samoa', 'AD': 'Andorra', 'AO': 'Angola', 'AI': 'Anguilla', 'AQ': 'Antarctica', 'AG': 'Antigua and Barbuda', 'AR': 'Argentina', 'AM': 'Armenia', 'AW': 'Aruba', 'AU': 'Australia', 'AT': 'Austria', 'AZ': 'Azerbaijan', 'BS': 'Bahamas', 'BH': 'Bahrain', 'BD': 'Bangladesh', 'BB': 'Barbados', 'BY': 'Belarus', 'BE': 'Belgium', 'BZ': 'Belize', 'BJ': 'Benin', 'BM': 'Bermuda', 'BT': 'Bhutan', 'BO': 'Bolivia, Plurinational State of', 'BQ': 'Bonaire, Sint Eustatius and Saba', 'BA': 'Bosnia and Herzegovina', 'BW': 'Botswana', 'BV': 'Bouvet Island', 'BR': 'Brazil', 'IO': 'British Indian Ocean Territory', 'BN': 'Brunei Darussalam', 'BG': 'Bulgaria', 'BF': 'Burkina Faso', 'BI': 'Burundi', 'KH': 'Cambodia', 'CM': 'Cameroon', 'CA': 'Canada', 'CV': 'Cabo Verde', 'KY': 'Cayman Islands', 'CF': 'Central African Republic', 'TD': 'Chad', 'CL': 'Chile', 'CN': 'China', 'CX': 'Christmas Island', 'CC': 'Cocos (Keeling) Islands', 'CO': 'Colombia', 'KM': 'Comoros', 'CG': 'Congo', 'CD': 'Congo, Democratic Republic of the', 'CK': 'Cook Islands', 'CR': 'Costa Rica', 'CI': "Côte d'Ivoire", 'HR': 'Croatia', 'CU': 'Cuba', 'CW': 'Curaçao', 'CY': 'Cyprus', 'CZ': 'Czechia', 'DK': 'Denmark', 'DJ': 'Djibouti', 'DM': 'Dominica', 'DO': 'Dominican Republic', 'EC': 'Ecuador', 'EG': 'Egypt', 'SV': 'El Salvador', 'GQ': 'Equatorial Guinea', 'ER': 'Eritrea', 'EE': 'Estonia', 'ET': 'Ethiopia', 'FK': 'Falkland Islands (Malvinas)', 'FO': 'Faroe Islands', 'FJ': 'Fiji', 'FI': 'Finland', 'FR': 'France', 'GF': 'French Guiana', 'PF': 'French Polynesia', 'TF': 'French Southern Territories', 'GA': 'Gabon', 'GM': 'Gambia', 'GE': 'Georgia', 'DE': 'Germany', 'GH': 'Ghana', 'GI': 'Gibraltar', 'GR': 'Greece', 'GL': 'Greenland', 'GD': 'Grenada', 'GP': 'Guadeloupe', 'GU': 'Guam', 'GT': 'Guatemala', 'GG': 'Guernsey', 'GN': 'Guinea', 'GW': 'Guinea-Bissau', 'GY': 'Guyana', 'HT': 'Haiti', 'HM': 'Heard Island and McDonald Islands', 'VA': 'Holy See', 'HN': 'Honduras', 'HK': 'Hong Kong', 'HU': 'Hungary', 'IS': 'Iceland', 'IN': 'India', 'ID': 'Indonesia', 'IR': 'Iran, Islamic Republic of', 'IQ': 'Iraq', 'IE': 'Ireland', 'IM': 'Isle of Man', 'IL': 'Israel', 'IT': 'Italy', 'JM': 'Jamaica', 'JP': 'Japan', 'JE': 'Jersey', 'JO': 'Jordan', 'KZ': 'Kazakhstan', 'KE': 'Kenya', 'KI': 'Kiribati', 'KP': "Korea, Democratic People's Republic of", 'KR': 'Korea, Republic of', 'XK': 'Kosovo', 'KW': 'Kuwait', 'KG': 'Kyrgyzstan', 'LA': "Lao People's Democratic Republic", 'LV': 'Latvia', 'LB': 'Lebanon', 'LS': 'Lesotho', 'LR': 'Liberia', 'LY': 'Libya', 'LI': 'Liechtenstein', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'MO': 'Macao', 'MK': 'North Macedonia', 'MG': 'Madagascar', 'MW': 'Malawi', 'MY': 'Malaysia', 'MV': 'Maldives', 'ML': 'Mali', 'MT': 'Malta', 'MH': 'Marshall Islands', 'MQ': 'Martinique', 'MR': 'Mauritania', 'MU': 'Mauritius', 'YT': 'Mayotte', 'MX': 'Mexico', 'FM': 'Micronesia, Federated States of', 'MD': 'Moldova, Republic of', 'MC': 'Monaco', 'MN': 'Mongolia', 'ME': 'Montenegro', 'MS': 'Montserrat', 'MA': 'Morocco', 'MZ': 'Mozambique', 'MM': 'Myanmar', 'NA': 'Namibia', 'NR': 'Nauru', 'NP': 'Nepal', 'NL': 'Netherlands', 'NC': 'New Caledonia', 'NZ': 'New Zealand', 'NI': 'Nicaragua', 'NE': 'Niger', 'NG': 'Nigeria', 'NU': 'Niue', 'NF': 'Norfolk Island', 'MP': 'Northern Mariana Islands', 'NO': 'Norway', 'OM': 'Oman', 'PK': 'Pakistan', 'PW': 'Palau', 'PS': 'Palestine, State of', 'PA': 'Panama', 'PG': 'Papua New Guinea', 'PY': 'Paraguay', 'PE': 'Peru', 'PH': 'Philippines', 'PN': 'Pitcairn', 'PL': 'Poland', 'PT': 'Portugal', 'PR': 'Puerto Rico', 'QA': 'Qatar', 'RE': 'Réunion', 'RO': 'Romania', 'RU': 'Russian Federation', 'RW': 'Rwanda', 'BL': 'Saint Barthélemy', 'SH': 'Saint Helena, Ascension and Tristan da Cunha', 'KN': 'Saint Kitts and Nevis', 'LC': 'Saint Lucia', 'MF': 'Saint Martin (French part)', 'PM': 'Saint Pierre and Miquelon', 'VC': 'Saint Vincent and the Grenadines', 'WS': 'Samoa', 'SM': 'San Marino', 'ST': 'Sao Tome and Principe', 'SA': 'Saudi Arabia', 'SN': 'Senegal', 'RS': 'Serbia', 'SC': 'Seychelles', 'SL': 'Sierra Leone', 'SG': 'Singapore', 'SX': 'Sint Maarten (Dutch part)', 'SK': 'Slovakia', 'SI': 'Slovenia', 'SB': 'Solomon Islands', 'SO': 'Somalia', 'ZA': 'South Africa', 'GS': 'South Georgia and the South Sandwich Islands', 'SS': 'South Sudan', 'ES': 'Spain', 'LK': 'Sri Lanka', 'SD': 'Sudan', 'SR': 'Suriname', 'SJ': 'Svalbard and Jan Mayen', 'SZ': 'Eswatini', 'SE': 'Sweden', 'CH': 'Switzerland', 'SY': 'Syrian Arab Republic', 'TW': 'Taiwan, Province of China', 'TJ': 'Tajikistan', 'TZ': 'Tanzania, United Republic of', 'TH': 'Thailand', 'TL': 'Timor-Leste', 'TG': 'Togo', 'TK': 'Tokelau', 'TO': 'Tonga', 'TT': 'Trinidad and Tobago', 'TN': 'Tunisia', 'TR': 'Türkiye', 'TM': 'Turkmenistan', 'TC': 'Turks and Caicos Islands', 'TV': 'Tuvalu', 'UG': 'Uganda', 'UA': 'Ukraine', 'AE': 'United Arab Emirates', 'GB': 'United Kingdom of Great Britain and Northern Ireland', 'US': 'United States of America', 'UM': 'United States Minor Outlying Islands', 'UY': 'Uruguay', 'UZ': 'Uzbekistan', 'VU': 'Vanuatu', 'VE': 'Venezuela, Bolivarian Republic of', 'VN': 'Viet Nam', 'VG': 'Virgin Islands, British', 'VI': 'Virgin Islands, U.S.', 'WF': 'Wallis and Futuna', 'EH': 'Western Sahara', 'YE': 'Yemen', 'ZM': 'Zambia', 'ZW': 'Zimbabwe', 'XX': 'Unknown', 'T1': 'Tor'} 
 # XX and T1 are provided by CloudFlare, which are not ISO3166 standard
@@ -96,6 +109,57 @@ def b62decode(d):
     for i in range(len(d)):
         ret += l.find(d[i]) * 62 ** (len(d) - i - 1)
     return ret * flag
+
+class arequests():
+    async def get(url, data = None, headers = None, timeout = 10, dhrid = -1):
+        aiosql.extend_conn(dhrid, timeout)
+        async with aiohttp.ClientSession(trust_env = True) as session:
+            async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.content.read()
+                aiosql.extend_conn(dhrid, 2)
+                return r
+
+    async def post(url, data = None, headers = None, timeout = 10, dhrid = -1):
+        aiosql.extend_conn(dhrid, timeout)
+        async with aiohttp.ClientSession(trust_env = True) as session:
+            async with session.post(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.content.read()
+                aiosql.extend_conn(dhrid, 2)
+                return r
+
+    async def patch(url, data = None, headers = None, timeout = 10, dhrid = -1):
+        aiosql.extend_conn(dhrid, timeout)
+        async with aiohttp.ClientSession(trust_env = True) as session:
+            async with session.patch(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.content.read()
+                aiosql.extend_conn(dhrid, 2)
+                return r
+                
+    async def put(url, data = None, headers = None, timeout = 10, dhrid = -1):
+        aiosql.extend_conn(dhrid, timeout)
+        async with aiohttp.ClientSession(trust_env = True) as session:
+            async with session.put(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.content.read()
+                aiosql.extend_conn(dhrid, 2)
+                return r
+                
+    async def delete(url, data = None, headers = None, timeout = 10, dhrid = -1):
+        aiosql.extend_conn(dhrid, timeout)
+        async with aiohttp.ClientSession(trust_env = True) as session:
+            async with session.delete(url, data = data, headers = headers, timeout = timeout) as resp:
+                r = requests.Response()
+                r.status_code = resp.status
+                r._content = await resp.content.read()
+                aiosql.extend_conn(dhrid, 2)
+                return r
 
 ipv4 = '''^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(
             25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(
@@ -214,6 +278,23 @@ def getUserAgent(request):
         return ""
     else:
         return ""
+
+ROLES = {}
+sroles = config.roles
+for srole in sroles:
+    try:
+        ROLES[int(srole["id"])] = srole["name"]
+    except:
+        pass
+ROLES = dict(collections.OrderedDict(sorted(ROLES.items())))
+
+async def getHighestActiveRole(dhrid):
+    for roleid in ROLES.keys():
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE roles LIKE '%,{roleid},%'")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) > 0:
+            return roleid
+    return list(ROLES.keys())[0]
 
 cuserinfo = {} # user info cache
 
@@ -805,7 +886,7 @@ async def AutoMessage(meta, setvar):
             timestamp = ""
             if meta.embed.timestamp:
                 timestamp = str(datetime.now())
-            r = requests.post(ddurl, headers=headers, data=json.dumps({
+            r = await arequests.post(ddurl, headers=headers, data=json.dumps({
                 "content": setvar(meta.content),
                 "embeds": [{
                     "title": setvar(meta.embed.title), 

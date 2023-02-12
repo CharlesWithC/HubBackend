@@ -1,9 +1,11 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import Request
+import json
+import os
 from typing import Optional
-import os, json
+
+from fastapi import Request
 
 from app import config
 

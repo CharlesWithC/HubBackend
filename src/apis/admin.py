@@ -1,23 +1,30 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import Request, Header, Response
-from typing import Optional
-from discord import Colour
-import json, copy, math, os, sys, time, psutil
+import copy
+import json
+import math
+import os
+import sys
 import threading
+import time
+from typing import Optional
 
-from app import app, config, tconfig, config_path, validateConfig
+import psutil
+from discord import Colour
+from fastapi import Header, Request, Response
+
+import multilang as ml
+from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
 from functions import *
-import multilang as ml
 
-config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', "allowed_tracker_ips", 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
 
-config_protected = ["navio_api_token", "discord_client_secret", "discord_bot_token"]
+config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token"]
 
 backup_config = copy.deepcopy(tconfig)
 
@@ -139,7 +146,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     for tt in formconfig.keys():
         if tt in config_whitelist:
-            if tt in ["name", "logo_url", "guild_id", "navio_api_token", "discord_client_id", \
+            if tt in ["name", "logo_url", "guild_id", "discord_client_id", \
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
                 if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
@@ -155,11 +162,11 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                     response.status_code = 400
                     return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
-            if tt in ["guild_id", "navio_company_id", "delivery_log_channel_id", "discord_client_id"]:
+            if tt in ["guild_id", "tracker_company_id", "delivery_log_channel_id", "discord_client_id"]:
                 try:
                     int(formconfig[tt])
                 except:
-                    if tt in ["navio_company_id", "delivery_log_channel_id"] and formconfig[tt] == "":
+                    if tt in ["delivery_log_channel_id", "tracker_company_id"] and formconfig[tt] == "":
                         formconfig[tt] = "0"
                     else:
                         response.status_code = 400
@@ -210,7 +217,8 @@ async def patchConfig(request: Request, response: Response, authorization: str =
             else:
                 ttconfig[tt] = copy.deepcopy(formconfig[tt])
 
-    open(config_path, "w", encoding="utf-8").write(json.dumps(ttconfig, indent=4, ensure_ascii=False))
+    out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
+    open(config_path, "w", encoding="utf-8").write(out)
 
     await AuditLog(dhrid, adminid, "Updated config")
 

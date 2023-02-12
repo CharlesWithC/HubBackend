@@ -3,7 +3,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import os, sys, json
+import json
+import os
+import sys
 
 userbase = os.path.expanduser('~')
 hubbase = os.path.expanduser('~') + "/hub"

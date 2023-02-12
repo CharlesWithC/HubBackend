@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "1.21.22"
+        "version": "1.22.1"
     },
     "paths": {
         "/abbr": {
@@ -2510,7 +2510,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (logid, max_speed, profit, fuel, distance)",
+                        "title": "Order by (logid, max_speed, profit, fuel, distance, views)",
                         "type": "string"
                     },
                     "name": "order_by",
@@ -2878,10 +2878,95 @@
                 }
             }
         },
+        "/abbr/tracksim/setup": {
+            "post": {
+                "summary": "TrackSim Setup",
+                "tags": ["tracker"],
+                "operationId": "post_tracksim_setup",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/abbr/tracksim/update": {
+            "post": {
+                "summary": "TrackSim Webhook",
+                "tags": ["tracker"],
+                "operationId": "post_tracksim_update",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "object": {
+                                        "description": "Object",
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "description": "Type",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Data",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["object", "type", "data"]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/abbr/navio": {
             "post": {
                 "summary": "Navio Webhook",
-                "tags": ["navio"],
+                "tags": ["tracker"],
                 "operationId": "post_navio",
                 "security": [{
                     "bearerAuth": []
@@ -5084,8 +5169,8 @@
         "name": "dlog",
         "description": "The core function of Drivers Hub."
     },{
-        "name": "navio",
-        "description": "Navio Integration."
+        "name": "tracker",
+        "description": "Tracker Integration."
     },{
         "name": "announcement",
         "description": "Announcement Plugin"

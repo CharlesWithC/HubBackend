@@ -1,18 +1,21 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI, Response, Request, Header
-from fastapi.responses import StreamingResponse
-from typing import Optional
-from io import BytesIO
-import json, time, math
+import json
+import math
+import time
 import traceback
+from io import BytesIO
+from typing import Optional
 
+from fastapi import FastAPI, Header, Request, Response
+from fastapi.responses import StreamingResponse
+
+import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
-import multilang as ml
-from plugins.division import divisiontxt, DIVISIONPNT
+from plugins.division import DIVISIONPNT, divisiontxt
 
 # cache (works in each worker process)
 cstats = {}
@@ -52,7 +55,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
         response.status_code = 404
         return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
 
-    await aiosql.execute(dhrid, f"SELECT userid, data, timestamp, distance FROM dlog WHERE logid >= 0 AND logid = {logid}")
+    await aiosql.execute(dhrid, f"SELECT userid, data, timestamp, distance, view_count, trackerid, tracker_type FROM dlog WHERE logid >= 0 AND logid = {logid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -64,6 +67,15 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     if "data" in data.keys():
         del data["data"]["object"]["driver"]
     distance = t[0][3]
+    view_count = t[0][4] + 1
+    
+    tracker = ""
+    trackerid = t[0][5]
+    tracker_type = t[0][6]
+    if tracker_type == 1:
+        tracker = "navio"
+    elif tracker_type == 2:
+        tracker = "tracksim"
 
     await aiosql.execute(dhrid, f"SELECT data FROM telemetry WHERE logid = {logid}")
     p = await aiosql.fetchall(dhrid)
@@ -97,6 +109,9 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     o = await aiosql.fetchall(dhrid)
     for oo in o:
         challenge_record.append(oo[0])
+    
+    await aiosql.execute(dhrid, f"UPDATE dlog SET view_count = view_count + 1 WHERE logid = {logid}")
+    await aiosql.commit(dhrid)
 
     userinfo = None
     if userid == -1 and config.privacy:
@@ -108,7 +123,8 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
 
     return {"error": False, "response": {"dlog": {"logid": str(logid), "user": userinfo, \
         "distance": str(distance), "division": division, "challenge_record": challenge_record, \
-            "detail": data, "telemetry": telemetry, "timestamp": str(t[0][2])}}}
+            "timestamp": str(t[0][2]), "views": str(view_count), "tracker": tracker, "trackerid": str(trackerid), \
+            "detail": data, "telemetry": telemetry}}}
 
 @app.delete(f"/{config.abbr}/dlog")
 async def deleteDlog(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
@@ -190,13 +206,15 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     elif page_size >= 250:
         page_size = 250
 
-    if not order_by in ["logid", "max_speed", "profit", "fuel", "distance"]:
+    if not order_by in ["logid", "max_speed", "profit", "fuel", "distance", "views"]:
         order_by = "logid"
         order = "desc"
     if not order in ["asc", "desc"]:
         order = "desc"
     if order_by == "max_speed":
         order_by = "topspeed"
+    if order_by == "views":
+        order_by = "view_count"
     order = order.upper()
 
     limit = ""
@@ -246,7 +264,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if game == 1 or game == 2:
         gamelimit = f" AND dlog.unit = {game}"
 
-    await aiosql.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel FROM dlog \
+    await aiosql.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     ret = []
@@ -324,7 +342,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
                 "destination_city": destination_city, "destination_company": destination_company, \
                     "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
                         "division": division, "challenge": challenge, \
-                            "status": status, "timestamp": str(tt[2])})
+                            "status": status, "views": str(tt[11]), "timestamp": str(tt[2])})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = await aiosql.fetchall(dhrid)
@@ -1150,10 +1168,10 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
     f = BytesIO()
     if not include_ids:
-        f.write(b"logid, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+        f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
     else:
-        f.write(b"logid, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
-    await aiosql.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title FROM dlog \
+        f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+    await aiosql.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
@@ -1190,6 +1208,12 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         challenge_id = ", ".join(challengeids)
         challenge = ", ".join(challengenames)
 
+        tracker = ""
+        tracker_type = dd[14]
+        if tracker_type == 1:
+            tracker = "navio"
+        elif tracker_type == 2:
+            tracker = "tracksim"
         trackerid = 0
         game = ""
         if dd[3] == 1:
@@ -1262,6 +1286,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         if dd[8] != "":
             try:
                 data = json.loads(decompress(dd[8]))["data"]["object"]
+                first_event = data["events"][0]
                 last_event = data["events"][-1]
                 
                 trackerid = data["id"]
@@ -1309,9 +1334,14 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
                 if is_delivered:
                     revenue = float(last_event["meta"]["revenue"])
-                    xp = float(last_event["meta"]["earned_xp"])
-                    auto_load = last_event["meta"]["auto_load"]
-                    auto_park = last_event["meta"]["auto_park"]
+                    if tracker_type == 1:
+                        xp = float(last_event["meta"]["earned_xp"])
+                        auto_load = last_event["meta"]["auto_load"]
+                        auto_park = last_event["meta"]["auto_park"]
+                    elif tracker_type == 2:
+                        xp = float(last_event["meta"]["earnedXP"])
+                        auto_load = first_event["meta"]["autoLoaded"]
+                        auto_park = last_event["meta"]["autoParked"]
                 else:
                     revenue = -float(last_event["meta"]["penalty"])
                 
@@ -1329,7 +1359,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
                 is_special = int(data["is_special"])
                 is_late = int(data["is_late"])
-                had_police_enabled = int(data["game"]["had_police_enabled"])
+                has_police_enabled = int(data["game"]["has_police_enabled"])
                 market = data["market"]
                 if data["multiplayer"] != None:
                     multiplayer = data["multiplayer"]["type"]
@@ -1338,9 +1368,9 @@ async def getDlogExport(request: Request, response: Response, authorization: str
                 traceback.print_exc()
 
         if not include_ids:
-            data = [logid, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+            data = [logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
         else:
-            data = [logid, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+            data = [logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
 
         for i in range(len(data)):
             data[i] = '"' + str(data[i]) + '"'

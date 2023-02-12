@@ -3,9 +3,14 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import os, sys, time, json, threading
-import uvicorn
+import json
+import os
+import sys
+import threading
+import time
 import traceback
+
+import uvicorn
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -37,9 +42,9 @@ if not os.path.exists(config_path):
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
 
+import multilang
 from app import app, config, version
 from db import genconn
-import multilang
 
 for external_plugin in config.external_plugins:
     if not os.path.exists(f"./external_plugins/{external_plugin}.py"):
@@ -82,6 +87,7 @@ if __name__ == "__main__":
     conn.close()
 
 import api
+
 if __name__ == "__main__":
     print("")
     print(f"Company Name: {config.name}")

@@ -1,20 +1,25 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import Request, Header, Response
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exceptions import RequestValidationError
+import json
+import os
+import sys
+import time
 from datetime import datetime, timedelta
-import json, os, sys, time, psutil, pymysql
-
-from app import app, config, version, DH_START_TIME
-from db import aiosql
-from functions import *
-import multilang as ml
-
 # Load external code before original code to prevent overwrite
 from importlib.machinery import SourceFileLoader
+
+import psutil
+import pymysql
+from fastapi import Header, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+import multilang as ml
+from app import DH_START_TIME, app, config, version
+from db import aiosql
+from functions import *
 
 for external_plugin in config.external_plugins:
     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
@@ -28,7 +33,10 @@ import apis.admin
 import apis.auth
 import apis.dlog
 import apis.member
-import apis.navio
+if config.tracker.lower() == "tracksim":
+    import apis.tracksim
+elif config.tracker.lower() == "navio":
+    import apis.navio
 import apis.user
 
 # import plugins
@@ -110,20 +118,19 @@ err500 = []
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.exception_handler(500)
 async def error500Handler(request: Request, exc: Exception):
-    global err500
-    if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
-        err500.append(time.time())
-        err500[:] = [i for i in err500 if i > time.time() - 3600] # 5 error / 60 minutes = restart
-        if len(err500) > 5:
-            try:
-                requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many `500 Internal Server Error`. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
-            except:
-                pass
-            threading.Thread(target=restart).start()
-            err500.append(-1)
-
     for err in pymysql_errs:
         if isinstance(exc, err):
+            global err500
+            if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
+                err500.append(time.time())
+                err500[:] = [i for i in err500 if i > time.time() - 3600] # 5 error / 60 minutes = restart
+                if len(err500) > 5:
+                    try:
+                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                    except:
+                        pass
+                    threading.Thread(target=restart).start()
+                    err500.append(-1)
             return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
     else:
         return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)

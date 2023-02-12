@@ -1,8 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
-# NOTE LEGACY CODE
 
 import asyncio
+import hashlib
+import hmac
 import json
 import time
 import traceback
@@ -14,8 +15,8 @@ from dateutil import parser
 from fastapi import FastAPI, Header, Request, Response
 
 import multilang as ml
-from app import app, config, tconfig
-from db import aiosql
+from app import app, config, config_path, tconfig, validateConfig
+from db import aiosql, genconn
 from functions import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
@@ -25,81 +26,73 @@ GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
-async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
+@app.post(f"/{config.abbr}/tracksim/setup")
+async def postTrackSimSetup(response: Response, request: Request, authorization: str = Header(None)):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 5)
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /tracksim/setup', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, required_permission = ["admin"], allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    adminid = au["userid"]
+
+    global tconfig
+    global config
+    ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
     
-    await aiosql.execute(dhrid, f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
-    p = await aiosql.fetchall(dhrid)
-    if len(p) > 0:
-        jobuuid = p[0][0]
-        await aiosql.execute(dhrid, f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
-        t = await aiosql.fetchall(dhrid)
-        data = f"{t[0][3]},{t[0][4]},v5;"
-        lastx = 0
-        lastz = 0
-        idle = 0
-        for tt in t:
-            if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
-                idle += 1
-                continue
-            else:
-                if idle > 0:
-                    data += f"^{idle}^"
-                    idle = 0
-            st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
-            rx = (round(tt[0]) - lastx) + 26
-            rz = (round(tt[2]) - lastz) + 26
-            if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
-                # using this method to compress data can save 60+% storage comparing with v4
-                data += f"{st[rx]}{st[rz]}"
-            else:
-                data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
-            lastx = round(tt[0])
-            lastz = round(tt[2])
-        await aiosql.close_conn(dhrid)
+    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE userid = {adminid}")
+    t = await aiosql.fetchall(dhrid)
+    email = t[0][0]
 
-        for _ in range(3):
-            try:
-                dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
+    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/tracksim/update"}, dhrid = dhrid)
+    if r.status_code != 200:
+        response.status_code = r.status_code
+        return {"error": True, "descriptor": json.loads(r.text)["error"]}
+
+    d = json.loads(r.text)
+    company_id = d["company_id"]
+    api_key = d["api_key"]["key"]
+    webhook_secret = d["webhook_secret"]
+
+    tconfig["tracker_company_id"] = str(company_id)
+    ttconfig["tracker_company_id"] = str(company_id)
+    config.tracker_company_id = str(company_id)
+    tconfig["tracker_api_token"] = api_key
+    ttconfig["tracker_api_token"] = api_key
+    config.tracker_api_token = api_key
+    tconfig["tracker_webhook_secret"] = webhook_secret
+    ttconfig["tracker_webhook_secret"] = webhook_secret
+    config.tracker_webhook_secret = webhook_secret
+    out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
+    open(config_path, "w", encoding="utf-8").write(out)
+
+    return {"error": False}
     
-                await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-                p = await aiosql.fetchall(dhrid)
-                if len(p) > 0:
-                    break
-                    
-                await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
-                await aiosql.commit(dhrid)
-                await aiosql.close_conn(dhrid)
-                break
-            except:
-                continue
-
-        for _ in range(5):
-            try:
-                dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
-                await aiosql.execute(dhrid, f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
-                await aiosql.commit(dhrid)
-                await aiosql.close_conn(dhrid)
-                break
-            except:
-                continue
-    else:
-        await aiosql.close_conn(dhrid)
-
-@app.post(f"/{config.abbr}/navio")
-async def postNavio(response: Response, request: Request):
+@app.post(f"/{config.abbr}/tracksim/update")
+async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
-        await AuditLog(dhrid, -999, f"Rejected suspicious Navio webhook post from {request.client.host}")
+        await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (IP is not in whitelist)")
+        return {"error": True, "descriptor": "Validation failed"}
+    
+    d = await request.json()
+    sig = hmac.new(config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
+    if sig != TrackSim_Signature:
+        response.status_code = 403
+        await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (Signature does not match)")
         return {"error": True, "descriptor": "Validation failed"}
     
     dhrid = genrid()
     await aiosql.new_conn(dhrid)
     
-    d = await request.json()
     if d["object"] != "event":
         return {"error": True, "descriptor": "Only events are accepted."}
     e = d["type"]
@@ -176,7 +169,7 @@ async def postNavio(response: Response, request: Request):
 
     duplicate = False
     logid = -1
-    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 1")
+    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 2")
     o = await aiosql.fetchall(dhrid)
     if len(o) > 0:
         duplicate = True # only for debugging purpose
@@ -196,7 +189,7 @@ async def postNavio(response: Response, request: Request):
     if e == "job.delivered":
         revenue = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
         isdelivered = 1
-        xp = d["data"]["object"]["events"][-1]["meta"]["earned_xp"]
+        xp = d["data"]["object"]["events"][-1]["meta"]["earnedXP"]
         meta_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
         if driven_distance < 0 or driven_distance > meta_distance * 1.5:
             driven_distance = 0
@@ -248,12 +241,12 @@ async def postNavio(response: Response, request: Request):
             except:
                 pass
         if delivery_rule_ok and not duplicate:
-            if "tracker" in config.enabled_plugins:
-                asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
+            # if "tracker" in config.enabled_plugins:
+            #     asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
             
             await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
             await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
-                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 1, 0)")
+                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
             await aiosql.commit(dhrid)
 
             discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
@@ -296,8 +289,8 @@ async def postNavio(response: Response, request: Request):
                 multiplayer = ml.ctr("single_player")
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    if not omultiplayer["server"] is None:
-                        multiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    if not omultiplayer["meta"]["server"] is None:
+                        multiplayer = "TruckersMP (" + omultiplayer["meta"]["server"] +")"
                     else:
                         multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
@@ -308,8 +301,8 @@ async def postNavio(response: Response, request: Request):
                 umultiplayer = ml.tr(None, "single_player", force_lang = language)
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    if not omultiplayer["server"] is None:
-                        umultiplayer = "TruckersMP (" + omultiplayer["server"] +")"
+                    if not omultiplayer["meta"]["server"] is None:
+                        umultiplayer = "TruckersMP (" + omultiplayer["meta"]["server"] +")"
                     else:
                         umultiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
@@ -510,8 +503,8 @@ async def postNavio(response: Response, request: Request):
                     if not jobreq["allow_overspeed"] and has_overspeed:
                         continue
 
-                    auto_park = d["data"]["object"]["events"][-1]["meta"]["auto_park"]
-                    auto_load = d["data"]["object"]["events"][-1]["meta"]["auto_load"]
+                    auto_park = d["data"]["object"]["events"][-1]["meta"]["autoParked"]
+                    auto_load = d["data"]["object"]["events"][0]["meta"]["autoLoaded"]
                     if not jobreq["allow_auto_park"] and auto_park:
                         continue
                     if not jobreq["allow_auto_load"] and auto_load:

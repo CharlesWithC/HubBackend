@@ -1,9 +1,17 @@
 # Changelog
 
+**v1.22.1**  
+1.Renamed `config.navio_*` to `config.tracker_*`  
+2.Added async requests  
+3.Added full role management for users with highest role  
+4.Added `view count` to delivery log  
+5.Added TrackSim setup, webhook, add/remove driver  
+6.Added dual-tracker support (TrackSim / Navio)  
+
 **v1.21.22**  
 1.Improved restart handler  
 2.Added `config.mysql_pool_size`  
-3.Changed `config.allowed_navio_ips` to `config.allowed_tracker_ips`  
+3.Renamed `config.allowed_navio_ips` to `config.allowed_tracker_ips`  
 4.Added `delivery_rules` to config whitelist  
 
 **v1.21.21**  

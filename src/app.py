@@ -1,15 +1,19 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from fastapi import FastAPI
-from discord import Colour
-import os, sys, json, time
+import json
+import os
+import sys
+import time
 
-version = "v1.21.22"
+from discord import Colour
+from fastapi import FastAPI
+
+version = "v1.22.1"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'navio_api_token', 'navio_company_id', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -54,9 +58,11 @@ config_sample = {
     "in_guild_check": True,
     "use_server_nickname": False,
 
-    "navio_api_token": "",
-    "navio_company_id": "",
-    "allowed_tracker_ips": ["185.233.107.244"],
+    "tracker": "tracksim",
+    "tracker_company_id": "",
+    "tracker_api_token": "",
+    "tracker_webhook_secret": "",
+    "allowed_tracker_ips": ["109.106.1.243"],
     "delivery_rules": {
         "max_speed": "180",
         "max_profit": "1000000",
