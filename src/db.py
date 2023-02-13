@@ -197,32 +197,39 @@ class AIOSQL:
         except:
             raise pymysql.err.OperationalError(f"Failed to create connection ({dhrid})")
 
-    async def refresh_conn(self, dhrid):
+    async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
             raise pymysql.err.OperationalError(f"Shutting down")
 
         conns = self.conns
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
+            cur = conns[dhrid][1]
+            if extend:
+                await cur.execute(f"SET wait_timeout={5+conns[dhrid][3]}, lock_wait_timeout=5;")
         except:
             try:
                 conn = await self.pool.acquire()
                 cur = await conn.cursor()
                 conns = self.conns
                 conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
+                if extend:
+                    await cur.execute(f"SET wait_timeout={5+conns[dhrid][3]}, lock_wait_timeout=5;")
             except:
                 pass
         self.conns = conns
     
-    def extend_conn(self, dhrid, seconds):
+    async def extend_conn(self, dhrid, seconds):
         if not dhrid in self.conns.keys():
             return
         conns = self.conns
         try:
-            conns[dhrid][2] = time.time() + seconds
+            conns[dhrid][2] = time.time() + seconds + 1
+            conns[dhrid][3] = seconds + 1
         except:
             pass
         self.conns = conns
+        await self.refresh_conn(dhrid, extend = True)
 
     async def close_conn(self, dhrid):
         if dhrid in self.conns.keys():

@@ -118,7 +118,7 @@ class arequests():
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 2)
+                aiosql.extend_conn(dhrid, 1)
                 return r
 
     async def post(url, data = None, headers = None, timeout = 10, dhrid = -1):
@@ -128,7 +128,7 @@ class arequests():
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 2)
+                aiosql.extend_conn(dhrid, 1)
                 return r
 
     async def patch(url, data = None, headers = None, timeout = 10, dhrid = -1):
@@ -138,7 +138,7 @@ class arequests():
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 2)
+                aiosql.extend_conn(dhrid, 1)
                 return r
                 
     async def put(url, data = None, headers = None, timeout = 10, dhrid = -1):
@@ -148,7 +148,7 @@ class arequests():
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 2)
+                aiosql.extend_conn(dhrid, 1)
                 return r
                 
     async def delete(url, data = None, headers = None, timeout = 10, dhrid = -1):
@@ -158,7 +158,7 @@ class arequests():
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 2)
+                aiosql.extend_conn(dhrid, 1)
                 return r
 
 ipv4 = '''^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(

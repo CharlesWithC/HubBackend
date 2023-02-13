@@ -1277,7 +1277,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
         is_special = 0
         is_late = 0
-        has_police_enabled = 0
+        has_police_enabled = -1
         market = ""
         multiplayer = ""
         auto_load = 0
@@ -1359,7 +1359,10 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
                 is_special = int(data["is_special"])
                 is_late = int(data["is_late"])
-                has_police_enabled = int(data["game"]["has_police_enabled"])
+                if "had_police_enabled" in data["game"].keys():
+                    has_police_enabled = int(data["game"]["had_police_enabled"])
+                elif "has_police_enabled" in data["game"].keys():
+                    has_police_enabled = int(data["game"]["has_police_enabled"])
                 market = data["market"]
                 if data["multiplayer"] != None:
                     multiplayer = data["multiplayer"]["type"]

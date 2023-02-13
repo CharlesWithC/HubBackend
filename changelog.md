@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.2**  
+1.Fixed `has_police_enabled` error when exporting dlog  
+2.Fixed database connection timeout due to slow `requests` response  
+
 **v1.22.1**  
 1.Renamed `config.navio_*` to `config.tracker_*`  
 2.Added async requests  
