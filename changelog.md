@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.22.3**  
+1.Removed `exit` on restart and left the `restart` job to `systemctl`  
+2.Fixed error when a navio / tracksim webhook post is rejected  
+3.Fixed config allowing `tracker_api_token` and `tracker_webhook_secret` being empty  
+
 **v1.22.2**  
 1.Fixed `has_police_enabled` error when exporting dlog  
 2.Fixed database connection timeout due to slow `requests` response  

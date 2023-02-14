@@ -91,13 +91,13 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
 
 @app.post(f"/{config.abbr}/navio")
 async def postNavio(response: Response, request: Request):
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(dhrid, -999, f"Rejected suspicious Navio webhook post from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
-    
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid)
     
     d = await request.json()
     if d["object"] != "event":

@@ -88,22 +88,6 @@ async def languages():
 def restart():
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
-    aiosql.shutdown_lock = True
-    time.sleep(2)
-    aiosql.close_pool()
-    time.sleep(5)
-    if "HUB_KILLING" in os.environ.keys():
-        sys.exit(1)
-    os.environ["HUB_KILLING"] = "true"
-    pid = os.getpid()
-    ppid = os.getppid()
-    parent = psutil.Process(ppid)
-    children = parent.children(recursive=True)
-    for child in children:
-        if child.pid != pid:
-            child.kill()
-    os.kill(ppid, 15)
-    sys.exit(1)
 
 # error handler to format error response
 @app.exception_handler(StarletteHTTPException)
@@ -118,20 +102,24 @@ err500 = []
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.exception_handler(500)
 async def error500Handler(request: Request, exc: Exception):
+    ismysqlerr = False
     for err in pymysql_errs:
         if isinstance(exc, err):
-            global err500
-            if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
-                err500.append(time.time())
-                err500[:] = [i for i in err500 if i > time.time() - 3600] # 5 error / 60 minutes = restart
-                if len(err500) > 5:
-                    try:
-                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
-                    except:
-                        pass
-                    threading.Thread(target=restart).start()
-                    err500.append(-1)
-            return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
+            ismysqlerr = True
+            break
+    if ismysqlerr:
+        global err500
+        if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
+            err500.append(time.time())
+            err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
+            if len(err500) > 5:
+                try:
+                    await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                except:
+                    pass
+                threading.Thread(target=restart).start()
+                err500.append(-1)
+        return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
     else:
         return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
         

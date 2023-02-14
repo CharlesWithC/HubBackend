@@ -55,7 +55,11 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/tracksim/update"}, dhrid = dhrid)
     if r.status_code != 200:
         response.status_code = r.status_code
-        return {"error": True, "descriptor": json.loads(r.text)["error"]}
+        try:
+            d = json.loads(r.text)
+            return {"error": True, "descriptor": d["error"]}
+        except:
+            return {"error": True, "descriptor": r.text}
 
     d = json.loads(r.text)
     company_id = d["company_id"]
@@ -78,6 +82,9 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     
 @app.post(f"/{config.abbr}/tracksim/update")
 async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (IP is not in whitelist)")
@@ -89,9 +96,6 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
         response.status_code = 403
         await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (Signature does not match)")
         return {"error": True, "descriptor": "Validation failed"}
-    
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid)
     
     if d["object"] != "event":
         return {"error": True, "descriptor": "Only events are accepted."}

@@ -95,22 +95,6 @@ def restart():
     os.system(f"nohup ./launcher tracker restart {config.abbr} > /dev/null")
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
-    aiosql.shutdown_lock = True
-    time.sleep(2)
-    aiosql.close_pool()
-    time.sleep(5)
-    if "HUB_KILLING" in os.environ.keys():
-        sys.exit(0)
-    os.environ["HUB_KILLING"] = "true"
-    pid = os.getpid()
-    ppid = os.getppid()
-    parent = psutil.Process(ppid)
-    children = parent.children(recursive=True)
-    for child in children:
-        if child.pid != pid:
-            child.kill()
-    os.kill(ppid, 15)
-    sys.exit(1)
 
 # update config
 @app.patch(f"/{config.abbr}/config")
@@ -144,8 +128,25 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
 
+    tracker = ""
+    if "tracker" in formconfig.keys():
+        tracker = formconfig["tracker"]
+    elif "tracker" in ttconfig.keys():
+        tracker = ttconfig["tracker"]
+    else:
+        tracker = "navio"
+
     for tt in formconfig.keys():
         if tt in config_whitelist:
+            if tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
+                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                    response.status_code = 400
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+            elif tracker == "navio" and tt in ["tracker_api_token"]:
+                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                    response.status_code = 400
+                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+
             if tt in ["name", "logo_url", "guild_id", "discord_client_id", \
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
                 if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":

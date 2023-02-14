@@ -9,7 +9,7 @@ import time
 from discord import Colour
 from fastapi import FastAPI
 
-version = "v1.22.2"
+version = "v1.22.3"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
