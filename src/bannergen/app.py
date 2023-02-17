@@ -4,6 +4,7 @@
 import os
 import string
 import time
+import traceback
 import unicodedata
 from io import BytesIO
 
@@ -40,8 +41,8 @@ for i in range(81):
     consola_bold_font_wsize.append(wsize)
 
 class arequests():
-    async def get(url, data = {}, headers = {}, timeout = 10):
-        async with aiohttp.ClientSession() as session:
+    async def get(url, data = None, headers = None, timeout = 10):
+        async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
@@ -122,7 +123,7 @@ async def banner(request: Request, response: Response):
                 banner.paste(logo_bg, (1475, 25, 1675, 225))              
 
         except:
-            pass
+            traceback.print_exc()
 
         # draw company name
         draw = ImageDraw.Draw(banner)
@@ -187,7 +188,7 @@ async def banner(request: Request, response: Response):
                 avatar.putdata(newData)
                 avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
             except:
-                pass
+                traceback.print_exc()
     avatar = avatar.getdata()
 
     # render avatar

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.4**  
+1.Removed try / except when adding job to database  
+2.Improved delivery rule block handling  
+
 **v1.22.3**  
 1.Removed `exit` on restart and left the `restart` job to `systemctl`  
 2.Fixed error when a navio / tracksim webhook post is rejected  

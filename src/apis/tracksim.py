@@ -171,12 +171,12 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
     username = t[0][1]
     trackerid = d["data"]["object"]["id"]
 
-    duplicate = False
+    duplicate = False # NOTE only for debugging purpose
     logid = -1
     await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 2")
     o = await aiosql.fetchall(dhrid)
     if len(o) > 0:
-        duplicate = True # only for debugging purpose
+        duplicate = True
         logid = o[0][0]
         return {"error": True, "descriptor": "Already logged"}
 
@@ -225,38 +225,40 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
         logid = int(t[0][0])
 
     delivery_rule_ok = True
-    try:
-        mod_revenue = revenue
-        if "delivery_rules" in tconfig.keys() and "action" in tconfig["delivery_rules"].keys() \
-                and tconfig["delivery_rules"]["action"] != "bypass":
-            action = tconfig["delivery_rules"]["action"]
-            delivery_rules = tconfig["delivery_rules"]
-            try:
-                if top_speed > int(delivery_rules["max_speed"]) and action == "block":
+    
+    mod_revenue = revenue # modified revenue
+    if "delivery_rules" in tconfig.keys() and "action" in tconfig["delivery_rules"].keys() \
+            and tconfig["delivery_rules"]["action"] != "bypass":
+        action = tconfig["delivery_rules"]["action"]
+        delivery_rules = tconfig["delivery_rules"]
+        try:
+            if top_speed > int(delivery_rules["max_speed"]) and action == "block":
+                delivery_rule_ok = False
+        except:
+            pass
+        try:
+            if revenue > int(delivery_rules["max_profit"]):
+                if action == "block":
                     delivery_rule_ok = False
-            except:
-                pass
-            try:
-                if revenue > int(delivery_rules["max_profit"]):
-                    if action == "block":
-                        delivery_rule_ok = False
-                    elif action == "drop":
-                        mod_revenue = 0
-            except:
-                pass
-        if delivery_rule_ok and not duplicate:
-            # if "tracker" in config.enabled_plugins:
-            #     asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
-            
-            await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
-                {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
-            await aiosql.commit(dhrid)
+                elif action == "drop":
+                    mod_revenue = 0
+        except:
+            pass
+        
+    if not delivery_rule_ok:        
+        return {"error": False, "response": "Blocked due to delivery rules."}
 
-            discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
-            await notification(dhrid, "dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), no_discord_notification = True)
-    except:
-        pass
+    if not duplicate:
+        # if "tracker" in config.enabled_plugins:
+        #     asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
+        
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
+        await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
+            {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
+        await aiosql.commit(dhrid)
+
+        discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+        await notification(dhrid, "dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), no_discord_notification = True)
 
     if config.delivery_log_channel_id != "" and not duplicate:
         try:
@@ -403,7 +405,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
             traceback.print_exc()
 
     try:
-        if "challenge" in config.enabled_plugins and delivery_rule_ok and isdelivered and not duplicate:
+        if "challenge" in config.enabled_plugins and isdelivered and not duplicate:
             await aiosql.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
             current_distance = await aiosql.fetchone(dhrid)
             current_distance = current_distance[0]

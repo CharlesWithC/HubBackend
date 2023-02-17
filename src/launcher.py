@@ -47,7 +47,6 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=5
-RuntimeMaxSec=1800s
 ExecStart="""+hubbase+"""/launcher bannergen main
 
 [Install]
