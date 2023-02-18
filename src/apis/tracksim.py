@@ -52,7 +52,7 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
-    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/tracksim/update"}, dhrid = dhrid)
+    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/{config.abbr}/tracksim/update"}, dhrid = dhrid)
     if r.status_code != 200:
         response.status_code = r.status_code
         try:
@@ -75,6 +75,9 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     tconfig["tracker_webhook_secret"] = webhook_secret
     ttconfig["tracker_webhook_secret"] = webhook_secret
     config.tracker_webhook_secret = webhook_secret
+    tconfig["allowed_tracker_ips"] = ["109.106.1.243"]
+    ttconfig["allowed_tracker_ips"] = ["109.106.1.243"]
+    config.allowed_tracker_ips = ["109.106.1.243"]
     out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
     open(config_path, "w", encoding="utf-8").write(out)
 

@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.5**  
+1.Fixed TrackSim setup webhook  
+2.Added `allowed_tracker_ips` update on TrackSim setup  
+
 **v1.22.4**  
 1.Removed try / except when adding job to database  
 2.Improved delivery rule block handling  
