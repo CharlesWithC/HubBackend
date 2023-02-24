@@ -10,8 +10,7 @@ import uuid
 from typing import Optional
 
 import bcrypt
-import requests
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -23,7 +22,7 @@ from functions import *
 @app.get(f'/{config.abbr}/user')
 async def getUser(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user', 60, 120)
@@ -133,7 +132,7 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
 async def getUserNotificationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, content: Optional[str] = '', status: Optional[int] = -1, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/list', 60, 60)
@@ -191,7 +190,7 @@ async def getUserNotificationList(request: Request, response: Response, authoriz
 @app.patch(f"/{config.abbr}/user/notification/status")
 async def patchUserNotificationStatus(request: Request, response: Response, authorization: str = Header(None), \
         notificationids: Optional[str] = ""):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/notification/status', 60, 30)
@@ -235,7 +234,7 @@ async def patchUserNotificationStatus(request: Request, response: Response, auth
 
 @app.get(f"/{config.abbr}/user/notification/settings")
 async def getNotificationSettings(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/settings', 60, 60)
@@ -269,7 +268,7 @@ async def enableNotification(request: Request, response: Response, notification_
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/notification_type/enable', 60, 30)
@@ -316,7 +315,7 @@ async def enableNotification(request: Request, response: Response, notification_
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3, dhrid = dhrid)
+            r = await arequests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
         except:
             traceback.print_exc()
             response.status_code = 503
@@ -375,7 +374,7 @@ async def disableNotification(request: Request, response: Response, notification
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
 
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/notification_type/disable', 60, 60)
@@ -423,7 +422,7 @@ async def disableNotification(request: Request, response: Response, notification
 
 @app.get(f"/{config.abbr}/user/language")
 async def getUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/language', 60, 60)
@@ -447,7 +446,7 @@ async def getUserLanguage(request: Request, response: Response, authorization: s
 
 @app.patch(f"/{config.abbr}/user/language")
 async def patchUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/language', 60, 30)
@@ -484,7 +483,7 @@ async def patchUserLanguage(request: Request, response: Response, authorization:
 async def getUserList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, name: Optional[str] = '', \
         order_by: Optional[str] = "discord_id", order: Optional[str] = "asc"):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/list', 60, 60)
@@ -540,7 +539,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
 @app.patch(f"/{config.abbr}/user/profile")
 async def patchUserProfile(request: Request, response: Response, authorization: str = Header(None), \
         discordid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/profile', 60, 15)
@@ -577,7 +576,7 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
     try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
     except:
         traceback.print_exc()
         if not staffmode:
@@ -609,7 +608,7 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
     
 @app.patch(f'/{config.abbr}/user/bio')
 async def patchUserBio(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/bio', 60, 30)
@@ -643,7 +642,7 @@ async def patchUserBio(request: Request, response: Response, authorization: str 
 
 @app.patch(f'/{config.abbr}/user/password')
 async def patchPassword(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/password', 60, 10)
@@ -719,7 +718,7 @@ async def patchPassword(request: Request, response: Response, authorization: str
     
 @app.delete(f'/{config.abbr}/user/password')
 async def deletePassword(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/password', 60, 10)
@@ -771,7 +770,7 @@ async def deletePassword(request: Request, response: Response, authorization: st
 
 @app.post(f"/{config.abbr}/user/tip")
 async def postTemporaryIdentityProof(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/tip', 180, 20)
@@ -798,7 +797,7 @@ async def postTemporaryIdentityProof(request: Request, response: Response, autho
 
 @app.get(f"/{config.abbr}/user/tip")
 async def getTemporaryIdentityProof(request: Request, response: Response, token: Optional[str] = ""):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/tip', 60, 120)
@@ -821,7 +820,7 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
 
 @app.post(f"/{config.abbr}/user/mfa")
 async def postMFA(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/mfa', 60, 30)
@@ -876,7 +875,7 @@ async def postMFA(request: Request, response: Response, authorization: str = Hea
 
 @app.delete(f"/{config.abbr}/user/mfa")
 async def deleteMFA(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[str] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/mfa', 60, 30)
@@ -949,7 +948,7 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         
 @app.patch(f"/{config.abbr}/user/steam")
 async def patchSteam(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/steam', 60, 3)
@@ -973,7 +972,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
+        r = await arequests.get("https://steamcommunity.com/openid/login?" + openid)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -1001,20 +1000,14 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid != 0 and userid >= 0:
-        # await aiosql.execute(dhrid, f"SELECT * FROM auditlog WHERE operation LIKE '%Updated Steam ID%' AND userid = {userid} AND timestamp >= {int(time.time() - 86400 * 3)}")
-        # p = await aiosql.fetchall(dhrid)
-        # if len(p) > 0:
-        #     response.status_code = 429
-        #     return {"error": True, "descriptor": ml.tr(request, "steam_updated_within_3d", force_lang = au["language"])}
-
         if not (await auth(dhrid, authorization, request, required_permission = ["driver"]))["error"]:
             try:
                 if config.tracker.lower() == "tracksim":
-                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
+                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
                 elif config.tracker.lower() == "navio":
-                    await arequests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token})
+                    await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token})
             except:
                 traceback.print_exc()
             await AuditLog(dhrid, userid, f"Updated Steam ID to `{steamid}`")
@@ -1023,7 +1016,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     await aiosql.commit(dhrid)
 
     try:
-        r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
+        r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}")
         if r.status_code == 200:
             d = json.loads(r.text)
             if not d["error"]:
@@ -1042,7 +1035,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
 
 @app.patch(f"/{config.abbr}/user/truckersmp")
 async def patchTruckersMP(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/truckersmp', 60, 3)
@@ -1070,7 +1063,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    r = await arequests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid), dhrid = dhrid)
+    r = await arequests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
     if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
@@ -1099,7 +1092,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
 # Manage User Section
 @app.put(f'/{config.abbr}/user/ban')
 async def userBan(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PUT /user/ban', 60, 10)
@@ -1161,7 +1154,7 @@ async def userBan(request: Request, response: Response, authorization: str = Hea
 
 @app.delete(f'/{config.abbr}/user/ban')
 async def userUnban(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/ban', 60, 10)
@@ -1199,7 +1192,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
 # Higher Management Section
 @app.patch(f"/{config.abbr}/user/discord")
 async def patchUserDiscord(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/discord', 60, 10)
@@ -1278,7 +1271,7 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     
 @app.delete(f"/{config.abbr}/user/connections")
 async def deleteUserConnection(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/connections', 60, 10)
@@ -1326,7 +1319,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     
 @app.delete(f"/{config.abbr}/user")
 async def deleteUser(request: Request, response: Response, authorization: str = Header(None), discordid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user', 60, 10)

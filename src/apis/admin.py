@@ -5,12 +5,10 @@ import copy
 import json
 import math
 import os
-import sys
 import threading
 import time
 from typing import Optional
 
-import psutil
 from discord import Colour
 from fastapi import Header, Request, Response
 
@@ -31,7 +29,7 @@ backup_config = copy.deepcopy(tconfig)
 # get config
 @app.get(f"/{config.abbr}/config")
 async def getConfig(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /config', 60, 60)
@@ -99,7 +97,7 @@ def restart():
 # update config
 @app.patch(f"/{config.abbr}/config")
 async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /config', 60, 60)
@@ -134,7 +132,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     elif "tracker" in ttconfig.keys():
         tracker = ttconfig["tracker"]
     else:
-        tracker = "navio"
+        tracker = "tracksim"
 
     for tt in formconfig.keys():
         if tt in config_whitelist:
@@ -228,7 +226,7 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 # restart service
 @app.post(f"/{config.abbr}/restart")
 async def postRestart(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /restart', 600, 3)
@@ -271,7 +269,7 @@ async def postRestart(request: Request, response: Response, authorization: str =
 @app.get(f"/{config.abbr}/audit")
 async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /audit', 60, 60)

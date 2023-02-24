@@ -1,14 +1,12 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import random
 import string
 import time
 from typing import Optional
 
-import requests
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 from fastapi.responses import RedirectResponse
 
 import multilang as ml
@@ -20,7 +18,7 @@ from functions import *
 @app.get(f"/{config.abbr}/downloads")
 async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads', 60, 120)
@@ -66,7 +64,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
         title: Optional[str] = "", creator_userid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/list', 60, 60)
@@ -130,7 +128,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
 @app.get(f"/{config.abbr}/downloads/{{secret}}")
 async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
         secret: Optional[str] = ""):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/redirect', 60, 60)
@@ -165,7 +163,7 @@ async def redirectDownloads(request: Request, response: Response, authorization:
 
 @app.post(f"/{config.abbr}/downloads")
 async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /downloads', 60, 30)
@@ -220,7 +218,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/downloads")
 async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /downloads', 60, 30)
@@ -281,7 +279,7 @@ async def patchDownloads(request: Request, response: Response, authorization: st
 @app.delete(f"/{config.abbr}/downloads")
 async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
         downloadsid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /downloads', 60, 30)

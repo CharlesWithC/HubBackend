@@ -9,11 +9,11 @@ import traceback
 from datetime import datetime
 from random import randint
 
-import requests
 from dateutil import parser
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
+from apis.member import RANKROLE
 from app import app, config, tconfig
 from db import aiosql
 from functions import *
@@ -27,7 +27,7 @@ if len(GIFS) == 0:
 
 async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
     dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 5)
+    await aiosql.new_conn(dhrid)
     
     await aiosql.execute(dhrid, f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
     p = await aiosql.fetchall(dhrid)
@@ -62,7 +62,7 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
         for _ in range(3):
             try:
                 dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
+                await aiosql.new_conn(dhrid)
     
                 await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
                 p = await aiosql.fetchall(dhrid)
@@ -79,7 +79,7 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
         for _ in range(5):
             try:
                 dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
+                await aiosql.new_conn(dhrid)
                 await aiosql.execute(dhrid, f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
                 await aiosql.commit(dhrid)
                 await aiosql.close_conn(dhrid)
@@ -91,7 +91,7 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
 
 @app.post(f"/{config.abbr}/navio")
 async def postNavio(response: Response, request: Request):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     if request.client.host not in config.allowed_tracker_ips:
@@ -133,12 +133,12 @@ async def postNavio(response: Response, request: Request):
             for role in config.member_leave.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -147,7 +147,7 @@ async def postNavio(response: Response, request: Request):
     
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
             d = json.loads(r.text)
             if "roles" in d:
                 roles = d["roles"]
@@ -156,7 +156,7 @@ async def postNavio(response: Response, request: Request):
                     if int(role) in list(RANKROLE.values()):
                         curroles.append(int(role))
                 for role in curroles:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
@@ -364,7 +364,7 @@ async def postNavio(response: Response, request: Request):
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     try:
-                        r = await arequests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3, dhrid = dhrid)
+                        r = await arequests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
                         if r.status_code == 401:
                             DisableDiscordIntegration()
                     except:

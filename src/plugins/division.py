@@ -1,16 +1,14 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import time
 import traceback
 from datetime import datetime
 from typing import Optional
 
-import requests
 from aiohttp import ClientSession
 from discord import Embed, Webhook
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -54,7 +52,7 @@ async def getDivisions(request: Request, response: Response):
 # Get division info
 @app.get(f"/{config.abbr}/division")
 async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /division', 60, 60)
@@ -137,7 +135,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
 # Self-operation
 @app.post(f"/{config.abbr}/division")
 async def postDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /division', 180, 10)
@@ -240,7 +238,7 @@ async def postDivision(request: Request, response: Response, authorization: str 
 @app.get(f"/{config.abbr}/division/list/pending")
 async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
         page: Optional[int] = 1, page_size: Optional[int] = 10):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /division/list/pending', 60, 60)
@@ -283,7 +281,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
 
 @app.patch(f"/{config.abbr}/division")
 async def patchDivision(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /division', 60, 30)

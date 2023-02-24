@@ -3,10 +3,9 @@
 
 import json
 import time
-from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -63,7 +62,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 
 @app.post(f"/{config.abbr}/challenge")
 async def postChallenge(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /challenge', 60, 30)
@@ -181,8 +180,8 @@ async def postChallenge(request: Request, response: Response, authorization: str
 # *Same as POST /challenge
 @app.patch(f"/{config.abbr}/challenge")
 async def patchChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /challenge', 60, 30)
     if rl[0]:
@@ -566,7 +565,7 @@ async def patchChallenge(request: Request, response: Response, authorization: st
 # - integer: challengeid
 @app.delete(f"/{config.abbr}/challenge")
 async def deleteChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge', 60, 30)
@@ -608,8 +607,8 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 # => manually accept a delivery as challenge
 @app.put(f"/{config.abbr}/challenge/delivery")
 async def putChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PUT /challenge/delivery', 60, 30)
     if rl[0]:
@@ -761,8 +760,8 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 @app.delete(f"/{config.abbr}/challenge/delivery")
 async def deleteChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, logid: Optional[int] = -1):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge/delivery', 60, 30)
     if rl[0]:
@@ -974,7 +973,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, authoriz
 @app.get(f"/{config.abbr}/challenge")
 async def getChallenge(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, userid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge', 60, 120)
@@ -1074,8 +1073,8 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
 
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge/list', 60, 60)
     if rl[0]:

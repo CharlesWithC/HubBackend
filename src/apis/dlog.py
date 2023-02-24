@@ -8,7 +8,7 @@ import traceback
 from io import BytesIO
 from typing import Optional
 
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 from fastapi.responses import StreamingResponse
 
 import multilang as ml
@@ -26,7 +26,7 @@ callusers_ts = 0
 
 @app.get(f"/{config.abbr}/dlog")
 async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog', 60, 60)
@@ -35,14 +35,9 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
     discordid = -1
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
@@ -128,7 +123,7 @@ async def getDlogInfo(request: Request, response: Response, authorization: str =
 
 @app.delete(f"/{config.abbr}/dlog")
 async def deleteDlog(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /dlog', 60, 30)
@@ -172,8 +167,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/list', 60, 60)
     if rl[0]:
@@ -183,13 +178,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 
     quserid = userid
     
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
@@ -355,8 +345,8 @@ async def getDlogList(request: Request, response: Response, authorization: str =
 @app.get(f"/{config.abbr}/dlog/statistics/summary")
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/summary', 60, 60)
     if rl[0]:
@@ -576,8 +566,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         ranges: Optional[int] = 30, interval: Optional[int] = 86400, end_time: Optional[int] = -1, \
         sum_up: Optional[bool] = False, userid: Optional[int] = -1):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
@@ -709,8 +699,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/leaderboard', 60, 60)
     if rl[0]:
@@ -1146,7 +1136,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/export', 600, 3)

@@ -8,8 +8,7 @@ import traceback
 from datetime import datetime
 from typing import Optional
 
-import requests
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -19,7 +18,7 @@ from functions import *
 
 @app.get(f"/{config.abbr}/announcement")
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement', 60, 120)
@@ -28,14 +27,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
-    aulanguage = ""
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -64,7 +57,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", order_by: Optional[str] = "announcementid", \
         title: Optional[str] = ""):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement/list', 60, 60)
@@ -73,14 +66,8 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
-    aulanguage = ""
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -131,7 +118,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /announcement', 60, 30)
@@ -204,7 +191,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/announcement")
 async def patchAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /announcement', 60, 30)
@@ -279,7 +266,7 @@ async def patchAnnouncement(request: Request, response: Response, authorization:
 
 @app.delete(f"/{config.abbr}/announcement")
 async def deleteAnnouncement(request: Request, response: Response, authorization: str = Header(None), announcementid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /announcement', 60, 30)

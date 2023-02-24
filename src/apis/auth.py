@@ -1,9 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import base64
 import json
-import re
 import time
 import traceback
 import uuid
@@ -11,9 +9,8 @@ from hashlib import sha256
 from typing import Optional
 
 import bcrypt
-import requests
 from discord_oauth2 import DiscordAuth
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 from fastapi.responses import RedirectResponse
 from pysteamsignin.steamsignin import SteamSignIn
 
@@ -36,7 +33,7 @@ def getUrl4MFA(token):
 # Password Auth
 @app.post(f'/{config.abbr}/auth/password')
 async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/password', 60, 3)
@@ -55,7 +52,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     try:
-        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -81,7 +78,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
             traceback.print_exc()
             response.status_code = 428
@@ -157,7 +154,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
     if code == "":
         return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
     
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/discord/callback', 60, 10)
@@ -186,6 +183,8 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             t = await aiosql.fetchall(dhrid)
             username = str(user_data['username'])
             username = convert_quotation(username).replace(",","")
+            if not "email" in user_data.keys():
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
             email = str(user_data['email'])
             email = convert_quotation(email)
             if not "@" in email: # make sure it's not empty
@@ -203,7 +202,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             
             if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
                 try:
-                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
                 except:
                     traceback.print_exc()
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
@@ -294,7 +293,7 @@ async def getSteamCallback(request: Request, response: Response):
         url = 'https://steamcommunity.com/openid/login?' + encodedData
         return RedirectResponse(url=url, status_code=302)
     
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/steam/callback', 60, 10)
@@ -303,7 +302,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
+        r = await arequests.get("https://steamcommunity.com/openid/login?" + data)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -336,7 +335,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
         except:
             traceback.print_exc()
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
@@ -386,7 +385,7 @@ async def getSteamCallback(request: Request, response: Response):
 # Token Management
 @app.get(f'/{config.abbr}/token')
 async def getToken(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /token', 60, 120)
@@ -407,7 +406,7 @@ async def getToken(request: Request, response: Response, authorization: str = He
 
 @app.patch(f"/{config.abbr}/token")
 async def patchToken(request: Request, response: Response, authorization: str = Header(None)):    
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /token', 60, 30)
@@ -435,7 +434,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
 
 @app.delete(f'/{config.abbr}/token')
 async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token', 60, 30)
@@ -461,7 +460,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
 async def getAllToken(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /token/list', 60, 60)
@@ -510,7 +509,7 @@ async def getAllToken(request: Request, response: Response, authorization: str =
 
 @app.delete(f'/{config.abbr}/token/hash')
 async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/hash', 60, 30)
@@ -557,7 +556,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
 @app.delete(f'/{config.abbr}/token/all')
 async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None), \
         last_used_before: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/all', 60, 10)
@@ -589,7 +588,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
 
 @app.patch(f'/{config.abbr}/token/application')
 async def patchApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /token/application', 60, 30)
@@ -633,7 +632,7 @@ async def patchApplicationToken(request: Request, response: Response, authorizat
 
 @app.delete(f'/{config.abbr}/token/application')
 async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/application', 60, 30)
@@ -676,7 +675,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
 # Multiple Factor Authentication
 @app.post(f"/{config.abbr}/auth/mfa")
 async def postMFA(request: Request, response: Response):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/mfa', 60, 3)

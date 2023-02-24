@@ -10,11 +10,11 @@ import traceback
 from datetime import datetime
 from random import randint
 
-import requests
 from dateutil import parser
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
+from apis.member import RANKROLE
 from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql, genconn
 from functions import *
@@ -26,9 +26,73 @@ GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
+async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
+    dhrid = genrid()
+    await aiosql.new_conn(dhrid)
+    
+    await aiosql.execute(dhrid, f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
+    p = await aiosql.fetchall(dhrid)
+    if len(p) > 0:
+        jobuuid = p[0][0]
+        await aiosql.execute(dhrid, f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
+        t = await aiosql.fetchall(dhrid)
+        data = f"{t[0][3]},{t[0][4]},v5;"
+        lastx = 0
+        lastz = 0
+        idle = 0
+        for tt in t:
+            if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
+                idle += 1
+                continue
+            else:
+                if idle > 0:
+                    data += f"^{idle}^"
+                    idle = 0
+            st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
+            rx = (round(tt[0]) - lastx) + 26
+            rz = (round(tt[2]) - lastz) + 26
+            if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
+                # using this method to compress data can save 60+% storage comparing with v4
+                data += f"{st[rx]}{st[rz]}"
+            else:
+                data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
+            lastx = round(tt[0])
+            lastz = round(tt[2])
+        await aiosql.close_conn(dhrid)
+
+        for _ in range(3):
+            try:
+                dhrid = genrid()
+                await aiosql.new_conn(dhrid)
+    
+                await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+                p = await aiosql.fetchall(dhrid)
+                if len(p) > 0:
+                    break
+                    
+                await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
+                await aiosql.commit(dhrid)
+                await aiosql.close_conn(dhrid)
+                break
+            except:
+                continue
+
+        for _ in range(5):
+            try:
+                dhrid = genrid()
+                await aiosql.new_conn(dhrid)
+                await aiosql.execute(dhrid, f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
+                await aiosql.commit(dhrid)
+                await aiosql.close_conn(dhrid)
+                break
+            except:
+                continue
+    else:
+        await aiosql.close_conn(dhrid)
+        
 @app.post(f"/{config.abbr}/tracksim/setup")
 async def postTrackSimSetup(response: Response, request: Request, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /tracksim/setup', 60, 5)
@@ -52,7 +116,7 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
-    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/{config.abbr}/tracksim/update"}, dhrid = dhrid)
+    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/{config.abbr}/tracksim/update"})
     if r.status_code != 200:
         response.status_code = r.status_code
         try:
@@ -85,7 +149,7 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     
 @app.post(f"/{config.abbr}/tracksim/update")
 async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     if request.client.host not in config.allowed_tracker_ips:
@@ -133,12 +197,12 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
             for role in config.member_leave.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -147,7 +211,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
     
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
             d = json.loads(r.text)
             if "roles" in d:
                 roles = d["roles"]
@@ -156,7 +220,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                     if int(role) in list(RANKROLE.values()):
                         curroles.append(int(role))
                 for role in curroles:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
@@ -252,8 +316,8 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
         return {"error": False, "response": "Blocked due to delivery rules."}
 
     if not duplicate:
-        # if "tracker" in config.enabled_plugins:
-        #     asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
+        if "tracker" in config.enabled_plugins:
+            asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
         
         await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
         await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
@@ -364,7 +428,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                                     "footer": {"text": multiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
                     try:
-                        r = await arequests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3, dhrid = dhrid)
+                        r = await arequests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3)
                         if r.status_code == 401:
                             DisableDiscordIntegration()
                     except:

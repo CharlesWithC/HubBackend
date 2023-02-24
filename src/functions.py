@@ -5,7 +5,6 @@ import base64
 import collections
 import hashlib
 import hmac
-import ipaddress
 import json
 import math
 import random
@@ -111,54 +110,44 @@ def b62decode(d):
     return ret * flag
 
 class arequests():
-    async def get(url, data = None, headers = None, timeout = 10, dhrid = -1):
-        aiosql.extend_conn(dhrid, timeout)
+    async def get(url, data = None, headers = None, timeout = 10):
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.get(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 1)
                 return r
 
-    async def post(url, data = None, headers = None, timeout = 10, dhrid = -1):
-        aiosql.extend_conn(dhrid, timeout)
+    async def post(url, data = None, headers = None, timeout = 10):
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.post(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 1)
                 return r
 
-    async def patch(url, data = None, headers = None, timeout = 10, dhrid = -1):
-        aiosql.extend_conn(dhrid, timeout)
+    async def patch(url, data = None, headers = None, timeout = 10):
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.patch(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 1)
                 return r
                 
-    async def put(url, data = None, headers = None, timeout = 10, dhrid = -1):
-        aiosql.extend_conn(dhrid, timeout)
+    async def put(url, data = None, headers = None, timeout = 10):
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.put(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 1)
                 return r
                 
-    async def delete(url, data = None, headers = None, timeout = 10, dhrid = -1):
-        aiosql.extend_conn(dhrid, timeout)
+    async def delete(url, data = None, headers = None, timeout = 10):
         async with aiohttp.ClientSession(trust_env = True) as session:
             async with session.delete(url, data = data, headers = headers, timeout = timeout) as resp:
                 r = requests.Response()
                 r.status_code = resp.status
                 r._content = await resp.content.read()
-                aiosql.extend_conn(dhrid, 1)
                 return r
 
 ipv4 = '''^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(
@@ -439,8 +428,6 @@ def ProcessDiscordMessage(): # thread
             # combined thread
             try:
                 if time.time() - lastRLAclear > 30:
-                    aiosql.release()
-                    
                     conn = genconn()
                     cur = conn.cursor()
                     cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 86400)}")
@@ -599,6 +586,8 @@ async def notification(dhrid, notification_type, discordid, content, no_driversh
                 "timestamp": str(datetime.now()), "color": config.intcolor}]})
 
 async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
+    if request.client.host in config.whitelist_ips:
+        return (False, {})
     await aiosql.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE ip = '{ip}' AND endpoint LIKE 'ip-ban-%'")
     t = await aiosql.fetchall(dhrid)
     maxban = 0
@@ -695,7 +684,7 @@ async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
                 resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
                 return (False, resp_headers)
 
-async def auth(dhrid, authorization, request, check_ip_address = True, allow_application_token = False, check_member = True, required_permission = []):
+async def auth(dhrid, authorization, request, allow_application_token = False, check_member = True, required_permission = []):
     # authorization header basic check
     if authorization is None:
         return {"error": True, "descriptor": "Unauthorized", "code": 401}
@@ -708,7 +697,7 @@ async def auth(dhrid, authorization, request, check_ip_address = True, allow_app
         return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
     # application token
-    if tokentype == "Application":
+    if tokentype.lower() == "application":
         # check if allowed
         if not allow_application_token:
             return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited"), "code": 401}
@@ -758,7 +747,7 @@ async def auth(dhrid, authorization, request, check_ip_address = True, allow_app
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": True}
 
     # bearer token
-    elif tokentype == "Bearer":
+    elif tokentype.lower() == "bearer":
         await aiosql.execute(dhrid, f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
@@ -770,19 +759,20 @@ async def auth(dhrid, authorization, request, check_ip_address = True, allow_app
         user_agent = t[0][4]
 
         # check country
-        curCountry = getRequestCountry(request, abbr = True)
-        if curCountry != country and country != "":
-            await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
-            await aiosql.commit(dhrid)
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+        if not request.client.host in config.whitelist_ips:
+            curCountry = getRequestCountry(request, abbr = True)
+            if curCountry != country and country != "":
+                await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
+                await aiosql.commit(dhrid)
+                return {"error": True, "descriptor": "Unauthorized", "code": 401}
 
-        if ip != request.client.host:
-            await aiosql.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-        if curCountry != country and not curCountry != "" and country != "":
-            await aiosql.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
-        if getUserAgent(request) != user_agent:
-            await aiosql.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
-        await aiosql.commit(dhrid)
+            if ip != request.client.host:
+                await aiosql.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+            if curCountry != country and not curCountry != "" and country != "":
+                await aiosql.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
+            if getUserAgent(request) != user_agent:
+                await aiosql.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
+            await aiosql.commit(dhrid)
         
         # additional check
         

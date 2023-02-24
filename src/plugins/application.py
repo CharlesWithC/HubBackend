@@ -8,10 +8,9 @@ import traceback
 from datetime import datetime
 from typing import Optional
 
-import requests
 from aiohttp import ClientSession
 from discord import Embed, Webhook
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -38,7 +37,7 @@ async def getApplicationTypes(request: Request, response: Response):
 
 @app.get(f"/{config.abbr}/application/positions")
 async def getApplicationPositions(request: Request, response: Response):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await aiosql.fetchall(dhrid)
@@ -53,7 +52,7 @@ async def getApplicationPositions(request: Request, response: Response):
 # Get Application
 @app.get(f"/{config.abbr}/application")
 async def getApplication(request: Request, response: Response, authorization: str = Header(None), applicationid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /application', 60, 120)
@@ -110,7 +109,7 @@ async def getApplication(request: Request, response: Response, authorization: st
 async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /application/list', 60, 60)
@@ -218,7 +217,7 @@ async def getApplicationList(request: Request, response: Response, authorization
 # Self-operation
 @app.post(f"/{config.abbr}/application")
 async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /application', 180, 10)
@@ -320,7 +319,7 @@ async def postApplication(request: Request, response: Response, authorization: s
 
     if applicantrole != 0 and config.discord_bot_token != "":
         try:
-            r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, dhrid = dhrid)
+            r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."})
             if r.status_code == 401:
                 DisableDiscordIntegration()
             if r.status_code // 100 != 2:
@@ -376,7 +375,7 @@ async def postApplication(request: Request, response: Response, authorization: s
 
 @app.patch(f"/{config.abbr}/application")
 async def updateApplication(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application', 180, 10)
@@ -489,7 +488,7 @@ async def updateApplication(request: Request, response: Response, authorization:
 # Management
 @app.patch(f"/{config.abbr}/application/status")
 async def updateApplicationStatus(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/status', 60, 30)
@@ -590,7 +589,7 @@ async def updateApplicationStatus(request: Request, response: Response, authoriz
 # Higher-management
 @app.patch(f"/{config.abbr}/application/positions")
 async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/positions', 60, 30)

@@ -3,12 +3,11 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import os
 import sys
 import threading
-import time
 import traceback
+from datetime import datetime
 
 import uvicorn
 
@@ -42,7 +41,6 @@ if not os.path.exists(config_path):
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
 
-import multilang
 from app import app, config, version
 from db import genconn
 
@@ -52,7 +50,6 @@ for external_plugin in config.external_plugins:
         sys.exit(1)
 
 if __name__ == "__main__":
-    from datetime import datetime
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")

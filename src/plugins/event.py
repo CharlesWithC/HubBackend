@@ -1,14 +1,12 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import math
 import time
 import traceback
 from typing import Optional
 
-import requests
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config
@@ -91,7 +89,7 @@ def EventNotification():
 
 @app.get(f"/{config.abbr}/event")
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /event', 60, 120)
@@ -100,14 +98,8 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
-    aulanguage = ""
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -155,7 +147,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
         first_event_after: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /event/list', 60, 60)
@@ -164,14 +156,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
-    userid = -1
     aulanguage = ""
-    if stoken == "guest":
-        userid = -1
-    else:
+    userid = -1
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -268,7 +255,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
 
 @app.get(f"/{config.abbr}/event/all")
 async def getAllEvent(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /event/all', 60, 10)
@@ -277,13 +264,8 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    stoken = "guest"
-    if authorization != None:
-        stoken = authorization.split(" ")[1]
     userid = -1
-    if stoken == "guest":
-        userid = -1
-    else:
+    if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             userid = -1
@@ -304,7 +286,7 @@ async def getAllEvent(request: Request, response: Response, authorization: str =
 
 @app.patch(f"/{config.abbr}/event/vote")
 async def patchEventVote(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event/vote', 60, 30)
@@ -345,7 +327,7 @@ async def patchEventVote(request: Request, response: Response, authorization: st
 
 @app.post(f"/{config.abbr}/event")
 async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /event', 60, 30)
@@ -405,7 +387,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
 
 @app.patch(f"/{config.abbr}/event")
 async def patchEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event', 60, 30)
@@ -472,7 +454,7 @@ async def patchEvent(request: Request, response: Response, authorization: str = 
 
 @app.delete(f"/{config.abbr}/event")
 async def deleteEvent(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /event', 60, 30)
@@ -506,7 +488,7 @@ async def deleteEvent(request: Request, response: Response, authorization: str =
 
 @app.patch(f"/{config.abbr}/event/attendee")
 async def patchEventAttendee(request: Request, response: Response, authorization: str = Header(None), eventid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event/attendee', 60, 10)

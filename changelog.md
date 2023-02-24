@@ -1,5 +1,14 @@
 # Changelog
 
+**v1.22.6**  
+1.Fixed `Unknown Error` on Discord callback when `email` is not provided in form data  
+2.Added `config.whitelist_ips` to authorization country check and ratelimit  
+3.Added middleware to requests to better manage database connection pool  
+4.Removed legacy database connection pool management solution  
+5.Enabled TrackSim telemetry tracking  
+6.Disabled `guest` token authorization  
+7.Removed unnecessary imports and strings  
+
 **v1.22.5**  
 1.Fixed TrackSim setup webhook  
 2.Added `allowed_tracker_ips` update on TrackSim setup  

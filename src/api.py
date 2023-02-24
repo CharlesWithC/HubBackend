@@ -9,14 +9,12 @@ from datetime import datetime, timedelta
 # Load external code before original code to prevent overwrite
 from importlib.machinery import SourceFileLoader
 
-import psutil
 import pymysql
-from fastapi import Header, Request, Response
+from fastapi import Header, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-import multilang as ml
 from app import DH_START_TIME, app, config, version
 from db import aiosql
 from functions import *
@@ -57,7 +55,7 @@ if "event" in config.enabled_plugins:
 @app.get(f'/{config.abbr}')
 async def index(request: Request, authorization: str = Header(None)):
     if not authorization is None:
-        dhrid = genrid()
+        dhrid = request.state.dhrid
         await aiosql.new_conn(dhrid)
         au = await auth(dhrid, authorization, request, check_member = False)
         if not au["error"]:
@@ -83,6 +81,15 @@ async def languages():
         t.append(ll.split(".")[0])
     t = sorted(t)
     return {"error": False, "response": {"company": config.language, "supported": t}}
+
+# middleware to manage database connection
+@app.middleware("http")
+async def dispatch(request: Request, call_next):
+    dhrid = genrid()
+    request.state.dhrid = dhrid
+    response = await call_next(request)
+    await aiosql.close_conn(dhrid)
+    return response
 
 # thread to restart service
 def restart():

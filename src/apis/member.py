@@ -5,17 +5,12 @@ import collections
 import json
 import math
 import os
-import string
 import time
 import traceback
 from datetime import datetime
-from io import BytesIO
 from typing import Optional
 
-import requests
-from aiohttp import ClientSession
-from discord import Embed, Webhook
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import Header, Request, Response
 from fastapi.responses import RedirectResponse, StreamingResponse
 
 import multilang as ml
@@ -114,7 +109,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         name: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = -1,\
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list', 60, 60)
@@ -228,7 +223,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
 @app.get(f"/{config.abbr}/member/list/all")
 async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list/all', 60, 10)
@@ -258,7 +253,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         response.status_code = 404
         return {"error": True, "descriptor": "Not Found"}
     
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     qu = ""
@@ -374,7 +369,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles/rank', 60, 3)
@@ -480,7 +475,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         except:
             traceback.print_exc()
             response.status_code = 503
@@ -506,13 +501,13 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                 return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
             else:
                 try:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
                     else:
                         for role in curroles:
-                            r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                            r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                             if r.status_code // 100 != 2:
                                 err = json.loads(r.text)
                                 await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
@@ -541,7 +536,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 # Member Operation Section
 @app.put(f'/{config.abbr}/member')
 async def putMember(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PUT /member', 60, 30)
@@ -595,7 +590,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles', 60, 30)
@@ -724,9 +719,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     if config.perms.driver[0] in addedroles:
         try:
             if config.tracker.lower() == "tracksim":
-                r = await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+                r = await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
             elif config.tracker.lower() == "navio":
-                r = await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+                r = await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token})
             if r.status_code == 401:
                 tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
             elif r.status_code // 100 != 2:
@@ -758,12 +753,12 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -773,9 +768,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     if config.perms.driver[0] in removedroles:
         try:
             if config.tracker.lower() == "tracksim":
-                r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+                r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
             elif config.tracker.lower() == "navio":
-                r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+                r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token})
             if r.status_code == 401:
                 tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
             elif r.status_code // 100 != 2:
@@ -803,12 +798,12 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             for role in config.member_leave.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                     elif int(role) > 0:
-                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -837,7 +832,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/point', 60, 30)
@@ -887,7 +882,7 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
 @app.post(f"/{config.abbr}/member/resign")
 async def postMemberResign(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/resign', 60, 10)
@@ -939,9 +934,9 @@ async def postMemberResign(request: Request, response: Response, authorization: 
     tracker_app_error = ""
     try:
         if config.tracker.lower() == "tracksim":
-            r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
         elif config.tracker.lower() == "navio":
-            r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token})
         if r.status_code == 401:
             tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
         elif r.status_code // 100 != 2:
@@ -972,12 +967,12 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         for role in config.member_leave.role_change:
             try:
                 if int(role) < 0:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                 elif int(role) > 0:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
@@ -986,7 +981,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
     
     headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
     try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3)
         d = json.loads(r.text)
         if "roles" in d:
             roles = d["roles"]
@@ -995,7 +990,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
                 if int(role) in list(RANKROLE.values()):
                     curroles.append(int(role))
             for role in curroles:
-                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3)
                 if r.status_code // 100 != 2:
                     err = json.loads(r.text)
                     await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
@@ -1009,7 +1004,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
 
 @app.post(f"/{config.abbr}/member/dismiss")
 async def postMemberDismiss(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
-    dhrid = genrid()
+    dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/dismiss', 60, 10)
@@ -1069,9 +1064,9 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     tracker_app_error = ""
     try:
         if config.tracker.lower() == "tracksim":
-            r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
         elif config.tracker.lower() == "navio":
-            r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token})
         if r.status_code == 401:
             tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
         elif r.status_code // 100 != 2:
@@ -1102,12 +1097,12 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         for role in config.member_leave.role_change:
             try:
                 if int(role) < 0:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{udiscordid}>: `{err["message"]}`')
                 elif int(role) > 0:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{udiscordid}>: `{err["message"]}`')
@@ -1116,7 +1111,7 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     
     headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
     try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}", headers=headers, timeout = 3, dhrid = dhrid)
+        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}", headers=headers, timeout = 3)
         d = json.loads(r.text)
         if "roles" in d:
             roles = d["roles"]
@@ -1125,7 +1120,7 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
                 if int(role) in list(RANKROLE.values()):
                     curroles.append(int(role))
             for role in curroles:
-                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{role}', headers=headers, timeout = 3)
                 if r.status_code // 100 != 2:
                     err = json.loads(r.text)
                     await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{udiscordid}>: `{err["message"]}`')
