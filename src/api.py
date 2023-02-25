@@ -83,13 +83,40 @@ async def languages():
     return {"error": False, "response": {"company": config.language, "supported": t}}
 
 # middleware to manage database connection
+# also include 500 error handler
+err500 = []
+pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
     dhrid = genrid()
     request.state.dhrid = dhrid
-    response = await call_next(request)
-    await aiosql.close_conn(dhrid)
-    return response
+    try:
+        response = await call_next(request)
+        await aiosql.close_conn(dhrid)
+        return response
+    except Exception as exc:
+        await aiosql.close_conn(dhrid)
+        traceback.print_exc()
+        ismysqlerr = False
+        for err in pymysql_errs:
+            if isinstance(exc, err):
+                ismysqlerr = True
+                break
+        if ismysqlerr:
+            global err500
+            if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
+                err500.append(time.time())
+                err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
+                if len(err500) > 5:
+                    try:
+                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                    except:
+                        pass
+                    threading.Thread(target=restart).start()
+                    err500.append(-1)
+            return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
+        else:
+            return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
 
 # thread to restart service
 def restart():
@@ -105,8 +132,6 @@ async def errorHandler(request: Request, exc: StarletteHTTPException):
 async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": True, "descriptor": "Unprocessable Entity"}, status_code = 422)
 
-err500 = []
-pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.exception_handler(500)
 async def error500Handler(request: Request, exc: Exception):
     ismysqlerr = False

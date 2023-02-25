@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.7**  
+1.Merged 500 error handler into middleware  
+2.Added database connection close on request fail  
+
 **v1.22.6**  
 1.Fixed `Unknown Error` on Discord callback when `email` is not provided in form data  
 2.Added `config.whitelist_ips` to authorization country check and ratelimit  

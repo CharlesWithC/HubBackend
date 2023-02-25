@@ -168,8 +168,20 @@ class AIOSQL:
             conn = await self.pool.acquire()
             cur = await conn.cursor()
             await cur.execute(f"SET wait_timeout=15, lock_wait_timeout=5;")
+            
             conns = self.conns
-            conns[dhrid] = [conn, cur]
+            to_remove = []
+            for rid in conns.keys():
+                if time.time() - conns[rid][2] >= 300:
+                    to_remove.append(rid)
+            for rid in to_remove:
+                try:
+                    self.pool.release(self.conns[rid][0])
+                except:
+                    pass
+                del self.conns[rid]
+
+            conns[dhrid] = [conn, cur, time.time()]
             self.conns = conns
             return conn
         except:
@@ -179,9 +191,9 @@ class AIOSQL:
         if dhrid in self.conns.keys():
             try:
                 self.pool.release(self.conns[dhrid][0])
-                del self.conns[dhrid]
             except:
                 pass
+            del self.conns[dhrid]
 
     async def commit(self, dhrid):
         if dhrid in self.conns.keys():

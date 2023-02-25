@@ -96,7 +96,7 @@ async def postNavio(response: Response, request: Request):
 
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
-        await AuditLog(dhrid, -999, f"Rejected suspicious Navio webhook post from {request.client.host}")
+        await AuditLog(dhrid, -999, f"Rejected Navio webhook update from {request.client.host}")
         return {"error": True, "descriptor": "Validation failed"}
     
     d = await request.json()

@@ -154,14 +154,14 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
 
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
-        await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (IP is not in whitelist)")
+        await AuditLog(dhrid, -999, f"Rejected TrackSim webhook update from {request.client.host} (IP is not in whitelist)")
         return {"error": True, "descriptor": "Validation failed"}
     
     d = await request.json()
     sig = hmac.new(config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
     if sig != TrackSim_Signature:
         response.status_code = 403
-        await AuditLog(dhrid, -999, f"Rejected suspicious TrackSim webhook post from {request.client.host} (Signature does not match)")
+        await AuditLog(dhrid, -999, f"Rejected TrackSim webhook update from {request.client.host} (Signature does not match)")
         return {"error": True, "descriptor": "Validation failed"}
     
     if d["object"] != "event":
