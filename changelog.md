@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.22.8**  
+1.Added legacy database connection pool management solution back  
+2.Added timeout when acquiring connection from pool  
+3.Added try/except when getting current config to return backup config in case local file is broken  
+
 **v1.22.7**  
 1.Merged 500 error handler into middleware  
 2.Added database connection close on request fail  

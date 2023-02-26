@@ -46,25 +46,29 @@ async def getConfig(request: Request, response: Response, authorization: str = H
     adminid = au["userid"]
     
     # current config
-    orgcfg = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
-    f = copy.deepcopy(orgcfg)
-    ffconfig = {}
+    try:
+        orgcfg = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
+        f = copy.deepcopy(orgcfg)
+        ffconfig = {}
 
-    # process whitelist
-    for tt in f.keys():
-        if tt in config_whitelist:
-            ffconfig[tt] = f[tt]
+        # process whitelist
+        for tt in f.keys():
+            if tt in config_whitelist:
+                ffconfig[tt] = f[tt]
 
-    # remove sensitive data
-    for tt in config_protected:
-        ffconfig[tt] = ""
+        # remove sensitive data
+        for tt in config_protected:
+            ffconfig[tt] = ""
 
-    # remove disabled plugins
-    for t in config_plugins.keys():
-        if not t in tconfig["enabled_plugins"]:
-            for tt in config_plugins[t]:
-                if tt in ffconfig.keys():
-                    del ffconfig[tt]
+        # remove disabled plugins
+        for t in config_plugins.keys():
+            if not t in tconfig["enabled_plugins"]:
+                for tt in config_plugins[t]:
+                    if tt in ffconfig.keys():
+                        del ffconfig[tt]
+    except:
+        ffconfig = {}
+        traceback.print_exc()
     
     # old config
     t = copy.deepcopy(backup_config)

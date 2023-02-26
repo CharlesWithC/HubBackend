@@ -315,7 +315,7 @@ async def enableNotification(request: Request, response: Response, notification_
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3)
+            r = await arequests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=3, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 503
@@ -332,7 +332,7 @@ async def enableNotification(request: Request, response: Response, notification_
 
             r = None
             try:
-                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid)), 
+                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid), dhrid = dhrid), 
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, discordid)), \
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
@@ -576,7 +576,7 @@ async def patchUserProfile(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
     try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
     except:
         traceback.print_exc()
         if not staffmode:
@@ -972,7 +972,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + openid)
+        r = await arequests.get("https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -1003,11 +1003,11 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
         if not (await auth(dhrid, authorization, request, required_permission = ["driver"]))["error"]:
             try:
                 if config.tracker.lower() == "tracksim":
-                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
-                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token})
+                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
                 elif config.tracker.lower() == "navio":
-                    await arequests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token})
-                    await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token})
+                    await arequests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
             except:
                 traceback.print_exc()
             await AuditLog(dhrid, userid, f"Updated Steam ID to `{steamid}`")
@@ -1016,7 +1016,7 @@ async def patchSteam(request: Request, response: Response, authorization: str = 
     await aiosql.commit(dhrid)
 
     try:
-        r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}")
+        r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
         if r.status_code == 200:
             d = json.loads(r.text)
             if not d["error"]:
@@ -1063,7 +1063,7 @@ async def patchTruckersMP(request: Request, response: Response, authorization: s
         response.status_code = 400
         return {"error": True, "descriptor": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    r = await arequests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid))
+    r = await arequests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid), dhrid = dhrid)
     if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": True, "descriptor": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}

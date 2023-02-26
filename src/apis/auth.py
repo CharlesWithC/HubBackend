@@ -52,7 +52,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         return {"error": True, "descriptor": ml.tr(request, "bad_form")}
 
     try:
-        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response})
+        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -78,7 +78,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 428
@@ -202,7 +202,7 @@ async def getAuthDiscordCallback(request: Request, response: Response, code: Opt
             
             if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
                 try:
-                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
                 except:
                     traceback.print_exc()
                     return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
@@ -302,7 +302,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + data)
+        r = await arequests.get("https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -335,7 +335,7 @@ async def getSteamCallback(request: Request, response: Response):
 
     if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"})
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
