@@ -1,5 +1,10 @@
 # Changelog
 
+**v1.22.9**  
+1.Removed `wait_timeout` that closes connections  
+**Note** Closed connections are not released to pool  
+2.Added pool restart before restarting service when pool is corrupted  
+
 **v1.22.8**  
 1.Added legacy database connection pool management solution back  
 2.Added timeout when acquiring connection from pool  

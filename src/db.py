@@ -145,16 +145,25 @@ class AIOSQL:
         self.conns = {}
         self.pool = None
         self.shutdown_lock = False
+        self.POOL_START_TIME = 0
 
     async def create_pool(self):
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 15, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5, \
                                         maxsize = min(20, config.mysql_pool_size))
+            self.POOL_START_TIME = time.time()
 
     def close_pool(self):
         self.shutdown_lock = True
         self.pool.terminate()
+    
+    async def restart_pool(self):
+        self.pool.terminate()
+        self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5, \
+                                        maxsize = min(20, config.mysql_pool_size))
+        self.POOL_START_TIME = time.time()
 
     def release(self):
         conns = self.conns
@@ -165,8 +174,8 @@ class AIOSQL:
                 to_delete.append(tdhrid)
                 try:
                     self.pool.release(tconn)
-                except:
-                    traceback.print_exc()
+                except Exception as exc:
+                    print(f"Failed to release connection ({tdhrid}): {str(exc)}")
         for tdhrid in to_delete:
             del conns[tdhrid]
         self.conns = conns
@@ -177,26 +186,25 @@ class AIOSQL:
 
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
-                                        db = self.dbname, autocommit = False, pool_recycle = 15, \
+                                        db = self.dbname, autocommit = False, pool_recycle = 5, \
                                         maxsize = min(20, config.mysql_pool_size))
+            self.POOL_START_TIME = time.time()
 
         self.release()
 
         try:
             try:
                 conn = await asyncio.wait_for(self.pool.acquire(), timeout=3)
-            except:
-                traceback.print_exc()
-                raise pymysql.err.OperationalError(f"Timeout when creating connection ({dhrid})")
+            except asyncio.TimeoutError:
+                raise pymysql.err.OperationalError(f"Timeout")
             cur = await conn.cursor()
-            await cur.execute(f"SET wait_timeout={3+extra_time}, lock_wait_timeout=3;")
+            await cur.execute(f"SET lock_wait_timeout=5;")
             conns = self.conns
             conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
             self.conns = conns
             return conn
-        except:
-            traceback.print_exc()
-            raise pymysql.err.OperationalError(f"Failed to create connection ({dhrid})")
+        except Exception as exc:
+            raise pymysql.err.OperationalError(f"Failed to create connection ({dhrid}): {str(exc)}")
     
     async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
@@ -207,7 +215,7 @@ class AIOSQL:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
             cur = conns[dhrid][1]
             if extend:
-                await cur.execute(f"SET wait_timeout={3+conns[dhrid][3]}, lock_wait_timeout=3;")
+                await cur.execute(f"SET lock_wait_timeout=5;")
         except:
             try:
                 conn = await self.pool.acquire()
@@ -215,7 +223,7 @@ class AIOSQL:
                 conns = self.conns
                 conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
                 if extend:
-                    await cur.execute(f"SET wait_timeout={3+conns[dhrid][3]}, lock_wait_timeout=3;")
+                    await cur.execute(f"SET lock_wait_timeout=5;")
             except:
                 pass
         self.conns = conns

@@ -96,18 +96,23 @@ async def dispatch(request: Request, call_next):
         return response
     except Exception as exc:
         await aiosql.close_conn(dhrid)
-        traceback.print_exc()
         ismysqlerr = False
         for err in pymysql_errs:
             if isinstance(exc, err):
                 ismysqlerr = True
                 break
         if ismysqlerr:
+            print(f"Database error: {str(exc)}")
             global err500
-            if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
+            if not -1 in err500 and int(time.time()) - aiosql.POOL_START_TIME >= 60:
                 err500.append(time.time())
                 err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
                 if len(err500) > 5:
+                    # try restarting database connection first
+                    print("Restarting database connection pool")
+                    await aiosql.restart_pool()
+                elif len(err500) > 10:
+                    print("Restarting service due to database errors")
                     try:
                         await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                     except:
@@ -116,6 +121,7 @@ async def dispatch(request: Request, call_next):
                     err500.append(-1)
             return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
         else:
+            traceback.print_exc()
             return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
 
 # thread to restart service
@@ -141,10 +147,15 @@ async def error500Handler(request: Request, exc: Exception):
             break
     if ismysqlerr:
         global err500
-        if not -1 in err500 and int(time.time()) - DH_START_TIME >= 60:
+        if not -1 in err500 and int(time.time()) - aiosql.POOL_START_TIME >= 60:
             err500.append(time.time())
             err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
             if len(err500) > 5:
+                # try restarting database connection first
+                print("Restarting database connection pool")
+                await aiosql.restart_pool()
+            elif len(err500) > 10:
+                print("Restarting service due to database errors")
                 try:
                     await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                 except:
