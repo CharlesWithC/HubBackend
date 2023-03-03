@@ -303,7 +303,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     if highest in ROLES.keys():
         highest_role = ROLES[highest]
     joined = datetime.fromtimestamp(join_timestamp)
-    since = f"{joined.year}/{joined.month}/{joined.day}"
+    joined = f"{joined.year}/{str(joined.month).zfill(2)}/{str(joined.day).zfill(2)}"
 
     if os.path.exists(f"/tmp/hub/banner/{config.abbr}_{discordid}.png"):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{config.abbr}_{discordid}.png") <= 3600:
@@ -351,7 +351,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     try:
         r = await arequests.post("http://127.0.0.1:8700/banner", data={"company_abbr": config.abbr, \
             "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
-            "discordid": discordid, "since": since, "highest_role": highest_role, \
+            "discordid": discordid, "joined": joined, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = r.status_code

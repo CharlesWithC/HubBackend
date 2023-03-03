@@ -16,8 +16,33 @@ from PIL import Image, ImageDraw, ImageFont
 
 app = FastAPI()
 
-# ConsoleBold.ttf
-supported_glyph_ord_range = [0, (8, 9), 13, 29, (32, 126), (128, 887), (890, 895), (900, 906), 908, (910, 929), (931, 1327), (1329, 1366), (1369, 1375), (1377, 1415), (1417, 1418), (1421, 1423), (1425, 1479), (1488, 1514), (1520, 1524), (1536, 1564), (1566, 1651), (1653, 1791), (1872, 1919), 1923, (2208, 2228), (2230, 2237), (2260, 2303), (2546, 2547), 2801, 3065, (3585, 3642), (3647, 3675), (4256, 4293), 4295, 4301, (4304, 4351), 6107, (7424, 7626), (7678, 7957), (7960, 7965), (7968, 8005), (8008, 8013), (8016, 8023), 8025, 8027, 8029, (8031, 8061), (8064, 8116), (8118, 8132), (8134, 8147), (8150, 8155), (8157, 8175), (8178, 8180), (8182, 8190), (8192, 8292), (8294, 8305), (8308, 8334), (8336, 8348), (8352, 8383), 8413, 8419, 8432, 8453, 8467, (8470, 8471), 8482, 8486, 8494, (8498, 8499), (8525, 8526), (8528, 8587), (8592, 8597), 8616, 8706, 8710, 8719, (8721, 8722), 8725, (8729, 8730), (8734, 8735), 8745, 8747, 8776, (8800, 8801), (8804, 8805), 8962, 8976, (8992, 8993), (9312, 9331), (9450, 9460), (9471, 9472), 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, (9552, 9580), 9600, 9604, 9608, 9612, (9616, 9619), (9632, 9633), (9642, 9644), 9650, 9652, 9656, 9658, 9660, 9662, 9666, 9668, (9674, 9676), 9679, (9688, 9689), 9702, (9786, 9788), 9792, 9794, 9824, 9827, (9829, 9830), (9834, 9835), 9839, 10038, (10102, 10111), (11360, 11391), (11520, 11557), 11559, 11565, (11744, 11775), 11799, (42560, 42655), (42775, 42925), (42928, 42935), (42999, 43007), (43824, 43877), (64256, 64262), (64275, 64279), (64285, 64310), (64312, 64316), 64318, (64320, 64321), (64323, 64324), (64326, 64335), 64337, 64340, 64344, 64348, 64352, 64356, 64360, (64364, 64365), (64368, 64369), (64371, 64372), (64375, 64376), (64379, 64380), (64383, 64384), 64395, 64397, 64400, 64404, 64408, 64412, (64421, 64422), (64424, 64425), 64427, 64431, (64433, 64449), 64469, 64485, 64488, 64490, 64492, 64494, 64496, 64498, 64500, 64502, (64504, 64505), 64507, (64509, 64510), (64606, 64611), (64754, 64756), (64828, 64831), 65010, 65012, (65018, 65021), (65056, 65059), (65136, 65140), (65142, 65151), 65154, 65156, 65160, (65162, 65163), 65166, 65169, 65172, (65175, 65176), (65179, 65180), (65182, 65183), (65186, 65187), (65190, 65191), 65198, 65200, 65203, 65207, 65211, 65215, (65226, 65228), (65230, 65232), (65235, 65236), (65239, 65240), 65243, (65246, 65248), 65251, 65255, 65258, 65264, (65266, 65276), 65279, (65532, 65533)]
+# to get supported_glyph_ord_range, run the following code
+#
+# from fontTools.ttLib import TTFont
+# font = TTFont("./font.ttf")
+# d = []
+# for table in font['cmap'].tables:
+#     for key in table.cmap.keys():
+#         if not key in d:
+#             d.append(key)
+# d = sorted(d)
+# r = []
+# st = d[0]
+# for i in range(1, len(d)):
+#     if d[i] - d[i-1] > 1:
+#         if d[i-1] == st:
+#             r.append(st)
+#         else:
+#             r.append((st, d[i-1]))
+#         st = d[i]
+# if d[len(d) - 1] == st:
+#     r.append(st)
+# else:
+#     r.append((st, d[len(d)-1]))
+# supported_glyph_ord_range = r
+
+# UbuntuMono.ttf
+supported_glyph_ord_range = [0, (8, 9), 13, 29, (32, 126), (128, 591), 658, 700, (710, 711), 713, (728, 733), 785, (900, 902), (904, 906), 908, (910, 929), (931, 974), (1024, 1119), (1122, 1123), (1138, 1141), (1162, 1273), (7808, 7813), (7922, 7923), (7936, 7957), (7960, 7965), (7968, 8005), (8008, 8013), (8016, 8023), 8025, 8027, 8029, (8031, 8061), (8064, 8116), (8118, 8132), (8134, 8147), (8150, 8155), (8157, 8175), (8178, 8180), (8182, 8190), (8211, 8213), (8216, 8218), (8220, 8222), (8224, 8226), 8230, 8240, (8249, 8250), 8260, 8304, (8308, 8313), (8320, 8329), 8364, 8366, 8372, 8377, 8467, 8470, 8482, 8486, 8494, (8531, 8542), 8706, 8710, 8719, (8721, 8722), 8725, (8729, 8730), 8734, 8747, 8776, 8800, (8804, 8805), 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, (9552, 9580), 9608, (9617, 9619), 9674, 57599, 61437, (61440, 61442), (62726, 62737), (63498, 63517), (64257, 64258), 65533]
 supported_glyph_ord = []
 for i in supported_glyph_ord_range:
     if type(i) == int:
@@ -31,14 +56,14 @@ def has_glyph(glyph):
         return True
     return False
 
-# Due to the nature of Consola font family has same width for all characters
+# Due to the nature of UbuntuMono font family has same width for all characters
 # We can preload its wsize to prevent using .getsize() which is slow
 # NOTE that non-printable characters from Sans Serif will still need .getsize()
-consola_bold_font_wsize = []
+ubuntu_mono_bold_font_wsize = []
 for i in range(81):
-    font = ImageFont.truetype("./fonts/ConsolaBold.ttf", i)
+    font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", i)
     wsize = font.getlength("a")
-    consola_bold_font_wsize.append(wsize)
+    ubuntu_mono_bold_font_wsize.append(wsize)
 
 class arequests():
     async def get(url, data = None, headers = None, timeout = 10):
@@ -54,7 +79,7 @@ async def banner(request: Request, response: Response):
     form = await request.form()
     company_abbr = form["company_abbr"]
     company_name = form["company_name"]
-    company_name = unicodedata.normalize('NFKC', company_name)
+    company_name = unicodedata.normalize('NFKC', company_name).upper()
     logo_url = form["logo_url"]
     hex_color = form["hex_color"][-6:]
     discordid = form["discordid"]
@@ -127,10 +152,10 @@ async def banner(request: Request, response: Response):
 
         # draw company name
         draw = ImageDraw.Draw(banner)
-        usH45 = ImageFont.truetype("./fonts/UniSansHeavy.ttf", 45)
+        usH45 = ImageFont.truetype("./fonts/OpenSansExtraBold.ttf", 45)
         theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
         company_name_len = usH45.getlength(f"{company_name}")
-        draw.text((1700 - 25 - company_name_len, 245), f"{company_name}", fill=theme_color, font=usH45)
+        draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH45)
 
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
     
@@ -167,7 +192,6 @@ async def banner(request: Request, response: Response):
                 avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
             try: # in case image is invalid
                 r = await arequests.get(avatarurl, timeout = 5)
-                usedefault = False
                 if r.status_code == 200:
                     try:
                         avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
@@ -231,49 +255,49 @@ async def banner(request: Request, response: Response):
     while r - l > 1:
         fontsize = (l + r) // 2
         if all_printable:
-            namew = consola_bold_font_wsize[fontsize] * len(name)
+            namew = ubuntu_mono_bold_font_wsize[fontsize] * len(name)
         else:
-            namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
+            namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
             namew = namefont.getlength(f"{name}")
         if namew > 450:
             r = fontsize - 1
         else:
             l = fontsize + 1
-    namefont = ImageFont.truetype("./fonts/ConsolaBold.ttf", fontsize)
+    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
     namebb = namefont.getbbox(f"{name}")
     nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
     draw.text((325, 50 + offset - namebb[1]), name, fill=(0,0,0), font=namefont)
     # y = 50 ~ 70
 
-    fontsize -= 10
+    fontsize -= 20
     highest_role = form["highest_role"]
     highest_role = unicodedata.normalize('NFKC', highest_role).lstrip(" ")
-    hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
+    hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
     hrolew = hrolefont.getlength(f"{highest_role}")
     for _ in range(100):
         if hrolew > 450:
             fontsize -= 1
-            hrolefont = ImageFont.truetype("./fonts/Impact.ttf", fontsize)
+            hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
             hrolew = hrolefont.getlength(f"{highest_role}")
     hrolebb = hrolefont.getbbox(f"{highest_role}")
     hroleh = hrolebb[3] - hrolebb[1]
 
-    nameb = 50 + offset + nameh
-    sincet = 210
-    draw.text((325, (sincet + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
+    nameb = 55 + offset + nameh
+    joinedt = 210
+    draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
     # y = 115 ~ 155
 
-    since = form["since"]
+    joined = form["joined"]
     division = form["division"]
     division = unicodedata.normalize('NFKC', division).lstrip(" ")
     distance = form["distance"]
     profit = form["profit"]
-    sincefont = ImageFont.truetype("./fonts/Consola.ttf", 40)
-    draw.text((325, 220), f"Since {since}", fill=(0,0,0), font=sincefont)
+    joinedfont = ImageFont.truetype("./fonts/UbuntuMono.ttf", 40)
+    draw.text((325, 220), f"Joined: {joined}", fill=(0,0,0), font=joinedfont)
 
     # separate line
-    coH40 = ImageFont.truetype("./fonts/ConsolaBold.ttf", 40)
+    coH40 = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
     divisionw = coH40.getlength(f"Division: {division}")
     if divisionw > 550:

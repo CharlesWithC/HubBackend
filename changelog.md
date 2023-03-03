@@ -1,5 +1,15 @@
 # Changelog
 
+**v1.22.11**  
+**[BannerGen]**  
+1.Changed `Since YYYY/(M)M/(D)D` to `Joined: YYYY/MM/DD`  
+2.Replaced license fonts with open fonts to prevent copyright issues  
+|Old Font|Supported Glyphs|New Font|Supported Glyphs|  
+--|--|--|--|
+|`Consola` + `Sans Serif`|3765|`Ubuntu Mono`|1256|  
+|`Impact`|720|`Anton`|978|  
+|`UniSans`|458|`Open Sans`|1010|  
+
 **v1.22.10**  
 1.Prevented restarting database connection pool for multiple times when it is already restarting  
 2.Removed original 500 error handler as middleware is handling errors  
