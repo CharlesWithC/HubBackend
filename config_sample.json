@@ -25,6 +25,7 @@
     "server_port": "7777",
     "server_workers": "1",
     "whitelist_ips": [],
+    "webhook_error": "",
 
     "database": "mysql",
     "mysql_host": "localhost",

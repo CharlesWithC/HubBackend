@@ -325,6 +325,7 @@ async def enableNotification(request: Request, response: Response, notification_
             response.status_code = 503
             return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         if r.status_code // 100 != 2:
+            response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
         d = json.loads(r.text)
         if "id" in d:
@@ -332,7 +333,7 @@ async def enableNotification(request: Request, response: Response, notification_
 
             r = None
             try:
-                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid), dhrid = dhrid), 
+                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid)), 
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, discordid)), \
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
@@ -340,6 +341,7 @@ async def enableNotification(request: Request, response: Response, notification_
                 traceback.print_exc()
 
             if r is None or r.status_code // 100 != 2:
+                response.status_code = 428
                 return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
             await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = {discordid} AND skey = 'discord-notification'")
@@ -353,6 +355,7 @@ async def enableNotification(request: Request, response: Response, notification_
             settings["discord"] = True
 
         else:
+            response.status_code = 428
             return {"error": True, "descriptor": ml.tr(request, "unable_to_dm", force_lang = au["language"])}
 
     res = ""

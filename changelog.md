@@ -1,5 +1,13 @@
 # Changelog
 
+**v1.22.10**  
+1.Prevented restarting database connection pool for multiple times when it is already restarting  
+2.Removed original 500 error handler as middleware is handling errors  
+3.Fixed `discord_notification_enabled` notification not being sent  
+4.Added 428 error if bot is unable to DM user when enabling Discord notification  
+5.Added `config.webhook_error` to send non-database errors to Discord  
+6.Added error formatter before printing the error to log  
+
 **v1.22.9**  
 1.Removed `wait_timeout` that closes connections  
 **Note** Closed connections are not released to pool  

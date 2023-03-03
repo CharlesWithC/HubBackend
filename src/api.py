@@ -84,7 +84,7 @@ async def languages():
 
 # middleware to manage database connection
 # also include 500 error handler
-err500 = []
+dberr = []
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
@@ -103,25 +103,45 @@ async def dispatch(request: Request, call_next):
                 break
         if ismysqlerr:
             print(f"Database error: {str(exc)}")
-            global err500
-            if not -1 in err500 and int(time.time()) - aiosql.POOL_START_TIME >= 60:
-                err500.append(time.time())
-                err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
-                if len(err500) > 5:
+            global dberr
+            if not -1 in dberr and int(time.time()) - aiosql.POOL_START_TIME >= 60 and aiosql.POOL_START_TIME != 0:
+                dberr.append(time.time())
+                dberr[:] = [i for i in dberr if i > time.time() - 1800]
+                if len(dberr) > 5:
                     # try restarting database connection first
                     print("Restarting database connection pool")
                     await aiosql.restart_pool()
-                elif len(err500) > 10:
+                elif len(dberr) > 10:
                     print("Restarting service due to database errors")
                     try:
                         await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                     except:
                         pass
                     threading.Thread(target=restart).start()
-                    err500.append(-1)
+                    dberr.append(-1)
             return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
         else:
-            traceback.print_exc()
+            if config.webhook_error != "":
+                try:
+                    err = traceback.format_exc()
+                    err = err[err.find("During handling of the above exception"):]
+                    lines = err.split("\n")[1:]
+                    while lines[0].startswith("\n") or lines[0] == "":
+                        lines = lines[1:]
+                    fmt = []
+                    for i in range(len(lines)):
+                        if lines[i].startswith("  "):
+                            lines[i] = lines[i][2:]
+                        if i >= 1 and (lines[i-1].find("fastapi") != -1 or lines[i-1].find("starlette") != -1 or lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1):
+                            continue
+                        if i < len(lines) - 1 and (lines[i].find("response = await call_next(request)") != -1 or lines[i+1].find("response = await call_next(request)") != -1):
+                            continue
+                        fmt.append(lines[i])
+                    err = "\n".join(fmt)
+                    print(err)
+                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                except:
+                    pass
             return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
 
 # thread to restart service
@@ -138,34 +158,6 @@ async def errorHandler(request: Request, exc: StarletteHTTPException):
 async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": True, "descriptor": "Unprocessable Entity"}, status_code = 422)
 
-@app.exception_handler(500)
-async def error500Handler(request: Request, exc: Exception):
-    ismysqlerr = False
-    for err in pymysql_errs:
-        if isinstance(exc, err):
-            ismysqlerr = True
-            break
-    if ismysqlerr:
-        global err500
-        if not -1 in err500 and int(time.time()) - aiosql.POOL_START_TIME >= 60:
-            err500.append(time.time())
-            err500[:] = [i for i in err500 if i > time.time() - 1800] # 5 error / 30 minutes = restart
-            if len(err500) > 5:
-                # try restarting database connection first
-                print("Restarting database connection pool")
-                await aiosql.restart_pool()
-            elif len(err500) > 10:
-                print("Restarting service due to database errors")
-                try:
-                    await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
-                except:
-                    pass
-                threading.Thread(target=restart).start()
-                err500.append(-1)
-        return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
-    else:
-        return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
-        
 @app.on_event("startup")
 async def startupEvent():
     await aiosql.create_pool()

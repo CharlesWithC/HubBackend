@@ -156,9 +156,11 @@ class AIOSQL:
 
     def close_pool(self):
         self.shutdown_lock = True
+        self.POOL_START_TIME = 0
         self.pool.terminate()
     
     async def restart_pool(self):
+        self.POOL_START_TIME = 0
         self.pool.terminate()
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.dbname, autocommit = False, pool_recycle = 5, \
