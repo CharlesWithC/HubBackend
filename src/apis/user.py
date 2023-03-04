@@ -1247,12 +1247,12 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
 
     # delete account of new discord, and both sessions
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {old_discord_id}")
-    await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {old_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE discordid = {old_discord_id}")
     await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {old_discord_id}")
 
     await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {new_discord_id}")
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {new_discord_id}")
-    await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {new_discord_id}")
+    await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE discordid = {new_discord_id}")
     await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {new_discord_id}")
     await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {new_discord_id}")
     await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {new_discord_id}")
@@ -1370,7 +1370,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
-        await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
 
@@ -1396,7 +1396,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
         await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE discordid = {discordid}")
-        await aiosql.execute(dhrid, f"DELETE FROM appsession WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM settings WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
 

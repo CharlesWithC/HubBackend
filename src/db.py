@@ -66,7 +66,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), discordid BIGI
         country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS temp_identity_proof (token CHAR(36), discordid BIGINT UNSIGNED, expire BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS appsession (token CHAR(36), discordid BIGINT UNSIGNED, timestamp BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), discordid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (userid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS settings (discordid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
@@ -115,7 +115,7 @@ indexes = ["CREATE INDEX user_userid ON user (userid)",
 "CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
 "CREATE INDEX session_token ON session (token)",
 "CREATE INDEX temp_identity_proof_token ON temp_identity_proof (token)",
-"CREATE INDEX appsession_token ON appsession (token)",
+"CREATE INDEX application_token_token ON application_token (token)",
 "CREATE INDEX ratelimit_ip ON ratelimit (ip)",
 "CREATE INDEX auditlog_userid ON auditlog (userid)",
 "CREATE INDEX settings_discordid ON settings (discordid)"]

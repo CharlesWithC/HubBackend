@@ -1,5 +1,11 @@
 # Changelog
 
+**v1.22.12**  
+1.Removed 50 session limit  
+2.Improved application token to allow multiple applications  
+3.Fixed the bug that Discord notification is not shown as disabled when the system disables it due to unable to DM  
+4.Fixed `mfa_invalid_otp` issue when the OTP starts with `0`  
+
 **v1.22.11**  
 **[BannerGen]**  
 1.Changed `Since YYYY/(M)M/(D)D` to `Joined: YYYY/MM/DD`  

@@ -246,13 +246,12 @@ def get_totp_token(secret):
     ret = []
     for k in range(-2,2):
         x =str(get_hotp_token(secret,intervals_no=int(time.time())//30+k))
-        while len(x)!=6:
-            x+='0'
+        x = x.zfill(6)
         ret.append(x)
     return ret
 
 def valid_totp(otp, secret):
-    return str(otp) in get_totp_token(secret)
+    return str(otp).zfill(6) in get_totp_token(secret)
 
 def getFullCountry(abbr):
     if abbr.upper() in ISO3166_COUNTRIES.keys():
@@ -488,8 +487,34 @@ def ProcessDiscordMessage(): # thread
             elif r.status_code == 403:
                 conn = genconn()
                 cur = conn.cursor()
-                cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
-                cur.execute(f"DELETE FROM settings WHERE skey = 'event-notification' AND sval = '{channelid}'")
+                cur.execute(f"SELECT discordid FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
+                t = cur.fetchall()
+                if len(t) != 0:
+                    discordid = t[0][0]
+                    cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
+                    
+                    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+                    settingsok = False
+
+                    cur.execute(f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'notification'")
+                    t = cur.fetchall()
+                    if len(t) != 0:
+                        settingsok = True
+                        d = t[0][0].split(",")
+                        for dd in d:
+                            if dd in settings.keys():
+                                settings[dd] = True
+                    settings["discord"] = False
+
+                    res = ""
+                    for tt in settings.keys():
+                        if settings[tt]:
+                            res += tt + ","
+                    res = res[:-1]
+                    if settingsok:
+                        cur.execute(f"UPDATE settings SET sval = '{res}' WHERE discordid = '{discordid}' AND skey = 'notification'")
+                    else:
+                        cur.execute(f"INSERT INTO settings VALUES ('{discordid}', 'notification', '{res}')")
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -713,11 +738,12 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited"), "code": 401}
 
         # validate token
-        await aiosql.execute(dhrid, f"SELECT discordid FROM appsession WHERE token = '{stoken}'")
+        await aiosql.execute(dhrid, f"SELECT discordid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             return {"error": True, "descriptor": "Unauthorized", "code": 401}
         discordid = t[0][0]
+        last_used_timestamp = t[0][1]
 
         # application token will skip ip check
 
@@ -747,6 +773,10 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             
             if not ok:
                 return {"error": True, "descriptor": "Forbidden", "code": 403}
+
+        if int(time.time()) - last_used_timestamp >= 5:
+            await aiosql.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            await aiosql.commit(dhrid)
 
         await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
         t = await aiosql.fetchall(dhrid)
