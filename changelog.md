@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.13**  
+1.Fixed `point2rank` seires functions going wrong when there's only one rank  
+2.Fixed error not being printed when `config.webhook_error == ""`  
+
 **v1.22.12**  
 1.Removed 50 session limit  
 2.Improved application token to allow multiple applications  

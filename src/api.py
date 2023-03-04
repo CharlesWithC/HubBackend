@@ -121,24 +121,24 @@ async def dispatch(request: Request, call_next):
                     dberr.append(-1)
             return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
         else:
+            err = traceback.format_exc()
+            err = err[err.find("During handling of the above exception"):]
+            lines = err.split("\n")[1:]
+            while lines[0].startswith("\n") or lines[0] == "":
+                lines = lines[1:]
+            fmt = []
+            for i in range(len(lines)):
+                if lines[i].startswith("  "):
+                    lines[i] = lines[i][2:]
+                if i >= 1 and (lines[i-1].find("fastapi") != -1 or lines[i-1].find("starlette") != -1 or lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1):
+                    continue
+                if i < len(lines) - 1 and (lines[i].find("response = await call_next(request)") != -1 or lines[i+1].find("response = await call_next(request)") != -1):
+                    continue
+                fmt.append(lines[i])
+            err = "\n".join(fmt)
+            print(err)
             if config.webhook_error != "":
                 try:
-                    err = traceback.format_exc()
-                    err = err[err.find("During handling of the above exception"):]
-                    lines = err.split("\n")[1:]
-                    while lines[0].startswith("\n") or lines[0] == "":
-                        lines = lines[1:]
-                    fmt = []
-                    for i in range(len(lines)):
-                        if lines[i].startswith("  "):
-                            lines[i] = lines[i][2:]
-                        if i >= 1 and (lines[i-1].find("fastapi") != -1 or lines[i-1].find("starlette") != -1 or lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1):
-                            continue
-                        if i < len(lines) - 1 and (lines[i].find("response = await call_next(request)") != -1 or lines[i+1].find("response = await call_next(request)") != -1):
-                            continue
-                        fmt.append(lines[i])
-                    err = "\n".join(fmt)
-                    print(err)
                     await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                 except:
                     pass

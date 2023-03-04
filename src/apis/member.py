@@ -70,7 +70,7 @@ def point2rankroleid(point):
     keys = list(RANKROLE.keys())
     if point < keys[0]:
         return -1
-    if point >= keys[0] and point < keys[1]:
+    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
         return RANKROLE[keys[0]]
     for i in range(1, len(keys)):
         if point >= keys[i-1] and point < keys[i]:
@@ -82,7 +82,7 @@ def point2rankname(point):
     keys = list(RANKNAME.keys())
     if point < keys[0]:
         return -1
-    if point >= keys[0] and point < keys[1]:
+    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
         return RANKNAME[keys[0]]
     for i in range(1, len(keys)):
         if point >= keys[i-1] and point < keys[i]:
