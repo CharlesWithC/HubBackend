@@ -813,11 +813,17 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     audit = f"Updated `{username}` (User ID: `{userid}`) roles:  \n"
     upd = ""
     for add in addedroles:
-        upd += f"`+ {ROLES[add]}`  \n"
-        audit += f"`+ {ROLES[add]}`  \n"
+        role_name = f"Role #{add}\n"
+        if add in ROLES.keys():
+            role_name = ROLES[add]
+        upd += f"`+ {role_name}`  \n"
+        audit += f"`+ {role_name}`  \n"
     for remove in removedroles:
-        upd += f"`- {ROLES[remove]}`  \n"
-        audit += f"`- {ROLES[remove]}`  \n"
+        role_name = f"Role #{remove}\n"
+        if remove in ROLES.keys():
+            role_name = ROLES[remove]
+        upd += f"`- {role_name}`  \n"
+        audit += f"`- {role_name}`  \n"
     audit = audit[:-1]
     await AuditLog(dhrid, adminid, audit)
     await aiosql.commit(dhrid)

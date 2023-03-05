@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.14**  
+1.Improved error formatter to prevent corrupted results  
+2.Fixed error when adding/removing a role that is not recognized  
+
 **v1.22.13**  
 1.Fixed `point2rank` seires functions going wrong when there's only one rank  
 2.Fixed error not being printed when `config.webhook_error == ""`  

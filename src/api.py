@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import hashlib
 import json
 import os
 import sys
@@ -31,10 +32,12 @@ import apis.admin
 import apis.auth
 import apis.dlog
 import apis.member
+
 if config.tracker.lower() == "tracksim":
     import apis.tracksim
 elif config.tracker.lower() == "navio":
     import apis.navio
+
 import apis.user
 
 # import plugins
@@ -86,6 +89,7 @@ async def languages():
 # also include 500 error handler
 dberr = []
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
+session_errs = []
 @app.middleware("http")
 async def dispatch(request: Request, call_next):
     dhrid = genrid()
@@ -121,25 +125,38 @@ async def dispatch(request: Request, call_next):
                     dberr.append(-1)
             return JSONResponse({"error": True, "descriptor": "Service Unavailable"}, status_code = 503)
         else:
+            global session_errs
             err = traceback.format_exc()
-            err = err[err.find("During handling of the above exception"):]
             lines = err.split("\n")[1:]
+            idx = 0
+            # remove anyio.EndOfStream error
+            for i in range(len(lines)):
+                if lines[i].find("During handling of the above exception") != -1:
+                    idx = i+1
+            lines = lines[idx:]
             while lines[0].startswith("\n") or lines[0] == "":
                 lines = lines[1:]
-            fmt = []
-            for i in range(len(lines)):
-                if lines[i].startswith("  "):
-                    lines[i] = lines[i][2:]
-                if i >= 1 and (lines[i-1].find("fastapi") != -1 or lines[i-1].find("starlette") != -1 or lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1):
+            fmt = [lines[0]]
+            for i in range(1, len(lines), 2):
+                if lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1:
                     continue
-                if i < len(lines) - 1 and (lines[i].find("response = await call_next(request)") != -1 or lines[i+1].find("response = await call_next(request)") != -1):
-                    continue
-                fmt.append(lines[i])
+                else:
+                    fmt.append(lines[i])
+                    if i + 1 < len(lines):
+                        fmt.append(lines[i+1])
             err = "\n".join(fmt)
-            print(err)
+
+            err_hash = str(hashlib.sha256(err.encode()).hexdigest())[:16]
+            if err_hash in session_errs:
+                # recognized error, do not print log or send webhook
+                print(f"ERROR: {err_hash}\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+                return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
+            session_errs.append(err_hash)
+
+            print(f"ERROR: {err_hash}\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
             if config.webhook_error != "":
                 try:
-                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
                 except:
                     pass
             return JSONResponse({"error": True, "descriptor": "Internal Server Error"}, status_code = 500)
