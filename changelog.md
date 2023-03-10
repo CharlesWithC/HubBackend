@@ -1,5 +1,9 @@
 # Changelog
 
+**v1.22.15**  
+1.Increased database connection timeout by 1 second (to 2 seconds)  
+2.Fixed traceback log corrupts when code is compiled  
+
 **v1.22.14**  
 1.Improved error formatter to prevent corrupted results  
 2.Fixed error when adding/removing a role that is not recognized  

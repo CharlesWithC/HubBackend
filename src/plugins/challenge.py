@@ -181,7 +181,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 @app.patch(f"/{config.abbr}/challenge")
 async def patchChallenge(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    await aiosql.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /challenge', 60, 30)
     if rl[0]:
@@ -608,7 +608,7 @@ async def deleteChallenge(request: Request, response: Response, authorization: s
 @app.put(f"/{config.abbr}/challenge/delivery")
 async def putChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), challengeid: Optional[int] = -1):
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    await aiosql.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'PUT /challenge/delivery', 60, 30)
     if rl[0]:
@@ -761,7 +761,7 @@ async def putChallengeDelivery(request: Request, response: Response, authorizati
 async def deleteChallengeDelivery(request: Request, response: Response, authorization: str = Header(None), \
         challengeid: Optional[int] = -1, logid: Optional[int] = -1):
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    await aiosql.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge/delivery', 60, 30)
     if rl[0]:
@@ -1074,7 +1074,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid, extra_time = 2)
+    await aiosql.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge/list', 60, 60)
     if rl[0]:

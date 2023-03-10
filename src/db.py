@@ -172,7 +172,7 @@ class AIOSQL:
         to_delete = []
         for tdhrid in conns.keys():
             (tconn, tcur, expire_time, extra_time) = conns[tdhrid]
-            if time.time() - expire_time >= 1:
+            if time.time() - expire_time >= 2:
                 to_delete.append(tdhrid)
                 try:
                     self.pool.release(tconn)
@@ -235,8 +235,8 @@ class AIOSQL:
             return
         conns = self.conns
         try:
-            conns[dhrid][2] = time.time() + seconds + 1
-            conns[dhrid][3] = seconds + 1
+            conns[dhrid][2] = time.time() + seconds + 2
+            conns[dhrid][3] = seconds + 2
         except:
             pass
         self.conns = conns

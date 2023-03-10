@@ -137,13 +137,16 @@ async def dispatch(request: Request, call_next):
             while lines[0].startswith("\n") or lines[0] == "":
                 lines = lines[1:]
             fmt = [lines[0]]
-            for i in range(1, len(lines), 2):
-                if lines[i].find("fastapi") != -1 or lines[i].find("starlette") != -1:
-                    continue
+            i = 1
+            while i < len(lines):
+                if lines[i].find("/fastapi/") != -1 or lines[i].find("/starlette/") != -1:
+                    if i + 1 < len(lines) and lines[i + 1].find("File") == -1:
+                        # not compiled, has detail code in next line
+                        i += 1
+                    # else: compiled, next line is file trace
                 else:
                     fmt.append(lines[i])
-                    if i + 1 < len(lines):
-                        fmt.append(lines[i+1])
+                i += 1
             err = "\n".join(fmt)
 
             err_hash = str(hashlib.sha256(err.encode()).hexdigest())[:16]
