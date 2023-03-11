@@ -330,7 +330,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
             {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
         await aiosql.commit(dhrid)
 
-        discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+        discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
         await notification(dhrid, "dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), no_discord_notification = True)
 
     if config.delivery_log_channel_id != "" and not duplicate:
@@ -374,7 +374,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                         multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     multiplayer = ml.ctr("scs_convoy")
-            discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+            discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
             language = await GetUserLanguage(dhrid, discordid, "en")
             if omultiplayer is None:
                 umultiplayer = ml.tr(None, "single_player", force_lang = language)
@@ -440,7 +440,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                     except:
                         traceback.print_exc()
                     
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     language = await GetUserLanguage(dhrid, discordid, "en")
                     data = {}
                     if config.distance_unit == "imperial":
@@ -484,7 +484,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
             current_distance = current_distance[0]
             current_distance = 0 if current_distance is None else int(current_distance)
 
-            userinfo = await getUserInfo(dhrid, request, userid = userid)
+            userinfo = await GetUserInfo(dhrid, request, userid = userid)
             roles = userinfo["roles"]
 
             await aiosql.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
@@ -609,7 +609,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
                     
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                     await aiosql.commit(dhrid)
@@ -637,7 +637,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                             if len(t) == 0:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                                 await notification(dhrid, "challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif challenge_type == 3:
                             await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
@@ -645,7 +645,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                                 await notification(dhrid, "challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif challenge_type == 2:
                             await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
@@ -665,7 +665,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                                     await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                                 await aiosql.commit(dhrid)
                         elif challenge_type == 5:
@@ -693,7 +693,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                                     await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                                 await aiosql.commit(dhrid)
                 except:

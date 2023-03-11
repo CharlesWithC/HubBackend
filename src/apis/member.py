@@ -124,7 +124,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
             response.status_code = au["code"]
             del au["code"]
             return au
-        await activityUpdate(dhrid, au["discordid"], f"members")
+        await ActivityUpdate(dhrid, au["discordid"], f"members")
     
     if page <= 0:
         page = 1
@@ -194,19 +194,8 @@ async def getMemberList(request: Request, response: Response, authorization: str
                 ok = True
         if not ok:
             continue
-        # activity_name = tt[6]
-        # activity_last_seen = tt[7]
-        # if activity_last_seen != None:
-        #     if int(time.time()) - activity_last_seen >= 300:
-        #         activity_name = "offline"
-        #     elif int(time.time()) - activity_last_seen >= 120:
-        #         activity_name = "online"
-        # else:
-        #     activity_name = "offline"
-        #     activity_last_seen = ""
         hrole[tt[0]] = highestrole
-        # rret[tt[0]] = {"name": tt[1], "userid": tt[0], "discordid": str(tt[2]), "avatar": tt[4], "roles": roles, "activity": {"name": activity_name, "last_seen": activity_last_seen}, "join_timestamp": tt[5]}
-        rret[tt[0]] = await getUserInfo(dhrid, request, userid = tt[0])
+        rret[tt[0]] = await GetUserInfo(dhrid, request, userid = tt[0])
 
     ret = []
     if sort_by_highest_role:
@@ -794,7 +783,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     await AuditLog(dhrid, adminid, audit)
     await aiosql.commit(dhrid)
 
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     if tracker_app_error != "":
@@ -845,9 +834,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     if int(distance) > 0:
         distance = "+" + data["distance"]
     
-    username = (await getUserInfo(dhrid, request, userid = userid))["name"]
+    username = (await GetUserInfo(dhrid, request, userid = userid))["name"]
     await AuditLog(dhrid, adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "member", discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     return Response(status_code=204)

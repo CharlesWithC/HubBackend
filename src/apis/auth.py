@@ -120,7 +120,7 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
     await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
     language = await GetUserLanguage(dhrid, discordid)
     await AuditLog(dhrid, -999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
     await notification(dhrid, "login", discordid, \
@@ -233,7 +233,7 @@ async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", err
             await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             await aiosql.commit(dhrid)
 
-            username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+            username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
             language = await GetUserLanguage(dhrid, discordid)
             await AuditLog(dhrid, -999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
             await notification(dhrid, "login", discordid, \
@@ -362,7 +362,7 @@ async def getSteamCallback(request: Request, response: Response):
     await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
     language = await GetUserLanguage(dhrid, discordid)
     await AuditLog(dhrid, -999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
     await notification(dhrid, "login", discordid, \
@@ -811,7 +811,7 @@ async def postMFA(request: Request, response: Response):
     await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
     language = await GetUserLanguage(dhrid, discordid)
     await AuditLog(dhrid, -999, f"MFA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
     await notification(dhrid, "login", discordid, \

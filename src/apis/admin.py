@@ -308,7 +308,7 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": await getUserInfo(dhrid, request, userid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
+        ret.append({"user": await GetUserInfo(dhrid, request, userid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
     t = await aiosql.fetchall(dhrid)

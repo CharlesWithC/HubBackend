@@ -50,7 +50,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             del au["code"]
             return au
         userid = au["userid"]
-        await activityUpdate(dhrid, au["discordid"], "dlogs")
+        await ActivityUpdate(dhrid, au["discordid"], "dlogs")
 
     if page <= 0:
         page = 1
@@ -180,9 +180,9 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         profit = tt[4]
         unit = tt[5]
         
-        userinfo = await getUserInfo(dhrid, request, userid = tt[0])
+        userinfo = await GetUserInfo(dhrid, request, userid = tt[0])
         if userid == -1 and config.privacy:
-            userinfo = await getUserInfo(dhrid, request, privacy = True)
+            userinfo = await GetUserInfo(dhrid, request, privacy = True)
 
         status = 1
         if tt[7] == 0:
@@ -575,7 +575,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         response.status_code = au["code"]
         del au["code"]
         return au
-    await activityUpdate(dhrid, au["discordid"], "leaderboard")
+    await ActivityUpdate(dhrid, au["discordid"], "leaderboard")
 
     if start_time is None:
         start_time = 0
@@ -936,7 +936,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             mythpnt = usermyth[userid]
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), \
+            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), \
                 "points": {"distance": distance, "challenge": challengepnt, "event": eventpnt, \
                     "division": divisionpnt, "myth": mythpnt, "total": usertot[userid], \
                     "rank": userrank[userid], "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
@@ -953,7 +953,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         withpoint.append(userid)
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), \
+            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), \
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
                 "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
@@ -963,7 +963,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             continue
         
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), 
+            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), 
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
                     "rank": rank, "total_no_limit": "0", "rank_no_limit": nlrank}})
 
@@ -1075,7 +1075,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         is_delivered = dd[9]
 
         user_id = dd[1]
-        user = await getUserInfo(dhrid, request, userid = user_id, tell_deleted = True)
+        user = await GetUserInfo(dhrid, request, userid = user_id, tell_deleted = True)
         username = user["name"]
         if "is_deleted" in user.keys():
             user_id = None
@@ -1268,7 +1268,7 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
-    await activityUpdate(dhrid, discordid, f"dlog_{logid}")
+    await ActivityUpdate(dhrid, discordid, f"dlog_{logid}")
     data = {}
     if t[0][1] != "":
         data = json.loads(decompress(t[0][1]))
@@ -1323,11 +1323,11 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
 
     userinfo = None
     if userid == -1 and config.privacy:
-        userinfo = await getUserInfo(dhrid, request, privacy = True)
+        userinfo = await GetUserInfo(dhrid, request, privacy = True)
     else:
-        userinfo = await getUserInfo(dhrid, request, userid = t[0][0], tell_deleted = True)
+        userinfo = await GetUserInfo(dhrid, request, userid = t[0][0], tell_deleted = True)
         if "is_deleted" in userinfo:
-            userinfo = await getUserInfo(dhrid, request, -1)
+            userinfo = await GetUserInfo(dhrid, request, -1)
 
     return {"logid": logid, "user": userinfo, \
         "distance": distance, "division": division, "challenge_record": challenge_record, \
@@ -1368,7 +1368,7 @@ async def deleteDlog(request: Request, response: Response, logid: int, authoriza
 
     await AuditLog(dhrid, adminid, f"Deleted delivery `#{logid}`")
 
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "dlog", discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     return Response(status_code=204)

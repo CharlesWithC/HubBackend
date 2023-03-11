@@ -65,7 +65,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
 
-    await activityUpdate(dhrid, au["discordid"], f"divisions")
+    await ActivityUpdate(dhrid, au["discordid"], f"divisions")
     
     stats = []
     for division in divisions:
@@ -139,7 +139,7 @@ async def getDlogDivision(request: Request, response: Response, logid: int, auth
             return {"error": ml.tr(request, "division_not_validated", force_lang = au["language"])}
 
     if userid == duserid or ok: # delivery driver check division / division staff check delivery
-        return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await getUserInfo(dhrid, request, userid = update_staff_userid)}
+        return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await GetUserInfo(dhrid, request, userid = update_staff_userid)}
     else:
         return {"divisionid": divisionid, "status": status}
 
@@ -284,8 +284,8 @@ async def patchDivision(request: Request, response: Response, logid: int, divisi
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     await AuditLog(dhrid, adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
 
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
-    adiscordid = (await getUserInfo(dhrid, request, userid = adminid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
+    adiscordid = (await GetUserInfo(dhrid, request, userid = adminid))["discordid"]
 
     language = await GetUserLanguage(dhrid, discordid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
@@ -334,7 +334,7 @@ async def getDivisionsPending(request: Request, response: Response, authorizatio
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"logid": tt[0], "divisionid": tt[2], "user": await getUserInfo(dhrid, request, userid = tt[1])})
+        ret.append({"logid": tt[0], "divisionid": tt[2], "user": await GetUserInfo(dhrid, request, userid = tt[1])})
     
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
     t = await aiosql.fetchall(dhrid)

@@ -62,7 +62,7 @@ async def index(request: Request, authorization: str = Header(None)):
         await aiosql.new_conn(dhrid)
         au = await auth(dhrid, authorization, request, check_member = False)
         if not au["error"]:
-            await activityUpdate(dhrid, au["discordid"], "index")
+            await ActivityUpdate(dhrid, au["discordid"], "index")
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
@@ -130,7 +130,7 @@ async def dispatch(request: Request, call_next):
                 if lines[i].find(to_ignore) != -1:
                     ignore = True
             if ignore:
-                if i + 1 < len(lines) and lines[i + 1].find("File") == -1:
+                if i + 1 < len(lines) and lines[i + 1].find("File ") == -1 and lines[i + 1].find(" line ") == -1:
                     # not compiled, has detail code in next line
                     i += 1
                 # else: compiled, next line is file trace

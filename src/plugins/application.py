@@ -117,7 +117,7 @@ async def getApplicationList(request: Request, response: Response, authorization
         return au
     discordid = au["discordid"]
     roles = au["roles"]
-    await activityUpdate(dhrid, au["discordid"], f"applications")
+    await ActivityUpdate(dhrid, au["discordid"], f"applications")
 
     if page_size <= 1:
         page_size = 1
@@ -192,7 +192,7 @@ async def getApplicationList(request: Request, response: Response, authorization
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "creator": await getUserInfo(dhrid, request, discordid = tt[2]), "application_type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await getUserInfo(dhrid, request, userid = tt[6])})
+        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(dhrid, request, discordid = tt[2]), "application_type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(dhrid, request, userid = tt[6])})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -245,7 +245,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
             response.status_code = 403
             return {"error": "Forbidden"}
 
-    return {"applicationid": t[0][0], "creator": await getUserInfo(dhrid, request, discordid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await getUserInfo(dhrid, request, userid = t[0][6])}
+    return {"applicationid": t[0][0], "creator": await GetUserInfo(dhrid, request, discordid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(dhrid, request, userid = t[0][6])}
 
 # Self-operation
 @app.post(f"/{config.abbr}/application")

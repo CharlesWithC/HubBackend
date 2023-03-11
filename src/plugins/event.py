@@ -67,7 +67,7 @@ def EventNotification():
                     discordid = int(bGetUserInfo(userid = vt)["discordid"])
                     if discordid in tonotify.keys():
                         channelid = tonotify[discordid]
-                        language = bGetUserLanguage(discordid, "en")
+                        language = bGetUserLanguage(discordid, "en", ignore_activity = True)
                         QueueDiscordMessage(channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
                             "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
                                 {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
@@ -109,7 +109,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await activityUpdate(dhrid, au["discordid"], f"events")
+            await ActivityUpdate(dhrid, au["discordid"], f"events")
     
     if first_event_after < 0:
         first_event_after = int(time.time()) - 86400
@@ -207,7 +207,7 @@ async def getEvent(request: Request, response: Response, eventid: int, authoriza
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await activityUpdate(dhrid, au["discordid"], f"events")
+            await ActivityUpdate(dhrid, au["discordid"], f"events")
     
     if int(eventid) < 0:
         response.status_code = 404
@@ -228,10 +228,10 @@ async def getEvent(request: Request, response: Response, eventid: int, authoriza
     vote = [int(x) for x in vote if x != ""]
     attendee_ret = []
     for at in attendee:
-        attendee_ret.append(await getUserInfo(dhrid, request, userid = at))
+        attendee_ret.append(await GetUserInfo(dhrid, request, userid = at))
     vote_ret = []
     for vt in vote:
-        vote_ret.append(await getUserInfo(dhrid, request, userid = vt))
+        vote_ret.append(await GetUserInfo(dhrid, request, userid = vt))
 
     return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
 
@@ -527,8 +527,8 @@ async def patchEventAttendee(request: Request, response: Response, eventid: int,
         if attendee in orgattendees:
             continue
         attendee = int(attendee)
-        name = (await getUserInfo(dhrid, request, userid = attendee))["name"]
-        discordid = (await getUserInfo(dhrid, request, userid = attendee))["discordid"]
+        name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
+        discordid = (await GetUserInfo(dhrid, request, userid = attendee))["discordid"]
         await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
         ret1 += f"{name} ({attendee}), "
         cnt += 1
@@ -544,8 +544,8 @@ async def patchEventAttendee(request: Request, response: Response, eventid: int,
         if not attendee in attendees:
             toremove.append(attendee)
             attendee = int(attendee)
-            name = (await getUserInfo(dhrid, request, userid = attendee))["name"]
-            discordid = (await getUserInfo(dhrid, request, userid = attendee))["discordid"]
+            name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
+            discordid = (await GetUserInfo(dhrid, request, userid = attendee))["discordid"]
             await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             ret2 += f"{name} ({attendee}), "
             cnt += 1
@@ -564,8 +564,8 @@ async def patchEventAttendee(request: Request, response: Response, eventid: int,
         cnt = 0
         for attendee in orgattendees:
             attendee = int(attendee)
-            name = (await getUserInfo(dhrid, request, userid = attendee))["name"]
-            discordid = (await getUserInfo(dhrid, request, userid = attendee))["discordid"]
+            name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
+            discordid = (await GetUserInfo(dhrid, request, userid = attendee))["discordid"]
             if gap > 0:
                 await notification(dhrid, "event", discordid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             elif gap < 0:

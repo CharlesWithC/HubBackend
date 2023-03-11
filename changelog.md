@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.0.1 (pre-release)**  
+1.Fixed user activity caching issue  
+2.Added user language cache  
+
 **v2.0.0 (pre-release)**  
 **Breaking changes** ⚠️  
 **Note: This is a pre-release focusing on request and response formats, major functionalities are not modified, there will be updates on the user system in v2.1.0.**  

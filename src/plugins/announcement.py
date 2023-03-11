@@ -38,7 +38,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             return au
         else:
             userid = au["userid"]
-            await activityUpdate(dhrid, au["discordid"], "announcements")
+            await ActivityUpdate(dhrid, au["discordid"], "announcements")
     
     limit = ""
     if userid == -1:
@@ -67,7 +67,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     ret = []
     for tt in t:
         ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), \
-            "author": await getUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], \
+            "author": await GetUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], \
                 "timestamp": tt[3]})
         
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
@@ -99,7 +99,7 @@ async def getAnnouncement(request: Request, response: Response, announcementid: 
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await activityUpdate(dhrid, au["discordid"], "announcements")
+            await ActivityUpdate(dhrid, au["discordid"], "announcements")
 
     if int(announcementid) < 0:
         response.status_code = 404
@@ -111,7 +111,7 @@ async def getAnnouncement(request: Request, response: Response, announcementid: 
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
-    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await getUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]}
+    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]}
 
 @app.post(f"/{config.abbr}/announcement")
 async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):

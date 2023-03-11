@@ -66,7 +66,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
         response.status_code = au["code"]
         del au["code"]
         return au
-    await activityUpdate(dhrid, au["discordid"], f"challenges")
+    await ActivityUpdate(dhrid, au["discordid"], f"challenges")
     
     if page <= 0:
         page = 1
@@ -200,7 +200,7 @@ async def getChallenge(request: Request, response: Response, challengeid: int, a
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
-    await activityUpdate(dhrid, au["discordid"], f"challenges")
+    await ActivityUpdate(dhrid, au["discordid"], f"challenges")
 
     await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
             required_distance, reward_points, public_details, job_requirements, description FROM challenge WHERE challengeid = {challengeid} \
@@ -241,7 +241,7 @@ async def getChallenge(request: Request, response: Response, challengeid: int, a
     await aiosql.execute(dhrid, f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, timestamp ASC, userid ASC")
     p = await aiosql.fetchall(dhrid)
     for pp in p:
-        completed.append({"user": await getUserInfo(dhrid, request, userid = pp[0]), "points": str(pp[1]), "timestamp": pp[2]})
+        completed.append({"user": await GetUserInfo(dhrid, request, userid = pp[0]), "points": str(pp[1]), "timestamp": pp[2]})
 
     return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "job_requirements": jobreq, "completed": completed}
 
@@ -530,7 +530,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 p = await aiosql.fetchall(dhrid)
                 if len(p) > 0:
                     await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_uncompleted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         elif org_delivery_count > delivery_count:
@@ -543,12 +543,12 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 p = await aiosql.fetchall(dhrid)
                 if len(p) == 0:
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_completed_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         else:
             for userid in original_points.keys():
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 if original_points[userid] < reward_points:
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 elif original_points[userid] > reward_points:
@@ -576,7 +576,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 p = await aiosql.fetchall(dhrid)
                 if len(p) > 0:
                     await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_uncompleted_increased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         elif org_delivery_count > delivery_count:
@@ -592,12 +592,12 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 p = await aiosql.fetchall(dhrid)
                 if len(p) == 0:
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_completed_decreased_distance_sum", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         else:
             for userid in original_points.keys():
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 if original_points[userid] < reward_points:
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points - original_points[userid]), "total_points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 elif original_points[userid] > reward_points:
@@ -636,7 +636,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                     left_cnt = int(current_delivery_count / delivery_count)
                     if delete_cnt > 0:
                         await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid} ORDER BY timestamp DESC LIMIT {delete_cnt}")
-                        discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                         if delete_cnt > 1:
                             await notification(dhrid, "challenge", discordid, ml.tr(request, "n_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": delete_cnt, "points": tseparator(p[0][0] * delete_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         else:
@@ -662,7 +662,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                     if add_cnt > 0:
                         for _ in range(add_cnt):
                             await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                        discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                         if add_cnt > 1:
                             await notification(dhrid, "challenge", discordid, ml.tr(request, "n_personal_recurring_challenge_compelted_decreased_delivery_count", var = {"title": title, "challengeid": challengeid, "count": add_cnt, "points": tseparator(reward_points * add_cnt), "total_points": tseparator(left_cnt * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         else:
@@ -671,7 +671,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
 
         else:
             for userid in original_points.keys():
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 if original_points[userid] < reward_points:
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator((reward_points - original_points[userid]) * completed_count[userid]), "total_points": tseparator(reward_points * completed_count[userid])}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 elif original_points[userid] > reward_points:
@@ -707,7 +707,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 if uid in previously_completed.keys():
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
                     gap = reward - previously_completed[uid][0]
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     if gap > 0:
                         await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                     elif gap < 0:
@@ -715,12 +715,12 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                     del previously_completed[uid]
                 else:
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         for uid in previously_completed.keys():
             reward = previously_completed[uid][0]
-            discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+            discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
             await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     elif challenge_type == 5:
@@ -767,7 +767,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                 if uid in previously_completed.keys():
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
                     gap = reward - previously_completed[uid][0]
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     if gap > 0:
                         await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                     elif gap < 0:
@@ -775,12 +775,12 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
                     del previously_completed[uid]
                 else:
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.commit(dhrid)
         for uid in previously_completed.keys():
             reward = previously_completed[uid][0]
-            discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+            discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
             await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     await AuditLog(dhrid, adminid, f"Updated challenge `#{challengeid}`")
@@ -879,7 +879,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
     timestamp = t[0][1]
     await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")    
     await aiosql.commit(dhrid)
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "challenge", discordid, ml.tr(request, "delivery_added_to_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     current_delivery_count = 0
@@ -905,7 +905,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
             if len(t) == 0:
                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await aiosql.commit(dhrid)
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
         
         elif challenge_type == 3:
@@ -914,7 +914,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
             if current_delivery_count >= (len(t) + 1) * delivery_count:
                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                 await aiosql.commit(dhrid)
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
         elif challenge_type == 2:
@@ -935,7 +935,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 await aiosql.commit(dhrid)
 
@@ -964,7 +964,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
                     s = usercnt[uid]
                     reward = round(reward_points * s / delivery_count)
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 await aiosql.commit(dhrid)
 
@@ -1018,7 +1018,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
     
     await aiosql.execute(dhrid, f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     await aiosql.commit(dhrid)
-    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "challenge", discordid, ml.tr(request, "delivery_removed_from_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     current_delivery_count = 0
@@ -1044,7 +1044,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
             if len(p) > 0:
                 await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid}")
                 await aiosql.commit(dhrid)
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
       
     elif challenge_type == 3:
@@ -1053,7 +1053,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
         if current_delivery_count < len(p) * delivery_count:
             await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE userid = {userid} AND challengeid = {challengeid} ORDER BY timestamp DESC LIMIT 1")
             await aiosql.commit(dhrid)
-            discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+            discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
             if len(p) <= 1:
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "one_personal_recurring_challenge_uncompleted", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             elif len(p) > 1:
@@ -1066,7 +1066,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
             if len(p) > 0:
                 userid = p[0][0]
                 points = p[0][1]
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await aiosql.commit(dhrid)
@@ -1100,7 +1100,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
                     if uid in previously_completed.keys():
                         await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
                         gap = reward - previously_completed[uid][0]
-                        discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                         if gap > 0:
                             await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif gap < 0:
@@ -1108,12 +1108,12 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
                         del previously_completed[uid]
                     else:
                         await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                        discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                         await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 await aiosql.commit(dhrid)
             for uid in previously_completed.keys():
                 reward = previously_completed[uid][0]
-                discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     elif challenge_type == 5:
@@ -1123,7 +1123,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
             if len(p) > 0:
                 userid = p[0][0]
                 points = p[0][1]
-                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
             await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await aiosql.commit(dhrid)
@@ -1164,7 +1164,7 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
                     if uid in previously_completed.keys():
                         await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {previously_completed[uid][1]})")
                         gap = reward - previously_completed[uid][0]
-                        discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                         if gap > 0:
                             await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_more_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(gap), "total_points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif gap < 0:
@@ -1172,12 +1172,12 @@ async def deleteChallengeDelivery(request: Request, response: Response, challeng
                         del previously_completed[uid]
                     else:
                         await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                        discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                        discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                         await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_received_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                 await aiosql.commit(dhrid)
             for uid in previously_completed.keys():
                 reward = previously_completed[uid][0]
-                discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
+                discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
                 await notification(dhrid, "challenge", discordid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     await AuditLog(dhrid, adminid, f"Removed delivery `#{logid}` from challenge `#{challengeid}`")

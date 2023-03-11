@@ -77,9 +77,9 @@ async def getUser(request: Request, response: Response, authorization: str = Hea
     discordid = t[0][1]
     
     if userid >= 0:
-        await activityUpdate(dhrid, udiscordid, f"member_{userid}")
+        await ActivityUpdate(dhrid, udiscordid, f"member_{userid}")
 
-    return (await getUserInfo(dhrid, request, discordid = discordid, include_email = True))
+    return (await GetUserInfo(dhrid, request, discordid = discordid, include_email = True))
 
 @app.get(f"/{config.abbr}/user/notification/list")
 async def getUserNotificationList(request: Request, response: Response, authorization: str = Header(None), \
@@ -394,11 +394,7 @@ async def getUserLanguage(request: Request, response: Response, authorization: s
         return au
     discordid = au["discordid"]
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE discordid = '{discordid}' AND skey = 'language'")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        return {"language": "en"}
-    return {"language": t[0][0]}
+    return {"language": await GetUserLanguage(dhrid, discordid)}
 
 @app.patch(f"/{config.abbr}/user/language")
 async def patchUserLanguage(request: Request, response: Response, authorization: str = Header(None)):
@@ -478,7 +474,7 @@ async def getUserList(request: Request, response: Response, authorization: str =
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        user = await getUserInfo(dhrid, request, discordid = tt[2])
+        user = await GetUserInfo(dhrid, request, discordid = tt[2])
         if tt[5] != None:
             user["ban"] = {"reason": tt[5], "expire": tt[6]}
         else:
@@ -773,7 +769,7 @@ async def getTemporaryIdentityProof(request: Request, response: Response, token:
         return {"error": ml.tr(request, "invalid_token")}
     await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE token = '{token}'")
     await aiosql.commit(dhrid)
-    return {"user": await getUserInfo(dhrid, request, discordid = t[0][0])}
+    return {"user": await GetUserInfo(dhrid, request, discordid = t[0][0])}
 
 @app.post(f"/{config.abbr}/user/mfa")
 async def postMFA(request: Request, response: Response, authorization: str = Header(None)):
@@ -825,7 +821,7 @@ async def postMFA(request: Request, response: Response, authorization: str = Hea
     await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE discordid = {discordid}")
     await aiosql.commit(dhrid)
         
-    username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
     await AuditLog(dhrid, -999, f"Enabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
     return Response(status_code=204)
@@ -871,7 +867,7 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+        username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
         await AuditLog(dhrid, -999, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
         return Response(status_code=204)
@@ -898,7 +894,7 @@ async def deleteMFA(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+        username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
         await AuditLog(dhrid, adminid, f"Disabled MFA for `{username}` (Discord ID: `{discordid}`)")
 
         return Response(status_code=204)
@@ -1141,7 +1137,7 @@ async def userUnban(request: Request, response: Response, authorization: str = H
         await aiosql.execute(dhrid, f"DELETE FROM banned WHERE discordid = {discordid}")
         await aiosql.commit(dhrid)
         
-        username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+        username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
         await AuditLog(dhrid, adminid, f"Unbanned `{username}` (Discord ID: `{discordid}`)")
         return Response(status_code=204)
 
@@ -1268,7 +1264,7 @@ async def deleteUserConnection(request: Request, response: Response, authorizati
     await aiosql.execute(dhrid, f"UPDATE user SET steamid = -1, truckersmpid = -1 WHERE discordid = {discordid}")
     await aiosql.commit(dhrid)
 
-    username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
     await AuditLog(dhrid, adminid, f"Deleted connections of `{username}` (Discord ID: `{discordid}`)")
 
     return Response(status_code=204)
@@ -1316,7 +1312,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         
-        username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+        username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")
@@ -1342,7 +1338,7 @@ async def deleteUser(request: Request, response: Response, authorization: str = 
             response.status_code = 428
             return {"error": ml.tr(request, "leave_company_before_delete", force_lang = au["language"])}
         
-        username = (await getUserInfo(dhrid, request, discordid = discordid))["name"]
+        username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE discordid = {discordid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE discordid = {discordid}")

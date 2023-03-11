@@ -38,7 +38,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    await activityUpdate(dhrid, au["discordid"], "downloads")
+    await ActivityUpdate(dhrid, au["discordid"], "downloads")
         
     limit = ""
     if title != "":
@@ -67,9 +67,9 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     ret = []
     for tt in t:
         if not isstaff:
-            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "orderid": tt[6], "click_count": tt[5]})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "orderid": tt[6], "click_count": tt[5]})
         else:
-            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "click_count": tt[5]})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "click_count": tt[5]})
         
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
@@ -99,7 +99,7 @@ async def getDownloads(request: Request, response: Response, downloadsid: int, a
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    await activityUpdate(dhrid, au["discordid"], "downloads")
+    await ActivityUpdate(dhrid, au["discordid"], "downloads")
 
     if downloadsid <= 0:
         response.status_code = 404
@@ -118,9 +118,9 @@ async def getDownloads(request: Request, response: Response, downloadsid: int, a
     await aiosql.commit(dhrid)
 
     if not isstaff:
-        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "secret": secret, "orderid": tt[6], "click_count": tt[5]}
     else:
-        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
 
 @app.get(f"/{config.abbr}/downloads/redirect/{{secret}}")
 async def redirectDownloads(request: Request, response: Response, secret: str):
