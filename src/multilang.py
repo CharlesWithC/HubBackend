@@ -38,7 +38,7 @@ EN_STRINGTABLE = {
     "mfa_required": "You have to enable MFA before continuing.",
     "language_not_supported": "Language is not supported.",
 
-    "invalid_discordid": "Invalid Discord ID.",
+    "discord_not_connected": "You have not connected a Discord account.",
     "dismiss_before_ban": "Dismiss member before banning.",
     "dismiss_before_unbind": "Dismiss member before unbinding their connections.",
     "dismiss_before_delete": "Dismiss member before deleting their account.",
@@ -58,7 +58,6 @@ EN_STRINGTABLE = {
     "member_not_found": "Member not found.",
     "banned_user_cannot_be_accepted": "Banned user cannot be accepted as member.",
     "user_not_found": "User not found.",
-    "user_must_register_first": "User must register with new Discord account first.",
     "user_must_not_be_member": "User with new Discord account must not be a member.",
     "already_member": "User is already a member.",
     "steam_not_bound": "User must have bound their Steam Account.",
@@ -68,7 +67,6 @@ EN_STRINGTABLE = {
     "add_role_higher_or_equal": "Member role to add higher / equal.",
     "remove_role_higher_or_equal": "Member role to remove higher / equal.",
     "already_have_discord_role": "You already have the role.",
-    "discord_role_given": "You have been given the role.",
     "losing_admin_permission": "Role update rejected: New roles will remove admin permission from the current user.",
 
     "delivery": "Delivery",

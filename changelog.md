@@ -1,5 +1,30 @@
 # Changelog
 
+**v2.1.0**  
+**Breaking changes** ⚠️  
+**Note: This is a release focusing on updating the user system, to allow every user to have a uid and use uid to identify users, rather than using discordid.**  
+**Warning⚠️:** Major database structure updates involved, **backup** the database before upgrading to this version.  
+**Hint:** It's no longer necessary to place an `upgrade.py` in the directory to upgrade, the upgrader is coded into the main program, which will be executed automatically.  
+
+**[Database Changes]**  
+1.Reordered columns in `user` table, added `uid` before `userid`. `uid` will be assigned to everyone with an `AUTO INCREMENT` property, `userid` will only be given to accepted members  
+2.Swapped order of `update_staff_timestamp` and `update_staff_userid` in `application` table  
+3.Changed tables using `discordid` to identify users to use `uid`.  
+**Affected Tables:** `user_password`, `user_activity`, `user_notification`, `banned` (it's complex), `application`, `session`, `auth_ticket`, `application_token`, `settings`  
+4.Changed `auditlog` using `userid` to identify users to use `uid`  
+5.Renamed `temp_identity_proof` to `auth_ticket`.  
+6.Changed `steamid,truckersmpid=-1/0` to `NULL`  
+7.Added `AUTO_INCREMENT` property to `user.userid`, `user_notification.notificationid`, `dlog.logid`, `announcement.announcementid`, `application.applicationid`, `challenge.challengeid`, `downloads.downloadsid`, `event.eventid`, thus removed `nxtuserid`, `nxtnotificationid`, `nxtlogid`, `nxtappid`, `nxtannid`, `nxtchallengeid`, `nxtdownloadsid`, `nxteventid` in settings  
+
+**[API Changes]**  
+1.Added `?uid` query param to **GET** `/member/banner`, **GET** `/user`, **PATCH** `/user/profile`  
+2.Added `uid` to `order_by` of **GET** `/user/list`, **GET** `/member/list`  
+3.Changed `?discordid` query param to `?uid` for **DELETE** `/user/mfa`, **DELETE** `/user`  
+4.Changed `discordid` in json data of **PUT** `/member`, **PUT**/**DELETE** `/user/ban`, **DELETE** `/user/connections` to `uid`  
+5.Moved `?userid` query param of `/member/dismiss` to path (`/member/dismiss/{userid}`)  
+6.Moved `uid` in json data to query param for **DELETE** `/user/connections`  
+7.Renamed `/user/tip` to `/auth/ticket`
+
 **v2.0.1 (pre-release)**  
 1.Fixed user activity caching issue  
 2.Added user language cache  

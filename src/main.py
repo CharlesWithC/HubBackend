@@ -6,7 +6,6 @@
 import os
 import sys
 import threading
-import traceback
 from datetime import datetime
 
 import uvicorn
@@ -41,7 +40,7 @@ if not os.path.exists(config_path):
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
 
-from app import app, config, version
+from app import app, version, config
 from db import genconn
 
 for external_plugin in config.external_plugins:
@@ -57,24 +56,33 @@ if __name__ == "__main__":
     print(f"Drivers Hub: Backend ({version})")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
 
-    if "upgrade" in sys.argv:
-        print("")
-        if os.path.exists(f"./upgrade.py"):
-            print("Detected upgrade")
-            import upgrade
-            try:
-                if upgrade.target_version == version or upgrade.target_version + ".rc" == version:
-                    upgrade.run()
-                    print("Upgrade completed")
-                else:
-                    print("Version mismatch, aborted")
-            except:
-                traceback.print_exc()
-                print("Upgrade failed due to errors above, main program exited")
-                sys.exit(1)
-        else:
-            print("Upgrade failed due to upgrade.py not found.")
+    os.environ["UPGRADING"] = "true"
+    import upgrades.manager
+    cur_version = version.replace(".rc", "").replace(".", "_")
+    pre_version = cur_version
+    conn = genconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
+    t = cur.fetchall()
+    cur.close()
+    conn.close()
+    if len(t) != 0:
+        pre_version = t[0][0].replace(".rc", "").replace(".", "_")
+    if pre_version != cur_version:
+        pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
+        if pre_idx == -1:
+            print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
             sys.exit(1)
+        cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
+        if cur_idx == -1:
+            print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
+            sys.exit(1)
+        for i in range(pre_idx + 1, cur_idx + 1):
+            v = upgrades.manager.VERSION_CHAIN[i]
+            if v in upgrades.manager.UPGRADEABLE_VERSION:
+                print(f"Updating data to be compatible with {v}...")
+                upgrades.manager.UPGRADER[v].run()
+    upgrades.manager.unload()
         
     conn = genconn()
     cur = conn.cursor()

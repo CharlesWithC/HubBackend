@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.0.1"
+        "version": "2.1.0"
     },
     "paths": {
         "/abbr": {
@@ -74,8 +74,8 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "tip": {
-                                        "description": "Temporary Identity Proof Token",
+                                    "token": {
+                                        "description": "Auth Ticket",
                                         "type": "string"
                                     },
                                     "otp": {
@@ -84,7 +84,7 @@
                                     }
                                 }
                             },
-                            "required": ["tip", "otp"]
+                            "required": ["token", "otp"]
                         }
                     }
                 },
@@ -305,6 +305,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Discord Snowflake",
                         "type": "integer"
                     },
@@ -339,10 +347,10 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Discord Snowflake",
+                        "title": "UID",
                         "type": "integer"
                     },
-                    "name": "discordid",
+                    "name": "uid",
                     "in": "query"
                 }],
                 "responses": {}
@@ -372,7 +380,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (name, discord_id, join_timestamp)",
+                        "title": "Order by (name, uid, discord_id, join_timestamp)",
                         "type": "string"
                     },
                     "name": "order_by",
@@ -596,10 +604,10 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Discord ID (To update another user's username)",
+                        "title": "UID (To update another user's profile)",
                         "type": "integer"
                     },
-                    "name": "discordid",
+                    "name": "uid",
                     "in": "query"
                 }],
                 "responses": {}
@@ -732,10 +740,10 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Discord ID (Required when disabling MFA for another user)",
+                        "title": "UID (Required when disabling MFA for another user)",
                         "type": "integer"
                     },
-                    "name": "discordid",
+                    "name": "uid",
                     "in": "query"
                 }],
                 "requestBody": {
@@ -899,23 +907,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "discordid": {
-                                        "description": "Discord Snowflake",
-                                        "type": "integer"
-                                    }
-                                }
-                            },
-                            "required": ["discordid"]
-                        }
-                    }
-                },
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "query"
+                }],
                 "responses": {}
             }
         },
@@ -1032,11 +1032,11 @@
                 "responses": {}
             }
         },
-        "/abbr/user/tip": {
+        "/abbr/auth/ticket": {
             "post": {
                 "summary": "Generate Temporary Identity Proof Token",
-                "tags": ["user"],
-                "operationId": "post_user_tip",
+                "tags": ["auth"],
+                "operationId": "post_auth_ticket",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1044,8 +1044,8 @@
             },
             "get": {
                 "summary": "Validate Temporary Identity Proof Token",
-                "tags": ["user"],
-                "operationId": "get_user_tip",
+                "tags": ["auth"],
+                "operationId": "get_auth_ticket",
                 "parameters": [{
                     "required": true,
                     "schema": {
@@ -1139,7 +1139,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (user_id, name, discord_id, highest_role, join_timestamp, last_seen)",
+                        "title": "Order by (user_id, name, uid, discord_id, highest_role, join_timestamp, last_seen)",
                         "type": "string"
                     },
                     "name": "order_by",
@@ -1199,6 +1199,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "UID",
+                        "type": "string"
+                    },
+                    "name": "uid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Discord Snowflake",
                         "type": "string"
                     },
@@ -1250,13 +1258,13 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "discordid": {
-                                        "description": "Discord Snowflake",
+                                    "uid": {
+                                        "description": "UID",
                                         "type": "integer"
                                     }
                                 }
                             },
-                            "required": ["discordid"]
+                            "required": ["uid"]
                         }
                     }
                 },
@@ -1327,7 +1335,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/dismiss": {
+        "/abbr/member/dismiss/{userid}": {
             "post": {
                 "summary": "Dismiss Member",
                 "tags": ["member"],
@@ -1342,7 +1350,7 @@
                         "type": "integer"
                     },
                     "name": "userid",
-                    "in": "query"
+                    "in": "path"
                 }],
                 "responses": {}
             }

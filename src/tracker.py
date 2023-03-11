@@ -6,7 +6,7 @@ import time
 import traceback
 from datetime import datetime
 
-import MySQLdb
+import pymysql
 from websockets import connect
 
 drivershub = """    ____       _                         __  __      __  
@@ -55,7 +55,7 @@ passwd = config.mysql_passwd
 dbname = config.mysql_db
 
 def genconn():
-    conn = MySQLdb.connect(host = host, user = user, passwd = passwd, db = dbname)
+    conn = pymysql.connect(host = host, user = user, passwd = passwd, db = dbname)
     cur = conn.cursor()
     cur.execute("SET session wait_timeout=10;")
     return conn

@@ -26,7 +26,7 @@
     "mfa_required": "Du skal aktivere MFA, før du fortsætter.",
     "language_not_supported": "Sprog er ikke understøttet.",
 
-    "invalid_discordid": "Ugyldigt Discord ID.",
+    "discord_not_connected": "Du har ikke tilsluttet en Discord-konto.",
     "dismiss_before_ban": "Afsig medlemet for ban.",
     "dismiss_before_unbind": "Afskedig medlem, før deres forbindelser ophæves.",
     "dismiss_before_delete": "Afvis medlem, før du sletter deres konto.",
@@ -46,7 +46,6 @@
     "member_not_found": "Medlemet blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Den bannede bruger kan ikke blive medlem.",
     "user_not_found": "Bruger ikke fundet.",
-    "user_must_register_first": "Brugeren skal først registrere sig med en ny Discord-konto.",
     "user_must_not_be_member": "Bruger med ny Discord-konto må ikke være medlem.",
     "already_member": "Brugeren er allerede medlem.",
     "steam_not_bound": "Brugern skal have registreret deres Steam konto",

@@ -124,7 +124,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
             response.status_code = au["code"]
             del au["code"]
             return au
-        await ActivityUpdate(dhrid, au["discordid"], f"members")
+        await ActivityUpdate(dhrid, au["uid"], f"members")
     
     if page <= 0:
         page = 1
@@ -135,19 +135,19 @@ async def getMemberList(request: Request, response: Response, authorization: str
         page_size = 250
 
     lroles = roles.split(",")
-    lroles = [int(x) for x in lroles if x != ""]
+    lroles = [int(x) for x in lroles if isint(x)]
     if len(lroles) > 100:
         lroles = lroles[:100]
 
     name = convert_quotation(name).lower()
     
     order_by_last_seen = False
-    if not order_by in ["user_id", "name", "discord_id", "highest_role", "join_timestamp", "last_seen"]:
+    if not order_by in ["user_id", "name", "uid", "discord_id", "highest_role", "join_timestamp", "last_seen"]:
         order_by = "user_id"
         order = "asc"
     if order_by == "last_seen":
         order_by_last_seen = True
-    cvt = {"user_id": "userid", "name": "name", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
+    cvt = {"user_id": "userid", "name": "name", "uid": "uid", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
     order_by = cvt[order_by]
 
     sort_by_highest_role = False
@@ -169,20 +169,20 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
     activity_limit = ""
     if last_seen_after >= 0:
-        activity_limit = f"AND user.discordid IN (SELECT user_activity.discordid FROM user_activity WHERE user_activity.timestamp >= {last_seen_after}) "
+        activity_limit = f"AND user.uid IN (SELECT user_activity.uid FROM user_activity WHERE user_activity.timestamp >= {last_seen_after}) "
 
     hrole = {}
     if order_by_last_seen:
-        await aiosql.execute(dhrid, f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
+        await aiosql.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
     else:
-        await aiosql.execute(dhrid, f"SELECT user.userid, user.name, user.discordid, user.roles, user.avatar, user.join_timestamp, user_activity.activity, user_activity.timestamp FROM user LEFT JOIN user_activity ON user.discordid = user_activity.discordid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
+        await aiosql.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{name}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
     t = await aiosql.fetchall(dhrid)
     rret = {}
     for tt in t:
         if tt[0] in hrole.keys(): # prevent duplicate result from SQL query
             continue
-        roles = tt[3].split(",")
-        roles = [int(x) for x in roles if x != ""]
+        roles = tt[1].split(",")
+        roles = [int(x) for x in roles if isint(x)]
         highestrole = 99999
         ok = False
         if len(lroles) == 0:
@@ -209,7 +209,7 @@ async def getMemberList(request: Request, response: Response, authorization: str
 
 @app.get(f'/{config.abbr}/member/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
+    userid: Optional[int] = -1, uid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     if not "banner" in config.enabled_plugins:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -220,6 +220,8 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     qu = ""
     if userid != -1:
         qu = f"userid = {userid}"
+    elif uid != -1:
+        qu = f"uid = {uid}"
     elif discordid != -1:
         qu = f"discordid = {discordid}"
     elif steamid != -1:
@@ -254,7 +256,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     avatar = t[2]
     join_timestamp = t[3]
     roles = t[4].split(",")
-    roles = [int(x) for x in roles if x != ""]
+    roles = [int(x) for x in roles if isint(x)]
     highest = 99999
     for i in roles:
         if int(i) < highest:
@@ -343,9 +345,14 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         response.status_code = au["code"]
         del au["code"]
         return au
+    uid = au["uid"]
     discordid = au["discordid"]
     userid = au["userid"]
     username = au["name"]
+    
+    if discordid is None:
+        response.status_code = 409
+        return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
     
     ratio = 1
     if config.distance_unit == "imperial":
@@ -377,7 +384,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         attendees = tt[0].split(",")
-        attendees = [int(x) for x in attendees if x != ""]
+        attendees = [int(x) for x in attendees if isint(x)]
         for ttt in attendees:
             attendee = int(ttt)
             if not attendee in userevent.keys():
@@ -483,7 +490,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     await AutoMessage(meta, setvar)
 
                 rankname = point2rankname(totalpnt)
-                await notification(dhrid, "member", discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(dhrid, discordid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(dhrid, discordid)), "description": f"**{rankname}**", "fields": []})
+                await notification(dhrid, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(dhrid, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(dhrid, uid)), "description": f"**{rankname}**", "fields": []})
                 return Response(status_code=204)
         else:
             response.status_code = 428
@@ -513,18 +520,18 @@ async def putMember(request: Request, response: Response, authorization: str = H
     
     data = await request.json()
     try:
-        discordid = int(data["discordid"])
+        uid = int(data["uid"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -538,12 +545,12 @@ async def putMember(request: Request, response: Response, authorization: str = H
     t = await aiosql.fetchall(dhrid)
     userid = int(t[0][0])
 
-    await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(dhrid, adminid, f'Added member: `{name}` (User ID: `{userid}` | Discord ID: `{discordid}`)')
+    await AuditLog(dhrid, adminid, f'Added member: `{name}` (User ID: `{userid}` | UID: `{uid}`)')
     await aiosql.commit(dhrid)
 
-    await notification(dhrid, "member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+    await notification(dhrid, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
 
     return {"userid": userid}   
 
@@ -586,14 +593,14 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     try:
         userid = int(data["userid"])
         roles = str(data["roles"]).split(",")
-        roles = [int(x) for x in roles if x != ""]
+        roles = [int(x) for x in roles if isint(x)]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     if userid < 0:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_userid", force_lang = au["language"])}
-    await aiosql.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid FROM user WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid, uid FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -603,7 +610,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     steamid = t[0][2]
     discordid = t[0][3]
     truckersmpid = t[0][4]
-    oldroles = [int(x) for x in oldroles if x != ""]
+    uid = t[0][5]
+    oldroles = [int(x) for x in oldroles if isint(x)]
     addedroles = []
     removedroles = []
     for role in roles:
@@ -660,15 +668,9 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     roles = [str(i) for i in roles]
     await aiosql.execute(dhrid, f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
     await aiosql.commit(dhrid)
-        
-    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = await aiosql.fetchall(dhrid)
-    userdiscordid = t[0][0]
-    username = t[0][1]
-    usermention = f"<@{userdiscordid}>"
 
     def setvar(msg):
-        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
 
     tracker_app_error = ""
     if config.perms.driver[0] in addedroles:
@@ -704,7 +706,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             meta = config.member_welcome
             await AutoMessage(meta, setvar)
         
-        if config.member_welcome.role_change != [] and config.discord_bot_token != "":
+        if discordid is not None and config.member_welcome.role_change != [] and config.discord_bot_token != "":
             for role in config.member_welcome.role_change:
                 try:
                     if int(role) < 0:
@@ -749,7 +751,7 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             meta = config.member_leave
             await AutoMessage(meta, setvar)
         
-        if config.member_leave.role_change != [] and config.discord_bot_token != "":
+        if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
             for role in config.member_leave.role_change:
                 try:
                     if int(role) < 0:
@@ -783,8 +785,8 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     await AuditLog(dhrid, adminid, audit)
     await aiosql.commit(dhrid)
 
-    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-    await notification(dhrid, "member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+    await notification(dhrid, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
 
     if tracker_app_error != "":
         return {"tracker_api_error": tracker_app_error.replace(f"{TRACKERAPP} API Error: ", "")}
@@ -823,9 +825,9 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
 
     if distance != 0:
         if distance > 0:
-            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
         else:
-            await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
+            await aiosql.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
         await aiosql.commit(dhrid)
     if mythpoint != 0:
         await aiosql.execute(dhrid, f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
@@ -836,8 +838,8 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
     
     username = (await GetUserInfo(dhrid, request, userid = userid))["name"]
     await AuditLog(dhrid, adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
-    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-    await notification(dhrid, "member", discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+    await notification(dhrid, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
 
     return Response(status_code=204)
 
@@ -857,8 +859,9 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     userid = au["userid"]
+    discordid = au["discordid"]
     name = convert_quotation(au["name"])
 
     stoken = authorization.split(" ")[1]
@@ -866,9 +869,10 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret, steamid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
+    steamid = t[0][1]
     if mfa_secret != "":
         data = await request.json()
         try:
@@ -880,15 +884,6 @@ async def postMemberResign(request: Request, response: Response, authorization: 
             response.status_code = 400
             return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = await aiosql.fetchall(dhrid)
-    userdiscordid = t[0][0]
-    username = t[0][1]
-    usermention = f"<@{userdiscordid}>"
-
-    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE discordid = {discordid}")
-    t = await aiosql.fetchall(dhrid)
-    steamid = t[0][0]
     await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     await aiosql.commit(dhrid)
 
@@ -913,18 +908,18 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         tracker_app_error = f"{TRACKERAPP} API Timeout"
 
     if tracker_app_error != "":
-        await AuditLog(dhrid, -999, f"Failed to remove `{username}` (User ID: `{userid}`) from {TRACKERAPP} Company.  \n"+tracker_app_error)
+        await AuditLog(dhrid, -999, f"Failed to remove `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.  \n"+tracker_app_error)
     else:
-        await AuditLog(dhrid, -999, f"Removed `{username}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
+        await AuditLog(dhrid, -999, f"Removed `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
 
     def setvar(msg):
-        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
 
     if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
         meta = config.member_leave
         await AutoMessage(meta, setvar)
     
-    if config.member_leave.role_change != [] and config.discord_bot_token != "":
+    if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
         for role in config.member_leave.role_change:
             try:
                 if int(role) < 0:
@@ -940,31 +935,32 @@ async def postMemberResign(request: Request, response: Response, authorization: 
             except:
                 traceback.print_exc()
     
-    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
-    try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
-        d = json.loads(r.text)
-        if "roles" in d:
-            roles = d["roles"]
-            curroles = []
-            for role in roles:
-                if int(role) in list(RANKROLE.values()):
-                    curroles.append(int(role))
-            for role in curroles:
-                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
-                if r.status_code // 100 != 2:
-                    err = json.loads(r.text)
-                    await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
-    except:
-        pass
+    if discordid is not None:
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
+        try:
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            d = json.loads(r.text)
+            if "roles" in d:
+                roles = d["roles"]
+                curroles = []
+                for role in roles:
+                    if int(role) in list(RANKROLE.values()):
+                        curroles.append(int(role))
+                for role in curroles:
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+        except:
+            pass
 
-    await AuditLog(dhrid, -999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
-    await notification(dhrid, "member", discordid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, discordid)))
+    await AuditLog(dhrid, -999, f'Member resigned: `{name}` (UID: `{uid}`)')
+    await notification(dhrid, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, uid)))
     
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/member/dismiss")
-async def postMemberDismiss(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
+@app.post(f"/{config.abbr}/member/dismiss/{{userid}}")
+async def postMemberDismiss(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -992,7 +988,7 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         if int(i) < adminhighest:
             adminhighest = int(i)
 
-    await aiosql.execute(dhrid, f"SELECT userid, steamid, name, roles, discordid FROM user WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"SELECT userid, steamid, name, roles, discordid, uid FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -1001,8 +997,9 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     steamid = t[0][1]
     name = t[0][2]
     roles = t[0][3].split(",")
-    udiscordid = t[0][4]
-    roles = [int(x) for x in roles if x != ""]
+    discordid = t[0][4]
+    uid = t[0][5]
+    roles = [int(x) for x in roles if isint(x)]
     highest = 99999
     for i in roles:
         if int(i) < highest:
@@ -1010,12 +1007,6 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     if adminhighest >= highest:
         response.status_code = 403
         return {"error": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
-
-    await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
-    t = await aiosql.fetchall(dhrid)
-    userdiscordid = t[0][0]
-    username = t[0][1]
-    usermention = f"<@{userdiscordid}>"
 
     await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     await aiosql.commit(dhrid)
@@ -1041,51 +1032,52 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         tracker_app_error = f"{TRACKERAPP} API Timeout"
 
     if tracker_app_error != "":
-        await AuditLog(dhrid, -999, f"Failed to remove `{username}` (User ID: `{userid}`) from {TRACKERAPP} Company.  \n"+tracker_app_error)
+        await AuditLog(dhrid, -999, f"Failed to remove `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.  \n"+tracker_app_error)
     else:
-        await AuditLog(dhrid, -999, f"Removed `{username}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
+        await AuditLog(dhrid, -999, f"Removed `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
 
     def setvar(msg):
-        return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
 
     if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
         meta = config.member_leave
         await AutoMessage(meta, setvar)
     
-    if config.member_leave.role_change != [] and config.discord_bot_token != "":
+    if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
         for role in config.member_leave.role_change:
             try:
                 if int(role) < 0:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{udiscordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
                 elif int(role) > 0:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{udiscordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
             except:
                 traceback.print_exc() 
     
-    headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
-    try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}", headers=headers, timeout = 3, dhrid = dhrid)
-        d = json.loads(r.text)
-        if "roles" in d:
-            roles = d["roles"]
-            curroles = []
-            for role in roles:
-                if int(role) in list(RANKROLE.values()):
-                    curroles.append(int(role))
-            for role in curroles:
-                r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{udiscordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
-                if r.status_code // 100 != 2:
-                    err = json.loads(r.text)
-                    await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{udiscordid}>: `{err["message"]}`')
-    except:
-        pass   
+    if discordid is not None:
+        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
+        try:
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            d = json.loads(r.text)
+            if "roles" in d:
+                roles = d["roles"]
+                curroles = []
+                for role in roles:
+                    if int(role) in list(RANKROLE.values()):
+                        curroles.append(int(role))
+                for role in curroles:
+                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+        except:
+            pass   
         
-    await AuditLog(dhrid, adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
-    await notification(dhrid, "member", udiscordid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(dhrid, udiscordid, "en")))
+    await AuditLog(dhrid, adminid, f'Dismissed member: `{name}` (UID: `{uid}`)')
+    await notification(dhrid, "member", uid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(dhrid, uid, "en")))
     return Response(status_code=204)

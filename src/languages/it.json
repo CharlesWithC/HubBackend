@@ -26,7 +26,7 @@
     "mfa_required": "Devi abilitare MFA (autenticazione a più fattori) prima di continuare.",
     "language_not_supported": "La langue n'est pas prise en charge.",
 
-    "invalid_discordid": "ID di Discord non valido.",
+    "discord_not_connected": "Non hai collegato un account Discord.",
     "dismiss_before_ban": "Rimuovi il membro dall'azienda prima di bannarlo.",
     "dismiss_before_unbind": "Rimuovi il membro dall'azienda prima di eliminare i collegamenti del membro.",
     "dismiss_before_delete": "Rimuovi il membro dall'azienda prima di eliminare l'account del membro.",
@@ -46,7 +46,6 @@
     "member_not_found": "Membro non trovato",
     "banned_user_cannot_be_accepted": "L'utente bannato non può essere accettato come membro.",
     "user_not_found": "Utente non trovato.",
-    "user_must_register_first": "L'utente deve prima registrarsi con un nuovo account Discord.",
     "user_must_not_be_member": "L'utente con un nuovo account Discord non deve essere un membro.",
     "already_member": "L'utente è già un membro.",
     "steam_not_bound": "L'utente deve aver collegato il proprio account di Steam.",

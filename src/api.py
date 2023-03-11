@@ -62,7 +62,7 @@ async def index(request: Request, authorization: str = Header(None)):
         await aiosql.new_conn(dhrid)
         au = await auth(dhrid, authorization, request, check_member = False)
         if not au["error"]:
-            await ActivityUpdate(dhrid, au["discordid"], "index")
+            await ActivityUpdate(dhrid, au["uid"], "index")
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")

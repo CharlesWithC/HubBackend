@@ -50,7 +50,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             del au["code"]
             return au
         userid = au["userid"]
-        await ActivityUpdate(dhrid, au["discordid"], "dlogs")
+        await ActivityUpdate(dhrid, au["uid"], "dlogs")
 
     if page <= 0:
         page = 1
@@ -575,7 +575,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(dhrid, au["discordid"], "leaderboard")
+    await ActivityUpdate(dhrid, au["uid"], "leaderboard")
 
     if start_time is None:
         start_time = 0
@@ -653,7 +653,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             roles = tt[1].split(",")
-            roles = [int(x) for x in roles if x != ""]
+            roles = [int(x) for x in roles if isint(x)]
             ok = False
             for i in roles:
                 if int(i) in config.perms.driver:
@@ -674,7 +674,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
     # set limits
     limituser = limituser.split(",")
-    limituser = [int(x) for x in limituser if x != ""]
+    limituser = [int(x) for x in limituser if isint(x)]
     if len(limituser) > 10:
         limituser = limituser[:10]
     limit = ""
@@ -713,7 +713,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
-            attendees = [int(x) for x in attendees if x != ""]
+            attendees = [int(x) for x in attendees if isint(x)]
             for attendee in attendees:
                 if not attendee in allusers:
                     continue
@@ -829,7 +829,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
-            attendees = [int(x) for x in attendees if x != ""]
+            attendees = [int(x) for x in attendees if isint(x)]
             for attendee in attendees:
                 if not attendee in allusers:
                     continue
@@ -1249,7 +1249,7 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
         response.headers[k] = rl[1][k]
 
     userid = -1
-    discordid = -1
+    uid = -1
     if authorization != None:
         au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
@@ -1257,7 +1257,7 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
             del au["code"]
             return au
         userid = au["userid"]
-        discordid = au["discordid"]
+        uid = au["uid"]
     
     if logid is None:
         response.status_code = 404
@@ -1268,7 +1268,7 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
-    await ActivityUpdate(dhrid, discordid, f"dlog_{logid}")
+    await ActivityUpdate(dhrid, uid, f"dlog_{logid}")
     data = {}
     if t[0][1] != "":
         data = json.loads(decompress(t[0][1]))
@@ -1368,7 +1368,7 @@ async def deleteDlog(request: Request, response: Response, logid: int, authoriza
 
     await AuditLog(dhrid, adminid, f"Deleted delivery `#{logid}`")
 
-    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-    await notification(dhrid, "dlog", discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+    await notification(dhrid, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
 
     return Response(status_code=204)

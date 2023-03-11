@@ -65,7 +65,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
 
-    await ActivityUpdate(dhrid, au["discordid"], f"divisions")
+    await ActivityUpdate(dhrid, au["uid"], f"divisions")
     
     stats = []
     for division in divisions:
@@ -160,6 +160,7 @@ async def postDivision(request: Request, response: Response, logid: int, divisio
         response.status_code = au["code"]
         del au["code"]
         return au
+    uid = au["uid"]
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
@@ -193,7 +194,7 @@ async def postDivision(request: Request, response: Response, logid: int, divisio
     await aiosql.execute(dhrid, f"SELECT roles FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
     roles = t[0][0].split(",")
-    roles = [int(x) for x in roles if x != ""]
+    roles = [int(x) for x in roles if isint(x)]
     udivisions = []
     for role in roles:
         if int(role) in divisionroles:
@@ -210,18 +211,18 @@ async def postDivision(request: Request, response: Response, logid: int, divisio
     await aiosql.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     await aiosql.commit(dhrid)
     
-    language = await GetUserLanguage(dhrid, discordid)
-    await notification(dhrid, "division", discordid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
+    language = await GetUserLanguage(dhrid, uid)
+    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
     dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
-    await aiosql.execute(dhrid, f"SELECT userid, name, avatar FROM user WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT userid, name, avatar FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     tt = t[0]
-    msg = f"**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
+    msg = f"**UID**: {uid}\n**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
     msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {divisiontxt[divisionid]}"
     avatar = tt[2]
 
@@ -284,15 +285,14 @@ async def patchDivision(request: Request, response: Response, logid: int, divisi
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     await AuditLog(dhrid, adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
 
-    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-    adiscordid = (await GetUserInfo(dhrid, request, userid = adminid))["discordid"]
+    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
 
-    language = await GetUserLanguage(dhrid, discordid)
+    language = await GetUserLanguage(dhrid, uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[int(status)]
 
-    await notification(dhrid, "division", discordid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), \
+    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, uid, "en")), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \

@@ -26,7 +26,7 @@
     "mfa_required": "Devam etmeden önce MFA'yı (çok faktörlü doğrulama) etkinleştirmeniz gerekir.",
     "language_not_supported": "Bu dil henüz desteklenmiyor.",
 
-    "invalid_discordid": "Geçersiz Discord kimliği. (ID)",
+    "discord_not_connected": "Bir Discord hesabı bağlamadınız.",
     "dismiss_before_ban": "Yasaklamadan önce üyeyi şirketten çıkart.",
     "dismiss_before_unbind": "Üyenin bağlantılarını silmeden önce üyeyi şirketten çıkart.",
     "dismiss_before_delete": "Üyenin hesabını silmeden önce üyeyi şirketten çıkart.",
@@ -46,7 +46,6 @@
     "member_not_found": "Üye bulunamadı.",
     "banned_user_cannot_be_accepted": "Yasaklanan kullanıcı üye olarak kabul edilemez.",
     "user_not_found": "Kullanıcı bulunamadı.",
-    "user_must_register_first": "Kullanıcı, önce yeni Discord hesabıyla kaydolmalıdır.",
     "user_must_not_be_member": "Yeni Discord hesabı olan kullanıcı, bir üye olmamalıdır.",
     "already_member": "Kullanıcı zaten bir üye.",
     "steam_not_bound": "Kullanıcı, Steam Hesabını ilişkilendirmiş olmalıdır.",

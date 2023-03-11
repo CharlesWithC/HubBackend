@@ -111,31 +111,27 @@ async def postNavio(response: Response, request: Request):
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        await aiosql.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE steamid = '{steamid}'")
+        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = '{steamid}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "User not found."}
-        userid = t[0][0]
-        name = t[0][1]
-        discordid = t[0][2]
-        await AuditLog(dhrid, -999, f"Member resigned: `{name}` (Discord ID: `{discordid}`)")
+        uid = t[0][0]
+        userid = t[0][1]
+        name = t[0][2]
+        discordid = t[0][3]
+        await AuditLog(dhrid, -999, f"Member resigned: `{name}` (UID: `{uid}`)")
         
-        await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
-        t = await aiosql.fetchall(dhrid)
-        userdiscordid = t[0][0]
-        username = t[0][1]
-        usermention = f"<@{userdiscordid}>"
         await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         await aiosql.commit(dhrid)
 
         def setvar(msg):
-            return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid))
+            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
 
         if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
             meta = config.member_leave
             await AutoMessage(meta, setvar)
         
-        if config.member_leave.role_change != [] and config.discord_bot_token != "":
+        if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
             for role in config.member_leave.role_change:
                 try:
                     if int(role) < 0:
@@ -150,24 +146,25 @@ async def postNavio(response: Response, request: Request):
                             await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
                 except:
                     traceback.print_exc()
-    
-        headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
-        try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
-            d = json.loads(r.text)
-            if "roles" in d:
-                roles = d["roles"]
-                curroles = []
-                for role in roles:
-                    if int(role) in list(RANKROLE.values()):
-                        curroles.append(int(role))
-                for role in curroles:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
-                    if r.status_code // 100 != 2:
-                        err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
-        except:
-            pass
+        
+        if discordid is not None:
+            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
+            try:
+                r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+                d = json.loads(r.text)
+                if "roles" in d:
+                    roles = d["roles"]
+                    curroles = []
+                    for role in roles:
+                        if int(role) in list(RANKROLE.values()):
+                            curroles.append(int(role))
+                    for role in curroles:
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+            except:
+                pass
         
         return {"message": "User resigned."}
 
@@ -228,10 +225,6 @@ async def postNavio(response: Response, request: Request):
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
     start_time = parser.parse(d["data"]["object"]["start_time"]).timestamp()
     end_time = parser.parse(d["data"]["object"]["stop_time"]).timestamp()
-    if not duplicate:
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtlogid' FOR UPDATE")
-        t = await aiosql.fetchall(dhrid)
-        logid = int(t[0][0])
 
     delivery_rule_ok = True
     
@@ -258,16 +251,17 @@ async def postNavio(response: Response, request: Request):
         return {"message": "Blocked due to delivery rules."}
 
     if not duplicate:
-        if "tracker" in config.enabled_plugins:
-            asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
-        
-        await aiosql.execute(dhrid, f"UPDATE settings SET sval = {logid+1} WHERE skey = 'nxtlogid'")
-        await aiosql.execute(dhrid, f"INSERT INTO dlog VALUES ({logid}, {userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
+        await aiosql.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, \
             {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 1, 0)")
         await aiosql.commit(dhrid)
+        await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+        logid = (await aiosql.fetchone(dhrid))[0]
 
-        discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-        await notification(dhrid, "dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), no_discord_notification = True)
+        if "tracker" in config.enabled_plugins:
+            asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
+
+        uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+        await notification(dhrid, "dlog", uid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid, "en")), no_discord_notification = True)
 
     if config.delivery_log_channel_id != "" and not duplicate:
         try:
@@ -310,8 +304,8 @@ async def postNavio(response: Response, request: Request):
                         multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     multiplayer = ml.ctr("scs_convoy")
-            discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-            language = await GetUserLanguage(dhrid, discordid, "en")
+            uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+            language = await GetUserLanguage(dhrid, uid, "en")
             if omultiplayer is None:
                 umultiplayer = ml.tr(None, "single_player", force_lang = language)
             else:
@@ -376,8 +370,8 @@ async def postNavio(response: Response, request: Request):
                     except:
                         traceback.print_exc()
                     
-                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-                    language = await GetUserLanguage(dhrid, discordid, "en")
+                    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+                    language = await GetUserLanguage(dhrid, uid, "en")
                     data = {}
                     if config.distance_unit == "imperial":
                         data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
@@ -407,8 +401,8 @@ async def postNavio(response: Response, request: Request):
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": config.intcolor,\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.intcolor}]}
-                    if await CheckNotificationEnabled(dhrid, "dlog", discordid):
-                        await SendDiscordNotification(dhrid, discordid, data)
+                    if await CheckNotificationEnabled(dhrid, "dlog", uid):
+                        await SendDiscordNotification(dhrid, uid, data)
                         
         except:
             traceback.print_exc()
@@ -545,8 +539,8 @@ async def postNavio(response: Response, request: Request):
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
                     
-                    discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-                    await notification(dhrid, "challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+                    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+                    await notification(dhrid, "challenge", uid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                     await aiosql.commit(dhrid)
 
@@ -573,16 +567,16 @@ async def postNavio(response: Response, request: Request):
                             if len(t) == 0:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-                                await notification(dhrid, "challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+                                uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+                                await notification(dhrid, "challenge", uid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
                         elif challenge_type == 3:
                             await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                             t = await aiosql.fetchall(dhrid)
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await GetUserInfo(dhrid, request, userid = userid))["discordid"]
-                                await notification(dhrid, "challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+                                uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+                                await notification(dhrid, "challenge", uid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
                         elif challenge_type == 2:
                             await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                             t = await aiosql.fetchall(dhrid)
@@ -601,8 +595,8 @@ async def postNavio(response: Response, request: Request):
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
-                                    await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+                                    uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
+                                    await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
                                 await aiosql.commit(dhrid)
                         elif challenge_type == 5:
                             await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
@@ -629,8 +623,8 @@ async def postNavio(response: Response, request: Request):
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await GetUserInfo(dhrid, request, userid = uid))["discordid"]
-                                    await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+                                    uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
+                                    await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
                                 await aiosql.commit(dhrid)
                 except:
                     traceback.print_exc()

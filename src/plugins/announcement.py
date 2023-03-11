@@ -38,7 +38,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
             return au
         else:
             userid = au["userid"]
-            await ActivityUpdate(dhrid, au["discordid"], "announcements")
+            await ActivityUpdate(dhrid, au["uid"], "announcements")
     
     limit = ""
     if userid == -1:
@@ -99,7 +99,7 @@ async def getAnnouncement(request: Request, response: Response, announcementid: 
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await ActivityUpdate(dhrid, au["discordid"], "announcements")
+            await ActivityUpdate(dhrid, au["uid"], "announcements")
 
     if int(announcementid) < 0:
         response.status_code = 404
@@ -164,21 +164,18 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": ml.tr(request, "event_staff_announcement_limit", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtannid' FOR UPDATE")
-    t = await aiosql.fetchall(dhrid)
-    announcementid = int(t[0][0])
-    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {announcementid+1} WHERE skey = 'nxtannid'")
-    await aiosql.commit(dhrid)
     timestamp = int(time.time())
 
-    await aiosql.execute(dhrid, f"INSERT INTO announcement VALUES ({announcementid}, {adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
-    await AuditLog(dhrid, adminid, f"Created announcement `#{announcementid}`")
+    await aiosql.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private) VALUES ({adminid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
     await aiosql.commit(dhrid)
+    await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    announcementid = (await aiosql.fetchone(dhrid))[0]
+    await AuditLog(dhrid, adminid, f"Created announcement `#{announcementid}`")
 
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content, dhrid = dhrid), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.intcolor}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -253,7 +250,7 @@ async def patchAnnouncement(request: Request, response: Response, announcementid
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content, dhrid = dhrid), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.intcolor}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:

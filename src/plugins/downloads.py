@@ -38,7 +38,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    await ActivityUpdate(dhrid, au["discordid"], "downloads")
+    await ActivityUpdate(dhrid, au["uid"], "downloads")
         
     limit = ""
     if title != "":
@@ -99,7 +99,7 @@ async def getDownloads(request: Request, response: Response, downloadsid: int, a
     isstaff = False
     if not staffau["error"]:
         isstaff = True
-    await ActivityUpdate(dhrid, au["discordid"], "downloads")
+    await ActivityUpdate(dhrid, au["uid"], "downloads")
 
     if downloadsid <= 0:
         response.status_code = 404
@@ -201,15 +201,13 @@ async def postDownloads(request: Request, response: Response, authorization: str
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid' FOR UPDATE")
-    t = await aiosql.fetchall(dhrid)
-    nxtdownloadsid = int(t[0][0])
-    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {nxtdownloadsid+1} WHERE skey = 'nxtdownloadsid'")
-    await aiosql.execute(dhrid, f"INSERT INTO downloads VALUES ({nxtdownloadsid}, {adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
-    await AuditLog(dhrid, adminid, f"Created downloadable item `#{nxtdownloadsid}`")
+    await aiosql.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
     await aiosql.commit(dhrid)
+    await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    downloadsid = (await aiosql.fetchone(dhrid))[0]
+    await AuditLog(dhrid, adminid, f"Created downloadable item `#{downloadsid}`")
 
-    return {"downloadsid": nxtdownloadsid}
+    return {"downloadsid": downloadsid}
 
 @app.patch(f"/{config.abbr}/downloads/{{downloadsid}}")
 async def patchDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):

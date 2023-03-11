@@ -62,22 +62,23 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         response.status_code = 503
         return {"error": "Service Unavailable"}
     
-    await aiosql.execute(dhrid, f"SELECT discordid, password FROM user_password WHERE email = '{email}'")
+    await aiosql.execute(dhrid, f"SELECT uid, password FROM user_password WHERE email = '{email}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_email_or_password")}
-    discordid = t[0][0]
+    uid = t[0][0]
     pwdhash = t[0][1]
     ok = bcrypt.checkpw(password, b64d(pwdhash).encode())
     if not ok:
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_email_or_password")}
+    discordid = (await GetUserInfo(dhrid, request, uid = uid))["discordid"]
     
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
+    if discordid is not None and (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
@@ -93,20 +94,20 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         d = json.loads(r.text)
         if config.use_server_nickname and d["nick"] != None:
             username = d["nick"]
-            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = {uid}")
             await aiosql.commit(dhrid)
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
-        await aiosql.execute(dhrid, f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
+        await aiosql.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
         await aiosql.commit(dhrid)
         return {"token": stoken, "mfa": True}
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -117,13 +118,13 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
         
     stoken = str(uuid.uuid4())
     stoken = "e" + stoken[1:]
-    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
+    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
-    language = await GetUserLanguage(dhrid, discordid)
-    await AuditLog(dhrid, -999, f"Password login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    await notification(dhrid, "login", discordid, \
+    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+    language = await GetUserLanguage(dhrid, uid)
+    await AuditLog(dhrid, -999, f"Password login: `{username}` (UID: `{uid}`) from `{getRequestCountry(request)}`")
+    await notification(dhrid, "login", uid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -164,6 +165,15 @@ async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", err
             if not 'id' in user_data:
                 return RedirectResponse(url=getUrl4Msg("Discord Error: " + user_data['message']), status_code=302)
             discordid = user_data['id']
+            username = str(user_data['username'])
+            username = convert_quotation(username).replace(",","")
+            if not "email" in user_data.keys():
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
+            email = str(user_data['email'])
+            email = convert_quotation(email)
+            if not "@" in email: # make sure it's not empty
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
+            avatar = str(user_data['avatar'])
             tokens = {**tokens, **user_data}
 
             await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
@@ -176,29 +186,20 @@ async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", err
                 expire = t[0][1]
                 expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
                 return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
+            uid = -1
 
             await aiosql.execute(dhrid, f"SELECT * FROM user WHERE discordid = '{discordid}'")
             t = await aiosql.fetchall(dhrid)
-
-            username = str(user_data['username'])
-            username = convert_quotation(username).replace(",","")
-
-            if not "email" in user_data.keys():
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
-            email = str(user_data['email'])
-            email = convert_quotation(email)
-            if not "@" in email: # make sure it's not empty
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
-            
-            avatar = str(user_data['avatar'])
             if len(t) == 0:
-                await aiosql.execute(dhrid, f"INSERT INTO user VALUES (-1, {discordid}, '{username}', '{avatar}', '',\
-                    '{email}', -1, -1, '', {int(time.time())}, '')")
-                await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{discordid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
-                await AuditLog(dhrid, -999, f"User register: `{username}` (Discord ID: `{discordid}`)")
+                await aiosql.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '')")
+                await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+                uid = (await aiosql.fetchone(dhrid))[0]
+                await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
+                await AuditLog(dhrid, -999, f"User register: `{username}` (UID: `{uid}`)")
             else:
-                await aiosql.execute(dhrid, f"UPDATE user_password SET email = '{email}' WHERE discordid = '{discordid}'")
-                await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE discordid = '{discordid}'")
+                uid = t[0][0]
+                await aiosql.execute(dhrid, f"UPDATE user_password SET email = '{email}' WHERE uid = '{uid}'")
+                await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE uid = '{uid}'")
             await aiosql.commit(dhrid)
             
             if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
@@ -214,29 +215,29 @@ async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", err
                 d = json.loads(r.text)
                 if config.use_server_nickname and d["nick"] != None:
                     username = d["nick"]
-                    await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+                    await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = '{uid}'")
                     await aiosql.commit(dhrid)
 
-            await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = '{uid}'")
             t = await aiosql.fetchall(dhrid)
             mfa_secret = t[0][0]
             if mfa_secret != "":
                 stoken = str(uuid.uuid4())
                 stoken = "f" + stoken[1:]
-                await aiosql.execute(dhrid, f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
+                await aiosql.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
                 await aiosql.commit(dhrid)
                 return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":
                 stoken = str(uuid.uuid4())
-            await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
+            await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             await aiosql.commit(dhrid)
 
-            username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
-            language = await GetUserLanguage(dhrid, discordid)
-            await AuditLog(dhrid, -999, f"Discord login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-            await notification(dhrid, "login", discordid, \
+            username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+            language = await GetUserLanguage(dhrid, uid)
+            await AuditLog(dhrid, -999, f"Discord login: `{username}` (UID: `{uid}`) from `{getRequestCountry(request)}`")
+            await notification(dhrid, "login", uid, \
                 ml.tr(request, "new_login", \
                     var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
                 discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -313,16 +314,17 @@ async def getSteamCallback(request: Request, response: Response):
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
     
-    await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = '{steamid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 401
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
-    discordid = t[0][0]
+    uid = t[0][0]
+    discordid = t[0][1]
     
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -330,7 +332,7 @@ async def getSteamCallback(request: Request, response: Response):
         expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
 
-    if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
+    if discordid is not None and (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
         try:
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
@@ -343,29 +345,29 @@ async def getSteamCallback(request: Request, response: Response):
         d = json.loads(r.text)
         if config.use_server_nickname and d["nick"] != None:
             username = d["nick"]
-            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = '{uid}'")
             await aiosql.commit(dhrid)
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = '{discordid}'")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
-        await aiosql.execute(dhrid, f"INSERT INTO temp_identity_proof VALUES ('{stoken}', {discordid}, {int(time.time())+600})") # 10min tip
+        await aiosql.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
         await aiosql.commit(dhrid)
         return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
         stoken = str(uuid.uuid4())
-    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
+    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
-    language = await GetUserLanguage(dhrid, discordid)
-    await AuditLog(dhrid, -999, f"Steam login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    await notification(dhrid, "login", discordid, \
+    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+    language = await GetUserLanguage(dhrid, uid)
+    await AuditLog(dhrid, -999, f"Steam login: `{username}` (Discord ID: `{uid}`) from `{getRequestCountry(request)}`")
+    await notification(dhrid, "login", uid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -415,7 +417,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
 
     stoken = authorization.split(" ")[1]
 
@@ -423,7 +425,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
         stoken = str(uuid.uuid4())
-    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
+    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
     return {"token": stoken}
@@ -470,7 +472,7 @@ async def getTokenList(request: Request, response: Response, authorization: str 
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     
     if page_size <= 1:
         page_size = 1
@@ -488,14 +490,14 @@ async def getTokenList(request: Request, response: Response, authorization: str 
 
     ret = []
     await aiosql.execute(dhrid, f"SELECT token, ip, timestamp, country, user_agent, last_used_timestamp FROM session \
-        WHERE discordid = {discordid} ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+        WHERE uid = {uid} ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         tk = tt[0]
         tk = sha256(tk.encode()).hexdigest()
         ret.append({"hash": tk, "ip": tt[1], "country": getFullCountry(tt[3]), "user_agent": tt[4], "create_timestamp": tt[2], "last_used_timestamp": tt[5]})
     
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM session WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM session WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
@@ -519,7 +521,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
@@ -534,13 +536,13 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     ok = False
-    await aiosql.execute(dhrid, f"SELECT token FROM session WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT token FROM session WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         thsh = sha256(tt[0].encode()).hexdigest()
         if thsh == hsh:
             ok = True
-            await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{tt[0]}' AND discordid = {discordid}")
+            await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{tt[0]}' AND uid = {uid}")
             await aiosql.commit(dhrid)
             break
 
@@ -567,7 +569,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
@@ -575,10 +577,10 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     if last_used_before == -1:
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid}")
+        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
         await aiosql.commit(dhrid)
     else:
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE discordid = {discordid} AND last_used_timestamp <= {last_used_before}")
+        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid} AND last_used_timestamp <= {last_used_before}")
         await aiosql.commit(dhrid)
 
     return Response(status_code=204)
@@ -601,7 +603,7 @@ async def getApplicationTokenList(request: Request, response: Response, authoriz
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     
     if page_size <= 1:
         page_size = 1
@@ -617,13 +619,13 @@ async def getApplicationTokenList(request: Request, response: Response, authoriz
 
     ret = []
     await aiosql.execute(dhrid, f"SELECT app_name, token, timestamp, last_used_timestamp FROM application_token \
-        WHERE discordid = {discordid} ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
+        WHERE uid = {uid} ORDER BY {order_by} {order} LIMIT {(page - 1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         tk = sha256(tt[1].encode()).hexdigest()
         ret.append({"app_name": tt[0], "hash": tk, "create_timestamp": tt[2], "last_used_timestamp": tt[3]})
     
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM application_token WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM application_token WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
@@ -647,7 +649,7 @@ async def postApplicationToken(request: Request, response: Response, authorizati
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
@@ -656,7 +658,7 @@ async def postApplicationToken(request: Request, response: Response, authorizati
     
     data = await request.json()
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
@@ -680,7 +682,7 @@ async def postApplicationToken(request: Request, response: Response, authorizati
         return {"error": ml.tr(request, "content_too_long", var = {"item": "app_name", "limit": "128"}, force_lang = au["language"])}
 
     stoken = str(uuid.uuid4())
-    await aiosql.execute(dhrid, f"INSERT INTO application_token VALUES ('{app_name}', '{stoken}', {discordid}, {int(time.time())}, 0)")
+    await aiosql.execute(dhrid, f"INSERT INTO application_token VALUES ('{app_name}', '{stoken}', {uid}, {int(time.time())}, 0)")
     await aiosql.commit(dhrid)
     
     return {"token": stoken}
@@ -701,7 +703,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     
     data = await request.json()
     try:
@@ -711,13 +713,13 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     ok = False
-    await aiosql.execute(dhrid, f"SELECT token FROM application_token WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT token FROM application_token WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         thsh = sha256(tt[0].encode()).hexdigest()
         if thsh == hsh:
             ok = True
-            await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE token = '{tt[0]}' AND discordid = {discordid}")
+            await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE token = '{tt[0]}' AND uid = {uid}")
             await aiosql.commit(dhrid)
             break
     
@@ -743,9 +745,9 @@ async def deleteAllApplicationToken(request: Request, response: Response, author
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
+    uid = au["uid"]
     
-    await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)
@@ -764,21 +766,21 @@ async def postMFA(request: Request, response: Response):
     
     data = await request.json()
     try:
-        tip = data["token"]
+        token = data["token"]
         otp = data["otp"]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json")}
 
-    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE expire <= {int(time.time())}")
-    await aiosql.execute(dhrid, f"SELECT discordid FROM temp_identity_proof WHERE token = '{tip}'")
+    await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"SELECT uid FROM auth_ticket WHERE token = '{token}'")
     t = await aiosql.fetchall(dhrid)
-    if len(t) == 0 or not tip.startswith("f"):
+    if len(t) == 0 or not token.startswith("f"):
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_token")}
-    discordid = t[0][0]
+    uid = t[0][0]
     
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -792,11 +794,11 @@ async def postMFA(request: Request, response: Response):
         response.status_code = 400
         return {"error": ml.tr(request, "mfa_invalid_otp")}
 
-    await aiosql.execute(dhrid, f"DELETE FROM temp_identity_proof WHERE token = '{tip}'")
+    await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE token = '{token}'")
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -808,13 +810,13 @@ async def postMFA(request: Request, response: Response):
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
         stoken = str(uuid.uuid4()) # All MFA logins won't be counted as unsafe
-    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{discordid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
+    await aiosql.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await aiosql.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, discordid = discordid))["name"]
-    language = await GetUserLanguage(dhrid, discordid)
-    await AuditLog(dhrid, -999, f"MFA login: `{username}` (Discord ID: `{discordid}`) from `{getRequestCountry(request)}`")
-    await notification(dhrid, "login", discordid, \
+    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+    language = await GetUserLanguage(dhrid, uid)
+    await AuditLog(dhrid, -999, f"MFA login: `{username}` (Discord ID: `{uid}`) from `{getRequestCountry(request)}`")
+    await notification(dhrid, "login", uid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), \
@@ -825,3 +827,53 @@ async def postMFA(request: Request, response: Response):
     )
 
     return {"token": stoken}
+
+@app.post(f"/{config.abbr}/auth/ticket")
+async def postAuthTicket(request: Request, response: Response, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/ticket', 180, 20)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    stoken = str(uuid.uuid4())
+    while stoken[0] == "f":
+        stoken = str(uuid.uuid4())
+    await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+180})")
+    await aiosql.commit(dhrid)
+
+    return {"token": stoken}
+
+@app.get(f"/{config.abbr}/auth/ticket")
+async def getAuthTicket(request: Request, response: Response, token: Optional[str] = ""):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/ticket', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    token = token.replace("'","")
+
+    await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"SELECT uid FROM auth_ticket WHERE token = '{token}'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 401
+        return {"error": ml.tr(request, "invalid_token")}
+    await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE token = '{token}'")
+    await aiosql.commit(dhrid)
+    return {"user": await GetUserInfo(dhrid, request, uid = t[0][0])}
