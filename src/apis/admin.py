@@ -43,7 +43,6 @@ async def getConfig(request: Request, response: Response, authorization: str = H
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
     
     # current config
     try:
@@ -90,7 +89,7 @@ async def getConfig(request: Request, response: Response, authorization: str = H
                 if tt in ffconfig.keys():
                     del ttconfig[tt]
 
-    return {"error": False, "response": {"config": ffconfig, "backup": ttconfig}}
+    return {"config": ffconfig, "backup": ttconfig}
 
 # thread to restart service
 def restart():
@@ -118,91 +117,91 @@ async def patchConfig(request: Request, response: Response, authorization: str =
     adminid = au["userid"]
     userroles = au["roles"]
 
-    form = await request.form()
+    data = await request.json()
     try:
-        formconfig = json.loads(form["config"])
-        if len(form["config"]) > 150000:
+        new_config = data["config"]
+        if type(data["config"]) != dict:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "150,000"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
 
     tracker = ""
-    if "tracker" in formconfig.keys():
-        tracker = formconfig["tracker"]
+    if "tracker" in new_config.keys():
+        tracker = new_config["tracker"]
     elif "tracker" in ttconfig.keys():
         tracker = ttconfig["tracker"]
     else:
         tracker = "tracksim"
 
-    for tt in formconfig.keys():
+    for tt in new_config.keys():
         if tt in config_whitelist:
             if tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
-                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
             elif tracker == "navio" and tt in ["tracker_api_token"]:
-                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
             if tt in ["name", "logo_url", "guild_id", "discord_client_id", \
                     "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
-                if formconfig[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "distance_unit":
-                if not formconfig[tt] in ["metric", "imperial"]:
+                if not new_config[tt] in ["metric", "imperial"]:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
             
             if tt in ["truckersmp_bind", "privacy", "in_guild_check"]:
-                if type(formconfig[tt]) != bool:
+                if type(new_config[tt]) != bool:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
             if tt in ["guild_id", "tracker_company_id", "delivery_log_channel_id", "discord_client_id"]:
                 try:
-                    int(formconfig[tt])
+                    int(new_config[tt])
                 except:
-                    if tt in ["delivery_log_channel_id", "tracker_company_id"] and formconfig[tt] == "":
-                        formconfig[tt] = "0"
+                    if tt in ["delivery_log_channel_id", "tracker_company_id"] and new_config[tt] == "":
+                        new_config[tt] = "0"
                     else:
                         response.status_code = 400
-                        return {"error": True, "descriptor": ml.tr(request, "config_invalid_datatype_integer", var = {"item": tt}, force_lang = au["language"])}
+                        return {"error": ml.tr(request, "config_invalid_datatype_integer", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "hex_color":
-                formconfig[tt] = formconfig[tt][-6:]
-                hex_color = formconfig[tt]
+                new_config[tt] = new_config[tt][-6:]
+                hex_color = new_config[tt]
                 try:
                     rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
                     rgbcolor = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-                    intcolor = int(hex_color, 16)
+                    intcolor = int(hex_color, 16) # test if we can convert it to int
                 except:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_hex_color", force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_hex_color", force_lang = au["language"])}
 
             if tt == "delivery_post_gifs":
                 p = []
-                for o in formconfig[tt]:
+                for o in new_config[tt]:
                     if isurl(o):
                         p.append(o)
-                formconfig[tt] = p
+                new_config[tt] = p
 
             if tt in ["logo_url", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
-                if formconfig[tt] != "" and not isurl(formconfig[tt]):
+                if new_config[tt] != "" and not isurl(new_config[tt]):
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_data_url", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_data_url", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "perms":
-                newperms = formconfig[tt]
+                newperms = new_config[tt]
                 if not "admin" in newperms:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
                 ar = newperms["admin"]
                 adminroles = []
                 for arr in ar:
@@ -213,19 +212,22 @@ async def patchConfig(request: Request, response: Response, authorization: str =
                         ok = True
                 if not ok:
                     response.status_code = 400
-                    return {"error": True, "descriptor": ml.tr(request, "config_invalid_permission_admin_protection", force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_permission_admin_protection", force_lang = au["language"])}
 
-            if type(formconfig[tt]) != dict and type(formconfig[tt]) != list and type(formconfig[tt]) != bool:
-                ttconfig[tt] = copy.deepcopy(str(formconfig[tt]))
+            if type(new_config[tt]) != dict and type(new_config[tt]) != list and type(new_config[tt]) != bool:
+                ttconfig[tt] = copy.deepcopy(str(new_config[tt]))
             else:
-                ttconfig[tt] = copy.deepcopy(formconfig[tt])
-
+                ttconfig[tt] = copy.deepcopy(new_config[tt])
+ 
     out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
+    if len(out) > 512000:
+        response.status_code = 400
+        return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
     open(config_path, "w", encoding="utf-8").write(out)
 
     await AuditLog(dhrid, adminid, "Updated config")
 
-    return {"error": False}
+    return Response(status_code=204)
 
 # restart service
 @app.post(f"/{config.abbr}/restart")
@@ -251,23 +253,23 @@ async def postRestart(request: Request, response: Response, authorization: str =
     mfa_secret = t[0][0]
     if mfa_secret == "":
         response.status_code = 428
-        return {"error": True, "descriptor": ml.tr(request, "mfa_required", force_lang = au["language"])}
+        return {"error": ml.tr(request, "mfa_required", force_lang = au["language"])}
     
-    form = await request.form()
+    data = await request.json()
     try:
-        otp = int(form["otp"])
+        otp = data["otp"]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     if not valid_totp(otp, mfa_secret):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     await AuditLog(dhrid, adminid, "Restarted service")
 
     threading.Thread(target=restart).start()
 
-    return {"error": False}
+    return Response(status_code=204)
 
 # get audit log (require audit / admin permission)
 @app.get(f"/{config.abbr}/audit")
@@ -287,7 +289,6 @@ async def getAudit(request: Request, response: Response, authorization: str = He
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
 
     if page <= 0:
         page = 1
@@ -307,10 +308,10 @@ async def getAudit(request: Request, response: Response, authorization: str = He
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": await getUserInfo(dhrid, userid = tt[0]), "operation": tt[1], "timestamp": str(tt[2])})
+        ret.append({"user": await getUserInfo(dhrid, request, userid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
     t = await aiosql.fetchall(dhrid)
     tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
+    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}

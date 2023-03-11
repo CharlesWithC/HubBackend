@@ -1,5 +1,84 @@
 # Changelog
 
+**v2.0.0 (pre-release)**  
+**Breaking changes** ⚠️  
+**Note: This is a pre-release focusing on request and response formats, major functionalities are not modified, there will be updates on the user system in v2.1.0.**  
+
+1.Changed request data from `form` to `json` to better format complex data  
+**Note** Form data will be rejected. You must add header `Content-Type: application/json`.  
+**Hint** The data format for endpoints won't be affected, but some containing complex data will be modified, as shown in the table below.  
+|Route|Affected Fields (Hint: `object` is `json`)|
+--|--|
+|**PATCH** `/config`|`config` (`string` -> `object`)|
+|**POST** `/application`|`data`->`application` (`string` -> `object`)|
+|**POST** `/challenge`|`job_requirements` (`string` -> `object`), `required_roles` (`string` -> `object` (`list`))|
+|**PATCH** `/challenge/{challengeid}`|`job_requirements` (`string` -> `object`), `required_roles` (`string` -> `object` (`list`))|
+|**PATCH** `/event/{eventid}/attendees`|`attendees` (`string` -> `object` (`list`))|
+
+2.Changed response format  
+i) Removed `error: bool` field. Error status will only be reflected in **status code** (non-2xx responses).  
+ii) Removed `descriptor: string` field. Added `error: string` field to explain the error, same as the original `descriptor: string` field.  
+iii) Moved data inside `response: object` out.  
+iv) On success, the response will be `204 No Content` if no message or data is returned.  
+v) Removed `string -> integer` conversion for most integers, known large integers like `discordid` will still be converted to string.  
+vi) Changed `"-1"` or `""` or `"N/A"` values to `None`  
+**Note** If you are using `-1` as `None` in your requests, you must remove it or you'll get incorrect responses!  
+**Examples:**  
+i) Unauthorized Error  
+**STATUS: 401** `{"error": "Unauthorized"}`  
+~~**Old format** `{"error": true, "descriptor": "Unauthorized"}`~~  
+ii) Get Info  
+**STATUS: 200** `{"info": "Some info here"}`  
+~~**Old format** `{"error": false, "response": {"info": "Some info here"}}`~~  
+iii) Update Info (Without a message returned)  
+**STATUS: 204**  
+~~**Old format** `{"error": false}`~~  
+iv) Update Info (With a message returned)  
+**STATUS: 200** `{"message": "Updated"}`  
+~~**Old format** `{"error": false, "response": {"message": "Updated"}}`~~  
+
+3.Changed request params name / format  
+|Route|Affected Params|  
+--|--|
+|**GET** `/dlog/statistics/chart`|`?end_time` -> `?before`|  
+|**GET**/**DELETE** `/dlog`|`?logid` moved to path (`/dlog/{logid}`)|
+|**GET**/**PATCH**/**DELETE** `/announcement`|`?announcementid` moved to path (`/announcement/{announcementid}`)|
+|**GET**/**PATCH**/**DELETE** `/application`|`(form)applicationid` moved to path (`/application/{applicationid}`)|
+|**PATCH** `/application/status`|`(form)applicationid` moved to path (`/application/{applicationid}/status`)|
+|**GET**/**PATCH**/**DELETE** `/challenge`|`?challengeid` moved to path (`/challenge/{challengeid}`)|
+|**PUT**/**DELETE** `/challenge/delivery`|`?challengeid,(form)logid` moved to path (`/challenge/{challengeid}/delivery/{logid}`)|
+|**GET**/**PATCH**/**DELETE** `/downloads`|`?downloadsid` moved to path (`/downloads/{downloadsid}`)|
+|**GET**/**PATCH**/**DELETE** `/event`|`?eventid` moved to path (`/event/{eventid}`)|
+|**PUT/DELETE** `/event/vote`|`?eventid` moved to path (`/event/{eventid}/vote`)|
+|**PATCH** `/event/attendees`|`?eventid` moved to path (`/event/{eventid}/attendees`)|
+
+4.Updated routes  
+|Route|Remark|
+--|--|
+|**GET** `/member/list/all`|Removed|
+|**GET** `/event/all`|Removed|
+|**GET** `/division?logid`|Splitted to **GET** `/division` and **GET** `/dlog/{logid}/division`|
+|**POST** `/division?divisionid` (`logid` in form)|Renamed to **POST** `/dlog/{logid}/division/{divisionid}`|
+|**GET** `/downloads/{secret}`|Renamed to **GET** `/downloads/redirect/{secret}`|
+|**PATCH** `/event/{eventid}/vote`|Splitted to **PUT**/**DELETE** `/event/{eventid}/vote`|
+|**PATCH** `/event/{eventid}/attendee`|Renamed to **GET** `/event/{eventid}/attendees`|
+
+5.Updated response/object format  
+**Hint** These formats apply whenever the object is returned, which greatly improves the API's usability and could reduce the amount of requests.  
+i) Activity `{status: str, last_seen: int}` or `None`  
+ii) Ban `{reason: str, expire: int}` or `None`  
+iii) User `{userid: int, name: str, email: str, discordid: str, steamid: str, truckersmpid: int, avatar: str, bio: str, roles: list, activity: dict, mfa: bool, join_timestamp: int}`  
+
+6.Removed object wrapper including `user: {}`, `application: {}`, `dlog: {}`, `downloads: {}`, `event: {}`  
+7.Replaced completed member list (`completed`) in `/challenge/list` with the number of completed members, the detailed list could be fetched with `/challenge/{challengeid}`  
+8.Replaced voted member list (`votes`) and attendees (`attendees`) in `/event/list` with the number of voted members and attendees, the detailed list could be fetched with `/event/{eventid}`  
+9.Renamed `detail` in **GET** `/application/{applicationid}` response to `application`, renamed `data` in **POST** `/application` request to `application`  
+10.Fixed `/member/roles/rank` not converting distance to imperial when `config.distance_unit = "imperial"`  
+11.Fixed permission control of updating application status  
+12.Added function to delete applications  
+13.Allowed admin to bypass division driver check (admins won't be counted in statistics unless they have the division role)  
+14.Other improvements on response and bug fixes, check [openapi.json](./openapi.json) for more info.  
+
 **v1.22.15**  
 1.Increased database connection timeout by 1 second (to 2 seconds)  
 2.Fixed traceback log corrupts when code is compiled  

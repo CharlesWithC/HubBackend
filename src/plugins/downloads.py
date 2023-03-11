@@ -15,50 +15,6 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/downloads")
-async def getDownloads(request: Request, response: Response, authorization: str = Header(None), \
-        downloadsid: Optional[int] = -1):
-    dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
-
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads', 60, 120)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    staffau = await auth(dhrid, authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
-    isstaff = False
-    if not staffau["error"]:
-        isstaff = True
-    await activityUpdate(dhrid, au["discordid"], "downloads")
-
-    if downloadsid <= 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    
-    await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    tt = t[0]
-
-    secret = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-    await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
-    await aiosql.execute(dhrid, f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
-    await aiosql.commit(dhrid)
-
-    if not isstaff:
-        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
-    else:
-        return {"error": False, "response": {"downloads": {"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "secret": secret, "orderid": str(tt[6]), "click_count": str(tt[5])}}}
-
 @app.get(f"/{config.abbr}/downloads/list")
 async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
@@ -111,9 +67,9 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     ret = []
     for tt in t:
         if not isstaff:
-            ret.append({"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "orderid": str(tt[6]), "click_count": str(tt[5])})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "orderid": tt[6], "click_count": tt[5]})
         else:
-            ret.append({"downloadsid": str(tt[0]), "creator": await getUserInfo(dhrid, userid = tt[1]), "title": tt[2], "description": decompress(tt[3]), "link": tt[4], "orderid": str(tt[6]), "click_count": str(tt[5])})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "click_count": tt[5]})
         
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
@@ -121,13 +77,53 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret[:page_size], "total_items": str(tot), \
-        "total_pages": str(int(math.ceil(tot / page_size)))}}
+    return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-# MUST BE AFTER /downloads/list or this will overwrite that
-@app.get(f"/{config.abbr}/downloads/{{secret}}")
-async def redirectDownloads(request: Request, response: Response, authorization: str = Header(None), \
-        secret: Optional[str] = ""):
+@app.get(f"/{config.abbr}/downloads/{{downloadsid}}")
+async def getDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads', 60, 120)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    staffau = await auth(dhrid, authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
+    isstaff = False
+    if not staffau["error"]:
+        isstaff = True
+    await activityUpdate(dhrid, au["discordid"], "downloads")
+
+    if downloadsid <= 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+    tt = t[0]
+
+    secret = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO downloads_templink VALUES ({downloadsid}, '{secret}', {int(time.time()+300)})")
+    await aiosql.commit(dhrid)
+
+    if not isstaff:
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+    else:
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await getUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+
+@app.get(f"/{config.abbr}/downloads/redirect/{{secret}}")
+async def redirectDownloads(request: Request, response: Response, secret: str):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -146,14 +142,14 @@ async def redirectDownloads(request: Request, response: Response, authorization:
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": ml.tr(request, "downloads_not_found")}
     downloadsid = t[0][0]
 
     await aiosql.execute(dhrid, f"SELECT link FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found")}
+        return {"error": ml.tr(request, "downloads_not_found")}
     link = t[0][0]
 
     await aiosql.execute(dhrid, f"UPDATE downloads SET click_count = click_count + 1 WHERE downloadsid = {downloadsid}")
@@ -179,31 +175,31 @@ async def postDownloads(request: Request, response: Response, authorization: str
         return au
     adminid = au["userid"]
 
-    form = await request.form()
+    data = await request.json()
     try:
-        title = convert_quotation(form["title"])
-        if len(form["title"]) > 200:
+        title = convert_quotation(data["title"])
+        if len(data["title"]) > 200:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(form["description"])
-        if len(form["description"]) > 2000:
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        description = compress(data["description"])
+        if len(data["description"]) > 2000:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convert_quotation(form["link"])
-        if len(form["link"]) > 200:
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        link = convert_quotation(data["link"])
+        if len(data["link"]) > 200:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
-        orderid = int(form["orderid"])
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
+        orderid = int(data["orderid"])
         if orderid > 2147483647:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtdownloadsid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
@@ -213,11 +209,10 @@ async def postDownloads(request: Request, response: Response, authorization: str
     await AuditLog(dhrid, adminid, f"Created downloadable item `#{nxtdownloadsid}`")
     await aiosql.commit(dhrid)
 
-    return {"error": False, "response": {"downloadsid": str(nxtdownloadsid)}}
+    return {"downloadsid": nxtdownloadsid}
 
-@app.patch(f"/{config.abbr}/downloads")
-async def patchDownloads(request: Request, response: Response, authorization: str = Header(None), \
-        downloadsid: Optional[int] = -1):
+@app.patch(f"/{config.abbr}/downloads/{{downloadsid}}")
+async def patchDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -236,49 +231,48 @@ async def patchDownloads(request: Request, response: Response, authorization: st
         
     if downloadsid <= 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
-    form = await request.form()
+    data = await request.json()
     try:
-        title = convert_quotation(form["title"])
-        if len(form["title"]) > 200:
+        title = convert_quotation(data["title"])
+        if len(data["title"]) > 200:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(form["description"])
-        if len(form["description"]) > 2000:
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        description = compress(data["description"])
+        if len(data["description"]) > 2000:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convert_quotation(form["link"])
-        if len(form["link"]) > 200:
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        link = convert_quotation(data["link"])
+        if len(data["link"]) > 200:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
-        orderid = int(form["orderid"])
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
+        orderid = int(data["orderid"])
         if orderid > 2147483647:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:        
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
     await AuditLog(dhrid, adminid, f"Updated downloadable item `#{downloadsid}`")
     await aiosql.commit(dhrid)
 
-    return {"error": False}
+    return Response(status_code=204)
     
-@app.delete(f"/{config.abbr}/downloads")
-async def deleteDownloads(request: Request, response: Response, authorization: str = Header(None), \
-        downloadsid: Optional[int] = -1):
+@app.delete(f"/{config.abbr}/downloads/{{downloadsid}}")
+async def deleteDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -297,16 +291,16 @@ async def deleteDownloads(request: Request, response: Response, authorization: s
         
     if int(downloadsid) < 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
     await AuditLog(dhrid, adminid, f"Deleted downloadable item `#{downloadsid}`")
     await aiosql.commit(dhrid)
 
-    return {"error": False}
+    return Response(status_code=204)

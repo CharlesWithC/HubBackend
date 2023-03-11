@@ -92,16 +92,16 @@ def point2rankname(point):
 
 # Basic Info Section
 @app.get(f"/{config.abbr}/member/roles")
-async def getRoles(request: Request, response: Response):
-    return {"error": False, "response": config.roles}
+async def getRoles():
+    return config.roles
 
 @app.get(f"/{config.abbr}/member/ranks")
-async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": config.ranks}
+async def getRanks():
+    return config.ranks
 
 @app.get(f"/{config.abbr}/member/perms")
-async def getRanks(request: Request, response: Response):
-    return {"error": False, "response": PERMS_STR}
+async def getRanks():
+    return PERMS_STR
 
 # Member Info Section
 @app.get(f'/{config.abbr}/member/list')
@@ -135,10 +135,9 @@ async def getMemberList(request: Request, response: Response, authorization: str
         page_size = 250
 
     lroles = roles.split(",")
-    while "" in lroles:
-        lroles.remove("")
-    if len(lroles) > 5:
-        lroles = lroles[:5]
+    lroles = [int(x) for x in lroles if x != ""]
+    if len(lroles) > 100:
+        lroles = lroles[:100]
 
     name = convert_quotation(name).lower()
     
@@ -180,35 +179,34 @@ async def getMemberList(request: Request, response: Response, authorization: str
     t = await aiosql.fetchall(dhrid)
     rret = {}
     for tt in t:
-        if str(tt[0]) in hrole.keys(): # prevent duplicate result from SQL query
+        if tt[0] in hrole.keys(): # prevent duplicate result from SQL query
             continue
         roles = tt[3].split(",")
-        while "" in roles:
-            roles.remove("")
+        roles = [int(x) for x in roles if x != ""]
         highestrole = 99999
         ok = False
         if len(lroles) == 0:
             ok = True
         for role in roles:
-            if int(role) < highestrole:
-                highestrole = int(role)
-            if str(role) in lroles:
+            if role < highestrole:
+                highestrole = role
+            if role in lroles:
                 ok = True
         if not ok:
             continue
-        activity_name = tt[6]
-        activity_last_seen = tt[7]
-        if activity_last_seen != None:
-            if int(time.time()) - activity_last_seen >= 300:
-                activity_name = "offline"
-            elif int(time.time()) - activity_last_seen >= 120:
-                activity_name = "online"
-        else:
-            activity_name = "offline"
-            activity_last_seen = ""
-        hrole[str(tt[0])] = highestrole
-        rret[str(tt[0])] = {"name": tt[1], "userid": str(tt[0]), "discordid": f"{tt[2]}", "avatar": tt[4], "roles": roles, \
-            "join_timestamp": str(tt[5]), "activity": {"name": activity_name, "last_seen": str(activity_last_seen)}}
+        # activity_name = tt[6]
+        # activity_last_seen = tt[7]
+        # if activity_last_seen != None:
+        #     if int(time.time()) - activity_last_seen >= 300:
+        #         activity_name = "offline"
+        #     elif int(time.time()) - activity_last_seen >= 120:
+        #         activity_name = "online"
+        # else:
+        #     activity_name = "offline"
+        #     activity_last_seen = ""
+        hrole[tt[0]] = highestrole
+        # rret[tt[0]] = {"name": tt[1], "userid": tt[0], "discordid": str(tt[2]), "avatar": tt[4], "roles": roles, "activity": {"name": activity_name, "last_seen": activity_last_seen}, "join_timestamp": tt[5]}
+        rret[tt[0]] = await getUserInfo(dhrid, request, userid = tt[0])
 
     ret = []
     if sort_by_highest_role:
@@ -218,40 +216,14 @@ async def getMemberList(request: Request, response: Response, authorization: str
     for userid in hrole.keys():
         ret.append(rret[userid])
         
-    return {"error": False, "response": {"list": ret[(page - 1) * page_size : page * page_size], \
-        "total_items": str(len(ret)), "total_pages": str(int(math.ceil(len(ret) / page_size)))}}
-
-@app.get(f"/{config.abbr}/member/list/all")
-async def getAllMemberList(request: Request, response: Response, authorization: str = Header(None)):
-    dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
-
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list/all', 60, 10)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    if config.privacy:
-        au = await auth(dhrid, authorization, request, allow_application_token = True)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-    
-    await aiosql.execute(dhrid, f"SELECT steamid, name, userid FROM user WHERE userid >= 0 ORDER BY userid ASC")
-    t = await aiosql.fetchall(dhrid)
-    ret = []
-    for tt in t:
-        ret.append({"name": tt[1], "userid": str(tt[2]), "steamid": str(tt[0])})
-    return {"error": False, "response": {"list": ret}}
+    return {"list": ret[(page - 1) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 @app.get(f'/{config.abbr}/member/banner')
 async def getUserBanner(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
     if not "banner" in config.enabled_plugins:
         response.status_code = 404
-        return {"error": True, "descriptor": "Not Found"}
+        return {"error": "Not Found"}
     
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -267,13 +239,13 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         qu = f"truckersmpid = {truckersmpid}"
     else:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": ml.tr(request, "user_not_found")}
 
     await aiosql.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found")}
+        return {"error": ml.tr(request, "user_not_found")}
 
     if userid == -1:
         return RedirectResponse(url=f"/{config.abbr}/member/banner?userid={t[0][5]}", status_code=302)
@@ -293,8 +265,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
     avatar = t[2]
     join_timestamp = t[3]
     roles = t[4].split(",")
-    while "" in roles:
-        roles.remove("")
+    roles = [int(x) for x in roles if x != ""]
     highest = 99999
     for i in roles:
         if int(i) < highest:
@@ -355,7 +326,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
                 "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = r.status_code
-            return {"error": True, "descriptor": r.text}
+            return {"error": r.text}
             
         response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
         for k in rl[1].keys():
@@ -365,7 +336,7 @@ async def getUserBanner(request: Request, response: Response, authorization: str
         
     except:
         response.status_code = 503
-        return {"error": True, "descriptor": "Service Unavailable"}
+        return {"error": "Service Unavailable"}
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patchMemberRankRoles(request: Request, response: Response, authorization: str = Header(None)):
@@ -417,8 +388,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         attendees = tt[0].split(",")
-        while "" in attendees:
-            attendees.remove("")
+        attendees = [int(x) for x in attendees if x != ""]
         for ttt in attendees:
             attendee = int(ttt)
             if not attendee in userevent.keys():
@@ -461,17 +431,17 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
     if userid in usermyth.keys():
         mythpnt = usermyth[userid]
 
-    totalpnt = distance + challengepnt + eventpnt + divisionpnt + mythpnt
+    totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + mythpnt
     rankroleid = point2rankroleid(totalpnt)
 
     if rankroleid == -1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
+        return {"error": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
 
     try:
         if config.discord_bot_token == "":
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
+            return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         try:
@@ -479,15 +449,15 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
         except:
             traceback.print_exc()
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
             
         if r.status_code == 401:
             DisableDiscordIntegration()
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
+            return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         elif r.status_code // 100 != 2:
             response.status_code = 503
-            return {"error": True, "descriptor": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
 
         d = json.loads(r.text)
         if "roles" in d:
@@ -498,7 +468,7 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
                     curroles.append(int(role))
             if rankroleid in curroles:
                 response.status_code = 409
-                return {"error": True, "descriptor": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
+                return {"error": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
             else:
                 try:
                     r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3, dhrid = dhrid)
@@ -525,10 +495,10 @@ async def patchMemberRankRoles(request: Request, response: Response, authorizati
 
                 rankname = point2rankname(totalpnt)
                 await notification(dhrid, "member", discordid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(dhrid, discordid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(dhrid, discordid)), "description": f"**{rankname}**", "fields": []})
-                return {"error": False, "response": ml.tr(request, "discord_role_given")}
+                return Response(status_code=204)
         else:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "must_join_discord", force_lang = au["language"])}
+            return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
 
     except:
         traceback.print_exc()
@@ -552,27 +522,27 @@ async def putMember(request: Request, response: Response, authorization: str = H
         return au
     adminid = au["userid"]
     
-    form = await request.form()
+    data = await request.json()
     try:
-        discordid = int(form["discordid"])
+        discordid = int(data["discordid"])
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
+        return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     if t[0][0] != -1:
         response.status_code = 409
-        return {"error": True, "descriptor": ml.tr(request, "already_member", force_lang = au["language"])}
+        return {"error": ml.tr(request, "already_member", force_lang = au["language"])}
     name = t[0][1]
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
@@ -586,7 +556,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
 
     await notification(dhrid, "member", discordid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
-    return {"error": False, "response": {"userid": str(userid)}}   
+    return {"userid": userid}   
 
 @app.patch(f'/{config.abbr}/member/roles')
 async def patchMemberRoles(request: Request, response: Response, authorization: str = Header(None)):
@@ -623,32 +593,28 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         if int(i) in config.perms.division:
             isDS = True
 
-    form = await request.form()
+    data = await request.json()
     try:
-        userid = int(form["userid"])
-        roles = str(form["roles"]).split(",")
+        userid = int(data["userid"])
+        roles = str(data["roles"]).split(",")
+        roles = [int(x) for x in roles if x != ""]
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     if userid < 0:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "invalid_userid", force_lang = au["language"])}
-    while "" in roles:
-        roles.remove("")
-    roles = [int(i) for i in roles]
+        return {"error": ml.tr(request, "invalid_userid", force_lang = au["language"])}
     await aiosql.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "member_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "member_not_found", force_lang = au["language"])}
     username = t[0][0]
     oldroles = t[0][1].split(",")
     steamid = t[0][2]
     discordid = t[0][3]
     truckersmpid = t[0][4]
-    while "" in oldroles:
-        oldroles.remove("")
-    oldroles = [int(i) for i in oldroles]
+    oldroles = [int(x) for x in oldroles if x != ""]
     addedroles = []
     removedroles = []
     for role in roles:
@@ -665,25 +631,25 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         for add in addedroles:
             if add <= adminhighest:
                 response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
+                return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
     
         for remove in removedroles:
             if remove <= adminhighest:
                 response.status_code = 403
-                return {"error": True, "descriptor": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
+                return {"error": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
 
     if len(addedroles) + len(removedroles) == 0:
-        return {"error": False}
+        return Response(status_code=204)
         
     if not isAdmin and not isHR and isDS:
         for add in addedroles:
             if add not in divisionroles:
                 response.status_code = 403
-                return {"error": True, "descriptor": "Forbidden"}
+                return {"error": "Forbidden"}
         for remove in removedroles:
             if remove not in divisionroles:
                 response.status_code = 403
-                return {"error": True, "descriptor": "Forbidden"}
+                return {"error": "Forbidden"}
 
     if isAdmin and adminid == userid: # check if user will lose admin permission
         ok = False
@@ -692,15 +658,15 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
                 ok = True
         if not ok:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
+            return {"error": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
 
     if config.perms.driver[0] in addedroles:
         if steamid <= 0:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "steam_not_bound", force_lang = au["language"])}
+            return {"error": ml.tr(request, "steam_not_bound", force_lang = au["language"])}
         if truckersmpid <= 0 and config.truckersmp_bind:
             response.status_code = 428
-            return {"error": True, "descriptor": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
+            return {"error": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
 
     roles = [str(i) for i in roles]
     await aiosql.execute(dhrid, f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
@@ -828,13 +794,13 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     await AuditLog(dhrid, adminid, audit)
     await aiosql.commit(dhrid)
 
-    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "member", discordid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
     if tracker_app_error != "":
-        return {"error": False, "response": {"tracker_api_error": tracker_app_error.replace(f"{TRACKERAPP} API Error: ", "")}}
+        return {"tracker_api_error": tracker_app_error.replace(f"{TRACKERAPP} API Error: ", "")}
     else:
-        return {"error": False}
+        return Response(status_code=204)
 
 @app.patch(f"/{config.abbr}/member/point")
 async def patchMemberPoint(request: Request, response: Response, authorization: str = Header(None)):
@@ -854,17 +820,17 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         return au
     adminid = au["userid"]
     
-    form = await request.form()
+    data = await request.json()
     try:
-        userid = int(form["userid"])
-        distance = int(form["distance"])
-        mythpoint = int(form["mythpoint"])
+        userid = int(data["userid"])
+        distance = int(data["distance"])
+        mythpoint = int(data["mythpoint"])
         if mythpoint > 2147483647:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "value_too_large", var = {"item": "mythpoint", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "mythpoint", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
         response.status_code = 400
-        return {"error": True, "descriptor": ml.tr(request, "bad_form", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if distance != 0:
         if distance > 0:
@@ -877,14 +843,14 @@ async def patchMemberPoint(request: Request, response: Response, authorization: 
         await aiosql.commit(dhrid)
     
     if int(distance) > 0:
-        distance = "+" + form["distance"]
+        distance = "+" + data["distance"]
     
-    username = (await getUserInfo(dhrid, userid = userid))["name"]
+    username = (await getUserInfo(dhrid, request, userid = userid))["name"]
     await AuditLog(dhrid, adminid, f"Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`")
-    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
     await notification(dhrid, "member", discordid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
 
-    return {"error": False}
+    return Response(status_code=204)
 
 @app.post(f"/{config.abbr}/member/resign")
 async def postMemberResign(request: Request, response: Response, authorization: str = Header(None)):
@@ -909,21 +875,21 @@ async def postMemberResign(request: Request, response: Response, authorization: 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
+        return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE discordid = {discordid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
-        form = await request.form()
+        data = await request.json()
         try:
-            otp = int(form["otp"])
+            otp = int(data["otp"])
         except:
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": True, "descriptor": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
@@ -1006,7 +972,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
     await AuditLog(dhrid, -999, f'Member resigned: `{name}` (Discord ID: `{discordid}`)')
     await notification(dhrid, "member", discordid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, discordid)))
     
-    return {"error": False}
+    return Response(status_code=204)
 
 @app.post(f"/{config.abbr}/member/dismiss")
 async def postMemberDismiss(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = -1):
@@ -1024,14 +990,13 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         response.status_code = au["code"]
         del au["code"]
         return au
-    discordid = au["discordid"]
     adminid = au["userid"]
     adminroles = au["roles"]
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
+        return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     adminhighest = 99999
     for i in adminroles:
@@ -1042,21 +1007,20 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": True, "descriptor": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     userid = t[0][0]
     steamid = t[0][1]
     name = t[0][2]
     roles = t[0][3].split(",")
     udiscordid = t[0][4]
-    while "" in roles:
-        roles.remove("")
+    roles = [int(x) for x in roles if x != ""]
     highest = 99999
     for i in roles:
         if int(i) < highest:
             highest = int(i)
     if adminhighest >= highest:
         response.status_code = 403
-        return {"error": True, "descriptor": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
+        return {"error": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT discordid, name FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
@@ -1135,4 +1099,4 @@ async def postMemberDismiss(request: Request, response: Response, authorization:
         
     await AuditLog(dhrid, adminid, f'Dismissed member: `{name}` (Discord ID: `{udiscordid}`)')
     await notification(dhrid, "member", udiscordid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(dhrid, udiscordid, "en")))
-    return {"error": False}
+    return Response(status_code=204)

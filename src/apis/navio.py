@@ -97,18 +97,24 @@ async def postNavio(response: Response, request: Request):
     if request.client.host not in config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(dhrid, -999, f"Rejected Navio webhook update from {request.client.host}")
-        return {"error": True, "descriptor": "Validation failed"}
+        return {"error": "Validation failed"}
     
-    d = await request.json()
+    if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
+        d = await request.form()
+    elif request.headers["Content-Type"] == "application/json":
+        d = await request.json()
+    else:
+        response.status_code = 400
+        return {"error": "Unsupported content type"}
     if d["object"] != "event":
-        return {"error": True, "descriptor": "Only events are accepted."}
+        return {"error": "Only events are accepted."}
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
         await aiosql.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE steamid = '{steamid}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": True, "descriptor": "User not found."}
+            return {"error": "User not found."}
         userid = t[0][0]
         name = t[0][1]
         discordid = t[0][2]
@@ -163,13 +169,13 @@ async def postNavio(response: Response, request: Request):
         except:
             pass
         
-        return {"error": False, "response": "User resigned."}
+        return {"message": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
     await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        return {"error": True, "descriptor": "User not found."}
+        return {"error": "User not found."}
     userid = t[0][0]
     username = t[0][1]
     trackerid = d["data"]["object"]["id"]
@@ -181,7 +187,7 @@ async def postNavio(response: Response, request: Request):
     if len(o) > 0:
         duplicate = True
         logid = o[0][0]
-        return {"error": True, "descriptor": "Already logged"}
+        return {"error": "Already logged"}
 
     driven_distance = float(d["data"]["object"]["driven_distance"])
     fuel_used = d["data"]["object"]["fuel_used"]
@@ -249,7 +255,7 @@ async def postNavio(response: Response, request: Request):
             pass
     
     if not delivery_rule_ok:        
-        return {"error": False, "response": "Blocked due to delivery rules."}
+        return {"message": "Blocked due to delivery rules."}
 
     if not duplicate:
         if "tracker" in config.enabled_plugins:
@@ -260,7 +266,7 @@ async def postNavio(response: Response, request: Request):
             {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 1, 0)")
         await aiosql.commit(dhrid)
 
-        discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+        discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
         await notification(dhrid, "dlog", discordid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")), no_discord_notification = True)
 
     if config.delivery_log_channel_id != "" and not duplicate:
@@ -287,9 +293,9 @@ async def postNavio(response: Response, request: Request):
                 destination_company = destination_company["name"]
             cargo = "N/A"
             cargo_mass = 0
-            if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["name"] is None:
+            if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["name"] is not None:
                 cargo = d["data"]["object"]["cargo"]["name"]
-            if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
+            if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["mass"] is not None:
                 cargo_mass = d["data"]["object"]["cargo"]["mass"]
             omultiplayer = d["data"]["object"]["multiplayer"]
             multiplayer = ""
@@ -298,26 +304,26 @@ async def postNavio(response: Response, request: Request):
                 multiplayer = ml.ctr("single_player")
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    if not omultiplayer["server"] is None:
+                    if omultiplayer["server"] is not None:
                         multiplayer = "TruckersMP (" + omultiplayer["server"] +")"
                     else:
                         multiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     multiplayer = ml.ctr("scs_convoy")
-            discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+            discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
             language = await GetUserLanguage(dhrid, discordid, "en")
             if omultiplayer is None:
                 umultiplayer = ml.tr(None, "single_player", force_lang = language)
             else:
                 if omultiplayer["type"] == "truckersmp":
-                    if not omultiplayer["server"] is None:
+                    if omultiplayer["server"] is not None:
                         umultiplayer = "TruckersMP (" + omultiplayer["server"] +")"
                     else:
                         umultiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
                     umultiplayer = ml.tr(None, "scs_convoy", force_lang = language)
             truck = d["data"]["object"]["truck"]
-            if not truck is None and not truck["brand"]["name"] is None and not truck["name"] is None:
+            if truck is not None and truck["brand"]["name"] is not None and truck["name"] is not None:
                 truck = truck["brand"]["name"] + " " + truck["name"]
             else:
                 truck = "N/A"
@@ -370,7 +376,7 @@ async def postNavio(response: Response, request: Request):
                     except:
                         traceback.print_exc()
                     
-                    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
                     language = await GetUserLanguage(dhrid, discordid, "en")
                     data = {}
                     if config.distance_unit == "imperial":
@@ -414,7 +420,7 @@ async def postNavio(response: Response, request: Request):
             current_distance = current_distance[0]
             current_distance = 0 if current_distance is None else int(current_distance)
 
-            userinfo = await getUserInfo(dhrid, userid = userid)
+            userinfo = await getUserInfo(dhrid, request, userid = userid)
             roles = userinfo["roles"]
 
             await aiosql.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
@@ -482,11 +488,11 @@ async def postNavio(response: Response, request: Request):
                     cargo = "[unknown]"
                     cargo_mass = 0
                     cargo_damage = 0
-                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["unique_id"] is None:
+                    if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["unique_id"] is not None:
                         cargo = d["data"]["object"]["cargo"]["unique_id"]
-                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["mass"] is None:
+                    if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["mass"] is not None:
                         cargo_mass = d["data"]["object"]["cargo"]["mass"]
-                    if not d["data"]["object"]["cargo"] is None and not d["data"]["object"]["cargo"]["damage"] is None:
+                    if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["damage"] is not None:
                         cargo_mass = d["data"]["object"]["cargo"]["damage"]
                     
                     if jobreq["cargo_id"] != "" and not cargo in jobreq["cargo_id"].split(","):
@@ -539,7 +545,7 @@ async def postNavio(response: Response, request: Request):
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
                     
-                    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+                    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
                     await notification(dhrid, "challenge", discordid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                     await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                     await aiosql.commit(dhrid)
@@ -567,7 +573,7 @@ async def postNavio(response: Response, request: Request):
                             if len(t) == 0:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+                                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
                                 await notification(dhrid, "challenge", discordid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif challenge_type == 3:
                             await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
@@ -575,7 +581,7 @@ async def postNavio(response: Response, request: Request):
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
                                 await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await aiosql.commit(dhrid)
-                                discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
+                                discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
                                 await notification(dhrid, "challenge", discordid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                         elif challenge_type == 2:
                             await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
@@ -595,7 +601,7 @@ async def postNavio(response: Response, request: Request):
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await getUserInfo(dhrid, userid = uid))["discordid"]
+                                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
                                     await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                                 await aiosql.commit(dhrid)
                         elif challenge_type == 5:
@@ -623,7 +629,7 @@ async def postNavio(response: Response, request: Request):
                                     s = usercnt[uid]
                                     reward = round(reward_points * s / delivery_count)
                                     await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    discordid = (await getUserInfo(dhrid, userid = uid))["discordid"]
+                                    discordid = (await getUserInfo(dhrid, request, userid = uid))["discordid"]
                                     await notification(dhrid, "challenge", discordid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
                                 await aiosql.commit(dhrid)
                 except:
@@ -632,4 +638,4 @@ async def postNavio(response: Response, request: Request):
     except:
         traceback.print_exc()
 
-    return {"error": False, "response": "Logged"}
+    return {"message": "Logged"}

@@ -20,7 +20,6 @@ from datetime import datetime
 import aiohttp
 import requests
 from aiohttp import ClientSession
-from discord import Embed, Webhook
 from fastapi.responses import JSONResponse
 
 import multilang as ml
@@ -308,18 +307,18 @@ async def getAvatarSrc(dhrid, userid):
         src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png"
     return src
 
-async def getUserInfo(dhrid, userid = -1, discordid = -1, privacy = False, tell_deleted = False):
+async def getUserInfo(dhrid, request, userid = -1, discordid = -1, privacy = False, tell_deleted = False, include_email = False):
     if userid == -999:
-        return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        return {"userid": None, "name": "System", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
-        return {"name": "[Protected]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        return {"userid": None, "name": "[Protected]", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
 
     if userid == -1 and discordid == -1:
         if not tell_deleted:
-            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+            return {"userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": [], "is_deleted": True}
+            return {"userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     global cuserinfo
     
@@ -336,36 +335,69 @@ async def getUserInfo(dhrid, userid = -1, discordid = -1, privacy = False, tell_
     elif discordid != -1:
         query = f"discordid = '{discordid}'"
     
-    await aiosql.execute(dhrid, f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
+    await aiosql.execute(dhrid, f"SELECT name, userid, discordid, avatar, roles, join_timestamp, email, truckersmpid, steamid, mfa_secret, bio FROM user WHERE {query}")
     p = await aiosql.fetchall(dhrid)
     if len(p) == 0:
         if not tell_deleted:
-            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+            return {"userid": userid, "name": "Unknown", "email": None, "discordid": str(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": [], "is_deleted": True}
+            return {"userid": userid, "name": "Unknown", "email": None, "discordid": str(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
+
+    if not request is None:
+        if "authorization" in request.headers.keys():
+            authorization = request.headers["authorization"]
+            au = await auth(dhrid, authorization, request)
+            if not au["error"]:
+                roles = au["roles"]
+                for i in roles:
+                    if int(i) in config.perms.admin:
+                        include_email = True
+                    if int(i) in config.perms.hr or int(i) in config.perms.hrm:
+                        include_email = True
+                if au["discordid"] == p[0][2]:
+                    include_email = True
 
     roles = p[0][4].split(",")
-    while "" in roles:
-        roles.remove("")
+    roles = [int(x) for x in roles if x != ""]
+    mfa_secret = p[0][9]
+    mfa_enabled = False
+    if mfa_secret != "":
+        mfa_enabled = True
+    email = p[0][6]
+    if email.endswith("!"): # unverified
+        email = email[:-1]
+    if not include_email:
+        email = ""
+
+    activity = None
+    await aiosql.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE discordid = {p[0][2]}")
+    ac = await aiosql.fetchall(dhrid)
+    if len(ac) != 0:
+        if int(time.time()) - ac[0][1] >= 300:
+            activity = {"status": "offline", "last_seen": ac[0][1]}
+        elif int(time.time()) - ac[0][1] >= 120:
+            activity = {"status": "online", "last_seen": ac[0][1]}
+        else:
+            activity = {"status": ac[0][0], "last_seen": ac[0][1]}
 
     if p[0][1] != -1:
-        cuserinfo[f"userid={p[0][1]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
-    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+        cuserinfo[f"userid={p[0][1]}"] = {"data": {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": b64d(p[0][10]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}, "expire": int(time.time()) + 600}
+    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": b64d(p[0][10]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}, "expire": int(time.time()) + 600}
 
-    return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
+    return {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": b64d(p[0][10]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}
 
-def bGetUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = False):
+def bGetUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = False, include_email = False):
     if userid == -999:
-        return {"name": "System", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        return {"userid": None, "name": "System", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
-        return {"name": "[Protected]", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+        return {"userid": None, "name": "[Protected]", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
 
     if userid == -1 and discordid == -1:
         if not tell_deleted:
-            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": []}
+            return {"userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"name": "Unknown", "userid": "-1", "discordid": "-1", "avatar": "", "roles": [], "is_deleted": True}
+            return {"userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     global cuserinfo
     
@@ -384,25 +416,46 @@ def bGetUserInfo(userid = -1, discordid = -1, privacy = False, tell_deleted = Fa
     
     conn = genconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT name, userid, discordid, avatar, roles FROM user WHERE {query}")
+    cur.execute(f"SELECT name, userid, discordid, avatar, roles, join_timestamp, email, truckersmpid, steamid, mfa_secret, bio FROM user WHERE {query}")
     p = cur.fetchall()
-    cur.close()
-    conn.close()
     if len(p) == 0:
+        cur.close()
+        conn.close()
         if not tell_deleted:
-            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": []}
+            return {"userid": userid, "name": "Unknown", "email": None, "discordid": str(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"name": "Unknown", "userid": str(userid), "discordid": str(discordid), "avatar": "", "roles": [], "is_deleted": True}
+            return {"userid": userid, "name": "Unknown", "email": None, "discordid": str(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     roles = p[0][4].split(",")
-    while "" in roles:
-        roles.remove("")
+    roles = [int(x) for x in roles if x != ""]
+    mfa_secret = p[0][9]
+    mfa_enabled = False
+    if mfa_secret != "":
+        mfa_enabled = True
+    email = p[0][6]
+    if email.endswith("!"): # unverified
+        email = email[:-1]
+    if not include_email:
+        email = ""
+
+    activity = None
+    cur.execute(f"SELECT activity, timestamp FROM user_activity WHERE discordid = {p[0][2]}")
+    ac = cur.fetchall()
+    cur.close()
+    conn.close()
+    if len(ac) != 0:
+        if int(time.time()) - ac[0][1] >= 300:
+            activity = {"status": "offline", "last_seen": ac[0][1]}
+        elif int(time.time()) - ac[0][1] >= 120:
+            activity = {"status": "online", "last_seen": ac[0][1]}
+        else:
+            activity = {"status": ac[0][0], "last_seen": ac[0][1]}
 
     if p[0][1] != -1:
-        cuserinfo[f"userid={p[0][1]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
-    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}, "expire": int(time.time()) + 600}
+        cuserinfo[f"userid={p[0][1]}"] = {"data": {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": p[0][10], "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}, "expire": int(time.time()) + 600}
+    cuserinfo[f"discordid={p[0][2]}"] = {"data": {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": p[0][10], "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}, "expire": int(time.time()) + 600}
 
-    return {"name": p[0][0], "userid": str(p[0][1]), "discordid": str(p[0][2]), "avatar": p[0][3], "roles": roles}
+    return {"userid": p[0][1], "name": p[0][0], "email": email, "discordid": str(p[0][2]), "steamid": str(p[0][8]), "truckersmpid": p[0][7], "avatar": p[0][3], "bio": p[0][10], "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][5]}
 
 async def activityUpdate(dhrid, discordid, activity):
     if int(discordid) <= 0:
@@ -642,7 +695,7 @@ async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Reset"] = str(maxban)
         resp_headers["X-RateLimit-Reset-After"] = str(maxban - int(time.time()))
         resp_headers["X-RateLimit-Global"] = "true"
-        resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+        resp_content = {"error": ml.tr(request, "rate_limit"), \
             "retry_after": str(maxban - int(time.time())), "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     await aiosql.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE ip = '{ip}' AND first_request_timestamp > {int(time.time() - 60)}")
@@ -661,7 +714,7 @@ async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
         resp_headers["X-RateLimit-Reset"] = str(int(time.time()) + 600)
         resp_headers["X-RateLimit-Reset-After"] = str(600)
         resp_headers["X-RateLimit-Global"] = "true"
-        resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+        resp_content = {"error": ml.tr(request, "rate_limit"), \
             "retry_after": "600", "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     await aiosql.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE ip = '{ip}' AND endpoint = '{endpoint}'")
@@ -706,7 +759,7 @@ async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
                 resp_headers["X-RateLimit-Reset"] = str(retry_after + int(time.time()))
                 resp_headers["X-RateLimit-Reset-After"] = str(retry_after)
                 resp_headers["X-RateLimit-Global"] = "false"
-                resp_content = {"error": True, "descriptor": ml.tr(request, "rate_limit"), \
+                resp_content = {"error": ml.tr(request, "rate_limit"), \
                     "retry_after": str(retry_after), "global": False}
                 return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
             else:
@@ -722,26 +775,26 @@ async def ratelimit(dhrid, request, ip, endpoint, limittime, limitcnt):
 async def auth(dhrid, authorization, request, allow_application_token = False, check_member = True, required_permission = []):
     # authorization header basic check
     if authorization is None:
-        return {"error": True, "descriptor": "Unauthorized", "code": 401}
+        return {"error": "Unauthorized", "code": 401}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        return {"error": True, "descriptor": "Unauthorized", "code": 401}
+        return {"error": "Unauthorized", "code": 401}
     
     tokentype = authorization.split(" ")[0]
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        return {"error": True, "descriptor": "Unauthorized", "code": 401}
+        return {"error": "Unauthorized", "code": 401}
 
     # application token
     if tokentype.lower() == "application":
         # check if allowed
         if not allow_application_token:
-            return {"error": True, "descriptor": ml.tr(request, "application_token_prohibited"), "code": 401}
+            return {"error": ml.tr(request, "application_token_prohibited"), "code": 401}
 
         # validate token
         await aiosql.execute(dhrid, f"SELECT discordid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
         discordid = t[0][0]
         last_used_timestamp = t[0][1]
 
@@ -753,15 +806,14 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         await aiosql.execute(dhrid, f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
 
-        while "" in roles:
-            roles.remove("")
+        roles = [int(x) for x in roles if x != ""]
 
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
@@ -772,7 +824,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
                         ok = True
             
             if not ok:
-                return {"error": True, "descriptor": "Forbidden", "code": 403}
+                return {"error": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
             await aiosql.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
@@ -791,7 +843,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         await aiosql.execute(dhrid, f"SELECT discordid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
         discordid = t[0][0]
         ip = t[0][1]
         country = t[0][2]
@@ -804,7 +856,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             if curCountry != country and country != "":
                 await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await aiosql.commit(dhrid)
-                return {"error": True, "descriptor": "Unauthorized", "code": 401}
+                return {"error": "Unauthorized", "code": 401}
 
             if ip != request.client.host:
                 await aiosql.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -820,15 +872,14 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         await aiosql.execute(dhrid, f"SELECT userid, roles, name FROM user WHERE discordid = {discordid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
         userid = t[0][0]
         roles = t[0][1].split(",")
         name = t[0][2]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": True, "descriptor": "Unauthorized", "code": 401}
+            return {"error": "Unauthorized", "code": 401}
 
-        while "" in roles:
-            roles.remove("")
+        roles = [int(x) for x in roles if x != ""]
 
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
@@ -840,7 +891,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
                         ok = True
             
             if not ok:
-                return {"error": True, "descriptor": "Forbidden", "code": 403}
+                return {"error": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
             await aiosql.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
@@ -854,7 +905,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             
         return {"error": False, "discordid": discordid, "userid": userid, "name": name, "roles": roles, "language": language, "application_token": False}
     
-    return {"error": True, "descriptor": "Unauthorized", "code": 401}
+    return {"error": "Unauthorized", "code": 401}
 
 async def AuditLog(dhrid, userid, text):
     try:
@@ -872,15 +923,15 @@ async def AuditLog(dhrid, userid, text):
             await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({userid}, '{convert_quotation(text)}', {int(time.time())})")
             await aiosql.commit(dhrid)
         if config.webhook_audit != "":
-            async with ClientSession() as session:
-                webhook = Webhook.from_url(config.webhook_audit, session=session)
-                embed = Embed(description = text, color = config.rgbcolor)
-                if userid not in [-999, -998]:
-                    embed.set_footer(text = f"{name} (ID {userid})", icon_url = await getAvatarSrc(dhrid, userid))
-                else:
-                    embed.set_footer(text = f"{name}")
-                embed.timestamp = datetime.now()
-                await webhook.send(embed=embed)
+            footer = {"text": name}
+            if userid not in [-999, -998]:
+                footer = {"text": f"{name} (ID {userid})", "icon_url": await getAvatarSrc(dhrid, userid)}
+            try:
+                r = await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+                if r.status_code == 401:
+                    DisableDiscordIntegration()
+            except:
+                traceback.print_exc()
     except:
         traceback.print_exc()
 
@@ -895,17 +946,29 @@ def DisableDiscordIntegration():
 async def AutoMessage(meta, setvar):
     global config
     try:
+        timestamp = ""
+        if meta.embed.timestamp:
+            timestamp = str(datetime.now())
+        data = json.dumps({
+            "content": setvar(meta.content),
+            "embeds": [{
+                "title": setvar(meta.embed.title), 
+                "description": setvar(meta.embed.description), 
+                "footer": {
+                    "text": setvar(meta.embed.footer.text), 
+                    "icon_url": setvar(meta.embed.footer.icon_url)
+                }, 
+                "image": {
+                    "url": setvar(meta.embed.image_url)
+                },
+                "timestamp": timestamp,
+                "color": config.intcolor
+            }]})
+        
         if meta.webhook_url != "":
-            async with ClientSession() as session:
-                webhook = Webhook.from_url(meta.webhook_url, session=session)
-                embed = Embed(title = setvar(meta.embed.title), \
-                    description = setvar(meta.embed.description), color = config.rgbcolor)
-                embed.set_footer(text = setvar(meta.embed.footer.text), icon_url = setvar(meta.embed.footer.icon_url))
-                if meta.embed.image_url != "":
-                    embed.set_image(url = setvar(meta.embed.image_url))
-                if meta.embed.timestamp:
-                    embed.timestamp = datetime.now()
-                await webhook.send(content = setvar(meta.content), embed=embed)
+            r = await arequests.post(meta.webhook_url, data=data)
+            if r.status_code == 401:
+                DisableDiscordIntegration()
 
         elif meta.channel_id != "":
             if config.discord_bot_token == "":
@@ -913,24 +976,7 @@ async def AutoMessage(meta, setvar):
 
             headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v10/channels/{meta.channel_id}/messages"
-            timestamp = ""
-            if meta.embed.timestamp:
-                timestamp = str(datetime.now())
-            r = await arequests.post(ddurl, headers=headers, data=json.dumps({
-                "content": setvar(meta.content),
-                "embeds": [{
-                    "title": setvar(meta.embed.title), 
-                    "description": setvar(meta.embed.description), 
-                    "footer": {
-                        "text": setvar(meta.embed.footer.text), 
-                        "icon_url": setvar(meta.embed.footer.icon_url)
-                    }, 
-                    "image": {
-                        "url": setvar(meta.embed.image_url)
-                    },
-                    "timestamp": timestamp,
-                    "color": config.intcolor
-                }]}))
+            r = await arequests.post(ddurl, headers=headers, data=data)
             if r.status_code == 401:
                 DisableDiscordIntegration()
     except:

@@ -9,7 +9,7 @@ import time
 from discord import Colour
 from fastapi import FastAPI
 
-version = "v1.22.15"
+version = "v2.0.0"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -188,6 +188,7 @@ config_sample = {
         "update_member_points": [],
         "dismiss_member": [],
         "get_pending_user_list": [],
+        "delete_application": [],
         "ban_user": [],
 
         "audit": [],
@@ -256,7 +257,14 @@ def validateConfig(cfg):
     for i in range(len(divisions)):
         division = divisions[i]
         if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "point" in division.keys():
-            newdivisions.append(division)
+            try:
+                # ensure they are integer
+                int(division["id"])
+                int(division["role_id"])
+                int(division["point"])
+                newdivisions.append(division)
+            except:
+                pass
     cfg["divisions"] = newdivisions
 
     roles = cfg["roles"]
@@ -332,9 +340,15 @@ config = Dict2Obj(config)
 if os.path.exists(config.openapi):
     app = FastAPI(title="Drivers Hub", version=version[1:], \
             openapi_url=f"/{config.abbr}/openapi.json", docs_url=f"/{config.abbr}/doc", redoc_url=None)
-    openapi_data = json.loads(open(config.openapi, "r", encoding="utf-8").read().replace("/abbr", f"/{config.abbr}"))
+    
+    OPENAPI_RESPONSES = '"responses": {"200": {"description": "Success"}, "204": {"description": "Success (No Content)"}, "400": {"description": "Bad Request - You need to correct the json data."}, "401": {"description": "Unauthorized - You need to use a valid token."}, "403": {"description": "Forbidden - You don\'t have permission to access the response."}, "404": {"description": "Not Found - The resource could not be found."}, "429": {"description": "Too Many Requests - You are being ratelimited."}, "500": {"description": "Internal Server Error - Usually caused by a bug or database issue."}, "503": {"description": "Service Unavailable - Database outage or rate limited."}}'
+    
+    openapi_data = json.loads(open(config.openapi, "r", encoding="utf-8").read()
+                              .replace("/abbr", f"/{config.abbr}")
+                              .replace('"responses": {}', OPENAPI_RESPONSES))
     def openapi():
         return openapi_data
     app.openapi = openapi
+    
 else:
     app = FastAPI(title="Drivers Hub", version=version[1:])

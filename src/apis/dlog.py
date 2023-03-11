@@ -24,148 +24,12 @@ cnlleaderboard = {}
 callusers = []
 callusers_ts = 0
 
-@app.get(f"/{config.abbr}/dlog")
-async def getDlogInfo(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
-
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog', 60, 60)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    userid = -1
-    discordid = -1
-    if authorization != None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-        userid = au["userid"]
-        discordid = au["discordid"]
-    
-    if logid < 0:
-        response.status_code = 404
-        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-
-    await aiosql.execute(dhrid, f"SELECT userid, data, timestamp, distance, view_count, trackerid, tracker_type FROM dlog WHERE logid >= 0 AND logid = {logid}")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-    await activityUpdate(dhrid, discordid, f"dlog_{logid}")
-    data = {}
-    if t[0][1] != "":
-        data = json.loads(decompress(t[0][1]))
-    if "data" in data.keys():
-        del data["data"]["object"]["driver"]
-    distance = t[0][3]
-    view_count = t[0][4] + 1
-    
-    tracker = ""
-    trackerid = t[0][5]
-    tracker_type = t[0][6]
-    if tracker_type == 1:
-        tracker = "navio"
-    elif tracker_type == 2:
-        tracker = "tracksim"
-
-    await aiosql.execute(dhrid, f"SELECT data FROM telemetry WHERE logid = {logid}")
-    p = await aiosql.fetchall(dhrid)
-    telemetry = ""
-    if len(p) > 0:
-        telemetry = decompress(p[0][0])
-        orgt = telemetry
-        ver = "v1"
-        telemetry = telemetry.split(";")
-        t1 = telemetry[1].split(",")
-        if len(t1) == 2:
-            ver = "v2"
-        basic = telemetry[0].split(",")
-        if len(basic) == 3:
-            if basic[2] == "v3":
-                ver = "v3"
-            elif basic[2] == "v4":
-                ver = "v4"
-            elif basic[2] == "v5":
-                ver = "v5"
-        telemetry = ver + orgt
-
-    division = ""
-    await aiosql.execute(dhrid, f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
-    p = await aiosql.fetchall(dhrid)
-    if len(p) != 0:
-        division = str(p[0][0])
-
-    challenge_record = []
-    await aiosql.execute(dhrid, f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
-    o = await aiosql.fetchall(dhrid)
-    for oo in o:
-        challenge_record.append(oo[0])
-    
-    await aiosql.execute(dhrid, f"UPDATE dlog SET view_count = view_count + 1 WHERE logid = {logid}")
-    await aiosql.commit(dhrid)
-
-    userinfo = None
-    if userid == -1 and config.privacy:
-        userinfo = await getUserInfo(dhrid, privacy = True)
-    else:
-        userinfo = await getUserInfo(dhrid, userid = t[0][0], tell_deleted = True)
-        if "is_deleted" in userinfo:
-            userinfo = await getUserInfo(dhrid, -1)
-
-    return {"error": False, "response": {"dlog": {"logid": str(logid), "user": userinfo, \
-        "distance": str(distance), "division": division, "challenge_record": challenge_record, \
-            "timestamp": str(t[0][2]), "views": str(view_count), "tracker": tracker, "trackerid": str(trackerid), \
-            "detail": data, "telemetry": telemetry}}}
-
-@app.delete(f"/{config.abbr}/dlog")
-async def deleteDlog(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
-    dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
-
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /dlog', 60, 30)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"], allow_application_token = True)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    adminid = au["userid"]
-
-    if logid < 0:
-        response.status_code = 404
-        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-
-    await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": True, "response": ml.tr(request, "delivery_log_not_found")}
-    userid = t[0][0]
-    
-    await aiosql.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
-    await aiosql.commit(dhrid)
-
-    await AuditLog(dhrid, adminid, f"Deleted delivery `#{logid}`")
-
-    discordid = (await getUserInfo(dhrid, userid = userid))["discordid"]
-    await notification(dhrid, "dlog", discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
-
-    return {"error": False}
-
 @app.get(f"/{config.abbr}/dlog/list")
 async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
-        speed_limit: Optional[int] = 0, userid: Optional[int] = -1, \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, game: Optional[int] = 0, status: Optional[int] = 1,\
+        speed_limit: Optional[int] = 0, userid: Optional[int] = None, \
+        start_time: Optional[int] = None, end_time: Optional[int] = None, game: Optional[int] = 0, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
@@ -208,7 +72,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     order = order.upper()
 
     limit = ""
-    if quserid != -1:
+    if quserid is not None:
         limit += f"AND dlog.userid = {quserid} "
     if challenge == "include":
         limit = limit
@@ -236,7 +100,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             pass
     
     timelimit = ""
-    if start_time != -1 and end_time != -1:
+    if start_time is not None and end_time is not None:
         timelimit = f"AND dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time}"
     
     if speed_limit > 0:
@@ -265,14 +129,12 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         logid = tt[3]
 
         division_id = tt[8]
-        division_name = ""
+        division_name = None
         division = {}
-        if division_id == None:
-            division_id = ""
-        else:
+        if division_id is not None:
             if division_id in divisiontxt.keys():
                 division_name = divisiontxt[division_id]
-            division = {"divisionid": str(division_id), "name": division_name}
+            division = {"divisionid": division_id, "name": division_name}
 
         await aiosql.execute(dhrid, f"SELECT dlog.logid, challenge_info.challengeid, challenge.title FROM dlog \
             LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
@@ -289,15 +151,15 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         
         challenge = []
         for i in range(len(challengeids)):
-            challenge.append({"challengeid": str(challengeids[i]), "name": challengenames[i]})
+            challenge.append({"challengeid": challengeids[i], "name": challengenames[i]})
 
         data = {}
         if tt[1] != "":
             data = json.loads(decompress(tt[1]))
-        source_city = "N/A"
-        source_company = "N/A"
-        destination_city = "N/A"
-        destination_company = "N/A"
+        source_city = None
+        source_company = None
+        destination_city = None
+        destination_company = None
         if "data" in data.keys() and data["data"]["object"]["source_city"] != None:
             source_city = data["data"]["object"]["source_city"]["name"]
         if "data" in data.keys() and data["data"]["object"]["source_company"] != None:
@@ -306,7 +168,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
             destination_city = data["data"]["object"]["destination_city"]["name"]
         if "data" in data.keys() and data["data"]["object"]["destination_company"] != None:
             destination_company = data["data"]["object"]["destination_company"]["name"]
-        cargo = "N/A"
+        cargo = None
         cargo_mass = 0
         if "data" in data.keys() and data["data"]["object"]["cargo"] != None:
             cargo = data["data"]["object"]["cargo"]["name"]
@@ -318,21 +180,21 @@ async def getDlogList(request: Request, response: Response, authorization: str =
         profit = tt[4]
         unit = tt[5]
         
-        userinfo = await getUserInfo(dhrid, userid = tt[0])
+        userinfo = await getUserInfo(dhrid, request, userid = tt[0])
         if userid == -1 and config.privacy:
-            userinfo = await getUserInfo(dhrid, privacy = True)
+            userinfo = await getUserInfo(dhrid, request, privacy = True)
 
-        status = "1"
+        status = 1
         if tt[7] == 0:
-            status = "2"
+            status = 2
 
-        ret.append({"logid": str(logid), "user": userinfo, "distance": str(distance), \
-            "max_speed": str(tt[9]), "fuel": str(tt[10]), \
+        ret.append({"logid": logid, "user": userinfo, "distance": distance, \
+            "max_speed": tt[9], "fuel": tt[10], \
             "source_city": source_city, "source_company": source_company, \
                 "destination_city": destination_city, "destination_company": destination_company, \
-                    "cargo": cargo, "cargo_mass": str(cargo_mass), "profit": str(profit), "unit": str(unit), \
+                    "cargo": cargo, "cargo_mass": cargo_mass, "profit": profit, "unit": unit, \
                         "division": division, "challenge": challenge, \
-                            "status": status, "views": str(tt[11]), "timestamp": str(tt[2])})
+                            "status": status, "views": tt[11], "timestamp": tt[2]})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit}")
     t = await aiosql.fetchall(dhrid)
@@ -340,11 +202,11 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     if len(t) > 0:
         tot = t[0][0]
 
-    return {"error": False, "response": {"list": ret, "total_items": str(tot), "total_pages": str(int(math.ceil(tot / page_size)))}}
+    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/dlog/statistics/summary")
 async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, userid: Optional[int] = -1):
+        start_time: Optional[int] = None, end_time: Optional[int] = None, userid: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -354,13 +216,13 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if start_time == -1:
+    if start_time is None:
         start_time = 0
-    if end_time == -1:
+    if end_time is None:
         end_time = max(int(time.time()), 32503651200)
 
     quser = ""
-    if userid != -1:
+    if userid is not None:
         if config.privacy:
             au = await auth(dhrid, authorization, request, allow_application_token = True)
             if au["error"]:
@@ -380,8 +242,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
             for t in tt:
                 if abs(t["start_time"] - start_time) <= 120 and abs(t["end_time"] - end_time) <= 120 and t["userid"] == userid:
                     ret = t["result"]
-                    ret["cache"] = str(ll)
-                    return {"error": False, "response": ret}
+                    ret["cache"] = ll
+                    return ret
 
     ret = {}
     # driver
@@ -403,7 +265,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
                 newdid.append(tt[0])
                 newdrivers += 1
 
-    ret["driver"] = {"tot": str(totdrivers), "new": str(newdrivers)}
+    ret["driver"] = {"tot": totdrivers, "new": newdrivers}
     
     # job / delivered / cancelled
     item = {"job": "COUNT(*)", "distance": "SUM(distance)", "fuel": "SUM(fuel)"}
@@ -483,15 +345,15 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
         newcancelled_ats = newcancelled_ats[0]
         newcancelled_ats = 0 if newcancelled_ats is None else nint(newcancelled_ats)
 
-        ret[key] = {"all": {"sum": {"tot": str(tot), "new": str(new)}, \
-            "ets2": {"tot": str(totets2), "new": str(newets2)}, \
-            "ats": {"tot": str(totats), "new": str(newats)}}, \
-            "delivered": {"sum": {"tot": str(totdelivered), "new": str(newdelivered)}, \
-                    "ets2": {"tot": str(totdelivered_ets2), "new": str(newdelivered_ets2)}, \
-                    "ats": {"tot": str(totdelivered_ats), "new": str(newdelivered_ats)}}, \
-                "cancelled": {"sum": {"tot": str(totcancelled), "new": str(newcancelled)}, \
-                    "ets2": {"tot": str(totcancelled_ets2), "new": str(newcancelled_ets2)}, \
-                    "ats": {"tot": str(totcancelled_ats), "new": str(newcancelled_ats)}}}
+        ret[key] = {"all": {"sum": {"tot": tot, "new": new}, \
+            "ets2": {"tot": totets2, "new": newets2}, \
+            "ats": {"tot": totats, "new": newats}}, \
+            "delivered": {"sum": {"tot": totdelivered, "new": newdelivered}, \
+                    "ets2": {"tot": totdelivered_ets2, "new": newdelivered_ets2}, \
+                    "ats": {"tot": totdelivered_ats, "new": newdelivered_ats}}, \
+                "cancelled": {"sum": {"tot": totcancelled, "new": newcancelled}, \
+                    "ets2": {"tot": totcancelled_ets2, "new": newcancelled_ets2}, \
+                    "ats": {"tot": totcancelled_ats, "new": newcancelled_ats}}}
 
     # profit
     await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {end_time}")
@@ -510,8 +372,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     newdollarprofit = await aiosql.fetchone(dhrid)
     newdollarprofit = newdollarprofit[0]
     newdollarprofit = 0 if newdollarprofit is None else nint(newdollarprofit)
-    allprofit = {"tot": {"euro": str(toteuroprofit), "dollar": str(totdollarprofit)}, \
-        "new": {"euro": str(neweuroprofit), "dollar": str(newdollarprofit)}}
+    allprofit = {"tot": {"euro": toteuroprofit, "dollar": totdollarprofit}, \
+        "new": {"euro": neweuroprofit, "dollar": newdollarprofit}}
 
     await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
     totdelivered_europrofit = await aiosql.fetchone(dhrid)
@@ -529,8 +391,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     newdelivered_dollarprofit = await aiosql.fetchone(dhrid)
     newdelivered_dollarprofit = newdelivered_dollarprofit[0]
     newdelivered_dollarprofit = 0 if newdelivered_dollarprofit is None else nint(newdelivered_dollarprofit)
-    deliveredprofit = {"tot": {"euro": str(totdelivered_europrofit), "dollar": str(totdelivered_dollarprofit)}, \
-        "new": {"euro": str(newdelivered_europrofit), "dollar": str(newdelivered_dollarprofit)}}
+    deliveredprofit = {"tot": {"euro": totdelivered_europrofit, "dollar": totdelivered_dollarprofit}, \
+        "new": {"euro": newdelivered_europrofit, "dollar": newdelivered_dollarprofit}}
     
     await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
     totcancelled_europrofit = await aiosql.fetchone(dhrid)
@@ -548,8 +410,8 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     newcancelled_dollarprofit = await aiosql.fetchone(dhrid)
     newcancelled_dollarprofit = newcancelled_dollarprofit[0]
     newcancelled_dollarprofit = 0 if newcancelled_dollarprofit is None else nint(newcancelled_dollarprofit)
-    cancelledprofit = {"tot": {"euro": str(totcancelled_europrofit), "dollar": str(totcancelled_dollarprofit)}, \
-        "new": {"euro": str(newcancelled_europrofit), "dollar": str(newcancelled_dollarprofit)}}
+    cancelledprofit = {"tot": {"euro": totcancelled_europrofit, "dollar": totcancelled_dollarprofit}, \
+        "new": {"euro": newcancelled_europrofit, "dollar": newcancelled_dollarprofit}}
     
     ret["profit"] = {"all": allprofit, "delivered": deliveredprofit, "cancelled": cancelledprofit}
 
@@ -558,14 +420,14 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
         cstats[ts] = []
     cstats[ts].append({"start_time": start_time, "end_time": end_time, "userid": userid, "result": ret})
 
-    ret["cache"] = "-1"
+    ret["cache"] = None
 
-    return {"error": False, "response": ret}
+    return ret
 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
 async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
-        ranges: Optional[int] = 30, interval: Optional[int] = 86400, end_time: Optional[int] = -1, \
-        sum_up: Optional[bool] = False, userid: Optional[int] = -1):
+        ranges: Optional[int] = 30, interval: Optional[int] = 86400, before: Optional[int] = None, \
+        sum_up: Optional[bool] = False, userid: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -576,7 +438,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
         response.headers[k] = rl[1][k]
 
     quserid = userid
-    if quserid != -1:
+    if quserid is not None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -593,13 +455,13 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     elif interval < 60:
         interval = 60
     
-    if end_time < 0:
-        end_time = int(time.time())
+    if before is None:
+        before = int(time.time())
 
     ret = []
     timerange = []
     for i in range(ranges):
-        r_start_time = end_time - ((i+1)*interval)
+        r_start_time = before - ((i+1)*interval)
         if r_start_time <= 0:
             break
         r_end_time = r_start_time + interval
@@ -607,7 +469,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     timerange = timerange[::-1]
 
     limit = ""
-    if quserid != -1:
+    if quserid is not None:
         limit = f"userid = {quserid} AND"
 
     alldriverid = []
@@ -618,70 +480,70 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     baseeuro = 0
     basedollar = 0
     if sum_up:
-        end_time = timerange[0][0]
+        before = timerange[0][0]
 
         for rid in config.perms.driver:
-            await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= 0 AND join_timestamp < {end_time} AND roles LIKE '%,{rid},%'")
+            await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= 0 AND join_timestamp < {before} AND roles LIKE '%,{rid},%'")
             t = await aiosql.fetchall(dhrid)
             for tt in t:
                 if not tt[0] in alldriverid:
                     alldriverid.append(tt[0])
                     basedriver += 1
 
-        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {end_time}")
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before}")
         t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
             basejob = nint(t[0][0])
 
-        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {end_time}")
+        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before}")
         t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
             basedistance = nint(t[0][0])
             basefuel = nint(t[0][1])
-        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {end_time} AND unit = 1")
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before} AND unit = 1")
         t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
             baseeuro = nint(t[0][0])
-        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {end_time} AND unit = 2")
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before} AND unit = 2")
         t = await aiosql.fetchall(dhrid)
         if len(t) > 0 and t[0][0] != None:
             basedollar = nint(t[0][0])
 
-    for (start_time, end_time) in timerange:
+    for (start_time, before) in timerange:
         driver = basedriver
         for rid in config.perms.driver:
-            await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp < {end_time} AND roles LIKE '%,{rid},%'")
+            await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp < {before} AND roles LIKE '%,{rid},%'")
             t = await aiosql.fetchall(dhrid)
             for tt in t:
                 if not tt[0] in alldriverid:
                     alldriverid.append(tt[0])
                     driver += 1
 
-        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time}")
+        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before}")
         t = await aiosql.fetchall(dhrid)
         job = basejob
         if len(t) > 0 and t[0][0] != None:
             job += nint(t[0][0])
                     
-        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time}")
+        await aiosql.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before}")
         t = await aiosql.fetchall(dhrid)
         distance = basedistance
         fuel = basefuel
         if len(t) > 0 and t[0][0] != None and len(t[0]) > 1:
             distance += nint(t[0][0])
             fuel += nint(t[0][1])
-        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} AND unit = 1")
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before} AND unit = 1")
         t = await aiosql.fetchall(dhrid)
         euro = baseeuro
         if len(t) > 0 and t[0][0] != None:
             euro += nint(t[0][0])
-        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} AND unit = 2")
+        await aiosql.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before} AND unit = 2")
         t = await aiosql.fetchall(dhrid)
         dollar = basedollar
         if len(t) > 0 and t[0][0] != None:
             dollar += nint(t[0][0])
-        profit = {"euro": str(euro), "dollar": str(dollar)}
-        ret.append({"start_time": str(start_time), "end_time": str(end_time), "driver": str(driver), "job": str(job), "distance": str(distance), "fuel": str(fuel), "profit": profit})
+        profit = {"euro": euro, "dollar": dollar}
+        ret.append({"start_time": start_time, "end_time": before, "driver": driver, "job": job, "distance": distance, "fuel": fuel, "profit": profit})
     
         if sum_up:
             basedriver = driver
@@ -691,12 +553,12 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
             baseeuro = euro
             basedollar = dollar
 
-    return {"error": False, "response": ret}
+    return ret
 
 @app.get(f"/{config.abbr}/dlog/leaderboard")
 async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, \
+        start_time: Optional[int] = None, end_time: Optional[int] = None, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
     dhrid = request.state.dhrid
@@ -715,13 +577,18 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         return au
     await activityUpdate(dhrid, au["discordid"], "leaderboard")
 
+    if start_time is None:
+        start_time = 0
+    if end_time is None:
+        end_time = max(int(time.time()), 32503651200)
+        
     limittype = point_types
     limituser = userids
 
     usecache = False
     nlusecache = False
-    cachetime = -1
-    nlcachetime = -1
+    cachetime = None
+    nlcachetime = None
 
     userdistance = {}
     userchallenge = {}
@@ -786,8 +653,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             roles = tt[1].split(",")
-            while "" in roles:
-                roles.remove("")
+            roles = [int(x) for x in roles if x != ""]
             ok = False
             for i in roles:
                 if int(i) in config.perms.driver:
@@ -805,15 +671,10 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
     # validate parameter
     page = max(page, 1)
     page_size = max(min(page_size, 250), 1)
-    if start_time == -1:
-        start_time = 0
-    if end_time == -1:
-        end_time = max(int(time.time()), 32503651200)
 
     # set limits
     limituser = limituser.split(",")
-    while "" in limituser:
-        limituser.remove("")
+    limituser = [int(x) for x in limituser if x != ""]
     if len(limituser) > 10:
         limituser = limituser[:10]
     limit = ""
@@ -852,10 +713,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
-            while "" in attendees:
-                attendees.remove("")
-            for ttt in attendees:
-                attendee = int(ttt)
+            attendees = [int(x) for x in attendees if x != ""]
+            for attendee in attendees:
                 if not attendee in allusers:
                     continue
                 if not attendee in userevent.keys():
@@ -970,10 +829,8 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         t = await aiosql.fetchall(dhrid)
         for tt in t:
             attendees = tt[0].split(",")
-            while "" in attendees:
-                attendees.remove("")
-            for ttt in attendees:
-                attendee = int(ttt)
+            attendees = [int(x) for x in attendees if x != ""]
+            for attendee in attendees:
                 if not attendee in allusers:
                     continue
                 if not attendee in nluserevent.keys():
@@ -1078,11 +935,11 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
         if userid in usermyth.keys():
             mythpnt = usermyth[userid]
 
-        if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, userid = userid), \
-                "points": {"distance": str(distance), "challenge": str(challengepnt), "event": str(eventpnt), \
-                    "division": str(divisionpnt), "myth": str(mythpnt), "total": str(usertot[userid]), \
-                    "rank": str(userrank[userid]), "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
+        if userid in limituser or len(limituser) == 0:
+            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), \
+                "points": {"distance": distance, "challenge": challengepnt, "event": eventpnt, \
+                    "division": divisionpnt, "myth": mythpnt, "total": usertot[userid], \
+                    "rank": userrank[userid], "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
     # drivers with points (WITHOUT LIMIT)
     for userid in nlusertot_id:
@@ -1095,20 +952,20 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
 
         withpoint.append(userid)
 
-        if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, userid = userid), \
+        if userid in limituser or len(limituser) == 0:
+            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), \
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
-                "rank": str(rank), "total_no_limit": str(nlusertot[userid]), "rank_no_limit": str(nluserrank[userid])}})
+                "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
     for userid in allusers:
         if userid in withpoint:
             continue
         
-        if str(userid) in limituser or len(limituser) == 0:
-            ret.append({"user": await getUserInfo(dhrid, userid = userid), 
+        if userid in limituser or len(limituser) == 0:
+            ret.append({"user": await getUserInfo(dhrid, request, userid = userid), 
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
-                    "rank": str(rank), "total_no_limit": "0", "rank_no_limit": str(nlrank)}})
+                    "rank": rank, "total_no_limit": "0", "rank_no_limit": nlrank}})
 
     if not usecache:
         ts = int(time.time())
@@ -1125,17 +982,17 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
 
     if (page - 1) * page_size >= len(ret):
-        return {"error": False, "response": {"list": [], "total_items": str(len(ret)), \
-            "total_pages": str(int(math.ceil(len(ret) / page_size))), \
-                "cache": str(cachetime), "cache_no_limit": str(nlcachetime)}}
+        return {"list": [], "total_items": len(ret), \
+            "total_pages": int(math.ceil(len(ret) / page_size)), \
+                "cache": cachetime, "cache_no_limit": nlcachetime}
 
-    return {"error": False, "response": {"list": ret[(page - 1) * page_size : page * page_size], \
-        "total_items": str(len(ret)), "total_pages": str(int(math.ceil(len(ret) / page_size))), \
-            "cache": str(cachetime), "cache_no_limit": str(nlcachetime)}}
+    return {"list": ret[(page - 1) * page_size : page * page_size], \
+        "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size)), \
+            "cache": cachetime, "cache_no_limit": nlcachetime}
 
 @app.get(f"/{config.abbr}/dlog/export")
 async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, include_ids: Optional[bool] = False):
+        start_time: Optional[int] = None, end_time: Optional[int] = None, include_ids: Optional[bool] = False):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -1151,9 +1008,9 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         del au["code"]
         return au
 
-    if start_time == -1:
+    if start_time is None:
         start_time = 0
-    if end_time == -1:
+    if end_time is None:
         end_time = max(int(time.time()), 32503651200)
 
     f = BytesIO()
@@ -1173,7 +1030,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
         division_id = dd[11]
         division = ""
-        if division_id == None:
+        if division_id is None:
             division_id = ""
         else:
             if division_id in divisiontxt.keys():
@@ -1181,7 +1038,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
 
         challengeids = dd[12]
         challengenames = dd[13]
-        if challengeids == None:
+        if challengeids is None:
             challengeids = []
             challengenames = []
         else:
@@ -1218,10 +1075,10 @@ async def getDlogExport(request: Request, response: Response, authorization: str
         is_delivered = dd[9]
 
         user_id = dd[1]
-        user = await getUserInfo(dhrid, userid = user_id, tell_deleted = True)
+        user = await getUserInfo(dhrid, request, userid = user_id, tell_deleted = True)
         username = user["name"]
         if "is_deleted" in user.keys():
-            user_id = "-1"
+            user_id = None
             username = "Unknown"        
 
         source_city = ""
@@ -1379,3 +1236,139 @@ async def getDlogExport(request: Request, response: Response, authorization: str
     response.headers["Content-Disposition"] = "attachment; filename=export.csv"
 
     return response
+
+@app.get(f"/{config.abbr}/dlog/{{logid}}")
+async def getDlogInfo(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    userid = -1
+    discordid = -1
+    if authorization != None:
+        au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+        if au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+        userid = au["userid"]
+        discordid = au["discordid"]
+    
+    if logid is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "delivery_log_not_found")}
+
+    await aiosql.execute(dhrid, f"SELECT userid, data, timestamp, distance, view_count, trackerid, tracker_type FROM dlog WHERE logid >= 0 AND logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "delivery_log_not_found")}
+    await activityUpdate(dhrid, discordid, f"dlog_{logid}")
+    data = {}
+    if t[0][1] != "":
+        data = json.loads(decompress(t[0][1]))
+    if "data" in data.keys():
+        del data["data"]["object"]["driver"]
+    distance = t[0][3]
+    view_count = t[0][4] + 1
+    
+    tracker = "unknown"
+    trackerid = t[0][5]
+    tracker_type = t[0][6]
+    if tracker_type == 1:
+        tracker = "navio"
+    elif tracker_type == 2:
+        tracker = "tracksim"
+
+    await aiosql.execute(dhrid, f"SELECT data FROM telemetry WHERE logid = {logid}")
+    p = await aiosql.fetchall(dhrid)
+    telemetry = ""
+    if len(p) > 0:
+        telemetry = decompress(p[0][0])
+        orgt = telemetry
+        ver = "v1"
+        telemetry = telemetry.split(";")
+        t1 = telemetry[1].split(",")
+        if len(t1) == 2:
+            ver = "v2"
+        basic = telemetry[0].split(",")
+        if len(basic) == 3:
+            if basic[2] == "v3":
+                ver = "v3"
+            elif basic[2] == "v4":
+                ver = "v4"
+            elif basic[2] == "v5":
+                ver = "v5"
+        telemetry = ver + orgt
+
+    division = None
+    await aiosql.execute(dhrid, f"SELECT divisionid FROM division WHERE logid = {logid} AND status = 1 AND logid >= 0")
+    p = await aiosql.fetchall(dhrid)
+    if len(p) != 0:
+        division = p[0][0]
+
+    challenge_record = []
+    await aiosql.execute(dhrid, f"SELECT challengeid FROM challenge_record WHERE logid = {logid}")
+    o = await aiosql.fetchall(dhrid)
+    for oo in o:
+        challenge_record.append(oo[0])
+    
+    await aiosql.execute(dhrid, f"UPDATE dlog SET view_count = view_count + 1 WHERE logid = {logid}")
+    await aiosql.commit(dhrid)
+
+    userinfo = None
+    if userid == -1 and config.privacy:
+        userinfo = await getUserInfo(dhrid, request, privacy = True)
+    else:
+        userinfo = await getUserInfo(dhrid, request, userid = t[0][0], tell_deleted = True)
+        if "is_deleted" in userinfo:
+            userinfo = await getUserInfo(dhrid, request, -1)
+
+    return {"logid": logid, "user": userinfo, \
+        "distance": distance, "division": division, "challenge_record": challenge_record, \
+            "timestamp": t[0][2], "views": view_count, "tracker": tracker, "trackerid": trackerid, \
+            "detail": data, "telemetry": telemetry}
+
+@app.delete(f"/{config.abbr}/dlog/{{logid}}")
+async def deleteDlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /dlog', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"], allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    adminid = au["userid"]
+
+    if logid is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "delivery_log_not_found")}
+
+    await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "delivery_log_not_found")}
+    userid = t[0][0]
+    
+    await aiosql.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
+    await aiosql.commit(dhrid)
+
+    await AuditLog(dhrid, adminid, f"Deleted delivery `#{logid}`")
+
+    discordid = (await getUserInfo(dhrid, request, userid = userid))["discordid"]
+    await notification(dhrid, "dlog", discordid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, discordid, "en")))
+
+    return Response(status_code=204)
