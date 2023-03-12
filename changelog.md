@@ -1,5 +1,11 @@
 # Changelog
 
+**v2.1.2**  
+1.Fixed `AutoMessage` cannot be sent when using webhook  
+2.Removed `member_leave` on driver role removal, removed `member_accept` and `member_welcome` on driver role addition, moved `member_accept` and `member_welcome` to be sent on member acceptance  
+3.Renamed `config.team_update` to `config.member_accept`, which is sent once the member is accepted  
+**Hint:** `member_accept` and `member_welcome` are both sent when member is accepted, `member_leave` is sent when member resigns or is dismissed  
+
 **v2.1.1**  
 1.Fixed upgrader failure due to `./upgrades/` does not exist by removing file log  
 2.Fixed application webhook being sent to division webhook  

@@ -531,7 +531,7 @@ async def putMember(request: Request, response: Response, authorization: str = H
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
+    await aiosql.execute(dhrid, f"SELECT userid, name, discordid, name FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -540,6 +540,8 @@ async def putMember(request: Request, response: Response, authorization: str = H
         response.status_code = 409
         return {"error": ml.tr(request, "already_member", force_lang = au["language"])}
     name = t[0][1]
+    discordid = t[0][2]
+    username = t[0][3]
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
@@ -551,6 +553,17 @@ async def putMember(request: Request, response: Response, authorization: str = H
     await aiosql.commit(dhrid)
 
     await notification(dhrid, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, uid, "en")))
+    
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
+
+    if config.member_accept.webhook_url != "" or config.member_accept.channel_id != "":
+        meta = config.member_accept
+        await AutoMessage(meta, setvar)
+    
+    if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
+        meta = config.member_welcome
+        await AutoMessage(meta, setvar)
 
     return {"userid": userid}   
 
@@ -669,9 +682,6 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     await aiosql.execute(dhrid, f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")
     await aiosql.commit(dhrid)
 
-    def setvar(msg):
-        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
-
     tracker_app_error = ""
     if config.perms.driver[0] in addedroles:
         try:
@@ -697,14 +707,6 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             await AuditLog(dhrid, adminid, f"Failed to add `{username}` (User ID: `{userid}`) to {TRACKERAPP} Company.  \n"+tracker_app_error)
         else:
             await AuditLog(dhrid, adminid, f"Added `{username}` (User ID: `{userid}`) to {TRACKERAPP} Company.")
-
-        if config.team_update.webhook_url != "" or config.team_update.channel_id != "":
-            meta = config.team_update
-            await AutoMessage(meta, setvar)
-        
-        if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
-            meta = config.member_welcome
-            await AutoMessage(meta, setvar)
         
         if discordid is not None and config.member_welcome.role_change != [] and config.discord_bot_token != "":
             for role in config.member_welcome.role_change:
@@ -747,10 +749,6 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
         else:
             await AuditLog(dhrid, adminid, f"Removed `{username}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
 
-        if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
-            meta = config.member_leave
-            await AutoMessage(meta, setvar)
-        
         if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
             for role in config.member_leave.role_change:
                 try:
@@ -913,7 +911,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
         await AuditLog(dhrid, -999, f"Removed `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
     if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
         meta = config.member_leave
@@ -935,7 +933,7 @@ async def postMemberResign(request: Request, response: Response, authorization: 
             except:
                 traceback.print_exc()
     
-    if discordid is not None:
+    if discordid is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
         try:
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
@@ -1037,7 +1035,7 @@ async def postMemberDismiss(request: Request, response: Response, userid: int, a
         await AuditLog(dhrid, -999, f"Removed `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
     if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
         meta = config.member_leave
@@ -1059,7 +1057,7 @@ async def postMemberDismiss(request: Request, response: Response, userid: int, a
             except:
                 traceback.print_exc() 
     
-    if discordid is not None:
+    if discordid is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
         try:
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)

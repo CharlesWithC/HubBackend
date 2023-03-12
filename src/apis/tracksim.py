@@ -189,7 +189,7 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
         await aiosql.commit(dhrid)
 
         def setvar(msg):
-            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid))
+            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
         if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
             meta = config.member_leave

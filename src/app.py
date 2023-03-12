@@ -9,11 +9,11 @@ import time
 from discord import Colour
 from fastapi import FastAPI
 
-version = "v2.1.1"
+version = "v2.1.2"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'team_update', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -88,13 +88,13 @@ config_sample = {
     "discord_callback_url": "https://drivershub.charlws.com/{abbr}/auth/discord/callback",
     "discord_bot_token": "",
 
-    "team_update": {
+    "member_accept": {
         "webhook_url": "",
         "channel_id": "",
         "content": "{mention}",
         "embed": {
             "title": "",
-            "description": "{name} has joined **VTC** as a **Driver**.",
+            "description": "{name} has joined **VTC**.",
             "image_url": "",
             "footer": {
                 "text": "",
@@ -307,6 +307,10 @@ def validateConfig(cfg):
     if "allowed_navio_ips" in cfg.keys():
         cfg["allowed_tracker_ips"] = cfg["allowed_navio_ips"]
         del cfg["allowed_navio_ips"]
+
+    if not "member_accept" in cfg.keys() and "team_update" in cfg.keys():
+        cfg["member_accept"] = cfg["team_update"]
+        del cfg["team_update"]
 
     tcfg = {}
     for key in config_keys_order:

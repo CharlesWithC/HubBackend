@@ -1,4 +1,4 @@
-VERSION_CHAIN = ["v2_0_0", "v2_0_1", "v2_1_0", "v2_1_1"]
+VERSION_CHAIN = ["v2_0_0", "v2_0_1", "v2_1_0", "v2_1_1", "v2_1_2"]
 
 UPGRADEABLE_VERSION = ["v2_1_0", "v2_1_1"]
 

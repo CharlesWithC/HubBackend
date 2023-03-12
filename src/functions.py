@@ -1097,7 +1097,7 @@ async def AutoMessage(meta, setvar):
             }]})
         
         if meta.webhook_url != "":
-            r = await arequests.post(meta.webhook_url, data=data)
+            r = await arequests.post(meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
             if r.status_code == 401:
                 DisableDiscordIntegration()
 
