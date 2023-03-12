@@ -1,5 +1,14 @@
 # Changelog
 
+**v2.1.1**  
+1.Fixed upgrader failure due to `./upgrades/` does not exist by removing file log  
+2.Fixed application webhook being sent to division webhook  
+3.Fixed application permission issue  
+4.Fixed `user.activity` being `null`  
+5.Fixed multilang unable to handle `None` requests  
+6.Fixed `v2_1_0` upgrader not creating DATA DIRECTORY for `application` and removing `nxtuserid` in settings  
+7.Created `v2_1_1` upgrader to set DATA DIRECTORY for `application` and add `nxtuserid` back to settings  
+
 **v2.1.0**  
 **Breaking changes** ⚠️  
 **Note: This is a release focusing on updating the user system, to allow every user to have a uid and use uid to identify users, rather than using discordid.**  

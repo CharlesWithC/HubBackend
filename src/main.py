@@ -69,14 +69,14 @@ if __name__ == "__main__":
     if len(t) != 0:
         pre_version = t[0][0].replace(".rc", "").replace(".", "_")
     if pre_version != cur_version:
-        pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
-        if pre_idx == -1:
+        if not pre_version in upgrades.manager.VERSION_CHAIN:
             print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
             sys.exit(1)
-        cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
-        if cur_idx == -1:
+        pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
+        if not cur_version in upgrades.manager.VERSION_CHAIN:
             print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
             sys.exit(1)
+        cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
         for i in range(pre_idx + 1, cur_idx + 1):
             v = upgrades.manager.VERSION_CHAIN[i]
             if v in upgrades.manager.UPGRADEABLE_VERSION:

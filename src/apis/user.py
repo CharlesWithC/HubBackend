@@ -485,7 +485,8 @@ async def getUserList(request: Request, response: Response, authorization: str =
             user["ban"] = {"reason": tt[1], "expire": tt[2]}
         else:
             user["ban"] = None
-        del user["roles"]
+        if "roles" in user.keys():
+            del user["roles"]
         ret.append(user)
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{name}%'")
     t = await aiosql.fetchall(dhrid)

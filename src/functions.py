@@ -358,6 +358,8 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     if uid != -1 and f"uid={uid}" in cuserinfo.keys():
         if int(time.time()) < cuserinfo[f"uid={uid}"]["expire"]:
             ret = cuserinfo[f"uid={uid}"]["data"]
+            if ignore_activity:
+                ret["activity"] = None
             if not ignore_activity and (f"uid={uid}" not in cactivity.keys() or \
                 f"uid={uid}" in cactivity.keys() and int(time.time()) >= cactivity[f"uid={uid}"]["expire"]):
                 activity = None
@@ -446,9 +448,9 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     if userid == -1:
         userid = None
 
-    cuserinfo[f"uid={uid}"] = {"data": {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": None, "mfa": mfa_enabled, "join_timestamp": p[0][11]}, "expire": int(time.time()) + 15}
+    cuserinfo[f"uid={uid}"] = {"data": {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}, "expire": int(time.time()) + 15}
     
-    return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": None, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
+    return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
     if userid == -999:
@@ -561,9 +563,9 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
     if p[0][7] != -1:
         cuserinfo[f"discordid={p[0][7]}"] = {"uid": uid, "expire": int(time.time()) + 15}
         
-    cuserinfo[f"uid={uid}"] = {"data": {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": None, "mfa": mfa_enabled, "join_timestamp": p[0][11]}, "expire": int(time.time()) + 15}
+    cuserinfo[f"uid={uid}"] = {"data": {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}, "expire": int(time.time()) + 15}
     
-    return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": None, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
+    return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 async def ActivityUpdate(dhrid, uid, activity):
     if int(uid) <= 0:

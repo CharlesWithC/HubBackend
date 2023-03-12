@@ -152,7 +152,7 @@ async def getApplicationList(request: Request, response: Response, authorization
             for tt in application_types:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if str(role) in roles:
+                    if role in roles:
                         allowed_application_types.append(str(tt["id"]))
                         break
         else:
@@ -238,7 +238,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
             if str(tt["id"]) == str(application_type):
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if str(role) in roles:
+                    if role in roles:
                         ok = True
                         break
         if not ok:
@@ -379,7 +379,7 @@ async def postApplication(request: Request, response: Response, authorization: s
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(config.webhook_division, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -476,7 +476,7 @@ async def updateApplication(request: Request, response: Response, applicationid:
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(config.webhook_division, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -549,7 +549,7 @@ async def updateApplicationStatus(request: Request, response: Response, applicat
             if str(tt["id"]) == str(application_type):
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if str(role) in roles:
+                    if role in roles:
                         ok = True
                         break
         if not ok:

@@ -1,11 +1,14 @@
-VERSION_CHAIN = ["v2_0_0", "v2_0_1", "v2_1_0"]
+VERSION_CHAIN = ["v2_0_0", "v2_0_1", "v2_1_0", "v2_1_1"]
 
-UPGRADEABLE_VERSION = ["v2_1_0"]
+UPGRADEABLE_VERSION = ["v2_1_0", "v2_1_1"]
 
 UPGRADER = {}
 
 import upgrades.v2_1_0
 UPGRADER["v2_1_0"] = upgrades.v2_1_0
+
+import upgrades.v2_1_1
+UPGRADER["v2_1_1"] = upgrades.v2_1_1
 
 def delete_module(modname):
     from sys import modules
