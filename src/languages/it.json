@@ -33,7 +33,7 @@
     "leave_company_before_delete": "Lascia l'azienda prima di eliminare l'account.",
     "user_already_banned": "L'utente è già stato bannato.",
     "user_not_banned": "L'utente non è stato bannato.",
-    "unable_to_dm": "Non siamo in grado di inviarti DM in Discord.",
+    "unable_to_dm": "Non siamo in grado di inviarti DM in3Discord.",
 
     "steam_api_error": "Impossibile accedere alle API di Steam. Impossibile associare il tuo account di Steam.",
     "invalid_steam_auth": "L'autenticazione di Steam non è valida.",
@@ -144,6 +144,7 @@
     "departure_time": "Heure de départ",
 
     "notification": "Notifica",
+    "notification_not_found": "Notifica non trovata.",
     "discord_notification_enabled": "Vous avez activé les notifications Discord !",
     "new_login": "Nouvelle connexion depuis `{country}` (`{ip}`)",
     "new_login_title": "Nouvelle connexion",

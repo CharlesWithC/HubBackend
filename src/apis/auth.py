@@ -17,7 +17,7 @@ from pysteamsignin.steamsignin import SteamSignIn
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, config.discord_callback_url)
 
@@ -32,7 +32,7 @@ def getUrl4MFA(token):
 
 # Password Auth
 @app.post(f'/{config.abbr}/auth/password')
-async def postAuthPassword(request: Request, response: Response, authorization: str = Header(None)):    
+async def post_auth_password(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -138,12 +138,12 @@ async def postAuthPassword(request: Request, response: Response, authorization: 
 
 # Discord Auth
 @app.get(f'/{config.abbr}/auth/discord/redirect', response_class=RedirectResponse)
-async def getAuthDiscordRedirect(request: Request):
+async def get_auth_discord_redirect():
     # login_url = discord_auth.login()
     return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
     
 @app.get(f'/{config.abbr}/auth/discord/callback')
-async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
+async def get_auth_discord_callback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer in ["", "-", None]:
         return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
@@ -259,7 +259,7 @@ async def getAuthDiscordCallback(request: Request, code: Optional[str] = "", err
 
 # Steam Auth (Only for connecting account)
 @app.get(f"/{config.abbr}/auth/steam/redirect")
-async def getSteamOAuth(request: Request, response: Response, connect_account: Optional[bool] = False):
+async def get_auth_steam_redirect(connect_account: Optional[bool] = False):
     steamLogin = SteamSignIn()
     encodedData = ""
     if not connect_account:
@@ -270,7 +270,7 @@ async def getSteamOAuth(request: Request, response: Response, connect_account: O
     return RedirectResponse(url=url, status_code=302)
 
 @app.get(f"/{config.abbr}/auth/steam/connect")
-async def getSteamConnect(request: Request, response: Response):
+async def get_auth_steam_connect(request: Request):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if referer in ["", "-", None] or data == "":
@@ -282,7 +282,7 @@ async def getSteamConnect(request: Request, response: Response):
     return RedirectResponse(url=config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
 @app.get(f"/{config.abbr}/auth/steam/callback")
-async def getSteamCallback(request: Request, response: Response):
+async def get_auth_steam_callback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if referer in ["", "-", None] or data == "":
@@ -381,7 +381,7 @@ async def getSteamCallback(request: Request, response: Response):
 
 # Token Management
 @app.get(f'/{config.abbr}/token')
-async def getToken(request: Request, response: Response, authorization: str = Header(None)):    
+async def get_token(request: Request, response: Response, authorization: str = Header(None)):    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -402,7 +402,7 @@ async def getToken(request: Request, response: Response, authorization: str = He
     return {"token_type": token_type}
 
 @app.patch(f"/{config.abbr}/token")
-async def patchToken(request: Request, response: Response, authorization: str = Header(None)):    
+async def patch_token(request: Request, response: Response, authorization: str = Header(None)):    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -431,7 +431,7 @@ async def patchToken(request: Request, response: Response, authorization: str = 
     return {"token": stoken}
 
 @app.delete(f'/{config.abbr}/token')
-async def deleteToken(request: Request, response: Response, authorization: str = Header(None)):
+async def delete_token(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -455,7 +455,7 @@ async def deleteToken(request: Request, response: Response, authorization: str =
     return Response(status_code=204)
 
 @app.get(f'/{config.abbr}/token/list')
-async def getTokenList(request: Request, response: Response, authorization: str = Header(None), \
+async def get_token_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
     dhrid = request.state.dhrid
@@ -506,7 +506,7 @@ async def getTokenList(request: Request, response: Response, authorization: str 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.delete(f'/{config.abbr}/token/hash')
-async def deleteTokenHash(request: Request, response: Response, authorization: str = Header(None)):
+async def delete_token_hash(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -553,7 +553,7 @@ async def deleteTokenHash(request: Request, response: Response, authorization: s
         return {"error": ml.tr(request, "hash_does_not_match_any_token", force_lang = au["language"])}
 
 @app.delete(f'/{config.abbr}/token/all')
-async def deleteAllToken(request: Request, response: Response, authorization: str = Header(None), \
+async def delete_token_all(request: Request, response: Response, authorization: str = Header(None), \
         last_used_before: Optional[int] = -1):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -586,7 +586,7 @@ async def deleteAllToken(request: Request, response: Response, authorization: st
     return Response(status_code=204)
 
 @app.get(f'/{config.abbr}/token/application/list')
-async def getApplicationTokenList(request: Request, response: Response, authorization: str = Header(None), \
+async def get_token_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
     dhrid = request.state.dhrid
@@ -634,7 +634,7 @@ async def getApplicationTokenList(request: Request, response: Response, authoriz
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.post(f'/{config.abbr}/token/application')
-async def postApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
+async def post_token_application(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -688,7 +688,7 @@ async def postApplicationToken(request: Request, response: Response, authorizati
     return {"token": stoken}
 
 @app.delete(f'/{config.abbr}/token/application')
-async def deleteApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
+async def delete_token_application(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -730,7 +730,7 @@ async def deleteApplicationToken(request: Request, response: Response, authoriza
         return {"error": ml.tr(request, "hash_does_not_match_any_token", force_lang = au["language"])}
 
 @app.delete(f'/{config.abbr}/token/application/all')
-async def deleteAllApplicationToken(request: Request, response: Response, authorization: str = Header(None)):
+async def delete_token_application_all(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -754,7 +754,7 @@ async def deleteAllApplicationToken(request: Request, response: Response, author
 
 # Multiple Factor Authentication
 @app.post(f"/{config.abbr}/auth/mfa")
-async def postMFA(request: Request, response: Response):
+async def post_auth_mfa(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -829,7 +829,7 @@ async def postMFA(request: Request, response: Response):
     return {"token": stoken}
 
 @app.post(f"/{config.abbr}/auth/ticket")
-async def postAuthTicket(request: Request, response: Response, authorization: str = Header(None)):
+async def post_auth_ticket(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -856,7 +856,7 @@ async def postAuthTicket(request: Request, response: Response, authorization: st
     return {"token": stoken}
 
 @app.get(f"/{config.abbr}/auth/ticket")
-async def getAuthTicket(request: Request, response: Response, token: Optional[str] = ""):
+async def get_auth_ticket(request: Request, response: Response, token: Optional[str] = ""):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

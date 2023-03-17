@@ -11,14 +11,14 @@ from datetime import datetime, timedelta
 from importlib.machinery import SourceFileLoader
 
 import pymysql
-from fastapi import Header, Request, Response
+from fastapi import Header, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import DH_START_TIME, app, config, version
 from db import aiosql
-from functions import *
+from functions.main import *
 
 for external_plugin in config.external_plugins:
     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
@@ -28,31 +28,30 @@ for external_plugin in config.external_plugins:
         sys.exit(1)
 
 # import basic api
-import apis.admin
-import apis.auth
-import apis.dlog
-import apis.member
+from apis.admin import *
+from apis.auth import *
+from apis.dlog import *
+from apis.member.main import *
+from apis.user.main import *
 
 if config.tracker.lower() == "tracksim":
-    import apis.tracksim
+    from apis.tracksim import *
 elif config.tracker.lower() == "navio":
-    import apis.navio
-
-import apis.user
+    from apis.navio import *
 
 # import plugins
 if "announcement" in config.enabled_plugins:
-    import plugins.announcement
+    from plugins.announcement import *
 if "application" in config.enabled_plugins:
-    import plugins.application
+    from plugins.application import *
 if "challenge" in config.enabled_plugins:
-    import plugins.challenge
+    from plugins.challenge import *
 if "division" in config.enabled_plugins:
-    import plugins.division
+    from plugins.division import *
 if "downloads" in config.enabled_plugins:
-    import plugins.downloads
+    from plugins.downloads import *
 if "event" in config.enabled_plugins:
-    import plugins.event
+    from plugins.event import *
 
 # basic info
 @app.get(f'/{config.abbr}')

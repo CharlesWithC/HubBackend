@@ -144,6 +144,7 @@
     "departure_time": "Heure de départ",
 
     "notification": "Notification",
+    "notification_not_found": "Notification introuvable.",
     "discord_notification_enabled": "Vous avez activé les notifications Discord !",
     "new_login": "Nouvelle connexion depuis `{country}` (`{ip}`)",
     "new_login_title": "Nouvelle connexion",

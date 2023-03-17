@@ -13,13 +13,13 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 
 @app.get(f"/{config.abbr}/announcement/list")
-async def getAnnouncement(request: Request, response: Response, authorization: str = Header(None), \
+async def get_announcement_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", \
-        order_by: Optional[str] = "announcementid", title: Optional[str] = ""):
+        order_by: Optional[str] = "announcementid", query: Optional[str] = ""):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -43,9 +43,9 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0 "
-    if title != "":
-        title = convert_quotation(title)
-        limit += f"AND title LIKE '%{title[:200]}%' "
+    if query != "":
+        query = convert_quotation(query)
+        limit += f"AND title LIKE '%{query[:200]}%' "
 
     if page_size <= 1:
         page_size = 1
@@ -79,7 +79,7 @@ async def getAnnouncement(request: Request, response: Response, authorization: s
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/announcement/{{announcementid}}")
-async def getAnnouncement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+async def get_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -114,7 +114,7 @@ async def getAnnouncement(request: Request, response: Response, announcementid: 
     return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]}
 
 @app.post(f"/{config.abbr}/announcement")
-async def postAnnouncement(request: Request, response: Response, authorization: str = Header(None)):
+async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -184,7 +184,7 @@ async def postAnnouncement(request: Request, response: Response, authorization: 
     return {"announcementid": announcementid}
 
 @app.patch(f"/{config.abbr}/announcement/{{announcementid}}")
-async def patchAnnouncement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+async def patch_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -259,7 +259,7 @@ async def patchAnnouncement(request: Request, response: Response, announcementid
     return Response(status_code=204)
 
 @app.delete(f"/{config.abbr}/announcement/{{announcementid}}")
-async def deleteAnnouncement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+async def delete_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

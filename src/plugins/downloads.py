@@ -12,14 +12,14 @@ from fastapi.responses import RedirectResponse
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 
 @app.get(f"/{config.abbr}/downloads/list")
-async def getDownloadsList(request: Request, response: Response, authorization: str = Header(None),
+async def get_downloads_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
-        title: Optional[str] = "", creator_userid: Optional[int] = -1):
+        query: Optional[str] = "", creator_userid: Optional[int] = -1):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -41,9 +41,9 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     await ActivityUpdate(dhrid, au["uid"], "downloads")
         
     limit = ""
-    if title != "":
-        title = convert_quotation(title).lower()
-        limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
+    if query != "":
+        query = convert_quotation(query).lower()
+        limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
     if creator_userid != -1:
         limit += f"AND userid = {creator_userid} "
 
@@ -80,7 +80,7 @@ async def getDownloadsList(request: Request, response: Response, authorization: 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/downloads/{{downloadsid}}")
-async def getDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+async def get_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -123,7 +123,7 @@ async def getDownloads(request: Request, response: Response, downloadsid: int, a
         return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
 
 @app.get(f"/{config.abbr}/downloads/redirect/{{secret}}")
-async def redirectDownloads(request: Request, response: Response, secret: str):
+async def get_downloads_redirect(request: Request, response: Response, secret: str):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -158,7 +158,7 @@ async def redirectDownloads(request: Request, response: Response, secret: str):
     return RedirectResponse(url=link, status_code=302)
 
 @app.post(f"/{config.abbr}/downloads")
-async def postDownloads(request: Request, response: Response, authorization: str = Header(None)):
+async def post_downloads(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -210,7 +210,7 @@ async def postDownloads(request: Request, response: Response, authorization: str
     return {"downloadsid": downloadsid}
 
 @app.patch(f"/{config.abbr}/downloads/{{downloadsid}}")
-async def patchDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+async def patch_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -270,7 +270,7 @@ async def patchDownloads(request: Request, response: Response, downloadsid: int,
     return Response(status_code=204)
     
 @app.delete(f"/{config.abbr}/downloads/{{downloadsid}}")
-async def deleteDownloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+async def delete_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

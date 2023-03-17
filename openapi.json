@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.1.3"
+        "version": "2.1.4"
     },
     "paths": {
         "/abbr": {
@@ -286,7 +286,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user": {
+        "/abbr/user/profile": {
             "get": {
                 "summary": "Get User Information",
                 "tags": ["user"],
@@ -337,17 +337,17 @@
                 }],
                 "responses": {}
             },
-            "delete": {
-                "summary": "Delete User",
+            "patch": {
+                "summary": "Update Profile (Name, Avatar) (Using data from Discord)",
                 "tags": ["user"],
-                "operationId": "deleteUser",
+                "operationId": "patch_user_profile",
                 "security": [{
                     "bearerAuth": []
                 }],
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "UID",
+                        "title": "UID (To update another user's profile)",
                         "type": "integer"
                     },
                     "name": "uid",
@@ -399,7 +399,7 @@
                         "title": "Query with username",
                         "type": "string"
                     },
-                    "name": "name",
+                    "name": "query",
                     "in": "query"
                 }],
                 "responses": {},
@@ -491,7 +491,7 @@
                         "title": "Query with content",
                         "type": "string"
                     },
-                    "name": "content",
+                    "name": "query",
                     "in": "query"
                 }, {
                     "required": false,
@@ -505,7 +505,27 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/status": {
+        "/abbr/user/notification/{notificationid}": {
+            "get": {
+                "summary": "Get User Notification",
+                "tags": ["user"],
+                "operationId": "get_user_notification",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Notification ID",
+                        "type": "string"
+                    },
+                    "name": "notificationid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/user/notification/{notificationid}/status/{status}": {
             "patch": {
                 "summary": "Update User Notification Status",
                 "tags": ["user"],
@@ -516,29 +536,20 @@
                 "parameters": [{
                     "required": true,
                     "schema": {
-                        "title": "Notification IDs (Separate with ','), or 'all' to update all status",
+                        "title": "Notification ID, use 'all' to update all status",
                         "type": "string"
                     },
-                    "name": "notificationids",
-                    "in": "query"
-                }],
-                "requestBody": {
+                    "name": "notificationid",
+                    "in": "path"
+                }, {
                     "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "read": {
-                                        "description": "Read",
-                                        "type": "boolean"
-                                    }
-                                }
-                            },
-                            "required": ["read"]
-                        }
-                    }
-                },
+                    "schema": {
+                        "title": "Status (Read)",
+                        "type": "int"
+                    },
+                    "name": "status",
+                    "in": "path"
+                }],
                 "responses": {}
             }
         },
@@ -553,7 +564,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/{notification_type}/enable": {
+        "/abbr/user/notification/settings/{notification_type}/enable": {
             "post": {
                 "summary": "Enable Notification",
                 "tags": ["user"],
@@ -573,7 +584,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/{notification_type}/disable": {
+        "/abbr/user/notification/settings/{notification_type}/disable": {
             "post": {
                 "summary": "Disable Notification",
                 "tags": ["user"],
@@ -589,26 +600,6 @@
                     },
                     "name": "notification_type",
                     "in": "path"
-                }],
-                "responses": {}
-            }
-        },
-        "/abbr/user/profile": {
-            "patch": {
-                "summary": "Update Profile (Name, Avatar) (Using data from Discord)",
-                "tags": ["user"],
-                "operationId": "patch_user_profile",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "parameters": [{
-                    "required": false,
-                    "schema": {
-                        "title": "UID (To update another user's profile)",
-                        "type": "integer"
-                    },
-                    "name": "uid",
-                    "in": "query"
                 }],
                 "responses": {}
             }
@@ -671,8 +662,10 @@
                     }
                 },
                 "responses": {}
-            },
-            "delete": {
+            }
+        },
+        "/abbr/user/password/disable": {
+            "post": {
                 "summary": "Disable Password Login",
                 "tags": ["user"],
                 "operationId": "delete_user_password",
@@ -729,8 +722,10 @@
                     }
                 },
                 "responses": {}
-            },
-            "delete": {
+            }
+        },
+        "/abbr/user/mfa/disable": {
+            "post": {
                 "summary": "Disable MFA",
                 "tags": ["user"],
                 "operationId": "delete_user_mfa",
@@ -805,13 +800,62 @@
                 "responses": {}
             }
         },
-        "/abbr/user/ban": {
+        "/abbr/user/{uid}/accept": {
+            "post": {
+                "summary": "Accept user as member",
+                "tags": ["user"],
+                "operationId": "post_user_accept",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/user/{uid}": {
+            "delete": {
+                "summary": "Delete User",
+                "tags": ["user"],
+                "operationId": "deleteUser",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/user/{uid}/ban": {
             "put": {
                 "summary": "Ban User",
                 "tags": ["user"],
                 "operationId": "put_user_ban",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "path"
                 }],
                 "requestBody": {
                     "required": true,
@@ -820,10 +864,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "discordid": {
-                                        "description": "Discord Snowflake",
-                                        "type": "integer"
-                                    },
                                     "expire": {
                                         "description": "Ban Expiration Timestamp (Use -1 to ban forever)",
                                         "type": "integer"
@@ -847,33 +887,34 @@
                 "security": [{
                     "bearerAuth": []
                 }],
-                "requestBody": {
+                "parameters": [{
                     "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "discordid": {
-                                        "description": "Discord Snowflake",
-                                        "type": "integer"
-                                    }
-                                }
-                            },
-                            "required": ["discordid"]
-                        }
-                    }
-                },
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "path"
+                }],
                 "responses": {}
             }
         },
-        "/abbr/user/discord": {
+        "/abbr/user/{uid}/discord": {
             "patch": {
                 "summary": "Update User Dicsord Snowflake",
                 "tags": ["user"],
                 "operationId": "patch_user_discord",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "path"
                 }],
                 "requestBody": {
                     "required": true,
@@ -882,11 +923,7 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "old_discord_id": {
-                                        "description": "Old Discord Snowflake",
-                                        "type": "integer"
-                                    },
-                                    "new_discord_id": {
+                                    "discord_id": {
                                         "description": "New Discord Snowflake",
                                         "type": "integer"
                                     }
@@ -899,7 +936,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/connections": {
+        "/abbr/user/{uid}/connections": {
             "delete": {
                 "summary": "Delete User Account Connections",
                 "tags": ["user"],
@@ -908,13 +945,13 @@
                     "bearerAuth": []
                 }],
                 "parameters": [{
-                    "required": false,
+                    "required": true,
                     "schema": {
                         "title": "UID",
                         "type": "integer"
                     },
                     "name": "uid",
-                    "in": "query"
+                    "in": "path"
                 }],
                 "responses": {}
             }
@@ -1063,36 +1100,6 @@
                 "summary": "Get All Roles",
                 "tags": ["member"],
                 "operationId": "get_member_roles",
-                "responses": {}
-            },
-            "patch": {
-                "summary": "Update Member Roles",
-                "tags": ["member"],
-                "operationId": "patch_member_roles",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "userid": {
-                                        "description": "User ID",
-                                        "type": "integer"
-                                    },
-                                    "roles": {
-                                        "description": "Roles (Use Role ID, Separate with ',')",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["userid", "roles"]
-                        }
-                    }
-                },
                 "responses": {}
             }
         },
@@ -1243,70 +1250,6 @@
                 "responses": {}
             }
         },
-        "/abbr/member": {
-            "put": {
-                "summary": "Add Member",
-                "tags": ["member"],
-                "operationId": "put_member",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "uid": {
-                                        "description": "UID",
-                                        "type": "integer"
-                                    }
-                                }
-                            },
-                            "required": ["uid"]
-                        }
-                    }
-                },
-                "responses": {}
-            }
-        },
-        "/abbr/member/point": {
-            "patch": {
-                "summary": "Update Member Points",
-                "tags": ["member"],
-                "operationId": "patch_member_point",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "userid": {
-                                        "description": "User ID",
-                                        "type": "integer"
-                                    },
-                                    "distance": {
-                                        "description": "Distance (km)",
-                                        "type": "string"
-                                    },
-                                    "mythpoint": {
-                                        "description": "Myth Point",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["userid", "distance", "mythpoint"]
-                        }
-                    }
-                },
-                "responses": {}
-            }
-        },
         "/abbr/member/resign": {
             "post": {
                 "summary": "Member Resign",
@@ -1335,7 +1278,85 @@
                 "responses": {}
             }
         },
-        "/abbr/member/dismiss/{userid}": {
+        "/abbr/member/{userid}/roles": {
+            "patch": {
+                "summary": "Update Member Roles",
+                "tags": ["member"],
+                "operationId": "patch_member_roles",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "roles": {
+                                        "description": "Roles",
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "required": ["roles"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/member/{userid}/points": {
+            "patch": {
+                "summary": "Update Member Points",
+                "tags": ["member"],
+                "operationId": "patch_member_points",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "distance": {
+                                        "description": "Distance (km)",
+                                        "type": "string"
+                                    },
+                                    "mythpoint": {
+                                        "description": "Myth Point",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["distance", "mythpoint"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/member/{userid}/dismiss": {
             "post": {
                 "summary": "Dismiss Member",
                 "tags": ["member"],
@@ -1420,11 +1441,11 @@
                 "responses": {}
             }
         },
-        "/abbr/audit": {
+        "/abbr/audit/list": {
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["admin"],
-                "operationId": "get_audit",
+                "operationId": "get_audit_list",
                 "security": [{
                     "bearerAuth": []
                 }],
@@ -1455,10 +1476,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Operation",
+                        "title": "Query with Operation",
                         "type": "string"
                     },
-                    "name": "operation",
+                    "name": "query",
                     "in": "query"
                 }],
                 "responses": {}
@@ -1928,10 +1949,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Title (for searching)",
+                        "title": "Query with title",
                         "type": "string"
                     },
-                    "name": "title",
+                    "name": "query",
                     "in": "query"
                 }],
                 "responses": {}
@@ -2385,10 +2406,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Title",
+                        "title": "Query with title",
                         "type": "string"
                     },
-                    "name": "title",
+                    "name": "query",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2878,10 +2899,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Title (for searching)",
+                        "title": "Query with title",
                         "type": "string"
                     },
-                    "name": "title",
+                    "name": "query",
                     "in": "query"
                 }, {
                     "required": false,
@@ -3074,10 +3095,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Title (for searching)",
+                        "title": "Query with title",
                         "type": "string"
                     },
-                    "name": "title",
+                    "name": "query",
                     "in": "query"
                 }, {
                     "required": false,

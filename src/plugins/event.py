@@ -11,7 +11,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql, genconn
-from functions import *
+from functions.main import *
 
 
 def EventNotification():        
@@ -87,8 +87,8 @@ def EventNotification():
         time.sleep(60)
 
 @app.get(f"/{config.abbr}/event/list")
-async def getEvent(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
+async def get_event_list(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         first_event_after: Optional[int] = -1):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -117,9 +117,9 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0 "
-    if title != "":
-        title = convert_quotation(title).lower()
-        limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
+    if query != "":
+        query = convert_quotation(query).lower()
+        limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
     if page <= 0:
         page = 1
@@ -187,7 +187,7 @@ async def getEvent(request: Request, response: Response, authorization: str = He
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/event/{{eventid}}")
-async def getEvent(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def get_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -236,7 +236,7 @@ async def getEvent(request: Request, response: Response, eventid: int, authoriza
     return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
 
 @app.put(f"/{config.abbr}/event/{{eventid}}/vote")
-async def putEventVote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def put_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -274,7 +274,7 @@ async def putEventVote(request: Request, response: Response, eventid: int, autho
         return Response(status_code=204)
     
 @app.delete(f"/{config.abbr}/event/{{eventid}}/vote")
-async def deleteEventVote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def delete_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -312,7 +312,7 @@ async def deleteEventVote(request: Request, response: Response, eventid: int, au
         return {"error": ml.tr(request, "event_not_voted", force_lang = au["language"])}
 
 @app.post(f"/{config.abbr}/event")
-async def postEvent(request: Request, response: Response, authorization: str = Header(None)):
+async def post_event(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -370,7 +370,7 @@ async def postEvent(request: Request, response: Response, authorization: str = H
     return {"eventid": eventid}
 
 @app.patch(f"/{config.abbr}/event/{{eventid}}")
-async def patchEvent(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def patch_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -437,7 +437,7 @@ async def patchEvent(request: Request, response: Response, eventid: int, authori
     return Response(status_code=204)
 
 @app.delete(f"/{config.abbr}/event/{{eventid}}")
-async def deleteEvent(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def delete_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -471,7 +471,7 @@ async def deleteEvent(request: Request, response: Response, eventid: int, author
     return Response(status_code=204)
 
 @app.patch(f"/{config.abbr}/event/{{eventid}}/attendees")
-async def patchEventAttendee(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+async def patch_event_attendees(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

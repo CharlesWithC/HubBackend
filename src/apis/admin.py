@@ -15,7 +15,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
-from functions import *
+from functions.main import *
 
 config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
@@ -26,9 +26,10 @@ config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_clie
 
 backup_config = copy.deepcopy(tconfig)
 
-# get config
 @app.get(f"/{config.abbr}/config")
-async def getConfig(request: Request, response: Response, authorization: str = Header(None)):    
+async def get_config(request: Request, response: Response, authorization: str = Header(None)):
+    """Returns saved config (config) and loaded config (backup)"""
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -91,15 +92,16 @@ async def getConfig(request: Request, response: Response, authorization: str = H
 
     return {"config": ffconfig, "backup": ttconfig}
 
-# thread to restart service
 def restart():
     os.system(f"nohup ./launcher tracker restart {config.abbr} > /dev/null")
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
 
-# update config
 @app.patch(f"/{config.abbr}/config")
-async def patchConfig(request: Request, response: Response, authorization: str = Header(None)):    
+async def patch_config(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates the config, only those specified in `config` will be updated
+    
+    JSON: `{"config": {}}`"""
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -229,9 +231,10 @@ async def patchConfig(request: Request, response: Response, authorization: str =
 
     return Response(status_code=204)
 
-# restart service
 @app.post(f"/{config.abbr}/restart")
-async def postRestart(request: Request, response: Response, authorization: str = Header(None)):    
+async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
+    """Restarts API service in a thread, returns 204"""
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -272,9 +275,11 @@ async def postRestart(request: Request, response: Response, authorization: str =
     return Response(status_code=204)
 
 # get audit log (require audit / admin permission)
-@app.get(f"/{config.abbr}/audit")
-async def getAudit(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):    
+@app.get(f"/{config.abbr}/audit/list")
+async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
+    """Returns a list of audit log"""
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

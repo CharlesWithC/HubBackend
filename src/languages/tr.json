@@ -144,6 +144,7 @@
     "departure_time": "Kalkış Zamanı",
 
     "notification": "Bildirim",
+    "notification_not_found": "Bildirim bulunamadı.",
     "discord_notification_enabled": "Discord Bildirimlerini etkinleştirdiniz!",
     "new_login": "Yeni giriş: `{country}` (`{ip}`)",
     "new_login_title": "Yeni Giriş",

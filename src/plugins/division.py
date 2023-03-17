@@ -11,7 +11,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 divisions = config.divisions
 divisionsGET = divisions
@@ -44,12 +44,12 @@ for division in divisions:
 
 # Basic info
 @app.get(f"/{config.abbr}/division/list")
-async def getDivisions():
+async def get_division_list():
     return divisionsGET
 
 # Get division info
 @app.get(f"/{config.abbr}/division")
-async def getDivision(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+async def get_division(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -87,7 +87,7 @@ async def getDivision(request: Request, response: Response, authorization: str =
 
 # Get division info
 @app.get(f"/{config.abbr}/dlog/{{logid}}/division")
-async def getDlogDivision(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+async def get_dlog_division(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -145,7 +145,7 @@ async def getDlogDivision(request: Request, response: Response, logid: int, auth
 
 # Self-operation
 @app.post(f"/{config.abbr}/dlog/{{logid}}/division/{{divisionid}}")
-async def postDivision(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
+async def post_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -242,7 +242,7 @@ async def postDivision(request: Request, response: Response, logid: int, divisio
     return Response(status_code=204)
 
 @app.patch(f"/{config.abbr}/dlog/{{logid}}/division/{{divisionid}}")
-async def patchDivision(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
+async def patch_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -301,7 +301,7 @@ async def patchDivision(request: Request, response: Response, logid: int, divisi
     return Response(status_code=204)
 
 @app.get(f"/{config.abbr}/division/list/pending")
-async def getDivisionsPending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
+async def get_division_list_pending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
         page: Optional[int] = 1, page_size: Optional[int] = 10):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

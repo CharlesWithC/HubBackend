@@ -144,6 +144,7 @@
     "departure_time": "Afgangstid",
 
     "notification": "Meddelelse",
+    "notification_not_found": "Meddelelse ikke fundet.",
     "discord_notification_enabled": "Du har aktiveret Discord-meddelelser!",
     "new_login": "Nyt login fra `{country}` (`{ip}`)",
     "new_login_title": "Nyt login",

@@ -13,7 +13,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 application_types = config.application_types
 to_delete = []
@@ -27,14 +27,14 @@ for i in to_delete[::-1]:
 
 # Basic Info
 @app.get(f"/{config.abbr}/application/types")
-async def getApplicationTypes():
+async def get_application_types():
     APPLICATIONS_TYPES = []
     for t in application_types:
         APPLICATIONS_TYPES.append({"applicationid": str(t["id"]), "name": t["name"]})
     return APPLICATIONS_TYPES
 
 @app.get(f"/{config.abbr}/application/positions")
-async def getApplicationPositions(request: Request):
+async def get_application_positions(request: Request):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
@@ -50,7 +50,7 @@ async def getApplicationPositions(request: Request):
         return ret
 
 @app.patch(f"/{config.abbr}/application/positions")
-async def patchApplicationPositions(request: Request, response: Response, authorization: str = Header(None)):
+async def post_application_positions(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -91,7 +91,7 @@ async def patchApplicationPositions(request: Request, response: Response, author
 
 # Get Application
 @app.get(f"/{config.abbr}/application/list")
-async def getApplicationList(request: Request, response: Response, authorization: str = Header(None), \
+async def get_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
     dhrid = request.state.dhrid
@@ -197,7 +197,7 @@ async def getApplicationList(request: Request, response: Response, authorization
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/application/{{applicationid}}")
-async def getApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+async def get_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -249,7 +249,7 @@ async def getApplication(request: Request, response: Response, applicationid: in
 
 # Self-operation
 @app.post(f"/{config.abbr}/application")
-async def postApplication(request: Request, response: Response, authorization: str = Header(None)):
+async def post_application(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -388,7 +388,7 @@ async def postApplication(request: Request, response: Response, authorization: s
     return {"applicationid": applicationid}
 
 @app.patch(f"/{config.abbr}/application/{{applicationid}}")
-async def updateApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+async def patch_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -486,7 +486,7 @@ async def updateApplication(request: Request, response: Response, applicationid:
 
 # Management
 @app.patch(f"/{config.abbr}/application/{{applicationid}}/status")
-async def updateApplicationStatus(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+async def update_application_status(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -581,7 +581,7 @@ async def updateApplicationStatus(request: Request, response: Response, applicat
     return Response(status_code=204)
 
 @app.delete(f"/{config.abbr}/application/{{applicationid}}")
-async def deleteApplication(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+async def delete_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

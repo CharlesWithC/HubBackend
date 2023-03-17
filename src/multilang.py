@@ -156,6 +156,7 @@ EN_STRINGTABLE = {
     "departure_time": "Departure Time",
 
     "notification": "Notification",
+    "notification_not_found": "Notification not found.",
     "discord_notification_enabled": "You have enabled Discord Notifications!",
     "new_login": "New login from `{country}` (`{ip}`)",
     "new_login_title": "New Login",

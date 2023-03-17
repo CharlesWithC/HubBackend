@@ -1,5 +1,36 @@
 # Changelog
 
+**v2.1.4**  
+1.Fixed challenge system `required_roles` validation  
+2.Updated routes, request json data format, request param format (see table below)  
+3.Added `/user/notification/{{notificationid}}` to get specific notification with notification id  
+4.Improved code base  
+
+|Route|Remark|
+--|--|
+|**GET** `/user`|Moved to **GET** `/user/profile`|
+|**GET** `/audit`|Moved to **GET** `/audit/list`|
+|**GET** `/user/list`|Renamed `?name` to `?query`|
+|**GET** `/member/list`|Renamed `?name` to `?query`|
+|**GET** `/user/notification/list`|Renamed `?content` to `?query`|
+|**GET** `/audit/list`|Renamed `?operation` to `?query`|
+|**GET** `/announcement/list`|Renamed `?title` to `?query`|
+|**GET** `/challenge/list`|Renamed `?title` to `?query`|
+|**GET** `/downloads/list`|Renamed `?title` to `?query`|
+|**GET** `/event/list`|Renamed `?title` to `?query`|
+|**DELETE** `/user/password`|Moved to **POST** `/user/password/disable`|
+|**DELETE** `/user/mfa`|Moved to **POST** `/user/mfa/disable`|
+|**PUT/DELETE** `/user/ban`|Moved `uid` in JSON to path `/user/{uid}/ban`|
+|**PATCH** `/user/discord`|Updated and moved `old_discord_id` in JSON to `uid` in path `/user/{uid}/discord`, renamed `new_discord_id` in JSON to `discordid`|
+|**DELETE** `/user/connections`|Moved `uid` in request param to path `/user/{uid}/connections`|
+|**DELETE** `/user`|Moved `uid` in request param to path `/user/{uid}`|
+|**PATCH** `/user/notification/status`|Moved to **PATCH** `/user/notification/{notificationid}/status/{status}`|
+|**POST** `/user/notification/{notification_type}/enable`|Moved to **POST** `/user/notification/settings/{notification_type}/enable`|
+|**POST** `/user/notification/{notification_type}/disable`|Moved to **POST** `/user/notification/settings/{notification_type}/disable`|
+|**PUT** `/member`|Moved to **POST** `/user/{uid}/accept`|
+|**PATCH** `/member/roles`|Moved `userid` in JSON to path `/member/{userid}/roles`|
+|**PATCH** `/member/point`|Renamed and moved `userid` in JSON to path `/member/{userid}/points`|
+
 **v2.1.3**  
 1.Fixed steam/truckersmp connection validation when adding driver role  
 2.Fixed error when sending notification to a `uid = None` user  

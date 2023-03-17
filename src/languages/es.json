@@ -144,6 +144,7 @@
     "departure_time": "Hora de salida",
 
     "notification": "Notificación",
+    "notification_not_found": "Notificación no encontrada.",
     "discord_notification_enabled": "¡Has habilitado las notificaciones de Discord!",
     "new_login": "Nuevo inicio de sesión desde `{country}` (`{ip}`)",
     "new_login_title": "Nuevo inicio de sesión",

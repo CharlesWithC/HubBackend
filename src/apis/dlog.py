@@ -14,7 +14,7 @@ from fastapi.responses import StreamingResponse
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 from plugins.division import DIVISIONPNT, divisiontxt
 
 # cache (works in each worker process)
@@ -25,7 +25,7 @@ callusers = []
 callusers_ts = 0
 
 @app.get(f"/{config.abbr}/dlog/list")
-async def getDlogList(request: Request, response: Response, authorization: str = Header(None), \
+async def get_dlog_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
         speed_limit: Optional[int] = 0, userid: Optional[int] = None, \
@@ -205,7 +205,7 @@ async def getDlogList(request: Request, response: Response, authorization: str =
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.get(f"/{config.abbr}/dlog/statistics/summary")
-async def getDlogStats(request: Request, response: Response, authorization: str = Header(None), \
+async def get_dlog_statistics_summary(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, userid: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
@@ -425,7 +425,7 @@ async def getDlogStats(request: Request, response: Response, authorization: str 
     return ret
 
 @app.get(f"/{config.abbr}/dlog/statistics/chart")
-async def getDlogChart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
+async def get_dlog_statistics_chart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         ranges: Optional[int] = 30, interval: Optional[int] = 86400, before: Optional[int] = None, \
         sum_up: Optional[bool] = False, userid: Optional[int] = None):
     dhrid = request.state.dhrid
@@ -556,7 +556,7 @@ async def getDlogChart(request: Request, response: Response, authorization: Opti
     return ret
 
 @app.get(f"/{config.abbr}/dlog/leaderboard")
-async def getDlogLeaderboard(request: Request, response: Response, authorization: str = Header(None), \
+async def get_dlog_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = None, end_time: Optional[int] = None, \
         speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
@@ -991,7 +991,7 @@ async def getDlogLeaderboard(request: Request, response: Response, authorization
             "cache": cachetime, "cache_no_limit": nlcachetime}
 
 @app.get(f"/{config.abbr}/dlog/export")
-async def getDlogExport(request: Request, response: Response, authorization: str = Header(None), \
+async def get_dlog_export(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, include_ids: Optional[bool] = False):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -1238,7 +1238,7 @@ async def getDlogExport(request: Request, response: Response, authorization: str
     return response
 
 @app.get(f"/{config.abbr}/dlog/{{logid}}")
-async def getDlogInfo(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+async def get_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -1335,7 +1335,7 @@ async def getDlogInfo(request: Request, response: Response, logid: int, authoriz
             "detail": data, "telemetry": telemetry}
 
 @app.delete(f"/{config.abbr}/dlog/{{logid}}")
-async def deleteDlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

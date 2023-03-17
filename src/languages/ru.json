@@ -144,6 +144,7 @@
     "departure_time": "Время отправления",
 
     "notification": "Уведомление",
+    "notification_not_found": "Уведомление не найдено.",
     "discord_notification_enabled": "Вы включили уведомления Discord!",
     "new_login": "Новый логин из `{country}` (`{ip}`)",
     "new_login_title": "Новый логин",

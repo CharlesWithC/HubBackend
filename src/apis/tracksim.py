@@ -14,10 +14,9 @@ from dateutil import parser
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from apis.member import RANKROLE
 from app import app, config, config_path, tconfig, validateConfig
-from db import aiosql, genconn
-from functions import *
+from db import aiosql
+from functions.main import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
@@ -91,7 +90,7 @@ async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
         await aiosql.close_conn(dhrid)
         
 @app.post(f"/{config.abbr}/tracksim/setup")
-async def postTrackSimSetup(response: Response, request: Request, authorization: str = Header(None)):
+async def post_tracksim_setup(response: Response, request: Request, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -148,7 +147,7 @@ async def postTrackSimSetup(response: Response, request: Request, authorization:
     return Response(status_code=204)
     
 @app.post(f"/{config.abbr}/tracksim/update")
-async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
+async def post_tracksim_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -490,16 +489,15 @@ async def postTrackSimUpdate(response: Response, request: Request, TrackSim_Sign
                     challenge_type = tt[1]
                     delivery_count = tt[2]
                     required_roles = tt[3].split(",")[:20]
+                    required_roles = [int(x) for x in required_roles if isint(x)]
                     reward_points = tt[4]
                     job_requirements = tt[5]
                     title = tt[6]
 
                     rolesok = False
                     if len(required_roles) == 0:
-                        roleok = True
+                        rolesok = True
                     for r in required_roles:
-                        if r == "":
-                            continue
                         if r in roles:
                             rolesok = True
                     if not rolesok:

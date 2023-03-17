@@ -10,7 +10,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions import *
+from functions.main import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
 JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int, "minimum_average_speed": int, "maximum_average_speed": int, "minimum_average_fuel": float, "maximum_average_fuel": float}
@@ -45,8 +45,8 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points
 # if userid is specified, then add "finished_delivery_count"
 @app.get(f"/{config.abbr}/challenge/list")
-async def getChallengeList(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, title: Optional[str] = "", \
+async def get_challenge_list(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         start_time: Optional[int] = -1, end_time: Optional[int] = -1, challenge_type: Optional[int] = 0,
         required_role: Optional[int] = -1, minimum_required_distance: Optional[int] = -1, maximum_required_distance: Optional[int] = -1,\
         userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
@@ -77,9 +77,9 @@ async def getChallengeList(request: Request, response: Response, authorization: 
     
     query_limit = "WHERE challengeid >= 0 "
 
-    if title != "":
-        title = convert_quotation(title).lower()
-        query_limit += f"AND LOWER(title) LIKE '%{title[:200]}%' "
+    if query != "":
+        query = convert_quotation(query).lower()
+        query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
     if start_time != -1 and end_time != -1:
         query_limit += f"AND start_time >= {start_time} AND end_time <= {end_time} "
@@ -174,7 +174,7 @@ async def getChallengeList(request: Request, response: Response, authorization: 
 # returns requirement if public_details = true and user is not staff
 #                     or if public_details = false
 @app.get(f"/{config.abbr}/challenge/{{challengeid}}")
-async def getChallenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = -1):
+async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = -1):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -282,7 +282,7 @@ async def getChallenge(request: Request, response: Response, challengeid: int, a
 #   - float: maximum_average_fuel (L/100km)
 
 @app.post(f"/{config.abbr}/challenge")
-async def postChallenge(request: Request, response: Response, authorization: str = Header(None)):
+async def post_challenge(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -399,7 +399,7 @@ async def postChallenge(request: Request, response: Response, authorization: str
 # JSON DATA
 # *Same as POST /challenge
 @app.patch(f"/{config.abbr}/challenge/{{challengeid}}")
-async def patchChallenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
+async def patch_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -787,7 +787,7 @@ async def patchChallenge(request: Request, response: Response, challengeid: int,
 # REQUEST PARAM
 # - integer: challengeid
 @app.delete(f"/{config.abbr}/challenge/{{challengeid}}")
-async def deleteChallenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
+async def delete_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -829,7 +829,7 @@ async def deleteChallenge(request: Request, response: Response, challengeid: int
 # - integer: logid
 # => manually accept a delivery as challenge
 @app.put(f"/{config.abbr}/challenge/{{challengeid}}/delivery/{{logid}}")
-async def putChallengeDelivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
+async def put_challenge_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -974,7 +974,7 @@ async def putChallengeDelivery(request: Request, response: Response, challengeid
 # - integer: logid
 # => denies a delivery as challenge
 @app.delete(f"/{config.abbr}/challenge/{{challengeid}}/delivery/{{logid}}")
-async def deleteChallengeDelivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
+async def delete_challenge_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 

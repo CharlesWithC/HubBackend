@@ -1,0 +1,60 @@
+import json
+import random
+import re
+import time
+from datetime import datetime
+
+import requests
+
+from functions.dataop import *
+from static import *
+
+
+def genrid():
+    return str(int(time.time()*10000000)) + str(random.randint(0, 10000)).zfill(5)
+
+def getDayStartTs(timestamp):
+    dt = datetime.fromtimestamp(timestamp)
+    return int(datetime(dt.year, dt.month, dt.day).timestamp())
+
+def isurl(s):
+    r = re.compile(
+            r'^(?:http)s?://' # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+            r'localhost|' #localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+            r'(?::\d+)?' # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return re.match(r, s) is not None
+
+def getFullCountry(abbr):
+    if abbr.upper() in ISO3166_COUNTRIES.keys():
+        return convert_quotation(ISO3166_COUNTRIES[abbr.upper()])
+    else:
+        return ""
+
+def getRequestCountry(request, abbr = False):
+    if "cf-ipcountry" in request.headers.keys():
+        country = request.headers["cf-ipcountry"]
+        if country.upper() in ISO3166_COUNTRIES.keys(): # makre sure abbr is a valid country code
+            if abbr:
+                return convert_quotation(request.headers["cf-ipcountry"])
+            else:
+                return convert_quotation(ISO3166_COUNTRIES[country.upper()])
+    return ""
+
+def getUserAgent(request):
+    if "user-agent" in request.headers.keys():
+        if len(request.headers["user-agent"]) <= 200:
+            return convert_quotation(request.headers["user-agent"])
+        return ""
+    else:
+        return ""
+    
+def DisableDiscordIntegration():
+    global config
+    config.discord_bot_token = ""
+    try:
+        requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+    except:
+        pass
