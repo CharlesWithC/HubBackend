@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.1.3**  
+1.Fixed steam/truckersmp connection validation when adding driver role  
+2.Fixed error when sending notification to a `uid = None` user  
+3.Fixed error when updating user's Discord connection  
+4.Updated `/member/roles` to take json data in request  
+5.Disabled error webhook on database errors  
+
 **v2.1.2**  
 1.Fixed `AutoMessage` cannot be sent when using webhook  
 2.Removed `member_leave` on driver role removal, removed `member_accept` and `member_welcome` on driver role addition, moved `member_accept` and `member_welcome` to be sent on member acceptance  

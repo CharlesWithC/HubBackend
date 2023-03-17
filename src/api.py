@@ -146,14 +146,6 @@ async def dispatch(request: Request, call_next):
 
         if ismysqlerr:
             print(f"DATABASE ERROR\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
-            
-            if err_hash not in session_errs:
-                session_errs.append(err_hash)
-                if config.webhook_error != "":
-                    try:
-                        await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Database Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
-                    except:
-                        pass
 
             global dberr
             if not -1 in dberr and int(time.time()) - aiosql.POOL_START_TIME >= 60 and aiosql.POOL_START_TIME != 0:
@@ -171,6 +163,7 @@ async def dispatch(request: Request, call_next):
                         pass
                     threading.Thread(target=restart).start()
                     dberr.append(-1)
+                    
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
         
         else:

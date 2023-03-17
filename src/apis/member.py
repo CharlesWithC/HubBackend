@@ -605,7 +605,10 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
     data = await request.json()
     try:
         userid = int(data["userid"])
-        roles = str(data["roles"]).split(",")
+        roles = data["roles"]
+        if type(roles) != list:
+            response.status_code = 400
+            return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
         roles = [int(x) for x in roles if isint(x)]
     except:
         response.status_code = 400
@@ -671,10 +674,10 @@ async def patchMemberRoles(request: Request, response: Response, authorization: 
             return {"error": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
 
     if config.perms.driver[0] in addedroles:
-        if steamid <= 0:
+        if steamid is None:
             response.status_code = 428
             return {"error": ml.tr(request, "steam_not_bound", force_lang = au["language"])}
-        if truckersmpid <= 0 and config.truckersmp_bind:
+        if truckersmpid is None and config.truckersmp_bind:
             response.status_code = 428
             return {"error": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
 

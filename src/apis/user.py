@@ -1154,25 +1154,26 @@ async def patchUserDiscord(request: Request, response: Response, authorization: 
     await aiosql.execute(dhrid, f"SELECT uid, userid FROM user WHERE discordid = {new_discord_id}")
     t = await aiosql.fetchall(dhrid)
     if len(t) >= 0:
-        # an account exists with the new discordid
-        if t[0][1] != -1:
-            response.status_code = 409
-            return {"error": ml.tr(request, "user_must_not_be_member", force_lang = au["language"])}
-        new_uid = t[0][0]
-
         # delete account of new discord, and both sessions
         await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {old_uid}")
         await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {old_uid}")
         await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {old_uid}")
 
-        await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {new_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {new_uid}")
+        # an account exists with the new discordid
+        if len(t) > 0:
+            if t[0][1] != -1:
+                response.status_code = 409
+                return {"error": ml.tr(request, "user_must_not_be_member", force_lang = au["language"])}
+            new_uid = t[0][0]
+
+            await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {new_uid}")
 
     # update discord binding
     await aiosql.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")

@@ -568,7 +568,7 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": str(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 async def ActivityUpdate(dhrid, uid, activity):
-    if int(uid) <= 0:
+    if uid is None or int(uid) <= 0:
         return
     activity = convert_quotation(activity)
     await aiosql.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
@@ -772,7 +772,7 @@ async def CheckNotificationEnabled(dhrid, notification_type, uid):
 
 async def notification(dhrid, notification_type, uid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):
-    if int(uid) <= 0:
+    if uid is None or int(uid) <= 0:
         return
     
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
