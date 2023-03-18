@@ -12,9 +12,7 @@ from functions.main import *
 
 @app.patch(f'/{config.abbr}/user/password')
 async def patch_user_password(request: Request, response: Response, authorization: str = Header(None)):
-    """Updates the password of the authorized user, returns 204
-    
-    [DEPRECATED] This function will be moved or removed when the user system no longer relies on Discord."""
+    """Updates the password of the authorized user, returns 204"""
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -92,9 +90,7 @@ async def patch_user_password(request: Request, response: Response, authorizatio
     
 @app.post(f'/{config.abbr}/user/password/disable')
 async def post_user_password_disable(request: Request, response: Response, authorization: str = Header(None)):
-    """Disables password login for the authorized user, returns 204
-    
-    [DEPRECATED] This function will be moved or removed when the user system no longer relies on Discord."""
+    """Disables password login for the authorized user, returns 204"""
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

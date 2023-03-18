@@ -28,7 +28,7 @@
     "invalid_avatar_url": "Неверный URL-адрес аватара.",
     "avatar_domain_not_in_whitelist": "Домен аватара не внесен в белый список.",
 
-    "discord_not_connected": "Вы не подключили учетную запись Discord.",
+    "connection_not_found": "Вы не подключили учетную запись {app}.",
     "dismiss_before_ban": "Откажитесь от участника перед запретом.",
     "dismiss_before_delete_connections": "Отклонить участника перед удалением его соединений.",
     "dismiss_before_delete": "Удалите участника до удаления его аккаунта.",
@@ -37,9 +37,10 @@
     "user_not_banned": "Пользователь не заблокирован.",
     "unable_to_dm": "Мы не можем написать вам личное сообщение в Discord.",
 
-    "steam_api_error": "API Steam недоступен. Не удалось подключить учетную запись Steam.",
+    "steam_api_error": "API Steam недоступен.",
+    "steam_api_key_not_configured": "Ключ Steam API не настроен.",
     "invalid_steam_auth": "Неверная аутентификация Steam.",
-    "steam_connected_to_other_account": "Учетная запись Steam уже подключена к другому пользователю.",
+    "connection_conflict": "Учетная запись {app} уже подключена к другому пользователю.",
     "invalid_truckersmp_id": "Недействительный TruckersMP ID.",
     "truckersmp_api_error": "API TruckersMP недоступен. Не удалось подключить учетную запись TruckersMP.",
     "steam_not_connected_before_truckersmp": "Вы должны подключить свою учетную запись Steam перед подключением учетной записи TruckersMP.",

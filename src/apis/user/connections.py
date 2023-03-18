@@ -4,6 +4,7 @@
 import json
 import traceback
 
+from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
 
 import multilang as ml
@@ -11,6 +12,69 @@ from app import app, config
 from db import aiosql
 from functions.main import *
 
+@app.patch(f"/{config.abbr}/user/discord")
+async def patch_user_discord(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates Discord account connection for the authorized user, returns 204
+    
+    JSON: `{"code": str}`"""
+
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    data = await request.json()
+    try:
+        code = str(data["code"])
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    try:
+        discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, f"https://{config.apidomain}/{config.abbr}/auth/discord/connect")
+        tokens = discord_auth.get_tokens(code)
+        if "access_token" in tokens.keys():
+            user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+            if not 'id' in user_data:
+                response.status_code = 400
+                return {"error": "Discord Error: " + user_data['message']}
+            discordid = user_data['id']
+            tokens = {**tokens, **user_data}
+
+            await aiosql.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND discordid = {discordid}")
+            t = await aiosql.fetchall(dhrid)
+            if len(t) > 0:
+                response.status_code = 409
+                return {"error": ml.tr(request, "connection_conflict", var = {"app": "Discord"}, force_lang = au["language"])}
+
+            await aiosql.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
+            await aiosql.commit(dhrid)
+
+            return Response(status_code=204)
+        
+        if 'error_description' in tokens.keys():
+            response.status_code = 400
+            return {"error": tokens['error_description']}
+        else:
+            response.status_code = 400
+            return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
+
+    except:
+        traceback.print_exc()
+        response.status_code = 400
+        return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
+    
 @app.patch(f"/{config.abbr}/user/steam")
 async def patch_user_steam(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Steam account connection for the authorized user, returns 204
@@ -59,7 +123,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
-        return {"error": ml.tr(request, "steam_connected_to_other_account", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_conflict", var = {"app": "Steam"}, force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)

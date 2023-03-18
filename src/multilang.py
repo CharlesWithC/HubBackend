@@ -40,7 +40,7 @@ EN_STRINGTABLE = {
     "invalid_avatar_url": "Invalid avatar URL.",
     "avatar_domain_not_in_whitelist": "The domain of the avatar is not whitelisted.",
 
-    "discord_not_connected": "You have not connected a Discord account.",
+    "connection_not_found": "You have not connected a {app} account.",
     "dismiss_before_ban": "Dismiss member before banning.",
     "dismiss_before_delete_connections": "Dismiss member before deleting their connections.",
     "dismiss_before_delete": "Dismiss member before deleting their account.",
@@ -49,9 +49,9 @@ EN_STRINGTABLE = {
     "user_not_banned": "User not banned.",
     "unable_to_dm": "We are unable to DM you in Discord.",
 
-    "steam_api_error": "Steam API inaccessible. Failed to connect Steam account.",
+    "steam_api_error": "Steam API inaccessible.",
     "invalid_steam_auth": "Invalid Steam Authentication.",
-    "steam_connected_to_other_account": "Steam account already connected to another user.",
+    "connection_conflict": "{app} account already connected to another user.",
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API inaccessible. Failed to connect TruckersMP account.",
     "steam_not_connected_before_truckersmp": "You must connect your Steam Account before connecting TruckersMP account.",
@@ -96,6 +96,7 @@ EN_STRINGTABLE = {
     "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
     "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
     "discord_api_inaccessible": "Discord API is inaccessible. This should be a temporary issue.",
+    "steam_api_key_not_configured": "Steam API Key is not configured.",
 
     "announcement_not_found": "Announcement not found.",
     "event_staff_announcement_limit": "Event staff can only post event announcements.",

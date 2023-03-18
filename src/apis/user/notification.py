@@ -155,7 +155,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
     if notification_type == "discord":
         if discordid is None:
             response.status_code = 409
-            return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
+            return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
         
         if config.discord_bot_token == "":
             response.status_code = 503

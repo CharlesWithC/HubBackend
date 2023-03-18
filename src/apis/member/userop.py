@@ -37,7 +37,7 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
     
     if discordid is None:
         response.status_code = 409
-        return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
     
     ratio = 1
     if config.distance_unit == "imperial":

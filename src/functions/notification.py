@@ -196,7 +196,7 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
                 "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": config.intcolor}]})
 
-async def AuditLog(dhrid, uid, text):
+async def AuditLog(dhrid, uid, text, discord_message_only = False):
     try:
         name = "Unknown User"
         avatar = ""
@@ -210,7 +210,7 @@ async def AuditLog(dhrid, uid, text):
             if len(t) > 0:
                 name = t[0][0]
                 avatar = t[0][1]
-        if uid != -998:
+        if uid != -998 and not discord_message_only:
             await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(text)}', {int(time.time())})")
             await aiosql.commit(dhrid)
         if config.webhook_audit != "":

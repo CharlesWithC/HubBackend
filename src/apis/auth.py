@@ -19,8 +19,6 @@ from app import app, config
 from db import aiosql
 from functions.main import *
 
-discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, config.discord_callback_url)
-
 def getUrl4Msg(message):
     return config.frontend_urls.auth_message.replace("{message}", str(message))
 
@@ -73,7 +71,6 @@ async def post_auth_password(request: Request, response: Response):
     if not ok:
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_email_or_password")}
-    discordid = (await GetUserInfo(dhrid, request, uid = uid))["discordid"]
     
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
@@ -88,7 +85,7 @@ async def post_auth_password(request: Request, response: Response):
         await aiosql.commit(dhrid)
         return {"token": stoken, "mfa": True}
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR email = '{email}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -119,15 +116,29 @@ async def post_auth_password(request: Request, response: Response):
 
 # Discord Auth
 @app.get(f'/{config.abbr}/auth/discord/redirect', response_class=RedirectResponse)
-async def get_auth_discord_redirect():
-    # login_url = discord_auth.login()
-    return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
+async def get_auth_discord_redirect(connect_account: Optional[bool] = False):
+    if not connect_account:
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
+    else:
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
     
+@app.get(f"/{config.abbr}/auth/discord/connect")
+async def get_auth_discord_connect(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
+    referer = request.headers.get("Referer")
+    data = str(request.query_params)
+    if referer in ["", "-", None] or data == "":
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
+
+    if code == "":
+        return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
+    
+    return RedirectResponse(url=config.frontend_urls.discord_callback + f"?code={code}", status_code=302)
+
 @app.get(f'/{config.abbr}/auth/discord/callback')
 async def get_auth_discord_callback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer in ["", "-", None]:
-        return RedirectResponse(url=config.discord_oauth2_url, status_code=302)
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
     
     if code == "":
         return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
@@ -140,6 +151,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
     try:
+        discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, f"https://{config.apidomain}/{config.abbr}/auth/discord/callback")
         tokens = discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
@@ -157,16 +169,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
             await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
             await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = '{discordid}'")
-            t = await aiosql.fetchall(dhrid)
-            if len(t) > 0:
-                reason = t[0][0]
-                expire = t[0][1]
-                expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
-            uid = -1
-
-            await aiosql.execute(dhrid, f"SELECT uid, mfa_secret FROM user WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT uid, mfa_secret, email FROM user WHERE discordid = '{discordid}'")
             t = await aiosql.fetchall(dhrid)
             mfa_secret = ""
             if len(t) == 0:
@@ -185,10 +188,14 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 uid = (await aiosql.fetchone(dhrid))[0]
                 await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
                 await aiosql.commit(dhrid)
-                await AuditLog(dhrid, -999, f"User register: `{username}` (UID: `{uid}`)")
+                await AuditLog(dhrid, -999, f"User register via Discord: `{username}` (UID: `{uid}`)")
             else:
                 uid = t[0][0]
                 mfa_secret = t[0][1]
+                if t[0][2] == "":
+                    await aiosql.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = '{uid}'")
+                    await aiosql.commit(dhrid)
+
             if mfa_secret != "":
                 stoken = str(uuid.uuid4())
                 stoken = "f" + stoken[1:]
@@ -196,6 +203,14 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 await aiosql.commit(dhrid)
                 return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
+            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR discordid = '{discordid}'")
+            t = await aiosql.fetchall(dhrid)
+            if len(t) > 0:
+                reason = t[0][0]
+                expire = t[0][1]
+                expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
+                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
+            
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":
                 stoken = str(uuid.uuid4())
@@ -285,14 +300,41 @@ async def get_auth_steam_callback(request: Request, response: Response):
     await aiosql.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = '{steamid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        response.status_code = 401
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
-    uid = t[0][0]
-    discordid = t[0][1]
+        if not "steam" in config.register_methods:
+            response.status_code = 404
+            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
+        
+        username = f"Steam User {steamid}"
+        avatar = ""
+
+        if config.steam_api_key != "":
+            try:
+                r = await arequests.get(f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+            except:
+                traceback.print_exc()
+            try:
+                d = json.loads(r.text)
+                username = convertQuotation(d["response"]["players"][0]["personaname"])
+                avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])
+            except:
+                await AuditLog(dhrid, -999, f"Unable to get player summary via Steam API (Steam ID: `{steamid}`)\nThis error is potentially due to invalid Steam API Key.")
+        else:
+            await AuditLog(dhrid, -999, f"Steam API Key not configured, unable to get player summary via Steam API (Steam ID: `{steamid}`).\nGet it at https://steamcommunity.com/dev/apikey and set `steam_api_key` in configuration.", discord_message_only = True)
+        
+        # register user
+        await aiosql.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '', '{avatar}', '', '', NULL, {steamid}, NULL, {int(time.time())}, '')")
+        await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+        uid = (await aiosql.fetchone(dhrid))[0]
+        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
+        await aiosql.commit(dhrid)
+        await AuditLog(dhrid, -999, f"User register via Steam: `{username}` (UID: `{uid}`)")
+    else:
+        uid = t[0][0]
     
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
+
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR steamid = '{steamid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -318,7 +360,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
 
     username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
     language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, -999, f"Steam login: `{username}` (Discord ID: `{uid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(dhrid, -999, f"Steam login: `{username}` (UID ID: `{uid}`) from `{getRequestCountry(request)}`")
     await notification(dhrid, "login", uid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \
@@ -767,7 +809,7 @@ async def post_auth_mfa(request: Request, response: Response):
 
     username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
     language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, -999, f"MFA login: `{username}` (Discord ID: `{uid}`) from `{getRequestCountry(request)}`")
+    await AuditLog(dhrid, -999, f"MFA login: `{username}` (UID ID: `{uid}`) from `{getRequestCountry(request)}`")
     await notification(dhrid, "login", uid, \
         ml.tr(request, "new_login", \
             var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), \

@@ -10,7 +10,8 @@
     "openapi": "./openapi.json",
     "language_dir": "./languages",
     "frontend_urls": {
-        "steam_callback": "https://{domain}/steam",
+        "steam_callback": "https://{domain}/connectSteam",
+        "discord_callback": "https://{domain}/connectDiscord",
         "auth_message": "https://{domain}/auth?message={message}",
         "auth_token": "https://{domain}/auth?token={token}",
         "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
@@ -44,6 +45,7 @@
     "allow_custom_profile": true,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
     "required_connections": ["discord", "email", "truckersmp"],
+    "register_methods": ["discord", "steam", "email"],
 
     "tracker": "tracksim",
     "tracker_company_id": "",
@@ -69,9 +71,8 @@
 
     "discord_client_id": "",
     "discord_client_secret": "",
-    "discord_oauth2_url": "",
-    "discord_callback_url": "https://drivershub.charlws.com/{abbr}/auth/discord/callback",
     "discord_bot_token": "",
+    "steam_api_key": "",
 
     "member_accept": {
         "webhook_url": "",

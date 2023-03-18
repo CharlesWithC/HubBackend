@@ -152,7 +152,7 @@ async def get_user_profile(request: Request, response: Response, authorization: 
     return (await GetUserInfo(dhrid, request, uid = uid))
 
 @app.patch(f"/{config.abbr}/user/profile")
-async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = -1, sync_to_discord: Optional[bool] = False):
+async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = -1, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
     """Updates the profile of a specific user
 
     If `sync_to_discord` is `true`, then syncs to their Discord profile.
@@ -196,8 +196,11 @@ async def patch_user_profile(request: Request, response: Response, authorization
 
     if sync_to_discord:
         if discordid is None:
-            response.status_code = 409
-            return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
+            response.status_code = 428
+            if not staffmode:
+                return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"}, force_lang = au["language"])}
         
         if config.discord_bot_token == "":
             response.status_code = 503
@@ -207,16 +210,19 @@ async def patch_user_profile(request: Request, response: Response, authorization
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
+            response.status_code = 503
             if not staffmode:
                 return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
             else:
                 return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
         if r.status_code == 404:
+            response.status_code = 428
             if not staffmode:
                 return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
             else:
                 return {"error": ml.tr(request, "user_not_in_discord", force_lang = au["language"])}
         if r.status_code // 100 != 2:
+            response.status_code = r.status_code
             if not staffmode:
                 return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
             else:
@@ -233,6 +239,38 @@ async def patch_user_profile(request: Request, response: Response, authorization
         await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
         await aiosql.commit(dhrid)
     
+    elif sync_to_steam:
+        await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = '{uid}'")
+        t = await aiosql.fetchall(dhrid)
+        steamid = t[0][0]
+        if steamid is None:
+            response.status_code = 428
+            if not staffmode:
+                return {"error": ml.tr(request, "connection_not_found", var = {"app": "Steam"}, force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
+
+        if config.steam_api_key == "":
+            response.status_code = 503
+            return {"error": ml.tr(request, "steam_api_key_not_configured", force_lang = au["language"])}
+
+        try:
+            r = await arequests.get(f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+        except:
+            traceback.print_exc()
+            response.status_code = 503
+            return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
+        try:
+            d = json.loads(r.text)
+            name = convertQuotation(d["response"]["players"][0]["personaname"])
+            avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])
+        except:
+            response.status_code = 503
+            return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
+
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.commit(dhrid)
+
     else:
         if not staffmode and not config.allow_custom_profile:
             response.status_code = 403

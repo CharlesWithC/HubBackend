@@ -1,5 +1,20 @@
 # Changelog
 
+**v2.2.0**  
+1.Automated `discord_callback_url` and `discord_oauth_url` generation, hence removed it from config  
+2.Added function to connect/update Discord account  
+-> Added `discord_callback` to `config.frontend_urls`  
+-> Added `?connect_account` request param to `/auth/discord/redirect` to return dynamic oauth url  
+-> Added route `/auth/discord/connect` which redirects to frontend (`config.discord_callback`) with access code  
+-> Added route **PATCH** `/user/discord` which takes the access code in JSON and updates Discord account  
+**Note** `/auth/discord/connect` needs to be added to `redirect uri` of Discord application besides `/auth/discord/callback` to make it work  
+3.Added `config.register_methods[]` to restrict registration methods, accept `email`, `discord`, `steam`  
+4.Added `config.steam_api_key` which will be used to get user profile when they register with Steam  
+**Hint** Get the API Key at [https://steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)  
+5.Added support to Steam register  
+-> When `/auth/steam/callback` is called by a user whose `steamid` is not recognized in database, then register a new account for the user  
+-> The user's Steam name and avatar will be set as their Drivers Hub default name and profile  
+
 **v2.1.6**  
 1.Added support to custom avatar and name (Updated **PATCH** `/user/profile`)  
 -> Disabled automatic sync to Discord profile on login  

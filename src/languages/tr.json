@@ -28,7 +28,7 @@
     "invalid_avatar_url": "Geçersiz avatar URL'si.",
     "avatar_domain_not_in_whitelist": "Avatarın alanı beyaz listede değil.",
 
-    "discord_not_connected": "Bir Discord hesabı bağlamadınız.",
+    "connection_not_found": "Bir {app} hesabı bağlamadınız.",
     "dismiss_before_ban": "Yasaklamadan önce üyeyi şirketten çıkart.",
     "dismiss_before_delete_connections": "Bağlantılarını silmeden önce üyeyi kapat.",
     "dismiss_before_delete": "Üyenin hesabını silmeden önce üyeyi şirketten çıkart.",
@@ -37,9 +37,10 @@
     "user_not_banned": "Kullanıcı yasaklanmadı.",
     "unable_to_dm": "Discord üzerinden size DM (Özel Mesaj) gönderemiyoruz.",
 
-    "steam_api_error": "Steam API'ye erişilemiyor. Steam hesabına bağlanılamadı.",
+    "steam_api_error": "Steam API'ye erişilemiyor.",
+    "steam_api_key_not_configured": "Steam API Anahtarı yapılandırılmadı.",
     "invalid_steam_auth": "Geçersiz Steam Kimlik Doğrulaması.",
-    "steam_connected_to_other_account": "Steam hesabı zaten başka bir kullanıcıya bağlı.",
+    "connection_conflict": "{app} hesabı zaten başka bir kullanıcıya bağlı.",
     "invalid_truckersmp_id": "Geçersiz TruckersMP kimliği. (TMPID)",
     "truckersmp_api_error": "TruckersMP API'sine erişilemiyor. TruckersMP hesabına bağlanılamadı.",
     "steam_not_connected_before_truckersmp": "TruckersMP hesabını bağlamadan önce Steam Hesabınızı bağlamanız gerekir.",

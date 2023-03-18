@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.1.6"
+        "version": "2.2.0"
     },
     "paths": {
         "/abbr": {
@@ -96,11 +96,28 @@
                 "summary": "Redirects to Discord OAuth2",
                 "tags": ["auth"],
                 "operationId": "get_auth_discord_redirect",
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Whether to connect account or login",
+                        "type": "boolean"
+                    },
+                    "name": "connect_account",
+                    "in": "query"
+                }],
                 "responses": {
                     "302": {
                         "description": "Redirects to Discord OAuth2"
                     }
                 }
+            }
+        },
+        "/abbr/auth/discord/connect": {
+            "get": {
+                "summary": "Discord OAuth Callback (To connect account)",
+                "tags": ["auth"],
+                "operationId": "get_auth_discord_connect",
+                "responses": {}
             }
         },
         "/abbr/auth/discord/callback": {
@@ -359,6 +376,14 @@
                         "type": "boolean"
                     },
                     "name": "sync_to_discord",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Sync to Steam",
+                        "type": "boolean"
+                    },
+                    "name": "sync_to_steam",
                     "in": "query"
                 }],
                 "requestBody": {
@@ -787,6 +812,17 @@
                         }
                     }
                 },
+                "responses": {}
+            }
+        },
+        "/abbr/user/discord": {
+            "patch": {
+                "summary": "Update Discord Account",
+                "tags": ["user"],
+                "operationId": "patch_user_discord",
+                "security": [{
+                    "bearerAuth": []
+                }],
                 "responses": {}
             }
         },

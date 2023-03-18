@@ -17,12 +17,12 @@ from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
 from functions.main import *
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
 
-config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token"]
+config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key"]
 
 backup_config = copy.deepcopy(tconfig)
 
@@ -151,7 +151,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
             if tt in ["name", "logo_url", "guild_id", "discord_client_id", \
-                    "discord_client_secret", "discord_oauth2_url", "discord_callback_url", "discord_bot_token"]:
+                    "discord_client_secret", "discord_bot_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
@@ -194,7 +194,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                         p.append(o)
                 new_config[tt] = p
 
-            if tt in ["logo_url", "discord_oauth2_url", "discord_callback_url", "webhook_division", "webhook_audit"]:
+            if tt in ["logo_url", "webhook_division", "webhook_audit"]:
                 if new_config[tt] != "" and not isurl(new_config[tt]):
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_data_url", var = {"item": tt}, force_lang = au["language"])}

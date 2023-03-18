@@ -28,7 +28,7 @@
     "invalid_avatar_url": "URL d'avatar invalide.",
     "avatar_domain_not_in_whitelist": "Le domaine de l'avatar n'est pas sur la liste blanche.",
 
-    "discord_not_connected": "Vous n'avez pas connecté de compte Discord.",
+    "connection_not_found": "Vous n'avez pas connecté de compte {app}.",
     "dismiss_before_ban": "Renvoyer le membre avant de le bannir.",
     "dismiss_before_delete_connections": "Rejeter le membre avant de supprimer ses connexions.",
     "dismiss_before_delete": "Renvoyer le membre avant de supprimer son compte.",
@@ -37,9 +37,10 @@
     "user_not_banned": "Utilisateur non banni.",
     "unable_to_dm": "Nous ne pouvons pas vous contacter par DM dans Discord.",
 
-    "steam_api_error": "API Steam inaccessible. Impossible de connecter le compte Steam.",
+    "steam_api_error": "API Steam inaccessible.",
+    "steam_api_key_not_configured": "La clé API Steam n'est pas configurée.",
     "invalid_steam_auth": "Authentification Steam invalide.",
-    "steam_connected_to_other_account": "Compte Steam déjà connecté à un autre utilisateur.",
+    "connection_conflict": "Compte {app} déjà connecté à un autre utilisateur.",
     "invalid_truckersmp_id": "Identifiant TruckersMP non valide.",
     "truckersmp_api_error": "API TruckersMP inaccessible. Échec de la connexion au compte TruckersMP.",
     "steam_not_connected_before_truckersmp": "Vous devez connecter votre compte Steam avant de connecter le compte TruckersMP.",

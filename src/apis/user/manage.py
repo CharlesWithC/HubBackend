@@ -92,9 +92,7 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
 async def patch_user_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
     """[Permission Control] Updates Discord account connection for a specific user, returns 204
     
-    JSON: `{"discord_id": int}`
-    
-    [DEPRECATED] This function will be moved or removed when the user system no longer relies on Discord."""
+    JSON: `{"discord_id": int}`"""
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
