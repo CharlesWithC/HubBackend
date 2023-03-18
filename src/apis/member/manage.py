@@ -19,7 +19,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /member/roles', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -257,7 +257,7 @@ async def patch_member_points(request: Request, response: Response, userid: int,
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/point', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /member/point', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -308,7 +308,7 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/dismiss', 60, 10)
+    rl = await ratelimit(dhrid, request, 'POST /member/dismiss', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

@@ -38,9 +38,8 @@ def ProcessDiscordMessage(): # thread
                 if time.time() - lastRLAclear > 30:
                     conn = genconn()
                     cur = conn.cursor()
-                    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 86400)}")
+                    cur.execute(f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 3600)}")
                     cur.execute(f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")
-                    cur.execute(f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
                     cur.execute(f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
                     lastRLAclear = time.time()
                     conn.commit()
@@ -184,7 +183,7 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
         return
 
     if settings["drivershub"] and not no_drivershub_notification:
-        await aiosql.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{convert_quotation(content)}', {int(time.time())}, 0)")
+        await aiosql.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{convertQuotation(content)}', {int(time.time())}, 0)")
         await aiosql.commit(dhrid)
     
     if settings["discord"] and not no_discord_notification:
@@ -200,22 +199,24 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
 async def AuditLog(dhrid, uid, text):
     try:
         name = "Unknown User"
+        avatar = ""
         if uid == -999:
             name = "System"
         elif uid == -998:
             name = "Discord API"
         else:
-            await aiosql.execute(dhrid, f"SELECT name FROM user WHERE userid = {uid}")
+            await aiosql.execute(dhrid, f"SELECT name, avatar FROM user WHERE userid = {uid}")
             t = await aiosql.fetchall(dhrid)
             if len(t) > 0:
                 name = t[0][0]
+                avatar = t[0][1]
         if uid != -998:
-            await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convert_quotation(text)}', {int(time.time())})")
+            await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(text)}', {int(time.time())})")
             await aiosql.commit(dhrid)
         if config.webhook_audit != "":
             footer = {"text": name}
             if uid not in [-999, -998]:
-                footer = {"text": f"{name} (ID {uid})", "icon_url": await getAvatarSrc(dhrid, uid)}
+                footer = {"text": f"{name} (ID {uid})", "icon_url": avatar}
             try:
                 r = await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
                 if r.status_code == 401:

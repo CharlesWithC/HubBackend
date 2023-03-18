@@ -53,7 +53,7 @@ async def get_division(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /division', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /division', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -91,7 +91,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/division', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/division', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -149,7 +149,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /dlog/division', 180, 10)
+    rl = await ratelimit(dhrid, request, 'POST /dlog/division', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -246,7 +246,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /dlog/division', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /dlog/division', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -306,7 +306,7 @@ async def get_division_list_pending(request: Request, response: Response, author
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /division/list/pending', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /division/list/pending', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

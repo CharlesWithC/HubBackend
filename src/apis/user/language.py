@@ -18,7 +18,7 @@ async def get_user_language(request: Request, response: Response, authorization:
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/language', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /user/language', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -42,7 +42,7 @@ async def patch_user_language(request: Request, response: Response, authorizatio
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/language', 60, 10)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/language', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -57,7 +57,7 @@ async def patch_user_language(request: Request, response: Response, authorizatio
 
     data = await request.json()
     try:
-        language = convert_quotation(data["language"])
+        language = convertQuotation(data["language"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}

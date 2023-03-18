@@ -18,22 +18,18 @@ async def getHighestActiveRole(dhrid):
             return roleid
     return list(ROLES.keys())[0]
 
-async def getAvatarSrc(dhrid, userid):
-    await aiosql.execute(dhrid, f"SELECT discordid, avatar FROM user WHERE userid = {userid}")
-    t = await aiosql.fetchall(dhrid)
-    discordid = str(t[0][0])
-    avatar = str(t[0][1])
-    src = ""
+def getAvatarSrc(discordid, avatar):
     if avatar.startswith("a_"):
-        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".gif"
+        src = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
     else:
-        src = "https://cdn.discordapp.com/avatars/" + discordid + "/" + avatar + ".png"
+        src = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
+    src = convertQuotation(src)
     return src
 
 async def ActivityUpdate(dhrid, uid, activity):
     if uid is None or int(uid) <= 0:
         return
-    activity = convert_quotation(activity)
+    activity = convertQuotation(activity)
     await aiosql.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
@@ -138,7 +134,7 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
                         include_email = True
                     if int(i) in config.perms.hr or int(i) in config.perms.hrm:
                         include_email = True
-                if au["discordid"] == p[0][2]:
+                if au["uid"] == uid:
                     include_email = True
 
     roles = p[0][6].split(",")

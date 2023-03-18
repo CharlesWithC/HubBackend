@@ -94,7 +94,7 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /tracksim/setup', 60, 5)
+    rl = await ratelimit(dhrid, request, 'POST /tracksim/setup', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

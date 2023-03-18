@@ -19,7 +19,7 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /member/roles/rank', 60, 3)
+    rl = await ratelimit(dhrid, request, 'PATCH /member/roles/rank', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -191,7 +191,7 @@ async def post_member_resign(request: Request, response: Response, authorization
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /member/resign', 60, 10)
+    rl = await ratelimit(dhrid, request, 'POST /member/resign', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -205,7 +205,7 @@ async def post_member_resign(request: Request, response: Response, authorization
     uid = au["uid"]
     userid = au["userid"]
     discordid = au["discordid"]
-    name = convert_quotation(au["name"])
+    name = convertQuotation(au["name"])
 
     stoken = authorization.split(" ")[1]
     if stoken.startswith("e"):

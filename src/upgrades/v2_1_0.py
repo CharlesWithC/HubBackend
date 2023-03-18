@@ -2,7 +2,7 @@ from db import genconn
 from app import config
 import traceback
 
-def convert_quotation(s):
+def convertQuotation(s):
     s = str(s)
     return s.replace("\\'","'").replace("'", "\\'")
 
@@ -10,7 +10,7 @@ def process_row(row):
     row = list(row)
     for i in range(len(row)):
         if type(row[i]) == str:
-            row[i] = convert_quotation(row[i])
+            row[i] = convertQuotation(row[i])
     return row
 
 def run():
@@ -299,5 +299,8 @@ def run():
         sval = cur.fetchone()[0]
         cur.execute(f"ALTER TABLE {skey2table[skey]} AUTO_INCREMENT={sval};")
         cur.execute(f"DELETE FROM settings WHERE skey = '{skey}'")
+    
+    cur.close()
+    conn.close()
     
     print(f"Upgrade finished")

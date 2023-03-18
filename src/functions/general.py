@@ -29,7 +29,7 @@ def isurl(s):
 
 def getFullCountry(abbr):
     if abbr.upper() in ISO3166_COUNTRIES.keys():
-        return convert_quotation(ISO3166_COUNTRIES[abbr.upper()])
+        return convertQuotation(ISO3166_COUNTRIES[abbr.upper()])
     else:
         return ""
 
@@ -38,15 +38,15 @@ def getRequestCountry(request, abbr = False):
         country = request.headers["cf-ipcountry"]
         if country.upper() in ISO3166_COUNTRIES.keys(): # makre sure abbr is a valid country code
             if abbr:
-                return convert_quotation(request.headers["cf-ipcountry"])
+                return convertQuotation(request.headers["cf-ipcountry"])
             else:
-                return convert_quotation(ISO3166_COUNTRIES[country.upper()])
+                return convertQuotation(ISO3166_COUNTRIES[country.upper()])
     return ""
 
 def getUserAgent(request):
     if "user-agent" in request.headers.keys():
         if len(request.headers["user-agent"]) <= 200:
-            return convert_quotation(request.headers["user-agent"])
+            return convertQuotation(request.headers["user-agent"])
         return ""
     else:
         return ""

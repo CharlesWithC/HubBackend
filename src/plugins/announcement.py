@@ -23,7 +23,7 @@ async def get_announcement_list(request: Request, response: Response, authorizat
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /announcement/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -44,7 +44,7 @@ async def get_announcement_list(request: Request, response: Response, authorizat
     if userid == -1:
         limit = "AND is_private = 0 "
     if query != "":
-        query = convert_quotation(query)
+        query = convertQuotation(query)
         limit += f"AND title LIKE '%{query[:200]}%' "
 
     if page_size <= 1:
@@ -83,7 +83,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /announcement', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /announcement', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -118,7 +118,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /announcement', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -140,7 +140,7 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         content = compress(data["content"])
         if len(data["title"]) > 200:
             response.status_code = 400
@@ -175,7 +175,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.intcolor}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": (await GetUserInfo(dhrid, userid = adminid))["avatar"]}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -188,7 +188,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /announcement', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -210,7 +210,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         content = compress(data["content"])
         if len(data["title"]) > 200:
             response.status_code = 400
@@ -250,7 +250,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": await getAvatarSrc(dhrid, adminid)}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.intcolor}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": (await GetUserInfo(dhrid, userid = adminid))["avatar"]}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.intcolor}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -263,7 +263,7 @@ async def delete_announcement(request: Request, response: Response, announcement
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /announcement', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /announcement', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

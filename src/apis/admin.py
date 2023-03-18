@@ -33,7 +33,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /config', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -105,7 +105,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /config', 60, 60)
+    rl = await ratelimit(dhrid, request, 'PATCH /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -238,7 +238,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /restart', 600, 3)
+    rl = await ratelimit(dhrid, request, 'POST /restart', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -283,7 +283,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /audit', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /audit', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -298,7 +298,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     if page <= 0:
         page = 1
 
-    operation = convert_quotation(operation.lower())
+    operation = convertQuotation(operation.lower())
 
     limit = ""
     if staff_userid != -1:

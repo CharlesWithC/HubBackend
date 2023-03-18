@@ -13,7 +13,7 @@ from db import aiosql
 from functions.main import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
-JOB_REQUIREMENT_TYPE = {"source_city_id": convert_quotation, "source_company_id": convert_quotation, "destination_city_id": convert_quotation, "destination_company_id": convert_quotation, "minimum_distance": int, "cargo_id": convert_quotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int, "minimum_average_speed": int, "maximum_average_speed": int, "minimum_average_fuel": float, "maximum_average_fuel": float}
+JOB_REQUIREMENT_TYPE = {"source_city_id": convertQuotation, "source_company_id": convertQuotation, "destination_city_id": convertQuotation, "destination_company_id": convertQuotation, "minimum_distance": int, "cargo_id": convertQuotation, "minimum_cargo_mass": int, "maximum_cargo_damage": float, "maximum_speed": int, "maximum_fuel": int, "minimum_profit": int, "maximum_profit": int, "maximum_offence": int, "allow_overspeed": int, "allow_auto_park": int, "allow_auto_load": int, "must_not_be_late": int, "must_be_special": int, "minimum_average_speed": int, "maximum_average_speed": int, "minimum_average_fuel": float, "maximum_average_fuel": float}
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
 # PLANS
@@ -55,7 +55,7 @@ async def get_challenge_list(request: Request, response: Response, authorization
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /challenge/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -78,7 +78,7 @@ async def get_challenge_list(request: Request, response: Response, authorization
     query_limit = "WHERE challengeid >= 0 "
 
     if query != "":
-        query = convert_quotation(query).lower()
+        query = convertQuotation(query).lower()
         query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
     if start_time != -1 and end_time != -1:
@@ -178,7 +178,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /challenge', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /challenge', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -286,7 +286,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /challenge', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /challenge', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -309,7 +309,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         description = compress(data["description"])
         if len(data["title"]) > 200:
             response.status_code = 400
@@ -403,7 +403,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /challenge', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /challenge', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -430,7 +430,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         description = compress(data["description"])
         if len(data["title"]) > 200:
             response.status_code = 400
@@ -791,7 +791,7 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /challenge', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -833,7 +833,7 @@ async def put_challenge_delivery(request: Request, response: Response, challenge
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PUT /challenge/delivery', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PUT /challenge/delivery', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -978,7 +978,7 @@ async def delete_challenge_delivery(request: Request, response: Response, challe
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /challenge/delivery', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /challenge/delivery', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

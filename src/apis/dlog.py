@@ -34,7 +34,7 @@ async def get_dlog_list(request: Request, response: Response, authorization: str
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -210,7 +210,7 @@ async def get_dlog_statistics_summary(request: Request, response: Response, auth
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/summary', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/statistics/summary', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -431,7 +431,7 @@ async def get_dlog_statistics_chart(request: Request, response: Response, author
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/statistics/chart', 60, 15)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -564,7 +564,7 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/leaderboard', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/leaderboard', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -996,7 +996,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog/export', 600, 3)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/export', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -1242,7 +1242,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /dlog', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /dlog', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -1339,7 +1339,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /dlog', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /dlog', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

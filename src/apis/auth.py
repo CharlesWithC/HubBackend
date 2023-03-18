@@ -36,7 +36,7 @@ async def post_auth_password(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/password', 60, 3)
+    rl = await ratelimit(dhrid, request, 'POST /auth/password', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -44,7 +44,7 @@ async def post_auth_password(request: Request, response: Response):
     
     data = await request.json()
     try:
-        email = convert_quotation(data["email"])  
+        email = convertQuotation(data["email"])  
         password = str(data["password"]).encode('utf-8')
         hcaptcha_response = data["h-captcha-response"]
     except:
@@ -154,7 +154,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/discord/callback', 60, 10)
+    rl = await ratelimit(dhrid, request, 'GET /auth/discord/callback', 60, 10)
     if rl[0]:
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
@@ -166,11 +166,11 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 return RedirectResponse(url=getUrl4Msg("Discord Error: " + user_data['message']), status_code=302)
             discordid = user_data['id']
             username = str(user_data['username'])
-            username = convert_quotation(username).replace(",","")
+            username = convertQuotation(username).replace(",","")
             if not "email" in user_data.keys():
                 return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
             email = str(user_data['email'])
-            email = convert_quotation(email)
+            email = convertQuotation(email)
             if not "@" in email: # make sure it's not empty
                 return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
             avatar = str(user_data['avatar'])
@@ -199,7 +199,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
             else:
                 uid = t[0][0]
                 await aiosql.execute(dhrid, f"UPDATE user_password SET email = '{email}' WHERE uid = '{uid}'")
-                await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}', email = '{email}' WHERE uid = '{uid}'")
+                await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{getAvatarSrc(discordid, avatar)}', email = '{email}' WHERE uid = '{uid}'")
             await aiosql.commit(dhrid)
             
             if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
@@ -294,7 +294,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/steam/callback', 60, 10)
+    rl = await ratelimit(dhrid, request, 'GET /auth/steam/callback', 60, 10)
     if rl[0]:
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
 
@@ -385,7 +385,7 @@ async def get_token(request: Request, response: Response, authorization: str = H
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /token', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /token', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -406,7 +406,7 @@ async def patch_token(request: Request, response: Response, authorization: str =
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /token', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /token', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -435,7 +435,7 @@ async def delete_token(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /token', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -461,7 +461,7 @@ async def get_token_list(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /token/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /token/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -510,7 +510,7 @@ async def delete_token_hash(request: Request, response: Response, authorization:
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/hash', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /token/hash', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -558,7 +558,7 @@ async def delete_token_all(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/all', 60, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /token/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -592,7 +592,7 @@ async def get_token_application_list(request: Request, response: Response, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /token/application/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /token/application/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -638,7 +638,7 @@ async def post_token_application(request: Request, response: Response, authoriza
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /token/application', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /token/application', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -672,7 +672,7 @@ async def post_token_application(request: Request, response: Response, authoriza
             return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
     
     try:
-        app_name = convert_quotation(data["app_name"])
+        app_name = convertQuotation(data["app_name"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -692,7 +692,7 @@ async def delete_token_application(request: Request, response: Response, authori
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/application', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /token/application', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -734,7 +734,7 @@ async def delete_token_application_all(request: Request, response: Response, aut
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /token/application/all', 60, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /token/application/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -758,7 +758,7 @@ async def post_auth_mfa(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/mfa', 60, 3)
+    rl = await ratelimit(dhrid, request, 'POST /auth/mfa', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -833,7 +833,7 @@ async def post_auth_ticket(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /auth/ticket', 180, 20)
+    rl = await ratelimit(dhrid, request, 'POST /auth/ticket', 180, 20)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -860,7 +860,7 @@ async def get_auth_ticket(request: Request, response: Response, token: Optional[
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /auth/ticket', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /auth/ticket', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

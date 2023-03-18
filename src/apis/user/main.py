@@ -31,7 +31,7 @@ async def get_user_list(request: Request, response: Response, authorization: str
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /user/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -51,7 +51,7 @@ async def get_user_list(request: Request, response: Response, authorization: str
     elif page_size >= 250:
         page_size = 250
     
-    query = convert_quotation(query).lower()
+    query = convertQuotation(query).lower()
     
     if not order_by in ["name", "uid", "discord_id", "join_timestamp"]:
         order_by = "discord_id"
@@ -94,7 +94,7 @@ async def get_user_profile(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /user', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -162,7 +162,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/profile', 60, 15)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/profile', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -221,12 +221,13 @@ async def patch_user_profile(request: Request, response: Response, authorization
         else:
             return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
     d = json.loads(r.text)
-    username = convert_quotation(d["user"]["username"])
+    username = convertQuotation(d["user"]["username"])
     avatar = ""
     if config.use_server_nickname and d["nick"] != None:
-        username = convert_quotation(d["nick"])
+        username = convertQuotation(d["nick"])
     if d["user"]["avatar"] != None:
-        avatar = convert_quotation(d["user"]["avatar"])
+        avatar = convertQuotation(d["user"]["avatar"])
+        avatar = getAvatarSrc(discordid, avatar)
         
     await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}' WHERE uid = '{uid}'")
     await aiosql.commit(dhrid)
@@ -242,7 +243,7 @@ async def patch_user_bio(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/bio', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/bio', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

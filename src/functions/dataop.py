@@ -7,7 +7,7 @@ import zlib
 from base64 import b64decode, b64encode
 
 
-def convert_quotation(s):
+def convertQuotation(s):
     s = str(s)
     return s.replace("\\'","'").replace("'", "\\'")
 

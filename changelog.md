@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.1.5**  
+1.Fixed notification cannot update status for all notifications  
+2.Improved ratelimit to identify session with `uid` when available  
+3.Updated user object to include full avatar URL rather than identifier  
+4.Added caching to authorization  
+5.Removed bearer token expiration  
+
 **v2.1.4**  
 1.Fixed challenge system `required_roles` validation  
 2.Updated routes, request json data format, request param format (see table below)  

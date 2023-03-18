@@ -20,7 +20,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/steam', 60, 3)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/steam', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -110,7 +110,7 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/truckersmp', 60, 3)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/truckersmp', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

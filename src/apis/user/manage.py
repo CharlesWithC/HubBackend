@@ -18,7 +18,7 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/accept', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /user/accept', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -84,7 +84,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/discord', 60, 10)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -158,7 +158,7 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/connections', 60, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /user/connections', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -203,7 +203,7 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PUT /user/ban', 60, 10)
+    rl = await ratelimit(dhrid, request, 'PUT /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -219,7 +219,7 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
     data = await request.json()
     try:
         expire = int(data["expire"])
-        reason = convert_quotation(data["reason"])
+        reason = convertQuotation(data["reason"])
         if len(reason) > 256:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "reason", "limit": "256"}, force_lang = au["language"])}
@@ -269,7 +269,7 @@ async def delete_user_ban(request: Request, response: Response, uid: int, author
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user/ban', 60, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -302,7 +302,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /user', 60, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /user', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

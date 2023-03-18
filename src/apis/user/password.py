@@ -19,7 +19,7 @@ async def patch_user_password(request: Request, response: Response, authorizatio
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/password', 60, 10)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/password', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -99,7 +99,7 @@ async def post_user_password_disable(request: Request, response: Response, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/password/disable', 60, 10)
+    rl = await ratelimit(dhrid, request, 'POST /user/password/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

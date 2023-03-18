@@ -93,7 +93,7 @@ async def get_event_list(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /event/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /event/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -118,7 +118,7 @@ async def get_event_list(request: Request, response: Response, authorization: st
     if userid == -1:
         limit = "AND is_private = 0 "
     if query != "":
-        query = convert_quotation(query).lower()
+        query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
     if page <= 0:
@@ -191,7 +191,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /event', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /event', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -240,7 +240,7 @@ async def put_event_vote(request: Request, response: Response, eventid: int, aut
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PUT /event/vote', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PUT /event/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -278,7 +278,7 @@ async def delete_event_vote(request: Request, response: Response, eventid: int, 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /event/vote', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /event/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -316,7 +316,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -331,11 +331,11 @@ async def post_event(request: Request, response: Response, authorization: str = 
         
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         link = compress(data["link"])
-        departure = convert_quotation(data["departure"])
-        destination = convert_quotation(data["destination"])
-        distance = convert_quotation(data["distance"])
+        departure = convertQuotation(data["departure"])
+        destination = convertQuotation(data["destination"])
+        distance = convertQuotation(data["distance"])
         meetup_timestamp = int(data["meetup_timestamp"])
         departure_timestamp = int(data["departure_timestamp"])
         description = compress(data["description"])
@@ -374,7 +374,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -399,11 +399,11 @@ async def patch_event(request: Request, response: Response, eventid: int, author
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         link = compress(data["link"])
-        departure = convert_quotation(data["departure"])
-        destination = convert_quotation(data["destination"])
-        distance = convert_quotation(data["distance"])
+        departure = convertQuotation(data["departure"])
+        destination = convertQuotation(data["destination"])
+        distance = convertQuotation(data["distance"])
         meetup_timestamp = int(data["meetup_timestamp"])
         departure_timestamp = int(data["departure_timestamp"])
         description = compress(data["description"])
@@ -441,7 +441,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /event', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -475,7 +475,7 @@ async def patch_event_attendees(request: Request, response: Response, eventid: i
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /event/attendees', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /event/attendees', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

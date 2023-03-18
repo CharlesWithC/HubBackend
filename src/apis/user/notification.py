@@ -23,7 +23,7 @@ async def get_user_notification_list(request: Request, response: Response, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /user/notification/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -44,7 +44,7 @@ async def get_user_notification_list(request: Request, response: Response, autho
     elif page_size >= 250:
         page_size = 250
 
-    query = convert_quotation(query).lower()
+    query = convertQuotation(query).lower()
     
     if not order_by in ["content", "notificationid"]:
         order_by = "notificationid"
@@ -84,7 +84,7 @@ async def get_user_notification_settings(request: Request, response: Response, a
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification/settings', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /user/notification/settings', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -120,7 +120,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/settings/enable', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /user/notification/settings/enable', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -161,7 +161,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
-        rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/notification/discord/enable', 60, 5)
+        rl = await ratelimit(dhrid, request, 'PATCH /user/notification/discord/enable', 60, 5)
         if rl[0]:
             return rl[1]
         for k in rl[1].keys():
@@ -236,7 +236,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/notification/settings/disable', 60, 60)
+    rl = await ratelimit(dhrid, request, 'POST /user/notification/settings/disable', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -286,7 +286,7 @@ async def get_user_notification(request: Request, response: Response, notificati
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /user/notification', 60, 30)
+    rl = await ratelimit(dhrid, request, 'GET /user/notification', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -308,13 +308,13 @@ async def get_user_notification(request: Request, response: Response, notificati
     return {"notificationid": tt[0], "content": tt[1], "timestamp": tt[2], "read": TF[tt[3]]}
 
 @app.patch(f"/{config.abbr}/user/notification/{{notificationid}}/status/{{status}}")
-async def patch_user_notification_status(request: Request, response: Response, notificationid: int, status: int, authorization: str = Header(None)):
+async def patch_user_notification_status(request: Request, response: Response, notificationid: str, status: int, authorization: str = Header(None)):
     """Updates status of a specific notification of the authorized user"""
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /user/notification/status', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /user/notification/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -332,11 +332,17 @@ async def patch_user_notification_status(request: Request, response: Response, n
         await aiosql.commit(dhrid)
         return Response(status_code=204)
 
+    try:
+        notificationid = int(notificationid)
+    except:
+        response.status_code = 404
+        return {"error": ml.tr(request, "notification_not_found")}
+
     await aiosql.execute(dhrid, f"SELECT status FROM user_notification WHERE notificationid = {notificationid} AND uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-            response.status_code = 404
-            return {"error": ml.tr(request, "notification_not_found")}
+        response.status_code = 404
+        return {"error": ml.tr(request, "notification_not_found")}
     
     await aiosql.execute(dhrid, f"UPDATE user_notification SET status = {status} WHERE notificationid = {notificationid} AND uid = {uid}")
     await aiosql.commit(dhrid)

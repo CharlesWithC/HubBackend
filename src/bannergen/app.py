@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import hashlib
 import os
 import string
 import time
@@ -76,13 +77,13 @@ class arequests():
 
 @app.post("/banner")
 async def banner(request: Request, response: Response):
-    form = await request.form()
-    company_abbr = form["company_abbr"]
-    company_name = form["company_name"]
+    data = await request.json()
+    company_abbr = data["company_abbr"]
+    company_name = data["company_name"]
     company_name = unicodedata.normalize('NFKC', company_name).upper()
-    logo_url = form["logo_url"]
-    hex_color = form["hex_color"][-6:]
-    discordid = form["discordid"]
+    logo_url = data["logo_url"]
+    hex_color = data["hex_color"][-6:]
+    userid = data["userid"]
 
     try:
         rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
@@ -94,9 +95,9 @@ async def banner(request: Request, response: Response):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 7200:
             os.remove(f"/tmp/hub/banner/{ll}")
 
-    if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{discordid}.png"):
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{discordid}.png") <= 3600:
-            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{company_abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
+    if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{userid}.png"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{userid}.png") <= 3600:
+            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","rb").read()]), media_type="image/jpeg")
             return response
 
     logo = Image.new("RGBA", (200,200),(255,255,255))
@@ -159,18 +160,18 @@ async def banner(request: Request, response: Response):
 
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
     
-    avatar = form["avatar"]
-    avatarid = avatar
+    avatar = data["avatar"]
+    avatarh = hashlib.sha256(avatar).hexdigest()[:16]
 
     l = os.listdir(f"/tmp/hub/avatar")
     for ll in l:
-        ldiscordid = ll.split("_")[0]
-        lavatarid = "_".join(ll.split("_")[1:]).split(".")[0]
-        if ldiscordid == discordid and lavatarid != avatarid:
+        luserid = ll.split("_")[0]
+        lavatarh = "_".join(ll.split("_")[1:]).split(".")[0]
+        if luserid == userid and lavatarh != avatarh:
             # user changed avatar
             os.remove(f"/tmp/hub/avatar/{ll}")
             continue
-        if ldiscordid == discordid and lavatarid == avatarid:
+        if luserid == userid and lavatarh == avatarh:
             # user didn't change avatar, and user is active, preserve avatar longer
             mtime = os.path.getmtime(f"/tmp/hub/avatar/{ll}")
             os.utime(f"/tmp/hub/avatar/{ll}", (time.time(), mtime))
@@ -178,20 +179,15 @@ async def banner(request: Request, response: Response):
             os.remove(f"/tmp/hub/avatar/{ll}")
             continue
 
-    if os.path.exists(f"/tmp/hub/avatar/{discordid}_{avatar}.png"):
-        avatar = Image.open(f"/tmp/hub/avatar/{discordid}_{avatar}.png")
+    if os.path.exists(f"/tmp/hub/avatar/{userid}_{avatarh}.png"):
+        avatar = Image.open(f"/tmp/hub/avatar/{userid}_{avatarh}.png")
     else:
         if str(avatar) == "None":
             avatar = logo.resize((250, 250)).convert("RGBA")
         else:
             # pre-process avatar
-            avatarurl = ""
-            if avatar.startswith("a_"):
-                avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
-            else:
-                avatarurl = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"
             try: # in case image is invalid
-                r = await arequests.get(avatarurl, timeout = 5)
+                r = await arequests.get(avatar, timeout = 5)
                 if r.status_code == 200:
                     try:
                         avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
@@ -201,16 +197,16 @@ async def banner(request: Request, response: Response):
                     avatar = logo.resize((250, 250)).convert("RGBA")
                 def dist(a,b,c,d):
                     return (c-a)*(c-a)+(b-d)*(b-d)
-                data = avatar.getdata()
+                datas = avatar.getdata()
                 newData = []
                 for i in range(0,250):
                     for j in range(0,250):
                         if dist(i,j,125,125) > 125*125:
                             newData.append((255,255,255,0))
                         else:
-                            newData.append(data[i*250+j])
+                            newData.append(datas[i*250+j])
                 avatar.putdata(newData)
-                avatar.save(f"/tmp/hub/avatar/{discordid}_{avatarid}.png", optimize = True)
+                avatar.save(f"/tmp/hub/avatar/{userid}_{avatarh}.png", optimize = True)
             except:
                 traceback.print_exc()
     avatar = avatar.getdata()
@@ -237,7 +233,7 @@ async def banner(request: Request, response: Response):
     theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
     # draw name
-    name = form["name"]
+    name = data["name"]
     name = unicodedata.normalize('NFKC', name).lstrip(" ")
     tname = ""
     all_printable = True
@@ -271,7 +267,7 @@ async def banner(request: Request, response: Response):
     # y = 50 ~ 70
 
     fontsize -= 20
-    highest_role = form["highest_role"]
+    highest_role = data["highest_role"]
     highest_role = unicodedata.normalize('NFKC', highest_role).lstrip(" ")
     hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
     hrolew = hrolefont.getlength(f"{highest_role}")
@@ -288,11 +284,11 @@ async def banner(request: Request, response: Response):
     draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
     # y = 115 ~ 155
 
-    joined = form["joined"]
-    division = form["division"]
+    joined = data["joined"]
+    division = data["division"]
     division = unicodedata.normalize('NFKC', division).lstrip(" ")
-    distance = form["distance"]
-    profit = form["profit"]
+    distance = data["distance"]
+    profit = data["profit"]
     joinedfont = ImageFont.truetype("./fonts/UbuntuMono.ttf", 40)
     draw.text((325, 220), f"Joined: {joined}", fill=(0,0,0), font=joinedfont)
 
@@ -312,7 +308,7 @@ async def banner(request: Request, response: Response):
     # output
     output = BytesIO()
     banner.save(output, "jpeg", optimize = True)
-    open(f"/tmp/hub/banner/{company_abbr}_{discordid}.png","wb").write(output.getvalue())
+    open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","wb").write(output.getvalue())
     
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
     return response

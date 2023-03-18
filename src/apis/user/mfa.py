@@ -20,7 +20,7 @@ async def post_user_mfa(request: Request, response: Response, authorization: str
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/mfa', 60, 10)
+    rl = await ratelimit(dhrid, request, 'POST /user/mfa', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -79,7 +79,7 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /user/mfa/disable', 60, 10)
+    rl = await ratelimit(dhrid, request, 'POST /user/mfa/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

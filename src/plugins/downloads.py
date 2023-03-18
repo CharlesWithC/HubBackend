@@ -23,7 +23,7 @@ async def get_downloads_list(request: Request, response: Response, authorization
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /downloads/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -42,7 +42,7 @@ async def get_downloads_list(request: Request, response: Response, authorization
         
     limit = ""
     if query != "":
-        query = convert_quotation(query).lower()
+        query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
     if creator_userid != -1:
         limit += f"AND userid = {creator_userid} "
@@ -84,7 +84,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /downloads', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -127,7 +127,7 @@ async def get_downloads_redirect(request: Request, response: Response, secret: s
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /downloads/redirect', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /downloads/redirect', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -136,7 +136,7 @@ async def get_downloads_redirect(request: Request, response: Response, secret: s
     await aiosql.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
     await aiosql.commit(dhrid)
 
-    secret = convert_quotation(secret)
+    secret = convertQuotation(secret)
 
     await aiosql.execute(dhrid, f"SELECT downloadsid FROM downloads_templink WHERE secret = '{secret}'")
     t = await aiosql.fetchall(dhrid)
@@ -162,7 +162,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /downloads', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -177,7 +177,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
@@ -185,7 +185,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convert_quotation(data["link"])
+        link = convertQuotation(data["link"])
         if len(data["link"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
@@ -214,7 +214,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /downloads', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -239,7 +239,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
     
     data = await request.json()
     try:
-        title = convert_quotation(data["title"])
+        title = convertQuotation(data["title"])
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
@@ -247,7 +247,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convert_quotation(data["link"])
+        link = convertQuotation(data["link"])
         if len(data["link"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
@@ -274,7 +274,7 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /downloads', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /downloads', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

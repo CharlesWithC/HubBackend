@@ -44,7 +44,7 @@ async def get_member_list(request: Request, response: Response, authorization: s
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /member/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -71,7 +71,7 @@ async def get_member_list(request: Request, response: Response, authorization: s
     if len(lroles) > 100:
         lroles = lroles[:100]
 
-    query = convert_quotation(query).lower()
+    query = convertQuotation(query).lower()
     
     order_by_last_seen = False
     if not order_by in ["user_id", "name", "uid", "discord_id", "highest_role", "join_timestamp", "last_seen"]:
@@ -206,7 +206,7 @@ async def get_member_banner(request: Request, response: Response, authorization:
             response = StreamingResponse(iter([open(f"/tmp/hub/banner/{config.abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
             return response
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /member/banner', 10, 5)
+    rl = await ratelimit(dhrid, request, 'GET /member/banner', 10, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -247,8 +247,8 @@ async def get_member_banner(request: Request, response: Response, authorization:
     try:
         r = await arequests.post("http://127.0.0.1:8700/banner", data={"company_abbr": config.abbr, \
             "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
-            "discordid": discordid, "joined": joined, "highest_role": highest_role, \
-                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, timeout = 5)
+            "userid": userid, "joined": joined, "highest_role": highest_role, \
+                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, header = {"Content-Type": "application/json"}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = r.status_code
             return {"error": r.text}

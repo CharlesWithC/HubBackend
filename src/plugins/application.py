@@ -54,7 +54,7 @@ async def post_application_positions(request: Request, response: Response, autho
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/positions', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /application/positions', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -72,7 +72,7 @@ async def post_application_positions(request: Request, response: Response, autho
         if type(data["positions"]) != list:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        positions = convert_quotation(",".join(data["positions"]))
+        positions = convertQuotation(",".join(data["positions"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -97,7 +97,7 @@ async def get_application_list(request: Request, response: Response, authorizati
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /application/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /application/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -201,7 +201,7 @@ async def get_application(request: Request, response: Response, applicationid: i
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'GET /application', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /application', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -253,7 +253,7 @@ async def post_application(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'POST /application', 180, 10)
+    rl = await ratelimit(dhrid, request, 'POST /application', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -392,7 +392,7 @@ async def patch_application(request: Request, response: Response, applicationid:
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application', 180, 10)
+    rl = await ratelimit(dhrid, request, 'PATCH /application', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -490,7 +490,7 @@ async def update_application_status(request: Request, response: Response, applic
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'PATCH /application/status', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /application/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -585,7 +585,7 @@ async def delete_application(request: Request, response: Response, applicationid
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, request.client.host, 'DELETE /application', 180, 10)
+    rl = await ratelimit(dhrid, request, 'DELETE /application', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

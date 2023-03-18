@@ -27,4 +27,7 @@ def run():
             cur.execute(f"UPDATE settings SET sval = '{nxtuserid}' WHERE skey = 'nxtuserid'")
     conn.commit()
     
+    cur.close()
+    conn.close()
+    
     print(f"Upgrade finished")
