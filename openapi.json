@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.1.5"
+        "version": "2.1.6"
     },
     "paths": {
         "/abbr": {
@@ -338,7 +338,7 @@
                 "responses": {}
             },
             "patch": {
-                "summary": "Update Profile (Name, Avatar) (Using data from Discord)",
+                "summary": "Update Profile (Name, Avatar)",
                 "tags": ["user"],
                 "operationId": "patch_user_profile",
                 "security": [{
@@ -352,7 +352,36 @@
                     },
                     "name": "uid",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Sync to Discord",
+                        "type": "boolean"
+                    },
+                    "name": "sync_to_discord",
+                    "in": "query"
                 }],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Name",
+                                        "type": "string"
+                                    }, 
+                                    "avatar": {
+                                        "description": "Avatar URL",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
                 "responses": {}
             }
         },

@@ -62,7 +62,7 @@ async def patch_user_password(request: Request, response: Response, authorizatio
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not "@" in email: # make sure it's not empty
+    if email == "" or "@" not in email: # make sure it's not empty
         response.status_code = 403
         return {"error": ml.tr(request, "invalid_email", force_lang = au["language"])}
         

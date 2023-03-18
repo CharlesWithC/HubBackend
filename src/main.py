@@ -56,39 +56,32 @@ if __name__ == "__main__":
     print(f"Drivers Hub: Backend ({version})")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
 
-    upgrade_loadable = False
-    try:
-        import upgrades.manager
-        upgrade_loadable = True
-    except:
-        pass
-
-    if upgrade_loadable:
-        cur_version = version.replace(".rc", "").replace(".", "_")
-        pre_version = cur_version
-        conn = genconn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
-        t = cur.fetchall()
-        cur.close()
-        conn.close()
-        if len(t) != 0:
-            pre_version = t[0][0].replace(".rc", "").replace(".", "_")
-        if pre_version != cur_version:
-            if not pre_version in upgrades.manager.VERSION_CHAIN:
-                print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
-                sys.exit(1)
-            pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
-            if not cur_version in upgrades.manager.VERSION_CHAIN:
-                print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
-                sys.exit(1)
-            cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
-            for i in range(pre_idx + 1, cur_idx + 1):
-                v = upgrades.manager.VERSION_CHAIN[i]
-                if v in upgrades.manager.UPGRADEABLE_VERSION:
-                    print(f"Updating data to be compatible with {v.replace('_', '.')}...")
-                    upgrades.manager.UPGRADER[v].run()
-        upgrades.manager.unload()
+    import upgrades.manager
+    cur_version = version.replace(".rc", "").replace(".", "_")
+    pre_version = cur_version
+    conn = genconn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
+    t = cur.fetchall()
+    cur.close()
+    conn.close()
+    if len(t) != 0:
+        pre_version = t[0][0].replace(".rc", "").replace(".", "_")
+    if pre_version != cur_version:
+        if not pre_version in upgrades.manager.VERSION_CHAIN:
+            print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
+            sys.exit(1)
+        pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
+        if not cur_version in upgrades.manager.VERSION_CHAIN:
+            print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
+            sys.exit(1)
+        cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
+        for i in range(pre_idx + 1, cur_idx + 1):
+            v = upgrades.manager.VERSION_CHAIN[i]
+            if v in upgrades.manager.UPGRADEABLE_VERSION:
+                print(f"Updating data to be compatible with {v.replace('_', '.')}...")
+                upgrades.manager.UPGRADER[v].run()
+    upgrades.manager.unload()
         
     conn = genconn()
     cur = conn.cursor()

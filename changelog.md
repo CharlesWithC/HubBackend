@@ -1,9 +1,22 @@
 # Changelog
 
+**v2.1.6**  
+1.Added support to custom avatar and name (Updated **PATCH** `/user/profile`)  
+-> Disabled automatic sync to Discord profile on login  
+-> Disabled default action of syncing to Discord profile, `sync_to_discord=true` in request param is required  
+-> Added `config.avatar_domain_whitelist[]` to restrict the domain of avatar URL  
+**Note** Subdomains are included! For example, if `c.com` is in the list, then `c.com`, `b.c.com`, `a.b.c.com` etc will be accepted.  
+-> Added `config.allow_custom_profile` to enable/disable the function for regular users, if disabled, then only users with permission `admin`, `hrm`, `hr`, `manage_profile` will be able to update profile for themselves or other users.  
+2.Renamed `config.in_guild_check` to `config.must_join_guild`  
+3.Added `config.required_connections[]`, accept `email`, `discord`, `steam`, `truckersmp`.  
+-> Removed `config.truckersmp_bind`  
+**Note** Connections are checked when accepting a user as member and creating an application. Steam connection is always required when adding driver role to user due to tracker authentication.  
+4.Moved in-Discord-guild check from login to when creating application  
+
 **v2.1.5**  
-1.Fixed notification cannot update status for all notifications  
+1.Fixed issue preventing status update of all notifications  
 2.Improved ratelimit to identify session with `uid` when available  
-3.Updated user object to include full avatar URL rather than identifier  
+3.Updated user object to store and use full avatar URL rather than identifier  
 4.Added caching to authorization  
 5.Removed bearer token expiration  
 

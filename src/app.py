@@ -9,18 +9,17 @@ import time
 from discord import Colour
 from fastapi import FastAPI
 
-version = "v2.1.5"
+version = "v2.1.6"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
     "name": "",
     "language": "en",
     "distance_unit": "metric",
-    "truckersmp_bind": True,
     "privacy": False,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
@@ -57,8 +56,11 @@ config_sample = {
     "external_plugins": [],
 
     "guild_id": "",
-    "in_guild_check": True,
-    "use_server_nickname": False,
+    "must_join_guild": True,
+    "use_server_nickname": True,
+    "allow_custom_profile": True,
+    "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
+    "required_connections": ["discord", "email", "truckersmp"],
 
     "tracker": "tracksim",
     "tracker_company_id": "",
@@ -182,7 +184,7 @@ config_sample = {
         "delete_dlog": [],
 
         "hr": [],
-        "patch_username": [],
+        "manage_profile": [],
         "add_member": [],
         "update_member_roles": [],
         "update_member_points": [],

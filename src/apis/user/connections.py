@@ -59,7 +59,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
-        return {"error": ml.tr(request, "steam_bound_to_other_account", force_lang = au["language"])}
+        return {"error": ml.tr(request, "steam_connected_to_other_account", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
@@ -148,7 +148,7 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
-        return {"error": ml.tr(request, "steam_not_bound_before_truckersmp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "steam_not_connected_before_truckersmp", force_lang = au["language"])}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]

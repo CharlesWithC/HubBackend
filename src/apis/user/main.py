@@ -152,12 +152,12 @@ async def get_user_profile(request: Request, response: Response, authorization: 
     return (await GetUserInfo(dhrid, request, uid = uid))
 
 @app.patch(f"/{config.abbr}/user/profile")
-async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = -1):
-    """Syncs the profile of a specific user to their current Discord profile
+async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = -1, sync_to_discord: Optional[bool] = False):
+    """Updates the profile of a specific user
+
+    If `sync_to_discord` is `true`, then syncs to their Discord profile.
     
-    If `uid` in request param is not provided, then syncs the profile for the authorized user.
-    
-    [DEPRECATED] This function will be moved or removed when the user system no longer relies on Discord."""
+    If `uid` in request param is not provided, then syncs the profile for the authorized user."""
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -181,7 +181,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
         uid = au["uid"]
         discordid = au["discordid"]
     else:
-        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "patch_username"])
+        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "manage_profile"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -194,43 +194,79 @@ async def patch_user_profile(request: Request, response: Response, authorization
         staffmode = True
         discordid = t[0][0]
 
-    if discordid is None:
-        response.status_code = 409
-        return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
-    
-    if config.discord_bot_token == "":
-        response.status_code = 503
-        return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
-
-    try:
-        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
-    except:
-        traceback.print_exc()
-        if not staffmode:
-            return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
-        else:
-            return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
-    if r.status_code == 404:
-        if not staffmode:
-            return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
-        else:
-            return {"error": ml.tr(request, "user_not_in_discord", force_lang = au["language"])}
-    if r.status_code // 100 != 2:
-        if not staffmode:
-            return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
-        else:
-            return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
-    d = json.loads(r.text)
-    username = convertQuotation(d["user"]["username"])
-    avatar = ""
-    if config.use_server_nickname and d["nick"] != None:
-        username = convertQuotation(d["nick"])
-    if d["user"]["avatar"] != None:
-        avatar = convertQuotation(d["user"]["avatar"])
-        avatar = getAvatarSrc(discordid, avatar)
+    if sync_to_discord:
+        if discordid is None:
+            response.status_code = 409
+            return {"error": ml.tr(request, "discord_not_connected", force_lang = au["language"])}
         
-    await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{avatar}' WHERE uid = '{uid}'")
-    await aiosql.commit(dhrid)
+        if config.discord_bot_token == "":
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
+
+        try:
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+        except:
+            traceback.print_exc()
+            if not staffmode:
+                return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
+        if r.status_code == 404:
+            if not staffmode:
+                return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "user_not_in_discord", force_lang = au["language"])}
+        if r.status_code // 100 != 2:
+            if not staffmode:
+                return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
+        d = json.loads(r.text)
+        name = convertQuotation(d["user"]["username"])
+        avatar = ""
+        if config.use_server_nickname and d["nick"] is not None:
+            name = convertQuotation(d["nick"])
+        if d["user"]["avatar"] is not None:
+            avatar = convertQuotation(d["user"]["avatar"])
+            avatar = getAvatarSrc(discordid, avatar)
+            
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.commit(dhrid)
+    
+    else:
+        if not staffmode and not config.allow_custom_profile:
+            response.status_code = 403
+            return {"error": "Forbidden"}
+        
+        data = await request.json()
+        try:
+            name = convertQuotation(data["name"])
+            if len(name) > 32:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "name", "limit": "32"}, force_lang = au["language"])}
+            avatar = convertQuotation(data["avatar"])
+            if len(name) > 256:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "avatar", "limit": "256"}, force_lang = au["language"])}
+        except:
+            response.status_code = 400
+            return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+            
+        avatar_domain = getDomainFromUrl(avatar)
+        if not avatar_domain:
+            response.status_code = 400
+            return {"error": ml.tr(request, "invalid_avatar_url", force_lang = au["language"])}
+        
+        ok = False
+        for domain in config.avatar_domain_whitelist:
+            if avatar_domain == domain or avatar_domain.endswith("." + domain): # domain / subdomain
+                ok = True
+        if not ok:
+            response.status_code = 400
+            return {"error": ml.tr(request, "avatar_domain_not_in_whitelist", force_lang = au["language"])}
+        
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.commit(dhrid)
 
     return Response(status_code=204)
     
@@ -259,13 +295,12 @@ async def patch_user_bio(request: Request, response: Response, authorization: st
     data = await request.json()
     try:
         bio = str(data["bio"])
+        if len(bio) > 1000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        
-    if len(bio) > 1000:
-        response.status_code = 400
-        return {"error": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"UPDATE user SET bio = '{b64e(bio)}' WHERE uid = {uid}")
     await aiosql.commit(dhrid)

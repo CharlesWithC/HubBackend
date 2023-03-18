@@ -3,7 +3,6 @@
     "name": "",
     "language": "en",
     "distance_unit": "metric",
-    "truckersmp_bind": true,
     "privacy": false,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
@@ -40,8 +39,11 @@
     "external_plugins": ["rework_member"],
 
     "guild_id": "",
-    "in_guild_check": true,
-    "use_server_nickname": false,
+    "must_join_guild": true,
+    "use_server_nickname": true,
+    "allow_custom_profile": true,
+    "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
+    "required_connections": ["discord", "email", "truckersmp"],
 
     "tracker": "tracksim",
     "tracker_company_id": "",
@@ -168,7 +170,7 @@
         "delete_dlog": [],
 
         "hr": [],
-        "patch_username": [],
+        "manage_profile": [],
         "add_member": [],
         "update_member_roles": [],
         "update_member_points": [],

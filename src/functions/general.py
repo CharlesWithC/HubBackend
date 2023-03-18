@@ -27,6 +27,15 @@ def isurl(s):
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(r, s) is not None
 
+def getDomainFromUrl(s):
+    if not isurl(s):
+        return False
+    r = re.search(r"(?<=://)[^/]+", s)
+    if r:
+        return r.group(0)
+    else:
+        return False
+
 def getFullCountry(abbr):
     if abbr.upper() in ISO3166_COUNTRIES.keys():
         return convertQuotation(ISO3166_COUNTRIES[abbr.upper()])

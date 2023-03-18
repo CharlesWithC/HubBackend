@@ -330,15 +330,35 @@ async def post_application(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": ml.tr(request, "no_loa_application", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid FROM user WHERE uid = {uid}")
+    await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid, discordid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
-    if t[0][4] is None:
+    if t[0][2] is None and "email" in config.required_connections:
         response.status_code = 428
-        return {"error": ml.tr(request, "must_verify_steam", force_lang = au["language"])}
-    if t[0][3] is None and config.truckersmp_bind:
+        return {"error": ml.tr(request, "must_have_connection", var = {"app": "email"}, force_lang = au["language"])}
+    if t[0][6] is None and "discord" in config.required_connections:
         response.status_code = 428
-        return {"error": ml.tr(request, "must_verify_truckersmp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "must_have_connection", var = {"app": "Discord"}, force_lang = au["language"])}
+    if t[0][4] is None and "steam" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "must_have_connection", var = {"app": "Steam"}, force_lang = au["language"])}
+    if t[0][3] is None and "truckersmp" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "must_have_connection", var = {"app": "TruckersMP"}, force_lang = au["language"])}
     userid = t[0][5]
+    
+    if discordid is not None and config.must_join_guild and config.discord_bot_token != "":
+        try:
+            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+        except:
+            traceback.print_exc()
+            response.status_code = 428
+            return {"error": ml.tr(request, "discord_check_fail")}
+        if r.status_code == 404:
+            response.status_code = 428
+            return {"error": ml.tr(request, "must_join_discord")}
+        if r.status_code // 100 != 2:
+            response.status_code = 428
+            return {"error": ml.tr(request, "discord_check_fail")}
 
     await aiosql.execute(dhrid, f"INSERT INTO application(application_type, uid, data, status, submit_timestamp, update_staff_userid, update_staff_timestamp) VALUES ({application_type}, {uid}, '{compress(json.dumps(application,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
     await aiosql.commit(dhrid)

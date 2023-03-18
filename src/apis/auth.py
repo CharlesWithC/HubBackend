@@ -78,25 +78,6 @@ async def post_auth_password(request: Request, response: Response):
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    if discordid is not None and (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
-        try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
-        except:
-            traceback.print_exc()
-            response.status_code = 428
-            return {"error": ml.tr(request, "discord_check_fail")}
-        if r.status_code == 404:
-            response.status_code = 428
-            return {"error": ml.tr(request, "must_join_discord")}
-        if r.status_code // 100 != 2:
-            response.status_code = 428
-            return {"error": ml.tr(request, "discord_check_fail")}
-        d = json.loads(r.text)
-        if config.use_server_nickname and d["nick"] != None:
-            username = d["nick"]
-            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = {uid}")
-            await aiosql.commit(dhrid)
-
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
@@ -167,13 +148,10 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
             discordid = user_data['id']
             username = str(user_data['username'])
             username = convertQuotation(username).replace(",","")
-            if not "email" in user_data.keys():
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
-            email = str(user_data['email'])
-            email = convertQuotation(email)
-            if not "@" in email: # make sure it's not empty
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_email")), status_code=302)
-            avatar = str(user_data['avatar'])
+            email = ""
+            if "email" in user_data.keys():
+                email = convertQuotation(user_data['email'])
+            avatar = getAvatarSrc(discordid, user_data['avatar'])
             tokens = {**tokens, **user_data}
 
             await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
@@ -188,39 +166,29 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
             uid = -1
 
-            await aiosql.execute(dhrid, f"SELECT * FROM user WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT uid, mfa_secret FROM user WHERE discordid = '{discordid}'")
             t = await aiosql.fetchall(dhrid)
+            mfa_secret = ""
             if len(t) == 0:
+                if config.use_server_nickname:
+                    try:
+                        r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
+                        if r.status_code == 200:
+                            d = json.loads(r.text)
+                            if d["nick"] is not None:
+                                username = convertQuotation(d["nick"])
+                    except:
+                        traceback.print_exc()
+                        
                 await aiosql.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '')")
                 await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
                 uid = (await aiosql.fetchone(dhrid))[0]
                 await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
+                await aiosql.commit(dhrid)
                 await AuditLog(dhrid, -999, f"User register: `{username}` (UID: `{uid}`)")
             else:
                 uid = t[0][0]
-                await aiosql.execute(dhrid, f"UPDATE user_password SET email = '{email}' WHERE uid = '{uid}'")
-                await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}', avatar = '{getAvatarSrc(discordid, avatar)}', email = '{email}' WHERE uid = '{uid}'")
-            await aiosql.commit(dhrid)
-            
-            if (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
-                try:
-                    r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
-                except:
-                    traceback.print_exc()
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
-                if r.status_code == 404:
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
-                if r.status_code // 100 != 2:
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
-                d = json.loads(r.text)
-                if config.use_server_nickname and d["nick"] != None:
-                    username = d["nick"]
-                    await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = '{uid}'")
-                    await aiosql.commit(dhrid)
-
-            await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = '{uid}'")
-            t = await aiosql.fetchall(dhrid)
-            mfa_secret = t[0][0]
+                mfa_secret = t[0][1]
             if mfa_secret != "":
                 stoken = str(uuid.uuid4())
                 stoken = "f" + stoken[1:]
@@ -331,22 +299,6 @@ async def get_auth_steam_callback(request: Request, response: Response):
         expire = t[0][1]
         expire = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
-
-    if discordid is not None and (config.in_guild_check or config.use_server_nickname) and config.discord_bot_token != "":
-        try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)
-        except:
-            traceback.print_exc()
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
-        if r.status_code == 404:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "must_join_discord")), status_code=302)
-        if r.status_code // 100 != 2:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "discord_check_fail")), status_code=302)
-        d = json.loads(r.text)
-        if config.use_server_nickname and d["nick"] != None:
-            username = d["nick"]
-            await aiosql.execute(dhrid, f"UPDATE user SET name = '{username}' WHERE uid = '{uid}'")
-            await aiosql.commit(dhrid)
 
     await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)

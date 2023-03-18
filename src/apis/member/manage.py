@@ -122,10 +122,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
     if config.perms.driver[0] in addedroles:
         if steamid is None:
             response.status_code = 428
-            return {"error": ml.tr(request, "steam_not_bound", force_lang = au["language"])}
-        if truckersmpid is None and config.truckersmp_bind:
-            response.status_code = 428
-            return {"error": ml.tr(request, "truckersmp_not_bound", force_lang = au["language"])}
+            return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
 
     roles = [str(i) for i in roles]
     await aiosql.execute(dhrid, f"UPDATE user SET roles = ',{','.join(roles)},' WHERE userid = {userid}")

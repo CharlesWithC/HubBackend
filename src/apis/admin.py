@@ -17,7 +17,7 @@ from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
 from functions.main import *
 
-config_whitelist = ['name', 'language', 'distance_unit', 'truckersmp_bind', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'in_guild_check', 'use_server_nickname', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_oauth2_url', 'discord_callback_url', 'discord_bot_token', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
     "division": ["webhook_division", "webhook_division_message", "divisions"]}
@@ -161,7 +161,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
             
-            if tt in ["truckersmp_bind", "privacy", "in_guild_check"]:
+            if tt in ["privacy", "must_join_guild", "use_server_nickname", "allow_custom_profile"]:
                 if type(new_config[tt]) != bool:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}

@@ -37,7 +37,7 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT userid, name, discordid, name FROM user WHERE uid = {uid}")
+    await aiosql.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -48,6 +48,21 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
     name = t[0][1]
     discordid = t[0][2]
     username = t[0][3]
+    steamid = t[0][4]
+    truckersmpid = t[0][5]
+    email = t[0][6]
+    if email == "" and "email" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "email"}, force_lang = au["language"])}
+    if discordid is None and "discord" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"}, force_lang = au["language"])}
+    if steamid is None and "steam" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
+    if truckersmpid is None and "truckersmp" in config.required_connections:
+        response.status_code = 428
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "TruckersMP"}, force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
     t = await aiosql.fetchall(dhrid)
@@ -151,7 +166,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
     
 @app.delete(f"/{config.abbr}/user/{{uid}}/connections")
 async def delete_user_connections(request: Request, response: Response, uid: Optional[int] = -1, authorization: str = Header(None)):
-    """[Permission Control] Deletes all third-party account connections (except Discord) for a specific user.
+    """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
     
     [Note] This function will be updated when the user system no longer relies on Discord."""
 
@@ -184,7 +199,7 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
     userid = t[0][0]
     if userid != -1:
         response.status_code = 428
-        return {"error": ml.tr(request, "dismiss_before_unbind", force_lang = au["language"])}
+        return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
     await aiosql.commit(dhrid)
