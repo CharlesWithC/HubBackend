@@ -27,6 +27,8 @@
     "language_not_supported": "Язык не поддерживается.",
     "invalid_avatar_url": "Неверный URL-адрес аватара.",
     "avatar_domain_not_in_whitelist": "Домен аватара не внесен в белый список.",
+    "smtp_configuration_invalid": "Конфигурация SMTP недействительна, невозможно отправить электронное письмо.",
+    "auth_link_invalid_or_expired": "Ссылка авторизации недействительна или срок ее действия истек.",
 
     "connection_not_found": "Вы не подключили учетную запись {app}.",
     "dismiss_before_ban": "Откажитесь от участника перед запретом.",

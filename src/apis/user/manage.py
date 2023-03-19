@@ -110,8 +110,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
         return au
     adminid = au["userid"]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -146,6 +145,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
             new_uid = t[0][0]
 
             await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
+            await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {new_uid}")
             await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
             await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
             await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
@@ -184,8 +184,7 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
         return au
     adminid = au["userid"]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -330,8 +329,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     if uid == auth_uid:
         uid = -1
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
@@ -355,6 +353,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         username = t[0][1]
         
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
+        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
@@ -380,6 +379,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             return {"error": ml.tr(request, "leave_company_before_delete", force_lang = au["language"])}
         
         await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
+        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
         await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")

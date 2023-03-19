@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.2.0"
+        "version": "2.2.1"
     },
     "paths": {
         "/abbr": {
@@ -55,7 +55,69 @@
                                     }
                                 }
                             },
-                            "required": ["email", "password", "h-captcha-response"]
+                            "required": ["email", "password"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/auth/register": {
+            "post": {
+                "summary": "Register",
+                "tags": ["auth"],
+                "operationId": "post_auth_register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "description": "Email",
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string"
+                                    },
+                                    "h-captcha-response": {
+                                        "description": "hCaptcha Response",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["email", "password"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/auth/reset": {
+            "post": {
+                "summary": "Reset Password",
+                "tags": ["auth"],
+                "operationId": "post_auth_reset",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "description": "Email",
+                                        "type": "string"
+                                    },
+                                    "h-captcha-response": {
+                                        "description": "hCaptcha Response",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["email"]
                         }
                     }
                 },
@@ -85,6 +147,43 @@
                                 }
                             },
                             "required": ["token", "otp"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/auth/email": {
+            "post": {
+                "summary": "Email Auth (Confirmation Link)",
+                "tags": ["auth"],
+                "operationId": "post_auth_email",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Secret",
+                        "type": "string"
+                    },
+                    "name": "secret",
+                    "in": "query"
+                }],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "password": {
+                                        "description": "New Password (When operation is Update Password)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
                         }
                     }
                 },
@@ -809,6 +908,45 @@
                                 }
                             },
                             "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/user/resendConfirmation": {
+            "post": {
+                "summary": "Resend Email Confirmation (Only after register)",
+                "tags": ["user"],
+                "operationId": "post_user_resend_confirmation",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/user/email": {
+            "patch": {
+                "summary": "Update Email",
+                "tags": ["user"],
+                "operationId": "patch_user_email",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "description": "New Email",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["email"]
                         }
                     }
                 },

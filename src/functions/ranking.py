@@ -1,3 +1,6 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 from static import RANKROLE, RANKNAME
 
 def point2rankroleid(point):

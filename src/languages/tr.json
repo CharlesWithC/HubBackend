@@ -27,6 +27,8 @@
     "language_not_supported": "Bu dil henüz desteklenmiyor.",
     "invalid_avatar_url": "Geçersiz avatar URL'si.",
     "avatar_domain_not_in_whitelist": "Avatarın alanı beyaz listede değil.",
+    "smtp_configuration_invalid": "SMTP yapılandırması geçersiz, e-posta gönderilemiyor.",
+    "auth_link_invalid_or_expired": "Yetkilendirme bağlantısı geçersiz veya süresi dolmuş.",
 
     "connection_not_found": "Bir {app} hesabı bağlamadınız.",
     "dismiss_before_ban": "Yasaklamadan önce üyeyi şirketten çıkart.",

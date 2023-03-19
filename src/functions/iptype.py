@@ -1,3 +1,6 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 import re
 
 ipv4re = '''^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(

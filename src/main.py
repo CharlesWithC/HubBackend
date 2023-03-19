@@ -90,7 +90,7 @@ if __name__ == "__main__":
     cur.close()
     conn.close()
 
-import api
+from api import *
 
 if __name__ == "__main__":
     print("")

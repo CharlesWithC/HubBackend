@@ -1,6 +1,10 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 import json
 import random
 import re
+import string
 import time
 from datetime import datetime
 
@@ -12,6 +16,9 @@ from static import *
 
 def genrid():
     return str(int(time.time()*10000000)) + str(random.randint(0, 10000)).zfill(5)
+
+def gensecret(length = 32):
+    return ''.join(random.choice(string.ascii_letters) for i in range(length))
 
 def getDayStartTs(timestamp):
     dt = datetime.fromtimestamp(timestamp)

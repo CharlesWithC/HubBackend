@@ -30,8 +30,7 @@ async def patch_user_password(request: Request, response: Response, authorizatio
         return au
     uid = au["uid"]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -108,8 +107,7 @@ async def post_user_password_disable(request: Request, response: Response, autho
         return au
     uid = au["uid"]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
@@ -131,8 +129,7 @@ async def post_user_password_disable(request: Request, response: Response, autho
     t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     

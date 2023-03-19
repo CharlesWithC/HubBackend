@@ -144,7 +144,7 @@ async def dispatch(request: Request, call_next):
             return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
 
         if ismysqlerr:
-            print(f"DATABASE ERROR\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
+            print(f"DATABASE ERROR [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
             global dberr
             if not -1 in dberr and int(time.time()) - aiosql.POOL_START_TIME >= 60 and aiosql.POOL_START_TIME != 0:
@@ -168,11 +168,11 @@ async def dispatch(request: Request, call_next):
         else:
             if err_hash in session_errs:
                 # recognized error, do not print log or send webhook
-                print(f"ERROR: {err_hash}\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+                print(f"ERROR: {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
                 return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
             session_errs.append(err_hash)
 
-            print(f"ERROR: {err_hash}\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
+            print(f"ERROR: {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
             if config.webhook_error != "":
                 try:
                     await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)

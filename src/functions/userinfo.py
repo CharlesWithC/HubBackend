@@ -126,7 +126,7 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     if not request is None:
         if "authorization" in request.headers.keys():
             authorization = request.headers["authorization"]
-            au = await auth(dhrid, authorization, request)
+            au = await auth(dhrid, authorization, request, check_member = False)
             if not au["error"]:
                 roles = au["roles"]
                 for i in roles:
@@ -144,8 +144,6 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     if mfa_secret != "":
         mfa_enabled = True
     email = p[0][3]
-    if email.endswith("!"): # unverified
-        email = email[:-1]
     if not include_email:
         email = ""
 
@@ -256,8 +254,6 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
     if mfa_secret != "":
         mfa_enabled = True
     email = p[0][3]
-    if email.endswith("!"): # unverified
-        email = email[:-1]
     if not include_email:
         email = ""
 

@@ -27,6 +27,8 @@
     "language_not_supported": "La langue n'est pas prise en charge.",
     "invalid_avatar_url": "URL d'avatar invalide.",
     "avatar_domain_not_in_whitelist": "Le domaine de l'avatar n'est pas sur la liste blanche.",
+    "smtp_configuration_invalid": "La configuration SMTP est invalide, impossible d'envoyer un e-mail.",
+    "auth_link_invalid_or_expired": "Lien d'autorisation invalide ou expiré.",
 
     "connection_not_found": "Vous n'avez pas connecté de compte {app}.",
     "dismiss_before_ban": "Renvoyer le membre avant de le bannir.",

@@ -19,7 +19,7 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt):
     
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
-        au = await auth(dhrid, authorization, request)
+        au = await auth(dhrid, authorization, request, check_member=False)
         if not au["error"]:
             identifier = f"uid/{au['uid']}"
 
@@ -278,3 +278,21 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         return csession[authorization]["result"]
     
     return {"error": "Unauthorized", "code": 401}
+
+async def isSecureAuth(dhrid, authorization, request):
+    stoken = authorization.split(" ")[1]
+    if not stoken.startswith("e"):
+        return True
+    
+    au = await auth(dhrid, authorization, request, check_member=False)
+    if au["error"]:
+        return False
+    uid = au["uid"]
+    
+    await aiosql.execute(dhrid, f"SELECT discordid, steamid FROM user WHERE uid = {uid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        return False
+    if t[0][0] is None and t[0][1] is None:
+        return True
+    return False

@@ -12,6 +12,114 @@ from app import app, config
 from db import aiosql
 from functions.main import *
 
+@app.post(f"/{config.abbr}/user/resendConfirmation")
+async def post_user_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
+    """Resends confirmation email"""
+
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'POST /user/resendConfirmation', 60, 1)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+    
+    await aiosql.execute(dhrid, f"SELECT operation, expire FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": "Not Found"}
+    email = convertQuotation("/".join(t[0][0].split("/")[1:]))
+    expire = t[0][1]
+
+    if not emailConfigured():
+        response.status_code = 428
+        return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
+
+    secret = "rg" + gensecret(length = 30)
+    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
+    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
+    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'register/{email}', {expire})")
+    await aiosql.commit(dhrid)
+    
+    link = config.frontend_urls.email_confirm.replace("{secret}", secret)
+    await aiosql.extend_conn(dhrid, 15)
+    ok = (await sendEmail(au["name"], email, "register", link))
+    await aiosql.extend_conn(dhrid, 2)
+    if not ok:
+        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+        await aiosql.commit(dhrid)
+        response.status_code = 428
+        return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
+
+    return Response(status_code=204)
+
+@app.patch(f"/{config.abbr}/user/email")
+async def patch_user_email(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates email for the authorized user, returns 204
+    
+    JSON: `{"email": str}`"""
+
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'PATCH /user/email', 60, 1)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    data = await request.json()
+    try:
+        new_email = convertQuotation(data["email"])
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND email = '{new_email}'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) > 0:
+        response.status_code = 409
+        return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = au["language"])}
+
+    if not emailConfigured():
+        response.status_code = 428
+        return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
+
+    secret = "ue" + gensecret(length = 30)
+    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
+    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
+    await aiosql.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'update-email/{new_email}', {int(time.time() + 3600)})")
+    await aiosql.commit(dhrid)
+    
+    link = config.frontend_urls.email_confirm.replace("{secret}", secret)
+    await aiosql.extend_conn(dhrid, 15)
+    ok = (await sendEmail(au["name"], new_email, "update_email", link))
+    await aiosql.extend_conn(dhrid, 2)
+    if not ok:
+        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+        await aiosql.commit(dhrid)
+        response.status_code = 428
+        return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
+
+    return Response(status_code=204)
+
 @app.patch(f"/{config.abbr}/user/discord")
 async def patch_user_discord(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Discord account connection for the authorized user, returns 204

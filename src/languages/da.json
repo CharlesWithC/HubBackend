@@ -27,6 +27,8 @@
     "language_not_supported": "Sprog er ikke understøttet.",
     "invalid_avatar_url": "Ugyldig avatar-URL.",
     "avatar_domain_not_in_whitelist": "Avatarens domæne er ikke hvidlistet.",
+    "smtp_configuration_invalid": "SMTP-konfigurationen er ugyldig, kan ikke sende e-mail.",
+    "auth_link_invalid_or_expired": "Autorisationslinket er ugyldigt eller udløbet.",
 
     "connection_not_found": "Du har ikke tilsluttet en {app}-konto.",
     "dismiss_before_ban": "Afsig medlemet for ban.",

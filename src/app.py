@@ -9,11 +9,11 @@ import time
 from discord import Colour
 from fastapi import FastAPI
 
-version = "v2.2.0"
+version = "v2.2.1"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -33,7 +33,8 @@ config_sample = {
         "auth_token": "https://{domain}/auth?token={token}",
         "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
         "member": "https://{domain}/member?userid={userid}",
-        "delivery": "https://{domain}/delivery?logid={logid}"
+        "delivery": "https://{domain}/delivery?logid={logid}",
+        "email_confirm": "https://{domain}/emailConfirm?secret={secret}"
     },
 
     "apidomain": "drivershub.charlws.com",
@@ -90,6 +91,31 @@ config_sample = {
     "discord_client_secret": "",
     "discord_bot_token": "",
     "steam_api_key": "",
+    
+    "smtp_host": "",
+    "smtp_port": "",
+    "smtp_email": "",
+    "smtp_passwd": "",
+    "email_template": {
+        "register": {
+            "subject": "Register Acccount",
+            "from_email": "VTC <email>",
+            "html": "You are registering an account in Drivers Hub. Please click the link below to verify your email.<br>{link}",
+            "plain": "You are registering an account in Drivers Hub. Please click the link below to verify your email.\n{link}"
+        },
+        "update_email": {
+            "subject": "Update Email",
+            "from_email": "VTC <email>",
+            "html": "You are updating your email in Drivers Hub. Please click the link below to verify your email.<br>{link}",
+            "plain": "You are updating your email in Drivers Hub. Please click the link below to verify your email.\n{link}"
+        },
+        "reset_password": {
+            "subject": "Reset Password",
+            "from_email": "VTC <email>",
+            "html": "You are resetting your password in Drivers Hub. Please click the link below to continue.<br>{link}",
+            "plain": "You are resetting your password in Drivers Hub. Please click the link below to continue.\n{link}"
+        }
+    },
 
     "member_accept": {
         "webhook_url": "",
@@ -317,6 +343,9 @@ def validateConfig(cfg):
     
     if not "discord_callback" in cfg["frontend_urls"].keys():
         cfg["frontend_urls"]["discord_callback"] = f"https://{cfg['domain']}/connectDiscord"
+    
+    if not "email_confirm" in cfg["frontend_urls"].keys():
+        cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/emailConfirm?secret={{secret}}"
 
     tcfg = {}
     for key in config_keys_order:

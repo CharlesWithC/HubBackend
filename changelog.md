@@ -1,5 +1,20 @@
 # Changelog
 
+**v2.2.1**  
+Added support to Email/Password registration and updating email  
+-> Added `smtp_server`, `smtp_port`, `smtp_email`, `smtp_passwd` in config for email credentials  
+-> Added `email_template.register/update_email/reset_password` as configurable email templates  
+
+-> Register with **POST** `/auth/register`  
+-> After register, confirm email with **POST** `/auth/email` with secret  
+-> To resend register confirmation email, use **POST** `/user/resendConfirmation`  
+
+-> To update email, use **PATCH** `/user/email`  
+-> To reset password, use **POST** `/auth/reset`  
+-> Use **POST** `/auth/email` with secret and new password to reset password  
+
+-> Secret starting with `rg` refers to `register`, `ue` update email, `rp` reset password, which may be useful for frontend  
+
 **v2.2.0**  
 1.Automated `discord_callback_url` and `discord_oauth_url` generation, hence removed it from config  
 2.Added function to connect/update Discord account  
@@ -11,7 +26,7 @@
 3.Added `config.register_methods[]` to restrict registration methods, accept `email`, `discord`, `steam`  
 4.Added `config.steam_api_key` which will be used to get user profile when they register with Steam  
 **Hint** Get the API Key at [https://steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)  
-5.Added support to Steam register  
+5.Added support to Steam registeration  
 -> When `/auth/steam/callback` is called by a user whose `steamid` is not recognized in database, then register a new account for the user  
 -> The user's Steam name and avatar will be set as their Drivers Hub default name and profile  
 

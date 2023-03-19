@@ -319,8 +319,7 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
     adminid = au["userid"]
     adminroles = au["roles"]
 
-    stoken = authorization.split(" ")[1]
-    if stoken.startswith("e"):
+    if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 

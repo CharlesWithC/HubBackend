@@ -27,6 +27,8 @@
     "language_not_supported": "No se admite el idioma.",
     "invalid_avatar_url": "URL de avatar no válida.",
     "avatar_domain_not_in_whitelist": "El dominio del avatar no está en la lista blanca.",
+    "smtp_configuration_invalid": "La configuración de SMTP no es válida, no se puede enviar el correo electrónico.",
+    "auth_link_invalid_or_expired": "Enlace de autorización no válido o caducado.",
 
     "connection_not_found": "No has conectado una cuenta de {app}.",
     "dismiss_before_ban": "Despedir al miembro antes de prohibir.",

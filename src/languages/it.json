@@ -27,6 +27,8 @@
     "language_not_supported": "La langue n'est pas prise en charge.",
     "invalid_avatar_url": "URL avatar non valido.",
     "avatar_domain_not_in_whitelist": "Il dominio dell'avatar non è nella whitelist.",
+    "smtp_configuration_invalid": "La configurazione SMTP non è valida, impossibile inviare email.",
+    "auth_link_invalid_or_expired": "Link di autorizzazione non valido o scaduto.",
 
     "connection_not_found": "Non hai collegato un account {app}.",
     "dismiss_before_ban": "Rimuovi il membro dall'azienda prima di bannarlo.",

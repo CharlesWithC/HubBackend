@@ -16,7 +16,8 @@
         "auth_token": "https://{domain}/auth?token={token}",
         "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
         "member": "https://{domain}/member?userid={userid}",
-        "delivery": "https://{domain}/delivery?logid={logid}"
+        "delivery": "https://{domain}/delivery?logid={logid}",
+        "email_confirm": "https://{domain}/emailConfirm?secret={secret}"
     },
 
     "apidomain": "drivershub.charlws.com",
@@ -73,6 +74,31 @@
     "discord_client_secret": "",
     "discord_bot_token": "",
     "steam_api_key": "",
+
+    "smtp_host": "",
+    "smtp_port": "",
+    "smtp_email": "",
+    "smtp_passwd": "",
+    "email_template": {
+        "register": {
+            "subject": "Register Acccount",
+            "from_email": "VTC <email>",
+            "html": "You are registering an account in Drivers Hub. Please click the link below to verify your email.<br>{link}",
+            "plain": "You are registering an account in Drivers Hub. Please click the link below to verify your email.\n{link}"
+        },
+        "update_email": {
+            "subject": "Update Email",
+            "from_email": "VTC <email>",
+            "html": "You are updating your email in Drivers Hub. Please click the link below to verify your email.<br>{link}",
+            "plain": "You are updating your email in Drivers Hub. Please click the link below to verify your email.\n{link}"
+        },
+        "reset_password": {
+            "subject": "Reset Password",
+            "from_email": "VTC <email>",
+            "html": "You are resetting your password in Drivers Hub. Please click the link below to continue.<br>{link}",
+            "plain": "You are resetting your password in Drivers Hub. Please click the link below to continue.\n{link}"
+        }
+    },
 
     "member_accept": {
         "webhook_url": "",
