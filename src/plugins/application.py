@@ -152,7 +152,7 @@ async def get_application_list(request: Request, response: Response, authorizati
             for tt in application_types:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if role in roles:
+                    if int(role) in roles:
                         allowed_application_types.append(str(tt["id"]))
                         break
         else:
@@ -238,7 +238,7 @@ async def get_application(request: Request, response: Response, applicationid: i
             if str(tt["id"]) == str(application_type):
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if role in roles:
+                    if int(role) in roles:
                         ok = True
                         break
         if not ok:
@@ -569,7 +569,7 @@ async def update_application_status(request: Request, response: Response, applic
             if str(tt["id"]) == str(application_type):
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if role in roles:
+                    if int(role) in roles:
                         ok = True
                         break
         if not ok:
@@ -617,6 +617,7 @@ async def delete_application(request: Request, response: Response, applicationid
         del au["code"]
         return au
     adminid = au["userid"]
+    roles = au["roles"]
     
     if int(applicationid) < 0:
         response.status_code = 404
@@ -627,7 +628,27 @@ async def delete_application(request: Request, response: Response, applicationid
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
+    
+    application_type = t[0][1]
 
+    isAdmin = False
+    for i in roles:
+        if int(i) in config.perms.admin:
+            isAdmin = True
+
+    if not isAdmin:
+        ok = False
+        for tt in application_types:
+            if str(tt["id"]) == str(application_type):
+                allowed_roles = tt["staff_role_id"]
+                for role in allowed_roles:
+                    if int(role) in roles:
+                        ok = True
+                        break
+        if not ok:
+            response.status_code = 403
+            return {"error": "Forbidden"}
+        
     await aiosql.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await aiosql.commit(dhrid)
 

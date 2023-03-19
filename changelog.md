@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.2.3**  
+1.Fixed banner generator  
+2.Fixed application permission control  
+
 **v2.2.2**  
 1.Fixed **POST** `/auth/register` not checking `config.register_methods`  
 2.Fixed in-Discord-guild check being bypassed when Discord account is not connected  

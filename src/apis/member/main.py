@@ -245,10 +245,10 @@ async def get_member_banner(request: Request, response: Response, authorization:
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
     try:
-        r = await arequests.post("http://127.0.0.1:8700/banner", data={"company_abbr": config.abbr, \
+        r = await arequests.post("http://127.0.0.1:8700/banner", data=json.dumps({"company_abbr": config.abbr, \
             "company_name": config.name, "logo_url": config.logo_url, "hex_color": config.hex_color,
             "userid": userid, "joined": joined, "highest_role": highest_role, \
-                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}, header = {"Content-Type": "application/json"}, timeout = 5)
+                "avatar": avatar, "name": name, "division": division, "distance": distance, "profit": profit}), headers = {"Content-Type": "application/json"}, timeout = 5)
         if r.status_code // 100 != 2:
             response.status_code = r.status_code
             return {"error": r.text}
@@ -260,5 +260,6 @@ async def get_member_banner(request: Request, response: Response, authorization:
         return response
         
     except:
+        traceback.print_exc()
         response.status_code = 503
         return {"error": "Service Unavailable"}

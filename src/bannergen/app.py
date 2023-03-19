@@ -161,17 +161,22 @@ async def banner(request: Request, response: Response):
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
     
     avatar = data["avatar"]
-    avatarh = hashlib.sha256(avatar).hexdigest()[:16]
+    avatarh = hashlib.sha256(avatar.encode()).hexdigest()[:16]
 
     l = os.listdir(f"/tmp/hub/avatar")
     for ll in l:
-        luserid = ll.split("_")[0]
-        lavatarh = "_".join(ll.split("_")[1:]).split(".")[0]
-        if luserid == userid and lavatarh != avatarh:
+        if len(ll.split("_")) != 3:
+            os.remove(f"/tmp/hub/avatar/{ll}")
+            continue
+
+        lcompanyabbr = ll.split("_")[0]
+        luserid = ll.split("_")[1]
+        lavatarh = "_".join(ll.split("_")[2:]).split(".")[0]
+        if lcompanyabbr == company_abbr and luserid == str(userid) and lavatarh != avatarh:
             # user changed avatar
             os.remove(f"/tmp/hub/avatar/{ll}")
             continue
-        if luserid == userid and lavatarh == avatarh:
+        if lcompanyabbr == company_abbr and luserid == str(userid) and lavatarh == avatarh:
             # user didn't change avatar, and user is active, preserve avatar longer
             mtime = os.path.getmtime(f"/tmp/hub/avatar/{ll}")
             os.utime(f"/tmp/hub/avatar/{ll}", (time.time(), mtime))
@@ -179,8 +184,8 @@ async def banner(request: Request, response: Response):
             os.remove(f"/tmp/hub/avatar/{ll}")
             continue
 
-    if os.path.exists(f"/tmp/hub/avatar/{userid}_{avatarh}.png"):
-        avatar = Image.open(f"/tmp/hub/avatar/{userid}_{avatarh}.png")
+    if os.path.exists(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png"):
+        avatar = Image.open(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png")
     else:
         if str(avatar) == "None":
             avatar = logo.resize((250, 250)).convert("RGBA")
@@ -206,7 +211,7 @@ async def banner(request: Request, response: Response):
                         else:
                             newData.append(datas[i*250+j])
                 avatar.putdata(newData)
-                avatar.save(f"/tmp/hub/avatar/{userid}_{avatarh}.png", optimize = True)
+                avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True)
             except:
                 traceback.print_exc()
     avatar = avatar.getdata()
