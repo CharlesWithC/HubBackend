@@ -335,7 +335,7 @@ async def post_application(request: Request, response: Response, authorization: 
     if t[0][2] is None and "email" in config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "email"}, force_lang = au["language"])}
-    if t[0][6] is None and "discord" in config.required_connections:
+    if t[0][6] is None and ("discord" in config.required_connections or config.must_join_guild):
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Discord"}, force_lang = au["language"])}
     if t[0][4] is None and "steam" in config.required_connections:
@@ -345,7 +345,7 @@ async def post_application(request: Request, response: Response, authorization: 
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "TruckersMP"}, force_lang = au["language"])}
     userid = t[0][5]
-    
+
     if discordid is not None and config.must_join_guild and config.discord_bot_token != "":
         try:
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {config.discord_bot_token}"}, dhrid = dhrid)

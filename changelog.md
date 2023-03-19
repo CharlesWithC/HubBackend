@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.2.2**  
+1.Fixed **POST** `/auth/register` not checking `config.register_methods`  
+2.Fixed in-Discord-guild check being bypassed when Discord account is not connected  
+
 **v2.2.1**  
 Added support to Email/Password registration and updating email  
 -> Added `smtp_server`, `smtp_port`, `smtp_email`, `smtp_passwd` in config for email credentials  

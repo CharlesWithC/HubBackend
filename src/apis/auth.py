@@ -116,6 +116,10 @@ async def post_auth_password(request: Request, response: Response):
 
 @app.post(f'/{config.abbr}/auth/register')
 async def post_auth_register(request: Request, response: Response):
+    if not "email" in config.register_methods:
+        response.status_code = 404
+        return {"error": "Not Found"}
+        
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
