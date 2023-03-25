@@ -50,6 +50,17 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, us
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, click_count INT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, active INT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, userid INT, garageid TEXT, price INT UNSIGNED, size INT, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (ownid INT AUTO_INCREMENT PRIMARY KEY, userid INT, merchid TEXT, price INT UNSIGNED, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+# userid = -1000 => company account
+# userid = -1001 => dealership
+# userid = -1002 => client
+# userid = -1003 => service station
+# userid = -1004 => blackhole
+
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
@@ -107,6 +118,24 @@ indexes = ["CREATE INDEX user_uid ON user (uid)",
 
 "CREATE INDEX downloads_downloadsid ON downloads (downloadsid)",
 "CREATE INDEX downloads_templink_secret ON downloads_templink (secret)",
+
+"CREATE INDEX economy_balance_userid ON economy_balance (userid)",
+"CREATE INDEX economy_balance_balance ON economy_balance (balance)",
+"CREATE INDEX economy_truck_vehicleid ON economy_truck (vehicleid)",
+"CREATE INDEX economy_truck_truckid ON economy_truck (truckid)",
+"CREATE INDEX economy_truck_slotid ON economy_truck (slotid)",
+"CREATE INDEX economy_truck_garageid ON economy_truck (garageid)",
+"CREATE INDEX economy_truck_userid ON economy_truck (userid)",
+"CREATE INDEX economy_garage_slotid ON economy_garage (slotid)",
+"CREATE INDEX economy_garage_garageid ON economy_garage (garageid)",
+"CREATE INDEX economy_garage_userid ON economy_garage (userid)",
+"CREATE INDEX economy_merch_ownid ON economy_merch (ownid)",
+"CREATE INDEX economy_merch_merchid ON economy_merch (merchid)",
+"CREATE INDEX economy_merch_userid ON economy_merch (userid)",
+"CREATE INDEX economy_transaction_txid ON economy_transaction (txid)",
+"CREATE INDEX economy_transaction_from_userid ON economy_transaction (from_userid)",
+"CREATE INDEX economy_transaction_to_userid ON economy_transaction (to_userid)",
+"CREATE INDEX economy_transaction_note ON economy_transaction (note)",
 
 "CREATE INDEX event_eventid ON event (eventid)",
 

@@ -16,10 +16,11 @@ from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
 from functions import *
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
 
 config_plugins = {"application": ["application_types"],
-    "division": ["webhook_division", "webhook_division_message", "divisions"]}
+    "division": ["webhook_division", "webhook_division_message", "divisions"],
+    "economy": ["economy"]}
 
 config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key", "smtp_passwd"]
 
@@ -158,8 +159,16 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 if not new_config[tt] in ["metric", "imperial"]:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
-            
-            if tt in ["privacy", "must_join_guild", "use_server_nickname", "allow_custom_profile"]:
+                
+            if tt == "economy":
+                if "garages" in tt.keys():
+                    garages = tt["garages"]
+                    for garage in garages:
+                        if "base_slots" in garage.keys() and isint(garage["base_slots"]):
+                            if garage["base_slots"] > 10:
+                                return {"error": ml.tr(request, "value_too_large", var = {"item": "economy.garages.base_slots", "limit": "10"}, force_lang = au["language"])}
+                
+            if tt in ["privacy", "must_join_guild", "use_server_nickname"]:
                 if type(new_config[tt]) != bool:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
@@ -273,7 +282,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
 # get audit log (require audit / admin permission)
 @app.get(f"/{config.abbr}/audit/list")
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = -1, operation: Optional[str] = ""):
+    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""
 
     dhrid = request.state.dhrid
@@ -291,13 +300,10 @@ async def get_audit_list(request: Request, response: Response, authorization: st
         del au["code"]
         return au
 
-    if page <= 0:
-        page = 1
-
     operation = convertQuotation(operation.lower())
 
     limit = ""
-    if staff_userid != -1:
+    if staff_userid is not None:
         limit = f"AND userid = {staff_userid}"
     
     if page_size <= 1:

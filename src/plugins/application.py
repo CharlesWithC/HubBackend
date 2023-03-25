@@ -88,7 +88,7 @@ async def post_application_positions(request: Request, response: Response, autho
 @app.get(f"/{config.abbr}/application/list")
 async def get_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
-        all_user: Optional[bool] = False, status: Optional[int] = -1, order: Optional[str] = "desc"):
+        all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -97,9 +97,6 @@ async def get_application_list(request: Request, response: Response, authorizati
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-
-    if page <= 0:
-        page = 1
 
     if not order in ["asc", "desc"]:
         order = "asc"
@@ -126,7 +123,7 @@ async def get_application_list(request: Request, response: Response, authorizati
         if application_type != 0:
             limit = f" AND application_type = {application_type} "
 
-        if status != -1 and status in [0,1,2]:
+        if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
 
         await aiosql.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY applicationid {order} LIMIT {(page-1) * page_size}, {page_size}")
@@ -160,7 +157,7 @@ async def get_application_list(request: Request, response: Response, authorizati
             else:
                 limit = f" WHERE application_type = {application_type} "
         
-        if status != -1 and status in [0,1,2]:
+        if status is not None and status in [0,1,2]:
             if not "WHERE" in limit:
                 limit = f" WHERE status = {status} "
             else:
@@ -548,7 +545,7 @@ async def update_application_status(request: Request, response: Response, applic
         update_timestamp = int(time.time())
 
     await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {staffid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(dhrid, staffid, ml.tr("updated_application_status", var = {"id": applicationid, "status": statustxt}))
+    await AuditLog(dhrid, staffid, ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(dhrid, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await aiosql.commit(dhrid)

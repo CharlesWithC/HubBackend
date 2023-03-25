@@ -98,6 +98,7 @@ EN_STRINGTABLE = {
     "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
     "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
     "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
+    "config_invalid_datatype_float": "Invalid data type for \"{item}\": Must be float.",
     "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
     "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
     "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
@@ -164,6 +165,22 @@ EN_STRINGTABLE = {
     "destination": "Destination",
     "meetup_time": "Meetup Time",
     "departure_time": "Departure Time",
+
+    "truck_not_found": "Truck not found.",
+    "truck_history_forbidden": "You do not have access to the truck's history data.",
+    "truck_purchase_forbidden": "You are not allowed to purchase a truck.",
+    "truck_purchase_company_forbidden": "You are not allowed to purcahse a truck for the company.",
+    "invalid_owner": "Invalid owner.",
+    "insufficient_balance": "Insufficient balance.",
+    "garage_slot_not_found": "Garage slot not found.",
+    "garage_slot_occupied": "Garage slot occupied.",
+    "new_owner_conflict": "New owner must not be the same as the current owner.",
+    "truck_modify_forbidden": "You are not allowed to modify the truck.",
+    "company": "Company",
+    "dealership": "Dealership",
+    "client": "Client",
+    "service_station": "Service Station",
+    "blackhole": "Blackhole",
 
     "notification": "Notification",
     "notification_not_found": "Notification not found.",
@@ -278,7 +295,13 @@ EN_STRINGTABLE = {
     "removed_attendees": "Removed attendees - Removed `{points}` points from",
     "added_event_points": "Updated points - Added `{points}` points to",
     "removed_event_points": "Updated points - Removed `{points}` points from",
-    "no_changes_made": "No changes made."
+    "no_changes_made": "No changes made.",
+    "purchased_truck": "Purchased truck {name} (ID: {id}) for {username} (User ID: {userid}).",
+    "transferred_truck": "Transferred truck `#{id}` to {username} (User ID: {userid}).",
+    "reassigned_truck": "Reassigned truck `#{id}` to {username} (User ID: {userid}).",
+    "removed_truck_assignee": "Removed assignee of truck `#{id}`.",
+    "unknown_garage": "Unknown garage",
+    "relocated_truck": "Relocated truck `#{id}` to `{garage}` (ID: `{garageid}`) slot `#{slotid}`."
 }
 
 def get_lang(request: Request):

@@ -187,7 +187,7 @@ async def delete_token_hash(request: Request, response: Response, authorization:
 
 @app.delete(f'/{config.abbr}/token/all')
 async def delete_token_all(request: Request, response: Response, authorization: str = Header(None), \
-        last_used_before: Optional[int] = -1):
+        last_used_before: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -208,12 +208,11 @@ async def delete_token_all(request: Request, response: Response, authorization: 
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    if last_used_before == -1:
+    if last_used_before is None:
         await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
-        await aiosql.commit(dhrid)
     else:
         await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid} AND last_used_timestamp <= {last_used_before}")
-        await aiosql.commit(dhrid)
+    await aiosql.commit(dhrid)
 
     return Response(status_code=204)
 

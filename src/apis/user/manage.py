@@ -163,7 +163,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
     return Response(status_code=204)
     
 @app.delete(f"/{config.abbr}/user/{{uid}}/connections")
-async def delete_user_connections(request: Request, response: Response, uid: Optional[int] = -1, authorization: str = Header(None)):
+async def delete_user_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
     """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
     
     [Note] This function will be updated when the user system no longer relies on Discord."""
@@ -188,6 +188,10 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
+    if uid is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+
     await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -243,7 +247,7 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
 
     await aiosql.execute(dhrid, f"SELECT userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
-    username = "Unknown User"
+    username = ml.ctr("unknown_user")
     email = ""
     discordid = "NULL"
     steamid = "NULL"

@@ -59,9 +59,6 @@ async def get_announcement_list(request: Request, response: Response, authorizat
         order = "asc"
     order = order.upper()
 
-    if page <= 0:
-        page = 1
-
     await aiosql.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     ret = []

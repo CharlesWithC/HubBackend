@@ -8,11 +8,11 @@ import time
 
 from fastapi import FastAPI
 
-version = "v2.2.4"
+version = "v2.3.0"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'language_dir', 'frontend_urls', 'apidomain', 'domain', 'server_ip', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
 
 config_sample = {
     "abbr": "",
@@ -39,8 +39,8 @@ config_sample = {
     "apidomain": "drivershub.charlws.com",
     "domain": "",
     "server_ip": "127.0.0.1",
-    "server_port": "7777",
-    "server_workers": "1",
+    "server_port": 7777,
+    "server_workers": 1,
     "whitelist_ips": [],
     "webhook_error": "",
 
@@ -50,7 +50,7 @@ config_sample = {
     "mysql_passwd": "",
     "mysql_db": "_drivershub",
     "mysql_ext": "/var/lib/mysqlext/",
-    "mysql_pool_size": "10",
+    "mysql_pool_size": 10,
     "hcaptcha_secret": "",
 
     "enabled_plugins": [],
@@ -70,8 +70,8 @@ config_sample = {
     "tracker_webhook_secret": "",
     "allowed_tracker_ips": ["109.106.1.243"],
     "delivery_rules": {
-        "max_speed": "180",
-        "max_profit": "1000000",
+        "max_speed": 180,
+        "max_profit": 1000000,
         "action": "block"
     },
     "delivery_log_channel_id": "",
@@ -182,22 +182,58 @@ config_sample = {
         }
     },
     "ranks": [
-        {"points": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": 0, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],
 
     "application_types": [
-        {"id": "1", "name": "Driver", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": "driver"},
-        {"id": "2", "name": "Staff", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
-        {"id": "3", "name": "LOA", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
-        {"id": "4", "name": "Division", "discord_role_id": "", "staff_role_id": ["40"], "message": "", "webhook": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "webhook": "", "note": ""}
     ],
 
     "webhook_division": "",
     "webhook_division_message": "",
     "divisions": [],
+    
+    "economy": {
+        "trucks": [{
+            "id": "brand.model",
+            "brand": "Brand",
+            "model": "Model",
+            "price": 1000000
+        }],
+        "garages": [{
+            "id": "berlin",
+            "name": "Berlin Garage",
+            "x": 9682.941,
+            "z": -10721.3594,
+            "price": 1000000,
+            "base_slots": 3,
+            "slot_price": 10000
+        }],
+        "truck_refund": 0.3,
+        "garage_refund": 0.5,
+        "slot_refund": 0.5,
+
+        "usd_to_coin": 0.5,
+        "eur_to_coin": 0.6,
+        "wear_ratio": 1,
+        "revenue_share_to_company": 0.4,
+        "truck_rental_cost_ratio": 0.01,
+
+        "max_wear_before_service": 0.1,
+        "unit_service_price": 1200,
+
+        "allow_purchase_truck": True,
+        "allow_purchase_garage": True,
+        "allow_purchase_slot": True,
+        "allow_purchase_merch": True,
+        "enable_balance_leaderboard": True
+    },
 
     "perms": {
-        "admin": ["0"],
+        "admin": [0],
         "config": [],
         "restart": [],
 
@@ -226,11 +262,11 @@ config_sample = {
         "downloads": [],
         "event": [],
         
-        "driver": ["100"]
+        "driver": [100]
     },
 
     "roles": [
-        {"id": "0", "name": "root", "color": "#000000"}
+        {"id": 0, "name": "root", "color": "#000000"}
     ],
 
     "webhook_audit": ""
@@ -251,7 +287,22 @@ class Dict2Obj(object):
             else:
                 setattr(self, key, d[key])
 
+def isfloat(t):
+    try:
+        float(t)
+        return True
+    except:
+        return False
+    
 def validateConfig(cfg):
+    tcfg = {}
+    for key in config_keys_order:
+        if key in cfg.keys():
+            tcfg[key] = cfg[key]
+        else:
+            tcfg[key] = config_sample[key]
+    cfg = tcfg
+
     if not "perms" in cfg.keys():
         perms = config_sample["perms"]
     perms = cfg["perms"]
@@ -305,6 +356,46 @@ def validateConfig(cfg):
             except:
                 pass
     cfg["divisions"] = newdivisions
+    
+    economy_trucks = cfg["economy"]["trucks"]
+    new_economy_trucks = []
+    for i in range(len(economy_trucks)):
+        truck = economy_trucks[i]
+        if "id" in truck.keys() and "brand" in truck.keys() and "model" in truck.keys() and "price" in truck.keys():
+            try:
+                truck["price"] = int(truck["price"])
+            except:
+                pass
+            new_economy_trucks.append(truck)
+    cfg["economy"]["trucks"] = new_economy_trucks
+    
+    economy_garages = cfg["economy"]["garages"]
+    new_economy_garages = []
+    for i in range(len(economy_garages)):
+        garage = economy_garages[i]
+        if "id" in garage.keys() and "name" in garage.keys() and "x" in garage.keys() and "z" in garage.keys() and "price" in garage.keys() and "base_slots" in garage.keys() and "slot_price" in garage.keys():
+            try:
+                garage["x"] = float(garage["x"])
+                garage["z"] = float(garage["z"])
+                garage["price"] = int(garage["price"])
+                garage["base_slots"] = min(int(garage["base_slots"]), 10)
+                garage["slot_price"] = int(garage["slot_price"])
+            except:
+                pass
+            new_economy_garages.append(garage)
+    cfg["economy"]["garages"] = new_economy_garages
+
+    economy_must_float = ['truck_refund', 'garage_refund', 'slot_refund', 'usd_to_coin', 'eur_to_coin', 'wear_ratio', 'revenue_share_to_company', 'truck_rental_cost_ratio', 'max_wear_before_service', 'unit_service_price']
+    for item in economy_must_float:
+        if not item in cfg["economy"].keys() or not isfloat(cfg["economy"][item]):
+            cfg["economy"][item] = config_sample["economy"][item]
+        else:
+            cfg["economy"][item] = float(cfg["economy"][item])
+
+    economy_must_bool = ['allow_purchase_truck', 'allow_purchase_garage', 'allow_purchase_slot', 'allow_purchase_merch', 'enable_balance_leaderboard']
+    for item in economy_must_bool:
+        if not item in cfg["economy"].keys() or type(cfg["economy"][item]) != bool:
+            cfg["economy"][item] = config_sample["economy"][item]
 
     roles = cfg["roles"]
     newroles = []

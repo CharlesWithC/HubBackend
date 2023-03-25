@@ -19,7 +19,7 @@ from functions import *
 async def get_downloads_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
-        query: Optional[str] = "", creator_userid: Optional[int] = -1):
+        query: Optional[str] = "", creator_userid: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -44,11 +44,8 @@ async def get_downloads_list(request: Request, response: Response, authorization
     if query != "":
         query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
-    if creator_userid != -1:
+    if creator_userid is not None:
         limit += f"AND userid = {creator_userid} "
-
-    if page <= 0:
-        page = 1
 
     if page_size <= 1:
         page_size = 1

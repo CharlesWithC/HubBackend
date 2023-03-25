@@ -72,7 +72,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
             challengenames = [dd[13]]
             while di + 1 < len(d):
                 if d[di + 1][0] == logid: # same log => multiple challenge id
-                    challengeids.append(d[di+1][12])
+                    challengeids.append(str(d[di+1][12]))
                     challengenames.append(d[di+1][13])
                     di += 1
                 else:
@@ -105,7 +105,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
         username = user["name"]
         if "is_deleted" in user.keys():
             user_id = None
-            username = "Unknown"        
+            username = ml.ctr("unknown")     
 
         source_city = ""
         source_city_id = ""

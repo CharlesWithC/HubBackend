@@ -16,7 +16,7 @@ from functions import *
 
 @app.get(f"/{config.abbr}/user/notification/list")
 async def get_user_notification_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', status: Optional[int] = -1, \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', status: Optional[int] = 0, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
     """Returns a list of notification of the authorized user"""
 
@@ -35,9 +35,6 @@ async def get_user_notification_list(request: Request, response: Response, autho
         del au["code"]
         return au
     uid = au["uid"]
-
-    if page <= 0:
-        page = 1
 
     if page_size <= 1:
         page_size = 1

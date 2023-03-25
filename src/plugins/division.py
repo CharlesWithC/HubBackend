@@ -26,7 +26,7 @@ async def get_division_list():
 
 # Get division info
 @app.get(f"/{config.abbr}/division")
-async def get_division(request: Request, response: Response, authorization: str = Header(None), logid: Optional[int] = -1):
+async def get_division(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -270,8 +270,8 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     return Response(status_code=204)
 
 @app.get(f"/{config.abbr}/division/list/pending")
-async def get_division_list_pending(request: Request, response: Response, authorization: str = Header(None), divisionid: Optional[int] = -1,\
-        page: Optional[int] = 1, page_size: Optional[int] = 10):
+async def get_division_list_pending(request: Request, response: Response, authorization: str = Header(None), \
+        divisionid: Optional[int] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -286,9 +286,6 @@ async def get_division_list_pending(request: Request, response: Response, author
         response.status_code = au["code"]
         del au["code"]
         return au
-        
-    if page <= 0:
-        page = 1
     
     if page_size <= 1:
         page_size = 1
@@ -296,7 +293,7 @@ async def get_division_list_pending(request: Request, response: Response, author
         page_size = 250
         
     limit = ""
-    if divisionid != -1:
+    if divisionid is not None:
         limit = f"AND divisionid = {divisionid}"
     await aiosql.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
         LIMIT {(page - 1) * page_size}, {page_size}")

@@ -23,8 +23,8 @@
     "apidomain": "drivershub.charlws.com",
     "domain": "",
     "server_ip": "127.0.0.1",
-    "server_port": "7777",
-    "server_workers": "1",
+    "server_port": 7777,
+    "server_workers": 1,
     "whitelist_ips": [],
     "webhook_error": "",
 
@@ -34,7 +34,7 @@
     "mysql_passwd": "",
     "mysql_db": "_drivershub",
     "mysql_ext": "/var/lib/mysqlext/",
-    "mysql_pool_size": "10",
+    "mysql_pool_size": 10,
     "hcaptcha_secret": "",
 
     "enabled_plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
@@ -54,8 +54,8 @@
     "tracker_webhook_secret": "",
     "allowed_tracker_ips": ["109.106.1.243"],
     "delivery_rules": {
-        "max_speed": "180",
-        "max_profit": "1000000",
+        "max_speed": 180,
+        "max_profit": 1000000,
         "action": "block"
     },
     "delivery_log_channel_id": "",
@@ -166,24 +166,60 @@
         }
     },
     "ranks": [
-        {"points": "0", "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": 0, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],
 
     "application_types": [
-        {"id": "1", "name": "Driver", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": "driver"},
-        {"id": "2", "name": "Staff", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
-        {"id": "3", "name": "LOA", "discord_role_id": "", "staff_role_id": ["20"], "message": "", "webhook": "", "note": ""},
-        {"id": "4", "name": "Division", "discord_role_id": "", "staff_role_id": ["40"], "message": "", "webhook": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "webhook": "", "note": ""}
     ],
 
     "webhook_division": "",
     "webhook_division_message": "",
     "divisions": [
-        {"id": "1", "name": "Construction", "role_id": "251", "points": "500"}
+        {"id": 1, "name": "Construction", "role_id": 251, "points": 500}
     ],
 
+    "economy": {
+        "trucks": [{
+            "id": "brand.model",
+            "brand": "Brand",
+            "model": "Model",
+            "price": 1000000
+        }],
+        "garages": [{
+            "id": "berlin",
+            "name": "Berlin Garage",
+            "x": 9682.941,
+            "z": -10721.3594,
+            "price": 1000000,
+            "base_slots": 3,
+            "slot_price": 10000
+        }],
+        "truck_refund": 0.3,
+        "garage_refund": 0.5,
+        "slot_refund": 0.5,
+
+        "usd_to_coin": 0.5,
+        "eur_to_coin": 0.6,
+        "wear_ratio": 1,
+        "revenue_share_to_company": 0.4,
+        "truck_rental_cost_ratio": 0.01,
+
+        "max_wear_before_service": 0.1,
+        "unit_service_price": 1200,
+
+        "allow_purchase_truck": true,
+        "allow_purchase_garage": true,
+        "allow_purchase_slot": true,
+        "allow_purchase_merch": true,
+        "enable_balance_leaderboard": true
+    },
+
     "perms": {
-        "admin": ["0"],
+        "admin": [0],
         "config": [],
         "restart": [],
 
@@ -205,6 +241,12 @@
         "get_pending_user_list": [],
         "ban_user": [],
 
+        "economy_manager": [],
+        "balance_manager": [],
+        "truck_manager": [],
+        "garage_manager": [],
+        "accountant": [],
+
         "audit": [],
         "announcement": [],
         "challenge": [],
@@ -212,13 +254,13 @@
         "downloads": [],
         "event": [],
         
-        "driver": ["100"]
+        "driver": [100]
     },
 
     "roles": [
-        {"id": "0", "name": "root", "color": "#000000"},
-        {"id": "100", "name": "Driver", "color": "#000000"},
-        {"id": "251", "name": "Construction Division", "color": "#000000"}
+        {"id": 0, "name": "root", "color": "#000000"},
+        {"id": 100, "name": "Driver", "color": "#000000"},
+        {"id": 251, "name": "Construction Division", "color": "#000000"}
     ],
 
     "webhook_audit": ""

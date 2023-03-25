@@ -61,8 +61,9 @@ def ClearUserCache():
             del cactivity[user]
 
 async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
-    if userid == -999:
-        return {"uid": None, "userid": None, "name": ml.tr(request, "system"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+    miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "client", -1003: "service_station", -1004: "blackhole"}
+    if userid in miscuserid.keys():
+        return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
         return {"uid": None, "userid": None, "name": f'[{ml.tr(request, "protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
@@ -178,8 +179,9 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
-    if userid == -999:
-        return {"uid": None, "userid": None, "name": ml.ctr("system"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+    miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "client", -1003: "service_station", -1004: "blackhole"}
+    if userid in miscuserid.keys():
+        return {"uid": None, "userid": None, "name": ml.ctr(miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
         return {"uid": None, "userid": None, "name": f'[{ml.ctr("protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}

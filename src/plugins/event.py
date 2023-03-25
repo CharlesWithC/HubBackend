@@ -88,8 +88,8 @@ def EventNotification():
 
 @app.get(f"/{config.abbr}/event/list")
 async def get_event_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
-        first_event_after: Optional[int] = -1):
+        page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
+        first_event_after: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -108,10 +108,9 @@ async def get_event_list(request: Request, response: Response, authorization: st
             return au
         else:
             userid = au["userid"]
-            aulanguage = au["language"]
             await ActivityUpdate(dhrid, au["uid"], f"events")
     
-    if first_event_after < 0:
+    if first_event_after is None:
         first_event_after = int(time.time()) - 86400
 
     limit = ""
@@ -120,9 +119,6 @@ async def get_event_list(request: Request, response: Response, authorization: st
     if query != "":
         query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
-
-    if page <= 0:
-        page = 1
 
     if page_size <= 1:
         page_size = 1

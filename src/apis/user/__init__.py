@@ -42,9 +42,6 @@ async def get_user_list(request: Request, response: Response, authorization: str
         response.status_code = au["code"]
         del au["code"]
         return au
-    
-    if page <= 0:
-        page = 1
 
     if page_size <= 1:
         page_size = 1
@@ -86,7 +83,7 @@ async def get_user_list(request: Request, response: Response, authorization: str
 
 @app.get(f'/{config.abbr}/user/profile')
 async def get_user_profile(request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = -1, uid: Optional[int] = -1, discordid: Optional[int] = -1, steamid: Optional[int] = -1, truckersmpid: Optional[int] = -1):
+    userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):
     """Returns the profile of a specific user
     
     If no request param is provided, then returns the profile of the authorized user."""
@@ -102,7 +99,7 @@ async def get_user_profile(request: Request, response: Response, authorization: 
     
     request_uid = -1
     aulanguage = ""
-    if userid == -1 and uid == -1 and discordid == -1 and steamid == -1 and truckersmpid == -1:
+    if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None:
         au = await auth(dhrid, authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -124,15 +121,15 @@ async def get_user_profile(request: Request, response: Response, authorization: 
             aulanguage = au["language"]
 
     qu = ""
-    if userid != -1:
+    if userid is not None:
         qu = f"userid = {userid}"
-    elif uid != -1:
+    elif uid is not None:
         qu = f"uid = {uid}"
-    elif discordid != -1:
+    elif discordid is not None:
         qu = f"discordid = {discordid}"
-    elif steamid != -1:
+    elif steamid is not None:
         qu = f"steamid = {steamid}"
-    elif truckersmpid != -1:
+    elif truckersmpid is not None:
         qu = f"truckersmpid = {truckersmpid}"
     else:
         response.status_code = 404
@@ -152,7 +149,7 @@ async def get_user_profile(request: Request, response: Response, authorization: 
     return (await GetUserInfo(dhrid, request, uid = uid))
 
 @app.patch(f"/{config.abbr}/user/profile")
-async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = -1, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
+async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
     """Updates the profile of a specific user
 
     If `sync_to_discord` is `true`, then syncs to their Discord profile.
@@ -177,7 +174,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
     staffmode = False
 
     discordid = -1
-    if uid == -1 or uid == au["uid"]:
+    if uid is None or uid == au["uid"]:
         uid = au["uid"]
         discordid = au["discordid"]
     else:

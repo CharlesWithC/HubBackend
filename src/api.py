@@ -50,6 +50,8 @@ if "division" in config.enabled_plugins:
     from plugins.division import *
 if "downloads" in config.enabled_plugins:
     from plugins.downloads import *
+if "economy" in config.enabled_plugins:
+    from plugins.economy import *
 if "event" in config.enabled_plugins:
     from plugins.event import *
 

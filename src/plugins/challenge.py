@@ -47,9 +47,10 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 @app.get(f"/{config.abbr}/challenge/list")
 async def get_challenge_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
-        start_time: Optional[int] = -1, end_time: Optional[int] = -1, challenge_type: Optional[int] = 0,
-        required_role: Optional[int] = -1, minimum_required_distance: Optional[int] = -1, maximum_required_distance: Optional[int] = -1,\
-        userid: Optional[int] = -1, must_have_completed: Optional[bool] = False, \
+        start_time: Optional[int] = None, end_time: Optional[int] = None, challenge_type: Optional[int] = None,
+        required_role: Optional[int] = None, \
+        minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
+        userid: Optional[int] = None, must_have_completed: Optional[bool] = False, \
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
 
     dhrid = request.state.dhrid
@@ -67,9 +68,6 @@ async def get_challenge_list(request: Request, response: Response, authorization
         del au["code"]
         return au
     await ActivityUpdate(dhrid, au["uid"], f"challenges")
-    
-    if page <= 0:
-        page = 1
     if page_size <= 0:
         page_size = 1
     elif page_size >= 100:
@@ -81,25 +79,25 @@ async def get_challenge_list(request: Request, response: Response, authorization
         query = convertQuotation(query).lower()
         query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
-    if start_time != -1 and end_time != -1:
-        query_limit += f"AND start_time >= {start_time} AND end_time <= {end_time} "
-    else:
-        query_limit += f"AND end_time >= {end_time - 86400} "
+    if start_time is not None:
+        query_limit += f"AND start_time >= {start_time} "
+    if end_time is not None:
+        query_limit += f"AND end_time <= {end_time} "
     
     if challenge_type in [1,2,3]:
         query_limit += f"AND challenge_type = {challenge_type} "
     
-    if required_role != -1:
+    if required_role is not None:
         query_limit += f"AND required_roles LIKE '%,{required_role},%' "
 
-    if minimum_required_distance != -1:
+    if minimum_required_distance is not None:
         query_limit += f"AND required_distance >= {minimum_required_distance} "
-    if maximum_required_distance != -1:
+    if maximum_required_distance is not None:
         query_limit += f"AND required_distance <= {maximum_required_distance} "
     
-    if userid != -1:
+    if userid is not None:
         query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {userid}) "
-    if userid == -1:
+    if userid is None:
         userid = au["userid"]
     
     # start_time / end_time / title / required_distance / reward_points / delivery_count
@@ -114,8 +112,7 @@ async def get_challenge_list(request: Request, response: Response, authorization
 
     ret = []
 
-    await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
-            required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
+    await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {(page - 1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -173,7 +170,7 @@ async def get_challenge_list(request: Request, response: Response, authorization
 # returns requirement if public_details = true and user is not staff
 #                     or if public_details = false
 @app.get(f"/{config.abbr}/challenge/{{challengeid}}")
-async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = -1):
+async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = None):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -188,7 +185,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    if userid == -1:
+    if userid is None:
         userid = au["userid"]
     isstaff = False
     staffau = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])

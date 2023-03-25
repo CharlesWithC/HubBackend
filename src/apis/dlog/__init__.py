@@ -44,9 +44,6 @@ async def get_dlog_list(request: Request, response: Response, authorization: str
             return au
         userid = au["userid"]
         await ActivityUpdate(dhrid, au["uid"], "dlogs")
-
-    if page <= 0:
-        page = 1
     
     if page_size <= 1:
         page_size = 1

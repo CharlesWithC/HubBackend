@@ -23,6 +23,13 @@ def isint(t):
     except:
         return False
 
+def isfloat(t):
+    try:
+        float(t)
+        return True
+    except:
+        return False
+
 def nint(t):
     try:
         if t is None:
