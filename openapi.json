@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.2.3"
+        "version": "2.2.4"
     },
     "paths": {
         "/abbr": {
@@ -1068,7 +1068,7 @@
                                 "type": "object",
                                 "properties": {
                                     "expire": {
-                                        "description": "Ban Expiration Timestamp (Use -1 to ban forever)",
+                                        "description": "Ban Expiration Timestamp (Use null to ban forever)",
                                         "type": "integer"
                                     },
                                     "reason": {
@@ -1077,7 +1077,7 @@
                                     }
                                 }
                             },
-                            "required": ["discordid", "expire", "reason"]
+                            "required": ["reason"]
                         }
                     }
                 },

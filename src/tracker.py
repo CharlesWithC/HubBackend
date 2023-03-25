@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 import asyncio
 import json
 import os

@@ -3,12 +3,14 @@
 
 import time
 
-from app import config
+import multilang as ml
+from app import config, tconfig
 from db import aiosql, genconn
 from functions.dataop import *
 from functions.general import *
 from functions.security import auth
 from static import *
+
 
 async def getHighestActiveRole(dhrid):
     for roleid in ROLES.keys():
@@ -19,6 +21,8 @@ async def getHighestActiveRole(dhrid):
     return list(ROLES.keys())[0]
 
 def getAvatarSrc(discordid, avatar):
+    if avatar is None:
+        return ""
     if avatar.startswith("a_"):
         src = f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"
     else:
@@ -58,16 +62,16 @@ def ClearUserCache():
 
 async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
     if userid == -999:
-        return {"uid": None, "userid": None, "name": "System", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": ml.tr(request, "system"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
-        return {"uid": None, "userid": None, "name": "[Protected]", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": f'[{ml.tr(request, "protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
 
     if userid == -1 and discordid == -1 and uid == -1:
         if not tell_deleted:
-            return {"uid": None, "userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"uid": None, "userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
+            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     ClearUserCache()
     global cuserinfo
@@ -117,9 +121,9 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
         userid = None if userid == -1 else userid
         discordid = None if discordid == -1 else discordid
         if not tell_deleted:
-            return {"uid": uid, "userid": userid, "name": "Unknown", "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"uid": uid, "userid": userid, "name": "Unknown", "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
+            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     uid = p[0][0]
 
@@ -137,8 +141,7 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
                 if au["uid"] == uid:
                     include_email = True
 
-    roles = p[0][6].split(",")
-    roles = [int(x) for x in roles if isint(x)]
+    roles = str2list(p[0][6])
     mfa_secret = p[0][10]
     mfa_enabled = False
     if mfa_secret != "":
@@ -176,16 +179,16 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
 
 def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
     if userid == -999:
-        return {"uid": None, "userid": None, "name": "System", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": ml.ctr("system"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
     if privacy:
-        return {"uid": None, "userid": None, "name": "[Protected]", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": f'[{ml.ctr("protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
 
     if userid == -1 and discordid == -1 and uid == -1:
         if not tell_deleted:
-            return {"uid": None, "userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+            return {"uid": None, "userid": None, "name": ml.ctr("unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"uid": None, "userid": None, "name": "Unknown", "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
+            return {"uid": None, "userid": None, "name": ml.ctr("unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     ClearUserCache()
     global cuserinfo
@@ -241,14 +244,13 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
         userid = None if userid == -1 else userid
         discordid = None if discordid == -1 else discordid
         if not tell_deleted:
-            return {"uid": uid, "userid": userid, "name": "Unknown", "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
+            return {"uid": uid, "userid": userid, "name": ml.ctr("unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         else:
-            return {"uid": uid, "userid": userid, "name": "Unknown", "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
+            return {"uid": uid, "userid": userid, "name": ml.ctr("unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     uid = p[0][0]
 
-    roles = p[0][6].split(",")
-    roles = [int(x) for x in roles if isint(x)]
+    roles = str2list(p[0][6])
     mfa_secret = p[0][10]
     mfa_enabled = False
     if mfa_secret != "":
@@ -296,7 +298,7 @@ def ClearUserLanguageCache():
         if int(time.time()) > clanguage[user]["expire"]:
             del clanguage[user]
 
-async def GetUserLanguage(dhrid, uid, default_language = ""):
+async def GetUserLanguage(dhrid, uid):
     ClearUserLanguageCache()
 
     global clanguage
@@ -305,12 +307,12 @@ async def GetUserLanguage(dhrid, uid, default_language = ""):
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'language'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
-        clanguage[uid] = {"language": default_language, "expire": int(time.time()) + 3}
-        return default_language
+        clanguage[uid] = {"language": config.language, "expire": int(time.time()) + 3}
+        return config.language
     clanguage[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]
 
-def bGetUserLanguage(uid, default_language = ""):
+def bGetUserLanguage(uid):
     ClearUserLanguageCache()
 
     global clanguage
@@ -323,7 +325,7 @@ def bGetUserLanguage(uid, default_language = ""):
     cur.close()
     conn.close()
     if len(t) == 0:
-        clanguage[uid] = {"language": default_language, "expire": int(time.time()) + 3}
-        return default_language
+        clanguage[uid] = {"language": config.language, "expire": int(time.time()) + 3}
+        return config.language
     clanguage[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]

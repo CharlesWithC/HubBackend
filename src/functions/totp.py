@@ -25,4 +25,4 @@ def get_totp_token(secret):
     return ret
 
 def valid_totp(otp, secret):
-    return str(otp).zfill(6) in get_totp_token(secret)
+    return otp in get_totp_token(secret)

@@ -179,7 +179,7 @@
     "webhook_division": "",
     "webhook_division_message": "",
     "divisions": [
-        {"id": "1", "name": "Construction", "role_id": "251", "point": "500"}
+        {"id": "1", "name": "Construction", "role_id": "251", "points": "500"}
     ],
 
     "perms": {

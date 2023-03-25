@@ -12,7 +12,7 @@ from fastapi.responses import RedirectResponse
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 
 @app.get(f"/{config.abbr}/downloads/list")
@@ -173,7 +173,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
 
     data = await request.json()
     try:
@@ -201,11 +201,11 @@ async def post_downloads(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({adminid}, '{title}', '{description}', '{link}', {orderid}, 0)")
+    await aiosql.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({staffid}, '{title}', '{description}', '{link}', {orderid}, 0)")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     downloadsid = (await aiosql.fetchone(dhrid))[0]
-    await AuditLog(dhrid, adminid, f"Created downloadable item `#{downloadsid}`")
+    await AuditLog(dhrid, staffid, ml.ctr("created_downloads", var = {"id": downloadsid}))
 
     return {"downloadsid": downloadsid}
 
@@ -225,7 +225,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
         
     if downloadsid <= 0:
         response.status_code = 404
@@ -264,7 +264,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
-    await AuditLog(dhrid, adminid, f"Updated downloadable item `#{downloadsid}`")
+    await AuditLog(dhrid, staffid, ml.ctr("updated_downloads", var = {"id": downloadsid}))
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)
@@ -285,12 +285,8 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
-        
-    if int(downloadsid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-
+    staffid = au["userid"]
+    
     await aiosql.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -298,7 +294,7 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
-    await AuditLog(dhrid, adminid, f"Deleted downloadable item `#{downloadsid}`")
+    await AuditLog(dhrid, staffid, ml.ctr("deleted_downloads", var = {"id": downloadsid}))
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)

@@ -203,20 +203,20 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
         if discord_embed != {}:
             await SendDiscordNotification(dhrid, uid, {"embeds": [{"title": discord_embed["title"], 
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}]})
+                "timestamp": str(datetime.now()), "color": config.int_color}]})
         else:
-            await SendDiscordNotification(dhrid, uid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(dhrid, uid, "en")), 
+            await SendDiscordNotification(dhrid, uid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(dhrid, uid)), 
                 "description": content, "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}]})
+                "timestamp": str(datetime.now()), "color": config.int_color}]})
 
 async def AuditLog(dhrid, uid, text, discord_message_only = False):
     try:
-        name = "Unknown User"
+        name = ml.ctr("unknown_user")
         avatar = ""
         if uid == -999:
-            name = "System"
+            name = ml.ctr("system")
         elif uid == -998:
-            name = "Discord API"
+            name = ml.ctr("discord_api")
         else:
             await aiosql.execute(dhrid, f"SELECT name, avatar FROM user WHERE userid = {uid}")
             t = await aiosql.fetchall(dhrid)
@@ -231,7 +231,7 @@ async def AuditLog(dhrid, uid, text, discord_message_only = False):
             if uid not in [-999, -998]:
                 footer = {"text": f"{name} (ID {uid})", "icon_url": avatar}
             try:
-                r = await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+                r = await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": config.int_color}]}), headers = {"Content-Type": "application/json"})
                 if r.status_code == 401:
                     DisableDiscordIntegration()
             except:
@@ -258,7 +258,7 @@ async def AutoMessage(meta, setvar):
                     "url": setvar(meta.embed.image_url)
                 },
                 "timestamp": timestamp,
-                "color": config.intcolor
+                "color": config.int_color
             }]})
         
         if meta.webhook_url != "":

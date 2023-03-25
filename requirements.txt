@@ -5,6 +5,7 @@ pymysql==1.0.2
 aiomysql==0.1.1
 aiosmtplib==2.0.1
 pysocks==1.7.1
+websockets==10.4
 bcrypt==3.2.2
 discord_oauth2==0.2
 steamsignin==1.0.1

@@ -9,8 +9,8 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
-from plugins.division import DIVISIONPNT
+from functions import *
+from plugins.division import DIVISION_POINTS
 
 @app.patch(f"/{config.abbr}/member/roles/rank")
 async def patch_member_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
@@ -68,10 +68,8 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
     await aiosql.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
     t = await aiosql.fetchall(dhrid)
     for tt in t:
-        attendees = tt[0].split(",")
-        attendees = [int(x) for x in attendees if isint(x)]
-        for ttt in attendees:
-            attendee = int(ttt)
+        attendees = str2list(tt[0])
+        for attendee in attendees:
             if not attendee in userevent.keys():
                 userevent[attendee] = tt[1]
             else:
@@ -84,8 +82,8 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
     for oo in o:
         if not oo[0] in userdivision.keys():
             userdivision[oo[0]] = 0
-        if oo[1] in DIVISIONPNT.keys():
-            userdivision[oo[0]] += oo[2] * DIVISIONPNT[oo[1]]
+        if oo[1] in DIVISION_POINTS.keys():
+            userdivision[oo[0]] += oo[2] * DIVISION_POINTS[oo[1]]
     
     # calculate myth
     usermyth = {}
@@ -117,7 +115,7 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
 
     if rankroleid == -1:
         response.status_code = 409
-        return {"error": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
+        return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
 
     try:
         if config.discord_bot_token == "":
@@ -142,26 +140,26 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
 
         d = json.loads(r.text)
         if "roles" in d:
-            roles = d["roles"]
-            curroles = []
-            for role in roles:
-                if int(role) in list(RANKROLE.values()):
-                    curroles.append(int(role))
-            if rankroleid in curroles:
+            discord_roles = d["roles"]
+            current_discord_roles = []
+            for role in discord_roles:
+                if role in list(RANKROLE.values()):
+                    current_discord_roles.append(role)
+            if rankroleid in current_discord_roles:
                 response.status_code = 409
-                return {"error": ml.tr(request, "already_have_discord_role", force_lang = au["language"])}
+                return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
             else:
                 try:
                     r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{rankroleid}> to <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": rankroleid, "user_discordid": discordid, "message": err["message"]}))
                     else:
-                        for role in curroles:
+                        for role in current_discord_roles:
                             r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
                             if r.status_code // 100 != 2:
                                 err = json.loads(r.text)
-                                await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+                                await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
                 except:
                     traceback.print_exc()
                 
@@ -179,7 +177,7 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
                 return Response(status_code=204)
         else:
             response.status_code = 428
-            return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
+            return {"error": ml.tr(request, "current_user_didnt_join_discord", force_lang = au["language"])}
 
     except:
         traceback.print_exc()
@@ -218,13 +216,13 @@ async def post_member_resign(request: Request, response: Response, authorization
     if mfa_secret != "":
         data = await request.json()
         try:
-            otp = int(data["otp"])
+            otp = data["otp"]
         except:
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
     await aiosql.commit(dhrid)
@@ -255,9 +253,9 @@ async def post_member_resign(request: Request, response: Response, authorization
         tracker_app_error = f"{TRACKERAPP} API Timeout"
 
     if tracker_app_error != "":
-        await AuditLog(dhrid, -999, f"Failed to remove `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.  \n"+tracker_app_error)
+        await AuditLog(dhrid, uid, ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
     else:
-        await AuditLog(dhrid, -999, f"Removed `{name}` (User ID: `{userid}`) from {TRACKERAPP} Company.")
+        await AuditLog(dhrid, uid, ml.ctr("added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP}))
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
@@ -273,12 +271,12 @@ async def post_member_resign(request: Request, response: Response, authorization
                     r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{str(-int(role))}> from <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
                 elif int(role) > 0:
                     r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{int(role)}> to <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
             except:
                 traceback.print_exc()
     
@@ -288,20 +286,20 @@ async def post_member_resign(request: Request, response: Response, authorization
             r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
             d = json.loads(r.text)
             if "roles" in d:
-                roles = d["roles"]
-                curroles = []
-                for role in roles:
-                    if int(role) in list(RANKROLE.values()):
-                        curroles.append(int(role))
-                for role in curroles:
+                discord_roles = d["roles"]
+                current_discord_roles = []
+                for role in discord_roles:
+                    if role in list(RANKROLE.values()):
+                        current_discord_roles.append(role)
+                for role in current_discord_roles:
                     r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, f'Error `{err["code"]}` when removing <@&{role}> from <@!{discordid}>: `{err["message"]}`')
+                        await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
         except:
             pass
 
-    await AuditLog(dhrid, -999, f'Member resigned: `{name}` (UID: `{uid}`)')
+    await AuditLog(dhrid, uid, ml.ctr("member_resigned"))
     await notification(dhrid, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, uid)))
     
     return Response(status_code=204)

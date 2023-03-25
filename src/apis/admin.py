@@ -9,13 +9,12 @@ import threading
 import time
 from typing import Optional
 
-from discord import Colour
 from fastapi import Header, Request, Response
 
 import multilang as ml
 from app import app, config, config_path, tconfig, validateConfig
 from db import aiosql
-from functions.main import *
+from functions import *
 
 config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'perms', 'roles', 'webhook_audit']
 
@@ -116,7 +115,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
     userroles = au["roles"]
 
     data = await request.json()
@@ -179,9 +178,9 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 new_config[tt] = new_config[tt][-6:]
                 hex_color = new_config[tt]
                 try:
-                    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                    rgbcolor = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-                    intcolor = int(hex_color, 16) # test if we can convert it to int
+                    # validate color
+                    tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                    int(hex_color, 16)
                 except:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_hex_color", force_lang = au["language"])}
@@ -203,13 +202,10 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 if not "admin" in newperms:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
-                ar = newperms["admin"]
-                adminroles = []
-                for arr in ar:
-                    adminroles.append(int(arr))
+                perm_roles = intify(newperms["admin"])
                 ok = False
                 for role in userroles:
-                    if int(role) in adminroles:
+                    if role in perm_roles:
                         ok = True
                 if not ok:
                     response.status_code = 400
@@ -219,14 +215,15 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 ttconfig[tt] = copy.deepcopy(str(new_config[tt]))
             else:
                 ttconfig[tt] = copy.deepcopy(new_config[tt])
- 
+    
+    ttconfig = validateConfig(ttconfig)
     out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
     if len(out) > 512000:
         response.status_code = 400
         return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
     open(config_path, "w", encoding="utf-8").write(out)
 
-    await AuditLog(dhrid, adminid, "Updated config")
+    await AuditLog(dhrid, staffid, ml.ctr("updated_config"))
 
     return Response(status_code=204)
 
@@ -248,9 +245,9 @@ async def post_restart(request: Request, response: Response, authorization: str 
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {adminid}")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {staffid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret == "":
@@ -262,12 +259,12 @@ async def post_restart(request: Request, response: Response, authorization: str 
         otp = data["otp"]
     except:
         response.status_code = 400
-        return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
     if not valid_totp(otp, mfa_secret):
         response.status_code = 400
-        return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(dhrid, adminid, "Restarted service")
+    await AuditLog(dhrid, staffid, ml.ctr("restarted_service"))
 
     threading.Thread(target=restart).start()
 

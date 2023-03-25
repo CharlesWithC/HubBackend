@@ -13,25 +13,12 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
-
-application_types = config.application_types
-to_delete = []
-for i in range(len(application_types)):
-    try:
-        application_types[i]["id"] = int(application_types[i]["id"])
-    except:
-        to_delete.append(i)
-for i in to_delete[::-1]:
-    application_types.remove(i)
+from functions import *
 
 # Basic Info
 @app.get(f"/{config.abbr}/application/types")
 async def get_application_types():
-    APPLICATIONS_TYPES = []
-    for t in application_types:
-        APPLICATIONS_TYPES.append({"applicationid": str(t["id"]), "name": t["name"]})
-    return APPLICATIONS_TYPES
+    return config.application_types
 
 @app.get(f"/{config.abbr}/application/positions")
 async def get_application_positions(request: Request):
@@ -44,7 +31,7 @@ async def get_application_positions(request: Request):
     else:
         ret = []
         for tt in t[0][0].split(","):
-            tt = tt.strip(" ")
+            tt = b64d(tt).strip(" ")
             if tt != "":
                 ret.append(tt)
         return ret
@@ -65,17 +52,25 @@ async def post_application_positions(request: Request, response: Response, autho
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
 
     data = await request.json()
     try:
         if type(data["positions"]) != list:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        positions = convertQuotation(",".join(data["positions"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    positions = []
+    for position in data["positions"]:
+        position = position.strip()
+        if position != "":
+            positions.append(position)
+    positions_str = ", ".join(positions)
+    positions = [b64e(x) for x in positions]
+    positions = ",".join([b64e(x) for x in data["positions"]])
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await aiosql.fetchall(dhrid)
@@ -85,7 +80,7 @@ async def post_application_positions(request: Request, response: Response, autho
         await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, adminid, f"Updated staff positions to: `{positions}`")
+    await AuditLog(dhrid, staffid, ml.ctr("updated_application_positions", var = {"positions": positions_str}))
 
     return Response(status_code=204)
 
@@ -142,39 +137,28 @@ async def get_application_list(request: Request, response: Response, authorizati
         if len(t) > 0:
             tot = p[0][0]
     else:
-        isAdmin = False
-        for i in roles:
-            if int(i) in config.perms.admin:
-                isAdmin = True
-        
-        allowed_application_types = []
-        if not isAdmin:
-            for tt in application_types:
+        limit = ""
+        if not checkPerm(roles, "admin"):
+            allowed_application_types = []
+            for tt in config.application_types:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if int(role) in roles:
-                        allowed_application_types.append(str(tt["id"]))
+                    if role in roles:
+                        allowed_application_types.append(tt["id"])
                         break
-        else:
-            for tt in application_types:
-                allowed_application_types.append(str(tt["id"]))
 
-        if len(allowed_application_types) == 0:
-            response.status_code = 403
-            return {"error": "Forbidden"}
-
-        limit = ""
-        if application_type == 0: # show all type
-            limit = " WHERE ("
-            for tt in allowed_application_types:
-                limit += f"application_type = {tt} OR "
-            limit = limit[:-3]
-            limit += ")"
-        else:
-            if not str(application_type) in allowed_application_types:
+            if len(allowed_application_types) == 0:
                 response.status_code = 403
-                return {"error": "Forbidden"}
-            limit = f" WHERE application_type = {application_type} "
+                return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
+        
+            if application_type == 0: # show all type
+                limit = " WHERE ("
+                for tt in allowed_application_types:
+                    limit += f"application_type = {tt} OR "
+                limit = limit[:-3]
+                limit += ")"
+            else:
+                limit = f" WHERE application_type = {application_type} "
         
         if status != -1 and status in [0,1,2]:
             if not "WHERE" in limit:
@@ -215,10 +199,6 @@ async def get_application(request: Request, response: Response, applicationid: i
     uid = au["uid"]
     roles = au["roles"]
 
-    if int(applicationid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
-
     await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -227,23 +207,18 @@ async def get_application(request: Request, response: Response, applicationid: i
 
     application_type = t[0][1]
     
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-
-    if not isAdmin and uid != t[0][2]:
+    if not checkPerm(roles, "admin") and uid != t[0][2]:
         ok = False
-        for tt in application_types:
-            if str(tt["id"]) == str(application_type):
+        for tt in config.application_types:
+            if tt["id"] == application_type:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if int(role) in roles:
+                    if role in roles:
                         ok = True
                         break
         if not ok:
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
     return {"applicationid": t[0][0], "creator": await GetUserInfo(dhrid, request, uid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(dhrid, request, userid = t[0][6])}
 
@@ -268,10 +243,6 @@ async def post_application(request: Request, response: Response, authorization: 
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
 
     data = await request.json()
     try:
@@ -289,7 +260,7 @@ async def post_application(request: Request, response: Response, authorization: 
     discord_message_content = ""
     webhookurl = ""
     note = ""
-    for o in application_types:
+    for o in config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
             applicantrole = o["discord_role_id"]
@@ -304,14 +275,14 @@ async def post_application(request: Request, response: Response, authorization: 
         for r in config.perms.driver:
             if r in roles:
                 response.status_code = 409
-                return {"error": ml.tr(request, "already_a_driver", force_lang = au["language"])}
+                return {"error": ml.tr(request, "drivers_not_allowed_to_create_driver_application", force_lang = au["language"])}
         await aiosql.execute(dhrid, f"SELECT * FROM application WHERE application_type = 1 AND uid = {uid} AND status = 0")
         p = await aiosql.fetchall(dhrid)
         if len(p) > 0:
             response.status_code = 409
             return {"error": ml.tr(request, "already_driver_application", force_lang = au["language"])}
 
-    if note == "division" and not isAdmin:
+    if note == "division" and not checkPerm(roles, "admin"):
         ok = False
         for r in config.perms.driver:
             if r in roles:
@@ -328,7 +299,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     if userid == -1 and application_type == 3:
         response.status_code = 403
-        return {"error": ml.tr(request, "no_loa_application", force_lang = au["language"])}
+        return {"error": ml.tr(request, "must_be_member_to_submit_loa_application", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid, discordid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
@@ -352,13 +323,13 @@ async def post_application(request: Request, response: Response, authorization: 
         except:
             traceback.print_exc()
             response.status_code = 428
-            return {"error": ml.tr(request, "discord_check_fail")}
+            return {"error": ml.tr(request, "user_in_guild_check_failed")}
         if r.status_code == 404:
             response.status_code = 428
-            return {"error": ml.tr(request, "must_join_discord")}
+            return {"error": ml.tr(request, "current_user_didnt_join_discord")}
         if r.status_code // 100 != 2:
             response.status_code = 428
-            return {"error": ml.tr(request, "discord_check_fail")}
+            return {"error": ml.tr(request, "user_in_guild_check_failed")}
 
     await aiosql.execute(dhrid, f"INSERT INTO application(application_type, uid, data, status, submit_timestamp, update_staff_userid, update_staff_timestamp) VALUES ({application_type}, {uid}, '{compress(json.dumps(application,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
     await aiosql.commit(dhrid)
@@ -372,7 +343,7 @@ async def post_application(request: Request, response: Response, authorization: 
                 DisableDiscordIntegration()
             if r.status_code // 100 != 2:
                 err = json.loads(r.text)
-                await AuditLog(dhrid, -998, f'Error `{err["code"]}` when adding <@&{applicantrole}> to <@!{discordid}>: `{err["message"]}`')
+                await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": applicantrole, "user_discordid": discordid, "message": err["message"]}))
         except:
             traceback.print_exc()
 
@@ -399,7 +370,7 @@ async def post_application(request: Request, response: Response, authorization: 
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.int_color}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -438,10 +409,6 @@ async def patch_application(request: Request, response: Response, applicationid:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if int(applicationid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
-
     await aiosql.execute(dhrid, f"SELECT uid, data, status, application_type FROM application WHERE applicationid = {applicationid}")
     t = await aiosql.fetchall(dhrid)
     if uid != t[0][0]:
@@ -477,7 +444,7 @@ async def patch_application(request: Request, response: Response, applicationid:
     application_type_text = ""
     discord_message_content = ""
     webhookurl = ""
-    for o in application_types:
+    for o in config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
             discord_message_content = o["message"]
@@ -496,7 +463,7 @@ async def patch_application(request: Request, response: Response, applicationid:
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": config.int_color}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -521,7 +488,7 @@ async def update_application_status(request: Request, response: Response, applic
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
     adminname = au["name"]
     roles = au["roles"]
 
@@ -537,12 +504,8 @@ async def update_application_status(request: Request, response: Response, applic
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
     statustxt = f"N/A"
-    if int(status) in STATUS.keys():
+    if status in STATUS.keys():
         statustxt = STATUS[int(status)]
-
-    if int(applicationid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = await aiosql.fetchall(dhrid)
@@ -556,41 +519,36 @@ async def update_application_status(request: Request, response: Response, applic
     language = await GetUserLanguage(dhrid, applicant_uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
-    statustxtTR = STATUSTR[int(status)]
+    statustxtTR = STATUSTR[status]
 
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-
-    if not isAdmin:
+    if not checkPerm(roles, "admin"):
         ok = False
-        for tt in application_types:
-            if str(tt["id"]) == str(application_type):
+        for tt in config.application_types:
+            if tt["id"] == application_type:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if int(role) in roles:
+                    if role in roles:
                         ok = True
                         break
         if not ok:
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
     data = json.loads(decompress(t[0][3]))
     i = 1
     while 1:
-        if not f"[Message] {adminname} ({adminid}) #{i}" in data.keys():
+        if not f"[Message] {adminname} ({staffid}) #{i}" in data.keys():
             break
         i += 1
     if message != "":
-        data[f"[Message] {adminname} ({adminid}) #{i}"] = message
+        data[f"[Message] {adminname} ({staffid}) #{i}"] = message
 
     update_timestamp = 0
     if status != 0:
         update_timestamp = int(time.time())
 
-    await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {adminid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(dhrid, adminid, f"Updated application `#{applicationid}` status to `{statustxt}`")
+    await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {staffid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await AuditLog(dhrid, staffid, ml.tr("updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(dhrid, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await aiosql.commit(dhrid)
@@ -616,13 +574,9 @@ async def delete_application(request: Request, response: Response, applicationid
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
     roles = au["roles"]
     
-    if int(applicationid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
-
     await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -631,27 +585,22 @@ async def delete_application(request: Request, response: Response, applicationid
     
     application_type = t[0][1]
 
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
-
-    if not isAdmin:
+    if not checkPerm(roles, "admin"):
         ok = False
-        for tt in application_types:
-            if str(tt["id"]) == str(application_type):
+        for tt in config.application_types:
+            if tt["id"] == application_type:
                 allowed_roles = tt["staff_role_id"]
                 for role in allowed_roles:
-                    if int(role) in roles:
+                    if role in roles:
                         ok = True
                         break
         if not ok:
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
         
     await aiosql.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, adminid, f"Deleted application `#{applicationid}`")
+    await AuditLog(dhrid, staffid, ml.ctr("deleted_application", var = {"id": applicationid}))
 
     return Response(status_code=204)

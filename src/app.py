@@ -6,10 +6,9 @@ import os
 import sys
 import time
 
-from discord import Colour
 from fastapi import FastAPI
 
-version = "v2.2.3"
+version = "v2.2.4"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -277,6 +276,15 @@ def validateConfig(cfg):
         if "distance" in rank.keys():
             rank["points"] = rank["distance"]
             del rank["distance"]
+        try:
+            rank["points"] = int(rank["points"])
+        except:
+            continue
+        try:
+            int(rank["discord_role_id"])
+            # just validation, no need t oconvert, as discord_role_id is not mandatory
+        except:
+            rank["discord_role_id"] = None
         if "discord_role_id" in rank.keys() and "points" in rank.keys() and "name" in rank.keys():
             newranks.append(rank)
     cfg["ranks"] = newranks
@@ -285,12 +293,14 @@ def validateConfig(cfg):
     newdivisions = []
     for i in range(len(divisions)):
         division = divisions[i]
-        if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "point" in division.keys():
+        if "point" in division.keys():
+            division["points"] = division["point"]
+            del division["point"]
+        if "id" in division.keys() and "name" in division.keys() and "role_id" in division.keys() and "points" in division.keys():
             try:
-                # ensure they are integer
-                int(division["id"])
-                int(division["role_id"])
-                int(division["point"])
+                division["id"] = int(division["id"])
+                division["role_id"] = int(division["role_id"])
+                division["points"] = int(division["points"])
                 newdivisions.append(division)
             except:
                 pass
@@ -300,6 +310,10 @@ def validateConfig(cfg):
     newroles = []
     for i in range(len(roles)):
         role = roles[i]
+        try:
+            role["id"] = int(role["id"])
+        except:
+            continue
         if "id" in role.keys() and "name" in role.keys():
             newroles.append(role)
     cfg["roles"] = newroles
@@ -309,6 +323,17 @@ def validateConfig(cfg):
     reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "webhook", "note"]
     for i in range(len(application_types)):
         application_type = application_types[i]
+        try:
+            application_type["id"] = int(application_type["id"])
+            for i in range(len(application_type["staff_role_id"])):
+                application_type["staff_role_id"][i] = int(application_type["staff_role_id"][i])
+        except:
+            continue
+        try:
+            int(application_type["discord_role_id"])
+            # just validation, no need t oconvert, as discord_role_id is not mandatory
+        except:
+            application_type["discord_role_id"] = None
         ok = True
         for req in reqs:
             if not req in application_type.keys():
@@ -364,15 +389,13 @@ if not "hex_color" in config.keys():
     config["hex_color"] = "2fc1f7"
 hex_color = config["hex_color"][-6:]
 try:
-    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-    config["intcolor"] = int(hex_color, 16)
+    # validate color
+    tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    config["int_color"] = int(hex_color, 16)
 except:
     hex_color = "2fc1f7"
     config["hex_color"] = "2fc1f7"
-    rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    config["rgbcolor"] = Colour.from_rgb(rgbcolor[0], rgbcolor[1], rgbcolor[2])
-    config["intcolor"] = int(hex_color, 16)
+    config["int_color"] = int(hex_color, 16)
 
 config = Dict2Obj(config)
 

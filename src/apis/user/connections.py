@@ -10,7 +10,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 @app.post(f"/{config.abbr}/user/resendConfirmation")
 async def post_user_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
@@ -235,8 +235,6 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
 
     await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = '{uid}'")
     t = await aiosql.fetchall(dhrid)
-    roles = t[0][0].split(",")
-    roles = [int(x) for x in roles if isint(x)]
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid is not None and userid >= 0:
@@ -250,7 +248,6 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
                     await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
             except:
                 traceback.print_exc()
-            await AuditLog(dhrid, userid, f"Updated Steam ID to `{steamid}`")
 
     await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = '{uid}'")
     await aiosql.commit(dhrid)
@@ -320,7 +317,7 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
-        return {"error": ml.tr(request, "steam_not_connected_before_truckersmp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "must_connect_steam_before_truckersmp", force_lang = au["language"])}
     steamid = t[0][0]
 
     tmpsteamid = d["response"]["steamID64"]

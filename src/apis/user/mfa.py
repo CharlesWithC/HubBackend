@@ -8,7 +8,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 
 @app.post(f"/{config.abbr}/user/mfa")
@@ -50,23 +50,22 @@ async def post_user_mfa(request: Request, response: Response, authorization: str
 
     if len(secret) != 16 or not secret.isalnum():
         response.status_code = 400
-        return {"error": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_mfa_secret", force_lang = au["language"])}
     
     try:
         base64.b32decode(secret)
     except:
         response.status_code = 400
-        return {"error": ml.tr(request, "mfa_invalid_secret", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_mfa_secret", force_lang = au["language"])}
 
     if not valid_totp(otp, secret):
         response.status_code = 400
-        return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE uid = {uid}")
     await aiosql.commit(dhrid)
         
     username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    await AuditLog(dhrid, -999, f"Enabled MFA for `{username}` (UID: `{uid}`)")
 
     return Response(status_code=204)
 
@@ -103,20 +102,19 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
     
         data = await request.json()
         try:
-            otp = int(data["otp"])
+            otp = data["otp"]
         except:
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
         
         if not valid_totp(otp, secret):
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
         
         await aiosql.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await aiosql.commit(dhrid)
         
         username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, -999, f"Disabled MFA for `{username}` (UID: `{uid}`)")
 
         return Response(status_code=204)
     
@@ -127,7 +125,7 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
             response.status_code = au["code"]
             del au["code"]
             return au
-        adminid = au["userid"]
+        staffid = au["userid"]
 
         await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
         t = await aiosql.fetchall(dhrid)
@@ -143,7 +141,7 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
         await aiosql.commit(dhrid)
         
         username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, adminid, f"Disabled MFA for `{username}` (UID: `{uid}`)")
+        await AuditLog(dhrid, staffid, ml.ctr("disabled_mfa", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
         

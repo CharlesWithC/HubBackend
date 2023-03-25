@@ -11,7 +11,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 
 @app.get(f"/{config.abbr}/user/notification/list")
@@ -187,10 +187,10 @@ async def post_user_notification_settings_enable(request: Request, response: Res
 
             r = None
             try:
-                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, discordid)), 
-                "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, discordid)), \
+                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, uid)), 
+                "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, uid)), \
                 "footer": {"text": config.name, "icon_url": config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": config.intcolor}]}), timeout=3)
+                "timestamp": str(datetime.now()), "color": config.int_color}]}), timeout=3)
             except:
                 traceback.print_exc()
 

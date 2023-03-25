@@ -1,5 +1,20 @@
 # Changelog
 
+**v2.2.4**  
+1.Fixed `db` creating `ratelimit` TABLE with `ip` COLUMN rather than `identifier` COLUMN  
+2.Fixed Discord register is not considering `config.register_methods`  
+3.Fixed **GET** `/auth/ticket` adding `user` wrapper  
+4.Removed legacy `str: true/false` detection in JSON  
+5.Removed `event` announcement type and `event staff` check  
+6.Removed `int->str` conversion for `/member/perms`, `/member/ranks`, `/member/roles`, `/division/list`, `/application/types`  
+7.Renamed `config.divisions[].point` to `config.division[].points`  
+8.Moved `/uptime` to `/status`, added `database` status  
+9.Improved `/application/list?all_user=true` to show all applications for `admin` when `config.application_types` is not correctly configured  
+10.Added caching to `ratelimit` to reduce database queries when there's excessive traffic (aka `global ratelimit`)  
+11.Added string table for audit log and improved existing string table  
+12.General improvements on the source code  
+13.Dropped `%_old` tables created by `v2.1.0` update  
+
 **v2.2.3**  
 1.Fixed banner generator  
 2.Fixed application permission control  

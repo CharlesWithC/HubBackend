@@ -11,41 +11,18 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
-divisions = config.divisions
-divisionsGET = divisions
-to_delete = []
-for i in range(len(divisions)):
-    try:
-        divisions[i]["id"] = int(divisions[i]["id"])
-        divisionsGET[i]["id"] = str(divisions[i]["id"])
-    except:
-        to_delete.append(i)
-for i in to_delete[::-1]:
-    divisions.remove(i)
-    divisionsGET.remove(i)
-    
-divisionroles = []
-divisiontxt = {}
-for division in divisions:
-    try:
-        divisionroles.append(int(division["role_id"]))
-        divisiontxt[int(division["id"])] = division["name"]
-    except:
-        pass
-
-DIVISIONPNT = {}
-for division in divisions:
-    try:
-        DIVISIONPNT[int(division["id"])] = int(division["point"])
-    except:
-        pass
+DIVISION_POINTS = {}
+DIVISION_NAME = {}
+for division in config.divisions:
+    DIVISION_POINTS[division["id"]] = division["points"]
+    DIVISION_NAME[division["id"]] = division["name"]
 
 # Basic info
 @app.get(f"/{config.abbr}/division/list")
 async def get_division_list():
-    return divisionsGET
+    return config.divisions
 
 # Get division info
 @app.get(f"/{config.abbr}/division")
@@ -68,10 +45,10 @@ async def get_division(request: Request, response: Response, authorization: str 
     await ActivityUpdate(dhrid, au["uid"], f"divisions")
     
     stats = []
-    for division in divisions:
+    for division in config.divisions:
         division_id = division["id"]
         division_role_id = division["role_id"]
-        division_point = int(division["point"])
+        division_point = division["points"]
         await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
         usertot = await aiosql.fetchone(dhrid)
         usertot = usertot[0]
@@ -81,7 +58,7 @@ async def get_division(request: Request, response: Response, authorization: str 
         pointtot = pointtot[0]
         pointtot = 0 if pointtot is None else int(pointtot)
         pointtot *= division_point
-        stats.append({"divisionid": int(division['id']), "name": division['name'], "total_drivers": usertot, "total_points": pointtot})
+        stats.append({"divisionid": division_id, "name": division['name'], "total_drivers": usertot, "total_points": pointtot})
     
     return stats
 
@@ -128,17 +105,14 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     update_staff_userid = tt[5]
     message = decompress(tt[6])
 
-    ok = False
-    for i in roles:
-        if int(i) in config.perms.admin or int(i) in config.perms.division:
-            ok = True
+    isStaff = checkPerm(roles, "admin") or checkPerm(roles, "division")
 
-    if not ok:
+    if isStaff:
         if userid != duserid and status != 1:
             response.status_code = 404
             return {"error": ml.tr(request, "division_not_validated", force_lang = au["language"])}
 
-    if userid == duserid or ok: # delivery driver check division / division staff check delivery
+    if userid == duserid or isStaff: # delivery driver check division / division staff check delivery
         return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await GetUserInfo(dhrid, request, userid = update_staff_userid)}
     else:
         return {"divisionid": divisionid, "status": status}
@@ -164,10 +138,6 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-    isAdmin = False
-    for i in roles:
-        if int(i) in config.perms.admin:
-            isAdmin = True
         
     await aiosql.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = await aiosql.fetchall(dhrid)
@@ -177,7 +147,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     luserid = t[0][0]
     if userid != luserid:
         response.status_code = 403
-        return {"error": ml.tr(request, "Forbidden", force_lang = au["language"])}
+        return {"error": ml.tr(request, "only_delivery_submitter_can_request_division_validation", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT status FROM division WHERE logid = {logid} AND logid >= 0")
     t = await aiosql.fetchall(dhrid)
@@ -193,18 +163,17 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     
     await aiosql.execute(dhrid, f"SELECT roles FROM user WHERE userid = {userid}")
     t = await aiosql.fetchall(dhrid)
-    roles = t[0][0].split(",")
-    roles = [int(x) for x in roles if isint(x)]
-    udivisions = []
+    roles = str2list(t[0][0])
+    joined_divisions = []
     for role in roles:
-        if int(role) in divisionroles:
-            for division in divisions:
+        if role in DIVISION_ROLES:
+            for division in config.divisions:
                 try:
-                    if int(division["role_id"]) == int(role):
-                        udivisions.append(int(division["id"]))
+                    if division["role_id"] == role:
+                        joined_divisions.append(division["id"])
                 except:
                     pass
-    if not isAdmin and not divisionid in udivisions:
+    if not checkPerm(roles, "admin") and not divisionid in joined_divisions:
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
     
@@ -214,7 +183,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     language = await GetUserLanguage(dhrid, uid)
     await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
-            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": DIVISION_NAME[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
@@ -223,7 +192,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     t = await aiosql.fetchall(dhrid)
     tt = t[0]
     msg = f"**UID**: {uid}\n**User ID**: {tt[0]}\n**Name**: {tt[1]}\n**Discord**: <@{discordid}> (`{discordid}`)\n\n"
-    msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {divisiontxt[divisionid]}"
+    msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {DIVISION_NAME[divisionid]}"
     avatar = tt[2]
 
     if config.webhook_division != "":
@@ -233,7 +202,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
             else:
                 author = {"name": tt[1], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"}
                 
-            r = await arequests.post(config.webhook_division, data=json.dumps({"content": config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": config.intcolor}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(config.webhook_division, data=json.dumps({"content": config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": config.int_color}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -257,7 +226,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    adminid = au["userid"]
+    staffid = au["userid"]
         
     data = await request.json()
     try:
@@ -275,26 +244,26 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "division_validation_not_found", force_lang = au["language"])}
-    if not divisionid in divisiontxt.keys():
+    if not divisionid in DIVISION_NAME.keys():
         divisionid = t[0][0]
     userid = t[0][2]
         
-    await aiosql.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {adminid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
+    await aiosql.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {staffid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     await aiosql.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    await AuditLog(dhrid, adminid, f"Updated division validation status of delivery `#{logid}` to `{STATUS[status]}`")
+    await AuditLog(dhrid, staffid, ml.ctr("updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
 
     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
 
     language = await GetUserLanguage(dhrid, uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
-    statustxtTR = STATUSTR[int(status)]
+    statustxtTR = STATUSTR[status]
 
-    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, uid, "en")), \
+    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, uid)), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
-            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": divisiontxt[divisionid], "inline": True},
+            "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": DIVISION_NAME[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
 

@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import DH_START_TIME, app, config, version
 from db import aiosql
-from functions.main import *
+from functions import *
 
 for external_plugin in config.external_plugins:
     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
@@ -31,8 +31,8 @@ for external_plugin in config.external_plugins:
 from apis.admin import *
 from apis.auth import *
 from apis.dlog import *
-from apis.member.main import *
-from apis.user.main import *
+from apis.member import *
+from apis.user import *
 
 if config.tracker.lower() == "tracksim":
     from apis.tracksim import *
@@ -55,7 +55,7 @@ if "event" in config.enabled_plugins:
 
 # basic info
 @app.get(f'/{config.abbr}')
-async def index(request: Request, authorization: str = Header(None)):
+async def get_index(request: Request, authorization: str = Header(None)):
     if authorization is not None:
         dhrid = request.state.dhrid
         await aiosql.new_conn(dhrid)
@@ -65,17 +65,24 @@ async def index(request: Request, authorization: str = Header(None)):
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    return {"name": config.name, "abbr": config.abbr, "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}
+    return {"name": config.name, "abbr": config.abbr, "language": config.language, "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}
 
 # uptime
-@app.get(f'/{config.abbr}/uptime')
-async def uptime():
+@app.get(f'/{config.abbr}/status')
+async def get_status(request: Request):
+    dbstatus = "unavailable"
+    try:
+        dhrid = request.state.dhrid
+        await aiosql.new_conn(dhrid)
+        dbstatus = "available"
+    except:
+        pass
     up_time_second = int(time.time()) - DH_START_TIME
-    return {"uptime": str(timedelta(seconds = up_time_second))}
+    return {"api": "active", "database": dbstatus, "uptime": str(timedelta(seconds = up_time_second))}
 
 # supported languages
 @app.get(f'/{config.abbr}/languages')
-async def languages():
+async def get_languages():
     l = os.listdir(config.language_dir)
     t = []
     for ll in l:
@@ -89,7 +96,7 @@ dberr = []
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
 session_errs = []
 @app.middleware("http")
-async def dispatch(request: Request, call_next):
+async def http_middleware(request: Request, call_next):
     if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim", "navio"]:
         if "content-type" in request.headers.keys():
             if request.headers["content-type"] != "application/json":
@@ -97,6 +104,9 @@ async def dispatch(request: Request, call_next):
     dhrid = genrid()
     request.state.dhrid = dhrid
     try:
+        rl = await ratelimit(dhrid, request, 'MIDDLEWARE', 60, 150, cGlobalOnly=True)
+        if rl[0]:
+            return rl[1]
         response = await call_next(request)
         await aiosql.close_conn(dhrid)
         return response
@@ -157,7 +167,7 @@ async def dispatch(request: Request, call_next):
                 elif len(dberr) > 10:
                     print("Restarting service due to database errors")
                     try:
-                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.int_color, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                     except:
                         pass
                     threading.Thread(target=restart).start()
@@ -175,7 +185,7 @@ async def dispatch(request: Request, call_next):
             print(f"ERROR: {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
             if config.webhook_error != "":
                 try:
-                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.intcolor, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
+                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.int_color, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
                 except:
                     pass
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)

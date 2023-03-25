@@ -53,7 +53,7 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, se
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (ip TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
+cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
 cur.execute(f"CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
@@ -65,9 +65,9 @@ t = cur.fetchall()
 keys = ["nxtuserid", "nxtlogid"]
 for key in keys:
     if not (key,) in t:
-        cur.execute(f"INSERT INTO settings VALUES (0, '{key}', 1)")
+        cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
 if not ("version",) in t:
-    cur.execute(f"INSERT INTO settings VALUES (0, 'version', '{version}')")
+    cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{version}')")
 
 indexes = ["CREATE INDEX user_uid ON user (uid)",
 "CREATE INDEX user_userid ON user (userid)",

@@ -17,7 +17,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 
 @app.get(f"/{config.abbr}/user/list")
@@ -212,29 +212,28 @@ async def patch_user_profile(request: Request, response: Response, authorization
             traceback.print_exc()
             response.status_code = 503
             if not staffmode:
-                return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
+                return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
             else:
-                return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
+                return {"error": ml.tr(request, "current_user_in_guild_check_faileded", force_lang = au["language"])}
         if r.status_code == 404:
             response.status_code = 428
             if not staffmode:
-                return {"error": ml.tr(request, "must_join_discord", force_lang = au["language"])}
+                return {"error": ml.tr(request, "current_user_didnt_join_discord", force_lang = au["language"])}
             else:
-                return {"error": ml.tr(request, "user_not_in_discord", force_lang = au["language"])}
+                return {"error": ml.tr(request, "user_didnt_join_discord", force_lang = au["language"])}
         if r.status_code // 100 != 2:
             response.status_code = r.status_code
             if not staffmode:
-                return {"error": ml.tr(request, "discord_check_fail", force_lang = au["language"])}
+                return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
             else:
-                return {"error": ml.tr(request, "user_discord_check_failed", force_lang = au["language"])}
+                return {"error": ml.tr(request, "current_user_in_guild_check_faileded", force_lang = au["language"])}
         d = json.loads(r.text)
         name = convertQuotation(d["user"]["username"])
         avatar = ""
         if config.use_server_nickname and d["nick"] is not None:
             name = convertQuotation(d["nick"])
         if d["user"]["avatar"] is not None:
-            avatar = convertQuotation(d["user"]["avatar"])
-            avatar = getAvatarSrc(discordid, avatar)
+            avatar = getAvatarSrc(discordid, d["user"]["avatar"])
             
         await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
         await aiosql.commit(dhrid)
@@ -274,7 +273,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
     else:
         if not staffmode and not config.allow_custom_profile:
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "custom_profile_disabled", force_lang = au["language"])}
         
         data = await request.json()
         try:
@@ -301,7 +300,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
                 ok = True
         if not ok:
             response.status_code = 400
-            return {"error": ml.tr(request, "avatar_domain_not_in_whitelist", force_lang = au["language"])}
+            return {"error": ml.tr(request, "avatar_domain_not_whitelisted", force_lang = au["language"])}
         
         await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
         await aiosql.commit(dhrid)

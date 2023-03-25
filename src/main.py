@@ -76,8 +76,8 @@ if __name__ == "__main__":
             print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
             sys.exit(1)
         cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
-        for i in range(pre_idx + 1, cur_idx + 1):
-            v = upgrades.manager.VERSION_CHAIN[i]
+        for role in range(pre_idx + 1, cur_idx + 1):
+            v = upgrades.manager.VERSION_CHAIN[role]
             if v in upgrades.manager.UPGRADEABLE_VERSION:
                 print(f"Updating data to be compatible with {v.replace('_', '.')}...")
                 upgrades.manager.UPGRADER[v].run()

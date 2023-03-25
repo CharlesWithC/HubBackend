@@ -86,7 +86,9 @@ async def banner(request: Request, response: Response):
     userid = data["userid"]
 
     try:
-        rgbcolor = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        # validate color
+        tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        int(hex_color, 16) 
     except:
         hex_color = "2fc1f7"
     

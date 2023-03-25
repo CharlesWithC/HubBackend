@@ -14,6 +14,15 @@ from functions.dataop import *
 from static import *
 
 
+def getUrl4Msg(message):
+    return config.frontend_urls.auth_message.replace("{message}", str(message))
+
+def getUrl4Token(token):
+    return config.frontend_urls.auth_token.replace("{token}", str(token))
+
+def getUrl4MFA(token):
+    return config.frontend_urls.auth_mfa.replace("{token}", str(token))
+
 def genrid():
     return str(int(time.time()*10000000)) + str(random.randint(0, 10000)).zfill(5)
 
@@ -71,6 +80,6 @@ def DisableDiscordIntegration():
     global config
     config.discord_bot_token = ""
     try:
-        requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": config.intcolor, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+        requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": config.int_color, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
     except:
         pass

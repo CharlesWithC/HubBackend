@@ -1,26 +1,34 @@
+#!/usr/bin/python3
+
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-# A python version of build.sh with threading
+import os
+import sys
+import threading
+import time
 
-import os, threading, time, sys
+# create build folder and copy files
+os.system("mkdir ./build")
+os.chdir("./build")
+os.system("cp -r ../src/* ./")
 
 def finalize():
-    cmds = """rm -rf ../releases
-mkdir ../releases
+    cmds = """rm -rf ./binary
+mkdir ./binary
 mv main.dist/main* main.dist/main
-cp main.dist/* ../releases/ -r
+cp main.dist/* ./binary/ -r
 mv bannergen/main.dist/main* bannergen/main.dist/bannergen
-cp bannergen/main.dist/* ../releases/ -r
+cp bannergen/main.dist/* ./binary/ -r
 mv tracker.dist/tracker* tracker.dist/tracker
-cp tracker.dist/* ../releases/ -r
+cp tracker.dist/* ./binary/ -r
 mv launcher.dist/launcher* launcher.dist/launcher
-cp launcher.dist/* ../releases/ -r
-cp languages/ ../releases/ -r
-cp bannergen/fonts ../releases/ -r
-mkdir ../releases/config
-cp ../config_sample.json ../releases/config/
-cp ../openapi.json ../releases/""".split("\n")
+cp launcher.dist/* ./binary/ -r
+cp languages/ ./binary/ -r
+cp bannergen/fonts ./binary/ -r
+mkdir ./binary/config
+cp ../config_sample.json ./binary/config/
+cp ../openapi.json ./binary/""".split("\n")
     for cmd in cmds:
         os.system(cmd)
 
@@ -49,7 +57,12 @@ def build_launcher():
     done += 1
 
 req = 4
-os.chdir("src")
+if "--rebuild" in sys.argv:
+    sys.argv.append("--rebuild-main")
+    sys.argv.append("--rebuild-bannergen")
+    sys.argv.append("--rebuild-tracker")
+    sys.argv.append("--rebuild-launcher")
+
 if "--rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.exists("main.dist"):
     threading.Thread(target = build_main, daemon = True).start()
     time.sleep(1)
@@ -81,8 +94,9 @@ else:
 while 1:
     if done == req:
         finalize()
-        os.chdir("../releases")
+        os.chdir("./binary")
         os.system("7z a hub.zip ./*")
-        os.system("mv hub.zip ../")
+        os.chdir("../../releases")
+        os.system("mv ../build/binary/hub.zip ./hub.zip")
         break
     time.sleep(1)

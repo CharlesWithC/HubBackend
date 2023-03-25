@@ -31,6 +31,21 @@ def nint(t):
     except:
         return 0
 
+def str2list(l):
+    # converts comma-separated list str of int elements to list
+    # e.g. "1,2,3" -> [1,2,3]
+    l = l.split(",")
+    return [int(x) for x in l if isint(x)]
+
+def intify(l):
+    return [int(x) for x in l if isint(x)]
+
+def list2str(l):
+    # converts list to comma-separated list str
+    # e.g. [1,2,3] -> "1,2,3"
+    l = [str(x) for x in l if isint(x)]
+    return ",".join(l)
+
 def b64e(s):
     s = str(s)
     s = re.sub(re.compile('<.*?>'), '', s)

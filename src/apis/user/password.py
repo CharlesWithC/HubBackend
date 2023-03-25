@@ -7,7 +7,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from app import app, config
 from db import aiosql
-from functions.main import *
+from functions import *
 
 
 @app.patch(f'/{config.abbr}/user/password')
@@ -40,13 +40,13 @@ async def patch_user_password(request: Request, response: Response, authorizatio
     if mfa_secret != "":
         data = await request.json()
         try:
-            otp = int(data["otp"])
+            otp = data["otp"]
         except:
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
@@ -61,13 +61,13 @@ async def patch_user_password(request: Request, response: Response, authorizatio
 
     if email == "" or "@" not in email: # make sure it's not empty
         response.status_code = 403
-        return {"error": ml.tr(request, "invalid_email", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_discord_email", force_lang = au["language"])}
         
     await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 1:
         response.status_code = 409
-        return {"error": ml.tr(request, "too_many_user_with_same_email", force_lang = au["language"])}
+        return {"error": ml.tr(request, "email_not_unique", force_lang = au["language"])}
         
     if len(password) >= 8:
         if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
@@ -117,13 +117,13 @@ async def post_user_password_disable(request: Request, response: Response, autho
     if mfa_secret != "":
         data = await request.json()
         try:
-            otp = int(data["otp"])
+            otp = data["otp"]
         except:
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
-            return {"error": ml.tr(request, "mfa_invalid_otp", force_lang = au["language"])}
+            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
