@@ -640,12 +640,14 @@ async def post_navio(response: Response, request: Request):
             if len(t) == 0:
                 isrented = True
                 economy_revenue = max(round(economy_revenue - config.economy.truck_rental_cost), 0)
+                note = 'rented-truck'
             else:
                 vehicleid = t[0][0]
                 garageid = t[0][1]
                 slotid = t[0][2]
                 current_damage = t[0][3]
                 current_odometer = t[0][4]
+                note = f't{vehicleid}-income'
 
             driver_revenue = round(economy_revenue * (1 - config.economy.revenue_share_to_company))
             company_revenue = round(economy_revenue * config.economy.revenue_share_to_company)
@@ -659,12 +661,12 @@ async def post_navio(response: Response, request: Request):
             await aiosql.commit(dhrid)
             
             if not isrented:
-                note = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
+                message = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
             else:
-                note = convertQuotation(f'dlog-{logid}/rental-{config.economy.truck_rental_cost}/revenue-{economy_revenue}')
+                message = convertQuotation(f'dlog-{logid}/rental-{config.economy.truck_rental_cost}/revenue-{economy_revenue}')
             
-            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {userid}, {driver_revenue}, 't{vehicleid}-income', '{note}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
-            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, -1000, {company_revenue}, 'ct{vehicleid}-income', '{note}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
+            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {userid}, {driver_revenue}, '{note}', '{message}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
+            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, -1000, {company_revenue}, 'c{note}', '{message}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
             await aiosql.commit(dhrid)
 
             if not isrented:
