@@ -58,10 +58,11 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (ownid INT AUTO_INCREMENT
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # userid = -1000 => company account
 # userid = -1001 => dealership
-# userid = -1002 => client
-# userid = -1003 => service station
-# userid = -1004 => scrap station
-# userid = -1005 => blackhole
+# userid = -1002 => garage agency
+# userid = -1003 => client
+# userid = -1004 => service station
+# userid = -1005 => scrap station
+# userid = -1006 => blackhole
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
