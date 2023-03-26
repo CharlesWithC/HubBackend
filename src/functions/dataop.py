@@ -38,6 +38,14 @@ def nint(t):
     except:
         return 0
 
+def nfloat(t):
+    try:
+        if t is None:
+            return 0
+        return float(t)
+    except:
+        return 0
+
 def str2list(l):
     # converts comma-separated list str of int elements to list
     # e.g. "1,2,3" -> [1,2,3]

@@ -213,6 +213,7 @@ config_sample = {
             "slot_price": 10000
         }],
         "truck_refund": 0.3,
+        "scrap_refund": 0.1,
         "garage_refund": 0.5,
         "slot_refund": 0.5,
 
@@ -220,9 +221,10 @@ config_sample = {
         "eur_to_coin": 0.6,
         "wear_ratio": 1,
         "revenue_share_to_company": 0.4,
-        "truck_rental_cost_ratio": 0.01,
+        "truck_rental_cost": 0.01,
 
         "max_wear_before_service": 0.1,
+        "max_distance_before_scrap": 500000,
         "unit_service_price": 1200,
 
         "allow_purchase_truck": True,
@@ -385,7 +387,7 @@ def validateConfig(cfg):
             new_economy_garages.append(garage)
     cfg["economy"]["garages"] = new_economy_garages
 
-    economy_must_float = ['truck_refund', 'garage_refund', 'slot_refund', 'usd_to_coin', 'eur_to_coin', 'wear_ratio', 'revenue_share_to_company', 'truck_rental_cost_ratio', 'max_wear_before_service', 'unit_service_price']
+    economy_must_float = ['truck_refund', 'scrap_refund', 'garage_refund', 'slot_refund', 'usd_to_coin', 'eur_to_coin', 'wear_ratio', 'revenue_share_to_company', 'truck_rental_cost', 'max_wear_before_service', 'max_distance_before_scrap', 'unit_service_price']
     for item in economy_must_float:
         if not item in cfg["economy"].keys() or not isfloat(cfg["economy"][item]):
             cfg["economy"][item] = config_sample["economy"][item]

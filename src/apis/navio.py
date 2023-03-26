@@ -629,4 +629,58 @@ async def post_navio(response: Response, request: Request):
     except:
         traceback.print_exc()
 
+    try:
+        if "economy" in config.enabled_plugins and isdelivered and not duplicate:
+            economy_revenue = round(revenue)
+            truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
+
+            isrented = False
+            await aiosql.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE userid = {userid} AND truckid = '{truckid}' AND status = 1")
+            t = await aiosql.fetchall(dhrid)
+            if len(t) == 0:
+                isrented = True
+                economy_revenue = max(round(economy_revenue - config.economy.truck_rental_cost), 0)
+            else:
+                vehicleid = t[0][0]
+                garageid = t[0][1]
+                slotid = t[0][2]
+                current_damage = t[0][3]
+                current_odometer = t[0][4]
+
+            driver_revenue = round(economy_revenue * (1 - config.economy.revenue_share_to_company))
+            company_revenue = round(economy_revenue * config.economy.revenue_share_to_company)
+            
+            await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
+            driver_balance = nint(await aiosql.fetchone())
+            await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
+            await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
+            company_balance = nint(await aiosql.fetchone())
+            await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
+            await aiosql.commit(dhrid)
+            
+            if not isrented:
+                note = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
+            else:
+                note = convertQuotation(f'dlog-{logid}/rental-{config.economy.truck_rental_cost}/revenue-{economy_revenue}')
+            
+            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {userid}, {driver_revenue}, 't{vehicleid}-income', '{note}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
+            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, -1000, {company_revenue}, 'ct{vehicleid}-income', '{note}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
+            await aiosql.commit(dhrid)
+
+            if not isrented:
+                truck_damage = d["data"]["object"]["truck"]["total_damage"]
+                damage = 0
+                for item in truck_damage.keys():
+                    damage += nfloat(truck_damage[item])
+
+                await aiosql.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage} WHERE vehicleid = {vehicleid}")
+                if current_damage + damage > config.economy.max_wear_before_service:
+                    await aiosql.execute(dhrid, f"UPDATE economy_truck SET status = -1 WHERE vehicleid = {vehicleid}")
+                if current_odometer + driven_distance > config.economy.max_distance_before_scrap:
+                    await aiosql.execute(dhrid, f"UPDATE economy_truck SET status = -2 WHERE vehicleid = {vehicleid}")
+                await aiosql.commit(dhrid)
+                
+    except:
+        traceback.print_exc()
+
     return {"message": "Logged"}

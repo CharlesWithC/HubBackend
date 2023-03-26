@@ -51,7 +51,8 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREME
 cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, active INT) DATA DIRECTORY = '{config.mysql_ext}'")
+cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{config.mysql_ext}'")
+# NOTE damage is a percentage (e.g. 0.01 => 1%)
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, userid INT, garageid TEXT, price INT UNSIGNED, size INT, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (ownid INT AUTO_INCREMENT PRIMARY KEY, userid INT, merchid TEXT, price INT UNSIGNED, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
@@ -59,7 +60,8 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCR
 # userid = -1001 => dealership
 # userid = -1002 => client
 # userid = -1003 => service station
-# userid = -1004 => blackhole
+# userid = -1004 => scrap station
+# userid = -1005 => blackhole
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{config.mysql_ext}'")
 
