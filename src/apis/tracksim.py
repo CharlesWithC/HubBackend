@@ -740,7 +740,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])
 
-                await aiosql.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage} WHERE vehicleid = {vehicleid}")
+                await aiosql.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage}, income = income + {economy_revenue} WHERE vehicleid = {vehicleid}")
                 if current_damage + damage > config.economy.max_wear_before_service:
                     await aiosql.execute(dhrid, f"UPDATE economy_truck SET status = -1 WHERE vehicleid = {vehicleid}")
                 if current_odometer + driven_distance > config.economy.max_distance_before_scrap:

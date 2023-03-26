@@ -88,15 +88,11 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
     
     STATUS = {0: ml.tr(request, "inactive", force_lang=au["language"]), 1: ml.tr(request, "active", force_lang=au["language"]), -1: ml.tr(request, "service_required", force_lang=au["language"]), -2: ml.tr(request, "scrapped", force_lang=au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp FROM economy_truck, status WHERE vehicleid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp FROM economy_truck, status, income, service_cost WHERE vehicleid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        await aiosql.execute(dhrid, f"SELECT SUM(amount) FROM economy_transaction WHERE note = 't{tt[0]}-income'")
-        income = nint(await aiosql.fetchone(dhrid))
-        await aiosql.execute(dhrid, f"SELECT SUM(amount) FROM economy_transaction WHERE note = 't{tt[0]}-service'")
-        service = nint(await aiosql.fetchone(dhrid))
-        ret.append({"vehicleid": tt[0], "truckid": tt[1], "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "price": tt[5], "income": income, "service": service, "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price),"purchase_timestamp": tt[8], "status": STATUS[tt[9]]})
+        ret.append({"vehicleid": tt[0], "truckid": tt[1], "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price),"purchase_timestamp": tt[8], "status": STATUS[tt[9]]})
     
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM economy_truck WHERE vehicleid >= 0 {limit}")
     t = await aiosql.fetchall(dhrid)
@@ -124,23 +120,18 @@ async def get_economy_trucks(request: Request, response: Response, vehicleid: in
         del au["code"]
         return au
 
-    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status FROM economy_truck WHERE vehicleid >= 0 AND vehicleid = {vehicleid}")
+    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost FROM economy_truck WHERE vehicleid >= 0 AND vehicleid = {vehicleid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     tt = t[0]
 
-    await aiosql.execute(dhrid, f"SELECT SUM(amount) FROM economy_transaction WHERE note = 't{tt[0]}-income'")
-    income = nint(await aiosql.fetchone(dhrid))
-    await aiosql.execute(dhrid, f"SELECT SUM(amount) FROM economy_transaction WHERE note = 't{tt[0]}-service'")
-    service = nint(await aiosql.fetchone(dhrid))
-
     await ActivityUpdate(dhrid, au["uid"], f"economy_trucks_{vehicleid}")
 
     STATUS = {0: ml.tr(request, "inactive", force_lang=au["language"]), 1: ml.tr(request, "active", force_lang=au["language"]), -1: ml.tr(request, "service_required", force_lang=au["language"]), -2: ml.tr(request, "scrapped", force_lang=au["language"])}
     
-    return {"vehicleid": tt[0], "truckid": tt[1], "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "price": tt[5], "income": income, "service": service, "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
+    return {"vehicleid": tt[0], "truckid": tt[1], "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 @app.get(f"/{config.abbr}/economy/trucks/{{vehicleid}}/{{operation}}/history")
 async def get_economy_trucks_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, order: Optional[str] = "desc"):
@@ -374,7 +365,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuser}")
-    await aiosql.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, {int(time.time())}, {status})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     vehicleid = (await aiosql.fetchone(dhrid))[0]
@@ -746,7 +737,7 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
     await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({userid}, -1003, {cost}, 't{vehicleid}-service', 'damage-{damage}', {int(balance - cost)}, NULL, {int(time.time())})")
     await aiosql.commit(dhrid)
 
-    await aiosql.execute(dhrid, f"UPDATE economy_truck SET damage = 0 WHERE vehicleid = {vehicleid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_truck SET damage = 0, service_cost = service_cost + {cost} WHERE vehicleid = {vehicleid}")
     if status == -1:
         model_conflict = False
         if current_owner != -1000:

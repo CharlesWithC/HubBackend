@@ -3,7 +3,6 @@
 **v2.3.0**  
 Added `economy` plugin  
 
-
 **v2.2.4**  
 1.Fixed `db` creating `ratelimit` TABLE with `ip` COLUMN rather than `identifier` COLUMN  
 2.Fixed Discord register is not considering `config.register_methods`  

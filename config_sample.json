@@ -199,6 +199,7 @@
             "slot_price": 10000
         }],
         "truck_refund": 0.3,
+        "scrap_refund": 0.1,
         "garage_refund": 0.5,
         "slot_refund": 0.5,
 
@@ -206,9 +207,10 @@
         "eur_to_coin": 0.6,
         "wear_ratio": 1,
         "revenue_share_to_company": 0.4,
-        "truck_rental_cost_ratio": 0.01,
+        "truck_rental_cost": 0.01,
 
         "max_wear_before_service": 0.1,
+        "max_distance_before_scrap": 500000,
         "unit_service_price": 1200,
 
         "allow_purchase_truck": true,
