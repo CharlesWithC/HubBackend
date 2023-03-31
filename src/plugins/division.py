@@ -105,7 +105,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     update_staff_userid = tt[5]
     message = decompress(tt[6])
 
-    isStaff = checkPerm(roles, "admin") or checkPerm(roles, "division")
+    isStaff = checkPerm(roles, ["admin", "division"])
 
     if not isStaff:
         if userid != duserid and status != 1:

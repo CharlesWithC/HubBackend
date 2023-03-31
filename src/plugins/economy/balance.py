@@ -1,0 +1,356 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
+import math
+import time
+from typing import Optional
+
+from fastapi import Header, Request, Response
+
+import multilang as ml
+from app import app, config
+from db import aiosql
+from functions import *
+
+@app.get(f"/{config.abbr}/economy/balance/leaderboard")
+async def get_economy_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
+        page: Optional[int] = 1, page_size: Optional[int] = 20, order: Optional[str] = "desc"):
+    '''Get balance leaderboard.
+    
+    [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, they will not be included in the leaderboard.
+    If authorized user is a balance_manager, they can view the full leaderboard.
+    User balance is by default private.'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/leaderboard', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    if not order.lower() in ["asc", "desc"]:
+        order = "asc"
+
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    public_userids = [au["userid"]]
+    included_userids = []
+
+    if not permok:
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'public-balance'")
+        t = await aiosql.fetchall(dhrid)
+        for tt in t:
+            public_userids.append(int(tt[0]))
+    
+    await aiosql.execute(dhrid, f"SELECT userid, balance FROM economy_balance WHERE userid >= 0 AND balance > 0 ORDER BY balance {order}")
+    t = await aiosql.fetchall(dhrid)
+    d = []
+
+    # get only public users
+    for tt in t:
+        if tt[0] in public_userids:
+            d.append(tt)
+            included_userids.append(tt[0])
+
+    # add users that are not in list
+    for tuserid in included_userids:
+        public_userids.remove(tuserid)
+    public_userids = sorted(public_userids)
+    to_add = []
+    for tuserid in public_userids:
+        to_add.append(tuserid)
+    if order.lower() == "asc":
+        d = to_add + d
+    elif order.lower() == "desc":
+        d = d + to_add
+
+    # select only those in page
+    d = d[page_size*(page-1):page_size*page]
+
+    # create ret[]
+    ret = []
+    for dd in d:
+        ret.append({"user": await GetUserInfo(usreid = dd[0]), "balance": dd[1]})
+
+    return {"list": ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
+
+@app.post(f"/{config.abbr}/economy/balance/transfer")
+async def post_economy_balance_transfer(request: Request, response: Response, authorization: str = Header(None)):
+    '''Transfer balance.
+    
+    JSON: `{"from_userid": int, "to_userid": int, "amount": int}`'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'POST /economy/balance/transfer', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    opuserid = au["userid"]
+    
+    data = await request.json()
+    try:
+        from_userid = int(data["from_userid"])
+        to_userid = int(data["to_userid"])
+        amount = int(data["amount"])
+
+        if "message" in data.keys():
+            message = convertQuotation(data["message"])
+        else:
+            message = ""
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    if amount <= 0:
+        response.status_code = 400
+        return {"error": ml.tr(request, "amount_must_be_positive", force_lang = au["language"])}
+
+    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    company_balance_perm_ok = balance_manager_perm_ok or checkPerm(au["roles"], "accountant")
+
+    if from_userid == -1000 and not company_balance_perm_ok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_company_balance_forbidden", force_lang = au["language"])}
+    if from_userid != opuserid and not balance_manager_perm_ok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_user_balance_forbidden", force_lang = au["language"])}
+    
+    if from_userid != -1000: # can only send FROM company to user
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid = {from_userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "from_user_not_found", force_lang = au["language"])}
+    if to_userid not in list(range(-1006,-999)): # can send TO any virtual account
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid = {to_userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "from_user_not_found", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {from_userid} FOR UPDATE")
+    from_balance = nint(await aiosql.fetchone(dhrid))
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {to_userid} FOR UPDATE")
+    to_balance = nint(await aiosql.fetchone(dhrid))
+    
+    if from_balance < amount:
+        response.status_code = 402
+        return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({from_userid}, {to_userid}, {amount}, 'regular-tx/by-{opuserid}', '{message}', {from_balance - amount}, {to_balance - amount}, {int(time.time())})")
+    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {amount} WHERE userid = {from_userid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {amount} WHERE userid = {to_userid}")
+    await aiosql.commit(dhrid)
+    
+    if company_balance_perm_ok:
+        return {"from_balance": from_balance - amount, "to_balance": to_balance + amount}
+    else:
+        return {"from_balance": from_balance - amount}
+
+@app.get(f"/{config.abbr}/economy/balance/{{userid}}")
+async def get_economy_balance_userid(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+    '''Get user balance.
+    
+    [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, 403 will be returned.
+    If authorized user is a balance_manager, they can view the user's balance without restrictions.
+    User balance is by default private.'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    if userid != -1000:
+        await aiosql.execute(dhrid, f"SELECT uid FROM user WHERE userid = {userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        uid = t[0][0]
+    else:
+        uid = userid
+
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+
+    if not permok:
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 403
+            return {"error": ml.tr(request, "view_balance_forbidden", force_lang = au["language"])}
+        # NOTE To make balance private, delete the row from settings.
+
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid}")
+    balance = nint(await aiosql.fetchone(dhrid))
+
+    return {"balance": balance}
+
+@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions")
+async def get_economy_balance_userid_transactions(request: Request, response: Response, userid: int, authorization: str = Header(None), \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        after: Optional[int] = None, before: Optional[int] = None, \
+        from_userid: Optional[int] = None, to_userid: Optional[int] = None, \
+        min_amount: Optional[int] = None, max_amount: Optional[int] = None, \
+        order: Optional[str] = "desc", order_by: Optional[str] = "timestamp"):
+    '''Get user's transaction history.
+    
+    [NOTE] This can only be viewed by balance manager and user. The user cannot make this info public.'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    if userid != -1000:
+        await aiosql.execute(dhrid, f"SELECT uid FROM user WHERE userid = {userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+    
+    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    permok = balance_manager_perm_ok or userid == au["userid"]
+
+    if not permok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "view_transaction_history_forbidden", force_lang = au["language"])}
+
+    await ActivityUpdate(dhrid, au["uid"], f"economy_transactions")
+
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+
+    limit = ""
+    if after is not None:
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
+
+    if from_userid is not None:
+        limit += f"AND from_userid = {from_userid} "
+    if to_userid is not None:
+        limit += f"AND to_userid = {to_userid} "
+
+    if min_amount is not None:
+        limit += f"AND amount >= {min_amount} "
+    if max_amount is not None:
+        limit += f"AND amount <= {max_amount} "
+
+    if not order_by in ["timestamp", "amount"]:
+        order_by = "timestamp"
+        order = "desc"
+    
+    if not order.lower() in ["asc", "desc"]:
+        order = "asc"
+
+    await aiosql.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' AND {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    t = await aiosql.fetchall(dhrid)
+    ret = []
+    for tt in t:
+        note = tt[4].split("/")
+        executorid = int(note[1].split("-")[1])
+        d = {"txid": tt[0], "from_user": await GetUserInfo(dhrid, request, userid = tt[1]), "to_user": await GetUserInfo(dhrid, request, userid = tt[2]), "executor": await GetUserInfo(dhrid, request, userid = executorid),"amount": tt[3], "from_new_balance": tt[6], "to_new_balance": tt[7], "message": tt[5]}
+        if not balance_manager_perm_ok:
+            if tt[1] != au["userid"]:
+                d["from_new_balance"] = None
+            elif tt[2] != au["userid"]:
+                d["to_new_balance"] = None
+        ret.append(d)
+    
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' AND {limit}")
+    t = await aiosql.fetchall(dhrid)
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+
+    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+
+@app.post(f"/{config.abbr}/economy/balance/{{userid}}/visibility/{{visibility}}")
+async def post_economy_balance_userid_visibility(request: Request, response: Response, userid: int, visibility: str, authorization: str = Header(None)):
+    '''Make user balance public.'''
+    if not visibility in ["public", "private"]:
+        response.status_code = 404
+        return {"error": "Not Found"}
+    
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/visibility', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    if userid != -1000:
+        await aiosql.execute(dhrid, f"SELECT uid FROM user WHERE userid = {userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+        uid = t[0][0]
+    else:
+        uid = userid
+
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+
+    if not permok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_balance_visibility_forbidden", force_lang = au["language"])}
+
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) != 0:
+        if visibility == "public":
+            response.status_code = 409
+            return {"error": ml.tr(request, "balance_visibility_already_public", force_lang = au["language"])}
+        elif visibility == "private":
+            await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+            await aiosql.commit(dhrid)
+            return Response(status_code=204)
+    else:
+        if visibility == "private":
+            response.status_code = 409
+            return {"error": ml.tr(request, "balance_visibility_already_private", force_lang = au["language"])}
+        elif visibility == "public":
+            await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ({uid}, 'public-balance', '{userid}')")
+            await aiosql.commit(dhrid)
+            return Response(status_code=204)

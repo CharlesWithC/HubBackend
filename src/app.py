@@ -230,7 +230,6 @@ config_sample = {
         "allow_purchase_truck": True,
         "allow_purchase_garage": True,
         "allow_purchase_slot": True,
-        "allow_purchase_merch": True,
         "enable_balance_leaderboard": True
     },
 
@@ -256,6 +255,12 @@ config_sample = {
         "get_pending_user_list": [],
         "delete_application": [],
         "ban_user": [],
+
+        "economy_manager": [],
+        "balance_manager": [],
+        "accountant": [],
+        "truck_manager": [],
+        "garage_manager": [],
 
         "audit": [],
         "announcement": [],

@@ -54,7 +54,6 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BI
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # NOTE damage is a percentage (e.g. 0.01 => 1%)
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price INT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_merch (ownid INT AUTO_INCREMENT PRIMARY KEY, merchid TEXT, userid INT, price INT UNSIGNED, purchase_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 # userid = -1000 => company account
 # userid = -1001 => dealership

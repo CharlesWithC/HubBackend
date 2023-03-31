@@ -87,7 +87,8 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
         return Response(status_code=204)
     
     # division staff are only allowed to update division roles
-    if not checkPerm(au["roles"], "admin") and not (checkPerm(au["roles"], "hr") or checkPerm(au["roles"], "hrm") or checkPerm(au["roles"], "update_member_roles")) and checkPerm(au["roles"], "division"):
+    # not admin, no role access, have division access
+    if not checkPerm(au["roles"], "admin") and not checkPerm(au["roles"], ["hrm", "hr", "update_member_roles"]) and checkPerm(au["roles"], "division"):
         for add in addedroles:
             if add not in DIVISION_ROLES:
                 response.status_code = 403

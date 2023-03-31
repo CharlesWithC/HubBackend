@@ -216,7 +216,6 @@
         "allow_purchase_truck": true,
         "allow_purchase_garage": true,
         "allow_purchase_slot": true,
-        "allow_purchase_merch": true,
         "enable_balance_leaderboard": true
     },
 
@@ -247,7 +246,6 @@
         "balance_manager": [],
         "truck_manager": [],
         "garage_manager": [],
-        "accountant": [],
 
         "audit": [],
         "announcement": [],

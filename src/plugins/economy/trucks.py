@@ -35,7 +35,7 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -114,7 +114,7 @@ async def get_economy_trucks_vehicle(request: Request, response: Response, vehic
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -147,7 +147,7 @@ async def get_economy_trucks_operation_history(request: Request, response: Respo
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -160,8 +160,7 @@ async def get_economy_trucks_operation_history(request: Request, response: Respo
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     ownerid = t[0][0]
 
-    if ownerid != au["userid"] and not checkPerm(au["roles"], "truck_manager") and \
-        not checkPerm(au["roles"], "economy_manager") and not checkPerm(au["roles"], "admin"):
+    if ownerid != au["userid"] and not checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"]):
         response.status_code = 403
         return {"error": ml.tr(request, "truck_history_forbidden", force_lang = au["language"])}
 
@@ -263,7 +262,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -288,7 +287,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # check access
     if not config.economy.allow_purchase_truck and not permok:
@@ -307,14 +306,14 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
     # check owner
     if owner == "self":
         foruser = userid
-        opuser = userid
+        opuserid = userid
         assigneeid = userid
     elif owner == "company":
         foruser = -1000
-        opuser = -1000
+        opuserid = -1000
     elif owner.startswith("user-"):
         foruser = userid.split("-")[1]
-        opuser = userid
+        opuserid = userid
         assigneeid = userid
         if not isint(foruser):
             response.status_code = 400
@@ -359,19 +358,19 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
     status = not model_conflict
 
     # check balance
-    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuser} FOR UPDATE")
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
     
     if truck["price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuser}")
+    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuserid}")
     await aiosql.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     vehicleid = (await aiosql.fetchone(dhrid))[0]
-    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuser}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {int(balance - truck['price'])}, NULL, {int(time.time())})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {int(balance - truck['price'])}, NULL, {int(time.time())})")
     await aiosql.commit(dhrid)
 
     username = (await GetUserInfo(dhrid, request, userid = foruser))["name"]
@@ -399,7 +398,7 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -466,7 +465,7 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can transfer anyone's truck
@@ -524,7 +523,7 @@ async def post_economy_trucks_relocate(request: Request, response: Response, veh
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -547,7 +546,7 @@ async def post_economy_trucks_relocate(request: Request, response: Response, veh
     current_owner = t[0][0]
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -596,7 +595,7 @@ async def post_economy_trucks_activate(request: Request, response: Response, veh
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -615,7 +614,7 @@ async def post_economy_trucks_activate(request: Request, response: Response, veh
     status = t[0][3]
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -655,7 +654,7 @@ async def post_economy_trucks_deactivate(request: Request, response: Response, v
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -671,7 +670,7 @@ async def post_economy_trucks_deactivate(request: Request, response: Response, v
     current_owner = t[0][0]
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -699,7 +698,7 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -719,7 +718,7 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
     status = t[0][4]
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -776,7 +775,7 @@ async def post_economy_trucks_sell(request: Request, response: Response, vehicle
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -796,7 +795,7 @@ async def post_economy_trucks_sell(request: Request, response: Response, vehicle
     refund = round(price * (1 - damage) * config.economy.truck_refund)
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -829,7 +828,7 @@ async def post_economy_trucks_scrap(request: Request, response: Response, vehicl
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -849,7 +848,7 @@ async def post_economy_trucks_scrap(request: Request, response: Response, vehicl
     refund = round(price * config.economy.scrap_refund)
 
     # check perm
-    permok = checkPerm(au["roles"], "truck_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck

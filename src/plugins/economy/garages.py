@@ -34,7 +34,7 @@ async def get_economy_garages_list(request: Request, response: Response, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -99,7 +99,7 @@ async def get_economy_garage(request: Request, response: Response, garageid: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -137,7 +137,7 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -197,7 +197,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -224,7 +224,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
         return {"error": ml.tr(request, "garage_already_purchased", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")    
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])    
     
     # check access
     if not config.economy.allow_purchase_garage and not permok:
@@ -237,13 +237,13 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
     # check owner
     if owner == "self":
         foruser = userid
-        opuser = userid
+        opuserid = userid
     elif owner == "company":
         foruser = -1000
-        opuser = -1000
+        opuserid = -1000
     elif owner.startswith("user-"):
         foruser = userid.split("-")[1]
-        opuser = userid
+        opuserid = userid
         if not isint(foruser):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
@@ -258,7 +258,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
     
     # check balance
-    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuser} FOR UPDATE")
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
     
     if garage["price"] > balance:
@@ -267,7 +267,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
 
     slotids = []
     ts = int(time.time())
-    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {garage['price']} WHERE userid = {opuser}")
+    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {garage['price']} WHERE userid = {opuserid}")
     for i in range(garage["base_slots"]):
         p = garage['price'] if i == 0 else 0
         await aiosql.execute(dhrid, f"INSERT INTO economy_garage(garageid, userid, price, note, purchase_timestamp) VALUES ('{garageid}', '{garageid}', {foruser}, {p}, 'garage-owner', {ts})")
@@ -275,7 +275,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
         await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
         slotid = (await aiosql.fetchone(dhrid))[0]
         slotids.append(slotid)
-    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuser}, -1002, {garage['price']}, 'g-{garageid}-purchase', 'for-user-{foruser}', {int(balance - garage['price'])}, NULL, {ts})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['price']}, 'g-{garageid}-purchase', 'for-user-{foruser}', {int(balance - garage['price'])}, NULL, {ts})")
     await aiosql.commit(dhrid)
 
     return {"slotids": slotids, "cost": garage['price'], "balance": round(balance - garage['price'])}
@@ -298,7 +298,7 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -325,7 +325,7 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
         return {"error": ml.tr(request, "garage_not_purchased_before_purchase_slots", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")    
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])    
     
     # check access
     if not config.economy.allow_purchase_slot and not permok:
@@ -338,13 +338,13 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
     # check owner
     if owner == "self":
         foruser = userid
-        opuser = userid
+        opuserid = userid
     elif owner == "company":
         foruser = -1000
-        opuser = -1000
+        opuserid = -1000
     elif owner.startswith("user-"):
         foruser = userid.split("-")[1]
-        opuser = userid
+        opuserid = userid
         if not isint(foruser):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
@@ -359,19 +359,19 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
     
     # check balance
-    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuser} FOR UPDATE")
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
     
     if garage["slot_price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {garage['slot_price']} WHERE userid = {opuser}")
+    await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {garage['slot_price']} WHERE userid = {opuserid}")
     await aiosql.execute(dhrid, f"INSERT INTO economy_garage(garageid, userid, price, note, purchase_timestamp) VALUES ('{garageid}', '{garageid}', {foruser}, {garage['slot_price']}, 'slot-owner', {int(time.time())})")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     slotid = (await aiosql.fetchone(dhrid))[0]
-    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuser}, -1002, {garage['slot_price']}, 'gs{slotid}-purchase', 'for-user-{foruser}', {int(balance - garage['slot_price'])}, NULL, {int(time.time())})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['slot_price']}, 'gs{slotid}-purchase', 'for-user-{foruser}', {int(balance - garage['slot_price'])}, NULL, {int(time.time())})")
     await aiosql.commit(dhrid)
 
     return {"slotid": slotid, "cost": garage['slot_price'], "balance": round(balance - garage['slot_price'])}
@@ -394,7 +394,7 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -426,7 +426,7 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -485,7 +485,7 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -517,7 +517,7 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -569,7 +569,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -588,7 +588,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     refund = price * config.economy.garage_refund
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -637,7 +637,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -660,7 +660,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
         return {"error": ml.tr(request, "garage_slot_is_base_slot", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], "garage_manager") or checkPerm(au["roles"], "economy_manager") or checkPerm(au["roles"], "admin")
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage

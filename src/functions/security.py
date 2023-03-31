@@ -12,12 +12,17 @@ from functions.dataop import *
 from functions.general import *
 from static import *
 
-def checkPerm(roles, perm):
-    if not perm in tconfig["perms"].keys():
-        return False
+def checkPerm(roles, perms):
+    '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
+    if type(perms) == str:
+        perms = [perms]
+    for perm in perms:
+        if not perm in tconfig["perms"].keys():
+            return False
     for role in roles:
-        if role in tconfig["perms"][perm]:
-            return True
+        for perm in perms:
+            if role in tconfig["perms"][perm]:
+                return True
     return False
 
 csession = {} # session token cache, this only checks if a session token is valid
