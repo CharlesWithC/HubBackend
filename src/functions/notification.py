@@ -218,18 +218,17 @@ async def AuditLog(dhrid, uid, text, discord_message_only = False):
         elif uid == -998:
             name = ml.ctr("discord_api")
         else:
-            await aiosql.execute(dhrid, f"SELECT name, avatar FROM user WHERE uid = {uid}")
-            t = await aiosql.fetchall(dhrid)
-            if len(t) > 0:
-                name = t[0][0]
-                avatar = t[0][1]
+            uinfo = await GetUserInfo(dhrid, None, uid = uid)
+            name = uinfo["name"]
+            avatar = uinfo["avatar"]
+            userid = uinfo["userid"] if uinfo["userid"] is not None else "N/A"
         if uid != -998 and not discord_message_only:
             await aiosql.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(text)}', {int(time.time())})")
             await aiosql.commit(dhrid)
         if config.webhook_audit != "":
             footer = {"text": name}
             if uid not in [-999, -998]:
-                footer = {"text": f"{name} (ID {uid})", "icon_url": avatar}
+                footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
             try:
                 r = await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": config.int_color}]}), headers = {"Content-Type": "application/json"})
                 if r.status_code == 401:

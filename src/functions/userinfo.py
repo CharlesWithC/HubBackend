@@ -169,9 +169,9 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
         cactivity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
 
     if p[0][1] != -1:
-        cuserinfo[f"userid={p[0][1]}"] = {"uid": uid, "expire": int(time.time()) + 15}
+        cuserinfo[f"userid={p[0][1]}"] = {"uid": uid, "expire": int(time.time()) + 2}
     if p[0][7] != -1:
-        cuserinfo[f"discordid={p[0][7]}"] = {"uid": uid, "expire": int(time.time()) + 15}
+        cuserinfo[f"discordid={p[0][7]}"] = {"uid": uid, "expire": int(time.time()) + 2}
 
     userid = p[0][1]
     if userid == -1:
@@ -237,7 +237,7 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
     if userid != -1:
         query = f"userid = '{userid}'"
     elif discordid != -1:
-        query = f"discordid = '{discordid}'"
+        query = f"discordid = {discordid}"
     elif uid != -1:
         query = f"uid = {uid}"
     

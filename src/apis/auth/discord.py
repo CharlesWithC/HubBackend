@@ -73,7 +73,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
             await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
             await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-            await aiosql.execute(dhrid, f"SELECT uid, mfa_secret, email FROM user WHERE discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT uid, mfa_secret, email FROM user WHERE discordid = {discordid}")
             t = await aiosql.fetchall(dhrid)
             mfa_secret = ""
             if len(t) == 0:
@@ -110,7 +110,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 await aiosql.commit(dhrid)
                 return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
-            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid}")
             t = await aiosql.fetchall(dhrid)
             if len(t) > 0:
                 reason = t[0][0]

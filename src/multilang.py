@@ -328,7 +328,7 @@ EN_STRINGTABLE = {
 
 def get_lang(request: Request):
     if request is None:
-        return "en"
+        return config.language
     lang = request.headers.get('Accept-Language', 'en')
     lang = lang.split(',')[0]
     lang = lang.split(';')[0]

@@ -110,9 +110,8 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
     global config
     ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
     
-    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE userid = {au['userid']}")
-    t = await aiosql.fetchall(dhrid)
-    email = t[0][0]
+    uinfo = await GetUserInfo(dhrid, request, userid = au["userid"], include_email = True)
+    email = uinfo["email"]
 
     r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/{config.abbr}/tracksim/update"}, dhrid = dhrid)
     if r.status_code != 200:
@@ -173,7 +172,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = '{steamid}'")
+        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "User not found."}
@@ -231,7 +230,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         return {"message": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return {"error": "User not found."}

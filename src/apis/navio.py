@@ -110,7 +110,7 @@ async def post_navio(response: Response, request: Request):
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = '{steamid}'")
+        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "User not found."}
@@ -168,7 +168,7 @@ async def post_navio(response: Response, request: Request):
         return {"message": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return {"error": "User not found."}

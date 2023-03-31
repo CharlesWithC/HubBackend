@@ -73,7 +73,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
     
-    await aiosql.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         if not "steam" in config.register_methods:
@@ -108,7 +108,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
