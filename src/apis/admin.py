@@ -280,7 +280,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
 # get audit log (require audit / admin permission)
 @app.get(f"/{config.abbr}/audit/list")
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, staff_userid: Optional[int] = None, operation: Optional[str] = ""):
+    page: Optional[int] = 1, page_size: Optional[int] = 30, uid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""
 
     dhrid = request.state.dhrid
@@ -301,8 +301,8 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     operation = convertQuotation(operation.lower())
 
     limit = ""
-    if staff_userid is not None:
-        limit = f"AND userid = {staff_userid}"
+    if uid is not None:
+        limit = f"AND uid = {uid}"
     
     if page_size <= 1:
         page_size = 1

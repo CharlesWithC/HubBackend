@@ -1671,10 +1671,10 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "User ID of Responsible Staff",
+                        "title": "UID",
                         "type": "integer"
                     },
-                    "name": "staff_userid",
+                    "name": "uid",
                     "in": "query"
                 }, {
                     "required": false,

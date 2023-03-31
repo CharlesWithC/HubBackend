@@ -646,16 +646,16 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                 t = await aiosql.fetchall(dhrid)
                                 usercnt = {}
                                 for tt in t:
-                                    uid = tt[0]
-                                    if not uid in usercnt.keys():
-                                        usercnt[uid] = 1
+                                    tuserid = tt[0]
+                                    if not tuserid in usercnt.keys():
+                                        usercnt[tuserid] = 1
                                     else:
-                                        usercnt[uid] += 1
-                                for uid in usercnt.keys():
-                                    s = usercnt[uid]
+                                        usercnt[tuserid] += 1
+                                for tuserid in usercnt.keys():
+                                    s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
-                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
+                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
+                                    uid = (await GetUserInfo(dhrid, request, userid = tuserid))["uid"]
                                     await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
                                 await aiosql.commit(dhrid)
                         elif challenge_type == 5:
@@ -672,18 +672,18 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                 totalcnt = 0
                                 for tt in t:
                                     totalcnt += tt[1]
-                                    uid = tt[0]
-                                    if not uid in usercnt.keys():
-                                        usercnt[uid] = tt[1] - max(totalcnt - delivery_count, 0)
+                                    tuserid = tt[0]
+                                    if not tuserid in usercnt.keys():
+                                        usercnt[tuserid] = tt[1] - max(totalcnt - delivery_count, 0)
                                     else:
-                                        usercnt[uid] += tt[1] - max(totalcnt - delivery_count, 0)
+                                        usercnt[tuserid] += tt[1] - max(totalcnt - delivery_count, 0)
                                     if totalcnt >= delivery_count:
                                         break
-                                for uid in usercnt.keys():
-                                    s = usercnt[uid]
+                                for tuserid in usercnt.keys():
+                                    s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
-                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({uid}, {challengeid}, {reward}, {curtime})")
-                                    uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
+                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
+                                    uid = (await GetUserInfo(dhrid, request, userid = tuserid))["uid"]
                                     await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
                                 await aiosql.commit(dhrid)
                 except:
@@ -724,6 +724,11 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             await EnsureEconomyBalance(dhrid, -1000) if company_balance == 0 else None
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await aiosql.commit(dhrid)
+            
+            uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+            user_language = await GetUserLanguage(dhrid, uid)
+            message = "  \n" + ml.tr(None, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
+            await notification(dhrid, "economy", uid, ml.tr(None, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": config.economy.currency_name, "from_user": ml.tr(None, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
             
             if not isrented:
                 message = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')

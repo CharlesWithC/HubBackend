@@ -12,6 +12,8 @@ from app import app, config
 from db import aiosql
 from functions import *
 
+# TODO Export transaction history to .csv
+
 @app.get(f"/{config.abbr}/economy/balance/leaderboard")
 async def get_economy_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 20, \

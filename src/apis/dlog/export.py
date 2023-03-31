@@ -68,7 +68,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
             challengeids = []
             challengenames = []
         else:
-            challengeids = [dd[12]]
+            challengeids = [str(dd[12])]
             challengenames = [dd[13]]
             while di + 1 < len(d):
                 if d[di + 1][0] == logid: # same log => multiple challenge id
