@@ -94,7 +94,7 @@ async def get_user_notification_settings(request: Request, response: Response, a
         return au
     uid = au["uid"]
 
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
@@ -110,7 +110,7 @@ async def get_user_notification_settings(request: Request, response: Response, a
 async def post_user_notification_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Enables a specific type of notification of the authorized user"""
 
-    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
+    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "economy", "event"]:
         response.status_code = 404
         return {"error": "Not Found"}
 
@@ -131,7 +131,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
     uid = au["uid"]
     discordid = au["discordid"]
 
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
     settingsok = False
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -226,7 +226,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
 async def post_user_notification_settings_disable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Disables a specific type of notification of the authorized user"""
 
-    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "event"]:
+    if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "economy", "event"]:
         response.status_code = 404
         return {"error": "Not Found"}
 
@@ -246,7 +246,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
         return au
     uid = au["uid"]
 
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
     settingsok = False
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")

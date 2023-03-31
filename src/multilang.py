@@ -263,6 +263,9 @@ EN_STRINGTABLE = {
     "challenge_uncompleted_lost_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed: You lost `{points}` points.",
     "one_personal_recurring_challenge_uncompleted": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points.",
     "one_personal_recurring_challenge_uncompleted_still_have_points": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "economy_transaction_message": "**Message**: {message}",
+    "economy_sent_transaction": "You sent **{amount} {currency_name}** to `{to_user}` (User ID: `{to_userid}`).{message}",
+    "economy_received_transaction": "`{from_user}` (User ID: `{from_userid}`) sent **{amount} {currency_name}** to you.{message}",
 
     "system": "System",
     "protected": "Protected",

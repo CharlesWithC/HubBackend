@@ -217,6 +217,7 @@ config_sample = {
         "garage_refund": 0.5,
         "slot_refund": 0.5,
 
+        "currency_name": "coin",
         "usd_to_coin": 0.5,
         "eur_to_coin": 0.6,
         "wear_ratio": 1,
@@ -403,6 +404,9 @@ def validateConfig(cfg):
     for item in economy_must_bool:
         if not item in cfg["economy"].keys() or type(cfg["economy"][item]) != bool:
             cfg["economy"][item] = config_sample["economy"][item]
+    
+    if not "currency_name" in cfg["economy"].keys():
+        cfg["economy"]["currency_name"] = "coin"
 
     roles = cfg["roles"]
     newroles = []

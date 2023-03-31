@@ -177,6 +177,20 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {amount} WHERE userid = {from_userid}")
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {amount} WHERE userid = {to_userid}")
     await aiosql.commit(dhrid)
+
+    from_user = await GetUserInfo(dhrid, request, userid = from_userid)
+    to_user = await GetUserInfo(dhrid, request, userid = to_userid)
+    from_user_language = await GetUserLanguage(dhrid, from_user["uid"])
+    to_user_language = await GetUserLanguage(dhrid, to_user["uid"])
+
+    from_message = ""
+    to_message = ""
+    if message != "":
+        from_message = "  \n" + ml.tr(None, "economy_transaction_message", var = {"message": message}, force_lang = from_user_language)
+        to_message = "  \n" + ml.tr(None, "economy_transaction_message", var = {"message": message}, force_lang = to_user_language)
+
+    await notification(dhrid, "economy", from_user["uid"], ml.tr(None, "economy_sent_transaction", var = {"amount": amount, "currency_name": config.economy.currency_name, "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
+    await notification(dhrid, "economy", to_user["uid"], ml.tr(None, "economy_received_transaction", var = {"amount": amount, "currency_name": config.economy.currency_name, "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
     
     if company_balance_perm_ok:
         return {"from_balance": from_balance - amount, "to_balance": to_balance + amount}

@@ -99,7 +99,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
         await aiosql.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '', '{avatar}', '', '', NULL, {steamid}, NULL, {int(time.time())}, '')")
         await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
         uid = (await aiosql.fetchone(dhrid))[0]
-        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,event,')")
+        await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
         await aiosql.commit(dhrid)
         await AuditLog(dhrid, uid, ml.ctr("steam_register", var = {"country": getRequestCountry(request)}))
     else:

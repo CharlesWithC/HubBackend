@@ -104,7 +104,7 @@ def ProcessDiscordMessage(): # thread
                     uid = t[0][0]
                     cur.execute(f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
                     
-                    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+                    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
                     settingsok = False
 
                     cur.execute(f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -163,7 +163,7 @@ async def SendDiscordNotification(dhrid, uid, data):
     QueueDiscordMessage(t, data)
 
 async def CheckNotificationEnabled(dhrid, notification_type, uid):
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
@@ -182,7 +182,7 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
     if uid is None or int(uid) <= 0:
         return
     
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
+    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)

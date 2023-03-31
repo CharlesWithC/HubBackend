@@ -311,6 +311,8 @@ def ClearUserLanguageCache():
             del clanguage[user]
 
 async def GetUserLanguage(dhrid, uid):
+    if uid is None:
+        return config.language
     ClearUserLanguageCache()
 
     global clanguage
@@ -325,6 +327,8 @@ async def GetUserLanguage(dhrid, uid):
     return t[0][0]
 
 def bGetUserLanguage(uid):
+    if uid is None:
+        return config.language
     ClearUserLanguageCache()
 
     global clanguage
