@@ -34,6 +34,8 @@ def nint(t):
     try:
         if t is None:
             return 0
+        if type(t) is tuple: # db fetchone query
+            return int(t[0])
         return int(t)
     except:
         return 0

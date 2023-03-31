@@ -334,6 +334,9 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
         return {"error": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"DELETE FROM economy_balance WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"DELETE FROM economy_truck WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await aiosql.commit(dhrid)
 
     tracker_app_error = ""

@@ -225,6 +225,9 @@ async def post_member_resign(request: Request, response: Response, authorization
             return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"DELETE FROM economy_balance WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"DELETE FROM economy_truck WHERE userid = {userid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await aiosql.commit(dhrid)
 
     tracker_app_error = ""

@@ -14,7 +14,8 @@ from functions import *
 
 @app.get(f"/{config.abbr}/economy/balance/leaderboard")
 async def get_economy_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 20, order: Optional[str] = "desc"):
+        page: Optional[int] = 1, page_size: Optional[int] = 20, \
+        min_balance: Optional[int] = None, max_balance: Optional[int] = None, order: Optional[str] = "desc"):
     '''Get balance leaderboard.
     
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, they will not be included in the leaderboard.
@@ -35,6 +36,12 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
         del au["code"]
         return au
     
+    limit = ""
+    if min_balance is not None:
+        limit += f"AND balance >= {min_balance} "
+    if max_balance is not None:
+        limit += f"AND balance <= {max_balance} "
+
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
 
@@ -44,11 +51,16 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
 
     if not permok:
         await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'public-balance'")
-        t = await aiosql.fetchall(dhrid)
-        for tt in t:
-            public_userids.append(int(tt[0]))
+    else:
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0")
+        public_userids.append(-1000)
+    t = await aiosql.fetchall(dhrid)
+    for tt in t:
+        public_userids.append(int(tt[0]))
+    if public_userids.count(au["userid"]) == 2:
+        public_userids.remove(au["userid"])
     
-    await aiosql.execute(dhrid, f"SELECT userid, balance FROM economy_balance WHERE userid >= 0 AND balance > 0 ORDER BY balance {order}")
+    await aiosql.execute(dhrid, f"SELECT userid, balance FROM economy_balance WHERE (userid >= 0 OR userid = -1000) AND balance > 0 {limit} ORDER BY balance {order}")
     t = await aiosql.fetchall(dhrid)
     d = []
 
@@ -64,19 +76,25 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
     public_userids = sorted(public_userids)
     to_add = []
     for tuserid in public_userids:
-        to_add.append(tuserid)
+        to_add.append((tuserid, 0))
     if order.lower() == "asc":
         d = to_add + d
     elif order.lower() == "desc":
         d = d + to_add
 
+    # filter balance
+    p = []
+    for dd in d:
+        if (min_balance is None or dd[1] >= min_balance) and (max_balance is None or dd[1] <= max_balance):
+            p.append(dd)
+
     # select only those in page
-    d = d[page_size*(page-1):page_size*page]
+    d = p[page_size*(page-1):page_size*page]
 
     # create ret[]
     ret = []
     for dd in d:
-        ret.append({"user": await GetUserInfo(userid = dd[0]), "balance": dd[1]})
+        ret.append({"user": await GetUserInfo(dhrid, request, userid = dd[0]), "balance": dd[1]})
 
     return {"list": ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
@@ -146,8 +164,10 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
     
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {from_userid} FOR UPDATE")
     from_balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, from_userid) if from_balance == 0 else None
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {to_userid} FOR UPDATE")
     to_balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, to_userid) if to_balance == 0 else None
     
     if from_balance < amount:
         response.status_code = 402
@@ -186,19 +206,16 @@ async def get_economy_balance_userid(request: Request, response: Response, useri
         return au
     
     if userid != -1000:
-        await aiosql.execute(dhrid, f"SELECT uid FROM user WHERE userid = {userid}")
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-        uid = t[0][0]
-    else:
-        uid = userid
 
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
 
     if not permok:
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 403
@@ -279,7 +296,7 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
 
-    await aiosql.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' AND {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    await aiosql.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -293,7 +310,7 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
                 d["to_new_balance"] = None
         ret.append(d)
     
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' AND {limit}")
+    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit}")
     t = await aiosql.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
@@ -331,7 +348,7 @@ async def post_economy_balance_userid_visibility(request: Request, response: Res
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
         uid = t[0][0]
     else:
-        uid = userid
+        uid = "NULL"
 
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
 
@@ -339,14 +356,14 @@ async def post_economy_balance_userid_visibility(request: Request, response: Res
         response.status_code = 403
         return {"error": ml.tr(request, "modify_balance_visibility_forbidden", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         if visibility == "public":
             response.status_code = 409
             return {"error": ml.tr(request, "balance_visibility_already_public", force_lang = au["language"])}
         elif visibility == "private":
-            await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'public-balance'")
+            await aiosql.execute(dhrid, f"DELETE FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
             await aiosql.commit(dhrid)
             return Response(status_code=204)
     else:

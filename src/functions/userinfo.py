@@ -65,6 +65,8 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
         return None
     
     miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
+    if userid == -1000:
+        return {"uid": None, "userid": None, "name": config.name, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": config.logo_url, "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
     if userid in miscuserid.keys():
         return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         
@@ -186,6 +188,8 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
         return None
     
     miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
+    if userid == -1000:
+        return {"uid": None, "userid": None, "name": config.name, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": config.logo_url, "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
     if userid in miscuserid.keys():
         return {"uid": None, "userid": None, "name": ml.ctr(miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
         

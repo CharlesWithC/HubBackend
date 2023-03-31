@@ -12,6 +12,7 @@ import requests
 
 from functions.dataop import *
 from static import *
+from db import aiosql
 
 
 def getUrl4Msg(message):
@@ -83,3 +84,9 @@ def DisableDiscordIntegration():
         requests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": config.int_color, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
     except:
         pass
+
+async def EnsureEconomyBalance(dhrid, userid):
+    await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        await aiosql.execute(dhrid, f"INSERT INTO economy_balance VALUES ({userid}, 0)")

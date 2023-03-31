@@ -3298,6 +3298,22 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Minimum Balance",
+                        "type": "integer"
+                    },
+                    "name": "min_balance",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Maximum Balance",
+                        "type": "integer"
+                    },
+                    "name": "max_balance",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Order (asc, desc) | Order By is locked to `timestamp`",
                         "type": "string"
                     },
@@ -3327,7 +3343,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}/transfer": {
+        "/abbr/economy/balance/transfer": {
             "post": {
                 "summary": "Transfer Balance",
                 "tags": ["economy_balance"],
@@ -3375,6 +3391,15 @@
                 "security": [{
                     "bearerAuth": []
                 }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }],
                 "responses": {}
             }
         },
@@ -3385,6 +3410,15 @@
                 "operationId": "post_economy_balance_userid_visibility_private",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
                 }],
                 "responses": {}
             }

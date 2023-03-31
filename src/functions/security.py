@@ -16,12 +16,9 @@ def checkPerm(roles, perms):
     '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
     if type(perms) == str:
         perms = [perms]
-    for perm in perms:
-        if not perm in tconfig["perms"].keys():
-            return False
     for role in roles:
         for perm in perms:
-            if role in tconfig["perms"][perm]:
+            if perm in tconfig["perms"].keys() and role in tconfig["perms"][perm]:
                 return True
     return False
 

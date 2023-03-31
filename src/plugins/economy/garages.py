@@ -262,6 +262,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
     # check balance
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, opuserid) if balance == 0 else None
     
     if garage["price"] > balance:
         response.status_code = 402
@@ -363,6 +364,7 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
     # check balance
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, opuserid) if balance == 0 else None
     
     if garage["slot_price"] > balance:
         response.status_code = 402
@@ -613,6 +615,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     await aiosql.execute(dhrid, f"DELETE FROM economy_garage WHERE garageid = '{garageid}'")
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {refund} WHERE userid = {current_owner}")
     await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {current_owner}, {refund}, 'g-{garageid}-sell', 'refund-{config.economy.garage_refund}', NULL, {round(balance + refund)}, {int(time.time())})")
     await aiosql.commit(dhrid)
@@ -680,6 +683,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     await aiosql.execute(dhrid, f"DELETE FROM economy_garage WHERE slotid = {slotid}")
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
+    await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {refund} WHERE userid = {current_owner}")
     await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1002, {current_owner}, {refund}, 'gs{slotid}-sell', 'refund-{config.economy.slot_refund}', NULL, {round(balance + refund)}, {int(time.time())})")
     await aiosql.commit(dhrid)

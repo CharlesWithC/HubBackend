@@ -717,9 +717,11 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
             driver_balance = nint(await aiosql.fetchone(dhrid))
+            await EnsureEconomyBalance(dhrid, userid) if driver_balance == 0 else None
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
             company_balance = nint(await aiosql.fetchone(dhrid))
+            await EnsureEconomyBalance(dhrid, -1000) if company_balance == 0 else None
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await aiosql.commit(dhrid)
             
