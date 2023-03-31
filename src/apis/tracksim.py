@@ -168,6 +168,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         return {"error": "Validation failed"}
     
     if d["object"] != "event":
+        response.status_code = 400
         return {"error": "Only events are accepted."}
     e = d["type"]
     if e == "company_driver.detached":
@@ -175,6 +176,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
+            response.status_code = 404
             return {"error": "User not found."}
         uid = t[0][0]
         userid = t[0][1]
@@ -227,12 +229,13 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             except:
                 pass
         
-        return {"message": "User resigned."}
+        return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
     await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
+        response.status_code = 404
         return {"error": "User not found."}
     userid = t[0][0]
     username = t[0][1]
@@ -245,6 +248,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     if len(o) > 0:
         duplicate = True
         logid = o[0][0]
+        response.status_code = 409
         return {"error": "Already logged"}
 
     driven_distance = float(d["data"]["object"]["driven_distance"])
@@ -310,8 +314,8 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         except:
             pass
         
-    if not delivery_rule_ok:        
-        return {"message": "Blocked due to delivery rules."}
+    if not delivery_rule_ok:
+        return {"error": "Blocked due to delivery rules."}
 
     if not duplicate:
         await aiosql.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
@@ -695,7 +699,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     try:
         if "economy" in config.enabled_plugins and isdelivered and not duplicate:
             economy_revenue = round(revenue)
-            truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
+            truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"]).lstrip("vehicle.")
 
             isrented = False
             await aiosql.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE userid = {userid} AND truckid = '{truckid}' AND status = 1")
@@ -755,4 +759,4 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     except:
         traceback.print_exc()
 
-    return {"message": "Logged"}
+    return {"error": "Logged"}

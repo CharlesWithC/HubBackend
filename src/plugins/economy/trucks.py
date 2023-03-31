@@ -92,9 +92,9 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
     
-    STATUS = {0: ml.tr(request, "inactive", force_lang=au["language"]), 1: ml.tr(request, "active", force_lang=au["language"]), -1: ml.tr(request, "service_required", force_lang=au["language"]), -2: ml.tr(request, "scrapped", force_lang=au["language"])}
+    STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
 
-    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp FROM economy_truck, status, income, service_cost WHERE vehicleid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
+    await aiosql.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost FROM economy_truck WHERE vehicleid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -135,7 +135,7 @@ async def get_economy_trucks_vehicle(request: Request, response: Response, vehic
 
     await ActivityUpdate(dhrid, au["uid"], f"economy_trucks_{vehicleid}")
 
-    STATUS = {0: ml.tr(request, "inactive", force_lang=au["language"]), 1: ml.tr(request, "active", force_lang=au["language"]), -1: ml.tr(request, "service_required", force_lang=au["language"]), -2: ml.tr(request, "scrapped", force_lang=au["language"])}
+    STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
     
     return {"vehicleid": tt[0], "truckid": tt[1], "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
@@ -282,6 +282,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
         slotid = int(data["slotid"])
 
         # assignee only work for company trucks
+        assigneeid = "NULL"
         if "assignee" in data.keys():
             assigneeid = data["assignee"]
             if assigneeid is None:
@@ -318,14 +319,14 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
         foruser = -1000
         opuserid = -1000
     elif owner.startswith("user-"):
-        foruser = userid.split("-")[1]
+        foruser = owner.split("-")[1]
         opuserid = userid
         assigneeid = userid
         if not isint(foruser):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
         foruser = int(foruser)
-        await aiosql.execute(f"SELECT userid FROM user WHERE userid = {userid}")
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 400
@@ -373,7 +374,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuserid}")
-    await aiosql.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, assigneeid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     vehicleid = (await aiosql.fetchone(dhrid))[0]
@@ -419,11 +420,13 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
         owner = data["owner"] # owner = self | company | user-{userid}
         
         # assignee only work for company trucks
-        assigneeid = data["assignee"]
-        if assigneeid is None:
-            assigneeid = "NULL"
-        else:
-            assigneeid = int(assigneeid)
+        assigneeid = "NULL"
+        if "assignee" in data.keys():
+            assigneeid = data["assignee"]
+            if assigneeid is None:
+                assigneeid = "NULL"
+            else:
+                assigneeid = int(assigneeid)
 
         if "message" in data.keys():
             message = convertQuotation(data["message"])
@@ -443,13 +446,13 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
         foruser = -1000
     elif owner.startswith("user-"):
         # me/company => another user
-        foruser = userid.split("-")[1]
+        foruser = owner.split("-")[1]
         assigneeid = foruser
         if not isint(foruser):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
         foruser = int(foruser)
-        await aiosql.execute(f"SELECT userid FROM user WHERE userid = {userid}")
+        await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 400
@@ -470,6 +473,10 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
     if current_owner != -1000 and current_owner == owner:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
+
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
     
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
@@ -552,6 +559,10 @@ async def post_economy_trucks_relocate(request: Request, response: Response, veh
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     current_owner = t[0][0]
 
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
+
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -620,6 +631,10 @@ async def post_economy_trucks_activate(request: Request, response: Response, veh
     current_assigneeid = t[0][2]
     status = t[0][3]
 
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
+
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -676,6 +691,10 @@ async def post_economy_trucks_deactivate(request: Request, response: Response, v
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     current_owner = t[0][0]
 
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
+
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -713,7 +732,7 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
     userid = au["userid"]
 
     # check current owner
-    await aiosql.execute(dhrid, f"SELECT truckid, userid, assignee, damage, status FROM economy_truck WHERE vehicleid = {vehicleid}")
+    await aiosql.execute(dhrid, f"SELECT truckid, userid, assigneeid, damage, status FROM economy_truck WHERE vehicleid = {vehicleid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -723,6 +742,10 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
     current_assignee = t[0][2]
     damage = t[0][3]
     status = t[0][4]
+
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
@@ -802,6 +825,10 @@ async def post_economy_trucks_sell(request: Request, response: Response, vehicle
     price = t[0][3]
     refund = round(price * (1 - damage) * config.economy.truck_refund)
 
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
+
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -813,7 +840,7 @@ async def post_economy_trucks_sell(request: Request, response: Response, vehicle
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
     
     # check balance
-    await aiosql.execute(dhrid, f"UPDATE economy_truck SET userid = -1001, active = 0 WHERE vehicleid = {vehicleid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_truck SET userid = -1001, status = 0, slotid = NULL, garageid = NULL WHERE vehicleid = {vehicleid}")
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
     await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
@@ -856,6 +883,10 @@ async def post_economy_trucks_scrap(request: Request, response: Response, vehicl
     price = t[0][3]
     refund = round(price * config.economy.scrap_refund)
 
+    if current_owner in [-1001, -1005]:
+        response.status_code = 403
+        return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "truck", force_lang = au["language"])}, force_lang = au["language"])}
+
     # check perm
     permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -871,7 +902,7 @@ async def post_economy_trucks_scrap(request: Request, response: Response, vehicl
         return {"error": ml.tr(request, "truck_scrap_unncessary", force_lang = au["language"])}
 
     # check balance
-    await aiosql.execute(dhrid, f"UPDATE economy_truck SET userid = -1005, active = 0 WHERE vehicleid = {vehicleid}")
+    await aiosql.execute(dhrid, f"UPDATE economy_truck SET userid = -1005, status = 0, status = 0, slotid = NULL, garageid = NULL WHERE vehicleid = {vehicleid}")
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await aiosql.fetchone(dhrid))
     await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
