@@ -183,7 +183,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
             response.status_code = au["code"]
             del au["code"]
             return au
-        await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE uid = '{uid}'")
+        await aiosql.execute(dhrid, f"SELECT discordid FROM user WHERE uid = {uid}")
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
@@ -232,11 +232,11 @@ async def patch_user_profile(request: Request, response: Response, authorization
         if d["user"]["avatar"] is not None:
             avatar = getAvatarSrc(discordid, d["user"]["avatar"])
             
-        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await aiosql.commit(dhrid)
     
     elif sync_to_steam:
-        await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = '{uid}'")
+        await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
         t = await aiosql.fetchall(dhrid)
         steamid = t[0][0]
         if steamid is None:
@@ -264,7 +264,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
             response.status_code = 503
             return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
 
-        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await aiosql.commit(dhrid)
 
     else:
@@ -299,7 +299,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
             response.status_code = 400
             return {"error": ml.tr(request, "avatar_domain_not_whitelisted", force_lang = au["language"])}
         
-        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = '{uid}'")
+        await aiosql.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await aiosql.commit(dhrid)
 
     return Response(status_code=204)

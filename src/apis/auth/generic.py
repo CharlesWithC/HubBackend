@@ -71,7 +71,7 @@ async def post_auth_password(request: Request, response: Response):
         await aiosql.commit(dhrid)
         return {"token": stoken, "mfa": True}
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR email = '{email}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR email = '{email}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -339,7 +339,7 @@ async def post_auth_mfa(request: Request, response: Response):
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]

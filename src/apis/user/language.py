@@ -66,7 +66,7 @@ async def patch_user_language(request: Request, response: Response, authorizatio
         response.status_code = 400
         return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = '{uid}' AND skey = 'language'")
+    await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
     await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{language}')")
     await aiosql.commit(dhrid)
 

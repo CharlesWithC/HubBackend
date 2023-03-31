@@ -293,7 +293,6 @@ async def post_event(request: Request, response: Response, authorization: str = 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
         
     data = await request.json()
     try:
@@ -325,11 +324,11 @@ async def post_event(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({staffid}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
+    await aiosql.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({au['userid']}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     eventid = (await aiosql.fetchone(dhrid))[0]
-    await AuditLog(dhrid, staffid, ml.ctr("created_event", var = {"id": eventid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("created_event", var = {"id": eventid}))
 
     return {"eventid": eventid}
 
@@ -349,7 +348,6 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
         
     await aiosql.execute(dhrid, f"SELECT userid FROM event WHERE eventid = {eventid}")
     t = await aiosql.fetchall(dhrid)
@@ -388,7 +386,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
-    await AuditLog(dhrid, staffid, ml.ctr("updated_event", var = {"id": eventid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_event", var = {"id": eventid}))
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)
@@ -408,8 +406,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
-        return au
-    staffid = au["userid"]
+        return 
         
     await aiosql.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid}")
     t = await aiosql.fetchall(dhrid)
@@ -418,7 +415,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_event", var = {"id": eventid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_event", var = {"id": eventid}))
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)
@@ -439,8 +436,6 @@ async def patch_event_attendees(request: Request, response: Response, eventid: i
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
-    staffuid = au["uid"]
         
     data = await request.json()
     try:
@@ -525,7 +520,7 @@ async def patch_event_attendees(request: Request, response: Response, eventid: i
     await aiosql.commit(dhrid)
 
     if ret == ml.ctr("updated_event_attendees", var = {"id": eventid}) + "  \n":
-        return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(dhrid, staffuid))}
+        return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(dhrid, au["uid"]))}
 
-    await AuditLog(dhrid, staffid, ret)
+    await AuditLog(dhrid, au["uid"], ret)
     return {"message": ret}

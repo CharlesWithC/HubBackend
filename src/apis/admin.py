@@ -116,7 +116,6 @@ async def patch_config(request: Request, response: Response, authorization: str 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     userroles = au["roles"]
 
     data = await request.json()
@@ -161,8 +160,8 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
                 
             if tt == "economy":
-                if "garages" in tt.keys():
-                    garages = tt["garages"]
+                if "garages" in new_config[tt].keys():
+                    garages = new_config[tt]["garages"]
                     for garage in garages:
                         if "base_slots" in garage.keys() and isint(garage["base_slots"]):
                             if garage["base_slots"] > 10:
@@ -232,7 +231,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
         return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
     open(config_path, "w", encoding="utf-8").write(out)
 
-    await AuditLog(dhrid, staffid, ml.ctr("updated_config"))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_config"))
 
     return Response(status_code=204)
 
@@ -254,9 +253,8 @@ async def post_restart(request: Request, response: Response, authorization: str 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {staffid}")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {au['userid']}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret == "":
@@ -273,7 +271,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(dhrid, staffid, ml.ctr("restarted_service"))
+    await AuditLog(dhrid, au["uid"], ml.ctr("restarted_service"))
 
     threading.Thread(target=restart).start()
 

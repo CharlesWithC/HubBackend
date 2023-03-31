@@ -268,7 +268,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             await aiosql.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await aiosql.commit(dhrid)
 
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'language'")
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
         t = await aiosql.fetchall(dhrid)
         language = ""
         if len(t) != 0:
@@ -337,7 +337,7 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             await aiosql.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await aiosql.commit(dhrid)
 
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'language'")
+        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
         t = await aiosql.fetchall(dhrid)
         language = ""
         if len(t) != 0:

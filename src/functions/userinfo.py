@@ -239,7 +239,7 @@ def bGetUserInfo(userid = -1, discordid = -1, uid = -1, privacy = False, tell_de
     elif discordid != -1:
         query = f"discordid = '{discordid}'"
     elif uid != -1:
-        query = f"uid = '{uid}'"
+        query = f"uid = {uid}"
     
     conn = genconn()
     cur = conn.cursor()
@@ -312,7 +312,7 @@ async def GetUserLanguage(dhrid, uid):
     global clanguage
     if uid in clanguage.keys() and int(time.time()) <= clanguage[uid]["expire"]:
         return clanguage[uid]["language"]
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'language'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         clanguage[uid] = {"language": config.language, "expire": int(time.time()) + 3}
@@ -328,7 +328,7 @@ def bGetUserLanguage(uid):
         return clanguage[uid]["language"]
     conn = genconn()
     cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'language'")
+    cur.execute(f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
     t = cur.fetchall()
     cur.close()
     conn.close()

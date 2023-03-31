@@ -105,13 +105,12 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     global tconfig
     global config
     ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
     
-    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE userid = {staffid}")
+    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE userid = {au['userid']}")
     t = await aiosql.fetchall(dhrid)
     email = t[0][0]
 
@@ -718,10 +717,10 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             company_revenue = round(economy_revenue * config.economy.revenue_share_to_company)
             
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
-            driver_balance = nint(await aiosql.fetchone())
+            driver_balance = nint(await aiosql.fetchone(dhrid))
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
-            company_balance = nint(await aiosql.fetchone())
+            company_balance = nint(await aiosql.fetchone(dhrid))
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await aiosql.commit(dhrid)
             

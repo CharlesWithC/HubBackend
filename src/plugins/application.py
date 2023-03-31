@@ -52,7 +52,6 @@ async def post_application_positions(request: Request, response: Response, autho
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     data = await request.json()
     try:
@@ -80,7 +79,7 @@ async def post_application_positions(request: Request, response: Response, autho
         await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("updated_application_positions", var = {"positions": positions_str}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_application_positions", var = {"positions": positions_str}))
 
     return Response(status_code=204)
 
@@ -485,8 +484,6 @@ async def update_application_status(request: Request, response: Response, applic
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
-    adminname = au["name"]
     roles = au["roles"]
 
     data = await request.json()
@@ -534,18 +531,18 @@ async def update_application_status(request: Request, response: Response, applic
     data = json.loads(decompress(t[0][3]))
     i = 1
     while 1:
-        if not f"[Message] {adminname} ({staffid}) #{i}" in data.keys():
+        if not f"[Message] {au['name']} ({au['userid']}) #{i}" in data.keys():
             break
         i += 1
     if message != "":
-        data[f"[Message] {adminname} ({staffid}) #{i}"] = message
+        data[f"[Message] {au['name']} ({au['userid']}) #{i}"] = message
 
     update_timestamp = 0
     if status != 0:
         update_timestamp = int(time.time())
 
-    await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {staffid}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(dhrid, staffid, ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
+    await aiosql.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await AuditLog(dhrid, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(dhrid, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await aiosql.commit(dhrid)
@@ -571,7 +568,6 @@ async def delete_application(request: Request, response: Response, applicationid
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     roles = au["roles"]
     
     await aiosql.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
@@ -598,6 +594,6 @@ async def delete_application(request: Request, response: Response, applicationid
     await aiosql.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_application", var = {"id": applicationid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_application", var = {"id": applicationid}))
 
     return Response(status_code=204)

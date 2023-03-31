@@ -307,7 +307,6 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     if logid is None:
         response.status_code = 404
@@ -323,7 +322,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     await aiosql.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_delivery", var = {"logid": logid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_delivery", var = {"logid": logid}))
 
     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
     await notification(dhrid, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid)))

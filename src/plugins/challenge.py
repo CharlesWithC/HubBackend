@@ -192,10 +192,6 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     if not staffau["error"]:
         isstaff = True
 
-    if int(challengeid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
-
     await ActivityUpdate(dhrid, au["uid"], f"challenges")
 
     await aiosql.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
@@ -292,7 +288,6 @@ async def post_challenge(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM challenge WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())}")
     tot = await aiosql.fetchone(dhrid)
@@ -377,12 +372,12 @@ async def post_challenge(request: Request, response: Response, authorization: st
             jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
     jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
-    await aiosql.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({staffid}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
+    await aiosql.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     challengeid = (await aiosql.fetchone(dhrid))[0]
 
-    await AuditLog(dhrid, staffid, ml.ctr("created_challenge", var = {"id": challengeid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("created_challenge", var = {"id": challengeid}))
 
     return {"challengeid": challengeid}
 
@@ -407,11 +402,6 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
-
-    if int(challengeid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
 
     await aiosql.execute(dhrid, f"SELECT delivery_count, challenge_type FROM challenge WHERE challengeid = {challengeid}")
     t = await aiosql.fetchall(dhrid)
@@ -770,7 +760,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
             await notification(dhrid, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
 
-    await AuditLog(dhrid, staffid, ml.ctr("updated_challenge", var = {"id": challengeid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_challenge", var = {"id": challengeid}))
 
     return Response(status_code=204)
 
@@ -793,7 +783,6 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -810,7 +799,7 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
     await aiosql.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_challenge", var = {"id": challengeid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_challenge", var = {"id": challengeid}))
 
     return Response(status_code=204)
 
@@ -835,7 +824,6 @@ async def put_challenge_delivery(request: Request, response: Response, challenge
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     if int(challengeid) < 0:
         response.status_code = 404
@@ -955,7 +943,7 @@ async def put_challenge_delivery(request: Request, response: Response, challenge
                     await notification(dhrid, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
                 await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("added_delivery_to_challenge", var = {"id": challengeid, "logid": logid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("added_delivery_to_challenge", var = {"id": challengeid, "logid": logid}))
     
     return Response(status_code=204)
 
@@ -980,12 +968,7 @@ async def delete_challenge_delivery(request: Request, response: Response, challe
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
-
-    if int(challengeid) < 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
-
+    
     await aiosql.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
@@ -1167,6 +1150,6 @@ async def delete_challenge_delivery(request: Request, response: Response, challe
                 uid = (await GetUserInfo(dhrid, request, userid = uid))["uid"]
                 await notification(dhrid, "challenge", uid, ml.tr(request, "challenge_updated_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
 
-    await AuditLog(dhrid, staffid, ml.ctr("removed_delivery_from_challenge", var = {"id": challengeid, "logid": logid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("removed_delivery_from_challenge", var = {"id": challengeid, "logid": logid}))
 
     return Response(status_code=204)

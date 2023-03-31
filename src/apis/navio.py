@@ -653,10 +653,10 @@ async def post_navio(response: Response, request: Request):
             company_revenue = round(economy_revenue * config.economy.revenue_share_to_company)
             
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
-            driver_balance = nint(await aiosql.fetchone())
+            driver_balance = nint(await aiosql.fetchone(dhrid))
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
             await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
-            company_balance = nint(await aiosql.fetchone())
+            company_balance = nint(await aiosql.fetchone(dhrid))
             await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await aiosql.commit(dhrid)
             

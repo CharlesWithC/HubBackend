@@ -107,7 +107,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
 
     isStaff = checkPerm(roles, "admin") or checkPerm(roles, "division")
 
-    if isStaff:
+    if not isStaff:
         if userid != duserid and status != 1:
             response.status_code = 404
             return {"error": ml.tr(request, "division_not_validated", force_lang = au["language"])}
@@ -226,7 +226,6 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
         
     data = await request.json()
     try:
@@ -248,11 +247,11 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
         divisionid = t[0][0]
     userid = t[0][2]
         
-    await aiosql.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {staffid}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
+    await aiosql.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {au['userid']}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     await aiosql.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    await AuditLog(dhrid, staffid, ml.ctr("updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
 
     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
 

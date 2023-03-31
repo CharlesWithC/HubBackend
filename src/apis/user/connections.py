@@ -233,7 +233,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Steam"}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     orgsteamid = t[0][1]
     userid = t[0][2]
@@ -249,7 +249,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
             except:
                 traceback.print_exc()
 
-    await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
     await aiosql.commit(dhrid)
 
     try:
@@ -258,14 +258,14 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
             d = json.loads(r.text)
             if not d["error"]:
                 truckersmpid = d["response"]["id"]
-                await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = '{uid}'")
+                await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
                 await aiosql.commit(dhrid)
                 return Response(status_code=204)
     except:
         traceback.print_exc()
 
     # in case user changed steam
-    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")
     await aiosql.commit(dhrid)
     
     return Response(status_code=204)
@@ -313,7 +313,7 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
@@ -326,6 +326,6 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
     await aiosql.commit(dhrid)
     return Response(status_code=204)

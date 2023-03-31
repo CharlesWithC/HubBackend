@@ -32,7 +32,6 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     staff_highest_role = 99999
     for i in au["roles"]:
@@ -98,7 +97,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
                 response.status_code = 403
                 return {"error": ml.tr(request, "only_division_staff_allowed", force_lang = au["language"])}
 
-    if checkPerm(au["roles"], "admin") and staffid == userid: # check if user will lose admin permission
+    if checkPerm(au["roles"], "admin") and au["userid"] == userid: # check if user will lose admin permission
         ok = False
         for role in new_roles:
             if role in config.perms.admin:
@@ -142,9 +141,9 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
             tracker_app_error = f"{TRACKERAPP} API Timeout"
 
         if tracker_app_error != "":
-            await AuditLog(dhrid, staffid, ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
+            await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
         else:
-            await AuditLog(dhrid, staffid, ml.ctr("added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP}))
+            await AuditLog(dhrid, au["uid"], ml.ctr("added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP}))
         
         if discordid is not None and config.member_welcome.role_change != [] and config.discord_bot_token != "":
             for role in config.member_welcome.role_change:
@@ -188,9 +187,9 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
             tracker_app_error = f"{TRACKERAPP} API Timeout"
 
         if tracker_app_error != "":
-            await AuditLog(dhrid, staffid, ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
+            await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
         else:
-            await AuditLog(dhrid, staffid, ml.ctr("added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP}))
+            await AuditLog(dhrid, au["uid"], ml.ctr("added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP}))
 
         if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
             for role in config.member_leave.role_change:
@@ -223,7 +222,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
         upd += f"`- {role_name}`  \n"
         audit += f"`- {role_name}`  \n"
     audit = audit[:-1]
-    await AuditLog(dhrid, staffid, audit)
+    await AuditLog(dhrid, au["uid"], audit)
     await aiosql.commit(dhrid)
 
     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
@@ -252,7 +251,6 @@ async def patch_member_points(request: Request, response: Response, userid: int,
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     
     data = await request.json()
     try:
@@ -279,7 +277,7 @@ async def patch_member_points(request: Request, response: Response, userid: int,
         distance = "+" + data["distance"]
     
     username = (await GetUserInfo(dhrid, request, userid = userid))["name"]
-    await AuditLog(dhrid, staffid, ml.ctr("updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "mythpoint": mythpoint}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "mythpoint": mythpoint}))
     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
     await notification(dhrid, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(dhrid, uid)))
 
@@ -303,7 +301,6 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     staffroles = au["roles"]
 
     staff_highest_role = 99999
@@ -364,9 +361,9 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
         tracker_app_error = f"{TRACKERAPP} API Timeout"
 
     if tracker_app_error != "":
-        await AuditLog(dhrid, staffid, ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
     else:
-        await AuditLog(dhrid, staffid, ml.ctr("added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP}))
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
@@ -410,6 +407,6 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
         except:
             pass   
         
-    await AuditLog(dhrid, staffid, ml.ctr("dismissed_member", var = {"username": name, "uid": uid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("dismissed_member", var = {"username": name, "uid": uid}))
     await notification(dhrid, "member", uid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(dhrid, uid)))
     return Response(status_code=204)

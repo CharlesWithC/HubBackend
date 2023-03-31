@@ -96,7 +96,7 @@ async def get_user_notification_settings(request: Request, response: Response, a
 
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
@@ -134,7 +134,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         settingsok = True
@@ -215,7 +215,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
             res += tt + ","
     res = res[:-1]
     if settingsok:
-        await aiosql.execute(dhrid, f"UPDATE settings SET sval = ',{res},' WHERE uid = '{uid}' AND skey = 'notification'")
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = ',{res},' WHERE uid = {uid} AND skey = 'notification'")
     else:
         await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',{res},')")
     await aiosql.commit(dhrid)
@@ -249,7 +249,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
     settingsok = False
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         settingsok = True
@@ -261,7 +261,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
     settings[notification_type] = False
 
     if notification_type == "discord":
-        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = '{uid}' AND skey = 'discord-notification'")
+        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'discord-notification'")
 
     res = ""
     for tt in settings.keys():
@@ -269,7 +269,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
             res += tt + ","
     res = res[:-1]
     if settingsok:
-        await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{res}' WHERE uid = '{uid}' AND skey = 'notification'")
+        await aiosql.execute(dhrid, f"UPDATE settings SET sval = '{res}' WHERE uid = {uid} AND skey = 'notification'")
     else:
         await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', '{res}')")
     await aiosql.commit(dhrid)

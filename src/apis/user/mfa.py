@@ -125,7 +125,6 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
             response.status_code = au["code"]
             del au["code"]
             return au
-        staffid = au["userid"]
 
         await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
         t = await aiosql.fetchall(dhrid)
@@ -141,7 +140,7 @@ async def post_user_mfa_disable(request: Request, response: Response, authorizat
         await aiosql.commit(dhrid)
         
         username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, staffid, ml.ctr("disabled_mfa", var = {"username": username, "uid": uid}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("disabled_mfa", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
         

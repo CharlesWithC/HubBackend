@@ -100,7 +100,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 uid = t[0][0]
                 mfa_secret = t[0][1]
                 if t[0][2] == "":
-                    await aiosql.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = '{uid}'")
+                    await aiosql.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
                     await aiosql.commit(dhrid)
 
             if mfa_secret != "":
@@ -110,7 +110,7 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                 await aiosql.commit(dhrid)
                 return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
 
-            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR discordid = '{discordid}'")
+            await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = '{discordid}'")
             t = await aiosql.fetchall(dhrid)
             if len(t) > 0:
                 reason = t[0][0]

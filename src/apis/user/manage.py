@@ -29,7 +29,6 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     
     await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
@@ -70,7 +69,7 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
 
     await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
     await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(dhrid, staffid, ml.ctr("accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
     await aiosql.commit(dhrid)
 
     await notification(dhrid, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, uid)))
@@ -108,7 +107,6 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
@@ -158,7 +156,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
     await aiosql.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
     await aiosql.commit(dhrid)
 
-    await AuditLog(dhrid, staffid, ml.ctr("updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
 
     return Response(status_code=204)
     
@@ -182,7 +180,6 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
 
     if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
@@ -206,7 +203,7 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
     await aiosql.commit(dhrid)
 
     username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_connections", var = {"username": username, "uid": uid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_connections", var = {"username": username, "uid": uid}))
 
     return Response(status_code=204)
 
@@ -230,7 +227,6 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     
     data = await request.json()
     try:
@@ -272,7 +268,7 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
         duration = ml.ctr("forever")
         if expire != 253402272000:
             duration = ml.ctr("until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
-        await AuditLog(dhrid, staffid, ml.ctr("banned_user", var = {"username": username, "uid": uid, "duration": duration}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("banned_user", var = {"username": username, "uid": uid, "duration": duration}))
         return Response(status_code=204)
     else:
         response.status_code = 409
@@ -296,7 +292,6 @@ async def delete_user_ban(request: Request, response: Response, uid: int, author
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     
     await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
@@ -308,7 +303,7 @@ async def delete_user_ban(request: Request, response: Response, uid: int, author
         await aiosql.commit(dhrid)
         
         username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, staffid, ml.ctr("unbanned_user", var = {"username": username, "uid": uid}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("unbanned_user", var = {"username": username, "uid": uid}))
         return Response(status_code=204)
    
 @app.delete(f"/{config.abbr}/user/{{uid}}")
@@ -343,7 +338,6 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             response.status_code = au["code"]
             del au["code"]
             return au
-        staffid = au["userid"]
 
         await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
         t = await aiosql.fetchall(dhrid)
@@ -367,7 +361,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await aiosql.commit(dhrid)
 
-        await AuditLog(dhrid, staffid, ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
+        await AuditLog(dhrid, au["uid"], ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
     

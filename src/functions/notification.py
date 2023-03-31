@@ -107,7 +107,7 @@ def ProcessDiscordMessage(): # thread
                     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
                     settingsok = False
 
-                    cur.execute(f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+                    cur.execute(f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
                     t = cur.fetchall()
                     if len(t) != 0:
                         settingsok = True
@@ -123,7 +123,7 @@ def ProcessDiscordMessage(): # thread
                             res += tt + ","
                     res = res[:-1]
                     if settingsok:
-                        cur.execute(f"UPDATE settings SET sval = '{res}' WHERE uid = '{uid}' AND skey = 'notification'")
+                        cur.execute(f"UPDATE settings SET sval = '{res}' WHERE uid = {uid} AND skey = 'notification'")
                     else:
                         cur.execute(f"INSERT INTO settings VALUES ('{uid}', 'notification', '{res}')")
                 conn.commit()
@@ -147,7 +147,7 @@ def ProcessDiscordMessage(): # thread
 threading.Thread(target=ProcessDiscordMessage, daemon = True).start()
 
 async def CheckDiscordNotification(dhrid, uid):
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'discord-notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'discord-notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         return False
@@ -165,7 +165,7 @@ async def SendDiscordNotification(dhrid, uid, data):
 async def CheckNotificationEnabled(dhrid, notification_type, uid):
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
@@ -184,7 +184,7 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
     
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "event": False}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = '{uid}' AND skey = 'notification'")
+    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await aiosql.fetchall(dhrid)
     if len(t) != 0:
         d = t[0][0].split(",")
@@ -218,7 +218,7 @@ async def AuditLog(dhrid, uid, text, discord_message_only = False):
         elif uid == -998:
             name = ml.ctr("discord_api")
         else:
-            await aiosql.execute(dhrid, f"SELECT name, avatar FROM user WHERE userid = {uid}")
+            await aiosql.execute(dhrid, f"SELECT name, avatar FROM user WHERE uid = {uid}")
             t = await aiosql.fetchall(dhrid)
             if len(t) > 0:
                 name = t[0][0]

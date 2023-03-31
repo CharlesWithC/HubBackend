@@ -119,8 +119,6 @@ async def post_announcement(request: Request, response: Response, authorization:
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
-    adminname = au["name"]
 
     data = await request.json()
     try:
@@ -146,16 +144,16 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     timestamp = int(time.time())
 
-    await aiosql.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private) VALUES ({staffid}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
+    await aiosql.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
     await aiosql.commit(dhrid)
     await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     announcementid = (await aiosql.fetchone(dhrid))[0]
-    await AuditLog(dhrid, staffid, ml.ctr("created_announcement", var = {"id": announcementid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("created_announcement", var = {"id": announcementid}))
 
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{adminname}", "icon_url": (await GetUserInfo(dhrid, userid = staffid))["avatar"]}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.int_color}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(dhrid, userid = au['userid']))["avatar"]}, "thumbnail": {"url": config.logo_url},"timestamp": str(datetime.now()), "color": config.int_color}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -179,9 +177,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     staffroles = au["roles"]
-    staffname = au["name"]
 
     data = await request.json()
     try:
@@ -211,18 +207,18 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     authorid = t[0][0]
-    if authorid != staffid and not checkPerm(staffroles, "admin"):
+    if authorid != au["userid"] and not checkPerm(staffroles, "admin"):
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
-    await AuditLog(dhrid, staffid, ml.ctr("updated_announcement", var = {"id": announcementid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("updated_announcement", var = {"id": announcementid}))
     await aiosql.commit(dhrid)
 
     if discord_channel_id is not None and config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{staffname}", "icon_url": (await GetUserInfo(dhrid, userid = staffid))["avatar"]}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.int_color}]}))
+            r = await arequests.post(f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(dhrid, userid = au["userid"]))["avatar"]}, "thumbnail": {"url": config.logo_url}, "timestamp": str(datetime.now()), "color": config.int_color}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration()
         except:
@@ -245,7 +241,6 @@ async def delete_announcement(request: Request, response: Response, announcement
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffid = au["userid"]
     staffroles = au["roles"]
 
     await aiosql.execute(dhrid, f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
@@ -254,12 +249,12 @@ async def delete_announcement(request: Request, response: Response, announcement
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     authorid = t[0][0]
-    if authorid != staffid and not checkPerm(staffroles, "admin"): # creator or leadership
+    if authorid != au["userid"] and not checkPerm(staffroles, "admin"): # creator or leadership
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
-    await AuditLog(dhrid, staffid, ml.ctr("deleted_announcement", var = {"id": announcementid}))
+    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_announcement", var = {"id": announcementid}))
     await aiosql.commit(dhrid)
 
     return Response(status_code=204)

@@ -108,7 +108,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
     await aiosql.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await aiosql.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = '{uid}' OR steamid = '{steamid}'")
+    await aiosql.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR steamid = '{steamid}'")
     t = await aiosql.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -119,7 +119,7 @@ async def get_auth_steam_callback(request: Request, response: Response):
             expire = ml.tr(request, "forever")
         return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = '{uid}'")
+    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await aiosql.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
