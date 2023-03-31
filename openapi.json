@@ -495,7 +495,7 @@
                                     "name": {
                                         "description": "Name",
                                         "type": "string"
-                                    }, 
+                                    },
                                     "avatar": {
                                         "description": "Avatar URL",
                                         "type": "string"
@@ -3271,6 +3271,1083 @@
                 }
             }
         },
+        "/abbr/economy/balance/leaderboard": {
+            "get": {
+                "summary": "Get Balance Leaderboard",
+                "tags": ["economy_balance"],
+                "operationId": "get_economy_balance_leaderboard",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc) | Order By is locked to `timestamp`",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}": {
+            "get": {
+                "summary": "Get User Balance",
+                "tags": ["economy_balance"],
+                "operationId": "get_economy_balance_userid",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}/transfer": {
+            "post": {
+                "summary": "Transfer Balance",
+                "tags": ["economy_balance"],
+                "operationId": "post_economy_balance_userid_transfer",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from_userid": {
+                                        "description": "From User ID",
+                                        "type": "integer"
+                                    },
+                                    "to_userid": {
+                                        "description": "To User ID",
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "description": "Amount",
+                                        "type": "integer"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["to_userid", "amount"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}/visibility/public": {
+            "post": {
+                "summary": "Make Balance Visibility Public",
+                "tags": ["economy_balance"],
+                "operationId": "post_economy_balance_userid_visibility_public",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}/visibility/private": {
+            "post": {
+                "summary": "Make Balance Visibility Private",
+                "tags": ["economy_balance"],
+                "operationId": "post_economy_balance_userid_visibility_private",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}/transactions/list": {
+            "get": {
+                "summary": "Get User Transaction History",
+                "tags": ["economy_balance"],
+                "operationId": "get_economy_balance_transaction_list",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "After Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "after",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Before Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "before",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "From User ID",
+                        "type": "integer"
+                    },
+                    "name": "from_userid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "To User ID",
+                        "type": "integer"
+                    },
+                    "name": "to_userid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Minimum Amount",
+                        "type": "integer"
+                    },
+                    "name": "min_amount",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Maximum Amount",
+                        "type": "integer"
+                    },
+                    "name": "max_amount",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (timestamp, amount)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages": {
+            "get": {
+                "summary": "Get Garages (Full list, including unpurchased)",
+                "tags": ["economy_garages"],
+                "operationId": "get_economy_garages",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/list": {
+            "get": {
+                "summary": "Get Garages List (Purchased)",
+                "tags": ["economy_garages"],
+                "operationId": "get_economy_garages_list",
+                "security": [{
+                    "bearerAuth": [{
+                        "required": false,
+                        "schema": {
+                            "title": "Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Trucks",
+                            "type": "integer"
+                        },
+                        "name": "min_trucks",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Trucks",
+                            "type": "integer"
+                        },
+                        "name": "max_trucks",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Income",
+                            "type": "integer"
+                        },
+                        "name": "min_income",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Income",
+                            "type": "integer"
+                        },
+                        "name": "max_income",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Order by (income, truck, slot)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    }]
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}": {
+            "get": {
+                "summary": "Get Garage Info",
+                "tags": ["economy_garages"],
+                "operationId": "get_economy_garages_garageid",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/purchase": {
+            "post": {
+                "summary": "Purchase a Garage",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_purchase",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["owner"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/transfer": {
+            "post": {
+                "summary": "Transfer a Garage",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_transfer",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["owner"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/sell": {
+            "post": {
+                "summary": "Sell a Garage",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_sell",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/slots/list": {
+            "get": {
+                "summary": "Get Garage Slots",
+                "tags": ["economy_garages"],
+                "operationId": "get_economy_garages_garageid_slots_list",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Owner User ID",
+                        "type": "integer"
+                    },
+                    "name": "owner",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Must Have Truck?",
+                        "type": "boolean"
+                    },
+                    "name": "must_have_truck",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Purchased After",
+                        "type": "integer"
+                    },
+                    "name": "purchased_after",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Purchased Before",
+                        "type": "integer"
+                    },
+                    "name": "purchased_before",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc) | Order By is locked to `purchase_timestamp`",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/slots/purchase": {
+            "post": {
+                "summary": "Purchase a Garage Slot",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_slots_purchase",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["owner"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/slots/{slotid}/transfer": {
+            "post": {
+                "summary": "Transfer a Garage Slot",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_slots_slotid_transfer",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }, {
+                    "required": true,
+                    "schema": {
+                        "title": "Slot ID",
+                        "type": "integer"
+                    },
+                    "name": "slotid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["owner"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/garages/{garageid}/slots/{slotid}/sell": {
+            "post": {
+                "summary": "Sell a Garage Slot",
+                "tags": ["economy_garages"],
+                "operationId": "post_economy_garages_garageid_slots_slotid_sell",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Garage ID",
+                        "type": "string"
+                    },
+                    "name": "garageid",
+                    "in": "path"
+                }, {
+                    "required": true,
+                    "schema": {
+                        "title": "Slot ID",
+                        "type": "integer"
+                    },
+                    "name": "slotid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks": {
+            "get": {
+                "summary": "Get Truck Models",
+                "tags": ["economy_trucks"],
+                "operationId": "get_economy_trucks",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/list": {
+            "get": {
+                "summary": "Get Trucks List (Purchased)",
+                "tags": ["economy_trucks"],
+                "operationId": "get_economy_trucks_list",
+                "security": [{
+                    "bearerAuth": [{
+                        "required": false,
+                        "schema": {
+                            "title": "Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Truck ID",
+                            "type": "string"
+                        },
+                        "name": "truckid",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Garage ID",
+                            "type": "string"
+                        },
+                        "name": "garageid",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Truck ID",
+                            "type": "string"
+                        },
+                        "name": "truckid",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Owner User ID",
+                            "type": "integer"
+                        },
+                        "name": "owner",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Price",
+                            "type": "integer"
+                        },
+                        "name": "min_price",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Price",
+                            "type": "integer"
+                        },
+                        "name": "max_price",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Purchased After",
+                            "type": "integer"
+                        },
+                        "name": "purchased_after",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Purchased Before",
+                            "type": "integer"
+                        },
+                        "name": "purchased_before",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Income",
+                            "type": "integer"
+                        },
+                        "name": "min_income",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Income",
+                            "type": "integer"
+                        },
+                        "name": "max_income",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Odometer",
+                            "type": "integer"
+                        },
+                        "name": "min_odometer",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Odometer",
+                            "type": "integer"
+                        },
+                        "name": "max_odometer",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Damage",
+                            "type": "integer"
+                        },
+                        "name": "min_damage",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Damage",
+                            "type": "integer"
+                        },
+                        "name": "max_damage",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Order by (vehicleid, userid, truckid, slotid, garageid, price, odometer, damage, purchase_timestamp)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    }, {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    }]
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}": {
+            "get": {
+                "summary": "Get Truck Info",
+                "tags": ["economy_trucks"],
+                "operationId": "get_economy_trucks_vehicleid",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/{operation}/history": {
+            "get": {
+                "summary": "Get Truck Operation History",
+                "tags": ["economy_trucks"],
+                "operationId": "get_economy_trucks_vehicleid_operation_history",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }, {
+                    "required": true,
+                    "schema": {
+                        "title": "Operation (all, dlog, service, transfer, reassign, purchase, sell, scrap)",
+                        "type": "string"
+                    },
+                    "name": "operation",
+                    "in": "path"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc) | Order By is locked to `timestamp`",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{truckid}/purchase": {
+            "post": {
+                "summary": "Purchase a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_truck_purchase",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Truck ID",
+                        "type": "string"
+                    },
+                    "name": "truckid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    },
+                                    "slotid": {
+                                        "description": "Slot ID",
+                                        "type": "integer"
+                                    },
+                                    "assigneeid": {
+                                        "description": "Assignee User ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["owner", "slotid"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/transfer": {
+            "post": {
+                "summary": "Transfer / Reassign a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_transfer",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | company | user-{userid})",
+                                        "type": "string"
+                                    },
+                                    "assigneeid": {
+                                        "description": "Assignee User ID",
+                                        "type": "integer"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["owner"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/relocate": {
+            "post": {
+                "summary": "Relocate a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_relocate",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slotid": {
+                                        "description": "Slot ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["slotid"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/activate": {
+            "post": {
+                "summary": "Activate a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_activate",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/deactivate": {
+            "post": {
+                "summary": "Deactivate a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_deactivate",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/repair": {
+            "post": {
+                "summary": "Repair a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_repair",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/sell": {
+            "post": {
+                "summary": "Sell a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_sell",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/trucks/{vehicleid}/scrap": {
+            "post": {
+                "summary": "Sell a Truck",
+                "tags": ["economy_trucks"],
+                "operationId": "post_economy_trucks_vehicleid_scrap",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "name": "vehicleid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
         "/abbr/event/list": {
             "get": {
                 "summary": "Get Event List",
@@ -3596,6 +4673,15 @@
     }, {
         "name": "downloads",
         "description": "Download Plugin"
+    }, {
+        "name": "economy_balance",
+        "description": "Economy Plugin (Balance)"
+    }, {
+        "name": "economy_garages",
+        "description": "Economy Plugin (Garages)"
+    }, {
+        "name": "economy_trucks",
+        "description": "Economy Plugin (Trucks)"
     }, {
         "name": "event",
         "description": "Event Plugin"

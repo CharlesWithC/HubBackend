@@ -19,9 +19,9 @@ async def get_economy_garages():
 @app.get(f"/{config.abbr}/economy/garages/list")
 async def get_economy_garages_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, 
-        min_truck: Optional[int] = None, max_truck: Optional[int] = None,
+        min_trucks: Optional[int] = None, max_trucks: Optional[int] = None,
         min_income: Optional[int] = None, max_income: Optional[int] = None,
-        order_by: Optional[str] = "tot_income", order: Optional[int] = "desc"):
+        order_by: Optional[str] = "income", order: Optional[int] = "desc"):
     '''Get a list of owned garages.
     
     `order_by` can be `income`, `truck`, `slot`'''
@@ -47,10 +47,10 @@ async def get_economy_garages_list(request: Request, response: Response, authori
         page_size = 250
 
     having = ""
-    if min_truck is not None:
-        having += f"AND tot_truck >= {min_truck} "
-    if max_truck is not None:
-        having += f"AND tot_truck <= {max_truck} "
+    if min_trucks is not None:
+        having += f"AND tot_truck >= {min_trucks} "
+    if max_trucks is not None:
+        having += f"AND tot_truck <= {max_trucks} "
     if min_income is not None:
         having += f"AND tot_income >= {min_income} "
     if max_income is not None:
@@ -122,7 +122,7 @@ async def get_economy_garage(request: Request, response: Response, garageid: str
 
 @app.get(f"/{config.abbr}/economy/garages/{{garageid}}/slots/list")
 async def get_economy_garage_slots_list(request: Request, response: Response, garageid: str, authorization: str = Header(None),
-        page: Optional[int] = 1, page_size: Optional[int] = 20, owner: Optional[str] = None, \
+        page: Optional[int] = 1, page_size: Optional[int] = 20, owner: Optional[int] = None, \
         must_have_truck: Optional[bool] = False, purchased_after: Optional[int] = None, purchased_before: Optional[int] = None,
         order: Optional[str] = "asc"):
     '''Get the slots of a specific garage.
@@ -158,9 +158,11 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
     if must_have_truck:
         having += "AND economy_truck.vehicleid != NULL "
     if purchased_after is not None:
-        having += f"AND economy_garage.purchase_timestamp >= {purchased_after}"
+        having += f"AND economy_garage.purchase_timestamp >= {purchased_after} "
     if purchased_before is not None:
-        having += f"AND economy_garage.purchase_timestamp <= {purchased_before}"
+        having += f"AND economy_garage.purchase_timestamp <= {purchased_before} "
+    if owner is not None:
+        having += f"AND economy_garage.userid = {owner} "
 
     await aiosql.execute(dhrid, f"SELECT economy_garage.slotid, eocnomy_garage.userid, economy_truck.vehicleid, economy_truck.userid,   economy_garage.purchase_timestamp, economy_garage.note FROM economy_garage WHERE slotid >= 0 \
                          LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
@@ -280,7 +282,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
 
     return {"slotids": slotids, "cost": garage['price'], "balance": round(balance - garage['price'])}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slot/purchase")
+@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/purchase")
 async def post_economy_garage_slot_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Purchases a slot of a garage, returns `slotid`, `cost`, `balance`.
     
@@ -292,7 +294,7 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slot/purchase', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slots/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -467,7 +469,7 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slot/{{slotid}}/transfer")
+@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}/transfer")
 async def post_economy_garage_slot_transfer(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Transfers a garage (ownership).
     
@@ -479,7 +481,7 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slot/slotid/transfer', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slots/slotid/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -623,7 +625,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
 
     return {"refund": refund, "balance": round(balance + refund)}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slot/{{slotid}}/sell")
+@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}/sell")
 async def post_economy_garage_sell(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Sells a garage (ownership), returns `refund`, `balance`.
 
@@ -631,7 +633,7 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slot/slotid/sell', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /economy/garages/garageid/slots/slotid/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

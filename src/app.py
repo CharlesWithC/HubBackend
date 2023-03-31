@@ -399,7 +399,7 @@ def validateConfig(cfg):
         else:
             cfg["economy"][item] = float(cfg["economy"][item])
 
-    economy_must_bool = ['allow_purchase_truck', 'allow_purchase_garage', 'allow_purchase_slot', 'allow_purchase_merch', 'enable_balance_leaderboard']
+    economy_must_bool = ['allow_purchase_truck', 'allow_purchase_garage', 'allow_purchase_slot', 'enable_balance_leaderboard']
     for item in economy_must_bool:
         if not item in cfg["economy"].keys() or type(cfg["economy"][item]) != bool:
             cfg["economy"][item] = config_sample["economy"][item]

@@ -22,6 +22,7 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
         page: Optional[int] = 1, page_size: Optional[int] = 10, truckid: Optional[str] = "", garageid: Optional[str] = "",\
         owner: Optional[int] = None, min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
+        min_income: Optional[int] = None, max_income: Optional[int] = None,
         min_odometer: Optional[int] = None, max_odometer: Optional[int] = None,
         min_damage: Optional[float] = None, max_damage: Optional[float] = None,
         order_by: Optional[str] = "odometer", order: Optional[int] = "desc"):
@@ -68,6 +69,11 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
         limit += f"AND purchase_timestamp >= {purchased_after} "
     if purchased_before is not None:
         limit += f"AND purchase_timestamp <= {purchased_before} "
+
+    if min_income is not None:
+        limit += f"AND income >= {min_income} "
+    if max_income is not None:
+        limit += f"AND income <= {max_income} "
 
     if min_odometer is not None:
         limit += f"AND odometer >= {min_odometer} "

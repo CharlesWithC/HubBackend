@@ -5,5 +5,3 @@ from functions import *
 from plugins.economy.balance import *
 from plugins.economy.garages import *
 from plugins.economy.trucks import *
-
-# TODO update userid of economy info

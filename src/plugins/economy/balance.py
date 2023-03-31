@@ -76,7 +76,7 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
     # create ret[]
     ret = []
     for dd in d:
-        ret.append({"user": await GetUserInfo(usreid = dd[0]), "balance": dd[1]})
+        ret.append({"user": await GetUserInfo(userid = dd[0]), "balance": dd[1]})
 
     return {"list": ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
@@ -84,7 +84,7 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
 async def post_economy_balance_transfer(request: Request, response: Response, authorization: str = Header(None)):
     '''Transfer balance.
     
-    JSON: `{"from_userid": int, "to_userid": int, "amount": int}`'''
+    JSON: `{"from_userid": Optional[int], "to_userid": int, "amount": int, "message": Optional[str]}`'''
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -103,7 +103,10 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
     
     data = await request.json()
     try:
-        from_userid = int(data["from_userid"])
+        if "from_userid" in data.keys():
+            from_userid = int(data["from_userid"])
+        else:
+            from_userid = opuserid
         to_userid = int(data["to_userid"])
         amount = int(data["amount"])
 
@@ -207,8 +210,8 @@ async def get_economy_balance_userid(request: Request, response: Response, useri
 
     return {"balance": balance}
 
-@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions")
-async def get_economy_balance_userid_transactions(request: Request, response: Response, userid: int, authorization: str = Header(None), \
+@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions/list")
+async def get_economy_balance_userid_transaction_list(request: Request, response: Response, userid: int, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after: Optional[int] = None, before: Optional[int] = None, \
         from_userid: Optional[int] = None, to_userid: Optional[int] = None, \
