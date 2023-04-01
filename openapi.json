@@ -2081,6 +2081,34 @@
                 "responses": {}
             }
         },
+        "/abbr/tracksim/update/route": {
+            "post": {
+                "summary": "Update TrackSim Route",
+                "tags": ["tracker"],
+                "operationId": "post_tracksim_update_route",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "logid": {
+                                        "description": "Log ID",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": ["logid"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/abbr/announcement/list": {
             "get": {
                 "summary": "Get Announcement List",

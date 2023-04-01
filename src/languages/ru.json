@@ -1,5 +1,8 @@
 {
     "unknown_error": "Неизвестная ошибка",
+    "api_error": "Ошибка API",
+    "api_timeout": "Время ожидания API",
+    "invalid_api_token": "Недопустимый токен API",
     "rate_limit": "Вы ограничены в скорости.",
     "bad_json": "Недопустимый JSON: поле отсутствует или данные не могут быть проанализированы.",
     "content_too_long": "Максимальная длина \"{item}\" – {limit} символов.",
@@ -265,6 +268,8 @@
     "rejected_tracksim_webhook_post_ip": "Отклонено обновление веб-перехватчика TrackSim с {ip} (IP-адрес не внесен в белый список)",
     "rejected_tracksim_webhook_post_signature": "Отклонено обновление вебхука TrackSim с {ip} (неверная подпись)",
     "delivery_blocked_due_to_rules": "Доставка ({tracker} ID: `{trackerid}`) заблокирована из-за правил.",
+    "route_already_fetched": "Маршрут уже получен",
+    "tracker_must_be": "Трекер должен быть {tracker}.",
     "member_resigned_audit": "Участник ушел в отставку.",
     "error_removing_discord_role": "Ошибка `{code}` при удалении <@&{discord_role}> из <@!{user_discordid}>: `{message}`",
     "error_adding_discord_role": "Ошибка `{code}` при добавлении <@&{discord_role}> ti <@!{user_discordid}>: `{message}`",

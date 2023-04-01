@@ -25,69 +25,97 @@ GIFS = config.delivery_post_gifs
 if len(GIFS) == 0:
     GIFS = [""]
 
-async def UpdateTelemetry(steamid, userid, logid, start_time, end_time):
-    dhrid = genrid()
-    await aiosql.new_conn(dhrid, extra_time = 5)
-    
-    await aiosql.execute(dhrid, f"SELECT uuid FROM temptelemetry WHERE steamid = {steamid} AND timestamp > {int(start_time)} AND timestamp < {int(end_time)} LIMIT 1")
-    p = await aiosql.fetchall(dhrid)
-    if len(p) > 0:
-        jobuuid = p[0][0]
-        await aiosql.execute(dhrid, f"SELECT x, y, z, game, mods, timestamp FROM temptelemetry WHERE uuid = '{jobuuid}'")
-        t = await aiosql.fetchall(dhrid)
-        data = f"{t[0][3]},{t[0][4]},v5;"
-        lastx = 0
-        lastz = 0
-        idle = 0
-        for tt in t:
-            if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
+async def FetchRoute(gameid, userid, logid, trackerid, request = None, dhrid = None):
+    try:
+        r = await arequests.get(f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
+    except:
+        return {"error": f"{TRACKERAPP} {ml.ctr('api_timeout')}"}
+    if r.status_code != 200:
+        try:
+            resp = json.loads(r.text)
+            if "error" in resp.keys() and resp["error"] is not None:
+                return {"error": TRACKERAPP + " " + resp["error"]}
+            elif "message" in resp.keys() and resp["message"] is not None:
+                return {"error": TRACKERAPP + " " + resp["message"]}
+            elif len(r.text) <= 64:
+                return {"error": TRACKERAPP + " " + r.text}
+            else:
+                return {"error": TRACKERAPP + " " + ml.tr(request, "unknown_error")}
+        except:
+            traceback.print_exc()
+            return {"error": TRACKERAPP + " " + ml.tr(request, "unknown_error")}
+    d = json.loads(r.text)
+    t = []
+    for i in range(len(d)-1):
+        # auto complete route
+        dup = 1
+        if int(d[i+1]["time"]-d[i]["time"]) >= 1:
+            dup = (d[i+1]["time"]-d[i]["time"]) * 4
+        if dup == 1:
+            t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
+        else:
+            sx = float(d[i]["x"])
+            sz = float(d[i]["z"])
+            tx = float(d[i+1]["x"])
+            tz = float(d[i+1]["z"])
+            dx = (tx - sx) / dup
+            dz = (tz - sz) / dup
+            for _ in range(dup):
+                t.append((sx, 0, sz))
+                sx += dx
+                sz += dz
+                
+    if len(d) > 0:
+        t.append((float(d[-1]["x"]), 0, float(d[-1]["z"])))
+
+    data = f"{gameid},,v5;"
+    cnt = 0
+    lastx = 0
+    lastz = 0
+    idle = 0
+    for tt in t:
+        if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
+            if cnt != 0:
                 idle += 1
-                continue
-            else:
-                if idle > 0:
-                    data += f"^{idle}^"
-                    idle = 0
-            st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
-            rx = (round(tt[0]) - lastx) + 26
-            rz = (round(tt[2]) - lastz) + 26
-            if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
-                # using this method to compress data can save 60+% storage comparing with v4
-                data += f"{st[rx]}{st[rz]}"
-            else:
-                data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
-            lastx = round(tt[0])
-            lastz = round(tt[2])
-        await aiosql.close_conn(dhrid)
+            continue
+        else:
+            if idle > 0:
+                data += f"^{idle}^"
+                idle = 0
+        st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
+        rx = (round(tt[0]) - lastx) + 26
+        rz = (round(tt[2]) - lastz) + 26
+        if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
+            # using this method to compress data can save 60+% storage comparing with v4
+            data += f"{st[rx]}{st[rz]}"
+        else:
+            data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
+        lastx = round(tt[0])
+        lastz = round(tt[2])
+        cnt += 1
 
-        for _ in range(3):
-            try:
-                dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
+    if dhrid is None:
+        dhrid = genrid()
+        await aiosql.new_conn(dhrid, extra_time = 5)
     
-                await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-                p = await aiosql.fetchall(dhrid)
-                if len(p) > 0:
-                    break
-                    
-                await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '{jobuuid}', {userid}, '{compress(data)}')")
-                await aiosql.commit(dhrid)
-                await aiosql.close_conn(dhrid)
+    for _ in range(3):
+        try:
+            await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+            p = await aiosql.fetchall(dhrid)
+            if len(p) > 0:
                 break
-            except:
-                continue
-
-        for _ in range(5):
-            try:
-                dhrid = genrid()
-                await aiosql.new_conn(dhrid, extra_time = 5)
-                await aiosql.execute(dhrid, f"DELETE FROM temptelemetry WHERE uuid = '{jobuuid}'")
-                await aiosql.commit(dhrid)
-                await aiosql.close_conn(dhrid)
-                break
-            except:
-                continue
-    else:
-        await aiosql.close_conn(dhrid)
+                
+            await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '', {userid}, '{compress(data)}')")
+            await aiosql.commit(dhrid)
+            await aiosql.close_conn(dhrid)
+            break
+        except:
+            dhrid = genrid()
+            await aiosql.new_conn(dhrid, extra_time = 5)
+            traceback.print_exc()
+            continue
+    
+    return True
         
 @app.post(f"/{config.abbr}/tracksim/setup")
 async def post_tracksim_setup(response: Response, request: Request, authorization: str = Header(None)):
@@ -143,7 +171,7 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
     open(config_path, "w", encoding="utf-8").write(out)
 
     return Response(status_code=204)
-    
+
 @app.post(f"/{config.abbr}/tracksim/update")
 async def post_tracksim_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
     dhrid = request.state.dhrid
@@ -328,7 +356,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         logid = (await aiosql.fetchone(dhrid))[0]
 
         if "tracker" in config.enabled_plugins:
-            asyncio.create_task(UpdateTelemetry(steamid, userid, logid, start_time, end_time))
+            asyncio.create_task(FetchRoute(munitint, userid, logid, trackerid))
 
         uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
         await notification(dhrid, "dlog", uid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid)), no_discord_notification = True)
@@ -765,3 +793,51 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         traceback.print_exc()
 
     return {"error": "Logged"}
+    
+@app.post(f"/{config.abbr}/tracksim/update/route")
+async def post_tracksim_update_route(response: Response, request: Request, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'POST /tracksim/update/route', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    data = await request.json()
+    try:
+        logid = data["logid"]
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"SELECT unit, tracker_type, trackerid, userid FROM dlog WHERE logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
+    (gameid, tracker_type, trackerid, userid) = t[0]
+
+    if tracker_type != 2:
+        response.status_code = 404
+        return {"error": ml.tr(request, "tracker_must_be", var = {"tracker": "TrackSim"}, force_lang = au["language"])}
+
+    await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) != 0:
+        response.status_code = 409
+        return {"error": ml.tr(request, "route_already_fetched", force_lang = au["language"])}
+    
+    r = await FetchRoute(gameid, userid, logid, trackerid, request, dhrid)
+
+    if r == True:
+        return Response(status_code=204)
+    else:
+        return r

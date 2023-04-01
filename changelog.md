@@ -6,6 +6,9 @@
 3.Added audit log and notification for blocked deliveries  
 4.Added economy transaction history export  
 5.Added economy transaction amount limit and trucks/garages price limit  
+6.Added TrackSim route saving (with automatic completion for broken routes)  
+-> This marks the end of Live Tracker, which has been removed from the code. It may be recovered in the future when needed.  
+7.Improved error handler to exclude `ProgrammingError` (e.g. invalid SQL syntax) from database errors  
 
 **v2.3.0**  
 1.Added `economy` plugin  

@@ -20,8 +20,6 @@ mv main.dist/main* main.dist/main
 cp main.dist/* ./binary/ -r
 mv bannergen/main.dist/main* bannergen/main.dist/bannergen
 cp bannergen/main.dist/* ./binary/ -r
-mv tracker.dist/tracker* tracker.dist/tracker
-cp tracker.dist/* ./binary/ -r
 mv launcher.dist/launcher* launcher.dist/launcher
 cp launcher.dist/* ./binary/ -r
 cp languages/ ./binary/ -r
@@ -46,21 +44,15 @@ def build_bannergen():
     global done
     done += 1
 
-def build_tracker():
-    os.system("nuitka3 tracker.py --standalone --include-package=websockets --show-progress --prefer-source-code")
-    global done
-    done += 1
-
 def build_launcher():
     os.system("nuitka3 launcher.py --standalone --show-progress --prefer-source-code")
     global done
     done += 1
 
-req = 4
+req = 3
 if "--rebuild" in sys.argv:
     sys.argv.append("--rebuild-main")
     sys.argv.append("--rebuild-bannergen")
-    sys.argv.append("--rebuild-tracker")
     sys.argv.append("--rebuild-launcher")
 
 if "--rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.exists("main.dist"):
@@ -69,13 +61,6 @@ if "--rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.e
 else:
     req -= 1
     print("skipped main")
-
-if "--rebuild-tracker" in sys.argv and os.path.exists("tracker.dist") or not os.path.exists("tracker.dist"):
-    threading.Thread(target = build_tracker, daemon = True).start()
-    time.sleep(1)
-else:
-    req -= 1
-    print("skipped tracker")
 
 if "--rebuild-launcher" in sys.argv and os.path.exists("launcher.dist") or not os.path.exists("launcher.dist"):
     threading.Thread(target = build_launcher, daemon = True).start()

@@ -12,6 +12,9 @@ from app import config
 # Hard-coded English String Table
 EN_STRINGTABLE = {
     "unknown_error": "Unknown Error",
+    "api_error": "API Error",
+    "api_timeout": "API Timeout",
+    "invalid_api_token": "Invalid API Token",
     "rate_limit": "You are being rate limited.",
     "bad_json": "Invalid JSON: Field missing or data cannot be parsed.",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
@@ -278,6 +281,8 @@ EN_STRINGTABLE = {
     "rejected_tracksim_webhook_post_ip": "Rejected TrackSim webhook update from {ip} (IP not whitelisted)",
     "rejected_tracksim_webhook_post_signature": "Rejected TrackSim webhook update from {ip} (Invalid signature)",
     "delivery_blocked_due_to_rules": "Delivery ({tracker} ID: `{trackerid}`) blocked due to rules.",
+    "route_already_fetched": "Route is already fetched.",
+    "tracker_must_be": "Tracker must be {tracker}.",
     "member_resigned_audit": "Member resigned.",
     "error_removing_discord_role": "Error `{code}` when removing <@&{discord_role}> from <@!{user_discordid}>: `{message}`",
     "error_adding_discord_role": "Error `{code}` when adding <@&{discord_role}> ti <@!{user_discordid}>: `{message}`",

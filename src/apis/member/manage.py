@@ -121,23 +121,23 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
             if config.tracker.lower() == "tracksim":
                 r = await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
             if r.status_code == 401:
-                tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
+                tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: {ml.ctr('invalid_api_token')}"
             elif r.status_code // 100 != 2:
                 try:
                     resp = json.loads(r.text)
                     if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `{resp['error']}`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{resp['error']}`"
                     elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `" + err["message"] + "`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + err["message"] + "`"
                     elif len(r.text) <= 64:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `" + r.text + "`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + r.text + "`"
                     else:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
                 except:
                     traceback.print_exc()
-                    tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
         except:
-            tracker_app_error = f"{TRACKERAPP} API Timeout"
+            tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_timeout')}"
 
         if tracker_app_error != "":
             await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
@@ -165,23 +165,23 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
             if config.tracker.lower() == "tracksim":
                 r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
             if r.status_code == 401:
-                tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
+                tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: {ml.ctr('invalid_api_token')}"
             elif r.status_code // 100 != 2:
                 try:
                     resp = json.loads(r.text)
                     if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `{resp['error']}`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{resp['error']}`"
                     elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `" + err["message"] + "`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + err["message"] + "`"
                     elif len(r.text) <= 64:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `" + r.text + "`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + r.text + "`"
                     else:
-                        tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
                 except:
                     traceback.print_exc()
-                    tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
         except:
-            tracker_app_error = f"{TRACKERAPP} API Timeout"
+            tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_timeout')}"
 
         if tracker_app_error != "":
             await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))
@@ -226,7 +226,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
     await notification(dhrid, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(dhrid, uid)))
 
     if tracker_app_error != "":
-        return {"tracker_api_error": tracker_app_error.replace(f"{TRACKERAPP} API Error: ", "")}
+        return {"tracker_api_error": tracker_app_error.replace(f"{TRACKERAPP} {ml.ctr('api_error')}: ", "")}
     else:
         return Response(status_code=204)
 
@@ -340,23 +340,23 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
         if config.tracker.lower() == "tracksim":
             r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
         if r.status_code == 401:
-            tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
+            tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: {ml.ctr('invalid_api_token')}"
         elif r.status_code // 100 != 2:
             try:
                 resp = json.loads(r.text)
                 if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{TRACKERAPP} API Error: `{resp['error']}`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{resp['error']}`"
                 elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{TRACKERAPP} API Error: `" + err["message"] + "`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + err["message"] + "`"
                 elif len(r.text) <= 64:
-                    tracker_app_error = f"{TRACKERAPP} API Error: `" + r.text + "`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `" + r.text + "`"
                 else:
-                    tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                    tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
             except:
                 traceback.print_exc()
-                tracker_app_error = f"{TRACKERAPP} API Error: `Unknown Error`"
+                tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
     except:
-        tracker_app_error = f"{TRACKERAPP} API Timeout"
+        tracker_app_error = f"{TRACKERAPP} {ml.ctr('api_timeout')}"
 
     if tracker_app_error != "":
         await AuditLog(dhrid, au["uid"], ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKERAPP, "error": tracker_app_error}))

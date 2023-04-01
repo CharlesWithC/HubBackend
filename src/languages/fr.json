@@ -1,5 +1,8 @@
 {
     "unknown_error": "Erreur inconnue",
+    "api_error": "Erreur d'API",
+    "api_timeout": "Délai d'expiration de l'API",
+    "invalid_api_token": "Jeton d'API invalide",
     "rate_limit": "Vous êtes limité en débit.",
     "bad_json": "JSON invalide : champ manquant ou données impossibles à analyser.",
     "content_too_long": "La longueur maximale de \"{item}\" est de {limit} caractères.",
@@ -265,6 +268,8 @@
     "rejected_tracksim_webhook_post_ip": "Mise à jour du webhook TrackSim rejetée depuis {ip} (IP non sur liste blanche)",
     "rejected_tracksim_webhook_post_signature": "Mise à jour du webhook TrackSim rejetée par {ip} (signature invalide)",
     "delivery_blocked_due_to_rules": "Diffusion ({tracker} ID : `{trackerid}`) bloquée en raison de règles.",
+    "route_already_fetched": "La route est déjà récupérée.",
+    "tracker_must_be": "Le tracker doit être {tracker}.",
     "member_resigned_audit": "Le membre a démissionné.",
     "error_removing_discord_role": "Erreur `{code}` lors de la suppression de <@&{discord_role}> de <@!{user_discordid}> : `{message}`",
     "error_adding_discord_role": "Erreur `{code}` lors de l'ajout de <@&{discord_role}> à <@!{user_discordid}> : `{message}`",

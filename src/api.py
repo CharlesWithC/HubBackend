@@ -93,7 +93,7 @@ async def get_languages():
 # middleware to manage database connection
 # also include 500 error handler
 dberr = []
-pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error")]
+pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error") and err not in [pymysql.err.ProgrammingError]]
 session_errs = []
 @app.middleware("http")
 async def http_middleware(request: Request, call_next):
@@ -115,10 +115,8 @@ async def http_middleware(request: Request, call_next):
         await aiosql.close_conn(dhrid)
 
         ismysqlerr = False
-        for err in pymysql_errs:
-            if isinstance(exc, err):
-                ismysqlerr = True
-                break
+        if type(exc) in pymysql_errs:
+            ismysqlerr = True
 
         err = traceback.format_exc()
         lines = err.split("\n")

@@ -32,7 +32,6 @@ cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid 
 # unit = 1: euro | 2: dollar
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS temptelemetry (steamid BIGINT, uuid CHAR(36), game INT, x INT, y INT, z INT, mods TEXT, timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
 
 cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT) DATA DIRECTORY = '{config.mysql_ext}'")
 # atype = 0: info | 1: event | 2: warning | 3: critical
@@ -106,8 +105,6 @@ indexes = ["CREATE INDEX user_uid ON user (uid)",
 "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
 
 "CREATE INDEX telemetry_logid ON telemetry (logid)",
-"CREATE INDEX temptelemetry_steamid ON temptelemetry (steamid)",
-"CREATE INDEX temptelemetry_uuid ON temptelemetry (uuid)",
 
 "CREATE INDEX division_logid ON division (logid)",
 "CREATE INDEX division_userid ON division (userid)",

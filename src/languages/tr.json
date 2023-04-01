@@ -1,5 +1,8 @@
 {
     "unknown_error": "Bilinmeyen Hata",
+    "api_error": "API Hatası",
+    "api_timeout": "API Zaman Aşımı",
+    "invalid_api_token": "Geçersiz API Simgesi",
     "rate_limit": "Oturumunuza hız sınırlandırması uygulandı. Lütfen daha yavaş işlem yapınız..",
     "bad_json": "Geçersiz JSON: Alan eksik veya veriler ayrıştırılamıyor.",
     "content_too_long": "Maksimum \"{item}\" uzunluğu {limit} karakter ile sınırlıdır.",
@@ -265,6 +268,8 @@
     "rejected_tracksim_webhook_post_ip": "{ip}'den TrackSim webhook güncellemesi reddedildi (IP beyaz listeye alınmadı)",
     "rejected_tracksim_webhook_post_signature": "{ip}'den TrackSim webhook güncellemesi reddedildi (Geçersiz imza)",
     "delivery_blocked_due_to_rules": "Teslim ({tracker} ID: `{trackerid}`) kurallar nedeniyle engellendi.",
+    "route_already_fetched": "Rota zaten getirildi.",
+    "tracker_must_be": "Tracker {tracker}.",
     "member_resigned_audit": "Üye istifa etti.",
     "error_removing_discord_role": "<@&{discord_role}> öğesini <@!{user_discordid}> öğesinden kaldırırken `{code}` hatası: `{message}`",
     "error_adding_discord_role": "<@&{discord_role}> ti <@!{user_discordid}> eklenirken `{code}` hatası: `{message}`",
