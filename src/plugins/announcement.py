@@ -16,10 +16,13 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/announcement/list")
+@app.get(f"/announcement/list")
 async def get_announcement_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", \
         order_by: Optional[str] = "announcementid", query: Optional[str] = ""):
+    if "announcement" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -73,8 +76,11 @@ async def get_announcement_list(request: Request, response: Response, authorizat
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/announcement/{{announcementid}}")
+@app.get(f"/announcement/{{announcementid}}")
 async def get_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+    if "announcement" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -103,8 +109,11 @@ async def get_announcement(request: Request, response: Response, announcementid:
 
     return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(dhrid, request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]}
 
-@app.post(f"/{config.abbr}/announcement")
+@app.post(f"/announcement")
 async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
+    if "announcement" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -161,8 +170,11 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     return {"announcementid": announcementid}
 
-@app.patch(f"/{config.abbr}/announcement/{{announcementid}}")
+@app.patch(f"/announcement/{{announcementid}}")
 async def patch_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+    if "announcement" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -226,8 +238,11 @@ async def patch_announcement(request: Request, response: Response, announcementi
 
     return Response(status_code=204)
 
-@app.delete(f"/{config.abbr}/announcement/{{announcementid}}")
+@app.delete(f"/announcement/{{announcementid}}")
 async def delete_announcement(request: Request, response: Response, announcementid: int, authorization: str = Header(None)):
+    if "announcement" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

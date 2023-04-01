@@ -20,13 +20,19 @@ for division in config.divisions:
     DIVISION_NAME[division["id"]] = division["name"]
 
 # Basic info
-@app.get(f"/{config.abbr}/division/list")
+@app.get(f"/division/list")
 async def get_division_list():
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     return config.divisions
 
 # Get division info
-@app.get(f"/{config.abbr}/division")
+@app.get(f"/division")
 async def get_division(request: Request, response: Response, authorization: str = Header(None)):
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -63,8 +69,11 @@ async def get_division(request: Request, response: Response, authorization: str 
     return stats
 
 # Get division info
-@app.get(f"/{config.abbr}/dlog/{{logid}}/division")
+@app.get(f"/dlog/{{logid}}/division")
 async def get_dlog_division(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -118,8 +127,11 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
         return {"divisionid": divisionid, "status": status}
 
 # Self-operation
-@app.post(f"/{config.abbr}/dlog/{{logid}}/division/{{divisionid}}")
+@app.post(f"/dlog/{{logid}}/division/{{divisionid}}")
 async def post_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -210,8 +222,11 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
         
     return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/dlog/{{logid}}/division/{{divisionid}}")
+@app.patch(f"/dlog/{{logid}}/division/{{divisionid}}")
 async def patch_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -268,9 +283,12 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
 
     return Response(status_code=204)
 
-@app.get(f"/{config.abbr}/division/list/pending")
+@app.get(f"/division/list/pending")
 async def get_division_list_pending(request: Request, response: Response, authorization: str = Header(None), \
         divisionid: Optional[int] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
+    if "division" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

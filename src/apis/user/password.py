@@ -10,7 +10,7 @@ from db import aiosql
 from functions import *
 
 
-@app.patch(f'/{config.abbr}/user/password')
+@app.patch(f"/user/password")
 async def patch_user_password(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the password of the authorized user, returns 204"""
 
@@ -87,7 +87,7 @@ async def patch_user_password(request: Request, response: Response, authorizatio
 
     return Response(status_code=204)
     
-@app.post(f'/{config.abbr}/user/password/disable')
+@app.post(f"/user/password/disable")
 async def post_user_password_disable(request: Request, response: Response, authorization: str = Header(None)):
     """Disables password login for the authorized user, returns 204"""
 

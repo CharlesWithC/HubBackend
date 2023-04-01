@@ -12,7 +12,7 @@ from db import aiosql
 from functions import *
 from plugins.division import DIVISION_POINTS
 
-@app.patch(f"/{config.abbr}/member/roles/rank")
+@app.patch(f"/member/roles/rank")
 async def patch_member_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
     """Updates rank role of the authorized user in Discord, returns 204"""
 
@@ -182,7 +182,7 @@ async def patch_member_roles_rank(request: Request, response: Response, authoriz
     except:
         traceback.print_exc()
 
-@app.post(f"/{config.abbr}/member/resign")
+@app.post(f"/member/resign")
 async def post_member_resign(request: Request, response: Response, authorization: str = Header(None)):
     """Resigns the authorized user, set userid to -1, returns 204"""
 

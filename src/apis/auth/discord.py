@@ -17,14 +17,14 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f'/{config.abbr}/auth/discord/redirect', response_class=RedirectResponse)
+@app.get(f"/auth/discord/redirect", response_class=RedirectResponse)
 async def get_auth_discord_redirect(connect_account: Optional[bool] = False):
     if not connect_account:
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
     else:
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={config.discord_client_id}&redirect_uri=https%3A%2F%2F{config.apidomain}%2F{config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
     
-@app.get(f"/{config.abbr}/auth/discord/connect")
+@app.get(f"/auth/discord/connect")
 async def get_auth_discord_connect(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     data = str(request.query_params)
@@ -36,7 +36,7 @@ async def get_auth_discord_connect(request: Request, code: Optional[str] = "", e
     
     return RedirectResponse(url=config.frontend_urls.discord_callback + f"?code={code}", status_code=302)
 
-@app.get(f'/{config.abbr}/auth/discord/callback')
+@app.get(f"/auth/discord/callback")
 async def get_auth_discord_callback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     referer = request.headers.get("Referer")
     if referer in ["", "-", None]:

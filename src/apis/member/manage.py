@@ -14,7 +14,7 @@ from functions import *
 
 # note that the larger the id is, the lower the role is
 
-@app.patch(f'/{config.abbr}/member/{{userid}}/roles')
+@app.patch(f"/member/{{userid}}/roles")
 async def patch_member_roles(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     """Updates the roles of a specific member, returns 204"""
 
@@ -230,7 +230,7 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
     else:
         return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/member/{{userid}}/points")
+@app.patch(f"/member/{{userid}}/points")
 async def patch_member_points(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     """Updates the points of a specific member, returns 204"""
 
@@ -280,7 +280,7 @@ async def patch_member_points(request: Request, response: Response, userid: int,
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/member/{{userid}}/dismiss")
+@app.post(f"/member/{{userid}}/dismiss")
 async def post_member_dismiss(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     """Dismisses member, set userid to -1, returns 204"""
 

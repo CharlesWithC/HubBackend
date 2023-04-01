@@ -15,11 +15,14 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/downloads/list")
+@app.get(f"/downloads/list")
 async def get_downloads_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
         query: Optional[str] = "", creator_userid: Optional[int] = None):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -76,8 +79,11 @@ async def get_downloads_list(request: Request, response: Response, authorization
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/downloads/{{downloadsid}}")
+@app.get(f"/downloads/{{downloadsid}}")
 async def get_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -119,8 +125,11 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     else:
         return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(dhrid, request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
 
-@app.get(f"/{config.abbr}/downloads/redirect/{{secret}}")
+@app.get(f"/downloads/redirect/{{secret}}")
 async def get_downloads_redirect(request: Request, response: Response, secret: str):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -154,8 +163,11 @@ async def get_downloads_redirect(request: Request, response: Response, secret: s
 
     return RedirectResponse(url=link, status_code=302)
 
-@app.post(f"/{config.abbr}/downloads")
+@app.post(f"/downloads")
 async def post_downloads(request: Request, response: Response, authorization: str = Header(None)):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -205,8 +217,11 @@ async def post_downloads(request: Request, response: Response, authorization: st
 
     return {"downloadsid": downloadsid}
 
-@app.patch(f"/{config.abbr}/downloads/{{downloadsid}}")
+@app.patch(f"/downloads/{{downloadsid}}")
 async def patch_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -264,8 +279,11 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
 
     return Response(status_code=204)
     
-@app.delete(f"/{config.abbr}/downloads/{{downloadsid}}")
+@app.delete(f"/downloads/{{downloadsid}}")
 async def delete_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
+    if "downloads" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

@@ -117,7 +117,7 @@ async def FetchRoute(gameid, userid, logid, trackerid, request = None, dhrid = N
     
     return True
         
-@app.post(f"/{config.abbr}/tracksim/setup")
+@app.post(f"/tracksim/setup")
 async def post_tracksim_setup(response: Response, request: Request, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -172,7 +172,7 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/tracksim/update")
+@app.post(f"/tracksim/update")
 async def post_tracksim_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -794,7 +794,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
 
     return {"error": "Logged"}
     
-@app.post(f"/{config.abbr}/tracksim/update/route")
+@app.post(f"/tracksim/update/route")
 async def post_tracksim_update_route(response: Response, request: Request, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

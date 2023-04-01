@@ -11,7 +11,7 @@ from app import app, config
 from db import aiosql
 from functions import *
 
-@app.post(f'/{config.abbr}/user/{{uid}}/accept')
+@app.post(f"/user/{{uid}}/accept")
 async def post_user_accept(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """[Permission Control] Accepts a user as member, assign userid, returns 204"""
 
@@ -87,7 +87,7 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
 
     return {"userid": userid}   
 
-@app.patch(f"/{config.abbr}/user/{{uid}}/discord")
+@app.patch(f"/user/{{uid}}/discord")
 async def patch_user_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
     """[Permission Control] Updates Discord account connection for a specific user, returns 204
     
@@ -160,7 +160,7 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
 
     return Response(status_code=204)
     
-@app.delete(f"/{config.abbr}/user/{{uid}}/connections")
+@app.delete(f"/user/{{uid}}/connections")
 async def delete_user_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
     """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
     
@@ -207,7 +207,7 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
 
     return Response(status_code=204)
 
-@app.put(f'/{config.abbr}/user/{{uid}}/ban')
+@app.put(f"/user/{{uid}}/ban")
 async def put_user_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Bans a specific user, returns 204
     
@@ -274,7 +274,7 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
         response.status_code = 409
         return {"error": ml.tr(request, "user_already_banned", force_lang = au["language"])}
 
-@app.delete(f'/{config.abbr}/user/{{uid}}/ban')
+@app.delete(f"/user/{{uid}}/ban")
 async def delete_user_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Unbans a specific user, returns 204"""
 
@@ -306,7 +306,7 @@ async def delete_user_ban(request: Request, response: Response, uid: int, author
         await AuditLog(dhrid, au["uid"], ml.ctr("unbanned_user", var = {"username": username, "uid": uid}))
         return Response(status_code=204)
    
-@app.delete(f"/{config.abbr}/user/{{uid}}")
+@app.delete(f"/user/{{uid}}")
 async def delete_user(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Deletes a specific user, returns 204"""
 

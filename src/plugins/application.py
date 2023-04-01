@@ -16,12 +16,18 @@ from db import aiosql
 from functions import *
 
 # Basic Info
-@app.get(f"/{config.abbr}/application/types")
+@app.get(f"/application/types")
 async def get_application_types():
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     return config.application_types
 
-@app.get(f"/{config.abbr}/application/positions")
+@app.get(f"/application/positions")
 async def get_application_positions(request: Request):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
     await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
@@ -36,8 +42,11 @@ async def get_application_positions(request: Request):
                 ret.append(tt)
         return ret
 
-@app.patch(f"/{config.abbr}/application/positions")
+@app.patch(f"/application/positions")
 async def post_application_positions(request: Request, response: Response, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -84,10 +93,13 @@ async def post_application_positions(request: Request, response: Response, autho
     return Response(status_code=204)
 
 # Get Application
-@app.get(f"/{config.abbr}/application/list")
+@app.get(f"/application/list")
 async def get_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = 0, \
         all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -176,8 +188,11 @@ async def get_application_list(request: Request, response: Response, authorizati
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/application/{{applicationid}}")
+@app.get(f"/application/{{applicationid}}")
 async def get_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -219,8 +234,11 @@ async def get_application(request: Request, response: Response, applicationid: i
     return {"applicationid": t[0][0], "creator": await GetUserInfo(dhrid, request, uid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(dhrid, request, userid = t[0][6])}
 
 # Self-operation
-@app.post(f"/{config.abbr}/application")
+@app.post(f"/application")
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -374,8 +392,11 @@ async def post_application(request: Request, response: Response, authorization: 
 
     return {"applicationid": applicationid}
 
-@app.patch(f"/{config.abbr}/application/{{applicationid}}")
+@app.patch(f"/application/{{applicationid}}")
 async def patch_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -468,8 +489,11 @@ async def patch_application(request: Request, response: Response, applicationid:
     return Response(status_code=204)
 
 # Management
-@app.patch(f"/{config.abbr}/application/{{applicationid}}/status")
+@app.patch(f"/application/{{applicationid}}/status")
 async def update_application_status(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -552,8 +576,11 @@ async def update_application_status(request: Request, response: Response, applic
 
     return Response(status_code=204)
 
-@app.delete(f"/{config.abbr}/application/{{applicationid}}")
+@app.delete(f"/application/{{applicationid}}")
 async def delete_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+    if "application" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

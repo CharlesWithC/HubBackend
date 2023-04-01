@@ -40,7 +40,7 @@ if not os.path.exists(config_path):
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
 
-from app import app, version, config
+from app import config, version
 from db import genconn
 
 for external_plugin in config.external_plugins:
@@ -119,4 +119,4 @@ if __name__ == "__main__":
     except:
         pass
     
-    uvicorn.run("app:app", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))
+    uvicorn.run("multi:mpp", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))

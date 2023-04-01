@@ -14,8 +14,11 @@ from functions import *
 from plugins.economy.trucks import GetTruckInfo
 
 
-@app.get(f"/{config.abbr}/economy/garages")
+@app.get(f"/economy/garages")
 async def get_economy_garages(request: Request, response: Response, authorization: str = Header(None)):
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -33,7 +36,7 @@ async def get_economy_garages(request: Request, response: Response, authorizatio
 
     return config.economy.garages
 
-@app.get(f"/{config.abbr}/economy/garages/list")
+@app.get(f"/economy/garages/list")
 async def get_economy_garages_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, 
         min_trucks: Optional[int] = None, max_trucks: Optional[int] = None,
@@ -42,6 +45,9 @@ async def get_economy_garages_list(request: Request, response: Response, authori
     '''Get a list of owned garages.
     
     `order_by` can be `income`, `truck`, `slot`'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -106,9 +112,12 @@ async def get_economy_garages_list(request: Request, response: Response, authori
     
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/economy/garages/{{garageid}}")
+@app.get(f"/economy/garages/{{garageid}}")
 async def get_economy_garage(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Get info of a specific garage.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -140,7 +149,7 @@ async def get_economy_garage(request: Request, response: Response, garageid: str
     p = await aiosql.fetchall(dhrid)
     return {"garageid": tt[0], "garage_owner": (await GetUserInfo(dhrid, request, userid = p[0][0])), "slots": tt[2], "slot_owners": nint(tt[3]), "trucks": nint(tt[4]), "income": nint(tt[5]), "purchase_timestamp": tt[1]}
 
-@app.get(f"/{config.abbr}/economy/garages/{{garageid}}/slots/list")
+@app.get(f"/economy/garages/{{garageid}}/slots/list")
 async def get_economy_garage_slots_list(request: Request, response: Response, garageid: str, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 20, owner: Optional[int] = None, \
         must_have_truck: Optional[bool] = False, purchased_after: Optional[int] = None, purchased_before: Optional[int] = None,
@@ -148,6 +157,9 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
     '''Get the slots of a specific garage.
     
     `order_by` is `purchase_timestamp`.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -201,9 +213,12 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}")
+@app.get(f"/economy/garages/{{garageid}}/slots/{{slotid}}")
 async def get_economy_garage_slots_slotid(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Get info of a specific garage slot.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -232,7 +247,7 @@ async def get_economy_garage_slots_slotid(request: Request, response: Response, 
     
     return {"slotid": tt[0], "slot_owner": await GetUserInfo(dhrid, request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(dhrid, request, tt[2]), "truck_owner": await GetUserInfo(dhrid, request, userid = tt[3])}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/purchase")
+@app.post(f"/economy/garages/{{garageid}}/purchase")
 async def post_economy_garage_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Purchases a garage, returns `slotids`, `cost`, `balance`.
     
@@ -241,6 +256,9 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] The garage must not have been purchased before, aka there must be no slots connected to the garage. Otherwise it should be /{garageid}/slots/purchase.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -334,7 +352,7 @@ async def post_economy_garage_purchase(request: Request, response: Response, gar
 
     return {"slotids": slotids, "cost": garage['price'], "balance": round(balance - garage['price'])}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/purchase")
+@app.post(f"/economy/garages/{{garageid}}/slots/purchase")
 async def post_economy_garage_slot_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Purchases a slot of a garage, returns `slotid`, `cost`, `balance`.
     
@@ -343,6 +361,9 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] The garage must have been purchased before, aka there must be slots connected to the garage. Otherwise it should be /{garageid}/purchase.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -431,7 +452,7 @@ async def post_economy_garage_slot_purchase(request: Request, response: Response
 
     return {"slotid": slotid, "cost": garage['slot_price'], "balance": round(balance - garage['slot_price'])}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/transfer")
+@app.post(f"/economy/garages/{{garageid}}/transfer")
 async def post_economy_garage_transfer(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Transfers a garage (ownership).
     
@@ -440,6 +461,9 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] This will transfer the garage ownership and the base slots when purchased.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -522,7 +546,7 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}/transfer")
+@app.post(f"/economy/garages/{{garageid}}/slots/{{slotid}}/transfer")
 async def post_economy_garage_slot_transfer(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Transfers a garage (ownership).
     
@@ -531,6 +555,9 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] This will transfer the slot ownership.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -610,11 +637,14 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/sell")
+@app.post(f"/economy/garages/{{garageid}}/sell")
 async def post_economy_garage_sell(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Sells a garage (ownership), returns `refund`, `balance`.
 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -679,11 +709,14 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
 
     return {"refund": refund, "balance": round(balance + refund)}
 
-@app.post(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}/sell")
+@app.post(f"/economy/garages/{{garageid}}/slots/{{slotid}}/sell")
 async def post_economy_garage_sell(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Sells a garage (ownership), returns `refund`, `balance`.
 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

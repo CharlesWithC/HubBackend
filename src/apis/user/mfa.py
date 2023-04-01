@@ -11,7 +11,7 @@ from db import aiosql
 from functions import *
 
 
-@app.post(f"/{config.abbr}/user/mfa")
+@app.post(f"/user/mfa")
 async def post_user_mfa(request: Request, response: Response, authorization: str = Header(None)):
     """Enables MFA for the authorized user, returns 204
     
@@ -69,7 +69,7 @@ async def post_user_mfa(request: Request, response: Response, authorization: str
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/user/mfa/disable")
+@app.post(f"/user/mfa/disable")
 async def post_user_mfa_disable(request: Request, response: Response, authorization: str = Header(None), uid: Optional[str] = -1):
     """Disables MFA for a specific user, returns 204
     

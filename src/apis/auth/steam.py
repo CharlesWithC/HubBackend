@@ -17,7 +17,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/auth/steam/redirect")
+@app.get(f"/auth/steam/redirect")
 async def get_auth_steam_redirect(connect_account: Optional[bool] = False):
     steamLogin = SteamSignIn()
     encodedData = ""
@@ -28,7 +28,7 @@ async def get_auth_steam_redirect(connect_account: Optional[bool] = False):
     url = 'https://steamcommunity.com/openid/login?' + encodedData
     return RedirectResponse(url=url, status_code=302)
 
-@app.get(f"/{config.abbr}/auth/steam/connect")
+@app.get(f"/auth/steam/connect")
 async def get_auth_steam_connect(request: Request):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
@@ -40,7 +40,7 @@ async def get_auth_steam_connect(request: Request):
 
     return RedirectResponse(url=config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
-@app.get(f"/{config.abbr}/auth/steam/callback")
+@app.get(f"/auth/steam/callback")
 async def get_auth_steam_callback(request: Request, response: Response):
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")

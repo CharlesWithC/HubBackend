@@ -14,7 +14,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f'/{config.abbr}/token')
+@app.get(f"/token")
 async def get_token(request: Request, response: Response, authorization: str = Header(None)):    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -35,7 +35,7 @@ async def get_token(request: Request, response: Response, authorization: str = H
 
     return {"token_type": token_type}
 
-@app.patch(f"/{config.abbr}/token")
+@app.patch(f"/token")
 async def patch_token(request: Request, response: Response, authorization: str = Header(None)):    
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -64,7 +64,7 @@ async def patch_token(request: Request, response: Response, authorization: str =
 
     return {"token": stoken}
 
-@app.delete(f'/{config.abbr}/token')
+@app.delete(f"/token")
 async def delete_token(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -88,7 +88,7 @@ async def delete_token(request: Request, response: Response, authorization: str 
 
     return Response(status_code=204)
 
-@app.get(f'/{config.abbr}/token/list')
+@app.get(f"/token/list")
 async def get_token_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
@@ -139,7 +139,7 @@ async def get_token_list(request: Request, response: Response, authorization: st
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.delete(f'/{config.abbr}/token/hash')
+@app.delete(f"/token/hash")
 async def delete_token_hash(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -185,7 +185,7 @@ async def delete_token_hash(request: Request, response: Response, authorization:
         response.status_code = 404
         return {"error": ml.tr(request, "invalid_hash", force_lang = au["language"])}
 
-@app.delete(f'/{config.abbr}/token/all')
+@app.delete(f"/token/all")
 async def delete_token_all(request: Request, response: Response, authorization: str = Header(None), \
         last_used_before: Optional[int] = None):
     dhrid = request.state.dhrid
@@ -216,7 +216,7 @@ async def delete_token_all(request: Request, response: Response, authorization: 
 
     return Response(status_code=204)
 
-@app.get(f'/{config.abbr}/token/application/list')
+@app.get(f"/token/application/list")
 async def get_token_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
@@ -264,7 +264,7 @@ async def get_token_application_list(request: Request, response: Response, autho
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.post(f'/{config.abbr}/token/application')
+@app.post(f"/token/application")
 async def post_token_application(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -317,7 +317,7 @@ async def post_token_application(request: Request, response: Response, authoriza
     
     return {"token": stoken}
 
-@app.delete(f'/{config.abbr}/token/application')
+@app.delete(f"/token/application")
 async def delete_token_application(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -359,7 +359,7 @@ async def delete_token_application(request: Request, response: Response, authori
         response.status_code = 404
         return {"error": ml.tr(request, "invalid_hash", force_lang = au["language"])}
 
-@app.delete(f'/{config.abbr}/token/application/all')
+@app.delete(f"/token/application/all")
 async def delete_token_application_all(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

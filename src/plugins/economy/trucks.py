@@ -27,8 +27,11 @@ async def GetTruckInfo(dhrid, request, vehicleid):
     
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
-@app.get(f"/{config.abbr}/economy/trucks")
+@app.get(f"/economy/trucks")
 async def get_economy_trucks(request: Request, response: Response, authorization: str = Header(None)):
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -46,7 +49,7 @@ async def get_economy_trucks(request: Request, response: Response, authorization
     
     return config.economy.trucks
 
-@app.get(f"/{config.abbr}/economy/trucks/list")
+@app.get(f"/economy/trucks/list")
 async def get_economy_trucks_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, truckid: Optional[str] = "", garageid: Optional[str] = "",\
         owner: Optional[int] = None, min_price: Optional[int] = None, max_price: Optional[int] = None, \
@@ -56,6 +59,9 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
         min_damage: Optional[float] = None, max_damage: Optional[float] = None,
         order_by: Optional[str] = "odometer", order: Optional[int] = "desc"):
     '''Get a list of owned trucks.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -140,9 +146,12 @@ async def get_economy_trucks_list(request: Request, response: Response, authoriz
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/economy/trucks/{{vehicleid}}")
+@app.get(f"/economy/trucks/{{vehicleid}}")
 async def get_economy_trucks_vehicle(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Get info of a specific truck'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -175,11 +184,14 @@ async def get_economy_trucks_vehicle(request: Request, response: Response, vehic
     
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
-@app.get(f"/{config.abbr}/economy/trucks/{{vehicleid}}/{{operation}}/history")
+@app.get(f"/economy/trucks/{{vehicleid}}/{{operation}}/history")
 async def get_economy_trucks_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, order: Optional[str] = "desc"):
     '''Get the transaction history of a specific truck.
 
     `order_by` is `timestamp`.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -284,7 +296,7 @@ async def get_economy_trucks_operation_history(request: Request, response: Respo
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.post(f"/{config.abbr}/economy/trucks/{{truckid}}/purchase")
+@app.post(f"/economy/trucks/{{truckid}}/purchase")
 async def post_economy_trucks_purchase(request: Request, response: Response, truckid: str, authorization: str = Header(None), owner: Optional[str] = "self"):
     '''Purchase a truck, returns `vehicleid`, `cost`, `balance`.
     
@@ -295,6 +307,9 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
     `assignee` is only required when `owner = company`
     
     [NOTE] If the owner / assignee already has a truck of the same model, the purchased truck will be deactivated to prevent conflict on job submission.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -422,7 +437,7 @@ async def post_economy_trucks_purchase(request: Request, response: Response, tru
 
     return {"vehicleid": vehicleid, "cost": truck["price"], "balance": round(balance - truck["price"])}
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/transfer")
+@app.post(f"/economy/trucks/{{vehicleid}}/transfer")
 async def post_economy_trucks_transfer(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
     
@@ -433,6 +448,9 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
     `assignee` is only required when `owner = company`
     
     [NOTE] If the new owner / assignee already has a truck of the same model, the transferred truck will be deactivated to prevent conflict on job submission.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -561,11 +579,14 @@ async def post_economy_trucks_transfer(request: Request, response: Response, veh
     
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/relocate")
+@app.post(f"/economy/trucks/{{vehicleid}}/relocate")
 async def post_economy_trucks_relocate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
     
     JSON: `{"slotid": int"}`'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -637,11 +658,14 @@ async def post_economy_trucks_relocate(request: Request, response: Response, veh
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/activate")
+@app.post(f"/economy/trucks/{{vehicleid}}/activate")
 async def post_economy_trucks_activate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Activates a truck, returns 204.
     
     [NOTE] If the owner / assignee has multiple trucks of the same model, other trucks of the same model will be deactivated.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -700,11 +724,14 @@ async def post_economy_trucks_activate(request: Request, response: Response, veh
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/deactivate")
+@app.post(f"/economy/trucks/{{vehicleid}}/deactivate")
 async def post_economy_trucks_deactivate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Deactivates a truck, returns 204.
     
     [NOTE] If there's no status truck of a model, new jobs of that model will be charged a rental cost.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -748,11 +775,14 @@ async def post_economy_trucks_deactivate(request: Request, response: Response, v
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/repair")
+@app.post(f"/economy/trucks/{{vehicleid}}/repair")
 async def post_economy_trucks_repair(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Repairs a truck, returns `cost`, `balance`.
     
     [NOTE] If the truck's damage > config.economy.max_wear_before_service, new jobs will be charged a rental cost. Once the issue is noticed, status state of the truck will be modified to -1. If the truck's state is -1 and a repair is performed, it will be reactivated automatically if there's no other status trucks.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -833,11 +863,14 @@ async def post_economy_trucks_repair(request: Request, response: Response, vehic
 
     return {"cost": cost, "balance": round(balance - cost)}
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/sell")
+@app.post(f"/economy/trucks/{{vehicleid}}/sell")
 async def post_economy_trucks_sell(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Sells a truck, returns `refund`, `balance`.
     
     [Note] refund = price * (1 - damage) * config.economy.truck_refund (ratio)'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -891,11 +924,14 @@ async def post_economy_trucks_sell(request: Request, response: Response, vehicle
 
     return {"refund": refund, "balance": round(balance + refund)}
 
-@app.post(f"/{config.abbr}/economy/trucks/{{vehicleid}}/scrap")
+@app.post(f"/economy/trucks/{{vehicleid}}/scrap")
 async def post_economy_trucks_scrap(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
     '''Scraps a truck, returns `refund`, `balance`.
     
     [Note] refund = price * config.economy.scrap_refund (ratio)'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

@@ -14,7 +14,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/user/notification/list")
+@app.get(f"/user/notification/list")
 async def get_user_notification_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', status: Optional[int] = 0, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
@@ -74,7 +74,7 @@ async def get_user_notification_list(request: Request, response: Response, autho
         
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/user/notification/settings")
+@app.get(f"/user/notification/settings")
 async def get_user_notification_settings(request: Request, response: Response, authorization: str = Header(None)):
     """Returns notification settings of the authorized user"""
 
@@ -106,7 +106,7 @@ async def get_user_notification_settings(request: Request, response: Response, a
     
     return settings
 
-@app.post(f"/{config.abbr}/user/notification/settings/{{notification_type}}/enable")
+@app.post(f"/user/notification/settings/{{notification_type}}/enable")
 async def post_user_notification_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Enables a specific type of notification of the authorized user"""
 
@@ -222,7 +222,7 @@ async def post_user_notification_settings_enable(request: Request, response: Res
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/user/notification/settings/{{notification_type}}/disable")
+@app.post(f"/user/notification/settings/{{notification_type}}/disable")
 async def post_user_notification_settings_disable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Disables a specific type of notification of the authorized user"""
 
@@ -276,7 +276,7 @@ async def post_user_notification_settings_disable(request: Request, response: Re
     
     return Response(status_code=204)
 
-@app.get(f"/{config.abbr}/user/notification/{{notificationid}}")
+@app.get(f"/user/notification/{{notificationid}}")
 async def get_user_notification(request: Request, response: Response, notificationid: int, authorization: str = Header(None)):
     """Returns a specific notification of the authorized user"""
 
@@ -304,7 +304,7 @@ async def get_user_notification(request: Request, response: Response, notificati
     tt = t[0]
     return {"notificationid": tt[0], "content": tt[1], "timestamp": tt[2], "read": TF[tt[3]]}
 
-@app.patch(f"/{config.abbr}/user/notification/{{notificationid}}/status/{{status}}")
+@app.patch(f"/user/notification/{{notificationid}}/status/{{status}}")
 async def patch_user_notification_status(request: Request, response: Response, notificationid: str, status: int, authorization: str = Header(None)):
     """Updates status of a specific notification of the authorized user"""
 

@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.4.0**  
+1.Improved how path prefix is defined  
+2.Improved how plugin is loaded  
+
 **v2.3.1**  
 1.Created a tool to automatically fix ultra-high User ID / UID  
 2.Removed support of navio due to truckspace shutdown  

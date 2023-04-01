@@ -44,7 +44,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # RETURN
 # challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points
 # if userid is specified, then add "finished_delivery_count"
-@app.get(f"/{config.abbr}/challenge/list")
+@app.get(f"/challenge/list")
 async def get_challenge_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         start_time: Optional[int] = None, end_time: Optional[int] = None, challenge_type: Optional[int] = None,
@@ -52,6 +52,8 @@ async def get_challenge_list(request: Request, response: Response, authorization
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
         userid: Optional[int] = None, must_have_completed: Optional[bool] = False, \
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
@@ -169,8 +171,11 @@ async def get_challenge_list(request: Request, response: Response, authorization
 # - integer: challengeid
 # returns requirement if public_details = true and user is not staff
 #                     or if public_details = false
-@app.get(f"/{config.abbr}/challenge/{{challengeid}}")
+@app.get(f"/challenge/{{challengeid}}")
 async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = None):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -272,8 +277,11 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 #   - float: minimum_average_fuel (L/100km)
 #   - float: maximum_average_fuel (L/100km)
 
-@app.post(f"/{config.abbr}/challenge")
+@app.post(f"/challenge")
 async def post_challenge(request: Request, response: Response, authorization: str = Header(None)):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -386,8 +394,11 @@ async def post_challenge(request: Request, response: Response, authorization: st
 # - integer: challengeid
 # JSON DATA
 # *Same as POST /challenge
-@app.patch(f"/{config.abbr}/challenge/{{challengeid}}")
+@app.patch(f"/challenge/{{challengeid}}")
 async def patch_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -767,8 +778,11 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 # DELETE /challenge
 # REQUEST PARAM
 # - integer: challengeid
-@app.delete(f"/{config.abbr}/challenge/{{challengeid}}")
+@app.delete(f"/challenge/{{challengeid}}")
 async def delete_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None)):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -808,8 +822,11 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
 # - integer: challengeid
 # - integer: logid
 # => manually accept a delivery as challenge
-@app.put(f"/{config.abbr}/challenge/{{challengeid}}/delivery/{{logid}}")
+@app.put(f"/challenge/{{challengeid}}/delivery/{{logid}}")
 async def put_challenge_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 
@@ -952,8 +969,11 @@ async def put_challenge_delivery(request: Request, response: Response, challenge
 # - integer: challengeid
 # - integer: logid
 # => denies a delivery as challenge
-@app.delete(f"/{config.abbr}/challenge/{{challengeid}}/delivery/{{logid}}")
+@app.delete(f"/challenge/{{challengeid}}/delivery/{{logid}}")
 async def delete_challenge_delivery(request: Request, response: Response, challengeid: int, logid: int, authorization: str = Header(None)):
+    if "challenge" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid, extra_time = 3)
 

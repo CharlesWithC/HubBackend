@@ -8,7 +8,7 @@ import time
 
 from fastapi import FastAPI
 
-version = "v2.3.1"
+version = "v2.4.0"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 

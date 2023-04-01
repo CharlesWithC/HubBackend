@@ -16,7 +16,7 @@ from functions import *
 from plugins.division import DIVISION_NAME
 
 
-@app.get(f"/{config.abbr}/dlog/export")
+@app.get(f"/dlog/export")
 async def get_dlog_export(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, include_ids: Optional[bool] = False):
     dhrid = request.state.dhrid

@@ -15,7 +15,7 @@ from db import aiosql
 from functions import *
 
 
-@app.post(f'/{config.abbr}/auth/password')
+@app.post(f"/auth/password")
 async def post_auth_password(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -105,7 +105,7 @@ async def post_auth_password(request: Request, response: Response):
 
     return {"token": stoken, "mfa": False}
 
-@app.post(f'/{config.abbr}/auth/register')
+@app.post(f"/auth/register")
 async def post_auth_register(request: Request, response: Response):
     if not "email" in config.register_methods:
         response.status_code = 404
@@ -236,7 +236,7 @@ async def post_auth_register(request: Request, response: Response):
 
     return {"token": stoken, "mfa": False}
 
-@app.post(f'/{config.abbr}/auth/reset')
+@app.post(f"/auth/reset")
 async def post_auth_reset(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -300,7 +300,7 @@ async def post_auth_reset(request: Request, response: Response):
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/auth/mfa")
+@app.post(f"/auth/mfa")
 async def post_auth_mfa(request: Request, response: Response):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -379,7 +379,7 @@ async def post_auth_mfa(request: Request, response: Response):
 
     return {"token": stoken}
 
-@app.post(f"/{config.abbr}/auth/email")
+@app.post(f"/auth/email")
 async def get_auth_email(request: Request, response: Response, secret: str, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

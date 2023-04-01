@@ -12,7 +12,7 @@ from functions import *
 
 cstats = {}
 
-@app.get(f"/{config.abbr}/dlog/statistics/summary")
+@app.get(f"/dlog/statistics/summary")
 async def get_dlog_statistics_summary(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, userid: Optional[int] = None):
     dhrid = request.state.dhrid
@@ -202,7 +202,7 @@ async def get_dlog_statistics_summary(request: Request, response: Response, auth
 
     return ret
 
-@app.get(f"/{config.abbr}/dlog/statistics/chart")
+@app.get(f"/dlog/statistics/chart")
 async def get_dlog_statistics_chart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         ranges: Optional[int] = 30, interval: Optional[int] = 86400, before: Optional[int] = None, \
         sum_up: Optional[bool] = False, userid: Optional[int] = None):

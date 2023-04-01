@@ -15,7 +15,7 @@ from db import aiosql
 from functions import *
 
 
-@app.post(f"/{config.abbr}/auth/ticket")
+@app.post(f"/auth/ticket")
 async def post_auth_ticket(request: Request, response: Response, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -42,7 +42,7 @@ async def post_auth_ticket(request: Request, response: Response, authorization: 
 
     return {"token": stoken}
 
-@app.get(f"/{config.abbr}/auth/ticket")
+@app.get(f"/auth/ticket")
 async def get_auth_ticket(request: Request, response: Response, token: Optional[str] = ""):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

@@ -17,7 +17,7 @@ from functions import *
 from plugins.division import DIVISION_NAME
 
 
-@app.get(f"/{config.abbr}/dlog/list")
+@app.get(f"/dlog/list")
 async def get_dlog_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
@@ -194,7 +194,7 @@ async def get_dlog_list(request: Request, response: Response, authorization: str
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/dlog/{{logid}}")
+@app.get(f"/dlog/{{logid}}")
 async def get_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
@@ -291,7 +291,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
             "timestamp": t[0][2], "views": view_count, "tracker": tracker, "trackerid": trackerid, \
             "detail": data, "telemetry": telemetry}
 
-@app.delete(f"/{config.abbr}/dlog/{{logid}}")
+@app.delete(f"/dlog/{{logid}}")
 async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)

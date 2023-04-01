@@ -14,7 +14,10 @@ from db import aiosql, genconn
 from functions import *
 
 
-def EventNotification():        
+def EventNotification():    
+    if "event" not in config.enabled_plugins:
+        return
+    
     while 1:
         try:
             conn = genconn()
@@ -86,10 +89,13 @@ def EventNotification():
 
         time.sleep(60)
 
-@app.get(f"/{config.abbr}/event/list")
+@app.get(f"/event/list")
 async def get_event_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         first_event_after: Optional[int] = None):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -166,8 +172,11 @@ async def get_event_list(request: Request, response: Response, authorization: st
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/{config.abbr}/event/{{eventid}}")
+@app.get(f"/event/{{eventid}}")
 async def get_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -209,8 +218,11 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
 
     return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
 
-@app.put(f"/{config.abbr}/event/{{eventid}}/vote")
+@app.put(f"/event/{{eventid}}/vote")
 async def put_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -243,8 +255,11 @@ async def put_event_vote(request: Request, response: Response, eventid: int, aut
         await aiosql.commit(dhrid)
         return Response(status_code=204)
     
-@app.delete(f"/{config.abbr}/event/{{eventid}}/vote")
+@app.delete(f"/event/{{eventid}}/vote")
 async def delete_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -277,8 +292,11 @@ async def delete_event_vote(request: Request, response: Response, eventid: int, 
         response.status_code = 409
         return {"error": ml.tr(request, "event_not_voted", force_lang = au["language"])}
 
-@app.post(f"/{config.abbr}/event")
+@app.post(f"/event")
 async def post_event(request: Request, response: Response, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -332,8 +350,11 @@ async def post_event(request: Request, response: Response, authorization: str = 
 
     return {"eventid": eventid}
 
-@app.patch(f"/{config.abbr}/event/{{eventid}}")
+@app.patch(f"/event/{{eventid}}")
 async def patch_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -391,8 +412,11 @@ async def patch_event(request: Request, response: Response, eventid: int, author
 
     return Response(status_code=204)
 
-@app.delete(f"/{config.abbr}/event/{{eventid}}")
+@app.delete(f"/event/{{eventid}}")
 async def delete_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -420,8 +444,11 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
 
     return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/event/{{eventid}}/attendees")
+@app.patch(f"/event/{{eventid}}/attendees")
 async def patch_event_attendees(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 

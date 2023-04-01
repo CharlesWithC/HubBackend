@@ -11,7 +11,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/user/language")
+@app.get(f"/user/language")
 async def get_user_language(request: Request, response: Response, authorization: str = Header(None)):
     """Returns the language of the authorized user"""
 
@@ -33,7 +33,7 @@ async def get_user_language(request: Request, response: Response, authorization:
 
     return {"language": await GetUserLanguage(dhrid, uid)}
 
-@app.patch(f"/{config.abbr}/user/language")
+@app.patch(f"/user/language")
 async def patch_user_language(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the language of the authorized user, returns 204
     

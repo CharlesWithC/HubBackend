@@ -38,23 +38,16 @@ if config.tracker.lower() == "tracksim":
     from apis.tracksim import *
 
 # import plugins
-if "announcement" in config.enabled_plugins:
-    from plugins.announcement import *
-if "application" in config.enabled_plugins:
-    from plugins.application import *
-if "challenge" in config.enabled_plugins:
-    from plugins.challenge import *
-if "division" in config.enabled_plugins:
-    from plugins.division import *
-if "downloads" in config.enabled_plugins:
-    from plugins.downloads import *
-if "economy" in config.enabled_plugins:
-    from plugins.economy import *
-if "event" in config.enabled_plugins:
-    from plugins.event import *
+from plugins.announcement import *
+from plugins.application import *
+from plugins.challenge import *
+from plugins.division import *
+from plugins.downloads import *
+from plugins.economy import *
+from plugins.event import *
 
 # basic info
-@app.get(f'/{config.abbr}')
+@app.get(f"/")
 async def get_index(request: Request, authorization: str = Header(None)):
     if authorization is not None:
         dhrid = request.state.dhrid
@@ -68,7 +61,7 @@ async def get_index(request: Request, authorization: str = Header(None)):
     return {"name": config.name, "abbr": config.abbr, "language": config.language, "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}
 
 # uptime
-@app.get(f'/{config.abbr}/status')
+@app.get(f"/status")
 async def get_status(request: Request):
     dbstatus = "unavailable"
     try:
@@ -81,7 +74,7 @@ async def get_status(request: Request):
     return {"api": "active", "database": dbstatus, "uptime": str(timedelta(seconds = up_time_second))}
 
 # supported languages
-@app.get(f'/{config.abbr}/languages')
+@app.get(f"/languages")
 async def get_languages():
     l = os.listdir(config.language_dir)
     t = []

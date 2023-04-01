@@ -15,7 +15,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/economy/balance/leaderboard")
+@app.get(f"/economy/balance/leaderboard")
 async def get_economy_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 20, exclude_company: Optional[bool] = True, \
         min_balance: Optional[int] = None, max_balance: Optional[int] = None, order: Optional[str] = "desc"):
@@ -24,6 +24,9 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, they will not be included in the leaderboard.
     If authorized user is a balance_manager, they can view the full leaderboard.
     User balance is by default private.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -106,11 +109,14 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.post(f"/{config.abbr}/economy/balance/transfer")
+@app.post(f"/economy/balance/transfer")
 async def post_economy_balance_transfer(request: Request, response: Response, authorization: str = Header(None)):
     '''Transfer balance.
     
     JSON: `{"from_userid": Optional[int], "to_userid": int, "amount": int, "message": Optional[str]}`'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -209,13 +215,16 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
     else:
         return {"from_balance": from_balance - amount}
 
-@app.get(f"/{config.abbr}/economy/balance/{{userid}}")
+@app.get(f"/economy/balance/{{userid}}")
 async def get_economy_balance_userid(request: Request, response: Response, userid: int, authorization: str = Header(None)):
     '''Get user balance.
     
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, 403 will be returned.
     If authorized user is a balance_manager, they can view the user's balance without restrictions.
     User balance is by default private.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -253,7 +262,7 @@ async def get_economy_balance_userid(request: Request, response: Response, useri
 
     return {"balance": balance}
 
-@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions/list")
+@app.get(f"/economy/balance/{{userid}}/transactions/list")
 async def get_economy_balance_userid_transaction_list(request: Request, response: Response, userid: int, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after: Optional[int] = None, before: Optional[int] = None, \
@@ -263,6 +272,9 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
     '''Get a user's transaction history.
     
     [NOTE] This can only be viewed by balance manager and user. The user cannot make this info public.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -345,11 +357,14 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 
-@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions/export")
+@app.get(f"/economy/balance/{{userid}}/transactions/export")
 async def get_economy_balance_userid_transaction_export(request: Request, response: Response, userid: int, authorization: str = Header(None), after: Optional[int] = None, before: Optional[int] = None):
     '''Export a user's transaction history.
     
     [NOTE] This can only be done by balance manager and user. The user cannot make this info public.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -427,9 +442,12 @@ async def get_economy_balance_userid_transaction_export(request: Request, respon
 
     return response
 
-@app.post(f"/{config.abbr}/economy/balance/{{userid}}/visibility/{{visibility}}")
+@app.post(f"/economy/balance/{{userid}}/visibility/{{visibility}}")
 async def post_economy_balance_userid_visibility(request: Request, response: Response, userid: int, visibility: str, authorization: str = Header(None)):
     '''Make user balance public.'''
+    if "economy" not in config.enabled_plugins:
+        return Response({"error": "Not Found"}, 404)
+
     if not visibility in ["public", "private"]:
         response.status_code = 404
         return {"error": "Not Found"}

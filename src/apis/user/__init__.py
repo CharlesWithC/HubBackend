@@ -20,7 +20,7 @@ from db import aiosql
 from functions import *
 
 
-@app.get(f"/{config.abbr}/user/list")
+@app.get(f"/user/list")
 async def get_user_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
@@ -81,7 +81,7 @@ async def get_user_list(request: Request, response: Response, authorization: str
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f'/{config.abbr}/user/profile')
+@app.get(f"/user/profile")
 async def get_user_profile(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):
     """Returns the profile of a specific user
@@ -148,7 +148,7 @@ async def get_user_profile(request: Request, response: Response, authorization: 
 
     return (await GetUserInfo(dhrid, request, uid = uid))
 
-@app.patch(f"/{config.abbr}/user/profile")
+@app.patch(f"/user/profile")
 async def patch_user_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
     """Updates the profile of a specific user
 
@@ -304,7 +304,7 @@ async def patch_user_profile(request: Request, response: Response, authorization
 
     return Response(status_code=204)
     
-@app.patch(f'/{config.abbr}/user/bio')
+@app.patch(f"/user/bio")
 async def patch_user_bio(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the bio of the authorized user, returns 204
     

@@ -26,7 +26,7 @@ config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_clie
 
 backup_config = copy.deepcopy(tconfig)
 
-@app.get(f"/{config.abbr}/config")
+@app.get(f"/config")
 async def get_config(request: Request, response: Response, authorization: str = Header(None)):
     """Returns saved config (config) and loaded config (backup)"""
 
@@ -97,7 +97,7 @@ def restart():
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
 
-@app.patch(f"/{config.abbr}/config")
+@app.patch(f"/config")
 async def patch_config(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the config, only those specified in `config` will be updated
     
@@ -236,7 +236,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     return Response(status_code=204)
 
-@app.post(f"/{config.abbr}/restart")
+@app.post(f"/restart")
 async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
     """Restarts API service in a thread, returns 204"""
 
@@ -279,7 +279,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     return Response(status_code=204)
 
 # get audit log (require audit / admin permission)
-@app.get(f"/{config.abbr}/audit/list")
+@app.get(f"/audit/list")
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, uid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""

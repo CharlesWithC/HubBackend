@@ -12,7 +12,7 @@ from app import app, config
 from db import aiosql
 from functions import *
 
-@app.post(f"/{config.abbr}/user/resendConfirmation")
+@app.post(f"/user/resendConfirmation")
 async def post_user_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
     """Resends confirmation email"""
 
@@ -63,7 +63,7 @@ async def post_user_resend_confirmation(request: Request, response: Response, au
 
     return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/user/email")
+@app.patch(f"/user/email")
 async def patch_user_email(request: Request, response: Response, authorization: str = Header(None)):
     """Updates email for the authorized user, returns 204
     
@@ -120,7 +120,7 @@ async def patch_user_email(request: Request, response: Response, authorization: 
 
     return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/user/discord")
+@app.patch(f"/user/discord")
 async def patch_user_discord(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Discord account connection for the authorized user, returns 204
     
@@ -183,7 +183,7 @@ async def patch_user_discord(request: Request, response: Response, authorization
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
     
-@app.patch(f"/{config.abbr}/user/steam")
+@app.patch(f"/user/steam")
 async def patch_user_steam(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Steam account connection for the authorized user, returns 204
     
@@ -267,7 +267,7 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
     
     return Response(status_code=204)
 
-@app.patch(f"/{config.abbr}/user/truckersmp")
+@app.patch(f"/user/truckersmp")
 async def patch_user_truckersmp(request: Request, response: Response, authorization: str = Header(None)):
     """Updates TruckersMP account connection for the authorized user, returns 204
     

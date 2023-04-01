@@ -17,7 +17,7 @@ cnlleaderboard = {}
 callusers = []
 callusers_ts = 0
 
-@app.get(f"/{config.abbr}/dlog/leaderboard")
+@app.get(f"/dlog/leaderboard")
 async def get_dlog_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = None, end_time: Optional[int] = None, \
