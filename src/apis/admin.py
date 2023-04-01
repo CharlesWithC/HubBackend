@@ -140,11 +140,11 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     for tt in new_config.keys():
         if tt in config_whitelist:
+            if tt == "tracker" and not new_config[tt] in ["tracksim"]:
+                response.status_code = 400
+                return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
+    
             if tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
-                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
-                    response.status_code = 400
-                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
-            elif tracker == "navio" and tt in ["tracker_api_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
@@ -165,6 +165,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     for garage in garages:
                         if "base_slots" in garage.keys() and isint(garage["base_slots"]):
                             if garage["base_slots"] > 10:
+                                response.status_code = 400
                                 return {"error": ml.tr(request, "value_too_large", var = {"item": "economy.garages.base_slots", "limit": "10"}, force_lang = au["language"])}
                 
             if tt in ["privacy", "must_join_guild", "use_server_nickname"]:

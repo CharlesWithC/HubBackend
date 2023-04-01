@@ -120,8 +120,6 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
         try:
             if config.tracker.lower() == "tracksim":
                 r = await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-            elif config.tracker.lower() == "navio":
-                r = await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
             if r.status_code == 401:
                 tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
             elif r.status_code // 100 != 2:
@@ -166,8 +164,6 @@ async def patch_member_roles(request: Request, response: Response, userid: int, 
         try:
             if config.tracker.lower() == "tracksim":
                 r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-            elif config.tracker.lower() == "navio":
-                r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
             if r.status_code == 401:
                 tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
             elif r.status_code // 100 != 2:
@@ -343,8 +339,6 @@ async def post_member_dismiss(request: Request, response: Response, userid: int,
     try:
         if config.tracker.lower() == "tracksim":
             r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-        elif config.tracker.lower() == "navio":
-            r = await arequests.delete(f"https://api.navio.app/v1/drivers/{steamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
         if r.status_code == 401:
             tracker_app_error = f"{TRACKERAPP} API Error: Invalid API Token"
         elif r.status_code // 100 != 2:

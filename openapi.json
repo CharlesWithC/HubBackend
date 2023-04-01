@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.3.0"
+        "version": "2.3.1"
     },
     "paths": {
         "/abbr": {
@@ -2081,42 +2081,6 @@
                 "responses": {}
             }
         },
-        "/abbr/navio": {
-            "post": {
-                "summary": "Navio Webhook",
-                "tags": ["tracker"],
-                "operationId": "post_navio",
-                "security": [{
-                    "bearerAuth": []
-                }],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "object": {
-                                        "description": "Object",
-                                        "type": "string"
-                                    },
-                                    "type": {
-                                        "description": "Type",
-                                        "type": "string"
-                                    },
-                                    "data": {
-                                        "description": "Data",
-                                        "type": "string"
-                                    }
-                                }
-                            },
-                            "required": ["object", "type", "data"]
-                        }
-                    }
-                },
-                "responses": {}
-            }
-        },
         "/abbr/announcement/list": {
             "get": {
                 "summary": "Get Announcement List",
@@ -3534,6 +3498,42 @@
                         "type": "string"
                     },
                     "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/balance/{userid}/transactions/export": {
+            "get": {
+                "summary": "Export Transaction History",
+                "tags": ["economy_balance"],
+                "operationId": "get_economy_balance_transaction_export",
+                "security": [{
+                    "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "path"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "After Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "after",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Before Timestamp",
+                        "type": "integer"
+                    },
+                    "name": "before",
                     "in": "query"
                 }],
                 "responses": {}

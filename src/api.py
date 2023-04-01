@@ -36,8 +36,6 @@ from apis.user import *
 
 if config.tracker.lower() == "tracksim":
     from apis.tracksim import *
-elif config.tracker.lower() == "navio":
-    from apis.navio import *
 
 # import plugins
 if "announcement" in config.enabled_plugins:
@@ -99,7 +97,7 @@ pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith(
 session_errs = []
 @app.middleware("http")
 async def http_middleware(request: Request, call_next):
-    if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim", "navio"]:
+    if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim"]:
         if "content-type" in request.headers.keys():
             if request.headers["content-type"] != "application/json":
                 return JSONResponse({"error": "Content-Type must be application/json."}, status_code=400)

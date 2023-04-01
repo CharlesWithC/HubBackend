@@ -3,9 +3,11 @@
 
 import math
 import time
+from io import BytesIO
 from typing import Optional
 
 from fastapi import Header, Request, Response
+from fastapi.responses import StreamingResponse
 
 import multilang as ml
 from app import app, config
@@ -134,6 +136,10 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
         to_userid = int(data["to_userid"])
         amount = int(data["amount"])
 
+        if amount > 4294967296:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "amount", "limit": "4,294,967,296"}, force_lang = au["language"])}
+        
         if "message" in data.keys():
             message = convertQuotation(data["message"])
         else:
@@ -254,13 +260,13 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
         from_userid: Optional[int] = None, to_userid: Optional[int] = None, \
         min_amount: Optional[int] = None, max_amount: Optional[int] = None, \
         order: Optional[str] = "desc", order_by: Optional[str] = "timestamp"):
-    '''Get user's transaction history.
+    '''Get a user's transaction history.
     
     [NOTE] This can only be viewed by balance manager and user. The user cannot make this info public.'''
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -337,6 +343,89 @@ async def get_economy_balance_userid_transaction_list(request: Request, response
         tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+
+
+@app.get(f"/{config.abbr}/economy/balance/{{userid}}/transactions/export")
+async def get_economy_balance_userid_transaction_export(request: Request, response: Response, userid: int, authorization: str = Header(None), after: Optional[int] = None, before: Optional[int] = None):
+    '''Export a user's transaction history.
+    
+    [NOTE] This can only be done by balance manager and user. The user cannot make this info public.'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions/export', 300, 3)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    if userid != -1000:
+        await aiosql.execute(dhrid, f"SELECT uid FROM user WHERE userid = {userid}")
+        t = await aiosql.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+    
+    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    permok = balance_manager_perm_ok or userid == au["userid"]
+
+    if not permok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "view_transaction_history_forbidden", force_lang = au["language"])}
+
+    limit = ""
+    if after is not None:
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
+
+    f = BytesIO()
+    f.write(b"txid, from_userid, to_userid, executor_userid, amount, message, from_new_balance, to_new_balance, time\n")
+
+    await aiosql.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY timestamp DESC")
+    t = await aiosql.fetchall(dhrid)
+    for tt in t:
+        note = tt[4].split("/")
+        executorid = int(note[1].split("-")[1])
+
+        from_userid = tt[1]
+        to_userid = tt[2]
+        if from_userid == -1000:
+            from_userid = "company"
+        if to_userid == -1000:
+            to_userid = "company"
+        
+        from_new_balance = tt[7]
+        to_new_balance = tt[8]
+        if not balance_manager_perm_ok:
+            if tt[1] != au["userid"] or from_new_balance is None:
+                from_new_balance = "/"
+            elif tt[2] != au["userid"] or to_new_balance is None:
+                to_new_balance = "/"
+
+        data = [tt[0], from_userid, to_userid, executorid, tt[3], tt[5], from_new_balance, to_new_balance, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(tt[8]))]
+        
+        for i in range(len(data)):
+            if data[i] is None:
+                data[i] = '""'
+            else:
+                data[i] = '"' + str(data[i]) + '"'
+        
+        f.write(",".join(data).encode("utf-8"))
+        f.write(b"\n")
+
+    response = StreamingResponse(iter([f.getvalue()]), media_type="text/csv")
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+    response.headers["Content-Disposition"] = "attachment; filename=transactions.csv"
+
+    return response
 
 @app.post(f"/{config.abbr}/economy/balance/{{userid}}/visibility/{{visibility}}")
 async def post_economy_balance_userid_visibility(request: Request, response: Response, userid: int, visibility: str, authorization: str = Header(None)):

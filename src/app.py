@@ -8,7 +8,7 @@ import time
 
 from fastapi import FastAPI
 
-version = "v2.3.0"
+version = "v2.3.1"
 
 config_path = os.environ["HUB_CONFIG_FILE"]
 
@@ -346,7 +346,7 @@ def validateConfig(cfg):
             try:
                 division["id"] = int(division["id"])
                 division["role_id"] = int(division["role_id"])
-                division["points"] = int(division["points"])
+                division["points"] = min(int(division["points"]), 2147483647)
                 newdivisions.append(division)
             except:
                 pass
@@ -359,7 +359,7 @@ def validateConfig(cfg):
         if "id" in truck.keys() and "brand" in truck.keys() and "model" in truck.keys() and "price" in truck.keys():
             try:
                 truck["id"] = truck["id"][len("vehicle."):] if truck["id"].startswith("vehicle.") else truck["id"]
-                truck["price"] = int(truck["price"])
+                truck["price"] = min(int(truck["price"]), 4294967296)
             except:
                 pass
             new_economy_trucks.append(truck)
@@ -373,9 +373,9 @@ def validateConfig(cfg):
             try:
                 garage["x"] = float(garage["x"])
                 garage["z"] = float(garage["z"])
-                garage["price"] = int(garage["price"])
+                garage["price"] = min(int(garage["price"]), 4294967296)
                 garage["base_slots"] = min(int(garage["base_slots"]), 10)
-                garage["slot_price"] = int(garage["slot_price"])
+                garage["slot_price"] = min(int(garage["slot_price"]), 4294967296)
             except:
                 pass
             new_economy_garages.append(garage)

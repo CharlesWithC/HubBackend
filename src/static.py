@@ -10,8 +10,6 @@ TF = {-1: False, 0: False, 1: True}
 TRACKERAPP = ""
 if config.tracker.lower() == "tracksim":
     TRACKERAPP = "TrackSim"
-elif config.tracker.lower() == "navio":
-    TRACKERAPP = "Navio"
 
 ROLES = {}
 sroles = config.roles

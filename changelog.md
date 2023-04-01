@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.3.1**  
+1.Created a tool to automatically fix ultra-high User ID / UID  
+2.Removed support of navio due to truckspace shutdown  
+3.Added audit log and notification for blocked deliveries  
+4.Added economy transaction history export  
+5.Added economy transaction amount limit and trucks/garages price limit  
+
 **v2.3.0**  
 1.Added `economy` plugin  
 2.Bug fixes and improvements  

@@ -243,9 +243,6 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
                 if config.tracker.lower() == "tracksim":
                     await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
                     await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-                elif config.tracker.lower() == "navio":
-                    await arequests.delete(f"https://api.navio.app/v1/drivers/{orgsteamid}", headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post("https://api.navio.app/v1/drivers", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Bearer " + config.tracker_api_token}, dhrid = dhrid)
             except:
                 traceback.print_exc()
 

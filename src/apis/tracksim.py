@@ -232,13 +232,14 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE steamid = {steamid}")
+    await aiosql.execute(dhrid, f"SELECT userid, name, uid FROM user WHERE steamid = {steamid}")
     t = await aiosql.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": "User not found."}
     userid = t[0][0]
     username = t[0][1]
+    uid = t[0][2]
     trackerid = d["data"]["object"]["id"]
 
     duplicate = False # NOTE only for debugging purpose
@@ -315,6 +316,9 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             pass
         
     if not delivery_rule_ok:
+        await AuditLog(dhrid, uid, ml.ctr(f"delivery_blocked_due_to_rules", var = {"tracker": TRACKERAPP, "trackerid": trackerid}))
+        await notification(dhrid, "dlog", uid, ml.tr(f"delivery_blocked_due_to_rules", var = {"tracker": TRACKERAPP, "trackerid": trackerid}, force_lang = await GetUserLanguage(dhrid, uid)))
+        response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 
     if not duplicate:

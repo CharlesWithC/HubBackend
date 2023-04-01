@@ -22,7 +22,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/export', 600, 3)
+    rl = await ratelimit(dhrid, request, 'GET /dlog/export', 300, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -262,6 +262,6 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
     response = StreamingResponse(iter([f.getvalue()]), media_type="text/csv")
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+    response.headers["Content-Disposition"] = "attachment; filename=dlog.csv"
 
     return response

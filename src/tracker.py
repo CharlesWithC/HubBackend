@@ -160,8 +160,6 @@ while 1:
     try:
         if config.tracker == "tracksim":
             asyncio.run(work("wss://gateway.tracksim.app"))
-        elif config.tracker == "navio":
-            asyncio.run(work("wss://gateway.navio.app"))
     except:
         time.sleep(3)
         pass
