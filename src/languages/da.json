@@ -14,9 +14,8 @@
     "application_token_not_allowed": "Adgang nægtet: Applikationstoken er ikke tilladt.",
     "access_sensitive_data": "Adgang nægtet: Du har adgang til følsomme data, og du skal logge ind med Discord, Steam eller aktivere MFA for at beskytte din konto.",
     "mfa_required": "Adgang nægtet: Du skal aktivere MFA og angive OTP for at få adgang til dette slutpunkt.",
-
-    "ban_with_expire": "Brugeren er udelukket indtil {expire} UTC.",
-    "ban_with_reason_expire": "Brugeren er udelukket af {reason} indtil {expire} UTC.",
+    "ban_with_expire": "Du er udelukket indtil {expire} UTC",
+    "ban_with_reason_expire": "Du er udelukket i {reason} indtil {expire} UTC",
     "user_in_guild_check_failed": "Kunne ikke kontrollere, om brugeren er i Discord-serveren.",
     "current_user_in_guild_check_failed": "Kunne ikke kontrollere, om du er i Discord-serveren.",
     "user_didnt_join_discord": "Brugeren tilsluttede sig ikke Discord-serveren.",
@@ -33,12 +32,12 @@
     "avatar_domain_not_whitelisted": "Avatarens domæne er ikke hvidlistet.",
     "smtp_configuration_invalid": "SMTP-konfigurationen er ugyldig, kan ikke sende e-mail.",
     "auth_secret_invalid_or_expired": "Autorisationshemmeligheden er ugyldig eller er udløbet.",
-
     "connection_not_found": "{app}-kontoen er ikke forbundet.",
+
     "connection_conflict": "{app}-konto er allerede forbundet til en anden bruger.",
     "connection_invalid": "Kontoforbindelsen til {app} er ugyldig.",
-
     "dismiss_before_ban": "Medlem skal afskediges før udelukkelse.",
+
     "dismiss_before_delete_connections": "Medlem skal afskediges, før kontoforbindelser slettes.",
     "dismiss_before_delete": "Medlem skal afskediges, før kontoen slettes.",
     "resign_before_delete": "Du skal sige op, før du sletter konto.",
@@ -46,28 +45,28 @@
     "user_not_banned": "Brugeren er ikke forbudt.",
     "unable_to_dm": "Vi kan ikke sende dig en DM i Discord.",
     "custom_profile_disabled": "Tilpasset profil er deaktiveret.",
-
     "steam_api_error": "Steam API er utilgængelig.",
+
     "steam_api_key_not_configured": "Steam API-nøgle er ikke konfigureret.",
     "invalid_steam_auth": "Ugyldig Steam-godkendelse.",
     "invalid_truckersmp_id": "Ugyldigt TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API er utilgængelig.",
     "must_connect_steam_before_truckersmp": "Steam-kontoen skal være forbundet, før TruckersMP-kontoen tilsluttes.",
     "truckersmp_steam_mismatch": "Steam-konto forbundet til TruckersMP-bruger {truckersmp_name} ({truckersmpid}) matcher ikke din Steam-konto.",
-
     "user_not_found": "Brugeren blev ikke fundet.",
+
     "member_not_found": "Medlemet blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Forbudte brugere kan ikke accepteres som medlemmer.",
-    "user_is_user_is_already_member": "Brugeren er allerede medlem.",
-    "new_discord_new_discord_user_must_not_be_member": "Den nye Discord-konto må ikke være forbundet med et medlem.",
+    "user_is_already_member": "Brugeren er allerede medlem.",
+    "new_discord_user_must_not_be_member": "Den nye Discord-konto må ikke være forbundet til et medlem.",
     "user_position_higher_or_equal": "Brugerens højeste rolle er højere end eller lig med dig.",
     "add_role_higher_or_equal": "En eller flere roller for brugeren, der skal tilføjes, er højere / lig med din højeste rolle.",
     "remove_role_higher_or_equal": "En eller flere roller for brugeren, der skal fjernes, er højere / lig med din højeste rolle.",
     "only_division_staff_allowed": "Kun divisionspersonale og administrator har tilladelse til at administrere divisionsroller.",
     "already_have_rank_role": "Rangrollen er allerede givet i Discord.",
     "losing_admin_permission": "Rolleopdatering afvist: Du mister administratorrettigheder ved at fjerne en eller flere roller.",
-
     "delivery": "Levering",
+
     "driver": "chauffør",
     "truck": "Lastbil",
     "cargo": "Last",
@@ -80,8 +79,8 @@
     "single_player": "Enkeltspiller",
     "scs_convoy": "SCS konvoj",
     "delivery_log_not_found": "Leverings log blev ikke fundet.",
-
     "invalid_distance_unit": "Ugyldig afstandsenhed. Kun \"metric\" og \"imperial\" accepteres.",
+
     "invalid_value": "Ugyldig værdi for {key}",
     "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
     "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
@@ -93,12 +92,12 @@
     "config_invalid_permission_admin_protection": "Tilladelsesopdatering afvist: Ny \"admin\"-tilladelse inkluderer ikke nogen rolle, som den nuværende bruger har.",
     "discord_integrations_disabled": "Discord-integrationer er blevet deaktiveret midlertidigt på grund af ugyldigt Discord Bot-token.",
     "discord_api_inaccessible": "Discord API er utilgængelig.",
-
     "announcement_not_found": "Bekendtgørelse ikke funder.",
+
     "announcement_only_creator_can_edit": "Kun forfatteren af ​​meddelelsen eller en administrator kan redigere den.",
     "announcement_only_creator_can_delete": "Kun forfatteren af ​​meddelelsen eller en administrator kan slette den.",
-
     "unknown_application_type": "Ukendt applikationstype",
+
     "status": "Status",
     "time": "Tid",
     "message": "Besked",
@@ -106,8 +105,8 @@
     "pending": "Afventer",
     "accepted": "Accepteret",
     "declined": "Afvist",
-
     "application_not_found": "Applikation blev ikke fundet.",
+
     "no_permission_to_application_type": "Du har ikke tilladelse til at få adgang til denne type applikation.",
     "drivers_not_allowed_to_create_driver_application": "Eksisterende drivere har ikke tilladelse til at oprette nye driverapplikationer.",
     "must_be_driver_to_submit_division_application": "Du skal være chauffør, før du indsender en opdelingsansøgning.",
@@ -119,8 +118,8 @@
     "application_already_accepted": "Ansøgningen er allerede accepteret",
     "application_already_declined": "Ansøgningen er allerede afvist",
     "application_already_processed": "Ansøgningen er allerede behandlet, status ukendt.",
-
     "start_time_must_be_earlier_than_end_time": "Starttidspunktet skal være tidligere end sluttidspunktet.",
+
     "invalid_challenge_type": "Ugyldig udfordringstype.",
     "invalid_required_roles": "Ugyldige påkrævede roller.",
     "invalid_reward_points": "Belønningspoint må ikke være negative.",
@@ -130,19 +129,19 @@
     "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
     "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
     "maximum_15_active_challenge": "Der kan højst være 15 aktive udfordringer på samme tid.",
-
     "only_delivery_submitter_can_request_division_validation": "Kun den bruger, der gennemførte leveringen, har tilladelse til at indsende anmodning om divisionsvalidering.",
+
     "division_already_requested": "Der er allerede indsendt en anmodning om validering af division.",
     "division_already_validated": "Leveringen er blevet valideret.",
     "division_already_denied": "Leveringen er blevet afvist, og du har ikke lov til at anmode om validering igen.",
     "not_division_driver": "Du er ikke en chauffør for divisionen.",
     "division_validation_not_found": "Anmodning om validering af en divisions levering blev ikke fundet.",
     "division_not_validated": "Denne levering er ikke valideret af en divisionssupervisor.",
-
     "downloads_not_found": "Downloadbar element blev ikke fundet.",
-    "downloads_invalid_link": "Ugyldigt link.",
 
+    "downloads_invalid_link": "Ugyldigt link.",
     "event_not_found": "Begivenhed ikke fundet.",
+
     "event_notification": "Begivenhedsmeddelelse",
     "event_notification_description": "En begivenhed, som du har stemt, starter snart!",
     "event_not_voted": "Du har ikke stemt på begivenheden!",
@@ -152,8 +151,52 @@
     "destination": "Destination",
     "meetup_time": "Mødetid",
     "departure_time": "Afgangstid",
+    "garage": "garage",
 
+    "garage_slot": "garageplads",
+    "economy_truck": "lastbil",
+    "purchase_forbidden": "Du har ikke lov at købe en {item}.",
+    "purchase_company_forbidden": "Du har ikke tilladelse til at købe en {item} til virksomheden.",
+    "modify_forbidden": "Du har ikke tilladelse til at ændre {item}.",
+    "truck_not_found": "Lastbil ikke fundet.",
+    "truck_history_forbidden": "Du har ikke adgang til lastbilens historiedata.",
+    "invalid_owner": "Ugyldig ejer.",
+    "insufficient_balance": "Utilstrækkelig saldo.",
+    "garage_slot_not_found": "Garageplads ikke fundet.",
+    "garage_slot_occupied": "Garageplads optaget.",
+    "new_owner_conflict": "Den nye ejer må ikke være den samme som den nuværende ejer.",
+    "truck_repair_required": "Lastbilen skal repareres før den kan aktiveres.",
+    "truck_scrap_required": "Lastbilen har nået sin kilometergrænse og skal skrottes.",
+    "truck_scrap_unncessary": "Lastbilen er langt fra sin kilometergrænse og kan ikke skrottes.",
+    "company": "Virksomhed",
+    "dealership": "Forhandler",
+    "garage_agency": "Garagebureau",
+    "client": "Klient",
+    "service_station": "Servicestation",
+    "blackhole": "Sort hul",
+    "inactive": "Inaktiv",
+    "active": "Aktiv",
+    "scrapped": "Skrottet",
+    "garage_not_found": "Garage ikke fundet.",
+    "garage_already_purchased": "Garagen er allerede købt af nogen. Du kan kun købe pladser i garagen.",
+    "garage_not_purchased_before_purchase_slots": "Garagen er endnu ikke købt. Du skal købe garagen, før du køber dens pladser.",
+    "garage_not_purchased": "Garagen er endnu ikke købt.",
+    "garage_has_slots": "Der er yderligere pladser i garagen, og de skal sælges, før garagen kan sælges. ",
+    "garage_has_truck": "Der er en lastbil parkeret i garagen, og de skal flyttes, før garagen kan sælges.",
+    "garage_slot_is_base_slot": "Den plads, der skal sælges, er inkluderet i basispakken, da garagen blev købt. . Den kan kun sælges ved at sælge garagen.",
+    "garage_slot_has_truck": "Der er en lastbil parkeret i garagepladsen, og de skal flyttes før pladsen kan sælges.",
+    "modify_company_balance_forbidden": "Du må ikke manipulere virksomhedens saldo.",
+    "modify_user_balance_forbidden": "Du har ikke lov til at manipulere andre brugeres saldo.",
+    "amount_must_be_positive": "Overførselsbeløbet skal være et positivt heltal.",
+    "from_user_not_found": "Afsenderbrugeren blev ikke fundet. ",
+    "to_user_not_found": "Modtagerbrugeren blev ikke fundet.",
+    "view_balance_forbidden": "Du har ikke tilladelse til at se brugerens saldo.",
+    "view_transaction_history_forbidden": "Du har ikke tilladelse til at se brugerens transaktionshistorik.",
+    "modify_balance_visibility_forbidden": "Du har ikke tilladelse til at ændre synligheden af brugerens balance.",
+    "balance_visibility_already_public": "Brugerens saldo er allerede offentlig.",
+    "balance_visibility_already_private": "Brugerens saldo er allerede privat.",
     "notification": "Meddelelse",
+
     "notification_not_found": "Meddelelse ikke fundet.",
     "discord_notification_enabled": "Du har aktiveret Discord-meddelelser!",
     "new_login": "Nyt login fra `{country}` (`{ip}`)",
@@ -206,8 +249,12 @@
     "challenge_uncompleted_lost_points": "Udfordringen `{title}` (Udfordrings-id: `{challengeid}`) er ikke længere fuldført: Du har mistet `{points}` point.",
     "one_personal_recurring_challenge_uncompleted": "1x fuldført status for tilbagevendende personlig udfordring `{title}` (Udfordrings-id: `{challengeid}`) er fjernet: Du mistede `{points}` point.",
     "one_personal_recurring_challenge_uncompleted_still_have_points": "1x fuldført status for tilbagevendende personlig udfordring `{title}` (Udfordrings-id: `{challengeid}`) er fjernet: Du mistede `{points}` point. Du fik stadig `{total_points}` point fra udfordring.",
-
+    "economy_transaction_message": "**Meddelelse**: {message}",
+    "economy_message_for_delivery": "Til levering `#{logid}`",
+    "economy_sent_transaction": "Du sendte **{amount} {currency_name}** til `{to_user}` (Bruger ID: `{to_userid}`).{message}",
+    "economy_received_transaction": "`{from_user}` (Bruger ID: `{from_userid}`) sendt **{amount} {currency_name}** til dig.{message}",
     "system": "System",
+
     "protected": "Beskyttet",
     "unknown": "Ukendt",
     "unknown_user": "Ukendt bruger",
@@ -266,5 +313,15 @@
     "removed_attendees": "Fjernede deltagere - Fjernede `{points}` point fra",
     "added_event_points": "Opdaterede punkter - Tilføjede `{points}` peger på",
     "removed_event_points": "Opdaterede punkter - Fjernede `{points}`-punkter fra",
-    "no_changes_made": "Ingen ændringer foretaget."
+    "no_changes_made": "Ingen ændringer foretaget.",
+    "purchased_truck": "Købt lastbil `{name}` (ID: `{id} `) for `{username}` (bruger-id: `{userid}`).",
+    "transferred_truck": "Overførte lastbil `#{id}` til `{username}` (bruger-id: `{userid}`) .",
+    "reassigned_truck": "Omtildelte lastbil `#{id}` til `{username}` (bruger-id: `{userid}`).",
+    "removed_truck_assignee": "Fjernet tildelt af lastbil `#{id}` .",
+    "unknown_garage": "Ukendt garage",
+    "relocated_truck": "Flyttet lastbil `#{id}` til `{garage}` (ID: `{garageid}`) slot `#{slotid}`.",
+    "transferred_garage": "Overførte garage `{garage}` (ID: `{id}`) til `{username}` (Bruger ID: `{userid}`).",
+    "transferred_slot": "Overført garageplads `# {id}` til `{username}` (Bruger ID: `{userid}`).",
+    "sold_garage": "Solgt garage `{garage}` (ID: `{id}`), som ejes af `{username}` (Bruger ID: `{userid}`).",
+    "sold_slot": "Solgt slot `#{id}` som ejes af `{username}` (Bruger ID: `{userid}`)."
 }

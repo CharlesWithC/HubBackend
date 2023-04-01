@@ -119,7 +119,10 @@ async def get_auth_discord_callback(request: Request, code: Optional[str] = "", 
                     expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
                 else:
                     expire = ml.tr(request, "forever")
-                return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+                if reason != "":
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+                else:
+                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
             
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":

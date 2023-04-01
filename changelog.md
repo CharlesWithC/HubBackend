@@ -1,7 +1,8 @@
 # Changelog
 
 **v2.3.0**  
-Added `economy` plugin  
+1.Added `economy` plugin  
+2.Bug fixes and improvements  
 
 **v2.2.4**  
 1.Fixed `db` creating `ratelimit` TABLE with `ip` COLUMN rather than `identifier` COLUMN  

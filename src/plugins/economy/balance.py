@@ -12,11 +12,10 @@ from app import app, config
 from db import aiosql
 from functions import *
 
-# TODO Export transaction history to .csv
 
 @app.get(f"/{config.abbr}/economy/balance/leaderboard")
 async def get_economy_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 20, \
+        page: Optional[int] = 1, page_size: Optional[int] = 20, exclude_company: Optional[bool] = True, \
         min_balance: Optional[int] = None, max_balance: Optional[int] = None, order: Optional[str] = "desc"):
     '''Get balance leaderboard.
     
@@ -43,6 +42,8 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
         limit += f"AND balance >= {min_balance} "
     if max_balance is not None:
         limit += f"AND balance <= {max_balance} "
+    if exclude_company:
+        limit += f"AND userid >= 0 "
 
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
@@ -61,6 +62,8 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
         public_userids.append(int(tt[0]))
     if public_userids.count(au["userid"]) == 2:
         public_userids.remove(au["userid"])
+    if exclude_company:
+        public_userids.remove(-1000)
     
     await aiosql.execute(dhrid, f"SELECT userid, balance FROM economy_balance WHERE (userid >= 0 OR userid = -1000) AND balance > 0 {limit} ORDER BY balance {order}")
     t = await aiosql.fetchall(dhrid)
@@ -89,6 +92,7 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
     for dd in d:
         if (min_balance is None or dd[1] >= min_balance) and (max_balance is None or dd[1] <= max_balance):
             p.append(dd)
+    tot = len(p)
 
     # select only those in page
     d = p[page_size*(page-1):page_size*page]
@@ -98,7 +102,7 @@ async def get_economy_balance_leaderboard(request: Request, response: Response, 
     for dd in d:
         ret.append({"user": await GetUserInfo(dhrid, request, userid = dd[0]), "balance": dd[1]})
 
-    return {"list": ret, "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
+    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 @app.post(f"/{config.abbr}/economy/balance/transfer")
 async def post_economy_balance_transfer(request: Request, response: Response, authorization: str = Header(None)):
@@ -162,7 +166,7 @@ async def post_economy_balance_transfer(request: Request, response: Response, au
         t = await aiosql.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
-            return {"error": ml.tr(request, "from_user_not_found", force_lang = au["language"])}
+            return {"error": ml.tr(request, "to_user_not_found", force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {from_userid} FOR UPDATE")
     from_balance = nint(await aiosql.fetchone(dhrid))

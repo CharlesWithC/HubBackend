@@ -14,9 +14,8 @@
     "application_token_not_allowed": "Acceso denegado: el token de la aplicación no está permitido.",
     "access_sensitive_data": "Acceso denegado: estás accediendo a datos confidenciales y debes iniciar sesión con Discord, Steam o habilitar MFA para proteger tu cuenta.",
     "mfa_required": "Acceso denegado: debe habilitar MFA y proporcionar OTP para acceder a este extremo.",
-
-    "ban_with_expire": "El usuario está prohibido {duration}.",
-    "ban_with_reason_expire": "El usuario está prohibido por {reason} {duration}.",
+    "ban_with_expire": "Está prohibido hasta las {expire} UTC",
+    "ban_with_reason_expire": "Está prohibido durante {reason} hasta las {expire} UTC",
     "user_in_guild_check_failed": "No se pudo comprobar si el usuario está en el servidor de Discord.",
     "current_user_in_guild_check_failed": "No se pudo comprobar si estás en el servidor de Discord.",
     "user_didnt_join_discord": "El usuario no se unió al Servidor de Discord.",
@@ -33,12 +32,12 @@
     "avatar_domain_not_whitelisted": "El dominio del avatar no está en la lista blanca.",
     "smtp_configuration_invalid": "La configuración de SMTP no es válida, no se puede enviar el correo electrónico.",
     "auth_secret_invalid_or_expired": "El secreto de autorización no es válido o ha caducado.",
-
     "connection_not_found": "La cuenta {app} no está conectada.",
+
     "connection_conflict": "La cuenta {app} ya está conectada a otro usuario.",
     "connection_invalid": "La conexión de la cuenta {app} no es válida.",
-
     "dismiss_before_ban": "El miembro debe ser despedido antes de ser baneado.",
+
     "dismiss_before_delete_connections": "El miembro debe ser descartado antes de eliminar las conexiones de la cuenta.",
     "dismiss_before_delete": "El miembro debe ser despedido antes de eliminar la cuenta.",
     "resign_before_delete": "Debes renunciar antes de eliminar la cuenta.",
@@ -46,28 +45,28 @@
     "user_not_banned": "El usuario no está baneado.",
     "unable_to_dm": "No podemos enviarle un mensaje directo en Discord.",
     "custom_profile_disabled": "El perfil personalizado está deshabilitado.",
-
     "steam_api_error": "No se puede acceder a la API de Steam.",
+
     "steam_api_key_not_configured": "La clave API de Steam no está configurada.",
     "invalid_steam_auth": "Autenticación de Steam no válida.",
     "invalid_truckersmp_id": "ID de TruckersMP no válido.",
     "truckersmp_api_error": "No se puede acceder a la API de TruckersMP.",
     "must_connect_steam_before_truckersmp": "La cuenta de Steam debe estar conectada antes de conectar la cuenta de TruckersMP.",
     "truckersmp_steam_mismatch": "La cuenta de Steam conectada al usuario de TruckersMP {truckersmp_name} ({truckersmpid}) no coincide con su cuenta de Steam.",
-
     "user_not_found": "Usuario no encontrado.",
+
     "member_not_found": "No se ha encontrado un miembro.",
     "banned_user_cannot_be_accepted": "Los usuarios prohibidos no pueden ser aceptados como miembros.",
-    "user_is_user_is_already_member": "El usuario ya es miembro.",
-    "new_discord_new_discord_user_must_not_be_member": "La nueva cuenta de Discord no debe estar conectada a un miembro.",
+    "user_is_already_member": "El usuario ya es miembro",
+    "new_discord_user_must_not_be_member": "La nueva cuenta de Discord no debe estar conectada a un miembro",
     "user_position_higher_or_equal": "El rol más alto del usuario es superior o igual a ti.",
     "add_role_higher_or_equal": "Uno o más roles del usuario para agregar es mayor/igual que su rol más alto.",
     "remove_role_higher_or_equal": "Uno o más roles del usuario a eliminar son mayores/iguales que su rol más alto.",
     "only_division_staff_allowed": "Solo el personal de la división y el administrador pueden administrar los roles de la división.",
     "already_have_rank_role": "El rol de rango ya se ha dado en Discord.",
     "losing_admin_permission": "Actualización de rol rechazada: perderá el permiso de administrador al eliminar uno o más roles.",
-
     "delivery": "Entrega",
+
     "driver": "Conductor",
     "truck": "Camión",
     "cargo": "Carga",
@@ -80,8 +79,8 @@
     "single_player": "Un jugador",
     "scs_convoy": "Convoy SCS",
     "delivery_log_not_found": "No se ha encontrado el registro de entrega.",
-
     "invalid_distance_unit": "Unidad de distancia no válida. Solo se aceptan “métricos” e “imperial”.",
+
     "invalid_value": "Valor no válido para {key}",
     "config_invalid_value": "Valor no válido para \"{item}\": no debe estar vacío.",
     "config_invalid_distance_unit": "Valor no válido para \"distance_unit\": debe ser \"métrico\" o \"imperial\".",
@@ -93,12 +92,12 @@
     "config_invalid_permission_admin_protection": "Actualización de permiso rechazada: el nuevo permiso \"admin\" no incluye ninguna función que tenga el usuario actual.",
     "discord_integrations_disabled": "Las integraciones de Discord se han deshabilitado temporalmente debido a un token de bot no válido.",
     "discord_api_inaccessible": "La API de Discord es inaccesible.",
-
     "announcement_not_found": "Anuncio no encontrado.",
+
     "announcement_only_creator_can_edit": "Solo el autor del anuncio o un administrador puede editarlo.",
     "announcement_only_creator_can_delete": "Solo el autor del anuncio o un administrador puede eliminarlo.",
-
     "unknown_application_type": "Tipo de aplicación desconocido",
+
     "status": "Estado",
     "time": "Hora",
     "message": "Mensaje",
@@ -106,8 +105,8 @@
     "pending": "Pendiente",
     "accepted": "Aceptado",
     "declined": "Declinado",
-
     "application_not_found": "Aplicación no encontrada.",
+
     "no_permission_to_application_type": "No tienes permiso para acceder a este tipo de aplicación.",
     "drivers_not_allowed_to_create_driver_application": "Los controladores existentes no pueden crear nuevas aplicaciones de controladores.",
     "must_be_driver_to_submit_division_application": "Debe ser conductor antes de enviar una solicitud de división.",
@@ -119,8 +118,8 @@
     "application_already_accepted": "La solicitud ya fue aceptada",
     "application_already_declined": "La solicitud ya fue rechazada",
     "application_already_processed": "La solicitud ya está procesada, estado desconocido.",
-
     "start_time_must_be_earlier_than_end_time": "La hora de inicio debe ser anterior a la hora de finalización.",
+
     "invalid_challenge_type": "Tipo de desafío no válido.",
     "invalid_required_roles": "Roles requeridos no válidos.",
     "invalid_reward_points": "Los puntos de recompensa no deben ser negativos.",
@@ -130,19 +129,19 @@
     "challenge_delivery_not_found": "La entrega no se acepta para el desafío.",
     "challenge_delivery_already_accepted": "La entrega ya se aceptó para el desafío.",
     "maximum_15_active_challenge": "Puede haber un máximo de 15 desafíos activos al mismo tiempo.",
-
     "only_delivery_submitter_can_request_division_validation": "Solo el usuario que completó la entrega puede enviar una solicitud de validación de división.",
+
     "division_already_requested": "Ya se envió una solicitud de validación de división.",
     "division_already_validated": "La entrega ya ha sido validada.",
     "division_already_denied": "La entrega ha sido denegada y no puedes volver a solicitar la validación.",
     "not_division_driver": "No eres un conductor de la división.",
     "division_validation_not_found": "No se ha encontrado la solicitud de validación de la división de entrega.",
     "division_not_validated": "Esta entrega no está validada por un supervisor de división.",
-
     "downloads_not_found": "Elemento descargable no encontrado.",
-    "downloads_invalid_link": "Enlace no válido.",
 
+    "downloads_invalid_link": "Enlace no válido.",
     "event_not_found": "Evento no encontrado.",
+
     "event_notification": "Notificación de eventos",
     "event_notification_description": "¡Un evento que has votado comenzará pronto!",
     "event_not_voted": "¡No has votado el evento!",
@@ -152,8 +151,52 @@
     "destination": "Destino",
     "meetup_time": "Hora de encuentro",
     "departure_time": "Hora de salida",
+    "garage": "garaje",
 
+    "garage_slot": "plaza de garaje",
+    "economy_truck": "camión",
+    "purchase_forbidden": "No tiene permitido comprar un {item}.",
+    "purchase_company_forbidden": "Usted está no se le permite comprar un {item} para la empresa.",
+    "modify_forbidden": "No se le permite modificar el {item}.",
+    "truck_not_found": "Camión no encontrado.",
+    "truck_history_forbidden": "Usted no no tiene acceso a los datos del historial del camión.",
+    "invalid_owner": "Propietario no válido.",
+    "insufficient_balance": "Saldo insuficiente. ocupado.",
+    "garage_slot_not_found": "Plaza de garaje no encontrada.",
+    "garage_slot_occupied": "Plaza de garaje ocupada.",
+    "new_owner_conflict": "El nuevo propietario no debe ser el mismo que el propietario actual.",
+    "truck_repair_required": "El camión debe repararse antes de poder activarlo.",
+    "truck_scrap_required": "El camión ha alcanzó su límite de kilometraje y debe ser desechado.",
+    "truck_scrap_unncessary": "El camión está lejos de su límite de kilometraje y no se puede desguazar.",
+    "company": "Compañía",
+    "dealership": "Concesionario",
+    "garage_agency": "Agencia de Taller",
+    "client": "Cliente",
+    "service_station": "Estación de servicio",
+    "blackhole": "Agujero negro",
+    "inactive": "Inactivo",
+    "active": "Activo",
+    "scrapped": "Desguazado",
+    "garage_not_found": "Garaje no encontrado.",
+    "garage_already_purchased": "Alguien ya compró el garaje. Solo puedes comprar espacios del garaje.",
+    "garage_not_purchased_before_purchase_slots": "El garaje aún no se ha comprado. Debe comprar el garaje antes de comprar sus espacios.",
+    "garage_not_purchased": "El garaje aún no se ha comprado.",
+    "garage_has_slots": "Hay espacios adicionales en el garaje y deben venderse antes de poder vender el garaje. ",
+    "garage_has_truck": "Hay un camión estacionado en el garaje y deben reubicarse antes de poder vender el garaje.",
+    "garage_slot_is_base_slot": "La ranura que se venderá está incluida en el paquete base cuando se compró el garaje . Solo se puede vender vendiendo el garaje.",
+    "garage_slot_has_truck": "Hay un camión estacionado en el espacio del garaje y debe reubicarse antes de que se pueda vender el espacio.",
+    "modify_company_balance_forbidden": "No está permitido manipular el saldo de la empresa.",
+    "modify_user_balance_forbidden": "No está permitido manipular el saldo de otros usuarios.",
+    "amount_must_be_positive": "El monto de la transferencia debe ser un número entero positivo.",
+    "from_user_not_found": "Usuario remitente no encontrado. ",
+    "to_user_not_found": "Usuario destinatario no encontrado.",
+    "view_balance_forbidden": "No tiene permiso para ver el saldo del usuario.",
+    "view_transaction_history_forbidden": "No tiene permiso para ver el historial de transacciones del usuario.",
+    "modify_balance_visibility_forbidden": "No tienes permiso para modificar la visibilidad del balance del usuario.",
+    "balance_visibility_already_public": "El saldo del usuario ya es público.",
+    "balance_visibility_already_private": "El saldo del usuario ya es privado.",
     "notification": "Notificación",
+
     "notification_not_found": "Notificación no encontrada.",
     "discord_notification_enabled": "¡Has habilitado las notificaciones de Discord!",
     "new_login": "Nuevo inicio de sesión desde `{country}` (`{ip}`)",
@@ -206,8 +249,12 @@
     "challenge_uncompleted_lost_points": "Desafío `{title}` (ID del desafío: `{challengeid}`) ya no se ha completado: Perdiste `{points}` puntos.",
     "one_personal_recurring_challenge_uncompleted": "1x estado completado de desafío personal recurrente `{title}` (ID del desafío: `{challengeid}`) se elimina: Has perdido `{points}` puntos.",
     "one_personal_recurring_challenge_uncompleted_still_have_points": "1x estado completado de desafío personal recurrente `{title}` (ID del desafío: `{challengeid}`) se elimina: Has perdido `{points}` puntos. Todavía tienes `{total_points}` puntos del desafío.",
-
+    "economy_transaction_message": "**Mensaje**: {message}",
+    "economy_message_for_delivery": "Para entrega `#{logid}`",
+    "economy_sent_transaction": "Usted envió **{amount} {currency_name}** a `{to_user} ` (ID de usuario: `{to_userid}`).{message}",
+    "economy_received_transaction": "`{from_user}` (ID de usuario: `{from_userid}`) le envió **{amount} {currency_name}** .{message}",
     "system": "Sistema",
+
     "protected": "Protegido",
     "unknown": "Desconocido",
     "unknown_user": "Usuario Desconocido",
@@ -266,5 +313,15 @@
     "removed_attendees": "Asistentes eliminados - Puntos `{points}` eliminados de",
     "added_event_points": "Puntos actualizados - Se agregaron `{points}` puntos a",
     "removed_event_points": "Puntos actualizados - Puntos `{points}` eliminados de",
-    "no_changes_made": "No se realizaron cambios."
+    "no_changes_made": "No se realizaron cambios.",
+    "purchased_truck": "Camión comprado `{name}` (ID: `{id}`) para `{username}` (ID de usuario: `{userid}`).",
+    "transferred_truck": "Camión transferido `#{id}` a `{username}` (ID de usuario: `{userid}`).",
+    "reassigned_truck": "Reasignado camión #{id} a {username} (ID de usuario: {userid}).",
+    "removed_truck_assignee": "Se eliminó el cesionario del camión `#{id}`.",
+    "unknown_garage": "Garaje desconocido",
+    "relocated_truck": "Camión reubicado `#{id}` a `{garage}` (ID: `{garageid}`) espacio `#{slotid}`.",
+    "transferred_garage": "Garaje transferido `{garage}` (ID: `{id}`) a `{username}` (ID de usuario: `{userid}`).",
+    "transferred_slot": "Lugar de garaje transferido `#{id}` a `{username}` (ID de usuario: `{userid}`).",
+    "sold_garage": "Se vendió el garaje {garage} (ID: {id}) que es propiedad de {username} (ID de usuario: {userid}).",
+    "sold_slot": "Vendido espacio `# {id}` que es propiedad de `{username}` (ID de usuario: `{userid}`)."
 }

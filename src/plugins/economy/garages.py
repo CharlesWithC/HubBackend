@@ -15,7 +15,22 @@ from plugins.economy.trucks import GetTruckInfo
 
 
 @app.get(f"/{config.abbr}/economy/garages")
-async def get_economy_garages():
+async def get_economy_garages(request: Request, response: Response, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/garages', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
     return config.economy.garages
 
 @app.get(f"/{config.abbr}/economy/garages/list")

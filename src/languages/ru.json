@@ -14,9 +14,8 @@
     "application_token_not_allowed": "Доступ запрещен: токен приложения не разрешен.",
     "access_sensitive_data": "Доступ запрещен: вы получаете доступ к конфиденциальным данным, и вы должны войти в систему с помощью Discord, Steam или включить MFA, чтобы защитить свою учетную запись.",
     "mfa_required": "Доступ запрещен: вам необходимо включить MFA и предоставить одноразовый пароль для доступа к этой конечной точке.",
-
-    "ban_with_expire": "Пользователь забанен {reason}.",
-    "ban_with_reason_expire": "Пользователь забанен по {reason} {duration}.",
+    "ban_with_expire": "Вы забанены до {expire} UTC",
+    "ban_with_reason_expire": "Вы забанены на {reason} до {expire} UTC",
     "user_in_guild_check_failed": "Не удалось проверить, находится ли пользователь на сервере Discord.",
     "current_user_in_guild_check_failed": "Не удалось проверить, находитесь ли вы на сервере Discord.",
     "user_didnt_join_discord": "Пользователь не присоединился к серверу Discord.",
@@ -33,12 +32,12 @@
     "avatar_domain_not_whitelisted": "Домен аватара не внесен в белый список.",
     "smtp_configuration_invalid": "Конфигурация SMTP недействительна, невозможно отправить электронное письмо.",
     "auth_secret_invalid_or_expired": "Секрет авторизации недействителен или срок его действия истек.",
-
     "connection_not_found": "Учетная запись {app} не подключена.",
+
     "connection_conflict": "Учетная запись {app} уже подключена к другому пользователю.",
     "connection_invalid": "Подключение аккаунта {app} недействительно.",
-
     "dismiss_before_ban": "Участник должен быть уволен перед баном.",
+
     "dismiss_before_delete_connections": "Участник должен быть уволен перед удалением подключений аккаунта.",
     "dismiss_before_delete": "Перед удалением аккаунта участник должен быть уволен.",
     "resign_before_delete": "Вы должны уйти в отставку перед удалением аккаунта.",
@@ -46,28 +45,28 @@
     "user_not_banned": "Пользователь не забанен.",
     "unable_to_dm": "Мы не можем написать вам личное сообщение в Discord.",
     "custom_profile_disabled": "Пользовательский профиль отключен.",
-
     "steam_api_error": "API Steam недоступен.",
+
     "steam_api_key_not_configured": "Ключ Steam API не настроен.",
     "invalid_steam_auth": "Неверная аутентификация Steam.",
     "invalid_truckersmp_id": "Недействительный TruckersMP ID.",
     "truckersmp_api_error": "API TruckersMP недоступен.",
     "must_connect_steam_before_truckersmp": "Учетная запись Steam должна быть подключена перед подключением учетной записи TruckersMP.",
     "truckersmp_steam_mismatch": "Учетная запись Steam, подключенная к пользователю TruckersMP {truckersmp_name} ({truckersmpid}), не соответствует вашей учетной записи Steam.",
-
     "user_not_found": "Пользователь не найден.",
+
     "member_not_found": "Участник не найден.",
     "banned_user_cannot_be_accepted": "Заблокированные пользователи не могут быть приняты в члены.",
-    "user_is_user_is_already_member": "Пользователь уже является участником.",
-    "new_discord_new_discord_user_must_not_be_member": "Новая учетная запись Discord не должна быть связана с участником.",
+    "user_is_already_member": "Пользователь уже зарегистрирован",
+    "new_discord_user_must_not_be_member": "Новая учетная запись Discord не должна быть связана с участником.",
     "user_position_higher_or_equal": "Наивысшая роль пользователя выше или равна вам.",
     "add_role_higher_or_equal": "Одна или несколько ролей пользователя для добавления выше/равны вашей самой высокой роли.",
     "remove_role_higher_or_equal": "Одна или несколько ролей удаляемого пользователя выше/равны вашей высшей роли.",
     "only_division_staff_allowed": "Только персонал отдела и администратор могут управлять ролями отдела.",
     "already_have_rank_role": "Роль ранга уже была указана в Discord.",
     "losing_admin_permission": "Обновление роли отклонено: вы потеряете права администратора, удалив одну или несколько ролей.",
-
     "delivery": "Доставка",
+
     "driver": "Водитель",
     "truck": "Грузовая машина",
     "cargo": "Груз",
@@ -80,8 +79,8 @@
     "single_player": "Одиночная игра",
     "scs_convoy": "Конвой СКС",
     "delivery_log_not_found": "Журнал доставки не найден.",
-
     "invalid_distance_unit": "Неверная единица измерения расстояния. Принимаются только \"метрические\" и \"имперские\".",
+
     "invalid_value": "Недопустимое значение для {ключей}",
     "config_invalid_value": "Неверное значение для \"{item}\": не должно быть пустым.",
     "config_invalid_distance_unit": "Неверное значение для \"distance_unit\": должно быть \"metric\" или \"imperial\".",
@@ -93,12 +92,12 @@
     "config_invalid_permission_admin_protection": "Обновление разрешений отклонено: новое разрешение \"admin\" не включает ни одной роли, которую имеет текущий пользователь.",
     "discord_integrations_disabled": "Интеграции Discord были временно отключены из-за недействительного Discord бот токен.",
     "discord_api_inaccessible": "API Discord недоступен.",
-
     "announcement_not_found": "Объявление не найдено.",
+
     "announcement_only_creator_can_edit": "Редактировать его может только автор объявления или администратор.",
     "announcement_only_creator_can_delete": "Удалить объявление может только автор или администратор.",
-
     "unknown_application_type": "Неизвестный тип приложения",
+
     "status": "Статус",
     "time": "Время",
     "message": "Сообщение",
@@ -106,8 +105,8 @@
     "pending": "В ожидании",
     "accepted": "Принято",
     "declined": "Отклонено",
-
     "application_not_found": "Приложение не найдено.",
+
     "no_permission_to_application_type": "У вас нет разрешения на доступ к этому типу приложений.",
     "drivers_not_allowed_to_create_driver_application": "Существующим драйверам не разрешено создавать новые приложения драйверов.",
     "must_be_driver_to_submit_division_application": "Вы должны быть водителем, прежде чем подавать заявку на участие в дивизионе.",
@@ -119,8 +118,8 @@
     "application_already_accepted": "Заявка уже принята",
     "application_already_declined": "Заявка уже отклонена",
     "application_already_processed": "Заявка уже обработана, статус неизвестен.",
-
     "start_time_must_be_earlier_than_end_time": "Время начала должно быть раньше времени окончания.",
+
     "invalid_challenge_type": "Неверный тип вызова.",
     "invalid_required_roles": "Неверные требуемые роли.",
     "invalid_reward_points": "Поощрительные баллы не должны быть отрицательными.",
@@ -130,19 +129,19 @@
     "challenge_delivery_not_found": "Доставка не принимается для вызова.",
     "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
     "maximum_15_active_challenge": "Одновременно может быть не более 15 активных испытаний.",
-
     "only_delivery_submitter_can_request_division_validation": "Только пользователь, завершивший доставку, может отправить запрос на подтверждение разделения.",
+
     "division_already_requested": "Запрос на проверку подразделения уже отправлен.",
     "division_already_validated": "Доставка уже подтверждена.",
     "division_already_denied": "В доставке было отказано, и вы не можете повторно запросить подтверждение.",
     "not_division_driver": "Вы не являетесь водителем подразделения.",
     "division_validation_not_found": "Запрос на валидацию подразделения доставки не найден.",
     "division_not_validated": "Эта доставка не подтверждена руководителем отдела.",
-
     "downloads_not_found": "Загружаемый элемент не найден.",
-    "downloads_invalid_link": "Неверная ссылка.",
 
+    "downloads_invalid_link": "Неверная ссылка.",
     "event_not_found": "Событие не найдено.",
+
     "event_notification": "Уведомление о событии",
     "event_notification_description": "Событие, за которое вы проголосовали, скоро начнется!",
     "event_not_voted": "Вы не голосовали за событие!",
@@ -152,8 +151,52 @@
     "destination": "Пункт назначения",
     "meetup_time": "Время встречи",
     "departure_time": "Время отправления",
+    "garage": "гараж",
 
+    "garage_slot": "гаражный слот",
+    "economy_truck": "грузовик",
+    "purchase_forbidden": "Вы не можете приобрести {item}.",
+    "purchase_company_forbidden": "Вы запрещено покупать {item} для компании.",
+    "modify_forbidden": "Вам не разрешено изменять {item}.",
+    "truck_not_found": "Грузовик не найден.",
+    "truck_history_forbidden": "Вы нет доступа к данным истории грузовика.",
+    "invalid_owner": "Недействительный владелец.",
+    "insufficient_balance": "Недостаточно баланса.",
+    "garage_slot_not_found": "Слот гаража не найден.",
+    "garage_slot_occupied": "Слот гаража занят.",
+    "new_owner_conflict": "Новый владелец не должен совпадать с текущим владельцем.",
+    "truck_repair_required": "Грузовик должен быть отремонтирован, прежде чем его можно будет активировать.",
+    "truck_scrap_required": "Грузовик достиг своего предела пробега и должен быть утилизирован.",
+    "truck_scrap_unncessary": "Грузовик далёк от своего предела пробега и не может быть утилизирован.",
+    "company": "Компания",
+    "dealership": "Диллер",
+    "garage_agency": "Гаражное агентство",
+    "client": "Клиент",
+    "service_station": "Станция технического обслуживания",
+    "blackhole": "Черная дыра",
+    "inactive": "Неактивно",
+    "active": "Активно",
+    "scrapped": "Списано",
+    "garage_not_found": "Гараж не найден.",
+    "garage_already_purchased": "Гараж уже кем-то куплен. Вы можете приобрести только слоты гаража.",
+    "garage_not_purchased_before_purchase_slots": "Гараж еще не куплен. Вы должны приобрести гараж перед покупкой его слотов.",
+    "garage_not_purchased": "Гараж еще не куплен.",
+    "garage_has_slots": "В гараже есть дополнительные слоты, и их необходимо продать, прежде чем гараж можно будет продать. ",
+    "garage_has_truck": "В гараже припаркован грузовик, и его необходимо переместить, прежде чем гараж можно будет продать.",
+    "garage_slot_is_base_slot": "Продаваемый слот включен в базовый пакет при покупке гаража . Его можно продать, только продав гараж.",
+    "garage_slot_has_truck": "В слоте гаража припаркован грузовик, и его необходимо переместить, прежде чем слот можно будет продать.",
+    "modify_company_balance_forbidden": "Вы не можете манипулировать балансом компании.",
+    "modify_user_balance_forbidden": "Вы не можете манипулировать балансом других пользователей.",
+    "amount_must_be_positive": "Сумма перевода должна быть положительным целым числом.",
+    "from_user_not_found": "Пользователь-отправитель не найден. ",
+    "to_user_not_found": "Пользователь-получатель не найден.",
+    "view_balance_forbidden": "Вам не разрешено просматривать баланс пользователя.",
+    "view_transaction_history_forbidden": "Вам не разрешено просматривать историю транзакций пользователя.",
+    "modify_balance_visibility_forbidden": "Вам не разрешено изменять видимость баланса пользователя. ",
+    "balance_visibility_already_public": "Баланс пользователя уже общедоступен",
+    "balance_visibility_already_private": "Баланс пользователя уже закрыт",
     "notification": "Уведомление",
+
     "notification_not_found": "Уведомление не найдено.",
     "discord_notification_enabled": "Вы включили уведомления Discord!",
     "new_login": "Новый логин из `{country}` (`{ip}`)",
@@ -206,8 +249,12 @@
     "challenge_uncompleted_lost_points": "Испытание `{title}` (идентификатор испытания: `{challengeid}`) больше не завершено: вы потеряли `{points}` очков.",
     "one_personal_recurring_challenge_uncompleted": "Удалено 1x статус выполнения повторяющегося личного испытания `{title}` (идентификатор испытания: `{challengeid}`): вы потеряли `{points}` очков.",
     "one_personal_recurring_challenge_uncompleted_still_have_points": "Удалено 1x выполненный статус повторяющегося личного испытания `{title}` (идентификатор испытания: `{challengeid}`): вы потеряли `{points}` очков. Вы все еще получили `{total_points}` очков из вызов.",
-
+    "economy_transaction_message": "**Сообщение**: {message}",
+    "economy_message_for_delivery": "Для доставки `#{logid}`",
+    "economy_sent_transaction": "Вы отправили **{amount} {currency_name}** на `{to_user} ` (ID пользователя: `{to_userid}`).{message}",
+    "economy_received_transaction": "`{from_user}` (ID пользователя: `{from_userid}`) отправил вам **{amount} {currency_name}** .{message}",
     "system": "Система",
+
     "protected": "Защищено",
     "unknown": "неизвестный",
     "unknown_user": "Неизвестный пользователь",
@@ -266,5 +313,15 @@
     "removed_attendees": "Удаленные участники - удалено `{points}` баллов из",
     "added_event_points": "Обновлены очки - добавлено `{points}` точек на",
     "removed_event_points": "Обновлены очки - удалено `{points}` очки из",
-    "no_changes_made": "Изменений нет."
+    "no_changes_made": "Изменений нет.",
+    "purchased_truck": "Приобретен грузовик `{name}` (ID: `{id}`) для `{username}` (ID пользователя: `{userid}`).",
+    "transferred_truck": "Грузовик `#{id}` передан `{username}` (идентификатор пользователя: `{userid}`).",
+    "reassigned_truck": "Грузовик `#{id}` переназначен `{username}` (идентификатор пользователя : `{userid}`.",
+    "removed_truck_assignee": "Удален правопреемник грузовика `#{id}`.",
+    "unknown_garage": "Неизвестный гараж",
+    "relocated_truck": "Перемещен грузовик `#{id}` в `{garage}` (ID: `{garageid}`) слот `#{slotid}`.",
+    "transferred_garage": "Гараж `{garage}` (ID: `{id}`) перенесен в `{username}` (ID пользователя: `{userid}`).",
+    "transferred_slot": "Слот гаража `#{id}` передан `{username}` (ID пользователя: `{userid}`).",
+    "sold_garage": "Продан гараж `{garage}` (ID: `{id}`), который принадлежит `{username}` (ID пользователя: `{userid}`).",
+    "sold_slot": "Продан слот `# {id}`, который принадлежит `{username}` (идентификатор пользователя: `{userid}`)."
 }

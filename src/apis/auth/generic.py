@@ -81,7 +81,10 @@ async def post_auth_password(request: Request, response: Response):
         else:
             expire = ml.tr(request, "forever")
         response.status_code = 403
-        return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        if reason != "":
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        else:
+            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
         
     stoken = str(uuid.uuid4())
     stoken = "e" + stoken[1:]
@@ -169,7 +172,10 @@ async def post_auth_register(request: Request, response: Response):
         else:
             expire = ml.tr(request, "forever")
         response.status_code = 403
-        return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        if reason != "":
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        else:
+            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
 
     if not emailConfigured():
         response.status_code = 428
@@ -349,7 +355,10 @@ async def post_auth_mfa(request: Request, response: Response):
         else:
             expire = ml.tr(request, "forever")
         response.status_code = 403
-        return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        if reason != "":
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+        else:
+            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":

@@ -28,7 +28,22 @@ async def GetTruckInfo(dhrid, request, vehicleid):
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 @app.get(f"/{config.abbr}/economy/trucks")
-async def get_economy_trucks():
+async def get_economy_trucks(request: Request, response: Response, authorization: str = Header(None)):
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/trucks', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
     return config.economy.trucks
 
 @app.get(f"/{config.abbr}/economy/trucks/list")

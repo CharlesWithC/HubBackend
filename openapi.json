@@ -3306,6 +3306,14 @@
                 }, {
                     "required": false,
                     "schema": {
+                        "title": "Exclude Company",
+                        "type": "boolean"
+                    },
+                    "name": "exclude_company",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
                         "title": "Minimum Balance",
                         "type": "integer"
                     },
