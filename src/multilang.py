@@ -168,6 +168,7 @@ EN_STRINGTABLE = {
 
     "garage": "garage",
     "garage_slot": "garage slot",
+    "economy_truck": "truck",
     "purchase_forbidden": "You are not allowed to purchase a {item}.",
     "purchase_company_forbidden": "You are not allowed to purchase a {item} for the company.",
     "modify_forbidden": "You are not allowed to modify the {item}.",

@@ -358,7 +358,7 @@ def validateConfig(cfg):
         truck = economy_trucks[i]
         if "id" in truck.keys() and "brand" in truck.keys() and "model" in truck.keys() and "price" in truck.keys():
             try:
-                truck["id"] = truck["id"].lstrip("vehicle.")
+                truck["id"] = truck["id"][len("vehicle."):] if truck["id"].startswith("vehicle.") else truck["id"]
                 truck["price"] = int(truck["price"])
             except:
                 pass

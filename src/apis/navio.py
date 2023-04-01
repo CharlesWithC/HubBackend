@@ -636,10 +636,11 @@ async def post_navio(response: Response, request: Request):
     try:
         if "economy" in config.enabled_plugins and isdelivered and not duplicate:
             economy_revenue = round(revenue)
-            truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"]).lstrip("vehicle.")
+            truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
+            truckid = truckid[len("vehicle."):] if truckid.startswith("vehicle.") else truckid
 
             isrented = False
-            await aiosql.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE userid = {userid} AND truckid = '{truckid}' AND status = 1")
+            await aiosql.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE (userid = {userid} OR assigneeid = {userid}) AND truckid = '{truckid}' AND status = 1 LIMIT 1")
             t = await aiosql.fetchall(dhrid)
             if len(t) == 0:
                 isrented = True

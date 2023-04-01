@@ -11,6 +11,8 @@ import multilang as ml
 from app import app, config
 from db import aiosql
 from functions import *
+from plugins.economy.trucks import GetTruckInfo
+
 
 @app.get(f"/{config.abbr}/economy/garages")
 async def get_economy_garages():
@@ -68,8 +70,8 @@ async def get_economy_garages_list(request: Request, response: Response, authori
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
     
-    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
-                         LEFT JOIN economy_truck ON economy_truck.garageid = economy_garage.garageid \
+    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 \
                          GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order} LIMIT {(page-1) * page_size}, {page_size}")
     t = await aiosql.fetchall(dhrid)
@@ -80,8 +82,8 @@ async def get_economy_garages_list(request: Request, response: Response, authori
         p = await aiosql.fetchall(dhrid)
         ret.append({"garageid": tt[0], "garage_owner": (await GetUserInfo(dhrid, request, userid = p[0][0])), "slots": tt[2], "slot_owners": nint(tt[3]), "trucks": nint(tt[4]), "income": nint(tt[5]), "purchase_timestamp": tt[1]})
 
-    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
-                         LEFT JOIN economy_truck ON economy_truck.garageid = economy_garage.garageid \
+    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 \
                          GROUP BY economy_garage.garageid {having}")
     t = await aiosql.fetchall(dhrid)
@@ -91,7 +93,7 @@ async def get_economy_garages_list(request: Request, response: Response, authori
 
 @app.get(f"/{config.abbr}/economy/garages/{{garageid}}")
 async def get_economy_garage(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
-    '''Get a info of a specific garage.'''
+    '''Get info of a specific garage.'''
     dhrid = request.state.dhrid
     await aiosql.new_conn(dhrid)
 
@@ -110,8 +112,8 @@ async def get_economy_garage(request: Request, response: Response, garageid: str
 
     garageid = convertQuotation(garageid)
 
-    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
-                         LEFT JOIN economy_truck ON economy_truck.garageid = economy_garage.garageid \
+    await aiosql.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 AND economy_garage.garageid = '{garageid}' \
                          GROUP BY economy_garage.garageid")
     t = await aiosql.fetchall(dhrid)
@@ -174,7 +176,7 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
     t = await aiosql.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"slotid": tt[0], "slot_owner": await GetUserInfo(dhrid, request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": {"vehicleid": tt[2]}, "truck_owner": await GetUserInfo(dhrid, request, userid = tt[3])})
+        ret.append({"slotid": tt[0], "slot_owner": await GetUserInfo(dhrid, request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(dhrid, request, tt[2]), "truck_owner": await GetUserInfo(dhrid, request, userid = tt[3])})
 
     await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM economy_garage WHERE economy_garage.garageid = '{garageid}'")
     t = await aiosql.fetchall(dhrid)
@@ -183,6 +185,37 @@ async def get_economy_garage_slots_list(request: Request, response: Response, ga
         tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+
+@app.get(f"/{config.abbr}/economy/garages/{{garageid}}/slots/{{slotid}}")
+async def get_economy_garage_slots_slotid(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
+    '''Get info of a specific garage slot.'''
+    dhrid = request.state.dhrid
+    await aiosql.new_conn(dhrid)
+
+    rl = await ratelimit(dhrid, request, 'GET /economy/garages/garageid/slots/slotid', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(dhrid, authorization, request, check_member = True, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    garageid = convertQuotation(garageid)
+
+    await aiosql.execute(dhrid, f"SELECT economy_garage.slotid, economy_garage.userid, economy_truck.vehicleid, economy_truck.userid, economy_garage.purchase_timestamp, economy_garage.note FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
+                         WHERE economy_garage.slotid = {slotid} AND economy_garage.garageid = '{garageid}'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
+    tt = t[0]
+    
+    return {"slotid": tt[0], "slot_owner": await GetUserInfo(dhrid, request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(dhrid, request, tt[2]), "truck_owner": await GetUserInfo(dhrid, request, userid = tt[3])}
 
 @app.post(f"/{config.abbr}/economy/garages/{{garageid}}/purchase")
 async def post_economy_garage_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
@@ -421,26 +454,6 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-
-    await aiosql.execute(dhrid, f"SELECT userid FROM economy_garage WHERE garageid = '{garageid}' AND note = 'garage-owner'")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 428
-        return {"error": ml.tr(request, "garage_not_purchased", force_lang = au["language"])}
-    current_owner = t[0][0]
-    if current_owner != -1000 and current_owner == owner:
-        response.status_code = 409
-        return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
-    
-    # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
-
-    # company garage but not manager or not owned garage
-    # manager can transfer anyone's garage
-    if not permok:
-        if current_owner == -1000 or current_owner != userid:
-            response.status_code = 403
-            return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
     
     # check owner
     if owner == "self":
@@ -461,9 +474,29 @@ async def post_economy_garage_transfer(request: Request, response: Response, gar
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
+
+    await aiosql.execute(dhrid, f"SELECT userid FROM economy_garage WHERE garageid = '{garageid}' AND note = 'garage-owner'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 428
+        return {"error": ml.tr(request, "garage_not_purchased", force_lang = au["language"])}
+    current_owner = t[0][0]
+    if current_owner != -1000 and current_owner == foruser:
+        response.status_code = 409
+        return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
+    
+    # check perm
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
+
+    # company garage but not manager or not owned garage
+    # manager can transfer anyone's garage
+    if not permok:
+        if current_owner == -1000 or current_owner != userid:
+            response.status_code = 403
+            return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE garageid = '{garageid}' AND note = 'garage-owner'")
-    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {owner}, NULL, 'g-{garageid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
+    await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'g-{garageid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
     await aiosql.commit(dhrid)
 
     garage = ml.ctr("unknown_garage")
@@ -513,26 +546,6 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT userid FROM economy_garage WHERE slotid = {slotid} AND garageid = '{garageid}'")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
-    current_owner = t[0][0]
-    if current_owner != -1000 and current_owner == owner:
-        response.status_code = 409
-        return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
-    
-    # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
-
-    # company garage but not manager or not owned garage
-    # manager can transfer anyone's garage
-    if not permok:
-        if current_owner == -1000 or current_owner != userid:
-            response.status_code = 403
-            return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage_slot", force_lang = au["language"])}, force_lang = au["language"])}
-    
     # check owner
     if owner == "self":
         foruser = userid
@@ -552,6 +565,26 @@ async def post_economy_garage_slot_transfer(request: Request, response: Response
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
+    
+    await aiosql.execute(dhrid, f"SELECT userid FROM economy_garage WHERE slotid = {slotid} AND garageid = '{garageid}'")
+    t = await aiosql.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
+    current_owner = t[0][0]
+    if current_owner != -1000 and current_owner == foruser:
+        response.status_code = 409
+        return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
+    
+    # check perm
+    permok = checkPerm(au["roles"], ["admin", "economy_manager", "garage_manager"])
+
+    # company garage but not manager or not owned garage
+    # manager can transfer anyone's garage
+    if not permok:
+        if current_owner == -1000 or current_owner != userid:
+            response.status_code = 403
+            return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage_slot", force_lang = au["language"])}, force_lang = au["language"])}
     
     await aiosql.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE slotid = {slotid} AND garageid = '{garageid}'")
     await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'gs{slotid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
@@ -605,8 +638,8 @@ async def post_economy_garage_sell(request: Request, response: Response, garagei
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
         
     await aiosql.execute(dhrid, f"SELECT COUNT(slotid) FROM economy_garage WHERE garageid = '{garageid}' AND note != 'garage-owner'")
-    t = await aiosql.fetchall(dhrid)
-    if len(t) != 0:
+    t = nint(await aiosql.fetchone(dhrid))
+    if t != 0:
         response.status_code = 428
         return {"error": ml.tr(request, "garage_has_slots", force_lang = au["language"])}
     await aiosql.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE garageid = '{garageid}'")
