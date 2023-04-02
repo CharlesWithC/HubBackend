@@ -157,7 +157,7 @@ async def CheckNotificationEnabled(dhrid, notification_type, uid):
 
 async def notification(dhrid, notification_type, uid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):
-    if uid is None or int(uid) <= 0:
+    if uid is None or int(uid) < 0:
         return
     
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}

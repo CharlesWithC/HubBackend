@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.4.1**  
+1.Fixed notifications not being sent to `uid = 0`  
+
 **v2.4.0**  
 1.Improved how path prefix is defined  
 2.Improved how plugin is loaded  

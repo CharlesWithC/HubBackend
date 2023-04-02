@@ -30,7 +30,7 @@ def getAvatarSrc(discordid, avatar):
     return src
 
 async def ActivityUpdate(dhrid, uid, activity):
-    if uid is None or int(uid) <= 0:
+    if uid is None or int(uid) < 0:
         return
     activity = convertQuotation(activity)
     await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
