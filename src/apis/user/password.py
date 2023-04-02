@@ -5,17 +5,15 @@ import bcrypt
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config
-from db import aiosql
+from app import app
 from functions import *
 
 
-@app.patch(f"/user/password")
-async def patch_user_password(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_password(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the password of the authorized user, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/password', 60, 10)
     if rl[0]:
@@ -34,8 +32,8 @@ async def patch_user_password(request: Request, response: Response, authorizatio
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         data = await request.json()
@@ -48,8 +46,8 @@ async def patch_user_password(request: Request, response: Response, authorizatio
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     email = t[0][0]
 
     data = await request.json()
@@ -63,8 +61,8 @@ async def patch_user_password(request: Request, response: Response, authorizatio
         response.status_code = 403
         return {"error": ml.tr(request, "invalid_discord_email", force_lang = au["language"])}
         
-    await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
+    t = await app.db.fetchall(dhrid)
     if len(t) > 1:
         response.status_code = 409
         return {"error": ml.tr(request, "email_not_unique", force_lang = au["language"])}
@@ -80,19 +78,18 @@ async def patch_user_password(request: Request, response: Response, authorizatio
     salt = bcrypt.gensalt()
     pwdhash = bcrypt.hashpw(password, salt).decode()
 
-    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
-    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
-    await aiosql.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{email}', '{b64e(pwdhash)}')")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
+    await app.db.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{email}', '{b64e(pwdhash)}')")
+    await app.db.commit(dhrid)
 
     return Response(status_code=204)
     
-@app.post(f"/user/password/disable")
-async def post_user_password_disable(request: Request, response: Response, authorization: str = Header(None)):
+async def post_password_disable(request: Request, response: Response, authorization: str = Header(None)):
     """Disables password login for the authorized user, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /user/password/disable', 60, 10)
     if rl[0]:
@@ -111,8 +108,8 @@ async def post_user_password_disable(request: Request, response: Response, autho
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret != "":
         data = await request.json()
@@ -125,16 +122,16 @@ async def post_user_password_disable(request: Request, response: Response, autho
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     email = t[0][0]
 
     if not (await isSecureAuth(dhrid, authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
-    await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
+    await app.db.commit(dhrid)
 
     return Response(status_code=204)

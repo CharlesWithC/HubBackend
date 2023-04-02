@@ -12,26 +12,16 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config, config_path, tconfig, validateConfig
-from db import aiosql
+from app import app
+from config import *
 from functions import *
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
 
-config_plugins = {"application": ["application_types"],
-    "division": ["webhook_division", "webhook_division_message", "divisions"],
-    "economy": ["economy"]}
-
-config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key", "smtp_passwd"]
-
-backup_config = copy.deepcopy(tconfig)
-
-@app.get(f"/config")
 async def get_config(request: Request, response: Response, authorization: str = Header(None)):
     """Returns saved config (config) and loaded config (backup)"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'GET /config', 60, 60)
     if rl[0]:
@@ -47,7 +37,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     
     # current config
     try:
-        orgcfg = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
+        orgcfg = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
         f = copy.deepcopy(orgcfg)
         ffconfig = {}
 
@@ -62,7 +52,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
         # remove disabled plugins
         for t in config_plugins.keys():
-            if not t in tconfig["enabled_plugins"]:
+            if not t in app.config.enabled_plugins:
                 for tt in config_plugins[t]:
                     if tt in ffconfig.keys():
                         del ffconfig[tt]
@@ -71,7 +61,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
         traceback.print_exc()
     
     # old config
-    t = copy.deepcopy(backup_config)
+    t = copy.deepcopy(app.backup_config)
     ttconfig = {}
 
     # process whitelist
@@ -85,7 +75,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
     # remove disabled plugins
     for t in config_plugins.keys():
-        if not t in tconfig["enabled_plugins"]:
+        if not t in app.config.enabled_plugins:
             for tt in config_plugins[t]:
                 if tt in ffconfig.keys():
                     del ttconfig[tt]
@@ -93,17 +83,16 @@ async def get_config(request: Request, response: Response, authorization: str = 
     return {"config": ffconfig, "backup": ttconfig}
 
 def restart():
-    os.system(f"nohup ./launcher tracker restart {config.abbr} > /dev/null")
+    os.system(f"nohup ./launcher tracker restart {app.config.abbr} > /dev/null")
     time.sleep(3)
-    os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
+    os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
 
-@app.patch(f"/config")
 async def patch_config(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the config, only those specified in `config` will be updated
     
     JSON: `{"config": {}}`"""
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /config', 60, 60)
     if rl[0]:
@@ -128,7 +117,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
+    ttconfig = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
 
     tracker = ""
     if "tracker" in new_config.keys():
@@ -230,18 +219,17 @@ async def patch_config(request: Request, response: Response, authorization: str 
     if len(out) > 512000:
         response.status_code = 400
         return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
-    open(config_path, "w", encoding="utf-8").write(out)
+    open(app.config_path, "w", encoding="utf-8").write(out)
 
     await AuditLog(dhrid, au["uid"], ml.ctr("updated_config"))
 
     return Response(status_code=204)
 
-@app.post(f"/restart")
 async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
     """Restarts API service in a thread, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /restart', 600, 3)
     if rl[0]:
@@ -255,8 +243,8 @@ async def post_restart(request: Request, response: Response, authorization: str 
         del au["code"]
         return au
 
-    await aiosql.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {au['userid']}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {au['userid']}")
+    t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
     if mfa_secret == "":
         response.status_code = 428
@@ -278,14 +266,12 @@ async def post_restart(request: Request, response: Response, authorization: str 
 
     return Response(status_code=204)
 
-# get audit log (require audit / admin permission)
-@app.get(f"/audit/list")
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, uid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'GET /audit', 60, 60)
     if rl[0]:
@@ -310,14 +296,14 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     elif page_size >= 500:
         page_size = 500
 
-    await aiosql.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {(page - 1) * page_size}, {page_size}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": await GetUserInfo(dhrid, request, userid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
+        ret.append({"user": await GetUserInfo(dhrid, request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
+    t = await app.db.fetchall(dhrid)
     tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}

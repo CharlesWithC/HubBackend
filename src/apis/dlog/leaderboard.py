@@ -7,24 +7,21 @@ from typing import Optional
 
 from fastapi import Header, Request, Response
 
-from app import app, config
-from db import aiosql
+from app import app
 from functions import *
-from plugins.division import DIVISION_POINTS
 
-cleaderboard = {}
-cnlleaderboard = {}
-callusers = []
-callusers_ts = 0
+app.state.cache_leaderboard = {}
+app.state.cache_nleaderboard = {}
+app.state.cache_all_users = []
+app.state.cache_all_users_ts = 0
 
-@app.get(f"/dlog/leaderboard")
-async def get_dlog_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
+async def get_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = None, end_time: Optional[int] = None, \
-        speed_limit: Optional[int] = 0, game: Optional[int] = 0, \
+        speed_limit: Optional[int] = None, game: Optional[int] = None, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid, extra_time = 3)
+    await app.db.new_conn(dhrid, extra_time = 3)
 
     rl = await ratelimit(dhrid, request, 'GET /dlog/leaderboard', 60, 60)
     if rl[0]:
@@ -69,13 +66,12 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
     nluserrank = {}
 
     # cache
-    global cleaderboard
-    l = list(cleaderboard.keys())
+    l = list(app.state.cache_leaderboard.keys())
     for ll in l:
         if ll < int(time.time()) - 120:
-            del cleaderboard[ll]
+            del app.state.cache_leaderboard[ll]
         else:
-            tt = cleaderboard[ll]
+            tt = app.state.cache_leaderboard[ll]
             for t in tt:
                 if abs(t["start_time"] - start_time) <= 120 and abs(t["end_time"] - end_time) <= 120 and \
                         t["speed_limit"] == speed_limit and t["game"] == game:
@@ -87,13 +83,13 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
                     userdivision = t["userdivision"]
                     usermyth = t["usermyth"]
                     break
-    global cnlleaderboard
-    l = list(cnlleaderboard.keys())
+                
+    l = list(app.state.cache_nleaderboard.keys())
     for ll in l:
         if ll < int(time.time()) - 120:
-            del cnlleaderboard[ll]
+            del app.state.cache_nleaderboard[ll]
         else:
-            t = cnlleaderboard[ll]
+            t = app.state.cache_nleaderboard[ll]
             nlusecache = True
             nlcachetime = ll
             nluserdistance = t["nluserdistance"]
@@ -106,27 +102,26 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
             nlrank = t["nlrank"]
             nluserrank = t["nluserrank"]
 
-    global callusers, callusers_ts
-    if int(time.time()) - callusers_ts <= 300:
-        allusers = callusers
+    if int(time.time()) - app.state.cache_all_users_ts <= 300:
+        allusers = app.state.cache_all_users
     else:
         allusers = []
-        await aiosql.execute(dhrid, f"SELECT userid, roles FROM user WHERE userid >= 0")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, roles FROM user WHERE userid >= 0")
+        t = await app.db.fetchall(dhrid)
         for tt in t:
             roles = str2list(tt[1])
             ok = False
             for i in roles:
-                if int(i) in config.perms.driver:
+                if int(i) in app.config.perms.driver:
                     ok = True
             if not ok:
                 continue
             allusers.append(tt[0])
-        callusers = allusers
-        callusers_ts = int(time.time())
+        app.state.cache_all_users = allusers
+        app.state.cache_all_users_ts = int(time.time())
 
     ratio = 1
-    if config.distance_unit == "imperial":
+    if app.config.distance_unit == "imperial":
         ratio = 0.621371
     
     # validate parameter
@@ -138,7 +133,7 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
     if len(limituser) > 10:
         limituser = limituser[:10]
     limit = ""
-    if speed_limit > 0:
+    if speed_limit is not None:
         limit = f" AND topspeed <= {speed_limit}"
     gamelimit = ""
     if game == 1 or game == 2:
@@ -147,8 +142,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
     if not usecache:
         ##### WITH LIMIT (Parameter)
         # calculate distance
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
+        t = await app.db.fetchall(dhrid)
         for tt in t:
             if not tt[0] in allusers:
                 continue
@@ -159,8 +154,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
             userdistance[tt[0]] = int(userdistance[tt[0]])
         
         # calculate challenge
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -169,8 +164,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
             userchallenge[oo[0]] += oo[1]
 
         # calculate event
-        await aiosql.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
+        t = await app.db.fetchall(dhrid)
         for tt in t:
             attendees = str2list(tt[0])
             for attendee in attendees:
@@ -182,31 +177,31 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
                     userevent[attendee] += tt[1]
         
         # calculate division
-        await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
+        t = await app.db.fetchall(dhrid)
         firstlogid = -1
         if len(t) > 0:
             firstlogid = t[0][0]
 
-        await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
+        t = await app.db.fetchall(dhrid)
         lastlogid = -1
         if len(t) > 0:
             lastlogid = t[0][0]
         
-        await aiosql.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
             if not oo[0] in userdivision.keys():
                 userdivision[oo[0]] = 0
-            if oo[1] in DIVISION_POINTS.keys():
-                userdivision[oo[0]] += oo[2] * DIVISION_POINTS[oo[1]]
+            if oo[1] in app.division_points.keys():
+                userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
         # calculate myth
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -262,8 +257,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
     if not nlusecache:
         ##### WITHOUT LIMIT
         # calculate distance
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
+        t = await app.db.fetchall(dhrid)
         for tt in t:
             if not tt[0] in allusers:
                 continue
@@ -274,8 +269,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
             nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
 
         # calculate challenge
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -284,8 +279,8 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
             nluserchallenge[oo[0]] += oo[1]
 
         # calculate event
-        await aiosql.execute(dhrid, f"SELECT attendee, points FROM event")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT attendee, points FROM event")
+        t = await app.db.fetchall(dhrid)
         for tt in t:
             attendees = str2list(tt[0])
             for attendee in attendees:
@@ -297,19 +292,19 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
                     nluserevent[attendee] += tt[1]
         
         # calculate division    
-        await aiosql.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
             if not oo[0] in nluserdivision.keys():
                 nluserdivision[oo[0]] = 0
-            if oo[1] in DIVISION_POINTS.keys():
-                nluserdivision[oo[0]] += oo[2] * DIVISION_POINTS[oo[1]]
+            if oo[1] in app.division_points.keys():
+                nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
         # calculate myth
-        await aiosql.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
-        o = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
                 continue
@@ -427,23 +422,23 @@ async def get_dlog_leaderboard(request: Request, response: Response, authorizati
 
     if not usecache:
         ts = int(time.time())
-        if not ts in cleaderboard.keys():
-            cleaderboard[ts] = []
-        cleaderboard[ts].append({"start_time": start_time, "end_time": end_time, "speed_limit": speed_limit, "game": game,\
+        if not ts in app.state.cache_leaderboard.keys():
+            app.state.cache_leaderboard[ts] = []
+        app.state.cache_leaderboard[ts].append({"start_time": start_time, "end_time": end_time, "speed_limit": speed_limit, "game": game,\
             "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
             "userdivision": userdivision, "usermyth": usermyth})
 
     if not nlusecache:
         ts = int(time.time())
-        cnlleaderboard[ts]={"nluserdistance": nluserdistance, "nluserchallenge": nluserchallenge, \
+        app.state.cache_nleaderboard[ts]={"nluserdistance": nluserdistance, "nluserchallenge": nluserchallenge, \
             "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nlusermyth": nlusermyth, \
             "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
 
-    if (page - 1) * page_size >= len(ret):
+    if max(page-1, 0) * page_size >= len(ret):
         return {"list": [], "total_items": len(ret), \
             "total_pages": int(math.ceil(len(ret) / page_size)), \
                 "cache": cachetime, "cache_no_limit": nlcachetime}
 
-    return {"list": ret[(page - 1) * page_size : page * page_size], \
+    return {"list": ret[max(page-1, 0) * page_size : page * page_size], \
         "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size)), \
             "cache": cachetime, "cache_no_limit": nlcachetime}

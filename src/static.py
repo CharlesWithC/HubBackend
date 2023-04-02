@@ -3,51 +3,392 @@
 
 import collections
 
-from app import config, tconfig
+from app import app
+
+app.tracker = ""
+if app.config.tracker.lower() == "tracksim":
+    app.tracker = "TrackSim"
+
+app.roles = {}
+sroles = app.config.roles
+for srole in sroles:
+    try:
+        app.roles[srole["id"]] = srole["name"]
+    except:
+        pass
+app.roles = dict(collections.OrderedDict(sorted(app.roles.items())))
+
+app.rankrole = {}
+app.rankname = {}
+for t in app.config.ranks:
+    try:
+        if t["discord_role_id"] is not None:
+            app.rankrole[t["points"]] = t["discord_role_id"]
+        else:
+            app.rankrole[t["points"]] = 0
+        app.rankname[t["points"]] = t["name"]
+    except:
+        pass
+app.rankrole = dict(collections.OrderedDict(sorted(app.rankrole.items())))
+app.rankname = dict(collections.OrderedDict(sorted(app.rankname.items())))
+
+app.division_roles = []
+for division in app.config.divisions:
+    try:
+        app.division_roles.append(division["role_id"])
+    except:
+        pass
+
+app.division_points = {}
+app.division_name = {}
+for division in app.config.divisions:
+    app.division_points[division["id"]] = division["points"]
+    app.division_name[division["id"]] = division["name"]
+
+app.trucks = {}
+app.garages = {}
+for truck in app.config.__dict__["economy"].__dict__["trucks"]:
+    app.trucks[truck["id"]] = truck
+for garage in app.config.__dict__["economy"].__dict__["garages"]:
+    app.garages[garage["id"]] = garage
 
 TF = {-1: False, 0: False, 1: True}
 
-TRACKERAPP = ""
-if config.tracker.lower() == "tracksim":
-    TRACKERAPP = "TrackSim"
-
-ROLES = {}
-sroles = config.roles
-for srole in sroles:
-    try:
-        ROLES[srole["id"]] = srole["name"]
-    except:
-        pass
-ROLES = dict(collections.OrderedDict(sorted(ROLES.items())))
-
-RANKS = config.ranks
-RANKROLE = {}
-RANKNAME = {}
-for t in RANKS:
-    try:
-        if t["discord_role_id"] != None:
-            RANKROLE[t["points"]] = t["discord_role_id"]
-        else:
-            RANKROLE[t["points"]] = 0
-        RANKNAME[t["points"]] = t["name"]
-    except:
-        pass
-RANKROLE = dict(collections.OrderedDict(sorted(RANKROLE.items())))
-RANKNAME = dict(collections.OrderedDict(sorted(RANKNAME.items())))
-
-DIVISION_ROLES = []
-for division in config.divisions:
-    try:
-        DIVISION_ROLES.append(division["role_id"])
-    except:
-        pass
-
-TRUCKS = {}
-GARAGES = {}
-for truck in tconfig["economy"]["trucks"]:
-    TRUCKS[truck["id"]] = truck
-for garage in tconfig["economy"]["garages"]:
-    GARAGES[garage["id"]] = garage
-
 ISO3166_COUNTRIES = {'AF': 'Afghanistan', 'AX': 'Åland Islands', 'AL': 'Albania', 'DZ': 'Algeria', 'AS': 'American Samoa', 'AD': 'Andorra', 'AO': 'Angola', 'AI': 'Anguilla', 'AQ': 'Antarctica', 'AG': 'Antigua and Barbuda', 'AR': 'Argentina', 'AM': 'Armenia', 'AW': 'Aruba', 'AU': 'Australia', 'AT': 'Austria', 'AZ': 'Azerbaijan', 'BS': 'Bahamas', 'BH': 'Bahrain', 'BD': 'Bangladesh', 'BB': 'Barbados', 'BY': 'Belarus', 'BE': 'Belgium', 'BZ': 'Belize', 'BJ': 'Benin', 'BM': 'Bermuda', 'BT': 'Bhutan', 'BO': 'Bolivia, Plurinational State of', 'BQ': 'Bonaire, Sint Eustatius and Saba', 'BA': 'Bosnia and Herzegovina', 'BW': 'Botswana', 'BV': 'Bouvet Island', 'BR': 'Brazil', 'IO': 'British Indian Ocean Territory', 'BN': 'Brunei Darussalam', 'BG': 'Bulgaria', 'BF': 'Burkina Faso', 'BI': 'Burundi', 'KH': 'Cambodia', 'CM': 'Cameroon', 'CA': 'Canada', 'CV': 'Cabo Verde', 'KY': 'Cayman Islands', 'CF': 'Central African Republic', 'TD': 'Chad', 'CL': 'Chile', 'CN': 'China', 'CX': 'Christmas Island', 'CC': 'Cocos (Keeling) Islands', 'CO': 'Colombia', 'KM': 'Comoros', 'CG': 'Congo', 'CD': 'Congo, Democratic Republic of the', 'CK': 'Cook Islands', 'CR': 'Costa Rica', 'CI': "Côte d'Ivoire", 'HR': 'Croatia', 'CU': 'Cuba', 'CW': 'Curaçao', 'CY': 'Cyprus', 'CZ': 'Czechia', 'DK': 'Denmark', 'DJ': 'Djibouti', 'DM': 'Dominica', 'DO': 'Dominican Republic', 'EC': 'Ecuador', 'EG': 'Egypt', 'SV': 'El Salvador', 'GQ': 'Equatorial Guinea', 'ER': 'Eritrea', 'EE': 'Estonia', 'ET': 'Ethiopia', 'FK': 'Falkland Islands (Malvinas)', 'FO': 'Faroe Islands', 'FJ': 'Fiji', 'FI': 'Finland', 'FR': 'France', 'GF': 'French Guiana', 'PF': 'French Polynesia', 'TF': 'French Southern Territories', 'GA': 'Gabon', 'GM': 'Gambia', 'GE': 'Georgia', 'DE': 'Germany', 'GH': 'Ghana', 'GI': 'Gibraltar', 'GR': 'Greece', 'GL': 'Greenland', 'GD': 'Grenada', 'GP': 'Guadeloupe', 'GU': 'Guam', 'GT': 'Guatemala', 'GG': 'Guernsey', 'GN': 'Guinea', 'GW': 'Guinea-Bissau', 'GY': 'Guyana', 'HT': 'Haiti', 'HM': 'Heard Island and McDonald Islands', 'VA': 'Holy See', 'HN': 'Honduras', 'HK': 'Hong Kong', 'HU': 'Hungary', 'IS': 'Iceland', 'IN': 'India', 'ID': 'Indonesia', 'IR': 'Iran, Islamic Republic of', 'IQ': 'Iraq', 'IE': 'Ireland', 'IM': 'Isle of Man', 'IL': 'Israel', 'IT': 'Italy', 'JM': 'Jamaica', 'JP': 'Japan', 'JE': 'Jersey', 'JO': 'Jordan', 'KZ': 'Kazakhstan', 'KE': 'Kenya', 'KI': 'Kiribati', 'KP': "Korea, Democratic People's Republic of", 'KR': 'Korea, Republic of', 'XK': 'Kosovo', 'KW': 'Kuwait', 'KG': 'Kyrgyzstan', 'LA': "Lao People's Democratic Republic", 'LV': 'Latvia', 'LB': 'Lebanon', 'LS': 'Lesotho', 'LR': 'Liberia', 'LY': 'Libya', 'LI': 'Liechtenstein', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'MO': 'Macao', 'MK': 'North Macedonia', 'MG': 'Madagascar', 'MW': 'Malawi', 'MY': 'Malaysia', 'MV': 'Maldives', 'ML': 'Mali', 'MT': 'Malta', 'MH': 'Marshall Islands', 'MQ': 'Martinique', 'MR': 'Mauritania', 'MU': 'Mauritius', 'YT': 'Mayotte', 'MX': 'Mexico', 'FM': 'Micronesia, Federated States of', 'MD': 'Moldova, Republic of', 'MC': 'Monaco', 'MN': 'Mongolia', 'ME': 'Montenegro', 'MS': 'Montserrat', 'MA': 'Morocco', 'MZ': 'Mozambique', 'MM': 'Myanmar', 'NA': 'Namibia', 'NR': 'Nauru', 'NP': 'Nepal', 'NL': 'Netherlands', 'NC': 'New Caledonia', 'NZ': 'New Zealand', 'NI': 'Nicaragua', 'NE': 'Niger', 'NG': 'Nigeria', 'NU': 'Niue', 'NF': 'Norfolk Island', 'MP': 'Northern Mariana Islands', 'NO': 'Norway', 'OM': 'Oman', 'PK': 'Pakistan', 'PW': 'Palau', 'PS': 'Palestine, State of', 'PA': 'Panama', 'PG': 'Papua New Guinea', 'PY': 'Paraguay', 'PE': 'Peru', 'PH': 'Philippines', 'PN': 'Pitcairn', 'PL': 'Poland', 'PT': 'Portugal', 'PR': 'Puerto Rico', 'QA': 'Qatar', 'RE': 'Réunion', 'RO': 'Romania', 'RU': 'Russian Federation', 'RW': 'Rwanda', 'BL': 'Saint Barthélemy', 'SH': 'Saint Helena, Ascension and Tristan da Cunha', 'KN': 'Saint Kitts and Nevis', 'LC': 'Saint Lucia', 'MF': 'Saint Martin (French part)', 'PM': 'Saint Pierre and Miquelon', 'VC': 'Saint Vincent and the Grenadines', 'WS': 'Samoa', 'SM': 'San Marino', 'ST': 'Sao Tome and Principe', 'SA': 'Saudi Arabia', 'SN': 'Senegal', 'RS': 'Serbia', 'SC': 'Seychelles', 'SL': 'Sierra Leone', 'SG': 'Singapore', 'SX': 'Sint Maarten (Dutch part)', 'SK': 'Slovakia', 'SI': 'Slovenia', 'SB': 'Solomon Islands', 'SO': 'Somalia', 'ZA': 'South Africa', 'GS': 'South Georgia and the South Sandwich Islands', 'SS': 'South Sudan', 'ES': 'Spain', 'LK': 'Sri Lanka', 'SD': 'Sudan', 'SR': 'Suriname', 'SJ': 'Svalbard and Jan Mayen', 'SZ': 'Eswatini', 'SE': 'Sweden', 'CH': 'Switzerland', 'SY': 'Syrian Arab Republic', 'TW': 'Taiwan, Province of China', 'TJ': 'Tajikistan', 'TZ': 'Tanzania, United Republic of', 'TH': 'Thailand', 'TL': 'Timor-Leste', 'TG': 'Togo', 'TK': 'Tokelau', 'TO': 'Tonga', 'TT': 'Trinidad and Tobago', 'TN': 'Tunisia', 'TR': 'Türkiye', 'TM': 'Turkmenistan', 'TC': 'Turks and Caicos Islands', 'TV': 'Tuvalu', 'UG': 'Uganda', 'UA': 'Ukraine', 'AE': 'United Arab Emirates', 'GB': 'United Kingdom of Great Britain and Northern Ireland', 'US': 'United States of America', 'UM': 'United States Minor Outlying Islands', 'UY': 'Uruguay', 'UZ': 'Uzbekistan', 'VU': 'Vanuatu', 'VE': 'Venezuela, Bolivarian Republic of', 'VN': 'Viet Nam', 'VG': 'Virgin Islands, British', 'VI': 'Virgin Islands, U.S.', 'WF': 'Wallis and Futuna', 'EH': 'Western Sahara', 'YE': 'Yemen', 'ZM': 'Zambia', 'ZW': 'Zimbabwe', 'XX': 'Unknown', 'T1': 'Tor'} 
 # XX and T1 are provided by CloudFlare, which are not ISO3166 standard
+
+# Hard-coded English String Table
+EN_STRINGTABLE = {
+    "unknown_error": "Unknown Error",
+    "api_error": "API Error",
+    "api_timeout": "API Timeout",
+    "invalid_api_token": "Invalid API Token",
+    "rate_limit": "You are being rate limited.",
+    "bad_json": "Invalid JSON: Field missing or data cannot be parsed.",
+    "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
+    "value_too_large": "Maximum value of \"{item}\" is {limit}.",
+
+    "invalid_captcha": "Invalid captcha.",
+    "invalid_email_or_password": "Invalid email or password.",
+    "invalid_authorization_token": "Invalid authorization token.",
+    "invalid_hash": "Invalid hash.",
+    "invalid_userid": "Invalid User ID.",
+
+    "application_token_not_allowed": "Access denied: Application token is not allowed.",
+    "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
+    "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
+    
+    "ban_with_expire": "You are banned until {expire} UTC",
+    "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
+    "user_in_guild_check_failed": "Failed to check if the user is in the Discord Server.",
+    "current_user_in_guild_check_failed": "Failed to check if you are in the Discord Server.",
+    "user_didnt_join_discord": "The user didn't join the Discord Server.",
+    "current_user_didnt_join_discord": "You didn't join the Discord Server.",
+    "invalid_discord_email": "An invalid email or no email is connected to the Discord account.",
+    "email_not_unique": "Your email is being used by multiple users and you cannot enable password login.",
+    "weak_password": "The password is too weak.",
+    "invalid_mfa_secret": "Invalid MFA secret.",
+    "mfa_already_enabled": "MFA is already enabled.",
+    "mfa_not_enabled": "MFA is not enabled.",
+    "invalid_otp": "Invalid OTP.",
+    "language_not_supported": "The language is not supported.",
+    "invalid_avatar_url": "Invalid avatar URL.",
+    "avatar_domain_not_whitelisted": "The domain of the avatar is not whitelisted.",
+    "smtp_app.configuration_invalid": "SMTP app.configuration is invalid, unable to send email.",
+    "auth_secret_invalid_or_expired": "Authorization secret is invalid or has expired.",
+
+    "connection_not_found": "{app} account is not connected.",
+    "connection_conflict": "{app} account already connected to another user.",
+    "connection_invalid": "{app} account connection is invalid.",
+
+    "dismiss_before_ban": "Member has to be dismissed before banning.",
+    "dismiss_before_delete_connections": "Member has to be dismissed before deleting account connections.",
+    "dismiss_before_delete": "Member has to be dismissed before deleting account.",
+    "resign_before_delete": "You must resign before deleting account.",
+    "user_already_banned": "User is already banned.",
+    "user_not_banned": "User is not banned.",
+    "unable_to_dm": "We are unable to DM you in Discord.",
+    "custom_profile_disabled": "Custom profile is disabled.",
+
+    "steam_api_error": "Steam API is inaccessible.",
+    "steam_api_key_not_app.configured": "Steam API Key is not app.configured.",
+    "invalid_steam_auth": "Invalid Steam Authentication.",
+    "invalid_truckersmp_id": "Invalid TruckersMP ID.",
+    "truckersmp_api_error": "TruckersMP API is inaccessible.",
+    "must_connect_steam_before_truckersmp": "Steam account must be connected before connecting TruckersMP account.",
+    "truckersmp_steam_mismatch": "Steam account connected to TruckersMP user {truckersmp_name} ({truckersmpid}) does not match your Steam account.",
+
+    "user_not_found": "User not found.",
+    "member_not_found": "Member not found.",
+    "banned_user_cannot_be_accepted": "Banned users cannot be accepted as members.",
+    "user_is_already_member": "User is already a member.",
+    "new_discord_user_must_not_be_member": "The new Discord account must not be connected to a member.",
+    "user_position_higher_or_equal": "The highest role of the user is higher than or equal to you.",
+    "add_role_higher_or_equal": "One or more roles of the user to add is higher / equal than your highest role.",
+    "remove_role_higher_or_equal": "One or more roles of the user to remove is higher / equal than your highest role.",
+    "only_division_staff_allowed": "Only division staff and admin are allowed to manage division roles.",
+    "already_have_rank_role": "The rank role has already been given in Discord.",
+    "losing_admin_permission": "Role update rejected: You will lose admin permission by removing one or more roles.",
+
+    "delivery": "Delivery",
+    "driver": "Driver",
+    "truck": "Truck",
+    "cargo": "Cargo",
+    "from": "From",
+    "to": "To",
+    "distance": "Distance",
+    "fuel": "Fuel",
+    "net_profit": "Net Profit",
+    "xp_earned": "XP Earned",
+    "single_player": "Single Player",
+    "scs_convoy": "SCS Convoy",
+    "delivery_log_not_found": "Delivery log not found.",
+
+    "invalid_distance_unit": "Invalid distance unit. Only \"metric\" and \"imperial\" is accepted.",
+    "invalid_value": "Invalid value for {key}",
+    "app.config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
+    "app.config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
+    "app.config_invalid_tracker": "Invalid value for \"tracker\": Must be \"tracksim\".",
+    "app.config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
+    "app.config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
+    "app.config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
+    "app.config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
+    "app.config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
+    "app.config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
+    "discord_api_inaccessible": "Discord API is inaccessible.",
+
+    "announcement_not_found": "Announcement not found.",
+    "announcement_only_creator_can_edit": "Only the author of the announcement or an administrator can edit it.",
+    "announcement_only_creator_can_delete": "Only the author of the announcement or an administrator can delete it.",
+
+    "unknown_application_type": "Unknown Application Type",
+    "status": "Status",
+    "time": "Time",
+    "message": "Message",
+    "no_message": "No Message",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "declined": "Declined",
+
+    "application_not_found": "Application not found.",
+    "no_permission_to_application_type": "You don't have permission to access this type of application.",
+    "drivers_not_allowed_to_create_driver_application": "Existing drivers are not allowed to create new driver applications.",
+    "must_be_driver_to_submit_division_application": "You must be a driver before submitting a division application.",
+    "already_driver_application": "You cannot create another driver application while there's one pending.",
+    "no_multiple_application_2h": "You are not allowed to create multiple applications within 2 hours.",
+    "must_be_member_to_submit_loa_application": "You must be a member before submitting a LOA application.",
+    "must_have_connection": "{app} account must be connected before submitting an application.",
+    "not_applicant": "You are not the applicant of the application.",
+    "application_already_accepted": "The application is already accepted",
+    "application_already_declined": "The application is already declined",
+    "application_already_processed": "The application is already processed, status unknown.",
+
+    "start_time_must_be_earlier_than_end_time": "Start time must be earlier than end time.",
+    "invalid_challenge_type": "Invalid challenge type.",
+    "invalid_required_roles": "Invalid required roles.",
+    "invalid_reward_points": "Reward points must not be negative.",
+    "invalid_delivery_count": "Delivery count must not be negative or zero.",
+    "invalid_distance_sum": "Distance sum must not be negative or zero.",
+    "challenge_not_found": "Challenge not found.",
+    "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
+    "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
+    "maximum_15_active_challenge": "There can be at most 15 active challenges at the same time.",
+
+    "only_delivery_submitter_can_request_division_validation": "Only the user who completed the delivery is allowed to submit division validation request.",
+    "division_already_requested": "A division validation request has already been submitted.",
+    "division_already_validated": "The delivery has already been validated.",
+    "division_already_denied": "The delivery has been denied and you are not allowed to request validation again.",
+    "not_division_driver": "You are not a driver for the division.", 
+    "division_validation_not_found": "Delivery division validation request not found.",
+    "division_not_validated": "This delivery is not validated by a division supervisor.",
+
+    "downloads_not_found": "Downloadable item not found.",
+    "downloads_invalid_link": "Invalid link.",
+
+    "event_not_found": "Event not found.",
+    "event_notification": "Event Notification",
+    "event_notification_description": "An event that you have voted is starting soon!",
+    "event_not_voted": "You have not voted the event!",
+    "event_already_voted": "You have already voted the event!",
+    "title": "Title",
+    "departure": "Departure",
+    "destination": "Destination",
+    "meetup_time": "Meetup Time",
+    "departure_time": "Departure Time",
+
+    "garage": "garage",
+    "garage_slot": "garage slot",
+    "economy_truck": "truck",
+    "purchase_forbidden": "You are not allowed to purchase a {item}.",
+    "purchase_company_forbidden": "You are not allowed to purchase a {item} for the company.",
+    "modify_forbidden": "You are not allowed to modify the {item}.",
+    "truck_not_found": "Truck not found.",
+    "truck_history_forbidden": "You do not have access to the truck's history data.",
+    "invalid_owner": "Invalid owner.",
+    "insufficient_balance": "Insufficient balance.",
+    "garage_slot_not_found": "Garage slot not found.",
+    "garage_slot_occupied": "Garage slot occupied.",
+    "new_owner_conflict": "The new owner must not be the same as the current owner.",
+    "truck_repair_required": "The truck must be repaired before it can be activated.",
+    "truck_scrap_required": "The truck has reached its mileage limit and must be scrapped.",
+    "truck_scrap_unncessary": "The truck is far from its mileage limit and cannot be scrapped.",
+    "company": "Company",
+    "dealership": "Dealership",
+    "garage_agency": "Garage Agency",
+    "client": "Client",
+    "service_station": "Service Station",
+    "blackhole": "Blackhole",
+    "inactive": "Inactive",
+    "active": "Active",
+    "scrapped": "Scrapped",
+    "garage_not_found": "Garage not found.",
+    "garage_already_purchased": "The garage is already purchased by someone. You can only purchase slots of the garage.",
+    "garage_not_purchased_before_purchase_slots": "The garage is not yet purchased. You must purchase the garage before purchasing its slots.",
+    "garage_not_purchased": "The garage is not yet purchased.",
+    "garage_has_slots": "There are additional slots in the garage and they must be sold before the garage can be sold.",
+    "garage_has_truck": "There is a truck parked in the garage and they must be relocated before the garage can be sold.",
+    "garage_slot_is_base_slot": "The slot to be sold is included in the base package when the garage was purchased. It can only be sold by selling the garage.",
+    "garage_slot_has_truck": "There is a truck parked in the garage slot and they must be relocated before the slot can be sold.",
+    "modify_company_balance_forbidden": "You are not allowed to manipulate the company's balance.",
+    "modify_user_balance_forbidden": "You are not allowed to manipulate other users' balance.",
+    "amount_must_be_positive": "Transfer amount must be a positive integer.",
+    "from_user_not_found": "Sender user not found.",
+    "to_user_not_found": "Recipent user not found.",
+    "view_balance_forbidden": "You are not allowed to view the user's balance.",
+    "view_transaction_history_forbidden": "You are not allowed to view the user's transaction history.",
+    "modify_balance_visibility_forbidden": "You are not allowed to modify the visibility of the user's balance.",
+    "balance_visibility_already_public": "The user's balance is already public.",
+    "balance_visibility_already_private": "The user's balance is already private.",
+
+    "notification": "Notification",
+    "notification_not_found": "Notification not found.",
+    "discord_notification_enabled": "You have enabled Discord Notifications!",
+    "new_login": "New login from `{country}` (`{ip}`)",
+    "new_login_title": "New Login",
+    "ip": "IP",
+    "country": "Country",
+    "job_submitted": "Job Submitted: `#{logid}`",
+    "job_deleted": "Job Deleted: `#{logid}`",
+    "new_rank": "You have received a new rank: `{rankname}`",
+    "new_rank_title": "New Rank",
+    "member_accepted": "You have been accepted as a member!\nYour User ID is `{userid}`",
+    "role_updated": "Your roles have been updated:\n{detail}",
+    "point_updated": "You have been given `{distance}km` and `{mythpoint}` myth points.",
+    "member_resigned": "You have resigned.",
+    "member_dismissed": "You have been dismissed.",
+    "application_submitted": "{application_type} application submitted.\nApplication ID: `#{applicationid}`",
+    "application_submitted_title": "Application Submitted",
+    "application_id": "Application ID",
+    "application_status_updated": "Application `#{applicationid}` status updated to `{status}`",
+    "application_status_updated_title": "Application Status Updated",
+    "division": "Division",
+    "division_validation_request_submitted": "Division Validation Request for Delivery `#{logid}` submitted.",
+    "division_validation_request_submitted_title": "Division Validation Request Submitted",
+    "log_id": "Log ID",
+    "division_validation_request_status_updated": "Division Validation Request for Delivery `#{logid}` status updated to `{status}`",
+    "division_validation_request_status_updated_title": "Division Validation Request Status Updated",
+    "event_updated_received_points": "Event `{title}` (Event ID: `{eventid}`) updated: You received `{points}` points.",
+    "event_updated_lost_points": "Event `{title}` (Event ID: `{eventid}`) updated: You lost `{points}` points.",
+    "event_updated_received_more_points": "Event `{title}` (Event ID: `{eventid}`) updated: You received `{gap}` points. You got `{points}` points from the event in total.",
+    "event_updated_lost_more_points": "Event `{title}` (Event ID: `{eventid}`) updated: You lost `{-gap}` points. You still got `{points}` points from the event.",
+    "delivery_accepted_by_challenge": "Delivery `#{logid}` accepted by challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "delivery_added_to_challenge": "Delivery `#{logid}` added to challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "delivery_removed_from_challenge": "Delivery `#{logid}` removed from challenge `{title}` (Challenge ID: `{challengeid}`)",
+    "one_time_personal_challenge_completed": "One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "recurring_challenge_completed_status_added": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "company_challenge_completed": "Company challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "challenge_uncompleted_increased_delivery_count": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased delivery count: You lost `{points}` points.",
+    "challenge_completed_decreased_delivery_count": "Challenge `{title}` (Challenge ID: `{challengeid}`) completed due to decreased delivery count: You received `{points}` points.",
+    "challenge_uncompleted_increased_distance_sum": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed due to increased distance sum: You lost `{points}` points.",
+    "challenge_completed_decreased_distance_sum": "Challenge `{title}` (Challenge ID: `{challengeid}`) completed due to decreased distance sum: You received `{points}` points.",
+    "n_personal_recurring_challenge_uncompelted_increased_delivery_count": "{count}x completed statuses of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) are lost due to increased delivery count: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "one_personal_recurring_challenge_uncompelted_increased_delivery_count": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed due to increased delivery count: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "n_personal_recurring_challenge_compelted_decreased_delivery_count": "{count}x completed statuses of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added due to decreased delivery count: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "one_personal_recurring_challenge_compelted_decreased_delivery_count": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) added due to decreased delivery count: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "personal_onetime_challenge_completed": "One-time personal challenge `{title}` (Challenge ID: `{challengeid}`) completed: You received `{points}` points.",
+    "challenge_updated_received_more_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "challenge_updated_received_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You received `{points}` points.",
+    "challenge_updated_lost_more_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{points}` points. You got `{total_points}` points from the challenge in total.",
+    "challenge_updated_lost_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) updated: You lost `{points}` points.",
+    "challenge_uncompleted_lost_points": "Challenge `{title}` (Challenge ID: `{challengeid}`) is no longer completed: You lost `{points}` points.",
+    "one_personal_recurring_challenge_uncompleted": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points.",
+    "one_personal_recurring_challenge_uncompleted_still_have_points": "1x completed status of recurring personal challenge `{title}` (Challenge ID: `{challengeid}`) is removed: You lost `{points}` points. You still got `{total_points}` points from the challenge.",
+    "economy_transaction_message": "**Message**: {message}",
+    "economy_message_for_delivery": "For Delivery `#{logid}`",
+    "economy_sent_transaction": "You sent **{amount} {currency_name}** to `{to_user}` (User ID: `{to_userid}`).{message}",
+    "economy_received_transaction": "`{from_user}` (User ID: `{from_userid}`) sent **{amount} {currency_name}** to you.{message}",
+
+    "system": "System",
+    "protected": "Protected",
+    "unknown": "Unknown",
+    "unknown_user": "Unknown User",
+    "discord_api": "Discord API",
+    "updated_app.config": "Updated app.config",
+    "restarted_service": "Restarted service",
+    "rejected_tracksim_webhook_post_ip": "Rejected TrackSim webhook update from {ip} (IP not whitelisted)",
+    "rejected_tracksim_webhook_post_signature": "Rejected TrackSim webhook update from {ip} (Invalid signature)",
+    "delivery_blocked_due_to_rules": "Delivery ({tracker} ID: `{trackerid}`) blocked due to rules.",
+    "route_already_fetched": "Route is already fetched.",
+    "tracker_must_be": "Tracker must be {tracker}.",
+    "member_resigned_audit": "Member resigned.",
+    "error_removing_discord_role": "Error `{code}` when removing <@&{discord_role}> from <@!{user_discordid}>: `{message}`",
+    "error_adding_discord_role": "Error `{code}` when adding <@&{discord_role}> ti <@!{user_discordid}>: `{message}`",
+    "discord_register": "User signed up with Discord from `{country}`",
+    "discord_login": "User logged in with Discord from `{country}`",
+    "steam_register": "User signed up with Steam from `{country}`",
+    "steam_login": "User logged in with Steam from `{country}`",
+    "password_register": "User signed up with email from `{country}`",
+    "password_login": "User logged in with password from `{country}`",
+    "mfa_login": "User logged in with MFA from `{country}`",
+    "deleted_delivery": "Deleted delivery `#{logid}`",
+    "failed_to_add_user_to_tracker_company": "Failed to add `{username}` (User ID: `{userid}`) to {tracker} company.  \nError: {error}",
+    "added_user_to_tracker_company": "Added `{username}` (User ID: `{userid}`) to {tracker} company.",
+    "updated_user_roles": "Updated roles of `{username}` (User ID: `{userid}`)",
+    "role": "Role",
+    "updated_user_points": "Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`",
+    "dismissed_member": "Dismissed `{username}` (UID: `{uid}`)",
+    "accepted_user_as_member": "Accepted `{username}` (User ID: `{userid}` | UID: `{uid}`) as member.",
+    "updated_user_discord": "Updated Discord ID of `{username}` (UID: `{uid}`) to `{discordid}`",
+    "deleted_connections": "Deleted connections of `{username}` (UID: `{uid}`)",
+    "forever": "forever",
+    "until": "until `{datetime}` UTC",
+    "banned_user": "Banned `{username}` (UID: `{uid}`) {duration}.",
+    "unbanned_user": "Unbanned `{username}` (UID: `{uid}`)",
+    "deleted_user": "Deleted user: `{username}` (UID: `{uid}`)",
+    "disabled_mfa": "Disabled MFA for `{username}` (UID: `{uid}`)",
+    "created_announcement": "Created announcement `#{id}`",
+    "updated_announcement": "Updated announcement `#{id}`",
+    "deleted_announcement": "Deleted announcement `#{id}`",
+    "updated_application_positions": "Updated application positions to `{positions}`.",
+    "updated_application_status": "Updated application `#{id}` status to `{status}`",
+    "deleted_application": "Deleted application `#{id}`",
+    "created_challenge": "Created challenge `#{id}`",
+    "updated_challenge": "Updated challenge `#{id}`",
+    "deleted_challenge": "Deleted challenge `#{id}`",
+    "added_delivery_to_challenge": "Added delivery `#{logid}` to challenge `#{id}`",
+    "removed_delivery_from_challenge": "Removed delivery `#{logid}` from challenge `#{id}`",
+    "updated_division_validation": "Updated division validation status of delivery `#{logid}` to `{status}`",
+    "created_downloads": "Created downloadable item `#{id}`",
+    "updated_downloads": "Updated downloadable item `#{id}`",
+    "deleted_downloads": "Deleted downloadable item `#{id}`",
+    "created_event": "Created event `#{id}`",
+    "updated_event": "Updated event `#{id}`",
+    "deleted_event": "Deleted event `#{id}`",
+    "updated_event_attendees": "Updated event `#{id}` attendees",
+    "added_attendees": "New attendees - Given `{points}` points to",
+    "removed_attendees": "Removed attendees - Removed `{points}` points from",
+    "added_event_points": "Updated points - Added `{points}` points to",
+    "removed_event_points": "Updated points - Removed `{points}` points from",
+    "no_changes_made": "No changes made.",
+    "purchased_truck": "Purchased truck `{name}` (ID: `{id}`) for `{username}` (User ID: `{userid}`).",
+    "transferred_truck": "Transferred truck `#{id}` to `{username}` (User ID: `{userid}`).",
+    "reassigned_truck": "Reassigned truck `#{id}` to `{username}` (User ID: `{userid}`).",
+    "removed_truck_assignee": "Removed assignee of truck `#{id}`.",
+    "unknown_garage": "Unknown garage",
+    "relocated_truck": "Relocated truck `#{id}` to `{garage}` (ID: `{garageid}`) slot `#{slotid}`.",
+    "transferred_garage": "Transferred garage `{garage}` (ID: `{id}`) to `{username}` (User ID: `{userid}`).",
+    "transferred_slot": "Transferred garage slot `#{id}` to `{username}` (User ID: `{userid}`).",
+    "sold_garage": "Sold garage `{garage}` (ID: `{id}`) which is owned by `{username}` (User ID: `{userid}`).",
+    "sold_slot": "Sold slot `#{id}` which is owned by `{username}` (User ID: `{userid}`)."
+}

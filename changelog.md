@@ -3,6 +3,11 @@
 **v2.4.0**  
 1.Improved how path prefix is defined  
 2.Improved how plugin is loaded  
+3.Improved routing  
+**Note** Renamed **POST** `/user/mfa` to `/user/mfa/enable`, also added plural form to plugin endpoints  
+4.Improved TrackSim route saving  
+5.Enabled async for `EventNotification` and `ProcessDiscordNotification` (no more threading)  
+6.Replaced `tconfig` with `config.__dict__`  
 
 **v2.3.1**  
 1.Created a tool to automatically fix ultra-high User ID / UID  

@@ -5,95 +5,83 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 # Load external code before original code to prevent overwrite
 from importlib.machinery import SourceFileLoader
 
 import pymysql
-from fastapi import Header, Request
+from fastapi import Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import DH_START_TIME, app, config, version
-from db import aiosql
+from apis import routes as apis_routes  # admin + tracksim
+from apis.auth import routes as auth_routes
+from apis.dlog import routes as dlog_routes
+from apis.member import routes as member_routes
+from apis.user import routes as user_routes
+from app import app, version
 from functions import *
+from plugins import routes as plugins_routes
 
-for external_plugin in config.external_plugins:
-    if os.path.exists(f"./external_plugins/{external_plugin}.py"):
-        SourceFileLoader(external_plugin, f"./external_plugins/{external_plugin}.py").load_module()
-    else:
-        print(f"Error: External plugin \"{external_plugin}\" not found, exited.")
-        sys.exit(1)
+routes = apis_routes + auth_routes + dlog_routes + member_routes + user_routes + plugins_routes
+for route in routes:
+    app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
 
-# import basic api
-from apis.admin import *
-from apis.auth import *
-from apis.dlog import *
-from apis.member import *
-from apis.user import *
+# for external_plugin in app.config.external_plugins:
+#     if os.path.exists(f"./external_plugins/{external_plugin}.py"):
+#         SourceFileLoader(external_plugin, f"./external_plugins/{external_plugin}.py").load_module()
+#     else:
+#         print(f"Error: External plugin \"{external_plugin}\" not found, exited.")
+#         sys.exit(1)
 
-if config.tracker.lower() == "tracksim":
-    from apis.tracksim import *
+# thread to restart service
+def restart():
+    time.sleep(3)
+    os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
 
-# import plugins
-from plugins.announcement import *
-from plugins.application import *
-from plugins.challenge import *
-from plugins.division import *
-from plugins.downloads import *
-from plugins.economy import *
-from plugins.event import *
+# NOTE Due to FastAPI not supporting events for sub-applications, we'll have to detour like this
+# The startup_event will be called by middleware once at least one request is sent
+async def startup_event():   
+    await app.db.create_pool()
 
-# basic info
-@app.get(f"/")
-async def get_index(request: Request, authorization: str = Header(None)):
-    if authorization is not None:
-        dhrid = request.state.dhrid
-        await aiosql.new_conn(dhrid)
-        au = await auth(dhrid, authorization, request, check_member = False)
-        if not au["error"]:
-            await ActivityUpdate(dhrid, au["uid"], "index")
-    currentDateTime = datetime.now()
-    date = currentDateTime.date()
-    year = date.strftime("%Y")
-    return {"name": config.name, "abbr": config.abbr, "language": config.language, "version": version, "copyright": f"Copyright (C) {year} CharlesWithC"}
+    dhrid = 0
+    await app.db.new_conn(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
+    await app.db.commit(dhrid)
+    await app.db.close_conn(dhrid)
 
-# uptime
-@app.get(f"/status")
-async def get_status(request: Request):
-    dbstatus = "unavailable"
-    try:
-        dhrid = request.state.dhrid
-        await aiosql.new_conn(dhrid)
-        dbstatus = "available"
-    except:
-        pass
-    up_time_second = int(time.time()) - DH_START_TIME
-    return {"api": "active", "database": dbstatus, "uptime": str(timedelta(seconds = up_time_second))}
+    loop = asyncio.get_event_loop()
+    loop.create_task(ClearOutdatedData())
+    loop.create_task(ProcessDiscordMessage())
+    from plugins.events import EventNotification
+    loop.create_task(EventNotification())
 
-# supported languages
-@app.get(f"/languages")
-async def get_languages():
-    l = os.listdir(config.language_dir)
-    t = []
-    for ll in l:
-        t.append(ll.split(".")[0])
-    t = sorted(t)
-    return {"company": config.language, "supported": t}
+# request param is needed as `call_next` will include it
+@app.exception_handler(StarletteHTTPException)
+async def errorHandler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse({"error": exc.detail}, status_code = exc.status_code)
+
+@app.exception_handler(RequestValidationError)
+async def error422Handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse({"error": "Unprocessable Entity"}, status_code = 422)
 
 # middleware to manage database connection
 # also include 500 error handler
-dberr = []
-pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error") and err not in [pymysql.err.ProgrammingError]]
-session_errs = []
+app.state.dberr = []
+app.state.pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error") and err not in [pymysql.err.ProgrammingError]]
+app.state.session_errs = []
 @app.middleware("http")
 async def http_middleware(request: Request, call_next):
     if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim"]:
         if "content-type" in request.headers.keys():
             if request.headers["content-type"] != "application/json":
                 return JSONResponse({"error": "Content-Type must be application/json."}, status_code=400)
+    if not "started" in app.state.__dict__["_state"].keys(): 
+        app.state.started = True
+        await startup_event()
     dhrid = genrid()
     request.state.dhrid = dhrid
     try:
@@ -101,14 +89,13 @@ async def http_middleware(request: Request, call_next):
         if rl[0]:
             return rl[1]
         response = await call_next(request)
-        await aiosql.close_conn(dhrid)
+        await app.db.close_conn(dhrid)
         return response
     except Exception as exc:
-        global session_errs
-        await aiosql.close_conn(dhrid)
+        await app.db.close_conn(dhrid)
 
         ismysqlerr = False
-        if type(exc) in pymysql_errs:
+        if type(exc) in app.state.pymysql_errs:
             ismysqlerr = True
 
         err = traceback.format_exc()
@@ -147,58 +134,35 @@ async def http_middleware(request: Request, call_next):
         if ismysqlerr:
             print(f"DATABASE ERROR [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-            global dberr
-            if not -1 in dberr and int(time.time()) - aiosql.POOL_START_TIME >= 60 and aiosql.POOL_START_TIME != 0:
-                dberr.append(time.time())
-                dberr[:] = [i for i in dberr if i > time.time() - 1800]
-                if len(dberr) > 5:
+            if not -1 in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
+                app.state.dberr.append(time.time())
+                app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
+                if len(app.state.dberr) > 5:
                     # try restarting database connection first
                     print("Restarting database connection pool")
-                    await aiosql.restart_pool()
-                elif len(dberr) > 10:
+                    await app.db.restart_pool()
+                elif len(app.state.dberr) > 10:
                     print("Restarting service due to database errors")
                     try:
-                        await arequests.post(config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": config.int_color, "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+                        await arequests.post(app.config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                     except:
                         pass
                     threading.Thread(target=restart).start()
-                    dberr.append(-1)
+                    app.state.dberr.append(-1)
                     
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
         
         else:
-            if err_hash in session_errs:
+            if err_hash in app.state.session_errs:
                 # recognized error, do not print log or send webhook
                 print(f"ERROR: {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
                 return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-            session_errs.append(err_hash)
+            app.state.session_errs.append(err_hash)
 
             print(f"ERROR: {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
-            if config.webhook_error != "":
+            if app.config.webhook_error != "":
                 try:
-                    await arequests.post(config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": config.apidomain, "inline": True}, {"name": "Abbreviation", "value": config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": config.int_color, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
+                    await arequests.post(app.config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.apidomain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
                 except:
                     pass
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-
-# thread to restart service
-def restart():
-    time.sleep(3)
-    os.system(f"nohup ./launcher hub restart {config.abbr} > /dev/null")
-
-# error handler to format error response
-@app.exception_handler(StarletteHTTPException)
-async def errorHandler(request: Request, exc: StarletteHTTPException):
-    return JSONResponse({"error": exc.detail}, status_code = exc.status_code)
-
-@app.exception_handler(RequestValidationError)
-async def error422Handler(request: Request, exc: RequestValidationError):
-    return JSONResponse({"error": "Unprocessable Entity"}, status_code = 422)
-
-@app.on_event("startup")
-async def startupEvent():
-    await aiosql.create_pool()
-
-@app.on_event("shutdown")
-async def shutdownEvent():
-    aiosql.close_pool()

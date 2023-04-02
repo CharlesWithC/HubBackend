@@ -14,43 +14,39 @@ from dateutil import parser
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config, config_path, tconfig, validateConfig
-from db import aiosql
+from app import app
+from config import validateConfig
 from functions import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
-GIFS = config.delivery_post_gifs
-if len(GIFS) == 0:
-    GIFS = [""]
-
 async def FetchRoute(gameid, userid, logid, trackerid, request = None, dhrid = None):
     try:
-        r = await arequests.get(f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
+        r = await arequests.get(f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {app.config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
     except:
-        return {"error": f"{TRACKERAPP} {ml.ctr('api_timeout')}"}
+        return {"error": f"{app.tracker} {ml.ctr('api_timeout')}"}
     if r.status_code != 200:
         try:
             resp = json.loads(r.text)
             if "error" in resp.keys() and resp["error"] is not None:
-                return {"error": TRACKERAPP + " " + resp["error"]}
+                return {"error": app.tracker + " " + resp["error"]}
             elif "message" in resp.keys() and resp["message"] is not None:
-                return {"error": TRACKERAPP + " " + resp["message"]}
+                return {"error": app.tracker + " " + resp["message"]}
             elif len(r.text) <= 64:
-                return {"error": TRACKERAPP + " " + r.text}
+                return {"error": app.tracker + " " + r.text}
             else:
-                return {"error": TRACKERAPP + " " + ml.tr(request, "unknown_error")}
+                return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
         except:
             traceback.print_exc()
-            return {"error": TRACKERAPP + " " + ml.tr(request, "unknown_error")}
+            return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
     d = json.loads(r.text)
     t = []
     for i in range(len(d)-1):
         # auto complete route
         dup = 1
         if int(d[i+1]["time"]-d[i]["time"]) >= 1:
-            dup = (d[i+1]["time"]-d[i]["time"]) * 4
+            dup = min((d[i+1]["time"]-d[i]["time"]) * 2, 6)
         if dup == 1:
             t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
         else:
@@ -58,12 +54,18 @@ async def FetchRoute(gameid, userid, logid, trackerid, request = None, dhrid = N
             sz = float(d[i]["z"])
             tx = float(d[i+1]["x"])
             tz = float(d[i+1]["z"])
-            dx = (tx - sx) / dup
-            dz = (tz - sz) / dup
-            for _ in range(dup):
-                t.append((sx, 0, sz))
-                sx += dx
-                sz += dz
+            if abs(tx - sx) <= 50 and abs(tz - sz) <= 50:
+                dx = (tx - sx) / dup
+                dz = (tz - sz) / dup
+                if dx <= 10 and dz <= 10:
+                    t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
+                else:
+                    for _ in range(dup):
+                        t.append((sx, 0, sz))
+                        sx += dx
+                        sz += dz
+            else:
+                t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
                 
     if len(d) > 0:
         t.append((float(d[-1]["x"]), 0, float(d[-1]["z"])))
@@ -96,31 +98,33 @@ async def FetchRoute(gameid, userid, logid, trackerid, request = None, dhrid = N
 
     if dhrid is None:
         dhrid = genrid()
-        await aiosql.new_conn(dhrid, extra_time = 5)
+        await app.db.new_conn(dhrid, extra_time = 5)
     
     for _ in range(3):
         try:
-            await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-            p = await aiosql.fetchall(dhrid)
+            await app.db.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+            p = await app.db.fetchall(dhrid)
             if len(p) > 0:
                 break
                 
-            await aiosql.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '', {userid}, '{compress(data)}')")
-            await aiosql.commit(dhrid)
-            await aiosql.close_conn(dhrid)
+            await app.db.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '', {userid}, '{compress(data)}')")
+            await app.db.commit(dhrid)
+            await app.db.close_conn(dhrid)
             break
         except:
             dhrid = genrid()
-            await aiosql.new_conn(dhrid, extra_time = 5)
+            await app.db.new_conn(dhrid, extra_time = 5)
             traceback.print_exc()
             continue
     
     return True
         
-@app.post(f"/tracksim/setup")
-async def post_tracksim_setup(response: Response, request: Request, authorization: str = Header(None)):
+async def post_setup(response: Response, request: Request, authorization: str = Header(None)):
+    if app.config.tracker.lower() != "tracksim":
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /tracksim/setup', 60, 5)
     if rl[0]:
@@ -134,14 +138,12 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
         del au["code"]
         return au
 
-    global tconfig
-    global config
-    ttconfig = validateConfig(json.loads(open(config_path, "r", encoding="utf-8").read()))
+    latest_config = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
     
     uinfo = await GetUserInfo(dhrid, request, userid = au["userid"], include_email = True)
     email = uinfo["email"]
 
-    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": config.name, "vtc_logo": config.logo_url, "email": email, "webhook": f"https://{config.apidomain}/{config.abbr}/tracksim/update"}, dhrid = dhrid)
+    r = await arequests.post("https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": app.config.name, "vtc_logo": app.config.logo_url, "email": email, "webhook": f"https://{app.config.apidomain}/{app.config.abbr}/tracksim/update"}, dhrid = dhrid)
     if r.status_code != 200:
         response.status_code = r.status_code
         try:
@@ -155,29 +157,27 @@ async def post_tracksim_setup(response: Response, request: Request, authorizatio
     api_key = d["api_key"]["key"]
     webhook_secret = d["webhook_secret"]
 
-    tconfig["tracker_company_id"] = str(company_id)
-    ttconfig["tracker_company_id"] = str(company_id)
-    config.tracker_company_id = str(company_id)
-    tconfig["tracker_api_token"] = api_key
-    ttconfig["tracker_api_token"] = api_key
-    config.tracker_api_token = api_key
-    tconfig["tracker_webhook_secret"] = webhook_secret
-    ttconfig["tracker_webhook_secret"] = webhook_secret
-    config.tracker_webhook_secret = webhook_secret
-    tconfig["allowed_tracker_ips"] = ["109.106.1.243"]
-    ttconfig["allowed_tracker_ips"] = ["109.106.1.243"]
-    config.allowed_tracker_ips = ["109.106.1.243"]
-    out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
-    open(config_path, "w", encoding="utf-8").write(out)
+    latest_config["tracker_company_id"] = str(company_id)
+    app.config.tracker_company_id = str(company_id)
+    latest_config["tracker_api_token"] = api_key
+    app.config.tracker_api_token = api_key
+    latest_config["tracker_webhook_secret"] = webhook_secret
+    app.config.tracker_webhook_secret = webhook_secret
+    latest_config["allowed_tracker_ips"] = ["109.106.1.243"]
+    app.config.allowed_tracker_ips = ["109.106.1.243"]
+    out = json.dumps(latest_config, indent=4, ensure_ascii=False)
+    open(app.config_path, "w", encoding="utf-8").write(out)
 
     return Response(status_code=204)
 
-@app.post(f"/tracksim/update")
-async def post_tracksim_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
+async def post_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
+    if app.config.tracker.lower() != "tracksim":
+        return Response({"error": "Not Found"}, 404)
+    
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    if request.client.host not in config.allowed_tracker_ips:
+    if request.client.host not in app.config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(dhrid, -999, ml.ctr("rejected_tracksim_webhook_post_ip", var = {"ip": request.client.host}))
         return {"error": "Validation failed"}
@@ -189,7 +189,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     else:
         response.status_code = 400
         return {"error": "Unsupported content type"}
-    sig = hmac.new(config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
+    sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
     if sig != TrackSim_Signature:
         response.status_code = 403
         await AuditLog(dhrid, -999, ml.ctr("rejected_tracksim_webhook_post_signature", var = {"ip": request.client.host}))
@@ -201,8 +201,8 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        await aiosql.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": "User not found."}
@@ -212,26 +212,26 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         discordid = t[0][3]
         await AuditLog(dhrid, uid, ml.ctr("member_resigned_audit", var = {"username": name, "uid": uid}))
         
-        await aiosql.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
+        await app.db.commit(dhrid)
 
         def setvar(msg):
             return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
-        if config.member_leave.webhook_url != "" or config.member_leave.channel_id != "":
-            meta = config.member_leave
+        if app.config.member_leave.webhook_url != "" or app.config.member_leave.channel_id != "":
+            meta = app.config.member_leave
             await AutoMessage(meta, setvar)
         
-        if discordid is not None and config.member_leave.role_change != [] and config.discord_bot_token != "":
-            for role in config.member_leave.role_change:
+        if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
+            for role in app.config.member_leave.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
                     elif int(role) > 0:
-                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
@@ -239,18 +239,18 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                     traceback.print_exc()
 
         if discordid is not None:
-            headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
+            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
             try:
-                r = await arequests.get(f"https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+                r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
                 d = json.loads(r.text)
                 if "roles" in d:
                     roles = d["roles"]
                     curroles = []
                     for role in roles:
-                        if role in list(RANKROLE.values()):
+                        if role in list(app.rankrole.values()):
                             curroles.append(role)
                     for role in curroles:
-                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
@@ -260,8 +260,8 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await aiosql.execute(dhrid, f"SELECT userid, name, uid FROM user WHERE steamid = {steamid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid, name, uid FROM user WHERE steamid = {steamid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": "User not found."}
@@ -272,8 +272,8 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
 
     duplicate = False # NOTE only for debugging purpose
     logid = -1
-    await aiosql.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 2")
-    o = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 2")
+    o = await app.db.fetchall(dhrid)
     if len(o) > 0:
         duplicate = True
         logid = o[0][0]
@@ -325,10 +325,10 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
     delivery_rule_ok = True
     
     mod_revenue = revenue # modified revenue
-    if "delivery_rules" in tconfig.keys() and "action" in tconfig["delivery_rules"].keys() \
-            and tconfig["delivery_rules"]["action"] != "bypass":
-        action = tconfig["delivery_rules"]["action"]
-        delivery_rules = tconfig["delivery_rules"]
+    if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
+            and app.config.__dict__["delivery_rules"].__dict__["action"] != "bypass":
+        action = app.config.__dict__["delivery_rules"].__dict__["action"]
+        delivery_rules = app.config.__dict__["delivery_rules"].__dict__
         try:
             if top_speed > int(delivery_rules["max_speed"]) and action == "block":
                 delivery_rule_ok = False
@@ -344,24 +344,24 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             pass
         
     if not delivery_rule_ok:
-        await AuditLog(dhrid, uid, ml.ctr(f"delivery_blocked_due_to_rules", var = {"tracker": TRACKERAPP, "trackerid": trackerid}))
-        await notification(dhrid, "dlog", uid, ml.tr(f"delivery_blocked_due_to_rules", var = {"tracker": TRACKERAPP, "trackerid": trackerid}, force_lang = await GetUserLanguage(dhrid, uid)))
+        await AuditLog(dhrid, uid, ml.ctr(f"delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}))
+        await notification(dhrid, "dlog", uid, ml.tr(f"delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}, force_lang = await GetUserLanguage(dhrid, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 
     if not duplicate:
-        await aiosql.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
-        await aiosql.commit(dhrid)
-        await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
-        logid = (await aiosql.fetchone(dhrid))[0]
+        await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
+        await app.db.commit(dhrid)
+        await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+        logid = (await app.db.fetchone(dhrid))[0]
 
-        if "tracker" in config.enabled_plugins:
+        if "tracker" in app.config.enabled_plugins:
             asyncio.create_task(FetchRoute(munitint, userid, logid, trackerid))
 
         uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
         await notification(dhrid, "dlog", uid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid)), no_discord_notification = True)
 
-    if config.delivery_log_channel_id != "" and not duplicate:
+    if app.config.delivery_log_channel_id != "" and not duplicate:
         try:
             source_city = d["data"]["object"]["source_city"]
             source_company = d["data"]["object"]["source_company"]
@@ -419,21 +419,24 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                 truck = truck["brand"]["name"] + " " + truck["name"]
             else:
                 truck = "N/A"
-            if config.discord_bot_token != "":
-                headers = {"Authorization": f"Bot {config.discord_bot_token}", "Content-Type": "application/json"}
+            if app.config.discord_bot_token != "":
+                headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
                 munit = "€"
                 if not game.startswith("e"):
                     munit = "$"
                 offence = -offence
                 if e == "job.delivered":
+                    GIFS = app.config.delivery_post_gifs
+                    if len(GIFS) == 0:
+                        GIFS = [""]
                     k = randint(0, len(GIFS)-1)
                     gifurl = GIFS[k]
                     if not isurl(gifurl):
                         gifurl = ""
-                    dhulink = config.frontend_urls.member.replace("{userid}", str(userid))
-                    dlglink = config.frontend_urls.delivery.replace("{logid}", str(logid))
+                    dhulink = app.config.frontend_urls.member.replace("{userid}", str(userid))
+                    dlglink = app.config.frontend_urls.delivery.replace("{logid}", str(logid))
                     data = "{}"
-                    if config.distance_unit == "imperial":
+                    if app.config.distance_unit == "imperial":
                         data = {"embeds": [{"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
@@ -445,9 +448,9 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                         {"name": ml.ctr("fuel"), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
-                                    "footer": {"text": multiplayer}, "color": config.int_color,\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.int_color}]}
-                    elif config.distance_unit == "metric":
+                                    "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
+                    elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.ctr('delivery')} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr("driver"), "value": f"[{username}]({dhulink})", "inline": True},
@@ -459,10 +462,10 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                         {"name": ml.ctr("fuel"), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.ctr("net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr("xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
-                                    "footer": {"text": multiplayer}, "color": config.int_color,\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.int_color}]}
+                                    "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     try:
-                        r = await arequests.post(f"https://discord.com/api/v10/channels/{config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=3, dhrid = dhrid)
+                        r = await arequests.post(f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=5, dhrid = dhrid)
                         if r.status_code == 401:
                             DisableDiscordIntegration()
                     except:
@@ -471,7 +474,7 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
                     language = await GetUserLanguage(dhrid, uid)
                     data = {}
-                    if config.distance_unit == "imperial":
+                    if app.config.distance_unit == "imperial":
                         data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
@@ -483,9 +486,9 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                         {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
-                                    "footer": {"text": umultiplayer}, "color": config.int_color,\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.int_color}]}
-                    elif config.distance_unit == "metric":
+                                    "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
+                    elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
@@ -497,8 +500,8 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                         {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
-                                    "footer": {"text": umultiplayer}, "color": config.int_color,\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": config.int_color}]}
+                                    "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
+                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     if await CheckNotificationEnabled(dhrid, "dlog", uid):
                         await SendDiscordNotification(dhrid, uid, data)
                         
@@ -506,19 +509,19 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
             traceback.print_exc()
 
     try:
-        if "challenge" in config.enabled_plugins and isdelivered and not duplicate:
-            await aiosql.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
-            current_distance = await aiosql.fetchone(dhrid)
+        if "challenge" in app.config.enabled_plugins and isdelivered and not duplicate:
+            await app.db.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+            current_distance = await app.db.fetchone(dhrid)
             current_distance = current_distance[0]
             current_distance = 0 if current_distance is None else int(current_distance)
 
             userinfo = await GetUserInfo(dhrid, request, userid = userid)
             roles = userinfo["roles"]
 
-            await aiosql.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
+            await app.db.execute(dhrid, f"SELECT challengeid, challenge_type, delivery_count, required_roles, reward_points, job_requirements, title \
                 FROM challenge \
                 WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())} AND required_distance <= {current_distance}")
-            t = await aiosql.fetchall(dhrid)
+            t = await app.db.fetchall(dhrid)
             for tt in t:
                 try:
                     challengeid = tt[0]
@@ -637,49 +640,49 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                     
                     uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
                     await notification(dhrid, "challenge", uid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(dhrid, uid)))
-                    await aiosql.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
-                    await aiosql.commit(dhrid)
+                    await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
+                    await app.db.commit(dhrid)
 
                     current_delivery_count = 0
                     if challenge_type in [1,3]:
-                        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
+                        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
                     elif challenge_type == 2:
-                        await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
+                        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
                     elif challenge_type == 4:
-                        await aiosql.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                             INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                             WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
                     elif challenge_type == 5:
-                        await aiosql.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
+                        await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                             INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                             WHERE challenge_record.challengeid = {challengeid}")
-                    current_delivery_count = await aiosql.fetchone(dhrid)
+                    current_delivery_count = await app.db.fetchone(dhrid)
                     current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
                     if current_delivery_count >= delivery_count:
                         if challenge_type in [1,4]:
-                            await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                            t = await aiosql.fetchall(dhrid)
+                            await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                            t = await app.db.fetchall(dhrid)
                             if len(t) == 0:
-                                await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                                await aiosql.commit(dhrid)
+                                await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                await app.db.commit(dhrid)
                                 uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
                                 await notification(dhrid, "challenge", uid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(dhrid, uid)))
                         elif challenge_type == 3:
-                            await aiosql.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
-                            t = await aiosql.fetchall(dhrid)
+                            await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
+                            t = await app.db.fetchall(dhrid)
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
-                                await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
-                                await aiosql.commit(dhrid)
+                                await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
+                                await app.db.commit(dhrid)
                                 uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
                                 await notification(dhrid, "challenge", uid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(dhrid, uid)))
                         elif challenge_type == 2:
-                            await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                            t = await aiosql.fetchall(dhrid)
+                            await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = await app.db.fetchall(dhrid)
                             if len(t) == 0:
                                 curtime = int(time.time())
-                                await aiosql.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
-                                t = await aiosql.fetchall(dhrid)
+                                await app.db.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} ORDER BY timestamp ASC LIMIT {delivery_count}")
+                                t = await app.db.fetchall(dhrid)
                                 usercnt = {}
                                 for tt in t:
                                     tuserid = tt[0]
@@ -690,20 +693,20 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                 for tuserid in usercnt.keys():
                                     s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
-                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
+                                    await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
                                     uid = (await GetUserInfo(dhrid, request, userid = tuserid))["uid"]
                                     await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
-                                await aiosql.commit(dhrid)
+                                await app.db.commit(dhrid)
                         elif challenge_type == 5:
-                            await aiosql.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
-                            t = await aiosql.fetchall(dhrid)
+                            await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
+                            t = await app.db.fetchall(dhrid)
                             if len(t) == 0:
                                 curtime = int(time.time())
-                                await aiosql.execute(dhrid, f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
+                                await app.db.execute(dhrid, f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
                                     INNER JOIN dlog ON dlog.logid = challenge_record.logid \
                                     WHERE challenge_record.challengeid = {challengeid} \
                                     GROUP BY dlog.userid, challenge_record.userid")
-                                t = await aiosql.fetchall(dhrid)
+                                t = await app.db.fetchall(dhrid)
                                 usercnt = {}
                                 totalcnt = 0
                                 for tt in t:
@@ -718,10 +721,10 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                                 for tuserid in usercnt.keys():
                                     s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
-                                    await aiosql.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
+                                    await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
                                     uid = (await GetUserInfo(dhrid, request, userid = tuserid))["uid"]
                                     await notification(dhrid, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(dhrid, uid)))
-                                await aiosql.commit(dhrid)
+                                await app.db.commit(dhrid)
                 except:
                     traceback.print_exc()
                 
@@ -729,17 +732,17 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
         traceback.print_exc()
 
     try:
-        if "economy" in config.enabled_plugins and isdelivered and not duplicate:
+        if "economy" in app.config.enabled_plugins and isdelivered and not duplicate:
             economy_revenue = round(revenue)
             truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
             truckid = truckid[len("vehicle."):] if truckid.startswith("vehicle.") else truckid
 
             isrented = False
-            await aiosql.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE (userid = {userid} OR assigneeid = {userid}) AND truckid = '{truckid}' AND status = 1 LIMIT 1")
-            t = await aiosql.fetchall(dhrid)
+            await app.db.execute(dhrid, f"SELECT vehicleid, garageid, slotid, damage, odometer FROM economy_truck WHERE (userid = {userid} OR assigneeid = {userid}) AND truckid = '{truckid}' AND status = 1 LIMIT 1")
+            t = await app.db.fetchall(dhrid)
             if len(t) == 0:
                 isrented = True
-                economy_revenue = max(round(economy_revenue - config.economy.truck_rental_cost), 0)
+                economy_revenue = max(round(economy_revenue - app.config.economy.truck_rental_cost), 0)
                 note = 'rented-truck'
             else:
                 vehicleid = t[0][0]
@@ -749,32 +752,32 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                 current_odometer = t[0][4]
                 note = f't{vehicleid}-income'
 
-            driver_revenue = round(economy_revenue * (1 - config.economy.revenue_share_to_company))
-            company_revenue = round(economy_revenue * config.economy.revenue_share_to_company)
+            driver_revenue = round(economy_revenue * (1 - app.config.economy.revenue_share_to_company))
+            company_revenue = round(economy_revenue * app.config.economy.revenue_share_to_company)
             
-            await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
-            driver_balance = nint(await aiosql.fetchone(dhrid))
+            await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
+            driver_balance = nint(await app.db.fetchone(dhrid))
             await EnsureEconomyBalance(dhrid, userid) if driver_balance == 0 else None
-            await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
-            await aiosql.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
-            company_balance = nint(await aiosql.fetchone(dhrid))
+            await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {driver_revenue} WHERE userid = {userid}")
+            await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
+            company_balance = nint(await app.db.fetchone(dhrid))
             await EnsureEconomyBalance(dhrid, -1000) if company_balance == 0 else None
-            await aiosql.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
+            await app.db.commit(dhrid)
             
             uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
             user_language = await GetUserLanguage(dhrid, uid)
             message = "  \n" + ml.tr(None, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
-            await notification(dhrid, "economy", uid, ml.tr(None, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": config.economy.currency_name, "from_user": ml.tr(None, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
+            await notification(dhrid, "economy", uid, ml.tr(None, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": app.config.economy.currency_name, "from_user": ml.tr(None, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
             
             if not isrented:
                 message = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
             else:
-                message = convertQuotation(f'dlog-{logid}/rental-{config.economy.truck_rental_cost}/revenue-{economy_revenue}')
+                message = convertQuotation(f'dlog-{logid}/rental-{app.config.economy.truck_rental_cost}/revenue-{economy_revenue}')
             
-            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, {userid}, {driver_revenue}, '{note}', '{message}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
-            await aiosql.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, -1000, {company_revenue}, 'c{note}', '{message}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, {userid}, {driver_revenue}, '{note}', '{message}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
+            await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, -1000, {company_revenue}, 'c{note}', '{message}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
+            await app.db.commit(dhrid)
 
             if not isrented:
                 truck_damage = d["data"]["object"]["truck"]["total_damage"]
@@ -782,22 +785,24 @@ async def post_tracksim_update(response: Response, request: Request, TrackSim_Si
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])
 
-                await aiosql.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage}, income = income + {economy_revenue} WHERE vehicleid = {vehicleid}")
-                if current_damage + damage > config.economy.max_wear_before_service:
-                    await aiosql.execute(dhrid, f"UPDATE economy_truck SET status = -1 WHERE vehicleid = {vehicleid}")
-                if current_odometer + driven_distance > config.economy.max_distance_before_scrap:
-                    await aiosql.execute(dhrid, f"UPDATE economy_truck SET status = -2 WHERE vehicleid = {vehicleid}")
-                await aiosql.commit(dhrid)
+                await app.db.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage}, income = income + {economy_revenue} WHERE vehicleid = {vehicleid}")
+                if current_damage + damage > app.config.economy.max_wear_before_service:
+                    await app.db.execute(dhrid, f"UPDATE economy_truck SET status = -1 WHERE vehicleid = {vehicleid}")
+                if current_odometer + driven_distance > app.config.economy.max_distance_before_scrap:
+                    await app.db.execute(dhrid, f"UPDATE economy_truck SET status = -2 WHERE vehicleid = {vehicleid}")
+                await app.db.commit(dhrid)
                 
     except:
         traceback.print_exc()
 
     return {"error": "Logged"}
     
-@app.post(f"/tracksim/update/route")
-async def post_tracksim_update_route(response: Response, request: Request, authorization: str = Header(None)):
+async def post_update_route(response: Response, request: Request, authorization: str = Header(None)):
+    if app.config.tracker.lower() != "tracksim":
+        return Response({"error": "Not Found"}, 404)
+
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /tracksim/update/route', 60, 30)
     if rl[0]:
@@ -818,8 +823,8 @@ async def post_tracksim_update_route(response: Response, request: Request, autho
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT unit, tracker_type, trackerid, userid FROM dlog WHERE logid = {logid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT unit, tracker_type, trackerid, userid FROM dlog WHERE logid = {logid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
@@ -829,8 +834,8 @@ async def post_tracksim_update_route(response: Response, request: Request, autho
         response.status_code = 404
         return {"error": ml.tr(request, "tracker_must_be", var = {"tracker": "TrackSim"}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) != 0:
         response.status_code = 409
         return {"error": ml.tr(request, "route_already_fetched", force_lang = au["language"])}

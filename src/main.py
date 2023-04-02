@@ -5,7 +5,6 @@
 
 import os
 import sys
-import threading
 from datetime import datetime
 
 import uvicorn
@@ -40,10 +39,10 @@ if not os.path.exists(config_path):
 if not "HUB_CONFIG_FILE" in os.environ.keys() or os.environ["HUB_CONFIG_FILE"] == "":
     os.environ["HUB_CONFIG_FILE"] = config_path
 
-from app import config, version
+from app import app, version
 from db import genconn
 
-for external_plugin in config.external_plugins:
+for external_plugin in app.config.external_plugins:
     if not os.path.exists(f"./external_plugins/{external_plugin}.py"):
         print(f"Error: External plugin \"{external_plugin}\" not found, exited.")
         sys.exit(1)
@@ -90,33 +89,28 @@ if __name__ == "__main__":
     cur.close()
     conn.close()
 
-from api import *
-
 if __name__ == "__main__":
     print("")
-    print(f"Company Name: {config.name}")
-    print(f"Company Abbreviation: {config.abbr}")
-    if len(config.enabled_plugins) != 0:
-        print(f"Plugins: {', '.join(sorted(config.enabled_plugins))}")
+    print(f"Company Name: {app.config.name}")
+    print(f"Company Abbreviation: {app.config.abbr}")
+    if len(app.config.enabled_plugins) != 0:
+        print(f"Plugins: {', '.join(sorted(app.config.enabled_plugins))}")
     else:
         print(f"Plugins: /")
-    if len(config.external_plugins) != 0:
-        print(f"External Plugins: {', '.join(sorted(config.external_plugins))}")
+    if len(app.config.external_plugins) != 0:
+        print(f"External Plugins: {', '.join(sorted(app.config.external_plugins))}")
     else:
         print("External Plugins: /")
     print("")
 
-    os.system(f"rm -rf /tmp/hub/logo/{config.abbr}.png")
-    os.system(f"rm -rf /tmp/hub/logo/{config.abbr}_bg.png")
-
-    if "event" in config.enabled_plugins:
-        from plugins.event import EventNotification
-        threading.Thread(target = EventNotification, daemon = True).start()
+    os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}.png")
+    os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}_bg.png")
 
     workers = 1
     try:
-        workers = int(config.server_workers)
+        workers = int(app.config.server_workers)
     except:
         pass
     
-    uvicorn.run("multi:mpp", host=config.server_ip, port=int(config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))
+    import routing # this is necessary for nuitka to build routing
+    uvicorn.run("routing:app", host=app.config.server_ip, port=int(app.config.server_port), log_level="info", access_log=False, proxy_headers = True, workers = min(workers, 8))

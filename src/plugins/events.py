@@ -1,7 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import asyncio
 import math
+import os
 import time
 import traceback
 from typing import Optional
@@ -9,51 +11,72 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config
-from db import aiosql, genconn
+from app import app
 from functions import *
 
 
-def EventNotification():    
-    if "event" not in config.enabled_plugins:
+async def EventNotification():
+    if "event" not in app.config.enabled_plugins:
         return
     
     while 1:
         try:
-            conn = genconn()
-            cur = conn.cursor()
+            dhrid = genrid()
+            await app.db.new_conn(dhrid)
+            await app.db.extend_conn(dhrid, 5)
+
+            npid = -1
+            nlup = -1
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-event-notification-pid'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                npid = int(t[0][0])
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-event-notification-last-update'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                nlup = int(t[0][0])
+            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 600:
+                try:
+                    await asyncio.sleep(60)
+                except:
+                    return
+                continue
+            await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-event-notification-pid', '{os.getpid()}')")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-event-notification-last-update', '{int(time.time())}')")
+            await app.db.commit(dhrid)
 
             notified_event = []
-            cur.execute(f"SELECT sval FROM settings WHERE skey = 'notified-event'")
-            t = cur.fetchall()
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'notified-event'")
+            t = await app.db.fetchall(dhrid)
             for tt in t:
                 sval = tt[0].split("-")
                 if int(time.time()) - int(sval[1]) > 3600:
-                    cur.execute(f"DELETE FROM settings WHERE skey = 'notified-event' AND sval = '{tt[0]}'")
+                    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'notified-event' AND sval = '{tt[0]}'")
                 else:
                     notified_event.append(int(sval[0]))
-            conn.commit()
+            await app.db.commit(dhrid)
 
             notification_enabled = []
             tonotify = {}
-            cur.execute(f"SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
-            d = cur.fetchall()
+            await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
+            d = await app.db.fetchall(dhrid)
             for dd in d:
                 notification_enabled.append(dd[0])
-            cur.execute(f"SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
-            d = cur.fetchall()
+            await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
+            d = await app.db.fetchall(dhrid)
             for dd in d:
                 if dd[0] in notification_enabled:
                     tonotify[dd[0]] = dd[1]
 
-            cur.execute(f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
-            t = cur.fetchall()
+            await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
+            t = await app.db.fetchall(dhrid)
             for tt in t:
                 if tt[0] in notified_event:
                     continue
                 notified_event.append(tt[0])
-                cur.execute(f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
-                conn.commit()
+                await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
+                await app.db.commit(dhrid)
 
                 title = tt[1] if tt[1] != "" else "N/A"
                 link = decompress(tt[2])
@@ -67,10 +90,10 @@ def EventNotification():
                 vote = str2list(tt[8])
                 
                 for vt in vote:
-                    uid = bGetUserInfo(userid = vt, ignore_activity = True)["uid"]
+                    uid = await GetUserInfo(dhrid, None, userid = vt, ignore_activity = True)["uid"]
                     if uid in tonotify.keys():
                         channelid = tonotify[uid]
-                        language = bGetUserLanguage(uid)
+                        language = GetUserLanguage(dhrid, uid)
                         QueueDiscordMessage(channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
                             "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
                                 {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
@@ -78,35 +101,41 @@ def EventNotification():
                                 {"name": ml.tr(None, "distance", force_lang = language), "value": distance, "inline": True},
                                 {"name": ml.tr(None, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
                                 {"name": ml.tr(None, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
-                            "footer": {"text": config.name, "icon_url": config.logo_url},
-                            "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": config.int_color}]})
+                            "footer": {"text": app.config.name, "icon_url": app.config.logo_url},
+                            "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
                             
-                time.sleep(1)
-            cur.close()
-            conn.close()
+                await app.db.extend_conn(dhrid, 2)
+                try:
+                    await asyncio.sleep(1)
+                except:
+                    return
+            
+            await app.db.close_conn(dhrid)
         except:
             traceback.print_exc()
 
-        time.sleep(60)
+        try:
+            await asyncio.sleep(60)
+        except:
+            return
 
-@app.get(f"/event/list")
-async def get_event_list(request: Request, response: Response, authorization: str = Header(None), \
+async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         first_event_after: Optional[int] = None):
-    if "event" not in config.enabled_plugins:
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /event/list', 60, 60)
+    rl = await ratelimit(dhrid, request, 'GET /events/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
     userid = -1
-    if authorization != None:
+    if authorization is not None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -131,8 +160,8 @@ async def get_event_list(request: Request, response: Response, authorization: st
     elif page_size >= 250:
         page_size = 250
 
-    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {(page-1) * page_size}, {page_size}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         attendee_cnt = 0
@@ -145,14 +174,14 @@ async def get_event_list(request: Request, response: Response, authorization: st
                 "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
                     "attendees": attendee_cnt, "votes": vote_cnt})
     
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
+    t = await app.db.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max((page-1) * page_size - tot,0)}, {page_size}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(max(page-1, 0) * page_size - tot,0)}, {page_size}")
+    t = await app.db.fetchall(dhrid)
     for tt in t:
         attendee_cnt = 0
         vote_cnt = 0
@@ -164,30 +193,29 @@ async def get_event_list(request: Request, response: Response, authorization: st
             "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], \
                 "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_cnt, "votes": vote_cnt})
     
-    await aiosql.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
+    t = await app.db.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
-@app.get(f"/event/{{eventid}}")
 async def get_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /event', 60, 120)
+    rl = await ratelimit(dhrid, request, 'GET /events', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
     userid = -1
-    if authorization != None:
+    if authorization is not None:
         au = await auth(dhrid, authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -198,8 +226,8 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
             aulanguage = au["language"]
             await ActivityUpdate(dhrid, au["uid"], f"events")
     
-    await aiosql.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = aulanguage)}
@@ -218,15 +246,14 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
 
     return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
 
-@app.put(f"/event/{{eventid}}/vote")
-async def put_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PUT /event/vote', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PUT /events/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -239,8 +266,8 @@ async def put_event_vote(request: Request, response: Response, eventid: int, aut
         return au
     userid = au["userid"]
         
-    await aiosql.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -251,19 +278,18 @@ async def put_event_vote(request: Request, response: Response, eventid: int, aut
         return {"error": ml.tr(request, "event_already_voted", force_lang = au["language"])}
     else:
         vote.append(userid)
-        await aiosql.execute(dhrid, f"UPDATE event SET vote = ',{list2str(vote)},' WHERE eventid = {eventid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"UPDATE event SET vote = ',{list2str(vote)},' WHERE eventid = {eventid}")
+        await app.db.commit(dhrid)
         return Response(status_code=204)
     
-@app.delete(f"/event/{{eventid}}/vote")
-async def delete_event_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+async def delete_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /event/vote', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /events/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -276,8 +302,8 @@ async def delete_event_vote(request: Request, response: Response, eventid: int, 
         return au
     userid = au["userid"]
         
-    await aiosql.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT vote FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -285,22 +311,21 @@ async def delete_event_vote(request: Request, response: Response, eventid: int, 
 
     if userid in vote:
         vote.remove(userid)
-        await aiosql.execute(dhrid, f"UPDATE event SET vote = ',{list2str(vote)},' WHERE eventid = {eventid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"UPDATE event SET vote = ',{list2str(vote)},' WHERE eventid = {eventid}")
+        await app.db.commit(dhrid)
         return Response(status_code=204)
     else:
         response.status_code = 409
         return {"error": ml.tr(request, "event_not_voted", force_lang = au["language"])}
 
-@app.post(f"/event")
 async def post_event(request: Request, response: Response, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'POST /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -342,23 +367,22 @@ async def post_event(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({au['userid']}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
-    await aiosql.commit(dhrid)
-    await aiosql.execute(dhrid, f"SELECT LAST_INSERT_ID();")
-    eventid = (await aiosql.fetchone(dhrid))[0]
+    await app.db.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({au['userid']}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
+    await app.db.commit(dhrid)
+    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    eventid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(dhrid, au["uid"], ml.ctr("created_event", var = {"id": eventid}))
 
     return {"eventid": eventid}
 
-@app.patch(f"/event/{{eventid}}")
 async def patch_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -370,8 +394,8 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         del au["code"]
         return au
         
-    await aiosql.execute(dhrid, f"SELECT userid FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -406,21 +430,20 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
     await AuditLog(dhrid, au["uid"], ml.ctr("updated_event", var = {"id": eventid}))
-    await aiosql.commit(dhrid)
+    await app.db.commit(dhrid)
 
     return Response(status_code=204)
 
-@app.delete(f"/event/{{eventid}}")
 async def delete_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /event', 60, 30)
+    rl = await ratelimit(dhrid, request, 'DELETE /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -432,27 +455,26 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
         del au["code"]
         return 
         
-    await aiosql.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
     await AuditLog(dhrid, au["uid"], ml.ctr("deleted_event", var = {"id": eventid}))
-    await aiosql.commit(dhrid)
+    await app.db.commit(dhrid)
 
     return Response(status_code=204)
 
-@app.patch(f"/event/{{eventid}}/attendees")
-async def patch_event_attendees(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in config.enabled_plugins:
+async def patch_attendees(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
+    if "event" not in app.config.enabled_plugins:
         return Response({"error": "Not Found"}, 404)
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /event/attendees', 60, 30)
+    rl = await ratelimit(dhrid, request, 'PATCH /events/attendees', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -479,8 +501,8 @@ async def patch_event_attendees(request: Request, response: Response, eventid: i
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT attendee, points, title FROM event WHERE eventid = {eventid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
@@ -543,8 +565,8 @@ async def patch_event_attendees(request: Request, response: Response, eventid: i
         if cnt > 0:
             ret = ret + ret3
 
-    await aiosql.execute(dhrid, f"UPDATE event SET attendee = ',{list2str(attendees)},', points = {points} WHERE eventid = {eventid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE event SET attendee = ',{list2str(attendees)},', points = {points} WHERE eventid = {eventid}")
+    await app.db.commit(dhrid)
 
     if ret == ml.ctr("updated_event_attendees", var = {"id": eventid}) + "  \n":
         return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(dhrid, au["uid"]))}

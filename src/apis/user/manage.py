@@ -7,16 +7,15 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config
-from db import aiosql
+from app import app
 from functions import *
 
-@app.post(f"/user/{{uid}}/accept")
-async def post_user_accept(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+
+async def post_accept(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """[Permission Control] Accepts a user as member, assign userid, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /user/accept', 60, 30)
     if rl[0]:
@@ -30,14 +29,14 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
         del au["code"]
         return au
     
-    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -50,51 +49,50 @@ async def post_user_accept(request: Request, response: Response, uid: int, autho
     steamid = t[0][4]
     truckersmpid = t[0][5]
     email = t[0][6]
-    if email == "" and "email" in config.required_connections:
+    if email == "" and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "email"}, force_lang = au["language"])}
-    if discordid is None and "discord" in config.required_connections:
+    if discordid is None and "discord" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"}, force_lang = au["language"])}
-    if steamid is None and "steam" in config.required_connections:
+    if steamid is None and "steam" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
-    if truckersmpid is None and "truckersmp" in config.required_connections:
+    if truckersmpid is None and "truckersmp" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "TruckersMP"}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
+    t = await app.db.fetchall(dhrid)
     userid = int(t[0][0])
 
-    await aiosql.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
-    await aiosql.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
+    await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(dhrid, au["uid"], ml.ctr("accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
-    await aiosql.commit(dhrid)
+    await app.db.commit(dhrid)
 
     await notification(dhrid, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, uid)))
     
     def setvar(msg):
         return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
 
-    if config.member_accept.webhook_url != "" or config.member_accept.channel_id != "":
-        meta = config.member_accept
+    if app.config.member_accept.webhook_url != "" or app.config.member_accept.channel_id != "":
+        meta = app.config.member_accept
         await AutoMessage(meta, setvar)
     
-    if config.member_welcome.webhook_url != "" or config.member_welcome.channel_id != "":
-        meta = config.member_welcome
+    if app.config.member_welcome.webhook_url != "" or app.config.member_welcome.channel_id != "":
+        meta = app.config.member_welcome
         await AutoMessage(meta, setvar)
 
     return {"userid": userid}   
 
-@app.patch(f"/user/{{uid}}/discord")
-async def patch_user_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
+async def patch_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
     """[Permission Control] Updates Discord account connection for a specific user, returns 204
     
     JSON: `{"discord_id": int}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 10)
     if rl[0]:
@@ -119,21 +117,21 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT uid, name FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT uid, name FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     old_uid = t[0][0]
     name = t[0][1]
 
-    await aiosql.execute(dhrid, f"SELECT uid, userid FROM user WHERE discordid = {new_discord_id}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT uid, userid FROM user WHERE discordid = {new_discord_id}")
+    t = await app.db.fetchall(dhrid)
     if len(t) >= 0:
         # delete account of new discord, and both sessions
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {old_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {old_uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {old_uid}")
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {old_uid}")
+        await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {old_uid}")
+        await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {old_uid}")
 
         # an account exists with the new discordid
         if len(t) > 0:
@@ -142,32 +140,31 @@ async def patch_user_discord(request: Request, response: Response, uid: int,  au
                 return {"error": ml.tr(request, "new_discord_user_must_not_be_member", force_lang = au["language"])}
             new_uid = t[0][0]
 
-            await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {new_uid}")
-            await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {new_uid}")
 
     # update discord binding
-    await aiosql.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
+    await app.db.commit(dhrid)
 
     await AuditLog(dhrid, au["uid"], ml.ctr("updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
 
     return Response(status_code=204)
     
-@app.delete(f"/user/{{uid}}/connections")
-async def delete_user_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
+async def delete_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
     """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
     
     [Note] This function will be updated when the user system no longer relies on Discord."""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'DELETE /user/connections', 60, 10)
     if rl[0]:
@@ -189,8 +186,8 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT userid FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -199,22 +196,21 @@ async def delete_user_connections(request: Request, response: Response, uid: Opt
         response.status_code = 428
         return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
+    await app.db.commit(dhrid)
 
     username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
     await AuditLog(dhrid, au["uid"], ml.ctr("deleted_connections", var = {"username": username, "uid": uid}))
 
     return Response(status_code=204)
 
-@app.put(f"/user/{{uid}}/ban")
-async def put_user_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+async def put_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Bans a specific user, returns 204
     
     JSON: {"expire": int, "reason": str}"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PUT /user/ban', 60, 10)
     if rl[0]:
@@ -241,8 +237,8 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
     if expire <= 0:
         expire = 253402272000
 
-    await aiosql.execute(dhrid, f"SELECT userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     username = ml.ctr("unknown_user")
     email = ""
     discordid = "NULL"
@@ -259,12 +255,12 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_ban", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        await aiosql.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, '{email}', {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, '{email}', {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+        await app.db.commit(dhrid)
         duration = ml.ctr("forever")
         if expire != 253402272000:
             duration = ml.ctr("until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
@@ -274,12 +270,11 @@ async def put_user_ban(request: Request, response: Response, uid: int, authoriza
         response.status_code = 409
         return {"error": ml.tr(request, "user_already_banned", force_lang = au["language"])}
 
-@app.delete(f"/user/{{uid}}/ban")
-async def delete_user_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+async def delete_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Unbans a specific user, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'DELETE /user/ban', 60, 10)
     if rl[0]:
@@ -293,25 +288,24 @@ async def delete_user_ban(request: Request, response: Response, uid: int, author
         del au["code"]
         return au
     
-    await aiosql.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 409
         return {"error": ml.tr(request, "user_not_banned", force_lang = au["language"])}
     else:
-        await aiosql.execute(dhrid, f"DELETE FROM banned WHERE uid = {uid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM banned WHERE uid = {uid}")
+        await app.db.commit(dhrid)
         
         username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
         await AuditLog(dhrid, au["uid"], ml.ctr("unbanned_user", var = {"username": username, "uid": uid}))
         return Response(status_code=204)
    
-@app.delete(f"/user/{{uid}}")
 async def delete_user(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Deletes a specific user, returns 204"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'DELETE /user', 60, 10)
     if rl[0]:
@@ -339,8 +333,8 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             del au["code"]
             return au
 
-        await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -350,16 +344,16 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         username = t[0][1]
         
-        await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
+        await app.db.commit(dhrid)
 
         await AuditLog(dhrid, au["uid"], ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
 
@@ -368,24 +362,24 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     else:
         uid = auth_uid
         
-        await aiosql.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
         userid = t[0][0]
         username = t[0][1]
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
         
-        await aiosql.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
-        await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
+        await app.db.commit(dhrid)
 
         await AuditLog(dhrid, uid, ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
 

@@ -6,17 +6,15 @@ import os
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config
-from db import aiosql
+from app import app
 from functions import *
 
 
-@app.get(f"/user/language")
-async def get_user_language(request: Request, response: Response, authorization: str = Header(None)):
+async def get_language(request: Request, response: Response, authorization: str = Header(None)):
     """Returns the language of the authorized user"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'GET /user/language', 60, 60)
     if rl[0]:
@@ -33,14 +31,13 @@ async def get_user_language(request: Request, response: Response, authorization:
 
     return {"language": await GetUserLanguage(dhrid, uid)}
 
-@app.patch(f"/user/language")
-async def patch_user_language(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_language(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the language of the authorized user, returns 204
     
     JSON: `{"language": str}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/language', 60, 10)
     if rl[0]:
@@ -62,12 +59,12 @@ async def patch_user_language(request: Request, response: Response, authorizatio
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not os.path.exists(config.language_dir + "/" + language + ".json"):
+    if not os.path.exists(app.config.language_dir + "/" + language + ".json"):
         response.status_code = 400
         return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
-    await aiosql.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{language}')")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
+    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{language}')")
+    await app.db.commit(dhrid)
 
     return Response(status_code=204)

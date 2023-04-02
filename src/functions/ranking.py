@@ -1,32 +1,32 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from static import RANKROLE, RANKNAME
+from app import app
 
 def point2rankroleid(point):
     """Returns Discord Snowflake of the rank of the point"""
 
-    keys = list(RANKROLE.keys())
+    keys = list(app.rankrole.keys())
     if point < keys[0]:
         return -1
     if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return RANKROLE[keys[0]]
+        return app.rankrole[keys[0]]
     for i in range(1, len(keys)):
         if point >= keys[i-1] and point < keys[i]:
-            return RANKROLE[keys[i-1]]
+            return app.rankrole[keys[i-1]]
     if point >= keys[-1]:
-        return RANKROLE[keys[-1]]
+        return app.rankrole[keys[-1]]
 
 def point2rankname(point):
     """Returns name of the rank of the point"""
 
-    keys = list(RANKNAME.keys())
+    keys = list(app.rankname.keys())
     if point < keys[0]:
         return -1
     if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return RANKNAME[keys[0]]
+        return app.rankname[keys[0]]
     for i in range(1, len(keys)):
         if point >= keys[i-1] and point < keys[i]:
-            return RANKNAME[keys[i-1]]
+            return app.rankname[keys[i-1]]
     if point >= keys[-1]:
-        return RANKNAME[keys[-1]]
+        return app.rankname[keys[-1]]

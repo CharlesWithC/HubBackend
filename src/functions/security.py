@@ -6,8 +6,7 @@ import time
 from fastapi.responses import JSONResponse
 
 import multilang as ml
-from app import config, tconfig
-from db import aiosql
+from app import app
 from functions.dataop import *
 from functions.general import *
 from static import *
@@ -18,13 +17,13 @@ def checkPerm(roles, perms):
         perms = [perms]
     for role in roles:
         for perm in perms:
-            if perm in tconfig["perms"].keys() and role in tconfig["perms"][perm]:
+            if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm]:
                 return True
     return False
 
-csession = {} # session token cache, this only checks if a session token is valid
-csession_extended = {} # extended session storage for ratelimit
-cratelimit = {}
+app.state.cache_session = {} # session token cache, this only checks if a session token is valid
+app.state.cache_session_extended = {} # extended session storage for ratelimit
+app.state.cache_ratelimit = {}
 
 async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly = False):
     # identifier is precise and will be stored in database
@@ -33,32 +32,31 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
     cidentifier = f"ip/{request.client.host}"
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
-        if authorization in csession_extended.keys():
-            cidentifier = f"uid/{csession_extended[authorization]['uid']}"
+        if authorization in app.state.cache_session_extended.keys():
+            cidentifier = f"uid/{app.state.cache_session_extended[authorization]['uid']}"
 
     # whitelist ip (only active when request is not authed)
-    if cidentifier.startswith("ip") and request.client.host in config.whitelist_ips:
+    if cidentifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
         return (False, {})
 
     # check ratelimit in memory
-    global cratelimit
-    k = list(cratelimit.keys())
+    k = list(app.state.cache_ratelimit.keys())
     for i in k:
-        for j in range(len(cratelimit[i])):
+        for j in range(len(app.state.cache_ratelimit[i])):
             try:
-                if cratelimit[i][j] < time.time() - 60:
-                    del cratelimit[i][j]
+                if app.state.cache_ratelimit[i][j] < time.time() - 60:
+                    del app.state.cache_ratelimit[i][j]
             except:
                 pass
-    if cidentifier in cratelimit.keys():
-        cratelimit[cidentifier].append(int(time.time()))
-        if len(cratelimit[cidentifier]) >= 150:
+    if cidentifier in app.state.cache_ratelimit.keys():
+        app.state.cache_ratelimit[cidentifier].append(int(time.time()))
+        if len(app.state.cache_ratelimit[cidentifier]) >= 150:
             try:
-                del cratelimit[cidentifier][1:(len(cratelimit[cidentifier])-149)]
+                del app.state.cache_ratelimit[cidentifier][1:(len(app.state.cache_ratelimit[cidentifier])-149)]
             except:
                 pass
             # global ratelimit active
-            maxban = cratelimit[cidentifier][0] + 600
+            maxban = app.state.cache_ratelimit[cidentifier][0] + 600
             resp_headers = {}
             resp_headers["Out-Of-Database"] = "true"
             resp_headers["Retry-After"] = str(maxban - int(time.time()))
@@ -71,7 +69,7 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
                 "retry_after": str(maxban - int(time.time())), "global": True}
             return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     else:
-        cratelimit[cidentifier] = [int(time.time())]
+        app.state.cache_ratelimit[cidentifier] = [int(time.time())]
 
     # only check cached global ratelimit, used by middleware
     if cGlobalOnly:
@@ -85,12 +83,12 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
             identifier = f"uid/{au['uid']}"
 
     # whitelist ip (only active when request is not authed)
-    if identifier.startswith("ip") and request.client.host in config.whitelist_ips:
+    if identifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
         return (False, {})
     
     # check global ratelimit
-    await aiosql.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE identifier = '{identifier}' AND endpoint LIKE 'global-ban-%'")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE identifier = '{identifier}' AND endpoint LIKE 'global-ban-%'")
+    t = await app.db.fetchall(dhrid)
     maxban = 0
     for tt in t:
         frt = tt[0]
@@ -98,8 +96,8 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
         maxban = max(frt + bansec, maxban)
         if maxban < time.time():
             # global ratelimit expired
-            await aiosql.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-{bansec}'")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-{bansec}'")
+            await app.db.commit(dhrid)
             maxban = 0
     if maxban > 0:
         # global ratelimit active
@@ -115,15 +113,15 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     
     # check route ratelimit
-    await aiosql.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE identifier = '{identifier}' AND first_request_timestamp > {int(time.time() - 60)}")
-    t = await aiosql.fetchall(dhrid)
-    if t[0][0] != None and t[0][0] > 150:
+    await app.db.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE identifier = '{identifier}' AND first_request_timestamp > {int(time.time() - 60)}")
+    t = await app.db.fetchall(dhrid)
+    if t[0][0] is not None and t[0][0] > 150:
         # more than 150r/m combined
         # including 429 requests
         # 10min global ratelimit
-        await aiosql.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-600'")
-        await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', 'global-ban-600', {int(time.time())}, 0)")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = 'global-ban-600'")
+        await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', 'global-ban-600', {int(time.time())}, 0)")
+        await app.db.commit(dhrid)
         resp_headers = {}
         resp_headers["Retry-After"] = str(600)
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
@@ -135,11 +133,11 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
             "retry_after": "600", "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
     
-    await aiosql.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '{endpoint}', {int(time.time())}, 1)")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '{endpoint}', {int(time.time())}, 1)")
+        await app.db.commit(dhrid)
         resp_headers = {}
         resp_headers["X-RateLimit-Limit"] = str(limitcnt)
         resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
@@ -150,8 +148,8 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
         first_request_timestamp = t[0][0]
         request_count = t[0][1]
         if int(time.time()) - first_request_timestamp > limittime:
-            await aiosql.execute(dhrid, f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"UPDATE ratelimit SET first_request_timestamp = {int(time.time())}, request_count = 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
+            await app.db.commit(dhrid)
             resp_headers = {}
             resp_headers["X-RateLimit-Limit"] = str(limitcnt)
             resp_headers["X-RateLimit-Remaining"] = str(limitcnt - 1)
@@ -160,14 +158,14 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
             return (False, resp_headers)
         else:
             if request_count + 1 > limitcnt:
-                await aiosql.execute(dhrid, f"SELECT request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '429-error'")
-                t = await aiosql.fetchall(dhrid)
+                await app.db.execute(dhrid, f"SELECT request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '429-error'")
+                t = await app.db.fetchall(dhrid)
                 if len(t) > 0:
-                    await aiosql.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '429-error'")
-                    await aiosql.commit(dhrid)
+                    await app.db.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '429-error'")
+                    await app.db.commit(dhrid)
                 else:
-                    await aiosql.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '429-error', {int(time.time())}, 1)")
-                    await aiosql.commit(dhrid)
+                    await app.db.execute(dhrid, f"INSERT INTO ratelimit VALUES ('{identifier}', '429-error', {int(time.time())}, 1)")
+                    await app.db.commit(dhrid)
 
                 retry_after = limittime - (int(time.time()) - first_request_timestamp)
                 resp_headers = {}
@@ -181,8 +179,8 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
                     "retry_after": str(retry_after), "global": False}
                 return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
             else:
-                await aiosql.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
-                await aiosql.commit(dhrid)
+                await app.db.execute(dhrid, f"UPDATE ratelimit SET request_count = request_count + 1 WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
+                await app.db.commit(dhrid)
                 resp_headers = {}
                 resp_headers["X-RateLimit-Limit"] = str(limitcnt)
                 resp_headers["X-RateLimit-Remaining"] = str(limitcnt - request_count - 1)
@@ -203,25 +201,23 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         return {"error": "Unauthorized", "code": 401}
     authorization = f"{tokentype} {stoken}"
 
-    global csession
-    k = list(csession.keys())
+    k = list(app.state.cache_session.keys())
     for a in k:
         try:
-            if csession[a]["expire"] < time.time():
-                del csession[a]
+            if app.state.cache_session[a]["expire"] < time.time():
+                del app.state.cache_session[a]
         except:
             pass
-    global csession_extended
-    k = list(csession_extended.keys())
+    k = list(app.state.cache_session_extended.keys())
     for a in k:
         try:
-            if csession_extended[a]["expire"] < time.time():
-                del csession_extended[a]
+            if app.state.cache_session_extended[a]["expire"] < time.time():
+                del app.state.cache_session_extended[a]
         except:
             pass
 
-    if authorization in csession.keys():
-        cache = csession[authorization]
+    if authorization in app.state.cache_session.keys():
+        cache = app.state.cache_session[authorization]
         if cache["settings"] == (allow_application_token, check_member, required_permission):
             return cache["result"]
         
@@ -232,8 +228,8 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             return {"error": ml.tr(request, "application_token_not_allowed"), "code": 401}
 
         # validate token
-        await aiosql.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "Unauthorized", "code": 401}
         uid = t[0][0]
@@ -244,8 +240,8 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         # additional check
         
         # this should not happen but just in case
-        await aiosql.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "Unauthorized", "code": 401}
         userid = t[0][0]
@@ -260,31 +256,31 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             ok = False
             for role in roles:
                 for perm in required_permission:
-                    if perm in tconfig["perms"].keys() and role in tconfig["perms"][perm] or role in tconfig["perms"]["admin"]:
+                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
                         ok = True
             
             if not ok:
                 return {"error": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
-            await aiosql.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            await app.db.commit(dhrid)
 
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+        t = await app.db.fetchall(dhrid)
         language = ""
         if len(t) != 0:
             language = t[0][0]
         
-        csession[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
-        csession_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
+        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
+        app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
-        return csession[authorization]["result"]
+        return app.state.cache_session[authorization]["result"]
 
     # bearer token
     elif tokentype.lower() == "bearer":
-        await aiosql.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "Unauthorized", "code": 401}
         uid = t[0][0]
@@ -294,26 +290,26 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
         user_agent = t[0][4]
 
         # check country
-        if not request.client.host in config.whitelist_ips:
+        if not request.client.host in app.config.whitelist_ips:
             curCountry = getRequestCountry(request, abbr = True)
             if curCountry != country and country != "":
-                await aiosql.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
-                await aiosql.commit(dhrid)
+                await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
+                await app.db.commit(dhrid)
                 return {"error": "Unauthorized", "code": 401}
 
             if ip != request.client.host:
-                await aiosql.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
+                await app.db.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
             if curCountry != country and not curCountry != "" and country != "":
-                await aiosql.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
+                await app.db.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
             if getUserAgent(request) != user_agent:
-                await aiosql.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
-            await aiosql.commit(dhrid)
+                await app.db.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
+            await app.db.commit(dhrid)
         
         # additional check
         
         # this should not happen but just in case
-        await aiosql.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": "Unauthorized", "code": 401}
         userid = t[0][0]
@@ -329,26 +325,26 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
             
             for role in roles:
                 for perm in required_permission:
-                    if perm in tconfig["perms"].keys() and role in tconfig["perms"][perm] or role in tconfig["perms"]["admin"]:
+                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
                         ok = True
             
             if not ok:
                 return {"error": "Forbidden", "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
-            await aiosql.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            await app.db.commit(dhrid)
 
-        await aiosql.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
-        t = await aiosql.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+        t = await app.db.fetchall(dhrid)
         language = ""
         if len(t) != 0:
             language = t[0][0]
         
-        csession[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
-        csession_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
+        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
+        app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
-        return csession[authorization]["result"]
+        return app.state.cache_session[authorization]["result"]
     
     return {"error": "Unauthorized", "code": 401}
 
@@ -362,8 +358,8 @@ async def isSecureAuth(dhrid, authorization, request):
         return False
     uid = au["uid"]
     
-    await aiosql.execute(dhrid, f"SELECT discordid, steamid FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT discordid, steamid FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return False
     if t[0][0] is None and t[0][1] is None:

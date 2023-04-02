@@ -1,12 +1,12 @@
 from db import genconn
-from app import config
+from app import app
 
 def run():
     conn = genconn(autocommit = True)
     cur = conn.cursor()
 
     print(f"Moving application to DATA DIRECTORY...")
-    cur.execute(f"ALTER TABLE application DATA DIRECTORY = '{config.mysql_ext}'")
+    cur.execute(f"ALTER TABLE application DATA DIRECTORY = '{app.config.mysql_ext}'")
 
     print("Fixing nxtuserid in settings...")
     cur.execute(f"SELECT MAX(userid) FROM user")

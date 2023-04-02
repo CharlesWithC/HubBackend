@@ -8,16 +8,14 @@ from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app, config
-from db import aiosql
+from app import app
 from functions import *
 
-@app.post(f"/user/resendConfirmation")
-async def post_user_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
+async def post_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
     """Resends confirmation email"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'POST /user/resendConfirmation', 60, 1)
     if rl[0]:
@@ -32,8 +30,8 @@ async def post_user_resend_confirmation(request: Request, response: Response, au
         return au
     uid = au["uid"]
     
-    await aiosql.execute(dhrid, f"SELECT operation, expire FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT operation, expire FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -45,32 +43,31 @@ async def post_user_resend_confirmation(request: Request, response: Response, au
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
     secret = "rg" + gensecret(length = 30)
-    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
-    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
-    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
-    await aiosql.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'register/{email}', {expire})")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
+    await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
+    await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
+    await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'register/{email}', {expire})")
+    await app.db.commit(dhrid)
     
-    link = config.frontend_urls.email_confirm.replace("{secret}", secret)
-    await aiosql.extend_conn(dhrid, 15)
+    link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
+    await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(au["name"], email, "register", link))
-    await aiosql.extend_conn(dhrid, 2)
+    await app.db.extend_conn(dhrid, 2)
     if not ok:
-        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+        await app.db.commit(dhrid)
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
     return Response(status_code=204)
 
-@app.patch(f"/user/email")
-async def patch_user_email(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_email(request: Request, response: Response, authorization: str = Header(None)):
     """Updates email for the authorized user, returns 204
     
     JSON: `{"email": str}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/email', 60, 1)
     if rl[0]:
@@ -92,8 +89,8 @@ async def patch_user_email(request: Request, response: Response, authorization: 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
-    await aiosql.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND email = '{new_email}'")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND email = '{new_email}'")
+    t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = au["language"])}
@@ -103,31 +100,30 @@ async def patch_user_email(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
     secret = "ue" + gensecret(length = 30)
-    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
-    await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
-    await aiosql.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'update-email/{new_email}', {int(time.time() + 3600)})")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'update-email/%'")
+    await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
+    await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'update-email/{new_email}', {int(time.time() + 3600)})")
+    await app.db.commit(dhrid)
     
-    link = config.frontend_urls.email_confirm.replace("{secret}", secret)
-    await aiosql.extend_conn(dhrid, 15)
+    link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
+    await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(au["name"], new_email, "update_email", link))
-    await aiosql.extend_conn(dhrid, 2)
+    await app.db.extend_conn(dhrid, 2)
     if not ok:
-        await aiosql.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
-        await aiosql.commit(dhrid)
+        await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+        await app.db.commit(dhrid)
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
     return Response(status_code=204)
 
-@app.patch(f"/user/discord")
-async def patch_user_discord(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_discord(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Discord account connection for the authorized user, returns 204
     
     JSON: `{"code": str}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 3)
     if rl[0]:
@@ -150,7 +146,7 @@ async def patch_user_discord(request: Request, response: Response, authorization
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     try:
-        discord_auth = DiscordAuth(config.discord_client_id, config.discord_client_secret, f"https://{config.apidomain}/{config.abbr}/auth/discord/connect")
+        discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/connect")
         tokens = discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
@@ -160,14 +156,14 @@ async def patch_user_discord(request: Request, response: Response, authorization
             discordid = user_data['id']
             tokens = {**tokens, **user_data}
 
-            await aiosql.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND discordid = {discordid}")
-            t = await aiosql.fetchall(dhrid)
+            await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND discordid = {discordid}")
+            t = await app.db.fetchall(dhrid)
             if len(t) > 0:
                 response.status_code = 409
                 return {"error": ml.tr(request, "connection_conflict", var = {"app": "Discord"}, force_lang = au["language"])}
 
-            await aiosql.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
-            await aiosql.commit(dhrid)
+            await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
+            await app.db.commit(dhrid)
 
             return Response(status_code=204)
         
@@ -183,14 +179,13 @@ async def patch_user_discord(request: Request, response: Response, authorization
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
     
-@app.patch(f"/user/steam")
-async def patch_user_steam(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_steam(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Steam account connection for the authorized user, returns 204
     
     JSON: `{"callback": str}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/steam', 60, 3)
     if rl[0]:
@@ -227,27 +222,27 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
     steamid = openid.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
-    await aiosql.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND steamid = {steamid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND steamid = {steamid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Steam"}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT roles, steamid, userid FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid is not None and userid >= 0:
         if not (await auth(dhrid, authorization, request, required_permission = ["driver"]))["error"]:
             try:
-                if config.tracker.lower() == "tracksim":
-                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + config.tracker_api_token}, dhrid = dhrid)
+                if app.config.tracker.lower() == "tracksim":
+                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
             except:
                 traceback.print_exc()
 
-    await aiosql.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
+    await app.db.commit(dhrid)
 
     try:
         r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
@@ -255,26 +250,25 @@ async def patch_user_steam(request: Request, response: Response, authorization: 
             d = json.loads(r.text)
             if not d["error"]:
                 truckersmpid = d["response"]["id"]
-                await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
-                await aiosql.commit(dhrid)
+                await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
+                await app.db.commit(dhrid)
                 return Response(status_code=204)
     except:
         traceback.print_exc()
 
     # in case user changed steam
-    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")
+    await app.db.commit(dhrid)
     
     return Response(status_code=204)
 
-@app.patch(f"/user/truckersmp")
-async def patch_user_truckersmp(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_truckersmp(request: Request, response: Response, authorization: str = Header(None)):
     """Updates TruckersMP account connection for the authorized user, returns 204
     
     JSON: `{"truckersmpid": int}`"""
 
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'PATCH /user/truckersmp', 60, 3)
     if rl[0]:
@@ -310,8 +304,8 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
-    t = await aiosql.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 428
         return {"error": ml.tr(request, "must_connect_steam_before_truckersmp", force_lang = au["language"])}
@@ -323,6 +317,6 @@ async def patch_user_truckersmp(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "truckersmp_steam_mismatch", var = {"truckersmp_name": truckersmp_name, "truckersmpid": str(truckersmpid)}, force_lang = au["language"])}
 
-    await aiosql.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
-    await aiosql.commit(dhrid)
+    await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
+    await app.db.commit(dhrid)
     return Response(status_code=204)

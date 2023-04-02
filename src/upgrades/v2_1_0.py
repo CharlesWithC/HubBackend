@@ -1,5 +1,5 @@
 from db import genconn
-from app import config
+from app import app
 import traceback
 
 def convertQuotation(s):
@@ -150,7 +150,7 @@ def run():
             cur.execute(f"DROP TABLE application")
     cur.execute(f"SELECT * FROM application_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     for row in rows:
         row = process_row(row)
         if not row[2] in discordid2uid.keys():

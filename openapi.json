@@ -845,7 +845,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/mfa": {
+        "/abbr/user/mfa/enable": {
             "post": {
                 "summary": "Enable MFA",
                 "tags": ["user"],
@@ -1159,7 +1159,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/application/list": {
+        "/abbr/token/applications/list": {
             "get": {
                 "summary": "Get Application Token List (Hash)",
                 "tags": ["auth"],
@@ -1261,7 +1261,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/application/all": {
+        "/abbr/token/applications/all": {
             "delete": {
                 "summary": "Revoke All Application Token",
                 "tags": ["auth"],
@@ -2109,7 +2109,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcement/list": {
+        "/abbr/announcements/list": {
             "get": {
                 "summary": "Get Announcement List",
                 "tags": ["announcement"],
@@ -2161,7 +2161,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcement": {
+        "/abbr/announcements": {
             "post": {
                 "summary": "Create Announcement",
                 "tags": ["announcement"],
@@ -2209,7 +2209,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcement/{announcementid}": {
+        "/abbr/announcements/{announcementid}": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -2302,7 +2302,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application/types": {
+        "/abbr/applications/types": {
             "get": {
                 "summary": "Get Application Types",
                 "tags": ["application"],
@@ -2310,7 +2310,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application/positions": {
+        "/abbr/applications/positions": {
             "get": {
                 "summary": "Get Application Positions",
                 "tags": ["application"],
@@ -2344,7 +2344,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application/list": {
+        "/abbr/applications/list": {
             "get": {
                 "summary": "Get Application List",
                 "tags": ["application"],
@@ -2404,7 +2404,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application": {
+        "/abbr/applications": {
             "post": {
                 "summary": "Create Application",
                 "tags": ["application"],
@@ -2436,7 +2436,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application/{applicationid}": {
+        "/abbr/applications/{applicationid}": {
             "get": {
                 "summary": "Get Application",
                 "tags": ["application"],
@@ -2509,7 +2509,7 @@
                 "responses": {}
             }
         },
-        "/abbr/application/{applicationid}/status": {
+        "/abbr/applications/{applicationid}/status": {
             "patch": {
                 "summary": "Update Application Status",
                 "tags": ["application"],
@@ -2550,7 +2550,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenge/list": {
+        "/abbr/challenges/list": {
             "get": {
                 "summary": "Get Challenge List",
                 "tags": ["challenge"],
@@ -2666,7 +2666,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenge": {
+        "/abbr/challenges": {
             "post": {
                 "summary": "Create Challenge",
                 "tags": ["challenge"],
@@ -2734,7 +2734,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenge/{challengeid}": {
+        "/abbr/challenges/{challengeid}": {
             "get": {
                 "summary": "Get Challenge",
                 "tags": ["challenge"],
@@ -2855,7 +2855,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenge/{challengeid}/delivery/{logid}": {
+        "/abbr/challenges/{challengeid}/delivery/{logid}": {
             "put": {
                 "summary": "Add Challenge Delivery",
                 "tags": ["challenge"],
@@ -2909,7 +2909,7 @@
                 "responses": {}
             }
         },
-        "/abbr/division/list": {
+        "/abbr/divisions/list": {
             "get": {
                 "summary": "Get Division List",
                 "tags": ["division"],
@@ -2917,7 +2917,7 @@
                 "responses": {}
             }
         },
-        "/abbr/division": {
+        "/abbr/divisions": {
             "get": {
                 "summary": "Get Division Info",
                 "tags": ["division"],
@@ -3023,7 +3023,7 @@
                 "responses": {}
             }
         },
-        "/abbr/division/list/pending": {
+        "/abbr/divisions/list/pending": {
             "get": {
                 "summary": "Get Pending Division Validation",
                 "tags": ["division"],
@@ -4456,7 +4456,7 @@
                 "responses": {}
             }
         },
-        "/abbr/event/list": {
+        "/abbr/events/list": {
             "get": {
                 "summary": "Get Event List",
                 "tags": ["event"],
@@ -4500,7 +4500,7 @@
                 "responses": {}
             }
         },
-        "/abbr/event": {
+        "/abbr/events": {
             "post": {
                 "summary": "Create Event",
                 "tags": ["event"],
@@ -4560,7 +4560,7 @@
                 "responses": {}
             }
         },
-        "/abbr/event/{eventid}": {
+        "/abbr/events/{eventid}": {
             "get": {
                 "summary": "Get Event",
                 "tags": ["event"],
@@ -4665,7 +4665,7 @@
                 "responses": {}
             }
         },
-        "/abbr/event/{eventid}/vote": {
+        "/abbr/events/{eventid}/vote": {
             "put": {
                 "summary": "Vote Event",
                 "tags": ["event"],
@@ -4703,7 +4703,7 @@
                 "responses": {}
             }
         },
-        "/abbr/event/{eventid}/attendees": {
+        "/abbr/events/{eventid}/attendees": {
             "patch": {
                 "summary": "Update Event Attendees",
                 "tags": ["event"],

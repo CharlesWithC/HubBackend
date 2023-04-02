@@ -10,17 +10,13 @@ from typing import Optional
 from fastapi import Header, Request, Response
 from fastapi.responses import StreamingResponse
 
-from app import app, config
-from db import aiosql
 from functions import *
-from plugins.division import DIVISION_NAME
 
 
-@app.get(f"/dlog/export")
-async def get_dlog_export(request: Request, response: Response, authorization: str = Header(None), \
+async def get_export(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, include_ids: Optional[bool] = False):
     dhrid = request.state.dhrid
-    await aiosql.new_conn(dhrid)
+    await app.db.new_conn(dhrid)
 
     rl = await ratelimit(dhrid, request, 'GET /dlog/export', 300, 3)
     if rl[0]:
@@ -44,12 +40,12 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
         f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
     else:
         f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
-    await aiosql.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
+    await app.db.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.timestamp >= {start_time} AND dlog.timestamp <= {end_time} AND dlog.logid >= 0")
-    d = await aiosql.fetchall(dhrid)
+    d = await app.db.fetchall(dhrid)
     for di in range(len(d)):
         dd = d[di]
         logid = dd[0]
@@ -59,8 +55,8 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
         if division_id is None:
             division_id = ""
         else:
-            if division_id in DIVISION_NAME.keys():
-                division = DIVISION_NAME[division_id]
+            if division_id in app.division_name.keys():
+                division = app.division_name[division_id]
 
         challengeids = dd[12]
         challengenames = dd[13]
@@ -167,16 +163,16 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
                 start_time = data["start_time"]
                 stop_time = data["stop_time"]
 
-                if data["source_city"] != None:
+                if data["source_city"] is not None:
                     source_city = data["source_city"]["name"]
                     source_city_id = data["source_city"]["unique_id"]
-                if data["source_company"] != None:
+                if data["source_company"] is not None:
                     source_company = data["source_company"]["name"]
                     source_company_id = data["source_company"]["unique_id"]
-                if data["destination_city"] != None:
+                if data["destination_city"] is not None:
                     destination_city = data["destination_city"]["name"]
                     destination_city_id = data["destination_city"]["unique_id"]
-                if data["destination_company"] != None:
+                if data["destination_company"] is not None:
                     destination_company = data["destination_company"]["name"]
                     destination_company_id = data["destination_company"]["unique_id"]
                 
@@ -184,21 +180,21 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
                 if "distance" in last_event["meta"]:
                     reported_distance = last_event["meta"]["distance"]
 
-                if data["cargo"] != None:
+                if data["cargo"] is not None:
                     cargo = data["cargo"]["name"]
                     cargo_id = data["cargo"]["unique_id"]
                     cargo_mass = data["cargo"]["mass"]
                     cargo_damage = data["cargo"]["damage"]
 
-                if data["truck"] != None:
+                if data["truck"] is not None:
                     truck = data["truck"]
-                    if truck["brand"] != None:
+                    if truck["brand"] is not None:
                         truck_brand = truck["brand"]["name"]
                         truck_brand_id = truck["brand"]["unique_id"]
                     truck_name = truck["name"]
                     truck_id = truck["unique_id"]
                     license_plate = truck["license_plate"]
-                    if truck["license_plate_country"] != None:
+                    if truck["license_plate_country"] is not None:
                         license_plate_country = truck["license_plate_country"]["name"]
                         license_plate_country_id = truck["license_plate_country"]["unique_id"]
                     avg_speed = truck["average_speed"]
@@ -237,7 +233,7 @@ async def get_dlog_export(request: Request, response: Response, authorization: s
                 elif "has_police_enabled" in data["game"].keys():
                     has_police_enabled = int(data["game"]["has_police_enabled"])
                 market = data["market"]
-                if data["multiplayer"] != None:
+                if data["multiplayer"] is not None:
                     multiplayer = data["multiplayer"]["type"]
 
             except:

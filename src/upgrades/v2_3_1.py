@@ -1,4 +1,3 @@
-from app import config
 from db import genconn
 
 
@@ -6,7 +5,7 @@ def run():
     conn = genconn(autocommit = True)
     cur = conn.cursor()
 
-    USERID_TABLES = ["user", "mythpoint", "dlog", "telemetry", "announcement", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]
+    USERID_TABLES = ["user", "mythpoint", "dlog", "telemetry", "announcement", "application", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]
     SPECIAL_USERID_TABLES = {"application": ["update_staff_userid"], "division": ["update_staff_userid"], "economy_transaction": ["from_userid", "to_userid"]}
 
     UID_TABLES = ["user", "user_password", "user_activity", "user_notification", "banned", "session", "auth_ticket", "application_token", "email_confirmation", "auditlog", "settings"]
@@ -66,7 +65,7 @@ def run():
                     print(f"Changing UID: {uid} to {max_uid}")
                     for TABLE in UID_TABLES:
                         cur.execute(f"UPDATE {TABLE} SET uid = {max_uid} WHERE uid = {uid}")
-                print("Update AUTO INCREMENT config...")
+                print("Update AUTO INCREMENT app.config...")
                 cur.execute(f"ALTER TABLE user AUTO_INCREMENT = {max_uid + 1}")
                 conn.commit()
 
