@@ -8,7 +8,6 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
@@ -18,10 +17,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
         speed_limit: Optional[int] = None, userid: Optional[int] = None, \
         start_time: Optional[int] = None, end_time: Optional[int] = None, game: Optional[int] = None, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/list', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -31,13 +31,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
     
     userid = -1
     if authorization is not None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+        au = await auth(authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
         userid = au["userid"]
-        await ActivityUpdate(dhrid, au["uid"], "dlogs")
+        await ActivityUpdate(request, au["uid"], "dlogs")
     
     if page_size <= 1:
         page_size = 1
@@ -164,9 +164,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         profit = tt[4]
         unit = tt[5]
         
-        userinfo = await GetUserInfo(dhrid, request, userid = tt[0])
+        userinfo = await GetUserInfo(request, userid = tt[0])
         if userid == -1 and app.config.privacy:
-            userinfo = await GetUserInfo(dhrid, request, privacy = True)
+            userinfo = await GetUserInfo(request, privacy = True)
 
         status = 1
         if tt[7] == 0:
@@ -189,10 +189,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def get_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -201,7 +202,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     userid = -1
     uid = -1
     if authorization is not None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+        au = await auth(authorization, request, allow_application_token = True, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -218,7 +219,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
-    await ActivityUpdate(dhrid, uid, f"dlog_{logid}")
+    await ActivityUpdate(request, uid, f"dlog_{logid}")
     data = {}
     if t[0][1] != "":
         data = json.loads(decompress(t[0][1]))
@@ -273,11 +274,11 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
 
     userinfo = None
     if userid == -1 and app.config.privacy:
-        userinfo = await GetUserInfo(dhrid, request, privacy = True)
+        userinfo = await GetUserInfo(request, privacy = True)
     else:
-        userinfo = await GetUserInfo(dhrid, request, userid = t[0][0], tell_deleted = True)
+        userinfo = await GetUserInfo(request, userid = t[0][0], tell_deleted = True)
         if "is_deleted" in userinfo:
-            userinfo = await GetUserInfo(dhrid, request, -1)
+            userinfo = await GetUserInfo(request, -1)
 
     return {"logid": logid, "user": userinfo, \
         "distance": distance, "division": division, "challenge_record": challenge_record, \
@@ -285,16 +286,17 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
             "detail": data, "telemetry": telemetry}
 
 async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /dlog', 60, 30)
+    rl = await ratelimit(request, 'DELETE /dlog', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"], allow_application_token = True)
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"], allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -314,9 +316,9 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     await app.db.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_delivery", var = {"logid": logid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_delivery", var = {"logid": logid}))
 
-    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
-    await notification(dhrid, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(dhrid, uid)))
+    uid = (await GetUserInfo(request, userid = userid))["uid"]
+    await notification(request, "dlog", uid, ml.tr(request, "job_deleted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)))
 
     return Response(status_code=204)

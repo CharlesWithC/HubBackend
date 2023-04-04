@@ -8,7 +8,6 @@
     "logo_url": "https://{domain}/images/logo.png",
 
     "openapi": "./openapi.json",
-    "language_dir": "./languages",
     "frontend_urls": {
         "steam_callback": "https://{domain}/connectSteam",
         "discord_callback": "https://{domain}/connectDiscord",

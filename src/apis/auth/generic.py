@@ -10,15 +10,15 @@ import bcrypt
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
 async def post_password(request: Request, response: Response):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/password', 60, 3)
+    rl = await ratelimit(request, 'POST /auth/password', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -34,7 +34,7 @@ async def post_password(request: Request, response: Response):
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -89,11 +89,11 @@ async def post_password(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, uid, ml.ctr("password_login", var = {"country": getRequestCountry(request)}))
+    username = (await GetUserInfo(request, uid = uid))["name"]
+    language = await GetUserLanguage(request, uid)
+    await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
 
-    await notification(dhrid, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
                          "description": "", 
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
@@ -104,6 +104,7 @@ async def post_password(request: Request, response: Response):
     return {"token": stoken, "mfa": False}
 
 async def post_register(request: Request, response: Response):
+    app = request.app
     if not "email" in app.config.register_methods:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -111,7 +112,7 @@ async def post_register(request: Request, response: Response):
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/register', 60, 10)
+    rl = await ratelimit(request, 'POST /auth/register', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -127,7 +128,7 @@ async def post_register(request: Request, response: Response):
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -174,11 +175,11 @@ async def post_register(request: Request, response: Response):
         else:
             return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
 
-    if not emailConfigured():
+    if not emailConfigured(app):
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid")}
     
-    rl = await ratelimit(dhrid, request, 'POST /auth/register', 60, 2)
+    rl = await ratelimit(request, 'POST /auth/register', 60, 2)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -195,7 +196,7 @@ async def post_register(request: Request, response: Response):
     uid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
     await app.db.commit(dhrid)
-    await AuditLog(dhrid, uid, ml.ctr("password_register", var = {"country": getRequestCountry(request)}))
+    await AuditLog(request, uid, ml.ctr(request, "password_register", var = {"country": getRequestCountry(request)}))
 
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
     await app.db.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{email}', '{b64e(pwdhash)}')")
@@ -207,7 +208,7 @@ async def post_register(request: Request, response: Response):
     
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
-    ok = (await sendEmail(username, email, "register", link))
+    ok = (await sendEmail(app, username, email, "register", link))
     await app.db.extend_conn(dhrid, 2)
     if not ok:
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE secret = '{secret}'")
@@ -220,10 +221,10 @@ async def post_register(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, uid, ml.ctr("password_login", var = {"country": getRequestCountry(request)}))
-    await notification(dhrid, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
+    username = (await GetUserInfo(request, uid = uid))["name"]
+    language = await GetUserLanguage(request, uid)
+    await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
                          "description": "", 
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
@@ -234,10 +235,11 @@ async def post_register(request: Request, response: Response):
     return {"token": stoken, "mfa": False}
 
 async def post_reset(request: Request, response: Response):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/reset', 60, 10)
+    rl = await ratelimit(request, 'POST /auth/reset', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -252,7 +254,7 @@ async def post_reset(request: Request, response: Response):
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post("https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -262,11 +264,11 @@ async def post_reset(request: Request, response: Response):
         response.status_code = 503
         return {"error": "Service Unavailable"}
 
-    if not emailConfigured():
+    if not emailConfigured(app):
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid")}
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/reset', 60, 2)
+    rl = await ratelimit(request, 'POST /auth/reset', 60, 2)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -286,7 +288,7 @@ async def post_reset(request: Request, response: Response):
     
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
-    ok = (await sendEmail(username, email, "reset_password", link))
+    ok = (await sendEmail(app, username, email, "reset_password", link))
     await app.db.extend_conn(dhrid, 2)
     if not ok:
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE secret = '{secret}'")
@@ -297,10 +299,11 @@ async def post_reset(request: Request, response: Response):
     return Response(status_code=204)
 
 async def post_mfa(request: Request, response: Response):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/mfa', 60, 3)
+    rl = await ratelimit(request, 'POST /auth/mfa', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -361,10 +364,10 @@ async def post_mfa(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, uid, ml.ctr("mfa_login", var = {"country": getRequestCountry(request)}))
-    await notification(dhrid, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
+    username = (await GetUserInfo(request, uid = uid))["name"]
+    language = await GetUserLanguage(request, uid)
+    await AuditLog(request, uid, ml.ctr(request, "mfa_login", var = {"country": getRequestCountry(request)}))
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
                         "description": "", 
                         "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
@@ -375,16 +378,17 @@ async def post_mfa(request: Request, response: Response):
     return {"token": stoken}
 
 async def post_email(request: Request, response: Response, secret: str, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/email', 60, 120)
+    rl = await ratelimit(request, 'POST /auth/email', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

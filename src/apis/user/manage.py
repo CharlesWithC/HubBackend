@@ -7,23 +7,22 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
 async def post_accept(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """[Permission Control] Accepts a user as member, assign userid, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/accept', 60, 30)
+    rl = await ratelimit(request, 'POST /user/accept', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -68,21 +67,21 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
 
     await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
     await app.db.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
-    await AuditLog(dhrid, au["uid"], ml.ctr("accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
     await app.db.commit(dhrid)
 
-    await notification(dhrid, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(dhrid, uid)))
+    await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
     
     def setvar(msg):
         return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
 
     if app.config.member_accept.webhook_url != "" or app.config.member_accept.channel_id != "":
         meta = app.config.member_accept
-        await AutoMessage(meta, setvar)
+        await AutoMessage(app, meta, setvar)
     
     if app.config.member_welcome.webhook_url != "" or app.config.member_welcome.channel_id != "":
         meta = app.config.member_welcome
-        await AutoMessage(meta, setvar)
+        await AutoMessage(app, meta, setvar)
 
     return {"userid": userid}   
 
@@ -90,23 +89,23 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
     """[Permission Control] Updates Discord account connection for a specific user, returns 204
     
     JSON: `{"discord_id": int}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/discord', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -154,7 +153,7 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
     await app.db.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
     await app.db.commit(dhrid)
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
 
     return Response(status_code=204)
     
@@ -162,23 +161,23 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
     
     [Note] This function will be updated when the user system no longer relies on Discord."""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /user/connections', 60, 10)
+    rl = await ratelimit(request, 'DELETE /user/connections', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -199,8 +198,8 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     await app.db.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_connections", var = {"username": username, "uid": uid}))
+    username = (await GetUserInfo(request, uid = uid))["name"]
+    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_connections", var = {"username": username, "uid": uid}))
 
     return Response(status_code=204)
 
@@ -208,17 +207,17 @@ async def put_ban(request: Request, response: Response, uid: int, authorization:
     """Bans a specific user, returns 204
     
     JSON: {"expire": int, "reason": str}"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PUT /user/ban', 60, 10)
+    rl = await ratelimit(request, 'PUT /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    au = await auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -239,7 +238,7 @@ async def put_ban(request: Request, response: Response, uid: int, authorization:
 
     await app.db.execute(dhrid, f"SELECT userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    username = ml.ctr("unknown_user")
+    username = ml.ctr(request, "unknown_user")
     email = ""
     discordid = "NULL"
     steamid = "NULL"
@@ -261,10 +260,10 @@ async def put_ban(request: Request, response: Response, uid: int, authorization:
         await app.db.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, '{email}', {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
         await app.db.commit(dhrid)
-        duration = ml.ctr("forever")
+        duration = ml.ctr(request, "forever")
         if expire != 253402272000:
-            duration = ml.ctr("until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
-        await AuditLog(dhrid, au["uid"], ml.ctr("banned_user", var = {"username": username, "uid": uid, "duration": duration}))
+            duration = ml.ctr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
+        await AuditLog(request, au["uid"], ml.ctr(request, "banned_user", var = {"username": username, "uid": uid, "duration": duration}))
         return Response(status_code=204)
     else:
         response.status_code = 409
@@ -272,17 +271,17 @@ async def put_ban(request: Request, response: Response, uid: int, authorization:
 
 async def delete_ban(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Unbans a specific user, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /user/ban', 60, 10)
+    rl = await ratelimit(request, 'DELETE /user/ban', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    au = await auth(authorization, request, required_permission = ["admin", "hr", "hrm", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -297,23 +296,23 @@ async def delete_ban(request: Request, response: Response, uid: int, authorizati
         await app.db.execute(dhrid, f"DELETE FROM banned WHERE uid = {uid}")
         await app.db.commit(dhrid)
         
-        username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, au["uid"], ml.ctr("unbanned_user", var = {"username": username, "uid": uid}))
+        username = (await GetUserInfo(request, uid = uid))["name"]
+        await AuditLog(request, au["uid"], ml.ctr(request, "unbanned_user", var = {"username": username, "uid": uid}))
         return Response(status_code=204)
    
 async def delete_user(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Deletes a specific user, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /user', 60, 10)
+    rl = await ratelimit(request, 'DELETE /user', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -322,12 +321,12 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     if uid == auth_uid:
         uid = -1
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     if uid != -1:
-        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "delete_user"])
+        au = await auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -355,7 +354,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await AuditLog(dhrid, au["uid"], ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
     
@@ -381,6 +380,6 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await AuditLog(dhrid, uid, ml.ctr("deleted_user", var = {"username": username, "uid": uid}))
+        await AuditLog(request, uid, ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)

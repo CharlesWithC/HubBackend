@@ -9,17 +9,15 @@ from email.mime.text import MIMEText
 import socks
 from aiosmtplib import SMTP
 
-from app import app
 
-
-def emailConfigured():
+def emailConfigured(app):
     return app.config.smtp_host != "" and app.config.smtp_port != "" and app.config.smtp_email != "" and app.config.smtp_passwd != ""
 
-async def sendEmail(name, email, category, link):
+async def sendEmail(app, name, email, category, link):
     if not category in app.config.__dict__["email_template"].__dict__.keys():
         raise ValueError("Invalid Category")
 
-    if not emailConfigured():
+    if not emailConfigured(app):
         return False
 
     message = MIMEMultipart('alternative')

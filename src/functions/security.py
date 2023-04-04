@@ -6,12 +6,11 @@ import time
 from fastapi.responses import JSONResponse
 
 import multilang as ml
-from app import app
 from functions.dataop import *
 from functions.general import *
 from static import *
 
-def checkPerm(roles, perms):
+def checkPerm(app, roles, perms):
     '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
     if type(perms) == str:
         perms = [perms]
@@ -21,11 +20,12 @@ def checkPerm(roles, perms):
                 return True
     return False
 
-app.state.cache_session = {} # session token cache, this only checks if a session token is valid
-app.state.cache_session_extended = {} # extended session storage for ratelimit
-app.state.cache_ratelimit = {}
+# app.state.cache_session = {} # session token cache, this only checks if a session token is valid
+# app.state.cache_session_extended = {} # extended session storage for ratelimit
+# app.state.cache_ratelimit = {}
 
-async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly = False):
+async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False):
+    (app, dhrid) = (request.app, request.state.dhrid)
     # identifier is precise and will be stored in database
     # cidentifier is a worker-level identifier stored in memory to prevent excessive amount of traffic
     # cidentifier will only handle global ratelimit
@@ -78,7 +78,7 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
     identifier = f"ip/{request.client.host}"
     if "authorization" in request.headers.keys():
         authorization = request.headers["authorization"]
-        au = await auth(dhrid, authorization, request, check_member=False)
+        au = await auth(authorization, request, check_member=False)
         if not au["error"]:
             identifier = f"uid/{au['uid']}"
 
@@ -188,7 +188,8 @@ async def ratelimit(dhrid, request, endpoint, limittime, limitcnt, cGlobalOnly =
                 resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
                 return (False, resp_headers)
 
-async def auth(dhrid, authorization, request, allow_application_token = False, check_member = True, required_permission = []):
+async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = []):
+    (app, dhrid) = (request.app, request.state.dhrid)
     # authorization header basic check
     if authorization is None:
         return {"error": "Unauthorized", "code": 401}
@@ -348,12 +349,13 @@ async def auth(dhrid, authorization, request, allow_application_token = False, c
     
     return {"error": "Unauthorized", "code": 401}
 
-async def isSecureAuth(dhrid, authorization, request):
+async def isSecureAuth(authorization, request):
+    (app, dhrid) = (request.app, request.state.dhrid)
     stoken = authorization.split(" ")[1]
     if not stoken.startswith("e"):
         return True
     
-    au = await auth(dhrid, authorization, request, check_member=False)
+    au = await auth(authorization, request, check_member=False)
     if au["error"]:
         return False
     uid = au["uid"]

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     import upgrades.manager
     cur_version = version.replace(".rc", "").replace(".", "_")
     pre_version = cur_version
-    conn = genconn()
+    conn = genconn(app)
     cur = conn.cursor()
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
     t = cur.fetchall()
@@ -79,15 +79,16 @@ if __name__ == "__main__":
             v = upgrades.manager.VERSION_CHAIN[role]
             if v in upgrades.manager.UPGRADEABLE_VERSION:
                 print(f"Updating data to be compatible with {v.replace('_', '.')}...")
-                upgrades.manager.UPGRADER[v].run()
+                upgrades.manager.UPGRADER[v].run(app)
     upgrades.manager.unload()
-        
-    conn = genconn()
-    cur = conn.cursor()
-    cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
-    conn.commit()
-    cur.close()
-    conn.close()
+    
+    if not version.endswith(".rc"):
+        conn = genconn(app)
+        cur = conn.cursor()
+        cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
+        conn.commit()
+        cur.close()
+        conn.close()
 
 if __name__ == "__main__":
     print("")

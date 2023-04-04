@@ -12,41 +12,43 @@ from fastapi import Request
 from fastapi.responses import RedirectResponse
 
 import multilang as ml
-from app import app
 from functions import *
 
 
-async def get_redirect(connect_account: Optional[bool] = False):
+async def get_redirect(request: Request, connect_account: Optional[bool] = False):
+    app = request.app
     if not connect_account:
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
     else:
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
     
 async def get_connect(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
+    app = request.app
     referer = request.headers.get("Referer")
     data = str(request.query_params)
     if referer in ["", "-", None] or data == "":
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
 
     if code == "":
-        return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, error_description), status_code=302)
     
     return RedirectResponse(url=app.config.frontend_urls.discord_callback + f"?code={code}", status_code=302)
 
 async def get_callback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
+    app = request.app
     referer = request.headers.get("Referer")
     if referer in ["", "-", None]:
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
     
     if code == "":
-        return RedirectResponse(url=getUrl4Msg(error_description), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, error_description), status_code=302)
     
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /auth/discord/callback', 60, 10)
+    rl = await ratelimit(request, 'GET /auth/discord/callback', 60, 10)
     if rl[0]:
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "rate_limit")), status_code=302)
 
     try:
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/callback")
@@ -54,7 +56,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
         if "access_token" in tokens.keys():
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
             if not 'id' in user_data:
-                return RedirectResponse(url=getUrl4Msg("Discord Error: " + user_data['message']), status_code=302)
+                return RedirectResponse(url=getUrl4Msg(app, "Discord Error: " + user_data['message']), status_code=302)
             discordid = user_data['id']
             username = str(user_data['username'])
             username = convertQuotation(username).replace(",","")
@@ -74,11 +76,11 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
             mfa_secret = ""
             if len(t) == 0:
                 if not "discord" in app.config.register_methods:
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
+                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "user_not_found")), status_code=302)
         
                 if app.config.use_server_nickname:
                     try:
-                        r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
+                        r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
                         if r.status_code == 200:
                             d = json.loads(r.text)
                             if d["nick"] is not None:
@@ -91,7 +93,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 uid = (await app.db.fetchone(dhrid))[0]
                 await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
                 await app.db.commit(dhrid)
-                await AuditLog(dhrid, uid, ml.ctr("discord_register", var = {"country": getRequestCountry(request)}))
+                await AuditLog(request, uid, ml.ctr(request, "discord_register", var = {"country": getRequestCountry(request)}))
             else:
                 uid = t[0][0]
                 mfa_secret = t[0][1]
@@ -104,7 +106,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 stoken = "f" + stoken[1:]
                 await app.db.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
                 await app.db.commit(dhrid)
-                return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
+                return RedirectResponse(url=getUrl4MFA(app, stoken), status_code=302)
 
             await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid}")
             t = await app.db.fetchall(dhrid)
@@ -116,9 +118,9 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 else:
                     expire = ml.tr(request, "forever")
                 if reason != "":
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
                 else:
-                    return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
+                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
             
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":
@@ -126,11 +128,11 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
             await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             await app.db.commit(dhrid)
 
-            username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-            language = await GetUserLanguage(dhrid, uid)
-            await AuditLog(dhrid, uid, ml.ctr("discord_login", var = {"country": getRequestCountry(request)}))
+            username = (await GetUserInfo(request, uid = uid))["name"]
+            language = await GetUserLanguage(request, uid)
+            await AuditLog(request, uid, ml.ctr(request, "discord_login", var = {"country": getRequestCountry(request)}))
 
-            await notification(dhrid, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
+            await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
                 discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
                                  "description": "", 
                                  "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True}, 
@@ -138,13 +140,13 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 }
             )
 
-            return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
+            return RedirectResponse(url=getUrl4Token(app, stoken), status_code=302)
         
         if 'error_description' in tokens.keys():
-            return RedirectResponse(url=getUrl4Msg(tokens['error_description']), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, tokens['error_description']), status_code=302)
         else:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)
 
     except:
         traceback.print_exc()
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "unknown_error")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)

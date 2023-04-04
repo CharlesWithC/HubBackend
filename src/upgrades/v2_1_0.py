@@ -1,5 +1,4 @@
 from db import genconn
-from app import app
 import traceback
 
 def convertQuotation(s):
@@ -13,7 +12,7 @@ def process_row(row):
             row[i] = convertQuotation(row[i])
     return row
 
-def run():
+def run(app):
     discordid2uid = {}
     userinfo = {}
     userid2uid = {}

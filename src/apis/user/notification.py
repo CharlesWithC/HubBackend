@@ -9,7 +9,6 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
@@ -17,17 +16,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', status: Optional[int] = None, \
         order_by: Optional[str] = "notificationid", order: Optional[str] = "desc"):
     """Returns a list of notification of the authorized user"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /user/notification/list', 60, 60)
+    rl = await ratelimit(request, 'GET /user/notification/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -74,17 +73,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
 async def get_notification(request: Request, response: Response, notificationid: int, authorization: str = Header(None)):
     """Returns a specific notification of the authorized user"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /user/notification', 60, 30)
+    rl = await ratelimit(request, 'GET /user/notification', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
         
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -101,17 +100,17 @@ async def get_notification(request: Request, response: Response, notificationid:
 
 async def patch_status(request: Request, response: Response, notificationid: str, status: int, authorization: str = Header(None)):
     """Updates status of a specific notification of the authorized user"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/notification/status', 60, 30)
+    rl = await ratelimit(request, 'PATCH /user/notification/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
         
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -142,17 +141,17 @@ async def patch_status(request: Request, response: Response, notificationid: str
 
 async def get_settings(request: Request, response: Response, authorization: str = Header(None)):
     """Returns notification settings of the authorized user"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /user/notification/settings', 60, 60)
+    rl = await ratelimit(request, 'GET /user/notification/settings', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -173,7 +172,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
 
 async def post_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Enables a specific type of notification of the authorized user"""
-
+    app = request.app
     if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "economy", "event"]:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -181,13 +180,13 @@ async def post_settings_enable(request: Request, response: Response, notificatio
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/notification/settings/enable', 60, 30)
+    rl = await ratelimit(request, 'POST /user/notification/settings/enable', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -222,7 +221,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
-        rl = await ratelimit(dhrid, request, 'PATCH /user/notification/discord/enable', 60, 5)
+        rl = await ratelimit(request, 'PATCH /user/notification/discord/enable', 60, 5)
         if rl[0]:
             return rl[1]
         for k in rl[1].keys():
@@ -230,13 +229,13 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post("https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=5, dhrid = dhrid)
+            r = await arequests.post(app, "https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=5, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
         if r.status_code == 401:
-            DisableDiscordIntegration()
+            DisableDiscordIntegration(app)
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         if r.status_code // 100 != 2:
@@ -248,8 +247,8 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
             r = None
             try:
-                r = await arequests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(dhrid, uid)), 
-                "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(dhrid, uid)), \
+                r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
+                "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(request, uid)), \
                 "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), timeout=5)
             except:
@@ -288,7 +287,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
 async def post_settings_disable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Disables a specific type of notification of the authorized user"""
-
+    app = request.app
     if notification_type not in ["drivershub", "discord", "login", "dlog", "member", "application", "challenge", "division", "economy", "event"]:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -296,13 +295,13 @@ async def post_settings_disable(request: Request, response: Response, notificati
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/notification/settings/disable', 60, 60)
+    rl = await ratelimit(request, 'POST /user/notification/settings/disable', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

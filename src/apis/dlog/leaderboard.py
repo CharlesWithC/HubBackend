@@ -7,34 +7,34 @@ from typing import Optional
 
 from fastapi import Header, Request, Response
 
-from app import app
 from functions import *
 
-app.state.cache_leaderboard = {}
-app.state.cache_nleaderboard = {}
-app.state.cache_all_users = []
-app.state.cache_all_users_ts = 0
+# app.state.cache_leaderboard = {}
+# app.state.cache_nleaderboard = {}
+# app.state.cache_all_users = []
+# app.state.cache_all_users_ts = 0
 
 async def get_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         start_time: Optional[int] = None, end_time: Optional[int] = None, \
         speed_limit: Optional[int] = None, game: Optional[int] = None, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/leaderboard', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/leaderboard', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(dhrid, au["uid"], "leaderboard")
+    await ActivityUpdate(request, au["uid"], "leaderboard")
 
     if start_time is None:
         start_time = 0
@@ -389,7 +389,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             mythpnt = usermyth[userid]
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), \
+            ret.append({"user": await GetUserInfo(request, userid = userid), \
                 "points": {"distance": distance, "challenge": challengepnt, "event": eventpnt, \
                     "division": divisionpnt, "myth": mythpnt, "total": usertot[userid], \
                     "rank": userrank[userid], "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
@@ -406,7 +406,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         withpoint.append(userid)
 
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), \
+            ret.append({"user": await GetUserInfo(request, userid = userid), \
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
                 "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
@@ -416,7 +416,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             continue
         
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(dhrid, request, userid = userid), 
+            ret.append({"user": await GetUserInfo(request, userid = userid), 
                 "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
                     "rank": rank, "total_no_limit": "0", "rank_no_limit": nlrank}})
 

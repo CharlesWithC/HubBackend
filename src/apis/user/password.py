@@ -5,30 +5,29 @@ import bcrypt
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
 async def patch_password(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the password of the authorized user, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/password', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/password', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -87,24 +86,24 @@ async def patch_password(request: Request, response: Response, authorization: st
     
 async def post_password_disable(request: Request, response: Response, authorization: str = Header(None)):
     """Disables password login for the authorized user, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/password/disable', 60, 10)
+    rl = await ratelimit(request, 'POST /user/password/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
@@ -126,7 +125,7 @@ async def post_password_disable(request: Request, response: Response, authorizat
     t = await app.db.fetchall(dhrid)
     email = t[0][0]
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     

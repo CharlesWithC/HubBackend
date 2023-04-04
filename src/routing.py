@@ -6,10 +6,9 @@ from starlette.routing import Mount
 import os
 
 import app as base
-from api import *
 
 routes = [
-    Mount(f"/{app.config.abbr}", base.app)
+    Mount(f"/{base.app.config.abbr}", base.app)
 ]
 app = FastAPI(routes = routes)
 

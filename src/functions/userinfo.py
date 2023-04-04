@@ -4,14 +4,14 @@
 import time
 
 import multilang as ml
-from app import app
 from functions.dataop import *
 from functions.general import *
 from functions.security import auth
 from static import *
 
 
-async def getHighestActiveRole(dhrid):
+async def getHighestActiveRole(request):
+    (app, dhrid) = (request.app, request.state.dhrid)
     for roleid in app.roles.keys():
         await app.db.execute(dhrid, f"SELECT uid FROM user WHERE roles LIKE '%,{roleid},%'")
         t = await app.db.fetchall(dhrid)
@@ -29,7 +29,8 @@ def getAvatarSrc(discordid, avatar):
     src = convertQuotation(src)
     return src
 
-async def ActivityUpdate(dhrid, uid, activity):
+async def ActivityUpdate(request, uid, activity):
+    (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None or int(uid) < 0:
         return
     activity = convertQuotation(activity)
@@ -44,10 +45,10 @@ async def ActivityUpdate(dhrid, uid, activity):
         await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, '{activity}', {int(time.time())})")
     await app.db.commit(dhrid)
     
-app.state.cache_userinfo = {} # user info cache (15 seconds)
-app.state_cache_activity = {} # activity cache (2 seconds)
+# app.state.cache_userinfo = {} # user info cache (15 seconds)
+# app.state_cache_activity = {} # activity cache (2 seconds)
 
-def ClearUserCache():
+def ClearUserCache(app):
     users = list(app.state.cache_userinfo.keys())
     for user in users:
         if int(time.time()) > app.state.cache_userinfo[user]["expire"]:
@@ -57,7 +58,8 @@ def ClearUserCache():
         if int(time.time()) > app.state_cache_activity[user]["expire"]:
             del app.state_cache_activity[user]
 
-async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
+async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
+    (app, dhrid) = (request.app, request.state.dhrid)
     if userid is None:
         return None
     
@@ -76,7 +78,7 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
         else:
             return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
-    ClearUserCache()
+    ClearUserCache(app)
     
     if userid != -1 and f"userid={userid}" in app.state.cache_userinfo.keys():
         if int(time.time()) < app.state.cache_userinfo[f"userid={userid}"]["expire"]:
@@ -131,7 +133,7 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     if not request is None:
         if "authorization" in request.headers.keys():
             authorization = request.headers["authorization"]
-            au = await auth(dhrid, authorization, request, check_member = False)
+            au = await auth(authorization, request, check_member = False)
             if not au["error"]:
                 roles = au["roles"]
                 for i in roles:
@@ -178,18 +180,19 @@ async def GetUserInfo(dhrid, request, userid = -1, discordid = -1, uid = -1, pri
     
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
-app.state.cache_language = {} # language cache (3 seconds)
+# app.state.cache_language = {} # language cache (3 seconds)
 
-def ClearUserLanguageCache():
+def ClearUserLanguageCache(app):
     users = list(app.state.cache_language.keys())
     for user in users:
         if int(time.time()) > app.state.cache_language[user]["expire"]:
             del app.state.cache_language[user]
 
-async def GetUserLanguage(dhrid, uid):
+async def GetUserLanguage(request, uid):
+    (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None:
         return app.config.language
-    ClearUserLanguageCache()
+    ClearUserLanguageCache(app)
 
     if uid in app.state.cache_language.keys() and int(time.time()) <= app.state.cache_language[uid]["expire"]:
         return app.state.cache_language[uid]["language"]

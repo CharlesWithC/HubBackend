@@ -11,22 +11,19 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 # Basic Info
-async def get_types():
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
+async def get_types(request: Request):
+    app = request.app
     
     return app.config.application_types
 
 async def get_positions(request: Request):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
+
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -40,19 +37,17 @@ async def get_positions(request: Request):
         return ret
 
 async def post_positions(request: Request, response: Response, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /applications/positions', 60, 30)
+    rl = await ratelimit(request, 'PATCH /applications/positions', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_application_positions"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -84,20 +79,18 @@ async def post_positions(request: Request, response: Response, authorization: st
         await app.db.execute(dhrid, f"UPDATE settings SET sval = '{positions}' WHERE skey = 'applicationpositions'")
     await app.db.commit(dhrid)
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("updated_application_positions", var = {"positions": positions_str}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_application_positions", var = {"positions": positions_str}))
 
     return Response(status_code=204)
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, application_type: Optional[int] = None, \
         all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /applications/list', 60, 60)
+    rl = await ratelimit(request, 'GET /applications/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -107,14 +100,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order = "asc"
     order = order.upper()
         
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
     roles = au["roles"]
-    await ActivityUpdate(dhrid, au["uid"], f"applications")
+    await ActivityUpdate(request, au["uid"], f"applications")
 
     if page_size <= 1:
         page_size = 1
@@ -140,7 +133,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             tot = p[0][0]
     else:
         limit = ""
-        if not checkPerm(roles, "admin"):
+        if not checkPerm(app, roles, "admin"):
             allowed_application_types = []
             for tt in app.config.application_types:
                 allowed_roles = tt["staff_role_id"]
@@ -178,24 +171,22 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(dhrid, request, uid = tt[2]), "application_type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(dhrid, request, userid = tt[6])})
+        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(request, uid = tt[2]), "application_type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(request, userid = tt[6])})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def get_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /applications', 60, 120)
+    rl = await ratelimit(request, 'GET /applications', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -211,7 +202,7 @@ async def get_application(request: Request, response: Response, applicationid: i
 
     application_type = t[0][1]
     
-    if not checkPerm(roles, "admin") and uid != t[0][2]:
+    if not checkPerm(app, roles, "admin") and uid != t[0][2]:
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
@@ -224,22 +215,20 @@ async def get_application(request: Request, response: Response, applicationid: i
             response.status_code = 403
             return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
-    return {"applicationid": t[0][0], "creator": await GetUserInfo(dhrid, request, uid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(dhrid, request, userid = t[0][6])}
+    return {"applicationid": t[0][0], "creator": await GetUserInfo(request, uid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(request, userid = t[0][6])}
 
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /applications', 180, 10)
+    rl = await ratelimit(request, 'POST /applications', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -287,7 +276,7 @@ async def post_application(request: Request, response: Response, authorization: 
             response.status_code = 409
             return {"error": ml.tr(request, "already_driver_application", force_lang = au["language"])}
 
-    if note == "division" and not checkPerm(roles, "admin"):
+    if note == "division" and not checkPerm(app, roles, "admin"):
         ok = False
         for r in app.config.perms.driver:
             if r in roles:
@@ -324,7 +313,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     if discordid is not None and app.config.must_join_guild and app.config.discord_bot_token != "":
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 428
@@ -343,17 +332,17 @@ async def post_application(request: Request, response: Response, authorization: 
 
     if discordid is not None and applicantrole != 0 and app.config.discord_bot_token != "":
         try:
-            r = await arequests.put(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, dhrid = dhrid)
+            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, dhrid = dhrid)
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
             if r.status_code // 100 != 2:
                 err = json.loads(r.text)
-                await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": applicantrole, "user_discordid": discordid, "message": err["message"]}))
+                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": applicantrole, "user_discordid": discordid, "message": err["message"]}))
         except:
             traceback.print_exc()
 
-    language = await GetUserLanguage(dhrid, uid)
-    await notification(dhrid, "application", uid, ml.tr(request, "application_submitted", 
+    language = await GetUserLanguage(request, uid)
+    await notification(request, "application", uid, ml.tr(request, "application_submitted", 
             var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language), 
         discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "", 
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True},
@@ -375,28 +364,26 @@ async def post_application(request: Request, response: Response, authorization: 
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
         except:
             traceback.print_exc()
 
     return {"applicationid": applicationid}
 
 async def patch_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /applications', 180, 10)
+    rl = await ratelimit(request, 'PATCH /applications', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -470,28 +457,26 @@ async def patch_application(request: Request, response: Response, applicationid:
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
                 
-            r = await arequests.post(webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
         except:
             traceback.print_exc()
 
     return Response(status_code=204)
 
 async def patch_status(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /applications/status', 60, 30)
+    rl = await ratelimit(request, 'PATCH /applications/status', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "application"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "application"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -522,12 +507,12 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     application_type = t[0][1]
     applicant_uid = t[0][2]
 
-    language = await GetUserLanguage(dhrid, applicant_uid)
+    language = await GetUserLanguage(request, applicant_uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[status]
 
-    if not checkPerm(roles, "admin"):
+    if not checkPerm(app, roles, "admin"):
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
@@ -554,8 +539,8 @@ async def patch_status(request: Request, response: Response, applicationid: int,
         update_timestamp = int(time.time())
 
     await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
-    await AuditLog(dhrid, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
-    await notification(dhrid, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
+    await AuditLog(request, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
+    await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await app.db.commit(dhrid)
 
@@ -565,19 +550,17 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     return Response(status_code=204)
 
 async def delete_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
-    if "application" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /applications', 180, 10)
+    rl = await ratelimit(request, 'DELETE /applications', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "delete_application"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "delete_application"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -592,7 +575,7 @@ async def delete_application(request: Request, response: Response, applicationid
     
     application_type = t[0][1]
 
-    if not checkPerm(roles, "admin"):
+    if not checkPerm(app, roles, "admin"):
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
@@ -608,6 +591,6 @@ async def delete_application(request: Request, response: Response, applicationid
     await app.db.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await app.db.commit(dhrid)
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_application", var = {"id": applicationid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_application", var = {"id": applicationid}))
 
     return Response(status_code=204)

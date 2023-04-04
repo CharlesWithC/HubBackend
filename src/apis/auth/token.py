@@ -9,21 +9,21 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
-async def get_token(request: Request, response: Response, authorization: str = Header(None)):    
+async def get_token(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /token', 60, 120)
+    rl = await ratelimit(request, 'GET /token', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False, allow_application_token = True)
+    au = await auth(authorization, request, check_member = False, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -33,17 +33,18 @@ async def get_token(request: Request, response: Response, authorization: str = H
 
     return {"token_type": token_type}
 
-async def patch_token(request: Request, response: Response, authorization: str = Header(None)):    
+async def patch_token(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app  
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /token', 60, 30)
+    rl = await ratelimit(request, 'PATCH /token', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -62,16 +63,17 @@ async def patch_token(request: Request, response: Response, authorization: str =
     return {"token": stoken}
 
 async def delete_token(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /token', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -87,16 +89,17 @@ async def delete_token(request: Request, response: Response, authorization: str 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /token/list', 60, 60)
+    rl = await ratelimit(request, 'GET /token/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -135,23 +138,24 @@ async def get_list(request: Request, response: Response, authorization: str = He
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def delete_hash(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /token/hash', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token/hash', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
@@ -181,23 +185,24 @@ async def delete_hash(request: Request, response: Response, authorization: str =
 
 async def delete_all(request: Request, response: Response, authorization: str = Header(None), \
         last_used_before: Optional[int] = None):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /token/all', 60, 10)
+    rl = await ratelimit(request, 'DELETE /token/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
@@ -212,16 +217,17 @@ async def delete_all(request: Request, response: Response, authorization: str = 
 async def get_application_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "last_used_timestamp", order: Optional[str] = "desc"):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /token/application/list', 60, 60)
+    rl = await ratelimit(request, 'GET /token/application/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -257,23 +263,24 @@ async def get_application_list(request: Request, response: Response, authorizati
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /token/application', 60, 30)
+    rl = await ratelimit(request, 'POST /token/application', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
     
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -309,16 +316,17 @@ async def post_application(request: Request, response: Response, authorization: 
     return {"token": stoken}
 
 async def delete_application(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /token/application', 60, 30)
+    rl = await ratelimit(request, 'DELETE /token/application', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -350,16 +358,17 @@ async def delete_application(request: Request, response: Response, authorization
         return {"error": ml.tr(request, "invalid_hash", force_lang = au["language"])}
 
 async def delete_application_all(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /token/application/all', 60, 10)
+    rl = await ratelimit(request, 'DELETE /token/application/all', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

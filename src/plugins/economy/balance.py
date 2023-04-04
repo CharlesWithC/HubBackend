@@ -10,7 +10,6 @@ from fastapi import Header, Request, Response
 from fastapi.responses import StreamingResponse
 
 import multilang as ml
-from app import app
 from functions import *
 
 
@@ -22,19 +21,17 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, they will not be included in the leaderboard.
     If authorized user is a balance_manager, they can view the full leaderboard.
     User balance is by default private.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/leaderboard', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/balance/leaderboard', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -51,7 +48,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     if not order.lower() in ["asc", "desc"]:
         order = "asc"
 
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
     public_userids = [au["userid"]]
     included_userids = []
 
@@ -103,7 +100,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     # create ret[]
     ret = []
     for dd in d:
-        ret.append({"user": await GetUserInfo(dhrid, request, userid = dd[0]), "balance": dd[1]})
+        ret.append({"user": await GetUserInfo(request, userid = dd[0]), "balance": dd[1]})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -111,19 +108,17 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     '''Transfer balance.
     
     JSON: `{"from_userid": Optional[int], "to_userid": int, "amount": int, "message": Optional[str]}`'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/balance/transfer', 60, 60)
+    rl = await ratelimit(request, 'POST /economy/balance/transfer', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -154,8 +149,8 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "amount_must_be_positive", force_lang = au["language"])}
 
-    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
-    company_balance_perm_ok = balance_manager_perm_ok or checkPerm(au["roles"], "accountant")
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
+    company_balance_perm_ok = balance_manager_perm_ok or checkPerm(app, au["roles"], "accountant")
 
     if from_userid == -1000 and not company_balance_perm_ok:
         response.status_code = 403
@@ -179,10 +174,10 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {from_userid} FOR UPDATE")
     from_balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, from_userid) if from_balance == 0 else None
+    await EnsureEconomyBalance(request, from_userid) if from_balance == 0 else None
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {to_userid} FOR UPDATE")
     to_balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, to_userid) if to_balance == 0 else None
+    await EnsureEconomyBalance(request, to_userid) if to_balance == 0 else None
     
     if from_balance < amount:
         response.status_code = 402
@@ -193,10 +188,10 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {amount} WHERE userid = {to_userid}")
     await app.db.commit(dhrid)
 
-    from_user = await GetUserInfo(dhrid, request, userid = from_userid)
-    to_user = await GetUserInfo(dhrid, request, userid = to_userid)
-    from_user_language = await GetUserLanguage(dhrid, from_user["uid"])
-    to_user_language = await GetUserLanguage(dhrid, to_user["uid"])
+    from_user = await GetUserInfo(request, userid = from_userid)
+    to_user = await GetUserInfo(request, userid = to_userid)
+    from_user_language = await GetUserLanguage(request, from_user["uid"])
+    to_user_language = await GetUserLanguage(request, to_user["uid"])
 
     from_message = ""
     to_message = ""
@@ -204,8 +199,8 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         from_message = "  \n" + ml.tr(None, "economy_transaction_message", var = {"message": message}, force_lang = from_user_language)
         to_message = "  \n" + ml.tr(None, "economy_transaction_message", var = {"message": message}, force_lang = to_user_language)
 
-    await notification(dhrid, "economy", from_user["uid"], ml.tr(None, "economy_sent_transaction", var = {"amount": amount, "currency_name": app.config.economy.currency_name, "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
-    await notification(dhrid, "economy", to_user["uid"], ml.tr(None, "economy_received_transaction", var = {"amount": amount, "currency_name": app.config.economy.currency_name, "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
+    await notification(request, "economy", from_user["uid"], ml.tr(None, "economy_sent_transaction", var = {"amount": amount, "currency_name": app.config.economy.currency_name, "to_user": to_user["name"], "to_userid": to_user["userid"] if to_user["userid"] is not None else "N/A", "message": from_message}, force_lang = from_user_language))
+    await notification(request, "economy", to_user["uid"], ml.tr(None, "economy_received_transaction", var = {"amount": amount, "currency_name": app.config.economy.currency_name, "from_user": from_user["name"], "from_userid": from_user["userid"] if from_user["userid"] is not None else "N/A", "message": to_message}, force_lang = to_user_language))
     
     if company_balance_perm_ok:
         return {"from_balance": from_balance - amount, "to_balance": to_balance + amount}
@@ -218,19 +213,17 @@ async def get_balance(request: Request, response: Response, userid: int, authori
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, 403 will be returned.
     If authorized user is a balance_manager, they can view the user's balance without restrictions.
     User balance is by default private.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/balance/userid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -243,7 +236,7 @@ async def get_balance(request: Request, response: Response, userid: int, authori
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
 
     if not permok:
         await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
@@ -267,19 +260,17 @@ async def get_balance_transaction_list(request: Request, response: Response, use
     '''Get a user's transaction history.
     
     [NOTE] This can only be viewed by balance manager and user. The user cannot make this info public.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions/list', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -292,14 +283,14 @@ async def get_balance_transaction_list(request: Request, response: Response, use
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     
-    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
     permok = balance_manager_perm_ok or userid == au["userid"]
 
     if not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "view_transaction_history_forbidden", force_lang = au["language"])}
 
-    await ActivityUpdate(dhrid, au["uid"], f"economy_transactions")
+    await ActivityUpdate(request, au["uid"], f"economy_transactions")
 
     if page_size <= 1:
         page_size = 1
@@ -335,7 +326,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
     for tt in t:
         note = tt[4].split("/")
         executorid = int(note[1].split("-")[1])
-        d = {"txid": tt[0], "from_user": await GetUserInfo(dhrid, request, userid = tt[1]), "to_user": await GetUserInfo(dhrid, request, userid = tt[2]), "executor": await GetUserInfo(dhrid, request, userid = executorid),"amount": tt[3], "from_new_balance": tt[6], "to_new_balance": tt[7], "message": tt[5]}
+        d = {"txid": tt[0], "from_user": await GetUserInfo(request, userid = tt[1]), "to_user": await GetUserInfo(request, userid = tt[2]), "executor": await GetUserInfo(request, userid = executorid),"amount": tt[3], "from_new_balance": tt[6], "to_new_balance": tt[7], "message": tt[5]}
         if not balance_manager_perm_ok:
             if tt[1] != au["userid"]:
                 d["from_new_balance"] = None
@@ -355,19 +346,17 @@ async def get_balance_transaction_export(request: Request, response: Response, u
     '''Export a user's transaction history.
     
     [NOTE] This can only be done by balance manager and user. The user cannot make this info public.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/transactions/export', 300, 3)
+    rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/export', 300, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -380,7 +369,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     
-    balance_manager_perm_ok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"])
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
     permok = balance_manager_perm_ok or userid == au["userid"]
 
     if not permok:
@@ -437,9 +426,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
 
 async def post_balance_visibility(request: Request, response: Response, userid: int, visibility: str, authorization: str = Header(None)):
     '''Make user balance public.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     if not visibility in ["public", "private"]:
         response.status_code = 404
         return {"error": "Not Found"}
@@ -447,13 +434,13 @@ async def post_balance_visibility(request: Request, response: Response, userid: 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/balance/userid/visibility', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/balance/userid/visibility', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -469,7 +456,7 @@ async def post_balance_visibility(request: Request, response: Response, userid: 
     else:
         uid = "NULL"
 
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
 
     if not permok:
         response.status_code = 403

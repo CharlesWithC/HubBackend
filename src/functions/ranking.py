@@ -1,9 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-from app import app
-
-def point2rankroleid(point):
+def point2rankroleid(app, point):
     """Returns Discord Snowflake of the rank of the point"""
 
     keys = list(app.rankrole.keys())
@@ -17,7 +15,7 @@ def point2rankroleid(point):
     if point >= keys[-1]:
         return app.rankrole[keys[-1]]
 
-def point2rankname(point):
+def point2rankname(app, point):
     """Returns name of the rank of the point"""
 
     keys = list(app.rankname.keys())

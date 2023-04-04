@@ -12,24 +12,23 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from config import *
 from functions import *
 
 
 async def get_config(request: Request, response: Response, authorization: str = Header(None)):
     """Returns saved config (config) and loaded config (backup)"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /config', 60, 60)
+    rl = await ratelimit(request, 'GET /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "config"])
+    au = await auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -82,8 +81,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
     return {"config": ffconfig, "backup": ttconfig}
 
-def restart():
-    os.system(f"nohup ./launcher tracker restart {app.config.abbr} > /dev/null")
+def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
 
@@ -91,16 +89,17 @@ async def patch_config(request: Request, response: Response, authorization: str 
     """Updates the config, only those specified in `config` will be updated
     
     JSON: `{"config": {}}`"""
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /config', 60, 60)
+    rl = await ratelimit(request, 'PATCH /config', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "config"])
+    au = await auth(authorization, request, required_permission = ["admin", "config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -221,23 +220,23 @@ async def patch_config(request: Request, response: Response, authorization: str 
         return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
     open(app.config_path, "w", encoding="utf-8").write(out)
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("updated_config"))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_config"))
 
     return Response(status_code=204)
 
 async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
     """Restarts API service in a thread, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /restart', 600, 3)
+    rl = await ratelimit(request, 'POST /restart', 600, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "restart"])
+    au = await auth(authorization, request, required_permission = ["admin", "restart"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -260,26 +259,26 @@ async def post_restart(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("restarted_service"))
+    await AuditLog(request, au["uid"], ml.ctr(request, "restarted_service"))
 
-    threading.Thread(target=restart).start()
+    threading.Thread(target=restart, args=(app,)).start()
 
     return Response(status_code=204)
 
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 30, uid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /audit', 60, 60)
+    rl = await ratelimit(request, 'GET /audit', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, required_permission = ["admin", "audit"])
+    au = await auth(authorization, request, required_permission = ["admin", "audit"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -300,7 +299,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"user": await GetUserInfo(dhrid, request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
+        ret.append({"user": await GetUserInfo(request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
     t = await app.db.fetchall(dhrid)

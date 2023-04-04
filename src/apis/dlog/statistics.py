@@ -6,17 +6,17 @@ from typing import Optional
 
 from fastapi import Header, Request, Response
 
-from app import app
 from functions import *
 
-app.state.cache_statistics = {}
+# app.state.cache_statistics = {}
 
 async def get_summary(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, userid: Optional[int] = None):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/statistics/summary', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/statistics/summary', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -30,7 +30,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     quser = ""
     if userid is not None:
         if app.config.privacy:
-            au = await auth(dhrid, authorization, request, allow_application_token = True)
+            au = await auth(authorization, request, allow_application_token = True)
             if au["error"]:
                 response.status_code = au["code"]
                 del au["code"]
@@ -202,10 +202,11 @@ async def get_summary(request: Request, response: Response, authorization: str =
 async def get_chart(request: Request, response: Response, authorization: Optional[str] = Header(None), \
         ranges: Optional[int] = 30, interval: Optional[int] = 86400, before: Optional[int] = None, \
         sum_up: Optional[bool] = False, userid: Optional[int] = None):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/statistics/chart', 60, 15)
+    rl = await ratelimit(request, 'GET /dlog/statistics/chart', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -213,7 +214,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     quserid = userid
     if quserid is not None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]

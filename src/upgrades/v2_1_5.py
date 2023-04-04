@@ -1,7 +1,8 @@
 from db import genconn
 from functions.userinfo import getAvatarSrc
 
-def run():
+
+def run(app):
     conn = genconn(autocommit = True)
     cur = conn.cursor()
 

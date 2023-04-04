@@ -10,21 +10,20 @@ from datetime import datetime
 import requests
 
 import multilang as ml
-from app import app
 from functions.arequests import *
 from functions.dataop import *
 from functions.general import *
 from functions.userinfo import *
 from static import *
 
-app.state.discord_message_queue = []
+# app.state.discord_message_queue = []
 
-def QueueDiscordMessage(channelid, data):
+def QueueDiscordMessage(app, channelid, data):
     if app.config.discord_bot_token == "":
         return
     app.state.discord_message_queue.append((channelid, data))
 
-async def ProcessDiscordMessage(): # thread
+async def ProcessDiscordMessage(app): # thread
     headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
     while 1:
         try:
@@ -110,7 +109,7 @@ async def ProcessDiscordMessage(): # thread
                 for i in to_delete[::-1]:
                     app.state.discord_message_queue.pop(i)
             elif r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
                 return
             elif r.status_code == 200 or r.status_code >= 400 and r.status_code <= 499:
                 for i in to_delete[::-1]:
@@ -124,7 +123,8 @@ async def ProcessDiscordMessage(): # thread
         except:
             return
 
-async def CheckDiscordNotification(dhrid, uid):
+async def CheckDiscordNotification(request, uid):
+    (app, dhrid) = (request.app, request.state.dhrid)
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'discord-notification'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -134,13 +134,14 @@ async def CheckDiscordNotification(dhrid, uid):
         return False
     return ret
 
-async def SendDiscordNotification(dhrid, uid, data):
-    t = await CheckDiscordNotification(dhrid, uid)
+async def SendDiscordNotification(request, uid, data):
+    t = await CheckDiscordNotification(request, uid)
     if t == False:
         return
-    QueueDiscordMessage(t, data)
+    QueueDiscordMessage(request.app, t, data)
 
-async def CheckNotificationEnabled(dhrid, notification_type, uid):
+async def CheckNotificationEnabled(request, notification_type, uid):
+    (app, dhrid) = (request.app, request.state.dhrid)
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -155,11 +156,13 @@ async def CheckNotificationEnabled(dhrid, notification_type, uid):
         return False
     return True
 
-async def notification(dhrid, notification_type, uid, content, no_drivershub_notification = False, \
+async def notification(request, notification_type, uid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}):
     if uid is None or int(uid) < 0:
         return
     
+    dhrid = request.state.dhrid
+    app = request.app    
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -179,24 +182,25 @@ async def notification(dhrid, notification_type, uid, content, no_drivershub_not
     
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            await SendDiscordNotification(dhrid, uid, {"embeds": [{"title": discord_embed["title"], 
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"], 
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
         else:
-            await SendDiscordNotification(dhrid, uid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(dhrid, uid)), 
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(request, uid)), 
                 "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
 
-async def AuditLog(dhrid, uid, text, discord_message_only = False):
+async def AuditLog(request, uid, text, discord_message_only = False):
     try:
-        name = ml.ctr("unknown_user")
+        (app, dhrid) = (request.app, request.state.dhrid)
+        name = ml.ctr(request, "unknown_user")
         avatar = ""
         if uid == -999:
-            name = ml.ctr("system")
+            name = ml.ctr(request, "system")
         elif uid == -998:
-            name = ml.ctr("discord_api")
+            name = ml.ctr(request, "discord_api")
         else:
-            uinfo = await GetUserInfo(dhrid, None, uid = uid)
+            uinfo = await GetUserInfo(request, uid = uid)
             name = uinfo["name"]
             avatar = uinfo["avatar"]
             userid = uinfo["userid"] if uinfo["userid"] is not None else "N/A"
@@ -208,15 +212,15 @@ async def AuditLog(dhrid, uid, text, discord_message_only = False):
             if uid not in [-999, -998]:
                 footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
             try:
-                r = await arequests.post(app.config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+                r = await arequests.post(app, app.config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
                 if r.status_code == 401:
-                    DisableDiscordIntegration()
+                    DisableDiscordIntegration(app)
             except:
                 traceback.print_exc()
     except:
         traceback.print_exc()
 
-async def AutoMessage(meta, setvar):
+async def AutoMessage(app, meta, setvar):
     try:
         timestamp = ""
         if meta.embed.timestamp:
@@ -238,9 +242,9 @@ async def AutoMessage(meta, setvar):
             }]})
         
         if meta.webhook_url != "":
-            r = await arequests.post(meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
+            r = await arequests.post(app, meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
 
         elif meta.channel_id != "":
             if app.config.discord_bot_token == "":
@@ -248,8 +252,8 @@ async def AutoMessage(meta, setvar):
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v10/channels/{meta.channel_id}/messages"
-            r = await arequests.post(ddurl, headers=headers, data=data)
+            r = await arequests.post(app, ddurl, headers=headers, data=data)
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
     except:
         traceback.print_exc()

@@ -8,10 +8,10 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
-async def GetTruckInfo(dhrid, request, vehicleid):
+async def GetTruckInfo(request, vehicleid):
+    (app, dhrid) = (request.app, request.state.dhrid)
     await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 AND vehicleid = {vehicleid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -24,22 +24,20 @@ async def GetTruckInfo(dhrid, request, vehicleid):
     if tt[1] in app.trucks.keys():
         (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
     
-    return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
+    return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 async def get_all_trucks(request: Request, response: Response, authorization: str = Header(None)):
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/trucks', 60, 30)
+    rl = await ratelimit(request, 'GET /economy/trucks', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -56,24 +54,22 @@ async def get_list(request: Request, response: Response, authorization: str = He
         min_damage: Optional[float] = None, max_damage: Optional[float] = None,
         order_by: Optional[str] = "odometer", order: Optional[int] = "desc"):
     '''Get a list of owned trucks.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/trucks/list', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/trucks/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(dhrid, au["uid"], f"economy_trucks")
+    await ActivityUpdate(request, au["uid"], f"economy_trucks")
 
     if page_size <= 1:
         page_size = 1
@@ -133,7 +129,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         truck = {"id": tt[1], "brand": None, "model": None}
         if tt[1] in app.trucks.keys():
             (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
-        ret.append({"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price),"purchase_timestamp": tt[8], "status": STATUS[tt[9]]})
+        ret.append({"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price),"purchase_timestamp": tt[8], "status": STATUS[tt[9]]})
     
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_truck WHERE vehicleid >= 0 {limit}")
     t = await app.db.fetchall(dhrid)
@@ -145,19 +141,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
 async def get_truck(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Get info of a specific truck'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/trucks/vehicleid', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/trucks/vehicleid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -170,7 +164,7 @@ async def get_truck(request: Request, response: Response, vehicleid: int, author
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     tt = t[0]
 
-    await ActivityUpdate(dhrid, au["uid"], f"economy_trucks_{vehicleid}")
+    await ActivityUpdate(request, au["uid"], f"economy_trucks_{vehicleid}")
 
     STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
 
@@ -178,25 +172,23 @@ async def get_truck(request: Request, response: Response, vehicleid: int, author
     if tt[1] in app.trucks.keys():
         (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
     
-    return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(dhrid, request, userid = tt[4]), "assignee": await GetUserInfo(dhrid, request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
+    return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 async def get_truck_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, order: Optional[str] = "desc"):
     '''Get the transaction history of a specific truck.
 
     `order_by` is `timestamp`.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /economy/trucks/vehicleid/operation/history', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/trucks/vehicleid/operation/history', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -209,11 +201,11 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     ownerid = t[0][0]
 
-    if ownerid != au["userid"] and not checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"]):
+    if ownerid != au["userid"] and not checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"]):
         response.status_code = 403
         return {"error": ml.tr(request, "truck_history_forbidden", force_lang = au["language"])}
 
-    await ActivityUpdate(dhrid, au["uid"], f"economy_trucks_{vehicleid}")
+    await ActivityUpdate(request, au["uid"], f"economy_trucks_{vehicleid}")
 
     if page_size <= 1:
         page_size = 1
@@ -258,30 +250,30 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
             p = tt[5].split("/")
             logid = int(p[0].split("-")[1])
             revenue = int(p[2].split("-")[1])
-            ret.append({"type": "dlog", "txid": tt[0], "user": await GetUserInfo(dhrid, request, userid = tt[2]), "amount": revenue, "logid": logid, "timestamp": tt[6]}) 
+            ret.append({"type": "dlog", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": revenue, "logid": logid, "timestamp": tt[6]}) 
         elif tt[4] == f"t{vehicleid}-service":
             # from_user => tx sender / user that requested service
-            ret.append({"type": "service", "txid": tt[0], "user": await GetUserInfo(dhrid, request, userid = tt[1]), "amount": tt[3], "damage": float(tt[5].split("-")[1]), "timestamp": tt[6]}) # message: damage-{damage}
+            ret.append({"type": "service", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[1]), "amount": tt[3], "damage": float(tt[5].split("-")[1]), "timestamp": tt[6]}) # message: damage-{damage}
         elif tt[4] == f"t{vehicleid}-transfer":
-            ret.append({"type": "service", "txid": tt[0], "from_user": await GetUserInfo(dhrid, request, userid = tt[1]), "to_user": await GetUserInfo(dhrid, request, userid = tt[2]), "message": tt[5], "timestamp": tt[6]}) # message: real transfer message
+            ret.append({"type": "service", "txid": tt[0], "from_user": await GetUserInfo(request, userid = tt[1]), "to_user": await GetUserInfo(request, userid = tt[2]), "message": tt[5], "timestamp": tt[6]}) # message: real transfer message
         elif tt[4] == f"t{vehicleid}-reassign":
-            ret.append({"type": "service", "txid": tt[0], "from_user": await GetUserInfo(dhrid, request, userid = tt[1]), "to_user": await GetUserInfo(dhrid, request, userid = tt[2]), "staff": await GetUserInfo(dhrid, request, userid = int(tt[5].split("-")[1])), "timestamp": tt[6]}) # message: staff-{userid}
+            ret.append({"type": "service", "txid": tt[0], "from_user": await GetUserInfo(request, userid = tt[1]), "to_user": await GetUserInfo(request, userid = tt[2]), "staff": await GetUserInfo(request, userid = int(tt[5].split("-")[1])), "timestamp": tt[6]}) # message: staff-{userid}
         elif tt[4] == f"t{vehicleid}-purchase":
             # from_user => tx sender / user who transferred money to dealership
-            ret.append({"type": "purchase", "txid": tt[0], "user": await GetUserInfo(dhrid, request, userid = tt[1]), "amount": tt[3], "timestamp": tt[6]})
+            ret.append({"type": "purchase", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[1]), "amount": tt[3], "timestamp": tt[6]})
         elif tt[4] == f"t{vehicleid}-sell":
             # to_user => tx receiver / user who got the refund from dealership
             p = tt[5].split("/")
             damage = float(p[0].split("-")[1])
             odometer = int(p[1].split("-")[1])
-            ret.append({"type": "sell", "txid": tt[0], "user": await GetUserInfo(dhrid, request, userid = tt[2]), "amount": tt[3], "damage": damage, "odometer": odometer, "timestamp": tt[6]})
+            ret.append({"type": "sell", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": tt[3], "damage": damage, "odometer": odometer, "timestamp": tt[6]})
         elif tt[4] == f"t{vehicleid}-scrap":
             # to_user => tx receiver / user who got a tiny refund from scrap station
             # message: damage-{damage}/odometer-{odometer}/refund-{refund}
             p = tt[5].split("/")
             damage = float(p[0].split("-")[1])
             odometer = int(p[1].split("-")[1])
-            ret.append({"type": "scrap", "txid": tt[0], "user": await GetUserInfo(dhrid, request, userid = tt[2]), "amount": tt[3], "damage": damage, "odometer": odometer, "timestamp": tt[6]})
+            ret.append({"type": "scrap", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": tt[3], "damage": damage, "odometer": odometer, "timestamp": tt[6]})
     
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE note {query}")
     t = await app.db.fetchall(dhrid)
@@ -301,19 +293,17 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     `assignee` is only required when `owner = company`
     
     [NOTE] If the owner / assignee already has a truck of the same model, the purchased truck will be deactivated to prevent conflict on job submission.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/truckid/purchase', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/truckid/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -338,7 +328,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # check access
     if not app.config.economy.allow_purchase_truck and not permok:
@@ -412,7 +402,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, opuserid) if balance == 0 else None
+    await EnsureEconomyBalance(request, opuserid) if balance == 0 else None
     
     if truck["price"] > balance:
         response.status_code = 402
@@ -426,8 +416,8 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {int(balance - truck['price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, userid = foruser))["name"]
-    await AuditLog(dhrid, au["uid"], ml.ctr("purchased_truck", var = {"name": truck["brand"] + " " + truck["model"], "id": truckid, "username": username, "userid": foruser}))
+    username = (await GetUserInfo(request, userid = foruser))["name"]
+    await AuditLog(request, au["uid"], ml.ctr(request, "purchased_truck", var = {"name": truck["brand"] + " " + truck["model"], "id": truckid, "username": username, "userid": foruser}))
 
     return {"vehicleid": vehicleid, "cost": truck["price"], "balance": round(balance - truck["price"])}
 
@@ -441,19 +431,17 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
     `assignee` is only required when `owner = company`
     
     [NOTE] If the new owner / assignee already has a truck of the same model, the transferred truck will be deactivated to prevent conflict on job submission.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/transfer', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -526,7 +514,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
     
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can transfer anyone's truck
@@ -555,18 +543,18 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
     if current_owner != foruser:
         await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 't{vehicleid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
 
-        username = (await GetUserInfo(dhrid, request, userid = foruser))["name"]
-        await AuditLog(dhrid, au["uid"], ml.ctr("transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
+        username = (await GetUserInfo(request, userid = foruser))["name"]
+        await AuditLog(request, au["uid"], ml.ctr(request, "transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
     if current_assigneeid != assigneeid:
         if current_assigneeid is None:
             current_assigneeid = "NULL"
         await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_assigneeid}, {assigneeid}, NULL, 't{vehicleid}-reassign', 'staff-{userid}', NULL, NULL, {int(time.time())})")
 
         if assigneeid != "NULL":
-            username = (await GetUserInfo(dhrid, request, userid = assigneeid))["name"]
-            await AuditLog(dhrid, au["uid"], ml.ctr("reassigned_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
+            username = (await GetUserInfo(request, userid = assigneeid))["name"]
+            await AuditLog(request, au["uid"], ml.ctr(request, "reassigned_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))
         else:
-            await AuditLog(dhrid, au["uid"], ml.ctr("removed_truck_assignee", var = {"id": vehicleid}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "removed_truck_assignee", var = {"id": vehicleid}))
 
     await app.db.commit(dhrid)
     
@@ -576,19 +564,17 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: s
     '''Transfer / Reassign a truck, returns 204.
     
     JSON: `{"slotid": int"}`'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/relocate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/relocate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -615,7 +601,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: s
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -642,11 +628,11 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: s
     await app.db.execute(dhrid, f"UPDATE economy_truck SET garageid = '{convertQuotation(garageid)}', slotid = {slotid} WHERE vehicleid = {vehicleid}")
     await app.db.commit(dhrid)
 
-    garage = ml.ctr("unknown_garage")
+    garage = ml.ctr(request, "unknown_garage")
     if garage in app.garages.keys():
         garage = app.garages[garage]["name"]
 
-    await AuditLog(dhrid, au["uid"], ml.ctr("relocated_truck", var = {"id": vehicleid, "garage": garage, "garageid": garageid, "slotid": slotid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "relocated_truck", var = {"id": vehicleid, "garage": garage, "garageid": garageid, "slotid": slotid}))
 
     return Response(status_code=204)
 
@@ -654,19 +640,17 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: s
     '''Activates a truck, returns 204.
     
     [NOTE] If the owner / assignee has multiple trucks of the same model, other trucks of the same model will be deactivated.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/activate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/activate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -689,7 +673,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: s
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -719,19 +703,17 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
     '''Deactivates a truck, returns 204.
     
     [NOTE] If there's no status truck of a model, new jobs of that model will be charged a rental cost.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/deactivate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/deactivate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -751,7 +733,7 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -769,19 +751,17 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: str
     '''Repairs a truck, returns `cost`, `balance`.
     
     [NOTE] If the truck's damage > app.config.economy.max_wear_before_service, new jobs will be charged a rental cost. Once the issue is noticed, status state of the truck will be modified to -1. If the truck's state is -1 and a repair is performed, it will be reactivated automatically if there's no other status trucks.'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/repair', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/repair', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -805,7 +785,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: str
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -817,7 +797,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: str
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, userid) if balance == 0 else None
+    await EnsureEconomyBalance(request, userid) if balance == 0 else None
     
     cost = round(damage * 100 * app.config.economy.unit_service_price)
     if cost > balance:
@@ -856,19 +836,17 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: str, 
     '''Sells a truck, returns `refund`, `balance`.
     
     [Note] refund = price * (1 - damage) * app.config.economy.truck_refund (ratio)'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/sell', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -892,7 +870,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: str, 
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -905,7 +883,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: str, 
     await app.db.execute(dhrid, f"UPDATE economy_truck SET userid = -1001, status = 0, slotid = NULL, garageid = NULL WHERE vehicleid = {vehicleid}")
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
+    await EnsureEconomyBalance(request, current_owner) if balance == 0 else None
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {refund} WHERE userid = {current_owner}")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1001, {current_owner}, {refund}, 't{vehicleid}-sell', 'damage-{damage}/odometer-{odometer}/refund-{app.config.economy.truck_refund}', NULL, {round(balance + refund)}, {int(time.time())})")
     await app.db.commit(dhrid)
@@ -916,19 +894,17 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: str,
     '''Scraps a truck, returns `refund`, `balance`.
     
     [Note] refund = price * app.config.economy.scrap_refund (ratio)'''
-    if "economy" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /economy/trucks/vehicleid/scrap', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/scrap', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -952,7 +928,7 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: str,
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -969,7 +945,7 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: str,
     await app.db.execute(dhrid, f"UPDATE economy_truck SET userid = -1005, status = 0, status = 0, slotid = NULL, garageid = NULL WHERE vehicleid = {vehicleid}")
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
-    await EnsureEconomyBalance(dhrid, current_owner) if balance == 0 else None
+    await EnsureEconomyBalance(request, current_owner) if balance == 0 else None
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {refund} WHERE userid = {current_owner}")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1005, {current_owner}, {refund}, 't{vehicleid}-scrap', 'damage-{damage}/odometer-{odometer}/refund-{app.config.economy.truck_refund}', NULL, {round(balance + refund)}, {int(time.time())})")
     await app.db.commit(dhrid)

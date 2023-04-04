@@ -8,168 +8,168 @@ import aiomysql
 import pymysql
 import warnings
 
-from app import app, version
+def init(app):
+    conn = pymysql.connect(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
+    cur = conn.cursor()
 
-conn = pymysql.connect(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
-cur = conn.cursor()
+    # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
-# NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
+    cur.execute(f"CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
+    # uid is unique identifier, userid is actually member id
+    cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
+    # Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
+    cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # unit = 1: euro | 2: dollar
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
-# uid is unique identifier, userid is actually member id
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
-# Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
-cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# unit = 1: euro | 2: dollar
+    cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # atype = 0: info | 1: event | 2: warning | 3: critical
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# atype = 0: info | 1: event | 2: warning | 3: critical
+    cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT,status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # status = 0: pending | 1: accepted | 2: declined
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT,status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# status = 0: pending | 1: accepted | 2: declined
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # status = 0: pending | 1: validated | 2: denied
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS division (logid INT, divisionid INT, userid INT, request_timestamp BIGINT, status INT, update_timestamp BIGINT, update_staff_userid INT, message TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# status = 0: pending | 1: validated | 2: denied
+    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, click_count INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, click_count INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # NOTE damage is a percentage (e.g. 0.01 => 1%)
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price INT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # userid = -1000 => company account
+    # userid = -1001 => dealership
+    # userid = -1002 => garage agency
+    # userid = -1003 => client
+    # userid = -1004 => service station
+    # userid = -1005 => scrap station
+    # userid = -1006 => blackhole
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# NOTE damage is a percentage (e.g. 0.01 => 1%)
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price INT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS economy_transaction (txid INT AUTO_INCREMENT PRIMARY KEY, from_userid INT, to_userid INT, amount BIGINT, note TEXT, message TEXT, from_new_balance INT, to_new_balance INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-# userid = -1000 => company account
-# userid = -1001 => dealership
-# userid = -1002 => garage agency
-# userid = -1003 => client
-# userid = -1004 => service station
-# userid = -1005 => scrap station
-# userid = -1006 => blackhole
+    cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
-cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
-cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-cur.execute(f"CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
+    cur.execute(f"SELECT skey FROM settings")
+    t = cur.fetchall()
+    keys = ["nxtuserid", "nxtlogid"]
+    for key in keys:
+        if not (key,) in t:
+            cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
+    if not ("version",) in t:
+        cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{app.version}')")
 
-cur.execute(f"SELECT skey FROM settings")
-t = cur.fetchall()
-keys = ["nxtuserid", "nxtlogid"]
-for key in keys:
-    if not (key,) in t:
-        cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
-if not ("version",) in t:
-    cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{version}')")
+    indexes = ["CREATE INDEX user_uid ON user (uid)",
+    "CREATE INDEX user_userid ON user (userid)",
+    "CREATE INDEX user_discordid ON user (discordid)",
+    "CREATE INDEX user_truckersmpid ON user (truckersmpid)",
+    "CREATE INDEX user_steamid ON user (steamid)",
 
-indexes = ["CREATE INDEX user_uid ON user (uid)",
-"CREATE INDEX user_userid ON user (userid)",
-"CREATE INDEX user_discordid ON user (discordid)",
-"CREATE INDEX user_truckersmpid ON user (truckersmpid)",
-"CREATE INDEX user_steamid ON user (steamid)",
+    "CREATE INDEX user_activity_uid ON user_activity (uid)",
+    "CREATE INDEX user_password_uid ON user_password (uid)",
+    "CREATE INDEX user_password_email ON user_password (email)",
 
-"CREATE INDEX user_activity_uid ON user_activity (uid)",
-"CREATE INDEX user_password_uid ON user_password (uid)",
-"CREATE INDEX user_password_email ON user_password (email)",
+    "CREATE INDEX banned_uid ON banned (uid)",
+    "CREATE INDEX banned_discordid ON banned (discordid)",
+    "CREATE INDEX banned_steamid ON banned (steamid)",
+    "CREATE INDEX banned_expire_timestamp ON banned (expire_timestamp)",
 
-"CREATE INDEX banned_uid ON banned (uid)",
-"CREATE INDEX banned_discordid ON banned (discordid)",
-"CREATE INDEX banned_steamid ON banned (steamid)",
-"CREATE INDEX banned_expire_timestamp ON banned (expire_timestamp)",
+    "CREATE INDEX mythpoint_userid ON mythpoint (userid)",
+    "CREATE INDEX mythpoint_timestamp ON mythpoint (timestamp)",
 
-"CREATE INDEX mythpoint_userid ON mythpoint (userid)",
-"CREATE INDEX mythpoint_timestamp ON mythpoint (timestamp)",
+    "CREATE INDEX dlog_logid ON dlog (logid)",
+    "CREATE INDEX dlog_userid ON dlog (userid)",
+    "CREATE INDEX dlog_trackerid ON dlog (trackerid)",
+    "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
 
-"CREATE INDEX dlog_logid ON dlog (logid)",
-"CREATE INDEX dlog_userid ON dlog (userid)",
-"CREATE INDEX dlog_trackerid ON dlog (trackerid)",
-"CREATE INDEX dlog_topspeed ON dlog (topspeed)",
+    "CREATE INDEX telemetry_logid ON telemetry (logid)",
 
-"CREATE INDEX telemetry_logid ON telemetry (logid)",
+    "CREATE INDEX division_logid ON division (logid)",
+    "CREATE INDEX division_userid ON division (userid)",
+    "CREATE INDEX division_divisionid ON division (divisionid)",
 
-"CREATE INDEX division_logid ON division (logid)",
-"CREATE INDEX division_userid ON division (userid)",
-"CREATE INDEX division_divisionid ON division (divisionid)",
+    "CREATE INDEX announcement_announcementid ON announcement (announcementid)",
 
-"CREATE INDEX announcement_announcementid ON announcement (announcementid)",
+    "CREATE INDEX application_applicationid ON application (applicationid)",
+    "CREATE INDEX application_uid ON application (uid)",
 
-"CREATE INDEX application_applicationid ON application (applicationid)",
-"CREATE INDEX application_uid ON application (uid)",
+    "CREATE INDEX downloads_downloadsid ON downloads (downloadsid)",
+    "CREATE INDEX downloads_templink_secret ON downloads_templink (secret)",
 
-"CREATE INDEX downloads_downloadsid ON downloads (downloadsid)",
-"CREATE INDEX downloads_templink_secret ON downloads_templink (secret)",
+    "CREATE INDEX economy_balance_userid ON economy_balance (userid)",
+    "CREATE INDEX economy_balance_balance ON economy_balance (balance)",
+    "CREATE INDEX economy_truck_vehicleid ON economy_truck (vehicleid)",
+    "CREATE INDEX economy_truck_truckid ON economy_truck (truckid)",
+    "CREATE INDEX economy_truck_slotid ON economy_truck (slotid)",
+    "CREATE INDEX economy_truck_garageid ON economy_truck (garageid)",
+    "CREATE INDEX economy_truck_userid ON economy_truck (userid)",
+    "CREATE INDEX economy_garage_slotid ON economy_garage (slotid)",
+    "CREATE INDEX economy_garage_garageid ON economy_garage (garageid)",
+    "CREATE INDEX economy_garage_userid ON economy_garage (userid)",
+    "CREATE INDEX economy_merch_ownid ON economy_merch (ownid)",
+    "CREATE INDEX economy_merch_merchid ON economy_merch (merchid)",
+    "CREATE INDEX economy_merch_userid ON economy_merch (userid)",
+    "CREATE INDEX economy_transaction_txid ON economy_transaction (txid)",
+    "CREATE INDEX economy_transaction_from_userid ON economy_transaction (from_userid)",
+    "CREATE INDEX economy_transaction_to_userid ON economy_transaction (to_userid)",
+    "CREATE INDEX economy_transaction_note ON economy_transaction (note)",
 
-"CREATE INDEX economy_balance_userid ON economy_balance (userid)",
-"CREATE INDEX economy_balance_balance ON economy_balance (balance)",
-"CREATE INDEX economy_truck_vehicleid ON economy_truck (vehicleid)",
-"CREATE INDEX economy_truck_truckid ON economy_truck (truckid)",
-"CREATE INDEX economy_truck_slotid ON economy_truck (slotid)",
-"CREATE INDEX economy_truck_garageid ON economy_truck (garageid)",
-"CREATE INDEX economy_truck_userid ON economy_truck (userid)",
-"CREATE INDEX economy_garage_slotid ON economy_garage (slotid)",
-"CREATE INDEX economy_garage_garageid ON economy_garage (garageid)",
-"CREATE INDEX economy_garage_userid ON economy_garage (userid)",
-"CREATE INDEX economy_merch_ownid ON economy_merch (ownid)",
-"CREATE INDEX economy_merch_merchid ON economy_merch (merchid)",
-"CREATE INDEX economy_merch_userid ON economy_merch (userid)",
-"CREATE INDEX economy_transaction_txid ON economy_transaction (txid)",
-"CREATE INDEX economy_transaction_from_userid ON economy_transaction (from_userid)",
-"CREATE INDEX economy_transaction_to_userid ON economy_transaction (to_userid)",
-"CREATE INDEX economy_transaction_note ON economy_transaction (note)",
+    "CREATE INDEX event_eventid ON event (eventid)",
 
-"CREATE INDEX event_eventid ON event (eventid)",
+    "CREATE INDEX challenge_challengeid ON challenge (challengeid)",
+    "CREATE INDEX challenge_start_time ON challenge (start_time)",
+    "CREATE INDEX challenge_end_time ON challenge (end_time)",
+    "CREATE INDEX challenge_type ON challenge (challenge_type)",
+    "CREATE INDEX challenge_record_userid ON challenge_record (userid)",
+    "CREATE INDEX challenge_record_challengeid ON challenge_record (challengeid)",
+    "CREATE INDEX challenge_completed_userid ON challenge_completed (userid)",
+    "CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
 
-"CREATE INDEX challenge_challengeid ON challenge (challengeid)",
-"CREATE INDEX challenge_start_time ON challenge (start_time)",
-"CREATE INDEX challenge_end_time ON challenge (end_time)",
-"CREATE INDEX challenge_type ON challenge (challenge_type)",
-"CREATE INDEX challenge_record_userid ON challenge_record (userid)",
-"CREATE INDEX challenge_record_challengeid ON challenge_record (challengeid)",
-"CREATE INDEX challenge_completed_userid ON challenge_completed (userid)",
-"CREATE INDEX challenge_completed_challengeid ON challenge_completed (challengeid)",
+    "CREATE INDEX session_token ON session (token)",
+    "CREATE INDEX auth_ticket_token ON auth_ticket (token)",
+    "CREATE INDEX application_token_token ON application_token (token)",
+    "CREATE INDEX ratelimit_ip ON ratelimit (ip)",
+    "CREATE INDEX email_confirmation_uid ON email_confirmation (uid)",
+    "CREATE INDEX email_confirmation_secret ON email_confirmation (secret)",
+    "CREATE INDEX auditlog_userid ON auditlog (userid)",
+    "CREATE INDEX settings_uid ON settings (uid)"]
 
-"CREATE INDEX session_token ON session (token)",
-"CREATE INDEX auth_ticket_token ON auth_ticket (token)",
-"CREATE INDEX application_token_token ON application_token (token)",
-"CREATE INDEX ratelimit_ip ON ratelimit (ip)",
-"CREATE INDEX email_confirmation_uid ON email_confirmation (uid)",
-"CREATE INDEX email_confirmation_secret ON email_confirmation (secret)",
-"CREATE INDEX auditlog_userid ON auditlog (userid)",
-"CREATE INDEX settings_uid ON settings (uid)"]
-
-for idx in indexes:
-    try:
-        cur.execute(idx)
-    except:
-        pass
-    
-conn.commit()
-cur.close()
-conn.close()
+    for idx in indexes:
+        try:
+            cur.execute(idx)
+        except:
+            pass
+        
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # LEGACY non-async
-def genconn(autocommit = False):
+def genconn(app, autocommit = False):
     conn = pymysql.connect(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db, autocommit = autocommit)
     conn.ping()
     return conn
 
 # ASYNCIO aiomysql
-class AIOSQL:
-    def __init__(self, host, user, passwd, db):
+class AioSQL:
+    def __init__(self, app, host, user, passwd, db):
+        self.app = app
         self.host = host
         self.user = user
         self.passwd = passwd
@@ -183,7 +183,7 @@ class AIOSQL:
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, app.config.mysql_pool_size))
+                                        maxsize = min(20, self.app.config.mysql_pool_size))
             self.POOL_START_TIME = time.time()
 
     def close_pool(self):
@@ -196,7 +196,7 @@ class AIOSQL:
         self.pool.terminate()
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, app.config.mysql_pool_size))
+                                        maxsize = min(20, self.app.config.mysql_pool_size))
         self.POOL_START_TIME = time.time()
 
     def release(self):
@@ -221,7 +221,7 @@ class AIOSQL:
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
-                                        maxsize = min(20, app.config.mysql_pool_size))
+                                        maxsize = min(20, self.app.config.mysql_pool_size))
             self.POOL_START_TIME = time.time()
 
         self.release()
@@ -312,5 +312,3 @@ class AIOSQL:
             return await self.conns[dhrid][1].fetchall()
         else:
             raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
-
-app.db = AIOSQL(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)

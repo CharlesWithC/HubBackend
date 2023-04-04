@@ -8,22 +8,21 @@ from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 async def post_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
     """Resends confirmation email"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/resendConfirmation', 60, 1)
+    rl = await ratelimit(request, 'POST /user/resendConfirmation', 60, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -38,7 +37,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     email = convertQuotation("/".join(t[0][0].split("/")[1:]))
     expire = t[0][1]
 
-    if not emailConfigured():
+    if not emailConfigured(app):
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
@@ -51,7 +50,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
-    ok = (await sendEmail(au["name"], email, "register", link))
+    ok = (await sendEmail(app, au["name"], email, "register", link))
     await app.db.extend_conn(dhrid, 2)
     if not ok:
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
@@ -65,17 +64,17 @@ async def patch_email(request: Request, response: Response, authorization: str =
     """Updates email for the authorized user, returns 204
     
     JSON: `{"email": str}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/email', 60, 1)
+    rl = await ratelimit(request, 'PATCH /user/email', 60, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -95,7 +94,7 @@ async def patch_email(request: Request, response: Response, authorization: str =
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = au["language"])}
 
-    if not emailConfigured():
+    if not emailConfigured(app):
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid", force_lang = au["language"])}
 
@@ -107,7 +106,7 @@ async def patch_email(request: Request, response: Response, authorization: str =
     
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
-    ok = (await sendEmail(au["name"], new_email, "update_email", link))
+    ok = (await sendEmail(app, au["name"], new_email, "update_email", link))
     await app.db.extend_conn(dhrid, 2)
     if not ok:
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
@@ -121,17 +120,17 @@ async def patch_discord(request: Request, response: Response, authorization: str
     """Updates Discord account connection for the authorized user, returns 204
     
     JSON: `{"code": str}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/discord', 60, 3)
+    rl = await ratelimit(request, 'PATCH /user/discord', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -183,17 +182,17 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     """Updates Steam account connection for the authorized user, returns 204
     
     JSON: `{"callback": str}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/steam', 60, 3)
+    rl = await ratelimit(request, 'PATCH /user/steam', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -208,7 +207,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
+        r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
     except:
         traceback.print_exc()
         response.status_code = 503
@@ -233,11 +232,11 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     orgsteamid = t[0][1]
     userid = t[0][2]
     if orgsteamid is not None and userid >= 0:
-        if not (await auth(dhrid, authorization, request, required_permission = ["driver"]))["error"]:
+        if not (await auth(authorization, request, required_permission = ["driver"]))["error"]:
             try:
-                if app.config.tracker.lower() == "tracksim":
-                    await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post("https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                if app.config.tracker == "tracksim":
+                    await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
             except:
                 traceback.print_exc()
 
@@ -245,7 +244,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     await app.db.commit(dhrid)
 
     try:
-        r = await arequests.get(f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
+        r = await arequests.get(app, f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
         if r.status_code == 200:
             d = json.loads(r.text)
             if not d["error"]:
@@ -266,17 +265,17 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
     """Updates TruckersMP account connection for the authorized user, returns 204
     
     JSON: `{"truckersmpid": int}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/truckersmp', 60, 3)
+    rl = await ratelimit(request, 'PATCH /user/truckersmp', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -295,7 +294,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_truckersmp_id", force_lang = au["language"])}
 
-    r = await arequests.get("https://api.truckersmp.com/v2/player/" + str(truckersmpid), dhrid = dhrid)
+    r = await arequests.get(app, "https://api.truckersmp.com/v2/player/" + str(truckersmpid), dhrid = dhrid)
     if r.status_code // 100 != 2:
         response.status_code = 503
         return {"error": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}

@@ -3,54 +3,55 @@
 
 import collections
 
-from app import app
+def load(app):
+    app.tracker = ""
+    if app.config.tracker == "tracksim":
+        app.tracker = "TrackSim"
 
-app.tracker = ""
-if app.config.tracker.lower() == "tracksim":
-    app.tracker = "TrackSim"
+    app.roles = {}
+    sroles = app.config.roles
+    for srole in sroles:
+        try:
+            app.roles[srole["id"]] = srole["name"]
+        except:
+            pass
+    app.roles = dict(collections.OrderedDict(sorted(app.roles.items())))
 
-app.roles = {}
-sroles = app.config.roles
-for srole in sroles:
-    try:
-        app.roles[srole["id"]] = srole["name"]
-    except:
-        pass
-app.roles = dict(collections.OrderedDict(sorted(app.roles.items())))
+    app.rankrole = {}
+    app.rankname = {}
+    for t in app.config.ranks:
+        try:
+            if t["discord_role_id"] is not None:
+                app.rankrole[t["points"]] = t["discord_role_id"]
+            else:
+                app.rankrole[t["points"]] = 0
+            app.rankname[t["points"]] = t["name"]
+        except:
+            pass
+    app.rankrole = dict(collections.OrderedDict(sorted(app.rankrole.items())))
+    app.rankname = dict(collections.OrderedDict(sorted(app.rankname.items())))
 
-app.rankrole = {}
-app.rankname = {}
-for t in app.config.ranks:
-    try:
-        if t["discord_role_id"] is not None:
-            app.rankrole[t["points"]] = t["discord_role_id"]
-        else:
-            app.rankrole[t["points"]] = 0
-        app.rankname[t["points"]] = t["name"]
-    except:
-        pass
-app.rankrole = dict(collections.OrderedDict(sorted(app.rankrole.items())))
-app.rankname = dict(collections.OrderedDict(sorted(app.rankname.items())))
+    app.division_roles = []
+    for division in app.config.divisions:
+        try:
+            app.division_roles.append(division["role_id"])
+        except:
+            pass
 
-app.division_roles = []
-for division in app.config.divisions:
-    try:
-        app.division_roles.append(division["role_id"])
-    except:
-        pass
+    app.division_points = {}
+    app.division_name = {}
+    for division in app.config.divisions:
+        app.division_points[division["id"]] = division["points"]
+        app.division_name[division["id"]] = division["name"]
 
-app.division_points = {}
-app.division_name = {}
-for division in app.config.divisions:
-    app.division_points[division["id"]] = division["points"]
-    app.division_name[division["id"]] = division["name"]
-
-app.trucks = {}
-app.garages = {}
-for truck in app.config.__dict__["economy"].__dict__["trucks"]:
-    app.trucks[truck["id"]] = truck
-for garage in app.config.__dict__["economy"].__dict__["garages"]:
-    app.garages[garage["id"]] = garage
+    app.trucks = {}
+    app.garages = {}
+    for truck in app.config.__dict__["economy"].__dict__["trucks"]:
+        app.trucks[truck["id"]] = truck
+    for garage in app.config.__dict__["economy"].__dict__["garages"]:
+        app.garages[garage["id"]] = garage
+    
+    return app
 
 TF = {-1: False, 0: False, 1: True}
 

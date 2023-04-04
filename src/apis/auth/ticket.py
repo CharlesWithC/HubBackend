@@ -12,10 +12,11 @@ from functions import *
 
 
 async def get_ticket(request: Request, response: Response, token: Optional[str] = ""):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /auth/ticket', 60, 120)
+    rl = await ratelimit(request, 'GET /auth/ticket', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -31,19 +32,20 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
         return {"error": ml.tr(request, "invalid_authorization_token")}
     await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE token = '{token}'")
     await app.db.commit(dhrid)
-    return (await GetUserInfo(dhrid, request, uid = t[0][0]))
+    return (await GetUserInfo(request, uid = t[0][0]))
 
 async def post_ticket(request: Request, response: Response, authorization: str = Header(None)):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /auth/ticket', 180, 20)
+    rl = await ratelimit(request, 'POST /auth/ticket', 180, 20)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

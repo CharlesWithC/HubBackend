@@ -15,16 +15,17 @@ from functions import *
 
 async def get_export(request: Request, response: Response, authorization: str = Header(None), \
         start_time: Optional[int] = None, end_time: Optional[int] = None, include_ids: Optional[bool] = False):
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/export', 300, 3)
+    rl = await ratelimit(request, 'GET /dlog/export', 300, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -97,11 +98,11 @@ async def get_export(request: Request, response: Response, authorization: str = 
         is_delivered = dd[9]
 
         user_id = dd[1]
-        user = await GetUserInfo(dhrid, request, userid = user_id, tell_deleted = True)
+        user = await GetUserInfo(request, userid = user_id, tell_deleted = True)
         username = user["name"]
         if "is_deleted" in user.keys():
             user_id = None
-            username = ml.ctr("unknown")     
+            username = ml.ctr(request, "unknown")     
 
         source_city = ""
         source_city_id = ""

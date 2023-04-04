@@ -7,23 +7,22 @@ import traceback
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
 async def patch_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
     """Updates rank role of the authorized user in Discord, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /member/roles/rank', 60, 3)
+    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -109,7 +108,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         mythpnt = usermyth[userid]
 
     totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + mythpnt
-    rankroleid = point2rankroleid(totalpnt)
+    rankroleid = point2rankroleid(app, totalpnt)
 
     if rankroleid == -1:
         response.status_code = 409
@@ -122,14 +121,14 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
 
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
             
         if r.status_code == 401:
-            DisableDiscordIntegration()
+            DisableDiscordIntegration(app)
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
         elif r.status_code // 100 != 2:
@@ -148,16 +147,16 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                 return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
             else:
                 try:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{rankroleid}', headers=headers, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": rankroleid, "user_discordid": discordid, "message": err["message"]}))
+                        await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": rankroleid, "user_discordid": discordid, "message": err["message"]}))
                     else:
                         for role in current_discord_roles:
-                            r = await arequests.delete(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
                             if r.status_code // 100 != 2:
                                 err = json.loads(r.text)
-                                await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
+                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
                 except:
                     traceback.print_exc()
                 
@@ -168,10 +167,10 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
 
                 if app.config.rank_up.webhook_url != "" or app.config.rank_up.channel_id != "":
                     meta = app.config.rank_up
-                    await AutoMessage(meta, setvar)
+                    await AutoMessage(app, meta, setvar)
 
-                rankname = point2rankname(totalpnt)
-                await notification(dhrid, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(dhrid, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(dhrid, uid)), "description": f"**{rankname}**", "fields": []})
+                rankname = point2rankname(app, totalpnt)
+                await notification(request, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(request, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(request, uid)), "description": f"**{rankname}**", "fields": []})
                 return Response(status_code=204)
         else:
             response.status_code = 428
@@ -182,17 +181,17 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
 
 async def post_resign(request: Request, response: Response, authorization: str = Header(None)):
     """Resigns the authorized user, set userid to -1, returns 204"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /member/resign', 60, 10)
+    rl = await ratelimit(request, 'POST /member/resign', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request)
+    au = await auth(authorization, request)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -202,7 +201,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     discordid = au["discordid"]
     name = convertQuotation(au["name"])
 
-    if not (await isSecureAuth(dhrid, authorization, request)):
+    if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
@@ -229,59 +228,59 @@ async def post_resign(request: Request, response: Response, authorization: str =
 
     tracker_app_error = ""
     try:
-        if app.config.tracker.lower() == "tracksim":
-            r = await arequests.delete(f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+        if app.config.tracker == "tracksim":
+            r = await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
         if r.status_code == 401:
-            tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: {ml.ctr('invalid_api_token')}"
+            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
         elif r.status_code // 100 != 2:
             try:
                 resp = json.loads(r.text)
                 if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: `{resp['error']}`"
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                 elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: `" + err["message"] + "`"
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + err["message"] + "`"
                 elif len(r.text) <= 64:
-                    tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: `" + r.text + "`"
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                 else:
-                    tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
             except:
                 traceback.print_exc()
-                tracker_app_error = f"{app.tracker} {ml.ctr('api_error')}: `{ml.ctr('unknown_error')}`"
+                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
-        tracker_app_error = f"{app.tracker} {ml.ctr('api_timeout')}"
+        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
 
     if tracker_app_error != "":
-        await AuditLog(dhrid, uid, ml.ctr("failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, uid, ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
-        await AuditLog(dhrid, uid, ml.ctr("added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, uid, ml.ctr(request, "added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
     if app.config.member_leave.webhook_url != "" or app.config.member_leave.channel_id != "":
         meta = app.config.member_leave
-        await AutoMessage(meta, setvar)
+        await AutoMessage(app, meta, setvar)
     
     if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
         for role in app.config.member_leave.role_change:
             try:
                 if int(role) < 0:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                        await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
                 elif int(role) > 0:
-                    r = await arequests.put(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                    r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, ml.ctr("error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                        await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
             except:
                 traceback.print_exc()
     
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
             d = json.loads(r.text)
             if "roles" in d:
                 discord_roles = d["roles"]
@@ -290,14 +289,14 @@ async def post_resign(request: Request, response: Response, authorization: str =
                     if role in list(app.rankrole.values()):
                         current_discord_roles.append(role)
                 for role in current_discord_roles:
-                    r = await arequests.delete(f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
-                        await AuditLog(dhrid, -998, ml.ctr("error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
+                        await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
         except:
             pass
 
-    await AuditLog(dhrid, uid, ml.ctr("member_resigned"))
-    await notification(dhrid, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(dhrid, uid)))
+    await AuditLog(request, uid, ml.ctr(request, "member_resigned"))
+    await notification(request, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(request, uid)))
     
     return Response(status_code=204)

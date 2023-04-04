@@ -1,7 +1,7 @@
 from db import genconn
-from app import app
 
-def run():
+
+def run(app):
     conn = genconn(autocommit = True)
     cur = conn.cursor()
 

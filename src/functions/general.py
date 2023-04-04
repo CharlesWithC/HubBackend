@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import os
 import random
 import re
 import string
@@ -15,13 +16,17 @@ from functions.dataop import *
 from static import *
 
 
-def getUrl4Msg(message):
+def restart(app):
+    time.sleep(3)
+    os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
+
+def getUrl4Msg(app, message):
     return app.config.frontend_urls.auth_message.replace("{message}", str(message))
 
-def getUrl4Token(token):
+def getUrl4Token(app, token):
     return app.config.frontend_urls.auth_token.replace("{token}", str(token))
 
-def getUrl4MFA(token):
+def getUrl4MFA(app, token):
     return app.config.frontend_urls.auth_mfa.replace("{token}", str(token))
 
 def genrid():
@@ -77,20 +82,21 @@ def getUserAgent(request):
     else:
         return ""
     
-def DisableDiscordIntegration():
+def DisableDiscordIntegration(app):
     app.config.discord_bot_token = ""
     try:
         requests.post(app.config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
     except:
         pass
 
-async def EnsureEconomyBalance(dhrid, userid):
+async def EnsureEconomyBalance(request, userid):
+    (app, dhrid) = (request.app, request.state.dhrid)
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         await app.db.execute(dhrid, f"INSERT INTO economy_balance VALUES ({userid}, 0)")
 
-async def ClearOutdatedData():
+async def ClearOutdatedData(app):
     while 1:
         # combined thread
         try:

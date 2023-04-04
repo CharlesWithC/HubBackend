@@ -9,35 +9,31 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
-async def get_all_divisions():
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
+async def get_all_divisions(request: Request):
+    app = request.app
 
     return app.config.divisions
 
 async def get_division(request: Request, response: Response, authorization: str = Header(None)):
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /divisions', 60, 60)
+    rl = await ratelimit(request, 'GET /divisions', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
 
-    await ActivityUpdate(dhrid, au["uid"], f"divisions")
+    await ActivityUpdate(request, au["uid"], f"divisions")
     
     stats = []
     for division in app.config.divisions:
@@ -58,19 +54,17 @@ async def get_division(request: Request, response: Response, authorization: str 
     return stats
 
 async def get_dlog_division(request: Request, response: Response, logid: int, authorization: str = Header(None)):
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /dlog/division', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/division', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -101,7 +95,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     update_staff_userid = tt[5]
     message = decompress(tt[6])
 
-    isStaff = checkPerm(roles, ["admin", "division"])
+    isStaff = checkPerm(app, roles, ["admin", "division"])
 
     if not isStaff:
         if userid != duserid and status != 1:
@@ -109,24 +103,22 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
             return {"error": ml.tr(request, "division_not_validated", force_lang = au["language"])}
 
     if userid == duserid or isStaff: # delivery driver check division / division staff check delivery
-        return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await GetUserInfo(dhrid, request, userid = update_staff_userid)}
+        return {"divisionid": divisionid, "status": status, "request_timestamp": request_timestamp, "update_timestamp": update_timestamp, "update_message": message, "update_staff": await GetUserInfo(request, userid = update_staff_userid)}
     else:
         return {"divisionid": divisionid, "status": status}
 
 async def post_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /dlog/division', 180, 10)
+    rl = await ratelimit(request, 'POST /dlog/division', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -170,15 +162,15 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
                         joined_divisions.append(division["id"])
                 except:
                     pass
-    if not checkPerm(roles, "admin") and not divisionid in joined_divisions:
+    if not checkPerm(app, roles, "admin") and not divisionid in joined_divisions:
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
     
     await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     await app.db.commit(dhrid)
     
-    language = await GetUserLanguage(dhrid, uid)
-    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
+    language = await GetUserLanguage(request, uid)
+    await notification(request, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
@@ -199,28 +191,26 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
             else:
                 author = {"name": tt[1], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"}
                 
-            r = await arequests.post(app.config.webhook_division, data=json.dumps({"content": app.config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            r = await arequests.post(app, app.config.webhook_division, data=json.dumps({"content": app.config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
-                DisableDiscordIntegration()
+                DisableDiscordIntegration(app)
         except:
             traceback.print_exc()
         
     return Response(status_code=204)
 
 async def patch_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /dlog/division', 60, 30)
+    rl = await ratelimit(request, 'PATCH /dlog/division', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -250,16 +240,16 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     await app.db.commit(dhrid)
 
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    await AuditLog(dhrid, au["uid"], ml.ctr("updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_division_validation", var = {"logid": logid, "status": STATUS[status]}))
 
-    uid = (await GetUserInfo(dhrid, request, userid = userid))["uid"]
+    uid = (await GetUserInfo(request, userid = userid))["uid"]
 
-    language = await GetUserLanguage(dhrid, uid)
+    language = await GetUserLanguage(request, uid)
     STATUSTR = {0: ml.tr(request, "pending", force_lang = language), 1: ml.tr(request, "accepted", force_lang = language),
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[status]
 
-    await notification(dhrid, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(dhrid, uid)), \
+    await notification(request, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(request, uid)), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
@@ -269,19 +259,17 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
 
 async def get_list_pending(request: Request, response: Response, authorization: str = Header(None), \
         divisionid: Optional[int] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
-    if "division" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /divisions/list/pending', 60, 60)
+    rl = await ratelimit(request, 'GET /divisions/list/pending', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -300,7 +288,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"logid": tt[0], "divisionid": tt[2], "user": await GetUserInfo(dhrid, request, userid = tt[1])})
+        ret.append({"logid": tt[0], "divisionid": tt[2], "user": await GetUserInfo(request, userid = tt[1])})
     
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
     t = await app.db.fetchall(dhrid)

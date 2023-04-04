@@ -12,11 +12,11 @@ from fastapi.responses import RedirectResponse
 from pysteamsignin.steamsignin import SteamSignIn
 
 import multilang as ml
-from app import app
 from functions import *
 
 
-async def get_redirect(connect_account: Optional[bool] = False):
+async def get_redirect(request: Request, connect_account: Optional[bool] = False):
+    app = request.app
     steamLogin = SteamSignIn()
     encodedData = ""
     if not connect_account:
@@ -27,6 +27,7 @@ async def get_redirect(connect_account: Optional[bool] = False):
     return RedirectResponse(url=url, status_code=302)
 
 async def get_connect(request: Request):
+    app = request.app
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if referer in ["", "-", None] or data == "":
@@ -38,6 +39,7 @@ async def get_connect(request: Request):
     return RedirectResponse(url=app.config.frontend_urls.steam_callback + f"?{str(request.query_params)}", status_code=302)
 
 async def get_callback(request: Request, response: Response):
+    app = request.app
     referer = request.headers.get("Referer")
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if referer in ["", "-", None] or data == "":
@@ -49,23 +51,23 @@ async def get_callback(request: Request, response: Response):
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /auth/steam/callback', 60, 10)
+    rl = await ratelimit(request, 'GET /auth/steam/callback', 60, 10)
     if rl[0]:
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "rate_limit")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "rate_limit")), status_code=302)
 
     r = None
     try:
-        r = await arequests.get("https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
+        r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         traceback.print_exc()
         response.status_code = 503
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "steam_api_error")), status_code=302)
     if r.status_code // 100 != 2:
         response.status_code = 503
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "steam_api_error")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "steam_api_error")), status_code=302)
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
-        return RedirectResponse(url=getUrl4Msg(ml.tr(request, "invalid_steam_auth")), status_code=302)
+        return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "invalid_steam_auth")), status_code=302)
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
     
@@ -74,14 +76,14 @@ async def get_callback(request: Request, response: Response):
     if len(t) == 0:
         if not "steam" in app.config.register_methods:
             response.status_code = 404
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "user_not_found")), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "user_not_found")), status_code=302)
         
         username = f"Steam User {steamid}"
         avatar = ""
 
         if app.config.steam_api_key != "":
             try:
-                r = await arequests.get(f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+                r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
             except:
                 traceback.print_exc()
             try:
@@ -97,7 +99,7 @@ async def get_callback(request: Request, response: Response):
         uid = (await app.db.fetchone(dhrid))[0]
         await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
         await app.db.commit(dhrid)
-        await AuditLog(dhrid, uid, ml.ctr("steam_register", var = {"country": getRequestCountry(request)}))
+        await AuditLog(request, uid, ml.ctr(request, "steam_register", var = {"country": getRequestCountry(request)}))
     else:
         uid = t[0][0]
     
@@ -114,9 +116,9 @@ async def get_callback(request: Request, response: Response):
         else:
             expire = ml.tr(request, "forever")
         if reason != "":
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
         else:
-            return RedirectResponse(url=getUrl4Msg(ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
 
     await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
@@ -126,7 +128,7 @@ async def get_callback(request: Request, response: Response):
         stoken = "f" + stoken[1:]
         await app.db.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
         await app.db.commit(dhrid)
-        return RedirectResponse(url=getUrl4MFA(stoken), status_code=302)
+        return RedirectResponse(url=getUrl4MFA(app, stoken), status_code=302)
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
@@ -134,10 +136,10 @@ async def get_callback(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-    language = await GetUserLanguage(dhrid, uid)
-    await AuditLog(dhrid, uid, ml.ctr("steam_login", var = {"country": getRequestCountry(request)}))
-    await notification(dhrid, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
+    username = (await GetUserInfo(request, uid = uid))["name"]
+    language = await GetUserLanguage(request, uid)
+    await AuditLog(request, uid, ml.ctr(request, "steam_login", var = {"country": getRequestCountry(request)}))
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
         discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
                          "description": "", 
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
@@ -145,4 +147,4 @@ async def get_callback(request: Request, response: Response):
         }
     )
 
-    return RedirectResponse(url=getUrl4Token(stoken), status_code=302)
+    return RedirectResponse(url=getUrl4Token(app, stoken), status_code=302)

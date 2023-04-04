@@ -7,22 +7,25 @@ from typing import Optional
 
 from fastapi import Request
 
-from app import app
 from static import EN_STRINGTABLE
 
-LANGUAGES = os.listdir(app.config.language_dir)
+import inspect
+
+abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
+
+LANGUAGES = os.listdir(os.path.join(abspath, "languages/"))
 LANGUAGES = [x.split(".")[0] for x in LANGUAGES]
 LANG_DATAS = {}
 for lang in LANGUAGES:
     try:
-        LANG_DATAS[lang] = json.loads(open(f"{app.config.language_dir}/{lang}.json","r").read())
+        LANG_DATAS[lang] = json.loads(open(os.path.join(abspath, f"languages/{lang}.json"),"r").read())
     except:
         pass
 LANGUAGES = LANG_DATAS.keys() # must be valid language file
 
 def get_lang(request: Request):
     if request is None:
-        return app.config.language
+        return request.app.config.language
     lang = request.headers.get('Accept-Language', 'en')
     lang = lang.split(',')[0]
     lang = lang.split(';')[0]
@@ -66,8 +69,8 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: 
 def tr(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""): # abbreviation of translate
     return translate(request, key, var, force_lang)
 
-def company_translate(key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
-    lang = app.config.language if force_lang == "" else force_lang
+def company_translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
+    lang = request.app.config.language if force_lang == "" else force_lang
     if lang not in LANGUAGES:
         lang = "en" 
 
@@ -93,5 +96,5 @@ def company_translate(key: str, var: Optional[dict] = {}, force_lang: Optional[s
         else: # invalid key
             return key
 
-def ctr(key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
-    return company_translate(key, var, force_lang)
+def ctr(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
+    return company_translate(request, key, var, force_lang)

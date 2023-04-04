@@ -9,7 +9,6 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
@@ -19,17 +18,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
     """Returns the information of a list of users
     
     Not all information is included, use `/user/profile` for detailed profile."""
-    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /user/list', 60, 60)
+    rl = await ratelimit(request, 'GET /user/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "get_pending_user_list"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -56,7 +55,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        user = await GetUserInfo(dhrid, request, uid = tt[0])
+        user = await GetUserInfo(request, uid = tt[0])
         if tt[1] is not None:
             user["ban"] = {"reason": tt[1], "expire": tt[2]}
         else:
@@ -78,11 +77,11 @@ async def get_profile(request: Request, response: Response, authorization: str =
     """Returns the profile of a specific user
     
     If no request param is provided, then returns the profile of the authorized user."""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /user/profile', 60, 120)
+    rl = await ratelimit(request, 'GET /user/profile', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -91,7 +90,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     request_uid = -1
     aulanguage = ""
     if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None:
-        au = await auth(dhrid, authorization, request, check_member = False, allow_application_token = True)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -101,7 +100,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
             request_uid = au["uid"]
             aulanguage = au["language"]
     else:
-        au = await auth(dhrid, authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, allow_application_token = True)
         if au["error"]:
             if app.config.privacy:
                 response.status_code = au["code"]
@@ -135,9 +134,9 @@ async def get_profile(request: Request, response: Response, authorization: str =
     uid = t[0][1]
     
     if userid >= 0:
-        await ActivityUpdate(dhrid, request_uid, f"member_{userid}")
+        await ActivityUpdate(request, request_uid, f"member_{userid}")
 
-    return (await GetUserInfo(dhrid, request, uid = uid))
+    return (await GetUserInfo(request, uid = uid))
 
 async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
     """Updates the profile of a specific user
@@ -145,17 +144,17 @@ async def patch_profile(request: Request, response: Response, authorization: str
     If `sync_to_discord` is `true`, then syncs to their Discord profile.
     
     If `uid` in request param is not provided, then syncs the profile for the authorized user."""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/profile', 60, 15)
+    rl = await ratelimit(request, 'PATCH /user/profile', 60, 15)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -168,7 +167,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
         uid = au["uid"]
         discordid = au["discordid"]
     else:
-        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "hr", "manage_profile"])
+        au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "manage_profile"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -194,7 +193,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
         try:
-            r = await arequests.get(f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 503
@@ -241,7 +240,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "steam_api_key_not_configured", force_lang = au["language"])}
 
         try:
-            r = await arequests.get(f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+            r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
         except:
             traceback.print_exc()
             response.status_code = 503
@@ -298,17 +297,17 @@ async def patch_bio(request: Request, response: Response, authorization: str = H
     """Updates the bio of the authorized user, returns 204
     
     JSON: `{"bio": str}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /user/bio', 60, 30)
+    rl = await ratelimit(request, 'PATCH /user/bio', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

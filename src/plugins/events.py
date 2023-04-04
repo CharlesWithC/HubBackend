@@ -11,19 +11,18 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
-async def EventNotification():
-    if "event" not in app.config.enabled_plugins:
-        return
-    
+async def EventNotification(app):
     while 1:
         try:
             dhrid = genrid()
             await app.db.new_conn(dhrid)
             await app.db.extend_conn(dhrid, 5)
+
+            request = Request(scope={"type":"http", "app": app})
+            request.state.dhrid = dhrid
 
             npid = -1
             nlup = -1
@@ -90,11 +89,11 @@ async def EventNotification():
                 vote = str2list(tt[8])
                 
                 for vt in vote:
-                    uid = await GetUserInfo(dhrid, None, userid = vt, ignore_activity = True)["uid"]
+                    uid = await GetUserInfo(request, userid = vt, ignore_activity = True)["uid"]
                     if uid in tonotify.keys():
                         channelid = tonotify[uid]
-                        language = GetUserLanguage(dhrid, uid)
-                        QueueDiscordMessage(channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
+                        language = GetUserLanguage(request, uid)
+                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
                             "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
                                 {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
                                 {"name": ml.tr(None, "destination", force_lang = language), "value": destination, "inline": True},
@@ -122,13 +121,11 @@ async def EventNotification():
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
         first_event_after: Optional[int] = None):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /events/list', 60, 60)
+    rl = await ratelimit(request, 'GET /events/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -136,14 +133,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     userid = -1
     if authorization is not None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
             return au
         else:
             userid = au["userid"]
-            await ActivityUpdate(dhrid, au["uid"], f"events")
+            await ActivityUpdate(request, au["uid"], f"events")
     
     if first_event_after is None:
         first_event_after = int(time.time()) - 86400
@@ -202,13 +199,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def get_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'GET /events', 60, 120)
+    rl = await ratelimit(request, 'GET /events', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -216,7 +211,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
 
     userid = -1
     if authorization is not None:
-        au = await auth(dhrid, authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -224,7 +219,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await ActivityUpdate(dhrid, au["uid"], f"events")
+            await ActivityUpdate(request, au["uid"], f"events")
     
     await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
@@ -239,27 +234,25 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
         vote = []
     attendee_ret = []
     for at in attendee:
-        attendee_ret.append(await GetUserInfo(dhrid, request, userid = at))
+        attendee_ret.append(await GetUserInfo(request, userid = at))
     vote_ret = []
     for vt in vote:
-        vote_ret.append(await GetUserInfo(dhrid, request, userid = vt))
+        vote_ret.append(await GetUserInfo(request, userid = vt))
 
     return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
 
 async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PUT /events/vote', 60, 30)
+    rl = await ratelimit(request, 'PUT /events/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -283,19 +276,17 @@ async def put_vote(request: Request, response: Response, eventid: int, authoriza
         return Response(status_code=204)
     
 async def delete_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /events/vote', 60, 30)
+    rl = await ratelimit(request, 'DELETE /events/vote', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True)
+    au = await auth(authorization, request, allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -319,19 +310,17 @@ async def delete_vote(request: Request, response: Response, eventid: int, author
         return {"error": ml.tr(request, "event_not_voted", force_lang = au["language"])}
 
 async def post_event(request: Request, response: Response, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /events', 60, 30)
+    rl = await ratelimit(request, 'POST /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -371,24 +360,22 @@ async def post_event(request: Request, response: Response, authorization: str = 
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
-    await AuditLog(dhrid, au["uid"], ml.ctr("created_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "created_event", var = {"id": eventid}))
 
     return {"eventid": eventid}
 
 async def patch_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /events', 60, 30)
+    rl = await ratelimit(request, 'PATCH /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -431,25 +418,23 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     
     await app.db.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
-    await AuditLog(dhrid, au["uid"], ml.ctr("updated_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
 
 async def delete_event(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'DELETE /events', 60, 30)
+    rl = await ratelimit(request, 'DELETE /events', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -462,25 +447,23 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
     
     await app.db.execute(dhrid, f"DELETE FROM event WHERE eventid = {eventid}")
-    await AuditLog(dhrid, au["uid"], ml.ctr("deleted_event", var = {"id": eventid}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "deleted_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
 
 async def patch_attendees(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
-    if "event" not in app.config.enabled_plugins:
-        return Response({"error": "Not Found"}, 404)
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'PATCH /events/attendees', 60, 30)
+    rl = await ratelimit(request, 'PATCH /events/attendees', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(dhrid, authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -511,15 +494,15 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     title = t[0][2]
     gap = points - old_points
 
-    ret = ml.ctr("updated_event_attendees", var = {"id": eventid}) + "  \n"
-    ret1 = ml.ctr("added_attendees", var = {"points": points}).rstrip(" ") + " "
+    ret = ml.ctr(request, "updated_event_attendees", var = {"id": eventid}) + "  \n"
+    ret1 = ml.ctr(request, "added_attendees", var = {"points": points}).rstrip(" ") + " "
     cnt = 0
     for attendee in attendees:
         if attendee in old_attendees:
             continue
-        name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
-        uid = (await GetUserInfo(dhrid, request, userid = attendee))["uid"]
-        await notification(dhrid, "event", uid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, uid)))
+        name = (await GetUserInfo(request, userid = attendee))["name"]
+        uid = (await GetUserInfo(request, userid = attendee))["uid"]
+        await notification(request, "event", uid, ml.tr(request, "event_updated_received_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
         ret1 += f"`{name}` (`{attendee}`), "
         cnt += 1
     ret1 = ret1[:-2]
@@ -527,15 +510,15 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     if cnt > 0:
         ret = ret + ret1
 
-    ret2 = ml.ctr("removed_attendees", var = {"points": points}).rstrip(" ") + " "
+    ret2 = ml.ctr(request, "removed_attendees", var = {"points": points}).rstrip(" ") + " "
     cnt = 0
     toremove = []
     for attendee in old_attendees:
         if not attendee in attendees:
             toremove.append(attendee)
-            name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
-            uid = (await GetUserInfo(dhrid, request, userid = attendee))["uid"]
-            await notification(dhrid, "event", uid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, uid)))
+            name = (await GetUserInfo(request, userid = attendee))["name"]
+            uid = (await GetUserInfo(request, userid = attendee))["uid"]
+            await notification(request, "event", uid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             ret2 += f"`{name}` (`{attendee}`), "
             cnt += 1
     ret2 = ret2[:-2]
@@ -547,17 +530,17 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     
     if gap != 0:
         if gap > 0:
-            ret3 = ml.ctr("added_event_points", var = {"points": gap})
+            ret3 = ml.ctr(request, "added_event_points", var = {"points": gap})
         else:
-            ret3 = ml.ctr("removed_event_points", var = {"points": -gap})
+            ret3 = ml.ctr(request, "removed_event_points", var = {"points": -gap})
         cnt = 0
         for attendee in old_attendees:
-            name = (await GetUserInfo(dhrid, request, userid = attendee))["name"]
-            uid = (await GetUserInfo(dhrid, request, userid = attendee))["uid"]
+            name = (await GetUserInfo(request, userid = attendee))["name"]
+            uid = (await GetUserInfo(request, userid = attendee))["uid"]
             if gap > 0:
-                await notification(dhrid, "event", uid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, uid)))
+                await notification(request, "event", uid, ml.tr(request, "event_updated_received_more_points", var = {"title": title, "eventid": eventid, "gap": gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             elif gap < 0:
-                await notification(dhrid, "event", uid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(dhrid, uid)))
+                await notification(request, "event", uid, ml.tr(request, "event_updated_lost_more_points", var = {"title": title, "eventid": eventid, "gap": -gap, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             ret3 += f"`{name}` (`{attendee}`), "
             cnt += 1
         ret3 = ret3[:-2]
@@ -568,8 +551,8 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     await app.db.execute(dhrid, f"UPDATE event SET attendee = ',{list2str(attendees)},', points = {points} WHERE eventid = {eventid}")
     await app.db.commit(dhrid)
 
-    if ret == ml.ctr("updated_event_attendees", var = {"id": eventid}) + "  \n":
-        return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(dhrid, au["uid"]))}
+    if ret == ml.ctr(request, "updated_event_attendees", var = {"id": eventid}) + "  \n":
+        return {"message": ml.tr(request, "no_changes_made", force_lang = await GetUserLanguage(request, au["uid"]))}
 
-    await AuditLog(dhrid, au["uid"], ret)
+    await AuditLog(request, au["uid"], ret)
     return {"message": ret}

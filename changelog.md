@@ -2,6 +2,7 @@
 
 **v2.4.1**  
 1.Fixed notifications not being sent to `uid = 0`  
+2.Switched to use `request.app` rather than import it  
 
 **v2.4.0**  
 1.Improved how path prefix is defined  

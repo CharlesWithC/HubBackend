@@ -6,7 +6,6 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from app import app
 from functions import *
 
 
@@ -14,17 +13,17 @@ async def post_enable(request: Request, response: Response, authorization: str =
     """Enables MFA for the authorized user, returns 204
     
     JSON: `{"secret": str, "otp": str}`"""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/mfa', 60, 10)
+    rl = await ratelimit(request, 'POST /user/mfa', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     
-    au = await auth(dhrid, authorization, request, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -63,7 +62,7 @@ async def post_enable(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '{secret}' WHERE uid = {uid}")
     await app.db.commit(dhrid)
         
-    username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+    username = (await GetUserInfo(request, uid = uid))["name"]
 
     return Response(status_code=204)
 
@@ -71,11 +70,11 @@ async def post_disable(request: Request, response: Response, authorization: str 
     """Disables MFA for a specific user, returns 204
     
     If `uid` in request param is not provided, then disables MFA for the authorized user."""
-
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(dhrid, request, 'POST /user/mfa/disable', 60, 10)
+    rl = await ratelimit(request, 'POST /user/mfa/disable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -83,7 +82,7 @@ async def post_disable(request: Request, response: Response, authorization: str 
     
     if uid == -1:
         # self-disable mfa
-        au = await auth(dhrid, authorization, request, check_member = False)
+        au = await auth(authorization, request, check_member = False)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -111,13 +110,13 @@ async def post_disable(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)
         
-        username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
+        username = (await GetUserInfo(request, uid = uid))["name"]
 
         return Response(status_code=204)
     
     else:
         # admin / hrm disable user mfa
-        au = await auth(dhrid, authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
+        au = await auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -136,8 +135,8 @@ async def post_disable(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)
         
-        username = (await GetUserInfo(dhrid, request, uid = uid))["name"]
-        await AuditLog(dhrid, au["uid"], ml.ctr("disabled_mfa", var = {"username": username, "uid": uid}))
+        username = (await GetUserInfo(request, uid = uid))["name"]
+        await AuditLog(request, au["uid"], ml.ctr(request, "disabled_mfa", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
         
