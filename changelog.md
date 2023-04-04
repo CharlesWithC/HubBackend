@@ -2,7 +2,8 @@
 
 **v2.4.1**  
 1.Fixed notifications not being sent to `uid = 0`  
-2.Switched to use `request.app` rather than import it  
+2.Fixed errors with MFA (due to `auth_ticket`)  
+3.Switched to use `request.app` rather than import it  
 
 **v2.4.0**  
 1.Improved how path prefix is defined  

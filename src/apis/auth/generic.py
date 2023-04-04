@@ -65,7 +65,7 @@ async def post_password(request: Request, response: Response):
     if mfa_secret != "":
         stoken = str(uuid.uuid4())
         stoken = "f" + stoken[1:]
-        await app.db.execute(dhrid, f"INSERT INTO ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
+        await app.db.execute(dhrid, f"INSERT INTO auth_ticket VALUES ('{stoken}', {uid}, {int(time.time())+600})") # 10min ticket
         await app.db.commit(dhrid)
         return {"token": stoken, "mfa": True}
 
@@ -317,8 +317,8 @@ async def post_mfa(request: Request, response: Response):
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json")}
 
-    await app.db.execute(dhrid, f"DELETE FROM ticket WHERE expire <= {int(time.time())}")
-    await app.db.execute(dhrid, f"SELECT uid FROM ticket WHERE token = '{token}'")
+    await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE expire <= {int(time.time())}")
+    await app.db.execute(dhrid, f"SELECT uid FROM auth_ticket WHERE token = '{token}'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0 or not token.startswith("f"):
         response.status_code = 401
@@ -339,7 +339,7 @@ async def post_mfa(request: Request, response: Response):
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp")}
 
-    await app.db.execute(dhrid, f"DELETE FROM ticket WHERE token = '{token}'")
+    await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE token = '{token}'")
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
