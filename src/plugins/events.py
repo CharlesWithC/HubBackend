@@ -89,17 +89,17 @@ async def EventNotification(app):
                 vote = str2list(tt[8])
                 
                 for vt in vote:
-                    uid = await GetUserInfo(request, userid = vt, ignore_activity = True)["uid"]
+                    uid = (await GetUserInfo(request, userid = vt, ignore_activity = True))["uid"]
                     if uid in tonotify.keys():
                         channelid = tonotify[uid]
                         language = GetUserLanguage(request, uid)
-                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": ml.tr(None, "event_notification", force_lang = language), "description": ml.tr(None, "event_notification_description", force_lang = language), "url": link,
-                            "fields": [{"name": ml.tr(None, "title", force_lang = language), "value": title, "inline": False},
-                                {"name": ml.tr(None, "departure", force_lang = language), "value": departure, "inline": True},
-                                {"name": ml.tr(None, "destination", force_lang = language), "value": destination, "inline": True},
-                                {"name": ml.tr(None, "distance", force_lang = language), "value": distance, "inline": True},
-                                {"name": ml.tr(None, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
-                                {"name": ml.tr(None, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
+                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": ml.tr(request, "event_notification", force_lang = language), "description": ml.tr(request, "event_notification_description", force_lang = language), "url": link,
+                            "fields": [{"name": ml.tr(request, "title", force_lang = language), "value": title, "inline": False},
+                                {"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
+                                {"name": ml.tr(request, "destination", force_lang = language), "value": destination, "inline": True},
+                                {"name": ml.tr(request, "distance", force_lang = language), "value": distance, "inline": True},
+                                {"name": ml.tr(request, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
+                                {"name": ml.tr(request, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
                             "footer": {"text": app.config.name, "icon_url": app.config.logo_url},
                             "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
                             

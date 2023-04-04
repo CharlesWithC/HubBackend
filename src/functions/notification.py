@@ -186,7 +186,7 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
         else:
-            await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(None, "notification", force_lang = await GetUserLanguage(request, uid)), 
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
                 "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
 

@@ -91,8 +91,6 @@ app.add_exception_handler(StarletteHTTPException, api.errorHandler)
 app.add_exception_handler(RequestValidationError, api.error422Handler)
 app.add_middleware(api.HubMiddleware)
 app.add_middleware(GZipMiddleware)
-app.add_middleware(HTTPSRedirectMiddleware)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts = [app.config.apidomain])
 
 db.init(app)
 app = static.load(app)

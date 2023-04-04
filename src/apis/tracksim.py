@@ -21,6 +21,8 @@ JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id"
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
 async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhrid = None):
+    if request is None:
+        request = Request(scope={"type":"http", "app": app})
     try:
         r = await arequests.get(app, f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {app.config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
     except:
@@ -354,7 +356,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid))
 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
-        await notification(request, "dlog", uid, ml.tr(None, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
+        await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
 
     if app.config.delivery_log_channel_id != "" and not duplicate:
         try:
@@ -400,7 +402,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             uid = (await GetUserInfo(request, userid = userid))["uid"]
             language = await GetUserLanguage(request, uid)
             if omultiplayer is None:
-                umultiplayer = ml.tr(None, "single_player", force_lang = language)
+                umultiplayer = ml.tr(request, "single_player", force_lang = language)
             else:
                 if omultiplayer["type"] == "truckersmp":
                     if omultiplayer["meta"]["server"] is not None:
@@ -408,7 +410,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     else:
                         umultiplayer = "TruckersMP"
                 elif omultiplayer["type"] == "scs_convoy":
-                    umultiplayer = ml.tr(None, "scs_convoy", force_lang = language)
+                    umultiplayer = ml.tr(request, "scs_convoy", force_lang = language)
             truck = d["data"]["object"]["truck"]
             if truck is not None and truck["brand"]["name"] is not None and truck["name"] is not None:
                 truck = truck["brand"]["name"] + " " + truck["name"]
@@ -470,31 +472,31 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     language = await GetUserLanguage(request, uid)
                     data = {}
                     if app.config.distance_unit == "imperial":
-                        data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
-                                "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
-                                        {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
-                                        {"name": ml.tr(None, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                        {"name": ml.tr(None, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
-                                        {"name": ml.tr(None, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
-                                        {"name": ml.tr(None, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
-                                        {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
-                                        {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                "fields": [{"name": ml.tr(request, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.tr(request, "truck", force_lang = language), "value": truck, "inline": True},
+                                        {"name": ml.tr(request, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.tr(request, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.tr(request, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
+                                        {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
+                                        {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     elif app.config.distance_unit == "metric":
-                        data = {"embeds": [{"title": f"{ml.tr(None, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}", 
                                 "url": dlglink,
-                                "fields": [{"name": ml.tr(None, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
-                                        {"name": ml.tr(None, "truck", force_lang = language), "value": truck, "inline": True},
-                                        {"name": ml.tr(None, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
-                                        {"name": ml.tr(None, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
-                                        {"name": ml.tr(None, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
-                                        {"name": ml.tr(None, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
-                                        {"name": ml.tr(None, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
-                                        {"name": ml.tr(None, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(None, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                "fields": [{"name": ml.tr(request, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
+                                        {"name": ml.tr(request, "truck", force_lang = language), "value": truck, "inline": True},
+                                        {"name": ml.tr(request, "cargo", force_lang = language), "value": cargo + f" ({int(cargo_mass/1000)}t)", "inline": True},
+                                        {"name": ml.tr(request, "from", force_lang = language), "value": source_company + ", " + source_city, "inline": True},
+                                        {"name": ml.tr(request, "to", force_lang = language), "value": destination_company + ", " + destination_city, "inline": True},
+                                        {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
+                                        {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
+                                        {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
+                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
@@ -634,7 +636,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             continue
                     
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
-                    await notification(request, "challenge", uid, ml.tr(None, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
+                    await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
                     await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
                     await app.db.commit(dhrid)
 
@@ -662,7 +664,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
                                 uid = (await GetUserInfo(request, userid = userid))["uid"]
-                                await notification(request, "challenge", uid, ml.tr(None, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
+                                await notification(request, "challenge", uid, ml.tr(request, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                         elif challenge_type == 3:
                             await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                             t = await app.db.fetchall(dhrid)
@@ -670,7 +672,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
                                 uid = (await GetUserInfo(request, userid = userid))["uid"]
-                                await notification(request, "challenge", uid, ml.tr(None, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
+                                await notification(request, "challenge", uid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
                         elif challenge_type == 2:
                             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                             t = await app.db.fetchall(dhrid)
@@ -690,7 +692,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
                                     uid = (await GetUserInfo(request, userid = tuserid))["uid"]
-                                    await notification(request, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
+                                    await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                                 await app.db.commit(dhrid)
                         elif challenge_type == 5:
                             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
@@ -718,7 +720,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
                                     uid = (await GetUserInfo(request, userid = tuserid))["uid"]
-                                    await notification(request, "challenge", uid, ml.tr(None, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
+                                    await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                                 await app.db.commit(dhrid)
                 except:
                     traceback.print_exc()
@@ -762,8 +764,8 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             
             uid = (await GetUserInfo(request, userid = userid))["uid"]
             user_language = await GetUserLanguage(request, uid)
-            message = "  \n" + ml.tr(None, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
-            await notification(request, "economy", uid, ml.tr(None, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": app.config.economy.currency_name, "from_user": ml.tr(None, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
+            message = "  \n" + ml.tr(request, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
+            await notification(request, "economy", uid, ml.tr(request, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": app.config.economy.currency_name, "from_user": ml.tr(request, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
             
             if not isrented:
                 message = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
