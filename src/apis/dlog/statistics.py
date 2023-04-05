@@ -11,7 +11,7 @@ from functions import *
 # app.state.cache_statistics = {}
 
 async def get_summary(request: Request, response: Response, authorization: str = Header(None), \
-        start_time: Optional[int] = None, end_time: Optional[int] = None, userid: Optional[int] = None):
+        after: Optional[int] = None, before: Optional[int] = None, userid: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
@@ -22,10 +22,10 @@ async def get_summary(request: Request, response: Response, authorization: str =
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if start_time is None:
-        start_time = 0
-    if end_time is None:
-        end_time = max(int(time.time()), 32503651200)
+    if after is None:
+        after = 0
+    if before is None:
+        before = max(int(time.time()), 32503651200)
 
     quser = ""
     if userid is not None:
@@ -45,7 +45,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         else:
             tt = app.state.cache_statistics[ll]
             for t in tt:
-                if abs(t["start_time"] - start_time) <= 120 and abs(t["end_time"] - end_time) <= 120 and t["userid"] == userid:
+                if abs(t["start_time"] - after) <= 120 and abs(t["end_time"] - before) <= 120 and t["userid"] == userid:
                     ret = t["result"]
                     ret["cache"] = ll
                     return ret
@@ -57,13 +57,13 @@ async def get_summary(request: Request, response: Response, authorization: str =
     totdrivers = 0
     newdrivers = 0
     for rid in app.config.perms.driver:
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
+        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if not tt[0] in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp <= {end_time} AND roles LIKE '%,{rid},%'")
+        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {after} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if not tt[0] in newdid:
@@ -75,60 +75,60 @@ async def get_summary(request: Request, response: Response, authorization: str =
     # job / delivered / cancelled
     item = {"job": "COUNT(*)", "distance": "SUM(distance)", "fuel": "SUM(fuel)"}
     for key in item.keys():
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp <= {before}")
         tot = await app.db.fetchone(dhrid)
         tot = nint(tot[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp >= {after} AND timestamp <= {before}")
         new = await app.db.fetchone(dhrid)
         new = nint(new[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {before}")
         totets2 = await app.db.fetchone(dhrid)
         totets2 = nint(totets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
         newets2 = await app.db.fetchone(dhrid)
         newets2 = nint(newets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {before}")
         totats = await app.db.fetchone(dhrid)
         totats = nint(totats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
         newats = await app.db.fetchone(dhrid)
         newats = nint(newats[0])
 
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp <= {before}")
         totdelivered = await app.db.fetchone(dhrid)
         totdelivered = nint(totdelivered[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before}")
         newdelivered = await app.db.fetchone(dhrid)
         newdelivered = nint(newdelivered[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {before}")
         totdelivered_ets2 = await app.db.fetchone(dhrid)
         totdelivered_ets2 = nint(totdelivered_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
         newdelivered_ets2 = await app.db.fetchone(dhrid)
         newdelivered_ets2 = nint(newdelivered_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {before}")
         totdelivered_ats = await app.db.fetchone(dhrid)
         totdelivered_ats = nint(totdelivered_ats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
         newdelivered_ats = await app.db.fetchone(dhrid)
         newdelivered_ats = nint(newdelivered_ats[0])
 
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp <= {before}")
         totcancelled = await app.db.fetchone(dhrid)
         totcancelled = nint(totcancelled[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before}")
         newcancelled = await app.db.fetchone(dhrid)
         newcancelled = nint(newcancelled[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {before}")
         totcancelled_ets2 = await app.db.fetchone(dhrid)
         totcancelled_ets2 = nint(totcancelled_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
         newcancelled_ets2 = await app.db.fetchone(dhrid)
         newcancelled_ets2 = nint(newcancelled_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {before}")
         totcancelled_ats = await app.db.fetchone(dhrid)
         totcancelled_ats = nint(totcancelled_ats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
         newcancelled_ats = await app.db.fetchone(dhrid)
         newcancelled_ats = nint(newcancelled_ats[0])
 
@@ -143,46 +143,46 @@ async def get_summary(request: Request, response: Response, authorization: str =
                     "ats": {"tot": totcancelled_ats, "new": newcancelled_ats}}}
 
     # profit
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {before}")
     toteuroprofit = await app.db.fetchone(dhrid)
     toteuroprofit = nint(toteuroprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
     neweuroprofit = await app.db.fetchone(dhrid)
     neweuroprofit = nint(neweuroprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {before}")
     totdollarprofit = await app.db.fetchone(dhrid)
     totdollarprofit = nint(totdollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
     newdollarprofit = await app.db.fetchone(dhrid)
     newdollarprofit = nint(newdollarprofit[0])
     allprofit = {"tot": {"euro": toteuroprofit, "dollar": totdollarprofit}, \
         "new": {"euro": neweuroprofit, "dollar": newdollarprofit}}
 
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {before}")
     totdelivered_europrofit = await app.db.fetchone(dhrid)
     totdelivered_europrofit = nint(totdelivered_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
     newdelivered_europrofit = await app.db.fetchone(dhrid)
     newdelivered_europrofit = nint(newdelivered_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {before}")
     totdelivered_dollarprofit = await app.db.fetchone(dhrid)
     totdelivered_dollarprofit = nint(totdelivered_dollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
     newdelivered_dollarprofit = await app.db.fetchone(dhrid)
     newdelivered_dollarprofit = nint(newdelivered_dollarprofit[0])
     deliveredprofit = {"tot": {"euro": totdelivered_europrofit, "dollar": totdelivered_dollarprofit}, \
         "new": {"euro": newdelivered_europrofit, "dollar": newdelivered_dollarprofit}}
     
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {before}")
     totcancelled_europrofit = await app.db.fetchone(dhrid)
     totcancelled_europrofit = nint(totcancelled_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
     newcancelled_europrofit = await app.db.fetchone(dhrid)
     newcancelled_europrofit = nint(newcancelled_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {before}")
     totcancelled_dollarprofit = await app.db.fetchone(dhrid)
     totcancelled_dollarprofit = nint(totcancelled_dollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {start_time} AND timestamp <= {end_time}")
+    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
     newcancelled_dollarprofit = await app.db.fetchone(dhrid)
     newcancelled_dollarprofit = nint(newcancelled_dollarprofit[0])
     cancelledprofit = {"tot": {"euro": totcancelled_europrofit, "dollar": totcancelled_dollarprofit}, \
@@ -193,7 +193,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     ts = int(time.time())
     if not ts in app.state.cache_statistics.keys():
         app.state.cache_statistics[ts] = []
-    app.state.cache_statistics[ts].append({"start_time": start_time, "end_time": end_time, "userid": userid, "result": ret})
+    app.state.cache_statistics[ts].append({"start_time": after, "end_time": before, "userid": userid, "result": ret})
 
     ret["cache"] = None
 

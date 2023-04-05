@@ -16,7 +16,7 @@ from functions import *
 
 async def get_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        start_time: Optional[int] = None, end_time: Optional[int] = None, \
+        after: Optional[int] = None, before: Optional[int] = None, \
         speed_limit: Optional[int] = None, game: Optional[int] = None, \
         point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
     app = request.app
@@ -36,10 +36,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         return au
     await ActivityUpdate(request, au["uid"], "leaderboard")
 
-    if start_time is None:
-        start_time = 0
-    if end_time is None:
-        end_time = max(int(time.time()), 32503651200)
+    if after is None:
+        after = 0
+    if before is None:
+        before = max(int(time.time()), 32503651200)
         
     limittype = point_types
     limituser = userids
@@ -73,7 +73,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         else:
             tt = app.state.cache_leaderboard[ll]
             for t in tt:
-                if abs(t["start_time"] - start_time) <= 120 and abs(t["end_time"] - end_time) <= 120 and \
+                if abs(t["start_time"] - after) <= 120 and abs(t["end_time"] - before) <= 120 and \
                         t["speed_limit"] == speed_limit and t["game"] == game:
                     usecache = True
                     cachetime = ll
@@ -142,7 +142,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     if not usecache:
         ##### WITH LIMIT (Parameter)
         # calculate distance
-        await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} {limit} {gamelimit} GROUP BY userid")
+        await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} {limit} {gamelimit} GROUP BY userid")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if not tt[0] in allusers:
@@ -154,7 +154,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             userdistance[tt[0]] = int(userdistance[tt[0]])
         
         # calculate challenge
-        await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
@@ -164,7 +164,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             userchallenge[oo[0]] += oo[1]
 
         # calculate event
-        await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {start_time} AND departure_timestamp <= {end_time}")
+        await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE departure_timestamp >= {after} AND departure_timestamp <= {before}")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             attendees = str2list(tt[0])
@@ -177,13 +177,13 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     userevent[attendee] += tt[1]
         
         # calculate division
-        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid ASC LIMIT 1")
+        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {after} AND timestamp <= {before} ORDER BY logid ASC LIMIT 1")
         t = await app.db.fetchall(dhrid)
         firstlogid = -1
         if len(t) > 0:
             firstlogid = t[0][0]
 
-        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} ORDER BY logid DESC LIMIT 1")
+        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {after} AND timestamp <= {before} ORDER BY logid DESC LIMIT 1")
         t = await app.db.fetchall(dhrid)
         lastlogid = -1
         if len(t) > 0:
@@ -200,7 +200,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
         # calculate myth
-        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {start_time} AND timestamp <= {end_time} GROUP BY userid")
+        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if not oo[0] in allusers:
@@ -424,7 +424,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         ts = int(time.time())
         if not ts in app.state.cache_leaderboard.keys():
             app.state.cache_leaderboard[ts] = []
-        app.state.cache_leaderboard[ts].append({"start_time": start_time, "end_time": end_time, "speed_limit": speed_limit, "game": game,\
+        app.state.cache_leaderboard[ts].append({"start_time": after, "end_time": before, "speed_limit": speed_limit, "game": game,\
             "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
             "userdivision": userdivision, "usermyth": usermyth})
 

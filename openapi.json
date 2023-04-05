@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.4.1"
+        "version": "2.4.2"
     },
     "paths": {
         "/abbr": {
@@ -1777,18 +1777,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Start Timestamp",
+                        "title": "After (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "start_time",
+                    "name": "after",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
+                        "title": "Before (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "end_time",
+                    "name": "before",
                     "in": "query"
                 }, {
                     "required": false,
@@ -1853,18 +1853,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Start Timestamp",
+                        "title": "After (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "start_time",
+                    "name": "after",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
+                        "title": "Before (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "end_time",
+                    "name": "before",
                     "in": "query"
                 }],
                 "responses": {}
@@ -1949,18 +1949,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Start Timestamp",
+                        "title": "After (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "start_time",
+                    "name": "after",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
+                        "title": "Before (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "end_time",
+                    "name": "before",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2009,18 +2009,18 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Start Timestamp",
+                        "title": "After (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "start_time",
+                    "name": "after",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
+                        "title": "Before (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "end_time",
+                    "name": "before",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2577,7 +2577,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (challengeid, title, start_time, end_time, required_distance, reward_points, delivery_count)",
+                        "title": "Order by (challengeid, title, after, before, required_distance, reward_points, delivery_count)",
                         "type": "string"
                     },
                     "name": "order_by",
@@ -2593,18 +2593,18 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Start Timestamp",
+                        "title": "After (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "start_time",
+                    "name": "after",
                     "in": "query"
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "End Timestamp",
+                        "title": "Before (Timestamp)",
                         "type": "integer"
                     },
-                    "name": "end_time",
+                    "name": "before",
                     "in": "query"
                 }, {
                     "required": false,
@@ -2689,12 +2689,12 @@
                                         "description": "Description",
                                         "type": "string"
                                     },
-                                    "start_time": {
-                                        "description": "Start Timestamp",
+                                    "after": {
+                                        "description": "After (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "end_time": {
-                                        "description": "End Timestamp",
+                                    "before": {
+                                        "description": "Before (Timestamp)",
                                         "type": "integer"
                                     },
                                     "challenge_type": {
@@ -2727,7 +2727,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "start_time", "end_time", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
+                            "required": ["title", "after", "before", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
                         }
                     }
                 },
@@ -2792,12 +2792,12 @@
                                         "description": "Description",
                                         "type": "string"
                                     },
-                                    "start_time": {
-                                        "description": "Start Timestamp",
+                                    "after": {
+                                        "description": "After (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "end_time": {
-                                        "description": "End Timestamp",
+                                    "before": {
+                                        "description": "Before (Timestamp)",
                                         "type": "integer"
                                     },
                                     "challenge_type": {
@@ -2830,7 +2830,7 @@
                                     }
                                 }
                             },
-                            "required": ["title", "start_time", "end_time", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
+                            "required": ["title", "after", "before", "challenge_type", "delivery_count", "required_roles", "required_distance", "reward_points", "public_details", "job_requirements"]
                         }
                     }
                 },
@@ -2924,6 +2924,23 @@
                 "operationId": "get_division",
                 "security": [{
                     "bearerAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "After (Timestamp)",
+                        "type": "integer"
+                    },
+                    "name": "after",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Before (Timestamp)",
+                        "type": "integer"
+                    },
+                    "name": "before",
+                    "in": "query"
                 }],
                 "responses": {}
             }

@@ -45,7 +45,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
-        start_time: Optional[int] = None, end_time: Optional[int] = None, challenge_type: Optional[int] = None,
+        after: Optional[int] = None, before: Optional[int] = None, challenge_type: Optional[int] = None,
         required_role: Optional[int] = None, \
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
         userid: Optional[int] = None, must_have_completed: Optional[bool] = False, \
@@ -77,10 +77,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query = convertQuotation(query).lower()
         query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
-    if start_time is not None:
-        query_limit += f"AND start_time >= {start_time} "
-    if end_time is not None:
-        query_limit += f"AND end_time <= {end_time} "
+    if after is not None:
+        query_limit += f"AND start_time >= {after} "
+    if before is not None:
+        query_limit += f"AND end_time <= {before} "
     
     if challenge_type in [1,2,3]:
         query_limit += f"AND challenge_type = {challenge_type} "

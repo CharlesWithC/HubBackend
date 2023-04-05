@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.4.2**  
+1.Renamed `start_time/end_time` in query param to `after/before`  
+2.Added `after/before` query param to **GET** `/divisions`  
+
 **v2.4.1**  
 1.Fixed notifications not being sent to `uid = 0`  
 2.Fixed errors with MFA (due to `auth_ticket`)  

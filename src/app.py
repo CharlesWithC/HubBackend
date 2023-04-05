@@ -25,7 +25,7 @@ import plugins
 import static
 from config import validateConfig
 
-version = "v2.4.1"
+version = "v2.4.2"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

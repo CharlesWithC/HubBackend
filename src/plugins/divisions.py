@@ -16,7 +16,8 @@ async def get_all_divisions(request: Request):
 
     return app.config.divisions
 
-async def get_division(request: Request, response: Response, authorization: str = Header(None)):
+async def get_division(request: Request, response: Response, authorization: str = Header(None), \
+        after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -33,6 +34,11 @@ async def get_division(request: Request, response: Response, authorization: str 
         del au["code"]
         return au
 
+    if after is None:
+        after = 0
+    if before is None:
+        before = max(int(time.time()), 32503651200)
+        
     await ActivityUpdate(request, au["uid"], f"divisions")
     
     stats = []
@@ -41,15 +47,11 @@ async def get_division(request: Request, response: Response, authorization: str 
         division_role_id = division["role_id"]
         division_point = division["points"]
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
-        usertot = await app.db.fetchone(dhrid)
-        usertot = usertot[0]
-        usertot = 0 if usertot is None else int(usertot)
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id}")
-        pointtot = await app.db.fetchone(dhrid)
-        pointtot = pointtot[0]
-        pointtot = 0 if pointtot is None else int(pointtot)
-        pointtot *= division_point
-        stats.append({"divisionid": division_id, "name": division['name'], "total_drivers": usertot, "total_points": pointtot})
+        usertot = nint(await app.db.fetchone(dhrid))
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id} AND request_timestamp >= {after} AND request_timestamp <= {before}")
+        distancetot = nint(await app.db.fetchone(dhrid))
+        pointtot = distancetot * division_point
+        stats.append({"divisionid": division_id, "name": division['name'], "total_drivers": usertot, "total_distance": distancetot, "total_points": pointtot})
     
     return stats
 
