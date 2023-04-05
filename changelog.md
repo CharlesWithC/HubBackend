@@ -3,6 +3,10 @@
 **v2.4.2**  
 1.Renamed `start_time/end_time` in query param to `after/before`  
 2.Added `after/before` query param to **GET** `/divisions`  
+3.Improved **GET** `/divisions` response  
+4.Renamed `config.server_ip` to `config.server_host`  
+5.Added ability to run multiple Drivers Hubs within one server process (multi mode)  
+6.Added **POST** `/config/reload` to reload config (**POST** `/restart` is disabled when multi_mode is active)  
 
 **v2.4.1**  
 1.Fixed notifications not being sent to `uid = 0`  

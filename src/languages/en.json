@@ -265,6 +265,7 @@
     "unknown_user": "Unknown User",
     "discord_api": "Discord API",
     "updated_config": "Updated config",
+    "reloaded_config": "Reloaded config",
     "restarted_service": "Restarted service",
     "rejected_tracksim_webhook_post_ip": "Rejected TrackSim webhook update from {ip} (IP not whitelisted)",
     "rejected_tracksim_webhook_post_signature": "Rejected TrackSim webhook update from {ip} (Invalid signature)",

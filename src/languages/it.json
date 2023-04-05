@@ -264,6 +264,7 @@
     "unknown_user": "Utente sconosciuto",
     "discord_api": "API Discord",
     "updated_config": "Configurazione aggiornata",
+    "reloaded_config": "Configurazione ricaricata",
     "restarted_service": "Servizio riavviato",
     "rejected_tracksim_webhook_post_ip": "Aggiornamento webhook TrackSim rifiutato da {ip} (IP non autorizzato)",
     "rejected_tracksim_webhook_post_signature": "Aggiornamento webhook TrackSim rifiutato da {ip} (firma non valida)",

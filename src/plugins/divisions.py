@@ -46,12 +46,37 @@ async def get_division(request: Request, response: Response, authorization: str 
         division_id = division["id"]
         division_role_id = division["role_id"]
         division_point = division["points"]
+
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
         usertot = nint(await app.db.fetchone(dhrid))
+
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id} AND request_timestamp >= {after} AND request_timestamp <= {before}")
-        distancetot = nint(await app.db.fetchone(dhrid))
-        pointtot = distancetot * division_point
-        stats.append({"divisionid": division_id, "name": division['name'], "total_drivers": usertot, "total_distance": distancetot, "total_points": pointtot})
+        jobstot = nint(await app.db.fetchone(dhrid))
+        pointtot = jobstot * division_point
+
+        await app.db.execute(dhrid, f"SELECT SUM(dlog.distance), SUM(dlog.fuel) FROM division \
+                             LEFT JOIN dlog ON division.logid = dlog.logid \
+                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
+                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
+        t = await app.db.fetchone(dhrid)
+        distancetot = nint(t[0])
+        fueltot = nint(t[1])
+        
+        await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
+                             LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 1 \
+                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
+                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
+        europrofit = nint(await app.db.fetchone(dhrid))
+        
+        await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
+                             LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 2 \
+                             WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
+                             AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
+        dollarprofit = nint(await app.db.fetchone(dhrid))
+
+        profit = {"euro": europrofit, "dollar": dollarprofit}
+        
+        stats.append({"divisionid": division_id, "name": division['name'], "drivers": usertot, "points": pointtot, "jobs": jobstot, "distance": distancetot, "fuel": fueltot, "profit": profit})
     
     return stats
 

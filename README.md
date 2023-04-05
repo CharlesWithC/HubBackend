@@ -10,6 +10,7 @@
 ```
 
 **Features:**  
+0.Multiple Drivers Hubs in one server process  
 1.Asynchronous IO (database), making FastAPI really fast  
 2.Original authentication and rate limiting algorithm  
 3.Discord / Steam / Password Login & MFA Support  
@@ -21,7 +22,8 @@
 Announcement, Application, Banner, Challenge, Division, Downloads, Event, Tracker  
 
 **External Plugins**  
-Place external plugins under `./external_plugins` and the program will detect and load it after all official plugins.  
+~~Place external plugins under `./external_plugins` and the program will detect and load it after all official plugins.~~  
+This feature has been disabled temporarily due to routing updates.  
 
 **Upgrade Plugin**  
 *A plugin loaded to upgrade existing data to latest version, mainly used when database structure is updated*  

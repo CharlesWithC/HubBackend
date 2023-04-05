@@ -264,6 +264,7 @@
     "unknown_user": "Novo Usuário",
     "discord_api": "API do Discord",
     "updated_config": "Config atualizada",
+    "reloaded_config": "Configuração recarregada",
     "restarted_service": "serviço reiniciado",
     "rejected_tracksim_webhook_post_ip": "Rejeitou a atualização do webhook TrackSim de {ip} (IP não está na lista de permissões)",
     "rejected_tracksim_webhook_post_signature": "Rejeitou a atualização do webhook TrackSim de {ip} (assinatura inválida)",

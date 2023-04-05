@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.4.2"
+        "version": "v2.4.2"
     },
     "paths": {
         "/abbr": {
@@ -13,11 +13,11 @@
                 "responses": {}
             }
         },
-        "/abbr/uptime": {
+        "/abbr/status": {
             "get": {
-                "summary": "Get Uptime",
+                "summary": "Get Status",
                 "tags": ["index"],
-                "operationId": "get_uptime",
+                "operationId": "get_status",
                 "responses": {}
             }
         },

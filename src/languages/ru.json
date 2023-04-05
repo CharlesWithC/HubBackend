@@ -264,6 +264,7 @@
     "unknown_user": "Неизвестный пользователь",
     "discord_api": "API раздора",
     "updated_config": "Обновлен конфиг",
+    "reloaded_config": "Конфигурация перезагружена",
     "restarted_service": "Перезапущен сервис",
     "rejected_tracksim_webhook_post_ip": "Отклонено обновление веб-перехватчика TrackSim с {ip} (IP-адрес не внесен в белый список)",
     "rejected_tracksim_webhook_post_signature": "Отклонено обновление вебхука TrackSim с {ip} (неверная подпись)",

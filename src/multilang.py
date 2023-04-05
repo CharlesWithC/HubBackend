@@ -16,12 +16,12 @@ abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentfr
 LANGUAGES = os.listdir(os.path.join(abspath, "languages/"))
 LANGUAGES = [x.split(".")[0] for x in LANGUAGES]
 LANG_DATAS = {}
-for lang in LANGUAGES:
+for LANGUAGE in LANGUAGES:
     try:
-        LANG_DATAS[lang] = json.loads(open(os.path.join(abspath, f"languages/{lang}.json"),"r").read())
+        LANG_DATAS[LANGUAGE] = json.loads(open(os.path.join(abspath, f"languages/{LANGUAGE}.json"),"r").read())
     except:
         pass
-LANGUAGES = LANG_DATAS.keys() # must be valid language file
+LANGUAGES = list(LANG_DATAS.keys()) # must be valid language file
 
 def get_lang(request: Request):
     if request is None:

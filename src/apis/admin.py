@@ -16,6 +16,15 @@ from config import *
 from functions import *
 
 
+class Dict2Obj(object):
+    def __init__(self, d):
+        for key in d:
+            if type(d[key]) is dict:
+                data = Dict2Obj(d[key])
+                setattr(self, key, data)
+            else:
+                setattr(self, key, d[key])
+
 async def get_config(request: Request, response: Response, authorization: str = Header(None)):
     """Returns saved config (config) and loaded config (backup)"""
     app = request.app
@@ -224,9 +233,58 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     return Response(status_code=204)
 
+async def post_config_reload(request: Request, response: Response, authorization: str = Header(None)):
+    """Reloads config, returns 204"""
+    app = request.app    
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'POST /config/reload', 60, 10)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, required_permission = ["admin", "reload_config", "restart"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE userid = {au['userid']}")
+    t = await app.db.fetchall(dhrid)
+    mfa_secret = t[0][0]
+    if mfa_secret == "":
+        response.status_code = 428
+        return {"error": ml.tr(request, "mfa_required", force_lang = au["language"])}
+    
+    data = await request.json()
+    try:
+        otp = data["otp"]
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+    if not valid_totp(otp, mfa_secret):
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+
+    await AuditLog(request, au["uid"], ml.ctr(request, "reloaded_config"))
+
+    config_txt = open(app.config_path, "r", encoding="utf-8").read()
+    config = validateConfig(json.loads(config_txt))
+    config = Dict2Obj(config)
+    app.config = config
+    app.backup_config = copy.deepcopy(config.__dict__)
+
+    return Response(status_code=204)
+
 async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
     """Restarts API service in a thread, returns 204"""
     app = request.app
+    if app.multi_mode:
+        response.status_code = 404
+        return {"error": "Not Found"}
+    
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 

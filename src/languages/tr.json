@@ -264,6 +264,7 @@
     "unknown_user": "Bilinmeyen Kullanıcı",
     "discord_api": "Discord API",
     "updated_config": "Güncellenmiş yapılandırma",
+    "reloaded_config": "Yeniden yüklenen yapılandırma",
     "restarted_service": "Hizmet yeniden başlatıldı",
     "rejected_tracksim_webhook_post_ip": "{ip}'den TrackSim webhook güncellemesi reddedildi (IP beyaz listeye alınmadı)",
     "rejected_tracksim_webhook_post_signature": "{ip}'den TrackSim webhook güncellemesi reddedildi (Geçersiz imza)",

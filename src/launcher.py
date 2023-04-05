@@ -3,12 +3,14 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import inspect
 import json
 import os
 import sys
 
 userbase = os.path.expanduser('~')
-hubbase = os.path.expanduser('~') + "/hub"
+hubbase = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
+
 serconf = """[Unit]
 Description={} Drivers Hub
 After=network.target
@@ -19,20 +21,6 @@ Type=simple
 Restart=always
 RestartSec=60
 ExecStart="""+hubbase+"""/launcher hub main {}
-
-[Install]
-WantedBy=default.target"""
-
-traconf = """[Unit]
-Description={} Tracker
-After=network.target
-StartLimitIntervalSec=0
-
-[Service]
-Type=simple
-Restart=always
-RestartSec=60
-ExecStart="""+hubbase+"""/launcher tracker main {}
 
 [Install]
 WantedBy=default.target"""
@@ -55,15 +43,13 @@ WantedBy=default.target"""
 serdir = userbase + "/.local/share/systemd/user/"
 pfi = hubbase + "/main.py"
 fi = hubbase + "/main"
-tpfi = hubbase + "/tracker.py"
-tfi = hubbase + "/tracker"
 bfi = hubbase + "/bannergen"
 cf = hubbase + "/config"
 
 args = sys.argv[1:]
 
 if len(args) != 3 and len(args) != 2:
-    print("Usage: launcher <hub|tracker|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
+    print("Usage: launcher <hub|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
     sys.exit(1)
     
 app = args[0]
@@ -95,7 +81,7 @@ if app == "bannergen":
     sys.exit(0)
     
 if len(args) != 3:
-    print("Usage: launcher <hub|tracker|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
+    print("Usage: launcher <hub|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
     sys.exit(1)
 abbr = args[2]
 
@@ -110,12 +96,12 @@ if app == "hub":
     if op == "test": # python test
         os.system(f"systemctl --user stop hub{abbr}.service")
         os.chdir("/".join(pfi.split("/")[:-1]))
-        os.system(f"python3 {pfi} {cf}/{abbr}.json")
+        os.system(f"python3 {pfi} --config {cf}/{abbr}.json")
         os.system(f"systemctl --user start hub{abbr}.service")
 
     elif op == "main": # executive file - should only be executed by systemctl
         os.chdir("/".join(fi.split("/")[:-1]))
-        os.system(f"{fi} {cf}/{abbr}.json")
+        os.system(f"{fi} --config {cf}/{abbr}.json")
 
     elif op == "start":
         os.system(f"systemctl --user start hub{abbr}.service")
@@ -134,39 +120,6 @@ if app == "hub":
     elif op == "disable":
         os.system(f"systemctl --user disable hub{abbr}.service")
         os.system(f"rm -f {serdir}/hub{abbr}.service")
-        os.system(f"systemctl --user daemon-reload")
-
-    else:
-        print("Unknown verb")
-
-elif app == "tracker":
-    if op == "test": # python test
-        os.system(f"systemctl --user stop tracker{abbr}.service")
-        os.chdir("/".join(tpfi.split("/")[:-1]))
-        os.system(f"python3 {tpfi} {cf}/{abbr}.json")
-        os.system(f"systemctl --user start tracker{abbr}.service")
-
-    elif op == "main": # executive file - should only be executed by systemctl
-        os.chdir("/".join(tfi.split("/")[:-1]))
-        os.system(f"{tfi} {cf}/{abbr}.json")
-
-    elif op == "start":
-        os.system(f"systemctl --user start tracker{abbr}.service")
-
-    elif op == "restart":
-        os.system(f"systemctl --user start tracker{abbr}.service")
-
-    elif op == "stop":
-        os.system(f"systemctl --user stop tracker{abbr}.service")
-
-    elif op == "enable":
-        os.system(f"rm -f {serdir}/tracker{abbr}.service")
-        open(f"{serdir}/tracker{abbr}.service", "w").write(traconf.format(name, abbr))
-        os.system(f"systemctl --user enable tracker{abbr}.service")
-    
-    elif op == "disable":
-        os.system(f"systemctl --user disable tracker{abbr}.service")
-        os.system(f"rm -f {serdir}/tracker{abbr}.service")
         os.system(f"systemctl --user daemon-reload")
 
     else:

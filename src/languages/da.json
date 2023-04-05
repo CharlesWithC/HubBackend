@@ -264,6 +264,7 @@
     "unknown_user": "Ukendt bruger",
     "discord_api": "Discord API",
     "updated_config": "Opdateret konfiguration",
+    "reloaded_config": "Genindlæst konfiguration",
     "restarted_service": "Genstartet tjeneste",
     "rejected_tracksim_webhook_post_ip": "Afvist TrackSim webhook-opdatering fra {ip} (IP ikke hvidlistet)",
     "rejected_tracksim_webhook_post_signature": "Afvist TrackSim webhook-opdatering fra {ip} (ugyldig signatur)",

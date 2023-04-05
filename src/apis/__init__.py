@@ -15,6 +15,7 @@ routes = [
 
     APIRoute("/config", admin.get_config, methods=["GET"], response_class=JSONResponse),
     APIRoute("/config", admin.patch_config, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/config/reload", admin.post_config_reload, methods=["POST"], response_class=JSONResponse),
     APIRoute("/restart", admin.post_restart, methods=["POST"], response_class=JSONResponse),
     APIRoute("/audit/list", admin.get_audit_list, methods=["GET"], response_class=JSONResponse)
 ]

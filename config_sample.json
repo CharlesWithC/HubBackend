@@ -21,7 +21,7 @@
 
     "apidomain": "drivershub.charlws.com",
     "domain": "",
-    "server_ip": "127.0.0.1",
+    "server_host": "127.0.0.1",
     "server_port": 7777,
     "server_workers": 1,
     "whitelist_ips": [],
@@ -209,6 +209,7 @@
     "perms": {
         "admin": [0],
         "config": [],
+        "reload_config": [],
         "restart": [],
 
         "hrm": [],
