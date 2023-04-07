@@ -111,7 +111,7 @@ async def EventNotification(app):
             
             await app.db.close_conn(dhrid)
         except:
-            traceback.print_exc()
+            pass
 
         try:
             await asyncio.sleep(60)

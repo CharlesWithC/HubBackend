@@ -14,6 +14,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from config import *
 from functions import *
+from api import tracebackHandler
 
 
 class Dict2Obj(object):
@@ -64,9 +65,9 @@ async def get_config(request: Request, response: Response, authorization: str = 
                 for tt in config_plugins[t]:
                     if tt in ffconfig.keys():
                         del ffconfig[tt]
-    except:
+    except Exception as exc:
         ffconfig = {}
-        traceback.print_exc()
+        await tracebackHandler(request, exc)
     
     # old config
     t = copy.deepcopy(app.backup_config)

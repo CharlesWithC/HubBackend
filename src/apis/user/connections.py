@@ -8,7 +8,9 @@ from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
 
 import multilang as ml
+from api import tracebackHandler
 from functions import *
+
 
 async def post_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
     """Resends confirmation email"""
@@ -173,8 +175,8 @@ async def patch_discord(request: Request, response: Response, authorization: str
             response.status_code = 400
             return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
 
-    except:
-        traceback.print_exc()
+    except Exception as exc:
+        await tracebackHandler(request, exc)
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
     
@@ -209,7 +211,6 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     try:
         r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
     except:
-        traceback.print_exc()
         response.status_code = 503
         return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
     if r.status_code // 100 != 2:
@@ -238,7 +239,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                     await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
                     await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
             except:
-                traceback.print_exc()
+                pass
 
     await app.db.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
@@ -253,7 +254,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                 await app.db.commit(dhrid)
                 return Response(status_code=204)
     except:
-        traceback.print_exc()
+        pass
 
     # in case user changed steam
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")

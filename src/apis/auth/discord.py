@@ -13,6 +13,7 @@ from fastapi.responses import RedirectResponse
 
 import multilang as ml
 from functions import *
+from api import tracebackHandler
 
 
 async def get_redirect(request: Request, connect_account: Optional[bool] = False):
@@ -37,7 +38,7 @@ async def get_connect(request: Request, code: Optional[str] = "", error_descript
 async def get_callback(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     app = request.app
     referer = request.headers.get("Referer")
-    if referer in ["", "-", None]:
+    if referer in ["", "-", None] or code == "" and error_description == "":
         return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
     
     if code == "":
@@ -86,7 +87,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                             if d["nick"] is not None:
                                 username = convertQuotation(d["nick"])
                     except:
-                        traceback.print_exc()
+                        pass
                         
                 await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '')")
                 await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
@@ -147,6 +148,6 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
         else:
             return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)
 
-    except:
-        traceback.print_exc()
+    except Exception as exc:
+        await tracebackHandler(request, exc)
         return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)

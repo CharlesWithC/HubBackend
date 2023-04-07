@@ -1,23 +1,23 @@
-VERSION_CHAIN = ["v2_0_0", "v2_0_1", "v2_1_0", "v2_1_1", "v2_1_2", "v2_1_3", "v2_1_4", "v2_1_5", "v2_1_6", "v2_2_0", "v2_2_1", "v2_2_2", "v2_2_3", "v2_2_4", "v2_3_0", "v2_3_1", "v2_4_0", "v2_4_1", "v2_4_2"]
+VERSION_CHAIN = ["2_0_0", "2_0_1", "2_1_0", "2_1_1", "2_1_2", "2_1_3", "2_1_4", "2_1_5", "2_1_6", "2_2_0", "2_2_1", "2_2_2", "2_2_3", "2_2_4", "2_3_0", "2_3_1", "2_4_0", "2_4_1", "2_4_2", "2_4_3"]
 
-UPGRADEABLE_VERSION = ["v2_1_0", "v2_1_1", "v2_1_5", "v2_2_4", "v2_3_1"]
+UPGRADEABLE_VERSION = ["2_1_0", "2_1_1", "2_1_5", "2_2_4", "2_3_1"]
 
 UPGRADER = {}
 
 import upgrades.v2_1_0
-UPGRADER["v2_1_0"] = upgrades.v2_1_0
+UPGRADER["2_1_0"] = upgrades.v2_1_0
 
 import upgrades.v2_1_1
-UPGRADER["v2_1_1"] = upgrades.v2_1_1
+UPGRADER["2_1_1"] = upgrades.v2_1_1
 
 import upgrades.v2_1_5
-UPGRADER["v2_1_5"] = upgrades.v2_1_5
+UPGRADER["2_1_5"] = upgrades.v2_1_5
 
 import upgrades.v2_2_4
-UPGRADER["v2_2_4"] = upgrades.v2_2_4
+UPGRADER["2_2_4"] = upgrades.v2_2_4
 
 import upgrades.v2_3_1
-UPGRADER["v2_3_1"] = upgrades.v2_3_1
+UPGRADER["2_3_1"] = upgrades.v2_3_1
 
 def delete_module(modname):
     from sys import modules
@@ -34,5 +34,5 @@ def delete_module(modname):
 
 def unload():
     for v in UPGRADER:
-        delete_module(f"upgrades.{v}")
+        delete_module(f"upgrades.v{v}")
     delete_module("upgrades.manager")

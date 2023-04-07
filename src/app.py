@@ -23,11 +23,11 @@ import plugins
 import static
 from config import validateConfig
 
-version = "v2.4.2"
+version = "2.4.3"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
-        version += ".rc"
+        version += ".dev"
 
 class Dict2Obj(object):
     def __init__(self, d):
@@ -43,8 +43,8 @@ def initApp(app, first_init = False):
         return
     
     import upgrades.manager
-    cur_version = app.version.replace(".rc", "").replace(".", "_")
-    pre_version = cur_version
+    cur_version = app.version.replace(".dev", "").replace(".", "_")
+    pre_version = cur_version.lstrip("v")
     conn = db.genconn(app)
     cur = conn.cursor()
     cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
@@ -52,7 +52,7 @@ def initApp(app, first_init = False):
     cur.close()
     conn.close()
     if len(t) != 0:
-        pre_version = t[0][0].replace(".rc", "").replace(".", "_")
+        pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
     if pre_version != cur_version:
         if not pre_version in upgrades.manager.VERSION_CHAIN:
             print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
@@ -62,14 +62,14 @@ def initApp(app, first_init = False):
             print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
             sys.exit(1)
         cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
-        for role in range(pre_idx + 1, cur_idx + 1):
-            v = upgrades.manager.VERSION_CHAIN[role]
+        for idx in range(pre_idx + 1, cur_idx + 1):
+            v = upgrades.manager.VERSION_CHAIN[idx]
             if v in upgrades.manager.UPGRADEABLE_VERSION:
                 print(f"Updating data to be compatible with {v.replace('_', '.')}...")
                 upgrades.manager.UPGRADER[v].run(app)
     upgrades.manager.unload()
     
-    if not version.endswith(".rc"):
+    if not version.endswith(".dev"):
         conn = db.genconn(app)
         cur = conn.cursor()
         cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")

@@ -8,6 +8,7 @@ from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
+from api import tracebackHandler
 
 
 async def patch_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
@@ -123,7 +124,6 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
         except:
-            traceback.print_exc()
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
             
@@ -158,7 +158,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                                 err = json.loads(r.text)
                                 await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
                 except:
-                    traceback.print_exc()
+                    pass
                 
                 usermention = f"<@{discordid}>"
                 rankmention = f"<@&{rankroleid}>"
@@ -176,8 +176,8 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
             response.status_code = 428
             return {"error": ml.tr(request, "current_user_didnt_join_discord", force_lang = au["language"])}
 
-    except:
-        traceback.print_exc()
+    except Exception as exc:
+        return await tracebackHandler(request, exc)
 
 async def post_resign(request: Request, response: Response, authorization: str = Header(None)):
     """Resigns the authorized user, set userid to -1, returns 204"""
@@ -243,8 +243,8 @@ async def post_resign(request: Request, response: Response, authorization: str =
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except:
-                traceback.print_exc()
+            except Exception as exc:
+                await tracebackHandler(request, exc)
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -275,7 +275,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
                         err = json.loads(r.text)
                         await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
             except:
-                traceback.print_exc()
+                pass
     
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}

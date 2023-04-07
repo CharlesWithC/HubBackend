@@ -246,10 +246,10 @@ async def put_ban(request: Request, response: Response, uid: int, authorization:
     if len(t) > 0:
         userid = t[0][0]
         username = t[0][1]
-        email = t[0][2]
-        discordid = t[0][3]
-        steamid = t[0][4]
-        truckersmpid = t[0][5]
+        email = t[0][2] if t[0][2] is not None else "NULL"
+        discordid = t[0][3] if t[0][3] is not None else "NULL"
+        steamid = t[0][4] if t[0][4] is not None else "NULL"
+        truckersmpid = t[0][5] if t[0][5] is not  None else "NULL"
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_ban", force_lang = au["language"])}

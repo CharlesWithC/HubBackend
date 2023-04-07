@@ -57,7 +57,6 @@ async def ProcessDiscordMessage(app): # thread
                 r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", \
                     headers=headers, data=json.dumps(data))
             except:
-                traceback.print_exc()
                 try:
                     await asyncio.sleep(5)
                 except:
@@ -116,7 +115,7 @@ async def ProcessDiscordMessage(app): # thread
                     app.state.discord_message_queue.pop(i)
             
         except:
-            traceback.print_exc()
+            pass
             
         try:
             await asyncio.sleep(1)
@@ -216,9 +215,9 @@ async def AuditLog(request, uid, text, discord_message_only = False):
                 if r.status_code == 401:
                     DisableDiscordIntegration(app)
             except:
-                traceback.print_exc()
+                pass
     except:
-        traceback.print_exc()
+        pass
 
 async def AutoMessage(app, meta, setvar):
     try:
@@ -256,4 +255,4 @@ async def AutoMessage(app, meta, setvar):
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
     except:
-        traceback.print_exc()
+        pass

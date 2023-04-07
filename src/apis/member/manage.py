@@ -9,6 +9,7 @@ from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
+from api import tracebackHandler
 
 # note that the larger the id is, the lower the role is
 
@@ -130,8 +131,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                     else:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-                except:
-                    traceback.print_exc()
+                except Exception as exc:
+                    await tracebackHandler(request, exc)
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         except:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -155,7 +156,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                 except:
-                    traceback.print_exc()
+                    pass
 
     if app.config.perms.driver[0] in removedroles:
         try:
@@ -174,8 +175,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                     else:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-                except:
-                    traceback.print_exc()
+                except Exception as exc:
+                    await tracebackHandler(request, exc)
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         except:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -199,7 +200,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                 except:
-                    traceback.print_exc()
+                    pass
     
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""
@@ -347,8 +348,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except:
-                traceback.print_exc()
+            except Exception as exc:
+                await tracebackHandler(request, exc)
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -379,7 +380,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                         err = json.loads(r.text)
                         await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
             except:
-                traceback.print_exc() 
+                pass
     
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}

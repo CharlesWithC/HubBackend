@@ -229,9 +229,8 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(app, "https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), timeout=5, dhrid = dhrid)
+            r = await arequests.post(app, "https://discord.com/api/v10/users/@me/channels", headers = headers, data = json.dumps({"recipient_id": discordid}), dhrid = dhrid)
         except:
-            traceback.print_exc()
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
         if r.status_code == 401:
@@ -250,9 +249,9 @@ async def post_settings_enable(request: Request, response: Response, notificatio
                 r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(request, uid)), \
                 "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), timeout=5)
+                "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
             except:
-                traceback.print_exc()
+                pass
 
             if r is None or r.status_code // 100 != 2:
                 response.status_code = 428

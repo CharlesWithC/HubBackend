@@ -315,7 +315,6 @@ async def post_application(request: Request, response: Response, authorization: 
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
         except:
-            traceback.print_exc()
             response.status_code = 428
             return {"error": ml.tr(request, "user_in_guild_check_failed")}
         if r.status_code == 404:
@@ -339,7 +338,7 @@ async def post_application(request: Request, response: Response, authorization: 
                 err = json.loads(r.text)
                 await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": applicantrole, "user_discordid": discordid, "message": err["message"]}))
         except:
-            traceback.print_exc()
+            pass
 
     language = await GetUserLanguage(request, uid)
     await notification(request, "application", uid, ml.tr(request, "application_submitted", 
@@ -368,7 +367,7 @@ async def post_application(request: Request, response: Response, authorization: 
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
-            traceback.print_exc()
+            pass
 
     return {"applicationid": applicationid}
 
@@ -461,7 +460,7 @@ async def patch_application(request: Request, response: Response, applicationid:
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
-            traceback.print_exc()
+            pass
 
     return Response(status_code=204)
 

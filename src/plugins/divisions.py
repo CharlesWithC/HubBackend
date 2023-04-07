@@ -222,7 +222,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
-            traceback.print_exc()
+            pass
         
     return Response(status_code=204)
 

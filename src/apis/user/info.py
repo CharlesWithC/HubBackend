@@ -195,7 +195,6 @@ async def patch_profile(request: Request, response: Response, authorization: str
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
         except:
-            traceback.print_exc()
             response.status_code = 503
             if not staffmode:
                 return {"error": ml.tr(request, "user_in_guild_check_failed", force_lang = au["language"])}
@@ -242,7 +241,6 @@ async def patch_profile(request: Request, response: Response, authorization: str
         try:
             r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
         except:
-            traceback.print_exc()
             response.status_code = 503
             return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
         try:

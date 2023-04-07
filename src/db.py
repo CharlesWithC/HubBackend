@@ -216,7 +216,7 @@ class AioSQL:
 
     async def new_conn(self, dhrid, extra_time = 0):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"Shutting down in progress")
+            raise pymysql.err.OperationalError(f"[AioSQL] Shutting down in progress")
 
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
@@ -230,7 +230,7 @@ class AioSQL:
             try:
                 conn = await asyncio.wait_for(self.pool.acquire(), timeout=3)
             except asyncio.TimeoutError:
-                raise pymysql.err.OperationalError(f"Timeout")
+                raise pymysql.err.OperationalError(f"[AioSQL] Timeout")
             cur = await conn.cursor()
             await cur.execute(f"SET lock_wait_timeout=5;")
             conns = self.conns
@@ -238,11 +238,11 @@ class AioSQL:
             self.conns = conns
             return conn
         except Exception as exc:
-            raise pymysql.err.OperationalError(f"Failed to create connection ({dhrid}): {str(exc)}")
+            raise pymysql.err.OperationalError(f"[AioSQL] Failed to create connection ({dhrid}): {str(exc)}")
     
     async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"Shutting down")
+            raise pymysql.err.OperationalError(f"[AioSQL] Shutting down")
 
         conns = self.conns
         try:
@@ -287,7 +287,7 @@ class AioSQL:
         if dhrid in self.conns.keys():
             await self.conns[dhrid][0].commit()
         else:
-            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
 
     async def execute(self, dhrid, sql):
         await self.refresh_conn(dhrid)
@@ -297,18 +297,18 @@ class AioSQL:
                 if w:
                     print(f"DATABASE WARNING: {w[0].message}\nOn Execute: {sql}")
         else:
-            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
 
     async def fetchone(self, dhrid):
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             return await self.conns[dhrid][1].fetchone()
         else:
-            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
 
     async def fetchall(self, dhrid):
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             return await self.conns[dhrid][1].fetchall()
         else:
-            raise pymysql.err.OperationalError(f"Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")

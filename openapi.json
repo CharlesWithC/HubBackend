@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "v2.4.2"
+        "version": "2.4.3"
     },
     "paths": {
         "/abbr": {
@@ -4815,8 +4815,15 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
+                "scheme": "bearer",
                 "description": "Bearer Token Authorization",
-                "scheme": "bearer"
+                "bearerFormat": "uuid"
+            },
+            "apiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Application",
+                "description": "Application Token Authorization"
             }
         },
         "schemas": {

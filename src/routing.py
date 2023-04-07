@@ -4,7 +4,7 @@
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from starlette.routing import Mount
 
 import app as base

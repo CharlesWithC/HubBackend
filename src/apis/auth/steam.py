@@ -59,7 +59,6 @@ async def get_callback(request: Request, response: Response):
     try:
         r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
-        traceback.print_exc()
         response.status_code = 503
         return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "steam_api_error")), status_code=302)
     if r.status_code // 100 != 2:
@@ -84,9 +83,6 @@ async def get_callback(request: Request, response: Response):
         if app.config.steam_api_key != "":
             try:
                 r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
-            except:
-                traceback.print_exc()
-            try:
                 d = json.loads(r.text)
                 username = convertQuotation(d["response"]["players"][0]["personaname"])
                 avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])

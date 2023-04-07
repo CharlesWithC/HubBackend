@@ -16,6 +16,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from config import validateConfig
 from functions import *
+from api import tracebackHandler
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
@@ -38,8 +39,8 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
                 return {"error": app.tracker + " " + r.text}
             else:
                 return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
-        except:
-            traceback.print_exc()
+        except Exception as exc:
+            await tracebackHandler(request, exc)
             return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
     d = json.loads(r.text)
     t = []
@@ -115,7 +116,6 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
         except:
             dhrid = genrid()
             await app.db.new_conn(dhrid, extra_time = 5)
-            traceback.print_exc()
             continue
     
     return True
@@ -233,7 +233,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                 except:
-                    traceback.print_exc()
+                    pass
 
         if discordid is not None:
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
@@ -397,7 +397,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         multiplayer = "TruckersMP (" + omultiplayer["meta"]["server"] +")"
                     else:
                         multiplayer = "TruckersMP"
-                elif omultiplayer["type"] == "scs_convoy":
+                elif omultiplayer["type"] == "multiplayer":
                     multiplayer = ml.ctr(request, "scs_convoy")
             uid = (await GetUserInfo(request, userid = userid))["uid"]
             language = await GetUserLanguage(request, uid)
@@ -409,7 +409,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         umultiplayer = "TruckersMP (" + omultiplayer["meta"]["server"] +")"
                     else:
                         umultiplayer = "TruckersMP"
-                elif omultiplayer["type"] == "scs_convoy":
+                elif omultiplayer["type"] == "multiplayer":
                     umultiplayer = ml.tr(request, "scs_convoy", force_lang = language)
             truck = d["data"]["object"]["truck"]
             if truck is not None and truck["brand"]["name"] is not None and truck["name"] is not None:
@@ -462,11 +462,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     try:
-                        r = await arequests.post(app, f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), timeout=5, dhrid = dhrid)
+                        r = await arequests.post(app, f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), dhrid = dhrid)
                         if r.status_code == 401:
                             DisableDiscordIntegration(app)
                     except:
-                        traceback.print_exc()
+                        pass
                     
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     language = await GetUserLanguage(request, uid)
@@ -501,9 +501,9 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
                         await SendDiscordNotification(request, uid, data)
-                        
-        except:
-            traceback.print_exc()
+                  
+        except Exception as exc:
+            await tracebackHandler(request, exc)
 
     try:
         if "challenge" in app.config.enabled_plugins and isdelivered and not duplicate:
@@ -723,10 +723,10 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                                 await app.db.commit(dhrid)
                 except:
-                    traceback.print_exc()
+                    pass
                 
     except:
-        traceback.print_exc()
+        pass
 
     try:
         if "economy" in app.config.enabled_plugins and isdelivered and not duplicate:
@@ -789,10 +789,10 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     await app.db.execute(dhrid, f"UPDATE economy_truck SET status = -2 WHERE vehicleid = {vehicleid}")
                 await app.db.commit(dhrid)
                 
-    except:
-        traceback.print_exc()
+    except Exception as exc:
+        await tracebackHandler(request, exc)
 
-    return {"error": "Logged"}
+    return Response(status_code=204)
     
 async def post_update_route(response: Response, request: Request, authorization: str = Header(None)):
     app = request.app

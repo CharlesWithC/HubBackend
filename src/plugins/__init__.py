@@ -53,8 +53,8 @@ routes_division = [
 
 routes_downloads = [
     APIRoute("/downloads/list", downloads.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/downloads/redirect/{secret}", downloads.get_redirect, methods=["GET"], response_class=JSONResponse),
     APIRoute("/downloads/{downloadsid}", downloads.get_downloads, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/downloads/{downloadsid}/redirect", downloads.get_redirect, methods=["GET"], response_class=JSONResponse),
     APIRoute("/downloads", downloads.post_downloads, methods=["POST"], response_class=JSONResponse),
     APIRoute("/downloads/{downloadsid}", downloads.patch_downloads, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/downloads/{downloadsid}", downloads.delete_downloads, methods=["DELETE"], response_class=JSONResponse)

@@ -11,6 +11,7 @@ from fastapi import Header, Request, Response
 from fastapi.responses import StreamingResponse
 
 from functions import *
+from api import tracebackHandler
 
 
 async def get_export(request: Request, response: Response, authorization: str = Header(None), \
@@ -237,8 +238,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 if data["multiplayer"] is not None:
                     multiplayer = data["multiplayer"]["type"]
 
-            except:
-                traceback.print_exc()
+            except Exception as exc:
+                await tracebackHandler(request, exc)
 
         if not include_ids:
             data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]

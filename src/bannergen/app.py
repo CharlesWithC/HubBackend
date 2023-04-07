@@ -151,7 +151,7 @@ async def banner(request: Request, response: Response):
                 banner.paste(logo_bg, (1475, 25, 1675, 225))              
 
         except:
-            traceback.print_exc()
+            pass
 
         # draw company name
         draw = ImageDraw.Draw(banner)
@@ -215,7 +215,7 @@ async def banner(request: Request, response: Response):
                 avatar.putdata(newData)
                 avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True)
             except:
-                traceback.print_exc()
+                pass
     avatar = avatar.getdata()
 
     # render avatar

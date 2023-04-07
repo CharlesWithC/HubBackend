@@ -40,7 +40,6 @@ async def post_password(request: Request, response: Response):
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
-        traceback.print_exc()
         response.status_code = 503
         return {"error": "Service Unavailable"}
     
@@ -134,7 +133,6 @@ async def post_register(request: Request, response: Response):
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
-        traceback.print_exc()
         response.status_code = 503
         return {"error": "Service Unavailable"}
 
@@ -260,7 +258,6 @@ async def post_reset(request: Request, response: Response):
             response.status_code = 403
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
-        traceback.print_exc()
         response.status_code = 503
         return {"error": "Service Unavailable"}
 

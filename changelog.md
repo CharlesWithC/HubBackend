@@ -1,5 +1,11 @@
 # Changelog
 
+**v2.4.3**  
+1.Fixed redirect route for downloads plugin  
+2.Fixed issue banning user who has `NULL` connection(s)  
+3.Fixed `scs_convoy`/`multiplayer` detection due to navio->tracksim migration  
+4.Improved traceback handler  
+
 **v2.4.2**  
 1.Renamed `start_time/end_time` in query param to `after/before`  
 2.Added `after/before` query param to **GET** `/divisions`  

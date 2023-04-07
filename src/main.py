@@ -48,6 +48,8 @@ elif args.config_directory is not None:
         sys.argv(1)
     config_files = os.listdir(args.config_directory)
     config_paths = [os.path.join(args.config_directory, x) for x in config_files]
+else:
+    print("No config is provided, aborted.")
 
 if config_paths is not None:
     os.environ["HUB_CONFIG"] = base64.b64encode(json.dumps(config_paths).encode()).decode()
@@ -60,7 +62,7 @@ if __name__ == "__main__":
     date = currentDateTime.date()
     year = date.strftime("%Y")
     print(drivershub)
-    print(f"Drivers Hub: Backend ({version})")
+    print(f"Drivers Hub: Backend (v{version})")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
     print(f"Languages: {', '.join(ml.LANGUAGES)}")
     print("")

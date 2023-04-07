@@ -155,7 +155,7 @@ async def post_announcement(request: Request, response: Response, authorization:
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
-            traceback.print_exc()
+            pass
 
     return {"announcementid": announcementid}
 
@@ -220,7 +220,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
-            traceback.print_exc()
+            pass
 
     return Response(status_code=204)
 
