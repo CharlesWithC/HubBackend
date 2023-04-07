@@ -63,6 +63,7 @@ routes_downloads = [
 routes_economy = [
     APIRoute("/economy/balance/leaderboard", economy.get_balance_leaderboard, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/transfer", economy.post_balance_transfer, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/economy/balance", economy.get_balance, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/{userid}", economy.get_balance, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/{userid}/transactions/list", economy.get_balance_transaction_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/{userid}/transactions/export", economy.get_balance_transaction_export, methods=["GET"], response_class=JSONResponse),

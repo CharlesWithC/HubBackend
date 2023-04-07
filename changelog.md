@@ -4,7 +4,10 @@
 1.Fixed redirect route for downloads plugin  
 2.Fixed issue banning user who has `NULL` connection(s)  
 3.Fixed `scs_convoy`/`multiplayer` detection due to navio->tracksim migration  
-4.Improved traceback handler  
+4.Prevented transferring to oneself in economy-balance  
+5.Added support to ommiting `/{userid}` for `/economy/balance`  
+6.Added support to ommiting JSON `owner` for `/../purchase` (default: `self`)  
+7.Improved traceback handler  
 
 **v2.4.2**  
 1.Renamed `start_time/end_time` in query param to `after/before`  

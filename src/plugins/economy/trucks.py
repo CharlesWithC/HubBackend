@@ -312,7 +312,10 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     
     data = await request.json()
     try:
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
         slotid = int(data["slotid"])
 
         # assignee only work for company trucks
@@ -452,7 +455,10 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
     try:
         # to reassign a truck, set owner to company and update assigneeid
 
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
         
         # assignee only work for company trucks
         assigneeid = "NULL"

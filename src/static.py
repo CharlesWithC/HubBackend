@@ -261,6 +261,8 @@ EN_STRINGTABLE = {
     "modify_balance_visibility_forbidden": "You are not allowed to modify the visibility of the user's balance.",
     "balance_visibility_already_public": "The user's balance is already public.",
     "balance_visibility_already_private": "The user's balance is already private.",
+    "from_to_user_must_not_be_same": "Sender and recipent must not be the same.",
+    "cannot_transfer_to_oneself": "You cannot transfer balance to yourself.",
 
     "notification": "Notification",
     "notification_not_found": "Notification not found.",

@@ -171,6 +171,13 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "to_user_not_found", force_lang = au["language"])}
+    if from_userid == to_userid:
+        if from_userid != opuserid:
+            response.status_code = 400
+            return {"error": ml.tr(request, "from_to_user_must_not_be_same", force_lang = au["language"])}
+        else:
+            response.status_code = 400
+            return {"error": ml.tr(request, "cannot_transfer_to_oneself", force_lang = au["language"])}
     
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {from_userid} FOR UPDATE")
     from_balance = nint(await app.db.fetchone(dhrid))
@@ -207,7 +214,7 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     else:
         return {"from_balance": from_balance - amount}
 
-async def get_balance(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+async def get_balance(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = None):
     '''Get user balance.
     
     [NOTE] If authorized user is not a balance_manager, and the user chose to hide their balance, 403 will be returned.
@@ -228,6 +235,9 @@ async def get_balance(request: Request, response: Response, userid: int, authori
         response.status_code = au["code"]
         del au["code"]
         return au
+    
+    if userid is None:
+        userid = au["userid"]
     
     if userid != -1000:
         await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid}")

@@ -257,7 +257,10 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
 
     data = await request.json()
     try:
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -359,7 +362,10 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
 
     data = await request.json()
     try:
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -458,7 +464,10 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
 
     data = await request.json()
     try:
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
 
         if "message" in data.keys():
             message = convertQuotation(data["message"])
@@ -549,7 +558,10 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
 
     data = await request.json()
     try:
-        owner = data["owner"] # owner = self | company | user-{userid}
+        if "owner" in data.keys():
+            owner = data["owner"] # owner = self | company | user-{userid}
+        else:
+            owner = "self"
 
         if "message" in data.keys():
             message = convertQuotation(data["message"])

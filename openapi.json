@@ -159,7 +159,8 @@
                 "tags": ["auth"],
                 "operationId": "post_auth_email",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -287,7 +288,8 @@
                 "tags": ["auth"],
                 "operationId": "get_token",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             },
@@ -296,7 +298,8 @@
                 "tags": ["auth"],
                 "operationId": "patch_token",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             },
@@ -305,7 +308,8 @@
                 "tags": ["auth"],
                 "operationId": "delete_token",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -316,7 +320,8 @@
                 "tags": ["auth"],
                 "operationId": "get_token_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -360,7 +365,8 @@
                 "tags": ["auth"],
                 "operationId": "delete_token_hash",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -388,7 +394,8 @@
                 "tags": ["auth"],
                 "operationId": "delete_token_all",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -408,7 +415,8 @@
                 "tags": ["user"],
                 "operationId": "get_user",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -458,7 +466,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_profile",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -567,7 +576,8 @@
                 "tags": ["user"],
                 "operationId": "get_user_language",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             },
@@ -576,7 +586,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_language",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -604,7 +615,8 @@
                 "tags": ["user"],
                 "operationId": "get_user_notification_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -664,7 +676,8 @@
                 "tags": ["user"],
                 "operationId": "get_user_notification",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -684,7 +697,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_notification_status",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -712,7 +726,8 @@
                 "tags": ["user"],
                 "operationId": "get_user_notification_settings",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -723,7 +738,8 @@
                 "tags": ["user"],
                 "operationId": "post_user_notification_enable",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -743,7 +759,8 @@
                 "tags": ["user"],
                 "operationId": "post_user_notification_disable",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -763,7 +780,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_bio",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -791,7 +809,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_password",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -823,7 +842,8 @@
                 "tags": ["user"],
                 "operationId": "delete_user_password",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -851,7 +871,8 @@
                 "tags": ["user"],
                 "operationId": "post_user_mfa",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -883,7 +904,8 @@
                 "tags": ["user"],
                 "operationId": "delete_user_mfa",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -920,7 +942,8 @@
                 "tags": ["user"],
                 "operationId": "post_user_resend_confirmation",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -931,7 +954,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_email",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -959,7 +983,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_discord",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -970,7 +995,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_steam",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -981,7 +1007,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_truckersmp",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1009,7 +1036,8 @@
                 "tags": ["user"],
                 "operationId": "post_user_accept",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1029,7 +1057,8 @@
                 "tags": ["user"],
                 "operationId": "deleteUser",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1049,7 +1078,8 @@
                 "tags": ["user"],
                 "operationId": "put_user_ban",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1088,7 +1118,8 @@
                 "tags": ["user"],
                 "operationId": "delete_user_ban",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1108,7 +1139,8 @@
                 "tags": ["user"],
                 "operationId": "patch_user_discord",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1145,7 +1177,8 @@
                 "tags": ["user"],
                 "operationId": "delete_user_connections",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1165,7 +1198,8 @@
                 "tags": ["auth"],
                 "operationId": "get_token_applcation_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1209,7 +1243,8 @@
                 "tags": ["auth"],
                 "operationId": "post_token_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1239,7 +1274,8 @@
                 "tags": ["auth"],
                 "operationId": "delete_token_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1267,7 +1303,8 @@
                 "tags": ["auth"],
                 "operationId": "delete_token_application_all",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -1278,7 +1315,8 @@
                 "tags": ["auth"],
                 "operationId": "post_auth_ticket",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             },
@@ -1328,7 +1366,8 @@
                 "tags": ["member"],
                 "operationId": "get_member_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1396,7 +1435,8 @@
                 "tags": ["member"],
                 "operationId": "get_member_banner",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1448,7 +1488,8 @@
                 "tags": ["member"],
                 "operationId": "patch_member_roles_rank",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -1459,7 +1500,8 @@
                 "tags": ["member"],
                 "operationId": "post_member_resign",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1487,7 +1529,8 @@
                 "tags": ["member"],
                 "operationId": "patch_member_roles",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1524,7 +1567,8 @@
                 "tags": ["member"],
                 "operationId": "patch_member_points",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1565,7 +1609,8 @@
                 "tags": ["member"],
                 "operationId": "post_member_dismiss",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1585,7 +1630,8 @@
                 "tags": ["admin"],
                 "operationId": "get_config",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             },
@@ -1594,7 +1640,8 @@
                 "tags": ["admin"],
                 "operationId": "patch_config",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1622,7 +1669,8 @@
                 "tags": ["admin"],
                 "operationId": "post_restart",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -1650,7 +1698,8 @@
                 "tags": ["admin"],
                 "operationId": "get_audit_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1694,7 +1743,8 @@
                 "tags": ["dlog"],
                 "operationId": "get_dlog",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1712,7 +1762,8 @@
                 "tags": ["dlog"],
                 "operationId": "delete_dlog",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -1732,7 +1783,8 @@
                 "tags": ["dlog"],
                 "operationId": "get_dlog_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1840,7 +1892,8 @@
                 "tags": ["dlog"],
                 "operationId": "get_dlog_statistics_summary",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1876,7 +1929,8 @@
                 "tags": ["dlog"],
                 "operationId": "get_dlog_statistics_chart",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -1928,7 +1982,8 @@
                 "tags": ["dlog"],
                 "operationId": "getDlogLeaderboard",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2004,7 +2059,8 @@
                 "tags": ["dlog"],
                 "operationId": "exportDeliveryLog",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2040,7 +2096,8 @@
                 "tags": ["tracker"],
                 "operationId": "post_tracksim_setup",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -2051,7 +2108,8 @@
                 "tags": ["tracker"],
                 "operationId": "post_tracksim_update",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2087,7 +2145,8 @@
                 "tags": ["tracker"],
                 "operationId": "post_tracksim_update_route",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2115,7 +2174,8 @@
                 "tags": ["announcement"],
                 "operationId": "get_announcement_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2167,7 +2227,8 @@
                 "tags": ["announcement"],
                 "operationId": "post_announcement",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2215,7 +2276,8 @@
                 "tags": ["announcement"],
                 "operationId": "get_announcement",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2233,7 +2295,8 @@
                 "tags": ["announcement"],
                 "operationId": "patch_announcement",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2288,7 +2351,8 @@
                 "tags": ["announcement"],
                 "operationId": "delete_announcement",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2322,7 +2386,8 @@
                 "tags": ["application"],
                 "operationId": "patch_application_positions",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2350,7 +2415,8 @@
                 "tags": ["application"],
                 "operationId": "get_application_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2410,7 +2476,8 @@
                 "tags": ["application"],
                 "operationId": "post_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2442,7 +2509,8 @@
                 "tags": ["application"],
                 "operationId": "get_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2460,7 +2528,8 @@
                 "tags": ["application"],
                 "operationId": "patch_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2495,7 +2564,8 @@
                 "tags": ["application"],
                 "operationId": "delete_application",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2515,7 +2585,8 @@
                 "tags": ["application"],
                 "operationId": "patch_application_status",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2556,7 +2627,8 @@
                 "tags": ["challenge"],
                 "operationId": "get_challenge_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2672,7 +2744,8 @@
                 "tags": ["challenge"],
                 "operationId": "post_challenge",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -2740,7 +2813,8 @@
                 "tags": ["challenge"],
                 "operationId": "get_challenge",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2766,7 +2840,8 @@
                 "tags": ["challenge"],
                 "operationId": "patch_challenge",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2841,7 +2916,8 @@
                 "tags": ["challenge"],
                 "operationId": "delete_challenge",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2861,7 +2937,8 @@
                 "tags": ["challenge"],
                 "operationId": "put_challenge_delivery",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2887,7 +2964,8 @@
                 "tags": ["challenge"],
                 "operationId": "delete_challenge_delivery",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2923,7 +3001,8 @@
                 "tags": ["division"],
                 "operationId": "get_division",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -2951,7 +3030,8 @@
                 "tags": ["dlog"],
                 "operationId": "get_dlog_division",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2971,7 +3051,8 @@
                 "tags": ["dlog"],
                 "operationId": "post_division",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -2997,7 +3078,8 @@
                 "tags": ["dlog"],
                 "operationId": "patch_division",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3046,7 +3128,8 @@
                 "tags": ["division"],
                 "operationId": "getDivisionPendingList",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -3082,7 +3165,8 @@
                 "tags": ["downloads"],
                 "operationId": "get_downloads_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -3142,7 +3226,8 @@
                 "tags": ["downloads"],
                 "operationId": "post_downloads",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -3182,7 +3267,8 @@
                 "tags": ["downloads"],
                 "operationId": "get_downloads",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3200,7 +3286,8 @@
                 "tags": ["downloads"],
                 "operationId": "patch_downloads",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -3247,7 +3334,8 @@
                 "tags": ["downloads"],
                 "operationId": "delete_downloads",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3267,7 +3355,8 @@
                 "tags": ["downloads"],
                 "operationId": "redirect_downloads",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3294,7 +3383,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "get_economy_balance_leaderboard",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -3348,13 +3438,26 @@
                 "responses": {}
             }
         },
+        "/abbr/economy/balance": {
+            "get": {
+                "summary": "Get Current User's Balance",
+                "tags": ["economy_balance"],
+                "operationId": "get_economy_balance",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "responses": {}
+            }
+        },
         "/abbr/economy/balance/{userid}": {
             "get": {
                 "summary": "Get User Balance",
                 "tags": ["economy_balance"],
                 "operationId": "get_economy_balance_userid",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3374,7 +3477,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "post_economy_balance_userid_transfer",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -3414,7 +3518,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "post_economy_balance_userid_visibility_public",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3434,7 +3539,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "post_economy_balance_userid_visibility_private",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3454,7 +3560,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "get_economy_balance_transaction_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3554,7 +3661,8 @@
                 "tags": ["economy_balance"],
                 "operationId": "get_economy_balance_transaction_export",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3590,7 +3698,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -3601,7 +3710,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -3677,7 +3787,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages_garageid",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3697,7 +3808,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_purchase",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3721,7 +3833,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner"]
+                            "required": []
                         }
                     }
                 },
@@ -3734,7 +3846,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_transfer",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3762,7 +3875,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner"]
+                            "required": []
                         }
                     }
                 },
@@ -3775,7 +3888,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_sell",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3795,7 +3909,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages_garageid_slots_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3871,7 +3986,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages_garageid_slots_slotid",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3899,7 +4015,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_slots_purchase",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3923,7 +4040,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner"]
+                            "required": []
                         }
                     }
                 },
@@ -3936,7 +4053,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_slots_slotid_transfer",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -3972,7 +4090,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner"]
+                            "required": []
                         }
                     }
                 },
@@ -3985,7 +4103,8 @@
                 "tags": ["economy_garages"],
                 "operationId": "post_economy_garages_garageid_slots_slotid_sell",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4013,7 +4132,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "get_economy_trucks",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "responses": {}
             }
@@ -4024,7 +4144,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "get_economy_trucks_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -4180,7 +4301,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "get_economy_trucks_vehicleid",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4200,7 +4322,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "get_economy_trucks_vehicleid_operation_history",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4252,7 +4375,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_truck_purchase",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4284,7 +4408,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner", "slotid"]
+                            "required": ["slotid"]
                         }
                     }
                 },
@@ -4297,7 +4421,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_transfer",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4329,7 +4454,7 @@
                                     }
                                 }
                             },
-                            "required": ["owner"]
+                            "required": []
                         }
                     }
                 },
@@ -4342,7 +4467,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_relocate",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4379,7 +4505,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_activate",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4399,7 +4526,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_deactivate",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4419,7 +4547,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_repair",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4439,7 +4568,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_sell",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4459,7 +4589,8 @@
                 "tags": ["economy_trucks"],
                 "operationId": "post_economy_trucks_vehicleid_scrap",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4479,7 +4610,8 @@
                 "tags": ["event"],
                 "operationId": "get_event_list",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -4523,7 +4655,8 @@
                 "tags": ["event"],
                 "operationId": "post_event",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "requestBody": {
                     "required": true,
@@ -4583,7 +4716,8 @@
                 "tags": ["event"],
                 "operationId": "get_event",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4601,7 +4735,8 @@
                 "tags": ["event"],
                 "operationId": "patch_event",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": false,
@@ -4668,7 +4803,8 @@
                 "tags": ["event"],
                 "operationId": "delete_event",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4688,7 +4824,8 @@
                 "tags": ["event"],
                 "operationId": "put_event_vote",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4706,7 +4843,8 @@
                 "tags": ["event"],
                 "operationId": "delete_event_vote",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4726,7 +4864,8 @@
                 "tags": ["event"],
                 "operationId": "patch_event_attendee",
                 "security": [{
-                    "bearerAuth": []
+                    "bearerAuth": [],
+                    "applicationAuth": []
                 }],
                 "parameters": [{
                     "required": true,
@@ -4819,11 +4958,11 @@
                 "description": "Bearer Token Authorization",
                 "bearerFormat": "uuid"
             },
-            "apiKeyAuth": {
+            "applicationAuth": {
                 "type": "apiKey",
+                "name": "Authorization",
                 "in": "header",
-                "name": "Application",
-                "description": "Application Token Authorization"
+                "description": "Application Token Authorization (Prefix the value with 'Application', e.g. 'Application xxxxx-xxxx')"
             }
         },
         "schemas": {
