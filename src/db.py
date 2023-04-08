@@ -100,6 +100,11 @@ def init(app):
     "CREATE INDEX dlog_userid ON dlog (userid)",
     "CREATE INDEX dlog_trackerid ON dlog (trackerid)",
     "CREATE INDEX dlog_topspeed ON dlog (topspeed)",
+    "CREATE INDEX dlog_distance ON dlog (distance)",
+    "CREATE INDEX dlog_fuel ON dlog (fuel)",
+    "CREATE INDEX dlog_unit ON dlog (unit)",
+    "CREATE INDEX dlog_isdelivered ON dlog (isdelivered)",
+    "CREATE INDEX dlog_timestamp ON dlog (timestamp)",
 
     "CREATE INDEX telemetry_logid ON telemetry (logid)",
 

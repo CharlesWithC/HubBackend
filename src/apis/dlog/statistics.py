@@ -40,12 +40,12 @@ async def get_summary(request: Request, response: Response, authorization: str =
     # cache
     l = list(app.state.cache_statistics.keys())
     for ll in l:
-        if ll < int(time.time()) - 120:
+        if ll < int(time.time()) - 15:
             del app.state.cache_statistics[ll]
         else:
             tt = app.state.cache_statistics[ll]
             for t in tt:
-                if abs(t["start_time"] - after) <= 120 and abs(t["end_time"] - before) <= 120 and t["userid"] == userid:
+                if abs(t["start_time"] - after) <= 15 and abs(t["end_time"] - before) <= 15 and t["userid"] == userid:
                     ret = t["result"]
                     ret["cache"] = ll
                     return ret
@@ -73,122 +73,138 @@ async def get_summary(request: Request, response: Response, authorization: str =
     ret["driver"] = {"tot": totdrivers, "new": newdrivers}
     
     # job / delivered / cancelled
-    item = {"job": "COUNT(*)", "distance": "SUM(distance)", "fuel": "SUM(fuel)"}
-    for key in item.keys():
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp <= {before}")
-        tot = await app.db.fetchone(dhrid)
-        tot = nint(tot[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND timestamp >= {after} AND timestamp <= {before}")
-        new = await app.db.fetchone(dhrid)
-        new = nint(new[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {before}")
-        totets2 = await app.db.fetchone(dhrid)
-        totets2 = nint(totets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-        newets2 = await app.db.fetchone(dhrid)
-        newets2 = nint(newets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {before}")
-        totats = await app.db.fetchone(dhrid)
-        totats = nint(totats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-        newats = await app.db.fetchone(dhrid)
-        newats = nint(newats[0])
+    # This query returns
+    # ets2 tot delivered job, ets2 new delivered job, ets2 tot cancelled job, ets2 new cancelled job
+    # ats tot delivered job, ats new delivered job, ats tot cancelled job, ats new cancelled job
+    # and distance, fuel (same order) as well
+    await app.db.execute(dhrid, f"SELECT \
+        ets2_job_1_0 + ets2_job_0_0 + ats_job_1_0 + ats_job_0_0 AS job_all_sum_tot, \
+        ets2_job_1_1 + ets2_job_0_1 + ats_job_1_1 + ats_job_0_1 AS job_all_sum_new, \
+        ets2_job_1_0 + ets2_job_0_0 AS job_all_ets2_tot, \
+        ets2_job_1_1 + ets2_job_0_1 AS job_all_ets2_new, \
+        ats_job_1_0 + ats_job_0_0 AS job_all_ats_tot, \
+        ats_job_1_1 + ats_job_0_1 AS job_all_ats_new, \
+        ets2_job_1_0 + ats_job_1_0 AS job_delivered_sum_tot, \
+        ets2_job_1_1 + ats_job_1_1 AS job_delivered_sum_new, \
+        ets2_job_1_0 AS job_delivered_ets2_tot, \
+        ets2_job_1_1 AS job_delivered_ets2_new, \
+        ats_job_1_0 AS job_delivered_ats_tot, \
+        ats_job_1_1 AS job_delivered_ats_new, \
+        ets2_job_0_0 + ats_job_0_0 AS job_cancelled_sum_tot, \
+        ets2_job_0_1 + ats_job_0_1 AS job_cancelled_sum_new, \
+        ets2_job_0_0 AS job_cancelled_ets2_tot, \
+        ets2_job_0_1 AS job_cancelled_ets2_new, \
+        ats_job_0_0 AS job_cancelled_ats_tot, \
+        ats_job_0_1 AS job_cancelled_ats_new, \
+        ets2_distance_1_0 + ets2_distance_0_0 + ats_distance_1_0 + ats_distance_0_0 AS distance_all_sum_tot, \
+        ets2_distance_1_1 + ets2_distance_0_1 + ats_distance_1_1 + ats_distance_0_1 AS distance_all_sum_new, \
+        ets2_distance_1_0 + ets2_distance_0_0 AS distance_all_ets2_tot, \
+        ets2_distance_1_1 + ets2_distance_0_1 AS distance_all_ets2_new, \
+        ats_distance_1_0 + ats_distance_0_0 AS distance_all_ats_tot, \
+        ats_distance_1_1 + ats_distance_0_1 AS distance_all_ats_new, \
+        ets2_distance_1_0 + ats_distance_1_0 AS distance_delivered_sum_tot, \
+        ets2_distance_1_1 + ats_distance_1_1 AS distance_delivered_sum_new, \
+        ets2_distance_1_0 AS distance_delivered_ets2_tot, \
+        ets2_distance_1_1 AS distance_delivered_ets2_new, \
+        ats_distance_1_0 AS distance_delivered_ats_tot, \
+        ats_distance_1_1 AS distance_delivered_ats_new, \
+        ets2_distance_0_0 + ats_distance_0_0 AS distance_cancelled_sum_tot, \
+        ets2_distance_0_1 + ats_distance_0_1 AS distance_cancelled_sum_new, \
+        ets2_distance_0_0 AS distance_cancelled_ets2_tot, \
+        ets2_distance_0_1 AS distance_cancelled_ets2_new, \
+        ats_distance_0_0 AS distance_cancelled_ats_tot, \
+        ats_distance_0_1 AS distance_cancelled_ats_new, \
+        ets2_fuel_1_0 + ets2_fuel_0_0 + ats_fuel_1_0 + ats_fuel_0_0 AS fuel_all_sum_tot, \
+        ets2_fuel_1_1 + ets2_fuel_0_1 + ats_fuel_1_1 + ats_fuel_0_1 AS fuel_all_sum_new, \
+        ets2_fuel_1_0 + ets2_fuel_0_0 AS fuel_all_ets2_tot, \
+        ets2_fuel_1_1 + ets2_fuel_0_1 AS fuel_all_ets2_new, \
+        ats_fuel_1_0 + ats_fuel_0_0 AS fuel_all_ats_tot, \
+        ats_fuel_1_1 + ats_fuel_0_1 AS fuel_all_ats_new, \
+        ets2_fuel_1_0 + ats_fuel_1_0 AS fuel_delivered_sum_tot, \
+        ets2_fuel_1_1 + ats_fuel_1_1 AS fuel_delivered_sum_new, \
+        ets2_fuel_1_0 AS fuel_delivered_ets2_tot, \
+        ets2_fuel_1_1 AS fuel_delivered_ets2_new, \
+        ats_fuel_1_0 AS fuel_delivered_ats_tot, \
+        ats_fuel_1_1 AS fuel_delivered_ats_new, \
+        ets2_fuel_0_0 + ats_fuel_0_0 AS fuel_cancelled_sum_tot, \
+        ets2_fuel_0_1 + ats_fuel_0_1 AS fuel_cancelled_sum_new, \
+        ets2_fuel_0_0 AS fuel_cancelled_ets2_tot, \
+        ets2_fuel_0_1 AS fuel_cancelled_ets2_new, \
+        ats_fuel_0_0 AS fuel_cancelled_ats_tot, \
+        ats_fuel_0_1 AS fuel_cancelled_ats_new, \
+        ets2_profit_1_0 + ets2_profit_0_0 AS profit_all_tot_euro, \
+        ets2_profit_1_1 + ets2_profit_0_1 AS profit_all_new_euro, \
+        ats_profit_1_0 + ats_profit_0_0 AS profit_all_tot_dollar, \
+        ats_profit_1_1 + ats_profit_0_1 AS profit_all_new_dollar, \
+        ets2_profit_1_0 AS profit_delivered_tot_euro, \
+        ets2_profit_1_1 AS profit_delivered_new_euro, \
+        ats_profit_1_0 AS profit_delivered_tot_dollar, \
+        ats_profit_1_1 AS profit_delivered_new_dollar, \
+        ets2_profit_0_0 AS profit_cancelled_tot_euro, \
+        ets2_profit_0_1 AS profit_cancelled_new_euro, \
+        ats_profit_0_0 AS profit_cancelled_tot_dollar, \
+        ats_profit_0_1 AS profit_cancelled_new_dollar \
+        FROM ( SELECT \
+        COUNT(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ets2_job_1_0, \
+        COUNT(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_1_1, \
+        COUNT(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ets2_job_0_0, \
+        COUNT(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_0_1, \
+        COUNT(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ats_job_1_0, \
+        COUNT(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_1_1, \
+        COUNT(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ats_job_0_0, \
+        COUNT(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_0_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN distance END) AS ets2_distance_1_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ets2_distance_1_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN distance END) AS ets2_distance_0_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ets2_distance_0_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN distance END) AS ats_distance_1_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ats_distance_1_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN distance END) AS ats_distance_0_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ats_distance_0_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END) AS ets2_fuel_1_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ets2_fuel_1_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END) AS ets2_fuel_0_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ets2_fuel_0_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END) AS ats_fuel_1_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ats_fuel_1_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END) AS ats_fuel_0_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ats_fuel_0_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN profit END) AS ets2_profit_1_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ets2_profit_1_1, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ets2_profit_0_0, \
+        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ets2_profit_0_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN profit END) AS ats_profit_1_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_1_1, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ats_profit_0_0, \
+        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_0_1 \
+        FROM dlog WHERE {quser} logid >= 0 ) AS stats")
+    t = await app.db.fetchall(dhrid)
+    keys = [desc[0] for desc in app.db.conns[dhrid][1].description]
+    t = list(t[0])
+    for i in range(len(t)):
+        if t[i] is None:
+            t[i] = 0
+        else:
+            t[i] = int(t[i])
+    d = dict(zip(keys, t))
 
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp <= {before}")
-        totdelivered = await app.db.fetchone(dhrid)
-        totdelivered = nint(totdelivered[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before}")
-        newdelivered = await app.db.fetchone(dhrid)
-        newdelivered = nint(newdelivered[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {before}")
-        totdelivered_ets2 = await app.db.fetchone(dhrid)
-        totdelivered_ets2 = nint(totdelivered_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-        newdelivered_ets2 = await app.db.fetchone(dhrid)
-        newdelivered_ets2 = nint(newdelivered_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {before}")
-        totdelivered_ats = await app.db.fetchone(dhrid)
-        totdelivered_ats = nint(totdelivered_ats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-        newdelivered_ats = await app.db.fetchone(dhrid)
-        newdelivered_ats = nint(newdelivered_ats[0])
+    for key, value in d.items():
+        parts = key.split("_")
+        current_dict = ret
+        for part in parts[:-1]:
+            current_dict = current_dict.setdefault(part, {})
+        current_dict[parts[-1]] = value
 
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp <= {before}")
-        totcancelled = await app.db.fetchone(dhrid)
-        totcancelled = nint(totcancelled[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before}")
-        newcancelled = await app.db.fetchone(dhrid)
-        newcancelled = nint(newcancelled[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {before}")
-        totcancelled_ets2 = await app.db.fetchone(dhrid)
-        totcancelled_ets2 = nint(totcancelled_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-        newcancelled_ets2 = await app.db.fetchone(dhrid)
-        newcancelled_ets2 = nint(newcancelled_ets2[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {before}")
-        totcancelled_ats = await app.db.fetchone(dhrid)
-        totcancelled_ats = nint(totcancelled_ats[0])
-        await app.db.execute(dhrid, f"SELECT {item[key]} FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-        newcancelled_ats = await app.db.fetchone(dhrid)
-        newcancelled_ats = nint(newcancelled_ats[0])
-
-        ret[key] = {"all": {"sum": {"tot": tot, "new": new}, \
-            "ets2": {"tot": totets2, "new": newets2}, \
-            "ats": {"tot": totats, "new": newats}}, \
-            "delivered": {"sum": {"tot": totdelivered, "new": newdelivered}, \
-                    "ets2": {"tot": totdelivered_ets2, "new": newdelivered_ets2}, \
-                    "ats": {"tot": totdelivered_ats, "new": newdelivered_ats}}, \
-                "cancelled": {"sum": {"tot": totcancelled, "new": newcancelled}, \
-                    "ets2": {"tot": totcancelled_ets2, "new": newcancelled_ets2}, \
-                    "ats": {"tot": totcancelled_ats, "new": newcancelled_ats}}}
-
-    # profit
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp <= {before}")
-    toteuroprofit = await app.db.fetchone(dhrid)
-    toteuroprofit = nint(toteuroprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-    neweuroprofit = await app.db.fetchone(dhrid)
-    neweuroprofit = nint(neweuroprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp <= {before}")
-    totdollarprofit = await app.db.fetchone(dhrid)
-    totdollarprofit = nint(totdollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-    newdollarprofit = await app.db.fetchone(dhrid)
-    newdollarprofit = nint(newdollarprofit[0])
-    allprofit = {"tot": {"euro": toteuroprofit, "dollar": totdollarprofit}, \
-        "new": {"euro": neweuroprofit, "dollar": newdollarprofit}}
-
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp <= {before}")
-    totdelivered_europrofit = await app.db.fetchone(dhrid)
-    totdelivered_europrofit = nint(totdelivered_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-    newdelivered_europrofit = await app.db.fetchone(dhrid)
-    newdelivered_europrofit = nint(newdelivered_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp <= {before}")
-    totdelivered_dollarprofit = await app.db.fetchone(dhrid)
-    totdelivered_dollarprofit = nint(totdelivered_dollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 1 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-    newdelivered_dollarprofit = await app.db.fetchone(dhrid)
-    newdelivered_dollarprofit = nint(newdelivered_dollarprofit[0])
-    deliveredprofit = {"tot": {"euro": totdelivered_europrofit, "dollar": totdelivered_dollarprofit}, \
-        "new": {"euro": newdelivered_europrofit, "dollar": newdelivered_dollarprofit}}
-    
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp <= {before}")
-    totcancelled_europrofit = await app.db.fetchone(dhrid)
-    totcancelled_europrofit = nint(totcancelled_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 1 AND timestamp >= {after} AND timestamp <= {before}")
-    newcancelled_europrofit = await app.db.fetchone(dhrid)
-    newcancelled_europrofit = nint(newcancelled_europrofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp <= {before}")
-    totcancelled_dollarprofit = await app.db.fetchone(dhrid)
-    totcancelled_dollarprofit = nint(totcancelled_dollarprofit[0])
-    await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {quser} logid >= 0 AND isdelivered = 0 AND unit = 2 AND timestamp >= {after} AND timestamp <= {before}")
-    newcancelled_dollarprofit = await app.db.fetchone(dhrid)
-    newcancelled_dollarprofit = nint(newcancelled_dollarprofit[0])
-    cancelledprofit = {"tot": {"euro": totcancelled_europrofit, "dollar": totcancelled_dollarprofit}, \
-        "new": {"euro": newcancelled_europrofit, "dollar": newcancelled_dollarprofit}}
-    
-    ret["profit"] = {"all": allprofit, "delivered": deliveredprofit, "cancelled": cancelledprofit}
+    top_level_dict = {}
+    for key, value in ret.items():
+        parts = key.split("_")
+        top_level_key = parts[0]
+        if top_level_key not in top_level_dict:
+            top_level_dict[top_level_key] = {}
+        current_dict = top_level_dict[top_level_key]
+        for part in parts[1:-1]:
+            current_dict = current_dict.setdefault(part, {})
+        current_dict[parts[-1]] = value
 
     ts = int(time.time())
     if not ts in app.state.cache_statistics.keys():

@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.5.0**  
+1.Improved `/dlog/statistics/summary` query performance  
+**Note** Cache expiry for this endpoint was reduced from `120` to `15` (seconds).  
+
 **v2.4.4**  
 1.Reworked external plugin system  
 **Hint** Read `External Plugins` in [README.md](./README.md) and check [example.py](./src/external_plugins/example.py) for reference.  
