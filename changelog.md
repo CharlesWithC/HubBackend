@@ -3,6 +3,7 @@
 **v2.5.0**  
 1.Improved `/dlog/statistics/summary` query performance  
 **Note** Cache expiry for this endpoint was reduced from `120` to `15` (seconds).  
+2.Improved `/dlog/statistics/chart` query performance  
 
 **v2.4.4**  
 1.Reworked external plugin system  

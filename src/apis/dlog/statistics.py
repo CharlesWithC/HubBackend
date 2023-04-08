@@ -178,14 +178,9 @@ async def get_summary(request: Request, response: Response, authorization: str =
         SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ats_profit_0_0, \
         SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_0_1 \
         FROM dlog WHERE {quser} logid >= 0 ) AS stats")
-    t = await app.db.fetchall(dhrid)
+    t = list(await app.db.fetchone(dhrid))
+    t = [nint(x) for x in t]
     keys = [desc[0] for desc in app.db.conns[dhrid][1].description]
-    t = list(t[0])
-    for i in range(len(t)):
-        if t[i] is None:
-            t[i] = 0
-        else:
-            t[i] = int(t[i])
     d = dict(zip(keys, t))
 
     for key, value in d.items():
@@ -258,90 +253,68 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         r_end_time = r_start_time + interval
         timerange.append((r_start_time, r_end_time))
     timerange = timerange[::-1]
+    if sum_up:
+        timerange = [(0, timerange[0][0])] + timerange
 
     limit = ""
     if quserid is not None:
         limit = f"userid = {quserid} AND"
-
-    alldriverid = []
+    
     basedriver = 0
-    basejob = 0
-    basedistance = 0
-    basefuel = 0
-    baseeuro = 0
-    basedollar = 0
     if sum_up:
-        before = timerange[0][0]
+        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp < {timerange[0][0]}")
+        t = await app.db.fetchall(dhrid)
+        for tt in t:
+            if not checkPerm(app, str2list(tt[2]), "driver"):
+                continue
+            basedriver += 1
 
-        for rid in app.config.perms.driver:
-            await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= 0 AND join_timestamp < {before} AND roles LIKE '%,{rid},%'")
-            t = await app.db.fetchall(dhrid)
-            for tt in t:
-                if not tt[0] in alldriverid:
-                    alldriverid.append(tt[0])
-                    basedriver += 1
+    # NOTE int(sum_up) will be 1 if sum_up is True, hence it will start from timerange[1] as timerange[0] is for base counting
+    # driver_changes cannot act like timerange to add a "base" for idx=0 due to later data calculation
+    driver_changes = [0] * len(timerange[int(sum_up):]) # init to be 0
+    await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp >= {timerange[0][0]} AND join_timestamp < {before}")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        if not checkPerm(app, str2list(tt[2]), "driver"):
+            continue
+        for i in range(int(sum_up), len(timerange)):
+            if tt[1] >= timerange[i][0] and tt[1] < timerange[i][1]:
+                driver_changes[i-int(sum_up)] += 1
+    driver_history = [basedriver] + [0] * len(driver_changes)
+    for i in range(1, len(driver_changes)):
+        if sum_up:
+            driver_history[i] = driver_history[i-1] + driver_changes[i-1]
+        else:
+            driver_history[i] = driver_changes[i-1]
+    driver_history = driver_history[1:]
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before}")
-        t = await app.db.fetchall(dhrid)
-        if len(t) > 0 and t[0][0] is not None:
-            basejob = nint(t[0][0])
-
-        await app.db.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before}")
-        t = await app.db.fetchall(dhrid)
-        if len(t) > 0 and t[0][0] is not None:
-            basedistance = nint(t[0][0])
-            basefuel = nint(t[0][1])
-        await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before} AND unit = 1")
-        t = await app.db.fetchall(dhrid)
-        if len(t) > 0 and t[0][0] is not None:
-            baseeuro = nint(t[0][0])
-        await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= 0 AND timestamp < {before} AND unit = 2")
-        t = await app.db.fetchall(dhrid)
-        if len(t) > 0 and t[0][0] is not None:
-            basedollar = nint(t[0][0])
-
-    for (start_time, before) in timerange:
-        driver = basedriver
-        for rid in app.config.perms.driver:
-            await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {limit} userid >= 0 AND join_timestamp >= {start_time} AND join_timestamp < {before} AND roles LIKE '%,{rid},%'")
-            t = await app.db.fetchall(dhrid)
-            for tt in t:
-                if not tt[0] in alldriverid:
-                    alldriverid.append(tt[0])
-                    driver += 1
-
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before}")
-        t = await app.db.fetchall(dhrid)
-        job = basejob
-        if len(t) > 0 and t[0][0] is not None:
-            job += nint(t[0][0])
-                    
-        await app.db.execute(dhrid, f"SELECT SUM(distance), SUM(fuel) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before}")
-        t = await app.db.fetchall(dhrid)
-        distance = basedistance
-        fuel = basefuel
-        if len(t) > 0 and t[0][0] is not None and len(t[0]) > 1:
-            distance += nint(t[0][0])
-            fuel += nint(t[0][1])
-        await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before} AND unit = 1")
-        t = await app.db.fetchall(dhrid)
-        euro = baseeuro
-        if len(t) > 0 and t[0][0] is not None:
-            euro += nint(t[0][0])
-        await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE {limit} logid >= 0 AND timestamp >= {start_time} AND timestamp < {before} AND unit = 2")
-        t = await app.db.fetchall(dhrid)
-        dollar = basedollar
-        if len(t) > 0 and t[0][0] is not None:
-            dollar += nint(t[0][0])
-        profit = {"euro": euro, "dollar": dollar}
-        ret.append({"start_time": start_time, "end_time": before, "driver": driver, "job": job, "distance": distance, "fuel": fuel, "profit": profit})
+    queries = []
+    for (start_time, end_time) in timerange:
+        queries.append(f"COUNT(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END)")
+        queries.append(f"SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN distance END)")
+        queries.append(f"SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END)")
+        queries.append(f"SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END)")
+        queries.append(f"SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END)")
+    querystr = "SELECT " + ",".join(queries) + f" FROM dlog WHERE {limit} logid >= 0"
+    await app.db.execute(dhrid, querystr)
+    t = list(await app.db.fetchone(dhrid))
+    t = [nint(x) for x in t]
+    (basejob, basedistance, basefuel, baseeuro, basedollar) = [0] * 5
+    if sum_up:
+        (basejob, basedistance, basefuel, baseeuro, basedollar) = t[0:5]
+        t = t[5:]
+        timerange = timerange[1:]
+    for i in range(0, len(t), 5):
+        job = basejob + t[i]
+        distance = basedistance + t[i+1]
+        fuel = basefuel + t[i+2]
+        euro = baseeuro + t[i+3]
+        dollar = basedollar + t[i+4]
+        (start_time, end_time) = timerange[int(i/5)]
+        ret.append({"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/5)], "job": job, "distance": distance, "fuel": fuel, "profit": {"euro": euro, "dollar": dollar}})
     
         if sum_up:
-            basedriver = driver
-            basejob = job
-            basedistance = distance
-            basefuel = fuel
-            baseeuro = euro
-            basedollar = dollar
+            (basejob, basedistance, basefuel, baseeuro, basedollar) = \
+                (job, distance, fuel, euro, dollar)
 
     return ret
