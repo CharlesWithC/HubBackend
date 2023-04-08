@@ -40,7 +40,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
             else:
                 return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
         except Exception as exc:
-            await tracebackHandler(request, exc)
+            await tracebackHandler(request, exc, traceback.format_exc())
             return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
     d = json.loads(r.text)
     t = []
@@ -503,7 +503,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         await SendDiscordNotification(request, uid, data)
                   
         except Exception as exc:
-            await tracebackHandler(request, exc)
+            await tracebackHandler(request, exc, traceback.format_exc())
 
     try:
         if "challenge" in app.config.plugins and isdelivered and not duplicate:
@@ -790,7 +790,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                 await app.db.commit(dhrid)
                 
     except Exception as exc:
-        await tracebackHandler(request, exc)
+        await tracebackHandler(request, exc, traceback.format_exc())
 
     return Response(status_code=204)
     

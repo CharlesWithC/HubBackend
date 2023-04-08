@@ -132,7 +132,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     else:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
                 except Exception as exc:
-                    await tracebackHandler(request, exc)
+                    await tracebackHandler(request, exc, traceback.format_exc())
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         except:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -176,7 +176,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     else:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
                 except Exception as exc:
-                    await tracebackHandler(request, exc)
+                    await tracebackHandler(request, exc, traceback.format_exc())
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         except:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -349,7 +349,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
             except Exception as exc:
-                await tracebackHandler(request, exc)
+                await tracebackHandler(request, exc, traceback.format_exc())
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"

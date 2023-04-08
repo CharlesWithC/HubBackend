@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.5.2**  
+Added Discord Role Connection  
+**Hint** The application will automatically `PUT` application metadata to Discord API on startup. Users can update their own metadata with **PATCH** `/member/roles/rank`. Only users logged in after the update will be able to use this feature as Discord API `Access Token` is required.  
+
 **v2.5.1**  
 1.Added economy-merch  
 **Hint** The company owns all the merch. Member will transfer balance to the company when purchasing, and company will transfer balance to member when the member sells the merch.  

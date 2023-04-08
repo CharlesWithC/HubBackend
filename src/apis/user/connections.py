@@ -150,12 +150,18 @@ async def patch_discord(request: Request, response: Response, authorization: str
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/connect")
         tokens = discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
+            await app.db.extend_conn(dhrid, 30)
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+            await app.db.extend_conn(dhrid, 2)
             if not 'id' in user_data:
                 response.status_code = 400
                 return {"error": "Discord Error: " + user_data['message']}
             discordid = user_data['id']
             tokens = {**tokens, **user_data}
+
+            (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
+            await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
+            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, 'connect', '{access_token}', '{refresh_token}', {expire_timestamp})")
 
             await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND discordid = {discordid}")
             t = await app.db.fetchall(dhrid)
@@ -176,7 +182,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
 
     except Exception as exc:
-        await tracebackHandler(request, exc)
+        await tracebackHandler(request, exc, traceback.format_exc())
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
     

@@ -19,16 +19,16 @@ from api import tracebackHandler
 async def get_redirect(request: Request, connect_account: Optional[bool] = False):
     app = request.app
     if not connect_account:
-        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email%20role_connections.write", status_code=302)
     else:
-        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email%20role_connections.write", status_code=302)
     
 async def get_connect(request: Request, code: Optional[str] = "", error_description: Optional[str] = ""):
     app = request.app
     referer = request.headers.get("Referer")
     data = str(request.query_params)
     if referer in ["", "-", None] or data == "":
-        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email", status_code=302)
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fconnect&response_type=code&scope=identify%20email%20role_connections.write", status_code=302)
 
     if code == "":
         return RedirectResponse(url=getUrl4Msg(app, error_description), status_code=302)
@@ -39,7 +39,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
     app = request.app
     referer = request.headers.get("Referer")
     if referer in ["", "-", None] or code == "" and error_description == "":
-        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email", status_code=302)
+        return RedirectResponse(url=f"https://discord.com/api/oauth2/authorize?client_id={app.config.discord_client_id}&redirect_uri=https%3A%2F%2F{app.config.apidomain}%2F{app.config.abbr}%2Fauth%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email%20role_connections.write", status_code=302)
     
     if code == "":
         return RedirectResponse(url=getUrl4Msg(app, error_description), status_code=302)
@@ -55,7 +55,9 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/callback")
         tokens = discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
+            await app.db.extend_conn(dhrid, 30)
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+            await app.db.extend_conn(dhrid, 2)
             if not 'id' in user_data:
                 return RedirectResponse(url=getUrl4Msg(app, "Discord Error: " + user_data['message']), status_code=302)
             discordid = user_data['id']
@@ -71,6 +73,10 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
 
             await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
             await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
+            
+            (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
+            await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
+            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, 'callback', '{access_token}', '{refresh_token}', {expire_timestamp})")
 
             await app.db.execute(dhrid, f"SELECT uid, mfa_secret, email FROM user WHERE discordid = {discordid}")
             t = await app.db.fetchall(dhrid)
@@ -149,5 +155,5 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
             return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)
 
     except Exception as exc:
-        await tracebackHandler(request, exc)
+        await tracebackHandler(request, exc, traceback.format_exc())
         return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "unknown_error")), status_code=302)

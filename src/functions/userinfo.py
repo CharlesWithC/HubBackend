@@ -2,12 +2,14 @@
 # Author: @CharlesWithC
 
 import time
+import traceback  # TEMP
 
 import multilang as ml
 from functions.dataop import *
 from functions.general import *
 from functions.security import auth
 from static import *
+from discord_oauth2 import DiscordAuth
 
 
 async def getHighestActiveRole(request):
@@ -203,3 +205,58 @@ async def GetUserLanguage(request, uid):
         return app.config.language
     app.state.cache_language[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]
+
+async def RefreshDiscordAccessToken(app):
+    while 1:
+        try:
+            dhrid = genrid()
+            await app.db.new_conn(dhrid)
+
+            npid = -1
+            nlup = -1
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-discord-refresh-pid'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                npid = int(t[0][0])
+            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-discord-refresh-last-update'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                nlup = int(t[0][0])
+            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 600:
+                try:
+                    await asyncio.sleep(60)
+                except:
+                    return
+                continue
+            await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-discord-refresh-pid' OR skey = 'process-discord-refresh-last-update'")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-discord-refresh-pid', '{os.getpid()}')")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-discord-refresh-last-update', '{int(time.time())}')")
+            await app.db.commit(dhrid)
+
+            discord_auth_callback = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/callback")
+            discord_auth_connect = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/connect")
+
+            await app.db.execute(dhrid, f"SELECT discordid, source, refresh_token FROM discord_access_token WHERE expire_timestamp <= {int(time.time() + 3600)}")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                (discordid, source, refresh_token) = (tt[0], tt[1], tt[2])
+                await app.db.extend_conn(dhrid, 30)
+                if source == "callback":
+                    tokens = discord_auth_callback.refresh_token(refresh_token)
+                elif source == "connect":
+                    tokens = discord_auth_connect.refresh_token(refresh_token)
+                await app.db.extend_conn(dhrid, 2)
+                await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
+                if "error" in tokens.keys():
+                    continue
+
+                (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
+                await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, 'callback', '{access_token}', '{refresh_token}', {expire_timestamp})")
+
+            await app.db.commit(dhrid)
+            await app.db.close_conn(dhrid)
+
+        except:
+            pass
+
+        await asyncio.sleep(600)

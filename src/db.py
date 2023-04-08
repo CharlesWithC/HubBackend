@@ -18,6 +18,7 @@ def init(app):
     # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS discord_access_token (discordid BIGINT UNSIGNED, source TEXT, access_token TEXT, refresh_token TEXT, expire_timestamp BIGINT)") # source is callback|connect
     # uid is unique identifier, userid is actually member id
     cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")

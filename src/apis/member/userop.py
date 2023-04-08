@@ -177,7 +177,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
             return {"error": ml.tr(request, "current_user_didnt_join_discord", force_lang = au["language"])}
 
     except Exception as exc:
-        return await tracebackHandler(request, exc)
+        return await tracebackHandler(request, exc, traceback.format_exc())
 
 async def post_resign(request: Request, response: Response, authorization: str = Header(None)):
     """Resigns the authorized user, set userid to -1, returns 204"""
@@ -244,7 +244,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
             except Exception as exc:
-                await tracebackHandler(request, exc)
+                await tracebackHandler(request, exc, traceback.format_exc())
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"

@@ -67,7 +67,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
                         del ffconfig[tt]
     except Exception as exc:
         ffconfig = {}
-        await tracebackHandler(request, exc)
+        await tracebackHandler(request, exc, traceback.format_exc())
     
     # old config
     t = copy.deepcopy(app.backup_config)
