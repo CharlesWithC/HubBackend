@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.5.0"
+        "version": "2.5.1"
     },
     "paths": {
         "/abbr": {
@@ -3377,6 +3377,18 @@
                 }
             }
         },
+        "/abbr/economy": {
+            "get": {
+                "summary": "Get Economy Config",
+                "tags": ["economy"],
+                "operationId": "get_economy",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "responses": {}
+            }
+        },
         "/abbr/economy/balance/leaderboard": {
             "get": {
                 "summary": "Get Balance Leaderboard",
@@ -3706,7 +3718,7 @@
         },
         "/abbr/economy/garages/list": {
             "get": {
-                "summary": "Get Garages List (Purchased)",
+                "summary": "Get Garages List (Owned)",
                 "tags": ["economy_garages"],
                 "operationId": "get_economy_garages_list",
                 "security": [{
@@ -4140,7 +4152,7 @@
         },
         "/abbr/economy/trucks/list": {
             "get": {
-                "summary": "Get Trucks List (Purchased)",
+                "summary": "Get Trucks List (Owned)",
                 "tags": ["economy_trucks"],
                 "operationId": "get_economy_trucks_list",
                 "security": [{
@@ -4178,14 +4190,6 @@
                         "type": "string"
                     },
                     "name": "garageid",
-                    "in": "query"
-                }, {
-                    "required": false,
-                    "schema": {
-                        "title": "Truck ID",
-                        "type": "string"
-                    },
-                    "name": "truckid",
                     "in": "query"
                 }, {
                     "required": false,
@@ -4604,6 +4608,212 @@
                 "responses": {}
             }
         },
+        "/abbr/economy/merch": {
+            "get": {
+                "summary": "Get Merch Products",
+                "tags": ["economy_merch"],
+                "operationId": "get_economy_merch",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/merch/list": {
+            "get": {
+                "summary": "Get Merch List (Owned)",
+                "tags": ["economy_merch"],
+                "operationId": "get_economy_merch_list",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Merch ID",
+                        "type": "string"
+                    },
+                    "name": "merchid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Owner User ID",
+                        "type": "integer"
+                    },
+                    "name": "owner",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Minimum Price",
+                        "type": "integer"
+                    },
+                    "name": "min_price",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Maximum Price",
+                        "type": "integer"
+                    },
+                    "name": "max_price",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Purchased After",
+                        "type": "integer"
+                    },
+                    "name": "purchased_after",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Purchased Before",
+                        "type": "integer"
+                    },
+                    "name": "purchased_before",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (merchid, itemid, userid, price, purchase_timestamp)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/economy/merch/{merchid}/purchase": {
+            "post": {
+                "summary": "Purchase a Merch",
+                "tags": ["economy_merch"],
+                "operationId": "post_economy_merch_merchid_purchase",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Merch ID",
+                        "type": "string"
+                    },
+                    "name": "merchid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | user-{userid})",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/merch/{itemid}/transfer": {
+            "post": {
+                "summary": "Transfer a Merch",
+                "tags": ["economy_merch"],
+                "operationId": "post_economy_merch_itemid_transfer",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Item ID",
+                        "type": "integer"
+                    },
+                    "name": "itemid",
+                    "in": "path"
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "description": "Owner (self | user-{userid})",
+                                        "type": "string"
+                                    },
+                                    "message": {
+                                        "description": "Message",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/abbr/economy/merch/{itemid}/sell": {
+            "post": {
+                "summary": "Sell a Merch",
+                "tags": ["economy_merch"],
+                "operationId": "post_economy_merch_itemid_sell",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Item ID",
+                        "type": "integer"
+                    },
+                    "name": "itemid",
+                    "in": "path"
+                }],
+                "responses": {}
+            }
+        },
         "/abbr/events/list": {
             "get": {
                 "summary": "Get Event List",
@@ -4938,6 +5148,9 @@
         "name": "downloads",
         "description": "Download Plugin"
     }, {
+        "name": "economy",
+        "description": "Economy Plugin"
+    }, {
         "name": "economy_balance",
         "description": "Economy Plugin (Balance)"
     }, {
@@ -4946,6 +5159,9 @@
     }, {
         "name": "economy_trucks",
         "description": "Economy Plugin (Trucks)"
+    }, {
+        "name": "economy_merch",
+        "description": "Economy Plugin (Merch)"
     }, {
         "name": "event",
         "description": "Event Plugin"

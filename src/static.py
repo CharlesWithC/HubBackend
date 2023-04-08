@@ -46,10 +46,13 @@ def load(app):
 
     app.trucks = {}
     app.garages = {}
+    app.merch = {}
     for truck in app.config.__dict__["economy"].__dict__["trucks"]:
         app.trucks[truck["id"]] = truck
     for garage in app.config.__dict__["economy"].__dict__["garages"]:
         app.garages[garage["id"]] = garage
+    for merch in app.config.__dict__["economy"].__dict__["merch"]:
+        app.merch[merch["id"]] = merch
     
     return app
 
@@ -95,7 +98,7 @@ EN_STRINGTABLE = {
     "language_not_supported": "The language is not supported.",
     "invalid_avatar_url": "Invalid avatar URL.",
     "avatar_domain_not_whitelisted": "The domain of the avatar is not whitelisted.",
-    "smtp_app.configuration_invalid": "SMTP app.configuration is invalid, unable to send email.",
+    "smtp_configuration_invalid": "SMTP configuration is invalid, unable to send email.",
     "auth_secret_invalid_or_expired": "Authorization secret is invalid or has expired.",
 
     "connection_not_found": "{app} account is not connected.",
@@ -112,7 +115,7 @@ EN_STRINGTABLE = {
     "custom_profile_disabled": "Custom profile is disabled.",
 
     "steam_api_error": "Steam API is inaccessible.",
-    "steam_api_key_not_app.configured": "Steam API Key is not app.configured.",
+    "steam_api_key_not_configured": "Steam API Key is not configured.",
     "invalid_steam_auth": "Invalid Steam Authentication.",
     "invalid_truckersmp_id": "Invalid TruckersMP ID.",
     "truckersmp_api_error": "TruckersMP API is inaccessible.",
@@ -147,15 +150,15 @@ EN_STRINGTABLE = {
 
     "invalid_distance_unit": "Invalid distance unit. Only \"metric\" and \"imperial\" is accepted.",
     "invalid_value": "Invalid value for {key}",
-    "app.config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
-    "app.config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
-    "app.config_invalid_tracker": "Invalid value for \"tracker\": Must be \"tracksim\".",
-    "app.config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
-    "app.config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
-    "app.config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
-    "app.config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
-    "app.config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
-    "app.config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
+    "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
+    "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"tracksim\".",
+    "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
+    "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
+    "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
+    "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
+    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
+    "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
     "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
     "discord_api_inaccessible": "Discord API is inaccessible.",
 
@@ -221,6 +224,7 @@ EN_STRINGTABLE = {
     "garage": "garage",
     "garage_slot": "garage slot",
     "economy_truck": "truck",
+    "merch": "merch",
     "purchase_forbidden": "You are not allowed to purchase a {item}.",
     "purchase_company_forbidden": "You are not allowed to purchase a {item} for the company.",
     "modify_forbidden": "You are not allowed to modify the {item}.",
@@ -263,6 +267,7 @@ EN_STRINGTABLE = {
     "balance_visibility_already_private": "The user's balance is already private.",
     "from_to_user_must_not_be_same": "Sender and recipent must not be the same.",
     "cannot_transfer_to_oneself": "You cannot transfer balance to yourself.",
+    "merch_not_found": "Merch not found",
 
     "notification": "Notification",
     "notification_not_found": "Notification not found.",

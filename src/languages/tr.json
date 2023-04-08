@@ -159,6 +159,7 @@
     "garage": "garaj",
     "garage_slot": "garaj yuvası",
     "economy_truck": "kamyon",
+    "merch": "merch",
     "purchase_forbidden": "Bir {item} satın almanıza izin verilmez.",
     "purchase_company_forbidden": "Siz şirket için bir {item} satın almasına izin verilmez.",
     "modify_forbidden": "{item} üzerinde değişiklik yapmanıza izin verilmez.",
@@ -201,6 +202,7 @@
     "balance_visibility_already_private": "Kullanıcının bakiyesi zaten gizli.",
     "from_to_user_must_not_be_same": "Gönderen ve reçete aynı olmamalıdır.",
     "cannot_transfer_to_oneself": "Bakiyeyi kendinize aktaramazsınız.",
+    "merch_not_found": "Merch bulunamadı",
 
     "notification": "Bildirim",
     "notification_not_found": "Bildirim bulunamadı.",

@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.5.1**  
+1.Added economy-merch  
+**Hint** The company owns all the merch. Member will transfer balance to the company when purchasing, and company will transfer balance to member when the member sells the merch.  
+2.Added route `/economy` for fetching config  
+
 **v2.5.0**  
 1.Improved `/dlog/statistics/summary` query performance  
 **Note** Cache expiry for this endpoint was reduced from `120` to `15` (seconds).  

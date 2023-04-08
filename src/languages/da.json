@@ -159,6 +159,7 @@
     "garage": "garage",
     "garage_slot": "garageplads",
     "economy_truck": "lastbil",
+    "merch": "merch",
     "purchase_forbidden": "Du har ikke lov at købe en {item}.",
     "purchase_company_forbidden": "Du har ikke tilladelse til at købe en {item} til virksomheden.",
     "modify_forbidden": "Du har ikke tilladelse til at ændre {item}.",
@@ -201,6 +202,7 @@
     "balance_visibility_already_private": "Brugerens saldo er allerede privat.",
     "from_to_user_must_not_be_same": "Afsender og opskrift må ikke være ens.",
     "cannot_transfer_to_oneself": "Du kan ikke overføre saldoen til dig selv.",
+    "merch_not_found": "Merch ikke fundet",
 
     "notification": "Meddelelse",
     "notification_not_found": "Meddelelse ikke fundet.",

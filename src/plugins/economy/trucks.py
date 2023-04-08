@@ -45,7 +45,7 @@ async def get_all_trucks(request: Request, response: Response, authorization: st
     
     return app.config.economy.trucks
 
-async def get_list(request: Request, response: Response, authorization: str = Header(None), \
+async def get_truck_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, truckid: Optional[str] = "", garageid: Optional[str] = "",\
         owner: Optional[int] = None, min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
@@ -182,7 +182,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /economy/trucks/vehicleid/operation/history', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/trucks/operation/history', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -286,7 +286,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
 async def post_truck_purchase(request: Request, response: Response, truckid: str, authorization: str = Header(None), owner: Optional[str] = "self"):
     '''Purchase a truck, returns `vehicleid`, `cost`, `balance`.
     
-    JSON: `{"owner": str, "slotid": int, "assignee": Optional[int]}`
+    JSON: `{"owner": Optional[str], "slotid": int, "assignee": Optional[int]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -297,7 +297,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/truckid/purchase', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -416,7 +416,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     vehicleid = (await app.db.fetchone(dhrid))[0]
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {int(balance - truck['price'])}, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {round(balance - truck['price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, userid = foruser))["name"]
@@ -424,10 +424,10 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
 
     return {"vehicleid": vehicleid, "cost": truck["price"], "balance": round(balance - truck["price"])}
 
-async def post_truck_transfer(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
+async def post_truck_transfer(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
     
-    JSON: `{"owner": str, "assignee": Optional[int], "message": Optional[str]}`
+    JSON: `{"owner": Optional[str], "assignee": Optional[int], "message": Optional[str]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -438,7 +438,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/transfer', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -566,7 +566,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: s
     
     return Response(status_code=204)
 
-async def post_truck_relocate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
+async def post_truck_relocate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
     
     JSON: `{"slotid": int"}`'''
@@ -574,7 +574,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/relocate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/relocate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -642,15 +642,15 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: s
 
     return Response(status_code=204)
 
-async def post_truck_activate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
-    '''Activates a truck, returns 204.
+async def post_truck_activate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
+    '''Activate a truck, returns 204.
     
     [NOTE] If the owner / assignee has multiple trucks of the same model, other trucks of the same model will be deactivated.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/activate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/activate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -705,15 +705,15 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: s
 
     return Response(status_code=204)
 
-async def post_truck_deactivate(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
-    '''Deactivates a truck, returns 204.
+async def post_truck_deactivate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
+    '''Deactivate a truck, returns 204.
     
     [NOTE] If there's no status truck of a model, new jobs of that model will be charged a rental cost.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/deactivate', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/deactivate', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -753,15 +753,15 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
 
     return Response(status_code=204)
 
-async def post_truck_repair(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
-    '''Repairs a truck, returns `cost`, `balance`.
+async def post_truck_repair(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
+    '''Repair a truck, returns `cost`, `balance`.
     
     [NOTE] If the truck's damage > app.config.economy.max_wear_before_service, new jobs will be charged a rental cost. Once the issue is noticed, status state of the truck will be modified to -1. If the truck's state is -1 and a repair is performed, it will be reactivated automatically if there's no other status trucks.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/repair', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/repair', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -814,7 +814,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: str
         return {"cost": cost, "balance": round(balance - cost)}
     
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {cost} WHERE userid = {userid}")
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({userid}, -1004, {cost}, 't{vehicleid}-service', 'damage-{damage}', {int(balance - cost)}, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({userid}, -1004, {cost}, 't{vehicleid}-service', 'damage-{damage}', {round(balance - cost)}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     await app.db.execute(dhrid, f"UPDATE economy_truck SET damage = 0, service_cost = service_cost + {cost} WHERE vehicleid = {vehicleid}")
@@ -838,15 +838,15 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: str
 
     return {"cost": cost, "balance": round(balance - cost)}
 
-async def post_truck_sell(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
-    '''Sells a truck, returns `refund`, `balance`.
+async def post_truck_sell(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
+    '''Sell a truck, returns `refund`, `balance`.
     
     [Note] refund = price * (1 - damage) * app.config.economy.truck_refund (ratio)'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/sell', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -896,15 +896,15 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: str, 
 
     return {"refund": refund, "balance": round(balance + refund)}
 
-async def post_truck_scrap(request: Request, response: Response, vehicleid: str, authorization: str = Header(None)):
-    '''Scraps a truck, returns `refund`, `balance`.
+async def post_truck_scrap(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
+    '''Scrap a truck, returns `refund`, `balance`.
     
     [Note] refund = price * app.config.economy.scrap_refund (ratio)'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/trucks/vehicleid/scrap', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/trucks/scrap', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

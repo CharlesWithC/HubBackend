@@ -159,6 +159,7 @@
     "garage": "garage",
     "garage_slot": "place de garage",
     "economy_truck": "camion",
+    "merch": "merch",
     "purchase_forbidden": "Vous n'êtes pas autorisé pour acheter un {item}.",
     "purchase_company_forbidden": "Vous n'êtes pas autorisé à acheter un {item} pour l'entreprise.",
     "modify_forbidden": "Vous n'êtes pas autorisé à modifier le {item}.",
@@ -201,6 +202,7 @@
     "balance_visibility_already_private": "Le solde de l'utilisateur est déjà privé.",
     "from_to_user_must_not_be_same": "L'expéditeur et le destinataire ne doivent pas être identiques.",
     "cannot_transfer_to_oneself": "Vous ne pouvez pas vous transférer de solde.",
+    "merch_not_found": "Merch introuvable",
 
     "notification": "Notification",
     "notification_not_found": "Notification introuvable.",

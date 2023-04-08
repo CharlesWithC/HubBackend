@@ -159,6 +159,7 @@
     "garage": "гараж",
     "garage_slot": "гаражный слот",
     "economy_truck": "грузовик",
+    "merch": "merch",
     "purchase_forbidden": "Вы не можете приобрести {item}.",
     "purchase_company_forbidden": "Вы запрещено покупать {item} для компании.",
     "modify_forbidden": "Вам не разрешено изменять {item}.",
@@ -201,6 +202,7 @@
     "balance_visibility_already_private": "Баланс пользователя уже закрыт",
     "from_to_user_must_not_be_same": "Отправитель и получатель не должны совпадать.",
     "cannot_transfer_to_oneself": "Вы не можете перевести баланс себе.",
+    "merch_not_found": "товар не найден",
 
     "notification": "Уведомление",
     "notification_not_found": "Уведомление не найдено.",

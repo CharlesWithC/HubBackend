@@ -61,6 +61,8 @@ routes_downloads = [
 ]
 
 routes_economy = [
+    APIRoute("/economy", economy.get_economy, methods=["GET"], response_class=JSONResponse),
+
     APIRoute("/economy/balance/leaderboard", economy.get_balance_leaderboard, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/transfer", economy.post_balance_transfer, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/balance", economy.get_balance, methods=["GET"], response_class=JSONResponse),
@@ -70,7 +72,7 @@ routes_economy = [
     APIRoute("/economy/balance/{userid}/visibility/{visibility}", economy.post_balance_visibility, methods=["POST"], response_class=JSONResponse),
     
     APIRoute("/economy/garages", economy.get_all_garages, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/economy/garages/list", economy.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/economy/garages/list", economy.get_garage_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}", economy.get_garage, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}/purchase", economy.post_garage_purchase, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}/transfer", economy.post_garage_transfer, methods=["POST"], response_class=JSONResponse),
@@ -82,7 +84,7 @@ routes_economy = [
     APIRoute("/economy/garages/{garageid}/slots/{slotid}/sell", economy.post_garage_slot_sell, methods=["POST"], response_class=JSONResponse),
     
     APIRoute("/economy/trucks", economy.get_all_trucks, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/economy/trucks/list", economy.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/economy/trucks/list", economy.get_truck_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{vehicleid}", economy.get_truck, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{vehicleid}/{operation}/history", economy.get_truck_operation_history, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{truckid}/purchase", economy.post_truck_purchase, methods=["POST"], response_class=JSONResponse),
@@ -92,7 +94,13 @@ routes_economy = [
     APIRoute("/economy/trucks/{truckid}/deactivate", economy.post_truck_deactivate, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{truckid}/repair", economy.post_truck_repair, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{truckid}/sell", economy.post_truck_sell, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/economy/trucks/{truckid}/scrap", economy.post_truck_scrap, methods=["POST"], response_class=JSONResponse)
+    APIRoute("/economy/trucks/{truckid}/scrap", economy.post_truck_scrap, methods=["POST"], response_class=JSONResponse),
+    
+    APIRoute("/economy/merch", economy.get_all_merch, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/economy/merch/list", economy.get_merch_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/economy/merch/{merchid}/purchase", economy.post_merch_purchase, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/economy/merch/{itemid}/transfer", economy.post_merch_transfer, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/economy/merch/{itemid}/sell", economy.post_merch_sell, methods=["POST"], response_class=JSONResponse)
 ]
 
 routes_event = [

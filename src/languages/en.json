@@ -160,6 +160,7 @@
     "garage": "garage",
     "garage_slot": "garage slot",
     "economy_truck": "truck",
+    "merch": "merch",
     "purchase_forbidden": "You are not allowed to purchase a {item}.",
     "purchase_company_forbidden": "You are not allowed to purchase a {item} for the company.",
     "modify_forbidden": "You are not allowed to modify the {item}.",
@@ -202,6 +203,7 @@
     "balance_visibility_already_private": "The user's balance is already private.",
     "from_to_user_must_not_be_same": "Sender and recipent must not be the same.",
     "cannot_transfer_to_oneself": "You cannot transfer balance to yourself.",
+    "merch_not_found": "Merch not found",
 
     "notification": "Notification",
     "notification_not_found": "Notification not found.",

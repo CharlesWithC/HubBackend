@@ -31,7 +31,7 @@ async def get_all_garages(request: Request, response: Response, authorization: s
 
     return app.config.economy.garages
 
-async def get_list(request: Request, response: Response, authorization: str = Header(None), \
+async def get_garage_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, 
         min_trucks: Optional[int] = None, max_trucks: Optional[int] = None,
         min_income: Optional[int] = None, max_income: Optional[int] = None,
@@ -149,7 +149,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /economy/garages/garageid/slots/list', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/garages/slots/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -205,7 +205,7 @@ async def get_garage_slot(request: Request, response: Response, garageid: str, s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /economy/garages/garageid/slots/slotid', 60, 60)
+    rl = await ratelimit(request, 'GET /economy/garages/slots/slotid', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -231,9 +231,9 @@ async def get_garage_slot(request: Request, response: Response, garageid: str, s
     return {"slotid": tt[0], "slot_owner": await GetUserInfo(request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(request, tt[2]), "truck_owner": await GetUserInfo(request, userid = tt[3])}
 
 async def post_garage_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
-    '''Purchases a garage, returns `slotids`, `cost`, `balance`.
+    '''Purchase a garage, returns `slotids`, `cost`, `balance`.
     
-    JSON: `{"owner": str}`
+    JSON: `{"owner": Optional[str]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -242,7 +242,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/purchase', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -330,15 +330,15 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
         await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
         slotid = (await app.db.fetchone(dhrid))[0]
         slotids.append(slotid)
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['price']}, 'g-{garageid}-purchase', 'for-user-{foruser}', {int(balance - garage['price'])}, NULL, {ts})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['price']}, 'g-{garageid}-purchase', 'for-user-{foruser}', {round(balance - garage['price'])}, NULL, {ts})")
     await app.db.commit(dhrid)
 
     return {"slotids": slotids, "cost": garage['price'], "balance": round(balance - garage['price'])}
 
 async def post_garage_slot_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
-    '''Purchases a slot of a garage, returns `slotid`, `cost`, `balance`.
+    '''Purchase a slot of a garage, returns `slotid`, `cost`, `balance`.
     
-    JSON: `{"owner": str}`
+    JSON: `{"owner": Optional[str]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -347,7 +347,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/slots/purchase', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/slots/purchase', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -430,15 +430,15 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
     slotid = (await app.db.fetchone(dhrid))[0]
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['slot_price']}, 'gs{slotid}-purchase', 'for-user-{foruser}', {int(balance - garage['slot_price'])}, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['slot_price']}, 'gs{slotid}-purchase', 'for-user-{foruser}', {round(balance - garage['slot_price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     return {"slotid": slotid, "cost": garage['slot_price'], "balance": round(balance - garage['slot_price'])}
 
 async def post_garage_transfer(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
-    '''Transfers a garage (ownership).
+    '''Transfer a garage (ownership).
     
-    JSON: `{"owner": str, "message": Optional[str]}`
+    JSON: `{"owner": Optional[str], "message": Optional[str]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -447,7 +447,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/transfer', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -503,7 +503,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
         response.status_code = 428
         return {"error": ml.tr(request, "garage_not_purchased", force_lang = au["language"])}
     current_owner = t[0][0]
-    if current_owner != -1000 and current_owner == foruser:
+    if current_owner == foruser:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
     
@@ -530,9 +530,9 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     return Response(status_code=204)
 
 async def post_garage_slot_transfer(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
-    '''Transfers a garage (ownership).
+    '''Transfer a garage (ownership).
     
-    JSON: `{"owner": str, "message": Optional[str]}`
+    JSON: `{"owner": Optional[str], "message": Optional[str]}`
     
     `owner` can be `self` | `company` | `user-{userid}`
 
@@ -541,7 +541,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/slots/slotid/transfer', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/slots/transfer', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -621,14 +621,14 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     return Response(status_code=204)
 
 async def post_garage_sell(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
-    '''Sells a garage (ownership), returns `refund`, `balance`.
+    '''Sell a garage (ownership), returns `refund`, `balance`.
 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/sell', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -690,14 +690,14 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     return {"refund": refund, "balance": round(balance + refund)}
 
 async def post_garage_slot_sell(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
-    '''Sells a garage (ownership), returns `refund`, `balance`.
+    '''Sell a garage (ownership), returns `refund`, `balance`.
 
     [NOTE] There must be no slots under the garage and no trucks parked in the base slots.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /economy/garages/garageid/slots/slotid/sell', 60, 30)
+    rl = await ratelimit(request, 'POST /economy/garages/slots/sell', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

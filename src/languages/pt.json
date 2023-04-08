@@ -159,6 +159,7 @@
     "garage": "garagem",
     "garage_slot": "vaga de garagem",
     "economy_truck": "caminhão",
+    "merch": "merch",
     "purchase_forbidden": "Você não tem permissão para comprar um {item}.",
     "purchase_company_forbidden": "Você não tem permissão para comprar um {item} para a empresa.",
     "modify_forbidden": "Você não tem permissão para modificar o {item}.",
@@ -201,6 +202,7 @@
     "balance_visibility_already_private": "O saldo do usuário já é privado.",
     "from_to_user_must_not_be_same": "Remetente e destinatário não devem ser iguais.",
     "cannot_transfer_to_oneself": "Você não pode transferir saldo para si mesmo.",
+    "merch_not_found": "Merch não encontrado",
 
     "notification": "Notificação",
     "notification_not_found": "Notificação não encontrada.",

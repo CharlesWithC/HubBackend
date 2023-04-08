@@ -28,7 +28,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.5.0"
+version = "2.5.1"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -220,7 +220,6 @@ def createApp(config_path, first_init = False):
     app.add_middleware(api.HubMiddleware)
     app.add_middleware(GZipMiddleware)
 
-    db.init(app)
     app = static.load(app)
 
     app.state.dberr = []
@@ -238,6 +237,12 @@ def createApp(config_path, first_init = False):
     app.state.cache_userinfo = {} # user info cache (15 seconds)
     app.state_cache_activity = {} # activity cache (2 seconds)
     
-    app = initApp(app, first_init = first_init)
+    try:
+        db.init(app)
+        app = initApp(app, first_init = first_init)
+    except Exception as exc:
+        if first_init:
+            logger.error(f"[{app.config.abbr}] Error initializing app: {exc}")
+        return None
 
     return app
