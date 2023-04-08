@@ -1624,6 +1624,30 @@
                 "responses": {}
             }
         },
+        "/abbr/discord/role-connection/enable": {
+            "post": {
+                "summary": "Enable Discord Role Connection",
+                "tags": ["admin"],
+                "operationId": "post_discord_role_connection_enable",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "responses": {}
+            }
+        },
+        "/abbr/discord/role-connection/disable": {
+            "post": {
+                "summary": "Disable Discord Role Connection",
+                "tags": ["admin"],
+                "operationId": "post_discord_role_connection_disable",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "responses": {}
+            }
+        },
         "/abbr/config": {
             "get": {
                 "summary": "Get Config",

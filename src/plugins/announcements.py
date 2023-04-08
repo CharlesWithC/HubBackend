@@ -151,7 +151,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     if discord_channel_id is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(app, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au['userid']))["avatar"]}, "thumbnail": {"url": app.config.logo_url},"timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
+            r = await arequests.post(app, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers = headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au['userid']))["avatar"]}, "thumbnail": {"url": app.config.logo_url},"timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
@@ -216,7 +216,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     if discord_channel_id is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
         try:
-            r = await arequests.post(app, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers=headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au["userid"]))["avatar"]}, "thumbnail": {"url": app.config.logo_url}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
+            r = await arequests.post(app, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", headers = headers, data=json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au["userid"]))["avatar"]}, "thumbnail": {"url": app.config.logo_url}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:

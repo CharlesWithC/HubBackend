@@ -2,7 +2,11 @@
 
 **v2.5.2**  
 Added Discord Role Connection  
-**Hint** The application will automatically `PUT` application metadata to Discord API on startup. Users can update their own metadata with **PATCH** `/member/roles/rank`. Only users logged in after the update will be able to use this feature as Discord API `Access Token` is required.  
+**Hints**  
+i) **POST** `/discord/role-connection/enable` must be called to enable this function. (And `/.../disable` may be called to disable it.)  
+ii) User may get connected by logging in / connecting Discord.  
+iii) Metadata will be automatically updated when a job is submited, distance is added, user logged in or user connected Discord.  
+iv) User may manually update metadata with **PATCH** `/member/roles/rank`.  
 
 **v2.5.1**  
 1.Added economy-merch  
@@ -25,7 +29,7 @@ Added Discord Role Connection
 3.Fixed `scs_convoy`/`multiplayer` detection due to navio->tracksim migration  
 4.Prevented transferring to oneself in economy-balance  
 5.Added support to ommiting `/{userid}` for `/economy/balance`  
-6.Added support to ommiting JSON `owner` for `/../purchase` (default: `self`)  
+6.Added support to ommiting JSON `owner` for `/.../purchase` (default: `self`)  
 7.Improved traceback handler  
 
 **v2.4.2**  

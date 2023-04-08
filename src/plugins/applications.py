@@ -355,10 +355,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     if webhookurl != "":
         try:
-            if t[0][1].startswith("a_"):
-                author = {"name": t[0][0], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif"}
-            else:
-                author = {"name": t[0][0], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png"}
+            author = {"name": t[0][0], "icon_url": t[0][1]}
             
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
@@ -448,10 +445,7 @@ async def patch_application(request: Request, response: Response, applicationid:
 
     if webhookurl != "":
         try:
-            if t[0][1].startswith("a_"):
-                author = {"name": t[0][0], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.gif"}
-            else:
-                author = {"name": t[0][0], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{t[0][1]}.png"}
+            author = {"name": t[0][0], "icon_url": t[0][1]}
             
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"

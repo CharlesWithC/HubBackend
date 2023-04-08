@@ -26,6 +26,64 @@ class Dict2Obj(object):
             else:
                 setattr(self, key, d[key])
 
+async def post_discord_role_connection_enable(request: Request, response: Response, authorization: str = Header(None)):
+    """Enable Discord Role Connection"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'GET /discord/role-connection/enable', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, required_permission = ["admin"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+    try:
+        r = await arequests.put(app, f"https://discord.com/api/v10/applications/{app.config.discord_client_id}/role-connections/metadata", data = json.dumps([{"type": 2, "key": "dlog", "name": "Deliveries", "description": "Deliveries submitted", "name_localizations": {"es-ES": "Entregas"}}, {"type": 2, "key": "distance", "name": "Distance(km)", "description": "Distance(km) driven", "name_localizations": {"es-ES": "Distancia"}}, {"type": 7, "key": "is_driver", "name": "Driver", "description": "Must be a driver", "name_localizations": {"es-ES": "Conductor"}}, {"type": 6, "key": "member_since", "name": "Member Since", "description": "Days since creating an account", "name_localizations": {"es-ES": "Miembro Desde"}}]), headers = headers, dhrid = dhrid)
+        if r.status_code // 100 != 2:
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+        return Response(status_code=204)
+    except:
+        response.status_code = 503
+        return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+    
+async def post_discord_role_connection_disable(request: Request, response: Response, authorization: str = Header(None)):
+    """Disable Discord Role Connection"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'GET /discord/role-connection/disable', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, required_permission = ["admin"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+    try:
+        r = await arequests.put(app, f"https://discord.com/api/v10/applications/{app.config.discord_client_id}/role-connections/metadata", data = json.dumps([]), headers = headers, dhrid = dhrid)
+        if r.status_code // 100 != 2:
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+        return Response(status_code=204)
+    except:
+        response.status_code = 503
+        return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+
 async def get_config(request: Request, response: Response, authorization: str = Header(None)):
     """Returns saved config (config) and loaded config (backup)"""
     app = request.app

@@ -262,6 +262,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES (-1, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
         else:
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES (-1, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
+        await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid))["discordid"])
         await app.db.commit(dhrid)
     if mythpoint != 0:
         await app.db.execute(dhrid, f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
@@ -385,7 +386,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
         try:
-            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
             d = json.loads(r.text)
             if "roles" in d:
                 roles = d["roles"]
@@ -394,7 +395,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                     if role in list(app.rankrole.values()):
                         curroles.append(role)
                 for role in curroles:
-                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers = headers, timeout = 3, dhrid = dhrid)
                     if r.status_code // 100 != 2:
                         err = json.loads(r.text)
                         await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))

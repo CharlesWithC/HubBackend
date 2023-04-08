@@ -246,7 +246,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
             r = None
             try:
-                r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers=headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
+                r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers = headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(request, uid)), \
                 "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))

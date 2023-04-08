@@ -213,10 +213,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
 
     if app.config.webhook_division != "":
         try:
-            if avatar.startswith("a_"):
-                author = {"name": tt[1], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.gif"}
-            else:
-                author = {"name": tt[1], "icon_url": f"https://cdn.discordapp.com/avatars/{discordid}/{avatar}.png"}
+            author = {"name": tt[1], "icon_url": avatar}
                 
             r = await arequests.post(app, app.config.webhook_division, data=json.dumps({"content": app.config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:

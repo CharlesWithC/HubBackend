@@ -172,6 +172,8 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
             await app.db.commit(dhrid)
 
+            await UpdateRoleConnection(request, discordid)
+
             return Response(status_code=204)
         
         if 'error_description' in tokens.keys():

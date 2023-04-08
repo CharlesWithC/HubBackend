@@ -135,6 +135,8 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
             await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
             await app.db.commit(dhrid)
 
+            await UpdateRoleConnection(request, discordid)
+
             username = (await GetUserInfo(request, uid = uid))["name"]
             language = await GetUserLanguage(request, uid)
             await AuditLog(request, uid, ml.ctr(request, "discord_login", var = {"country": getRequestCountry(request)}))

@@ -35,7 +35,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
                 response.status_code = au["code"]
                 del au["code"]
                 return au
-        quser = f"userid = {userid} AND"
+        quser = f"userid = {userid} AND "
 
     # cache
     l = list(app.state.cache_statistics.keys())
@@ -145,14 +145,14 @@ async def get_summary(request: Request, response: Response, authorization: str =
         ats_profit_0_0 AS profit_cancelled_tot_dollar, \
         ats_profit_0_1 AS profit_cancelled_new_dollar \
         FROM ( SELECT \
-        COUNT(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ets2_job_1_0, \
-        COUNT(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_1_1, \
-        COUNT(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ets2_job_0_0, \
-        COUNT(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_0_1, \
-        COUNT(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ats_job_1_0, \
-        COUNT(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_1_1, \
-        COUNT(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ats_job_0_0, \
-        COUNT(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_0_1, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ets2_job_1_0, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_1_1, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ets2_job_0_0, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_0_1, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ats_job_1_0, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_1_1, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ats_job_0_0, \
+        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_0_1, \
         SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN distance END) AS ets2_distance_1_0, \
         SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ets2_distance_1_1, \
         SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN distance END) AS ets2_distance_0_0, \
@@ -177,7 +177,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_1_1, \
         SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ats_profit_0_0, \
         SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_0_1 \
-        FROM dlog WHERE {quser} logid >= 0 ) AS stats")
+        FROM dlog WHERE {quser} logid >= -1) AS stats")
     t = list(await app.db.fetchone(dhrid))
     t = [nint(x) for x in t]
     keys = [desc[0] for desc in app.db.conns[dhrid][1].description]

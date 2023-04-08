@@ -238,7 +238,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         if discordid is not None:
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
             try:
-                r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers=headers, timeout = 3, dhrid = dhrid)
+                r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
                 d = json.loads(r.text)
                 if "roles" in d:
                     roles = d["roles"]
@@ -247,7 +247,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         if role in list(app.rankrole.values()):
                             curroles.append(role)
                     for role in curroles:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers=headers, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers = headers, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
@@ -257,7 +257,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await app.db.execute(dhrid, f"SELECT userid, name, uid FROM user WHERE steamid = {steamid}")
+    await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -265,6 +265,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     userid = t[0][0]
     username = t[0][1]
     uid = t[0][2]
+    discordid = t[0][3]
     trackerid = d["data"]["object"]["id"]
 
     duplicate = False # NOTE only for debugging purpose
@@ -342,7 +343,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         
     if not delivery_rule_ok:
         await AuditLog(request, uid, ml.ctr(request, f"delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}))
-        await notification(request, "dlog", uid, ml.tr(f"delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}, force_lang = await GetUserLanguage(request, uid)))
+        await notification(request, "dlog", uid, ml.tr(request, f"delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 
@@ -462,7 +463,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     try:
-                        r = await arequests.post(app, f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers=headers, data=json.dumps(data), dhrid = dhrid)
+                        r = await arequests.post(app, f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers = headers, data=json.dumps(data), dhrid = dhrid)
                         if r.status_code == 401:
                             DisableDiscordIntegration(app)
                     except:
@@ -501,6 +502,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}, "color": int(app.config.hex_color, 16)}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
                         await SendDiscordNotification(request, uid, data)
+                    await UpdateRoleConnection(request, discordid)
                   
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())

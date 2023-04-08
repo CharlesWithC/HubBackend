@@ -55,7 +55,7 @@ async def ProcessDiscordMessage(app): # thread
 
             try:
                 r = requests.post(f"https://discord.com/api/v10/channels/{channelid}/messages", \
-                    headers=headers, data=json.dumps(data))
+                    headers = headers, data=json.dumps(data))
             except:
                 try:
                     await asyncio.sleep(5)
@@ -251,7 +251,7 @@ async def AutoMessage(app, meta, setvar):
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
             ddurl = f"https://discord.com/api/v10/channels/{meta.channel_id}/messages"
-            r = await arequests.post(app, ddurl, headers=headers, data=data)
+            r = await arequests.post(app, ddurl, headers = headers, data=data)
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
     except:

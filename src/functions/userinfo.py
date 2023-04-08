@@ -2,12 +2,13 @@
 # Author: @CharlesWithC
 
 import time
-import traceback  # TEMP
+from fastapi import Request
 
 import multilang as ml
 from functions.dataop import *
 from functions.general import *
-from functions.security import auth
+from functions.security import auth, checkPerm
+from functions.arequests import *
 from static import *
 from discord_oauth2 import DiscordAuth
 
@@ -205,6 +206,36 @@ async def GetUserLanguage(request, uid):
         return app.config.language
     app.state.cache_language[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]
+
+async def UpdateRoleConnection(request, discordid):
+    (app, dhrid) = (request.app, request.state.dhrid)
+
+    userinfo = await GetUserInfo(request, discordid = discordid)
+    userid = userinfo["userid"]
+    discordid = userinfo["discordid"]
+    roles = userinfo["roles"]
+
+    if discordid is None:
+        return
+
+    await app.db.execute(dhrid, f"SELECT access_token FROM discord_access_token WHERE discordid = {discordid} AND expire_timestamp > {int(time.time())}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) != 0:
+        access_token = t[0][0]
+        is_driver = checkPerm(app, roles, "driver")
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        if is_driver:
+            await app.db.execute(dhrid, f"SELECT COUNT(logid) FROM dlog WHERE userid = {userid} AND logid >= 0")
+            t = await app.db.fetchone(dhrid)
+            if len(t) != 0:
+                discord_jobs = nint(t[0])
+            await app.db.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
+            t = await app.db.fetchone(dhrid)
+            if len(t) != 0:
+                discord_distance = nint(t[0])
+            await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false", "dlog": str(discord_jobs), "distance": str(discord_distance)}}), headers = headers, dhrid = dhrid)
+        else:
+            await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false"}}), headers = headers, dhrid = dhrid)
 
 async def RefreshDiscordAccessToken(app):
     while 1:
