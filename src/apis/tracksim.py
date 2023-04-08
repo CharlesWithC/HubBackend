@@ -352,7 +352,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
         logid = (await app.db.fetchone(dhrid))[0]
 
-        if "tracker" in app.config.enabled_plugins:
+        if "tracker" in app.config.plugins:
             asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid))
 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
@@ -506,7 +506,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             await tracebackHandler(request, exc)
 
     try:
-        if "challenge" in app.config.enabled_plugins and isdelivered and not duplicate:
+        if "challenge" in app.config.plugins and isdelivered and not duplicate:
             await app.db.execute(dhrid, f"SELECT SUM(distance) FROM dlog WHERE userid = {userid}")
             current_distance = await app.db.fetchone(dhrid)
             current_distance = current_distance[0]
@@ -729,7 +729,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         pass
 
     try:
-        if "economy" in app.config.enabled_plugins and isdelivered and not duplicate:
+        if "economy" in app.config.plugins and isdelivered and not duplicate:
             economy_revenue = round(revenue)
             truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
             truckid = truckid[len("vehicle."):] if truckid.startswith("vehicle.") else truckid

@@ -2,6 +2,8 @@
 # Author: @CharlesWithC
 
 import copy
+import importlib.util
+import inspect
 import json
 import os
 import sys
@@ -22,8 +24,11 @@ import db
 import plugins
 import static
 from config import validateConfig
+from logger import logger
 
-version = "2.4.3"
+abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
+
+version = "2.4.4"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -40,7 +45,7 @@ class Dict2Obj(object):
 
 def initApp(app, first_init = False):
     if not first_init:
-        return
+        return app
     
     import upgrades.manager
     cur_version = app.version.replace(".dev", "").replace(".", "_")
@@ -55,17 +60,17 @@ def initApp(app, first_init = False):
         pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
     if pre_version != cur_version:
         if not pre_version in upgrades.manager.VERSION_CHAIN:
-            print(f"Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
-            sys.exit(1)
+            logger.warning(f"[{app.config.abbr}] Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
+            return None
         pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
         if not cur_version in upgrades.manager.VERSION_CHAIN:
-            print(f"Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
-            sys.exit(1)
+            logger.warning(f"[{app.config.abbr}] Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
+            return None
         cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
         for idx in range(pre_idx + 1, cur_idx + 1):
             v = upgrades.manager.VERSION_CHAIN[idx]
             if v in upgrades.manager.UPGRADEABLE_VERSION:
-                print(f"Updating data to be compatible with {v.replace('_', '.')}...")
+                logger.info(f"[{app.config.abbr}] Updating data to be compatible with {v.replace('_', '.')}...")
                 upgrades.manager.UPGRADER[v].run(app)
     upgrades.manager.unload()
     
@@ -77,24 +82,30 @@ def initApp(app, first_init = False):
         cur.close()
         conn.close()
         
-    print(f"Company Name: {app.config.name}")
-    print(f"Company Abbreviation: {app.config.abbr}")
+    logger.info(f"[{app.config.abbr}] Name: {app.config.name}")
     if app.openapi_enabled:
-        print("OpenAPI: Enabled")
+        logger.info(f"[{app.config.abbr}] OpenAPI: Enabled")
     else:
-        print("OpenAPI: Disabled")
-    if len(app.config.enabled_plugins) != 0:
-        print(f"Plugins: {', '.join(sorted(app.config.enabled_plugins))}")
+        logger.info(f"[{app.config.abbr}] OpenAPI: Disabled")
+    if len(app.config.plugins) != 0:
+        logger.info(f"[{app.config.abbr}] Plugins: {', '.join(sorted(app.config.plugins))}")
     else:
-        print(f"Plugins: /")
+        logger.info(f"[{app.config.abbr}] Plugins: /")
     if len(app.config.external_plugins) != 0:
-        print(f"External Plugins: {', '.join(sorted(app.config.external_plugins))}")
+        extp = []
+        for plugin_name in app.config.external_plugins:
+            if plugin_name in app.loaded_external_plugins:
+                extp.append(f"{plugin_name} (loaded)")
+            else:
+                extp.append(f"{plugin_name} (not loaded)")
+        logger.info(f"[{app.config.abbr}] External Plugins: {', '.join(sorted(extp))}")
     else:
-        print("External Plugins: /")
-    print("")
+        logger.info(f"[{app.config.abbr}] External Plugins: /")
 
     os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}.png")
     os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}_bg.png")
+
+    return app
 
 def createApp(config_path, first_init = False):
     if not os.path.exists(config_path):
@@ -131,29 +142,78 @@ def createApp(config_path, first_init = False):
     app.backup_config = copy.deepcopy(config.__dict__)
     app.config_path = config_path
     app.start_time = int(time.time())
-    app.db = db.AioSQL(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
+    app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
+
+    # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
+    external_routes = []
+    app.loaded_external_plugins = []
+    for plugin_name in app.config.external_plugins:
+        if os.path.exists(f"external_plugins/{plugin_name}.py"):
+            spec = importlib.util.spec_from_file_location(plugin_name, os.path.join(os.path.join(abspath, "external_plugins"), plugin_name + ".py"))
+            external_plugin = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(external_plugin)
+        else:
+            if first_init:
+                logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': File not found.")
+            continue
+
+        app_bak = copy.copy(app)
+        app.state.external_routes = []
+        
+        # init external plugin
+        try:
+            # NOTE: The 'app_to_modify' object will be modified by external plugin
+            # We'll copy back additional state to original app
+            app_to_modify = copy.copy(app)
+            if external_plugin.init(app_to_modify, first_init) != True:
+                if first_init:
+                    logger.warning(f"[{app.config.abbr}] [External Plugin] '{plugin_name}' is not loaded: 'init' function did not return True.")
+                continue
+            for state in app_to_modify.state.__dict__.keys():
+                if not state in app.state.__dict__.keys():
+                    app.state.__dict__[state] = app_to_modify.state.__dict__[state]
+        except Exception as exc:
+            if first_init:
+                logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
+            app = copy.copy(app_bak)
+            continue
+        
+        # load routes from app.state
+        try:
+            for route in app.state.external_routes:
+                app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
+                external_routes.append(route.path)
+        except Exception as exc:
+            if first_init:
+                logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
+            app = copy.copy(app_bak)
+            continue
+        del app.state.external_routes
+
+        app.loaded_external_plugins.append(plugin_name)
 
     routes = apis.routes + apis.auth.routes + apis.dlog.routes + apis.member.routes + apis.user.routes
     if app.config.tracker == "tracksim":
         routes += apis.routes_tracksim
-    if "banner" in app.config.enabled_plugins:
+    if "banner" in app.config.plugins:
         routes += apis.member.routes_banner
-    if "announcement" in app.config.enabled_plugins:
+    if "announcement" in app.config.plugins:
         routes += plugins.routes_announcement
-    if "application" in app.config.enabled_plugins:
+    if "application" in app.config.plugins:
         routes += plugins.routes_application
-    if "challenge" in app.config.enabled_plugins:
+    if "challenge" in app.config.plugins:
         routes += plugins.routes_challenge
-    if "division" in app.config.enabled_plugins:
+    if "division" in app.config.plugins:
         routes += plugins.routes_division
-    if "downloads" in app.config.enabled_plugins:
+    if "downloads" in app.config.plugins:
         routes += plugins.routes_downloads
-    if "economy" in app.config.enabled_plugins:
+    if "economy" in app.config.plugins:
         routes += plugins.routes_economy
-    if "event" in app.config.enabled_plugins:
+    if "event" in app.config.plugins:
         routes += plugins.routes_event
     for route in routes:
-        app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
+        if not route.path in external_routes:
+            app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
 
     app.add_exception_handler(StarletteHTTPException, api.errorHandler)
     app.add_exception_handler(RequestValidationError, api.error422Handler)
@@ -177,7 +237,7 @@ def createApp(config_path, first_init = False):
     app.state.cache_ratelimit = {}
     app.state.cache_userinfo = {} # user info cache (15 seconds)
     app.state_cache_activity = {} # activity cache (2 seconds)
-
-    initApp(app, first_init = first_init)
+    
+    app = initApp(app, first_init = first_init)
 
     return app

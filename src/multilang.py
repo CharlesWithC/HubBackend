@@ -21,7 +21,7 @@ for LANGUAGE in LANGUAGES:
         LANG_DATAS[LANGUAGE] = json.loads(open(os.path.join(abspath, f"languages/{LANGUAGE}.json"),"r").read())
     except:
         pass
-LANGUAGES = list(LANG_DATAS.keys()) # must be valid language file
+LANGUAGES = sorted(list(LANG_DATAS.keys())) # must be valid language file
 
 def get_lang(request: Request):
     if request is None:

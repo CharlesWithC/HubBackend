@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.4.4**  
+1.Reworked external plugin system  
+**Hint** Read `External Plugins` in [README.md](./README.md) and check [example.py](./src/external_plugins/example.py) for reference.  
+2.Improved logging  
+
 **v2.4.3**  
 1.Fixed redirect route for downloads plugin  
 2.Fixed issue banning user who has `NULL` connection(s)  

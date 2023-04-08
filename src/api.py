@@ -4,7 +4,6 @@
 import asyncio
 import hashlib
 import json
-import logging
 import threading
 import time
 from datetime import datetime
@@ -17,6 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from functions import *
+from logger import logger
 
 
 # NOTE Due to FastAPI not supporting events for sub-applications, we'll have to detour like this
@@ -43,7 +43,6 @@ async def errorHandler(request: Request, exc: StarletteHTTPException):
 async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": "Unprocessable Entity"}, status_code = 422)
 
-logger = logging.getLogger('uvicorn')
 pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error") and err not in [pymysql.err.ProgrammingError]]
 # app.state.dberr = []
 # app.state.session_errs = []
@@ -91,29 +90,29 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
         # unable to parse json
         return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
 
-    if ismysqlerr and ("lost connection" in err.lower() or "timeout" in err.lower() or "[AioSQL]" in err.lower()):
-        # this will filter mysql error + connection/timeout error (including custom errors flagged by "[AioSQL]")
+    if ismysqlerr and ("lost connection" in err.lower() or "timeout" in err.lower() or "[aiosql]" in err.lower()):
+        # this will filter mysql error + connection/timeout error (including custom errors flagged by "[aiosql]")
         # it's literally impossible to identify programming (query) error from database-side errors from error code
         # as they are mixed up
         # hence we'll just check and filter connection/timeout errors
-        err = err.replace("[AioSQL] ", "")
+        err = err.replace("[aiosql] ", "")
         if err_hash in app.state.session_errs:
             # recognized error, do not print log or send webhook
-            logger.error(f"{err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+            logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
         app.state.session_errs.append(err_hash)
 
-        logger.error(f"{err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
+        logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
         if not -1 in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
             app.state.dberr.append(time.time())
             app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
             if len(app.state.dberr) > 5:
                 # try restarting database connection first
-                logging.info("Restarting database connection pool")
+                logger.info("Restarting database connection pool")
                 await app.db.restart_pool()
             elif len(app.state.dberr) > 10:
-                logging.info("Restarting service due to database errors")
+                logger.info("Restarting service due to database errors")
                 try:
                     await arequests.post(app, app.config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
                 except:
@@ -126,11 +125,11 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
     else:
         if err_hash in app.state.session_errs:
             # recognized error, do not print log or send webhook
-            logger.error(f"{err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+            logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
         app.state.session_errs.append(err_hash)
 
-        logger.error(f"{err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
+        logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
         if app.config.webhook_error != "":
             try:

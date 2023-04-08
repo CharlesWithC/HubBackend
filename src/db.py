@@ -3,10 +3,13 @@
 
 import asyncio
 import time
+import warnings
 
 import aiomysql
 import pymysql
-import warnings
+
+from logger import logger
+
 
 def init(app):
     conn = pymysql.connect(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
@@ -167,7 +170,7 @@ def genconn(app, autocommit = False):
     return conn
 
 # ASYNCIO aiomysql
-class AioSQL:
+class aiosql:
     def __init__(self, app, host, user, passwd, db):
         self.app = app
         self.host = host
@@ -209,14 +212,14 @@ class AioSQL:
                 try:
                     self.pool.release(tconn)
                 except Exception as exc:
-                    print(f"Failed to release connection ({tdhrid}): {str(exc)}")
+                    logger.warning(f"Failed to release connection ({tdhrid}): {str(exc)}")
         for tdhrid in to_delete:
             del conns[tdhrid]
         self.conns = conns
 
     async def new_conn(self, dhrid, extra_time = 0):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"[AioSQL] Shutting down in progress")
+            raise pymysql.err.OperationalError(f"[aiosql] Shutting down in progress")
 
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
@@ -230,7 +233,7 @@ class AioSQL:
             try:
                 conn = await asyncio.wait_for(self.pool.acquire(), timeout=3)
             except asyncio.TimeoutError:
-                raise pymysql.err.OperationalError(f"[AioSQL] Timeout")
+                raise pymysql.err.OperationalError(f"[aiosql] Timeout")
             cur = await conn.cursor()
             await cur.execute(f"SET lock_wait_timeout=5;")
             conns = self.conns
@@ -238,11 +241,11 @@ class AioSQL:
             self.conns = conns
             return conn
         except Exception as exc:
-            raise pymysql.err.OperationalError(f"[AioSQL] Failed to create connection ({dhrid}): {str(exc)}")
+            raise pymysql.err.OperationalError(f"[aiosql] Failed to create connection ({dhrid}): {str(exc)}")
     
     async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"[AioSQL] Shutting down")
+            raise pymysql.err.OperationalError(f"[aiosql] Shutting down")
 
         conns = self.conns
         try:
@@ -287,7 +290,7 @@ class AioSQL:
         if dhrid in self.conns.keys():
             await self.conns[dhrid][0].commit()
         else:
-            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def execute(self, dhrid, sql):
         await self.refresh_conn(dhrid)
@@ -295,20 +298,20 @@ class AioSQL:
             with warnings.catch_warnings(record=True) as w:
                 await self.conns[dhrid][1].execute(sql)
                 if w:
-                    print(f"DATABASE WARNING: {w[0].message}\nOn Execute: {sql}")
+                    logger.warning(f"DATABASE WARNING: {w[0].message}\nOn Execute: {sql}")
         else:
-            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def fetchone(self, dhrid):
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             return await self.conns[dhrid][1].fetchone()
         else:
-            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")
 
     async def fetchall(self, dhrid):
         await self.refresh_conn(dhrid)
         if dhrid in self.conns.keys():
             return await self.conns[dhrid][1].fetchall()
         else:
-            raise pymysql.err.OperationalError(f"[AioSQL] Connection does not exist in pool ({dhrid})")
+            raise pymysql.err.OperationalError(f"[aiosql] Connection does not exist in pool ({dhrid})")

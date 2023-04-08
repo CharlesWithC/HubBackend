@@ -2,12 +2,12 @@
 # Author: @CharlesWithC
 
 import os
-import sys
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from starlette.routing import Mount
 
 import app as base
+from logger import logger
 
 app = FastAPI()
 
@@ -34,8 +34,11 @@ def initRoutes(config_paths, first_init = False):
             routes.append(Mount(f"/{dh.config.abbr}", dh, name = f"{dh.config.name} Drivers Hub"))
 
     if len(routes) == 0:
-        print("No valid config is loaded, aborted.")
-        sys.exit(1)
+        logger.warning("No valid config is loaded, quited.")
+        os._exit(42)
+    
+    if first_init:
+        logger.info("")
 
     app = FastAPI(routes = routes)
     app.add_event_handler("shutdown", shutdownEvent)

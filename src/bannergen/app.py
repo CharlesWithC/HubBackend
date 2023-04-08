@@ -94,11 +94,11 @@ async def banner(request: Request, response: Response):
     
     l = os.listdir(f"/tmp/hub/banner")
     for ll in l:
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 7200:
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 1800:
             os.remove(f"/tmp/hub/banner/{ll}")
 
     if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{userid}.png"):
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{userid}.png") <= 3600:
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{userid}.png") <= 600:
             response = StreamingResponse(iter([open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","rb").read()]), media_type="image/jpeg")
             return response
 

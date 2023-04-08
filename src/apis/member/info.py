@@ -148,6 +148,7 @@ async def get_banner(request: Request, response: Response,
     else:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
+    
     await app.db.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -182,9 +183,9 @@ async def get_banner(request: Request, response: Response,
     joined = datetime.fromtimestamp(join_timestamp)
     joined = f"{joined.year}/{str(joined.month).zfill(2)}/{str(joined.day).zfill(2)}"
 
-    if os.path.exists(f"/tmp/hub/banner/{app.config.abbr}_{discordid}.png"):
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{app.config.abbr}_{discordid}.png") <= 3600:
-            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{app.config.abbr}_{discordid}.png","rb").read()]), media_type="image/jpeg")
+    if os.path.exists(f"/tmp/hub/banner/{app.config.abbr}_{userid}.png"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{app.config.abbr}_{userid}.png") <= 600:
+            response = StreamingResponse(iter([open(f"/tmp/hub/banner/{app.config.abbr}_{userid}.png","rb").read()]), media_type="image/jpeg")
             return response
 
     rl = await ratelimit(request, 'GET /member/banner', 10, 5)
@@ -236,7 +237,7 @@ async def get_banner(request: Request, response: Response,
         response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
         for k in rl[1].keys():
             response.headers[k] = rl[1][k]
-        response.headers["Cache-Control"] = "public, max-age=7200, stale-if-error=604800"
+        response.headers["Cache-Control"] = "public, max-age=600, stale-if-error=86400"
         return response
         
     except:

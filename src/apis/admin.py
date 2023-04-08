@@ -61,7 +61,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
         # remove disabled plugins
         for t in config_plugins.keys():
-            if not t in app.config.enabled_plugins:
+            if not t in app.config.plugins:
                 for tt in config_plugins[t]:
                     if tt in ffconfig.keys():
                         del ffconfig[tt]
@@ -84,7 +84,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
     # remove disabled plugins
     for t in config_plugins.keys():
-        if not t in app.config.enabled_plugins:
+        if not t in app.config.plugins:
             for tt in config_plugins[t]:
                 if tt in ffconfig.keys():
                     del ttconfig[tt]

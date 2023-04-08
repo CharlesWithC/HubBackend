@@ -1,6 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
+
+
 def isfloat(t):
     try:
         float(t)
@@ -8,7 +11,7 @@ def isfloat(t):
     except:
         return False
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'apidomain', 'domain', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'enabled_plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'apidomain', 'domain', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'hcaptcha_secret', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
 
 config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'member_welcome', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
 
@@ -18,7 +21,7 @@ config_plugins = {"application": ["application_types"],
 
 config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key", "smtp_passwd"]
 
-config_sample = {
+default_config = {
     "abbr": "",
     "name": "",
     "language": "en",
@@ -56,7 +59,7 @@ config_sample = {
     "mysql_pool_size": 10,
     "hcaptcha_secret": "",
 
-    "enabled_plugins": [],
+    "plugins": [],
     "external_plugins": [],
 
     "guild_id": "",
@@ -272,14 +275,6 @@ config_sample = {
 }
 
 def validateConfig(cfg):
-    tcfg = {}
-    for key in config_keys_order:
-        if key in cfg.keys():
-            tcfg[key] = cfg[key]
-        else:
-            tcfg[key] = config_sample[key]
-    cfg = tcfg
-
     if not "hex_color" in cfg.keys():
         cfg["hex_color"] = "2fc1f7"
     hex_color = cfg["hex_color"][-6:]
@@ -292,7 +287,7 @@ def validateConfig(cfg):
         cfg["hex_color"] = "2fc1f7"
 
     if not "perms" in cfg.keys():
-        perms = config_sample["perms"]
+        cfg["perms"] = default_config["perms"]
     perms = cfg["perms"]
     for perm in perms.keys():
         roles = perms[perm]
@@ -308,6 +303,22 @@ def validateConfig(cfg):
         perms[perm] = newroles
     cfg["perms"] = perms
 
+    if not "roles" in cfg.keys():
+        cfg["roles"] = default_config["roles"]
+    roles = cfg["roles"]
+    newroles = []
+    for i in range(len(roles)):
+        role = roles[i]
+        try:
+            role["id"] = int(role["id"])
+        except:
+            continue
+        if "id" in role.keys() and "name" in role.keys():
+            newroles.append(role)
+    cfg["roles"] = newroles
+
+    if not "ranks" in cfg.keys():
+        cfg["ranks"] = default_config["ranks"]
     ranks = cfg["ranks"]
     newranks = []
     for i in range(len(ranks)):
@@ -328,6 +339,8 @@ def validateConfig(cfg):
             newranks.append(rank)
     cfg["ranks"] = newranks
 
+    if not "divisions" in cfg.keys():
+        cfg["divisions"] = default_config["divisions"]
     divisions = cfg["divisions"]
     newdivisions = []
     for i in range(len(divisions)):
@@ -345,6 +358,9 @@ def validateConfig(cfg):
                 pass
     cfg["divisions"] = newdivisions
     
+    if not "economy" in cfg.keys():
+        cfg["economy"] = default_config["economy"]
+
     economy_trucks = cfg["economy"]["trucks"]
     new_economy_trucks = []
     for i in range(len(economy_trucks)):
@@ -377,30 +393,20 @@ def validateConfig(cfg):
     economy_must_float = ['truck_refund', 'scrap_refund', 'garage_refund', 'slot_refund', 'usd_to_coin', 'eur_to_coin', 'wear_ratio', 'revenue_share_to_company', 'truck_rental_cost', 'max_wear_before_service', 'max_distance_before_scrap', 'unit_service_price']
     for item in economy_must_float:
         if not item in cfg["economy"].keys() or not isfloat(cfg["economy"][item]):
-            cfg["economy"][item] = config_sample["economy"][item]
+            cfg["economy"][item] = default_config["economy"][item]
         else:
             cfg["economy"][item] = float(cfg["economy"][item])
 
     economy_must_bool = ['allow_purchase_truck', 'allow_purchase_garage', 'allow_purchase_slot', 'enable_balance_leaderboard']
     for item in economy_must_bool:
         if not item in cfg["economy"].keys() or type(cfg["economy"][item]) != bool:
-            cfg["economy"][item] = config_sample["economy"][item]
+            cfg["economy"][item] = default_config["economy"][item]
     
     if not "currency_name" in cfg["economy"].keys():
         cfg["economy"]["currency_name"] = "coin"
 
-    roles = cfg["roles"]
-    newroles = []
-    for i in range(len(roles)):
-        role = roles[i]
-        try:
-            role["id"] = int(role["id"])
-        except:
-            continue
-        if "id" in role.keys() and "name" in role.keys():
-            newroles.append(role)
-    cfg["roles"] = newroles
-
+    if not "application_types" in cfg.keys():
+        cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
     reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "webhook", "note"]
@@ -424,11 +430,9 @@ def validateConfig(cfg):
         if ok:
             new_application_types.append(application_type)
     cfg["application_types"] = new_application_types
-
-    if "apidoc" in cfg.keys():
-        cfg["openapi"] = cfg["apidoc"]
-        del cfg["apidoc"]
     
+    if not "external_plugins" in cfg.keys():
+        cfg["external_plugins"] = default_config["external_plugins"]
     external_plugins = cfg["external_plugins"]
     new_external_plugins = []
     for plugin in external_plugins:
@@ -440,6 +444,11 @@ def validateConfig(cfg):
         cfg["mysql_pool_size"] = int(cfg["mysql_pool_size"])
     except:
         cfg["mysql_pool_size"] = 10
+
+    # renamed configs
+    if "apidoc" in cfg.keys():
+        cfg["openapi"] = cfg["apidoc"]
+        del cfg["apidoc"]
 
     if "allowed_navio_ips" in cfg.keys():
         cfg["allowed_tracker_ips"] = cfg["allowed_navio_ips"]
@@ -458,12 +467,17 @@ def validateConfig(cfg):
     if not "server_host" in cfg.keys() and "server_ip" in cfg.keys():
         cfg["server_host"] = cfg["server_ip"]
         del cfg["server_ip"]
+    
+    # v2.4.4
+    if not "plugins" in cfg.keys() and "enabled_plugins" in cfg.keys():
+        cfg["plugins"] = cfg["enabled_plugins"]
+        del cfg["enabled_plugins"]
 
     tcfg = {}
     for key in config_keys_order:
         if key in cfg.keys():
             tcfg[key] = cfg[key]
         else:
-            tcfg[key] = config_sample[key]
+            tcfg[key] = default_config[key]
 
     return tcfg

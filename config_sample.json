@@ -36,8 +36,8 @@
     "mysql_pool_size": 10,
     "hcaptcha_secret": "",
 
-    "enabled_plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
-    "external_plugins": ["rework_member"],
+    "plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
+    "external_plugins": ["example"],
 
     "guild_id": "",
     "must_join_guild": true,

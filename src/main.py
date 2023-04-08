@@ -4,14 +4,16 @@
 # Author: @CharlesWithC
 
 import argparse
+import base64
+import json
 import os
-import sys, base64, json
 from datetime import datetime
 
 import uvicorn
 
 import multilang as ml
 import routing
+from logger import logger
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -44,16 +46,17 @@ elif args.configs is not None:
     config_paths = args.configs
 elif args.config_directory is not None:
     if not os.path.exists(args.config_directory):
-        print("Invalid config-directory, aborted.")
-        sys.argv(1)
+        logger.warning("Invalid config-directory, quited.")
+        os._exit(42)
     config_files = os.listdir(args.config_directory)
     config_paths = [os.path.join(args.config_directory, x) for x in config_files]
-else:
-    print("No config is provided, aborted.")
 
 if config_paths is not None:
     os.environ["HUB_CONFIG"] = base64.b64encode(json.dumps(config_paths).encode()).decode()
 else:
+    if not "HUB_CONFIG" in os.environ.keys():
+        logger.warning("No config is provided, quited.")
+        os._exit(42)
     config_paths = json.loads(base64.b64decode(os.environ["HUB_CONFIG"].encode()).decode())
 
 if __name__ == "__main__":
@@ -61,11 +64,12 @@ if __name__ == "__main__":
     currentDateTime = datetime.now()
     date = currentDateTime.date()
     year = date.strftime("%Y")
-    print(drivershub)
-    print(f"Drivers Hub: Backend (v{version})")
-    print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
-    print(f"Languages: {', '.join(ml.LANGUAGES)}")
-    print("")
+    for line in drivershub.split("\n"):
+        logger.info(line)
+    logger.info(f"Drivers Hub: Backend (v{version})")
+    logger.info(f"Copyright (C) {year} CharlesWithC All rights reserved.")
+    logger.info(f"Languages: {', '.join(ml.LANGUAGES)}")
+    logger.info("")
 
     scopes = routing.initRoutes(config_paths, first_init = True)
 
@@ -76,7 +80,7 @@ if __name__ == "__main__":
         uvicorn.run("routing:app", host=scopes["host"], port=scopes["port"], log_level="info", access_log=False, proxy_headers = True, workers = scopes["workers"])
     else:
         if args.parent_host is None or args.parent_port is None:
-            print("--parent-host and --parent-port must be provided when starting multiple Drivers Hubs within one server process.")
-            sys.exit(1)
+            logger.warning("--parent-host and --parent-port must be provided when starting multiple Drivers Hubs within one server process, quited.")
+            os._exit(42)
         workers = 1 if args.parent_workers is None else args.parent_workers
         uvicorn.run("routing:app", host=args.parent_host, port=args.parent_port, log_level="info", access_log=False, proxy_headers = True, workers = workers)
