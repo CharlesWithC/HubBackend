@@ -209,9 +209,9 @@ async def get_banner(request: Request, response: Response,
     distance = nint(t[0][0])
     if app.config.distance_unit == "imperial":
         distance = int(distance * 0.621371)
-        distance = f"{distance}mi"
+        distance = f"{tseparator(distance)}mi"
     else:
-        distance = f"{distance}km"
+        distance = f"{tseparator(distance)}km"
     
     await app.db.execute(dhrid, f"SELECT SUM(profit) FROM dlog WHERE userid = {userid} AND unit = 1")
     t = await app.db.fetchall(dhrid)

@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.5.3**  
+1.Fixed BannerGen 500 error  
+2.Added thousands separator to distance in banners  
+
 **v2.5.2**  
 Added Discord Role Connection  
 **Hints**  

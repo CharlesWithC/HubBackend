@@ -5,7 +5,6 @@ import hashlib
 import os
 import string
 import time
-import traceback
 import unicodedata
 from io import BytesIO
 
@@ -110,7 +109,7 @@ async def banner(request: Request, response: Response):
         banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:
         try:
-            r = await arequests.get(app, logo_url, timeout = 5)
+            r = await arequests.get(logo_url, timeout = 5)
 
             if r.status_code == 200:
                 logo = r.content
@@ -194,7 +193,7 @@ async def banner(request: Request, response: Response):
         else:
             # pre-process avatar
             try: # in case image is invalid
-                r = await arequests.get(app, avatar, timeout = 5)
+                r = await arequests.get(avatar, timeout = 5)
                 if r.status_code == 200:
                     try:
                         avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
