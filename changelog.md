@@ -1,7 +1,11 @@
 # Changelog
 
 **v2.5.4**  
-1.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion.  
+1.Fixed audit log on user resignation and when removing driver from tracker company  
+2.Fixed **PATCH** `/applications/positions` route  
+3.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
+4.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+5.Improved `openapi` (to use `servers:[]` instead of `/abbr`)  
 
 **v2.5.3**  
 1.Fixed BannerGen 500 error  

@@ -288,6 +288,8 @@
     "deleted_delivery": "Slettet levering `#{logid}`",
     "failed_to_add_user_to_tracker_company": "Kunne ikke tilføje `{username}` (bruger-id: `{userid}`) til {tracker}-virksomheden. \nFejl: {error}",
     "added_user_to_tracker_company": "Tilføjede `{username}` (bruger-id: `{userid}`) til {tracker}-virksomheden.",
+    "failed_remove_user_from_tracker_company": "Kunne ikke fjerne `{username}` (bruger-id: `{userid}`) fra virksomheden {tracker}. \nFejl: {error}",
+    "removed_user_from_tracker_company": "Fjernet `{username}` (brugere). ID: `{userid}`) fra {tracker} virksomhed.",
     "updated_user_roles": "Opdaterede roller for `{username}` (bruger-id: `{userid}`)",
     "role": "Rolle",
     "updated_user_points": "Opdaterede punkter for `{username}` (bruger-id: `{userid}`):\n Afstand: `{distance}km`\n Mytepunkt: `{mythpoint}`",

@@ -36,7 +36,7 @@ async def get_positions(request: Request):
                 ret.append(tt)
         return ret
 
-async def post_positions(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_positions(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)

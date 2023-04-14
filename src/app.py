@@ -83,7 +83,7 @@ def initApp(app, first_init = False):
         conn.close()
         
     logger.info(f"[{app.config.abbr}] Name: {app.config.name}")
-    if app.openapi_enabled:
+    if app.config.openapi:
         logger.info(f"[{app.config.abbr}] OpenAPI: Enabled")
     else:
         logger.info(f"[{app.config.abbr}] OpenAPI: Disabled")
@@ -121,22 +121,16 @@ def createApp(config_path, first_init = False):
     config = validateConfig(config_json)
     config = Dict2Obj(config)
 
-    if os.path.exists(config.openapi):
+    if config.openapi and static.OPENAPI is not None:
         app = FastAPI(title="Drivers Hub", version=version, openapi_url=f"/doc/openapi.json", docs_url=f"/doc", redoc_url=None)
-        
-        OPENAPI_RESPONSES = '"responses": {"200": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success"}, "204": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success (No Content)"}, "400": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Bad Request - You need to correct the json data."}, "401": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Unauthorized - You need to use a valid token."}, "403": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Forbidden - You don\'t have permission to access the response."}, "404": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Not Found - The resource could not be found."}, "429": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Too Many Requests - You are being ratelimited."}, "500": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Internal Server Error - Usually caused by a bug or database issue."}, "503": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Service Unavailable - Database outage or rate limited."}}'
-        
-        OPENAPI = json.loads(open(config.openapi, "r", encoding="utf-8").read()
-                                .replace("/abbr", f"/{config.abbr}")
-                                .replace('"responses": {}', OPENAPI_RESPONSES))
         def openapi():
-            return OPENAPI
+            data = static.OPENAPI
+            data["servers"] = [{"url": f"https://{config.apidomain}/{config.abbr}", "description": config.name}]
+            data["info"]["version"] = version
+            return static.OPENAPI
         app.openapi = openapi
-        app.openapi_enabled = True
-        
     else:
         app = FastAPI(title="Drivers Hub", version=version)
-        app.openapi_enabled = False
 
     app.config = config
     app.backup_config = copy.deepcopy(config.__dict__)

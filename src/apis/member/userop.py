@@ -253,9 +253,9 @@ async def post_resign(request: Request, response: Response, authorization: str =
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
 
     if tracker_app_error != "":
-        await AuditLog(request, uid, ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
-        await AuditLog(request, uid, ml.ctr(request, "added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
         
     await UpdateRoleConnection(request, discordid)
 
@@ -301,7 +301,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
         except:
             pass
 
-    await AuditLog(request, uid, ml.ctr(request, "member_resigned"))
+    await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit"))
     await notification(request, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(request, uid)))
     
     return Response(status_code=204)

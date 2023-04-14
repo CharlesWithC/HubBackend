@@ -184,9 +184,9 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
 
         if tracker_app_error != "":
-            await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
         else:
-            await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
             
         await UpdateRoleConnection(request, discordid)
 
@@ -360,9 +360,9 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
     
     await UpdateRoleConnection(request, discordid)
 

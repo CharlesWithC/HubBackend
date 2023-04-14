@@ -289,6 +289,8 @@
     "deleted_delivery": "Deleted delivery `#{logid}`",
     "failed_to_add_user_to_tracker_company": "Failed to add `{username}` (User ID: `{userid}`) to {tracker} company.  \nError: {error}",
     "added_user_to_tracker_company": "Added `{username}` (User ID: `{userid}`) to {tracker} company.",
+    "failed_remove_user_from_tracker_company": "Failed to remove `{username}` (User ID: `{userid}`) from {tracker} company.  \nError: {error}",
+    "removed_user_from_tracker_company": "Removed `{username}` (User ID: `{userid}`) from {tracker} company.",
     "updated_user_roles": "Updated roles of `{username}` (User ID: `{userid}`)",
     "role": "Role",
     "updated_user_points": "Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Myth Point: `{mythpoint}`",

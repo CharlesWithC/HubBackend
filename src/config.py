@@ -30,7 +30,7 @@ default_config = {
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
 
-    "openapi": "./openapi.json",
+    "openapi": False,
     "frontend_urls": {
         "steam_callback": "https://{domain}/connectSteam",
         "discord_callback": "https://{domain}/connectDiscord",
@@ -493,6 +493,10 @@ def validateConfig(cfg):
     if not "plugins" in cfg.keys() and "enabled_plugins" in cfg.keys():
         cfg["plugins"] = cfg["enabled_plugins"]
         del cfg["enabled_plugins"]
+
+    # v2.5.4
+    if "openapi" in cfg.keys() and type(cfg["openapi"]) is not bool:
+        cfg["openapi"] = False
 
     tcfg = {}
     for key in config_keys_order:

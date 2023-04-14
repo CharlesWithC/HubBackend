@@ -4,8 +4,9 @@
         "title": "Drivers Hub API",
         "version": "2.5.4"
     },
+    "servers": [],
     "paths": {
-        "/abbr": {
+        "/": {
             "get": {
                 "summary": "Drivers Hub Info",
                 "tags": ["index"],
@@ -13,7 +14,7 @@
                 "responses": {}
             }
         },
-        "/abbr/status": {
+        "/status": {
             "get": {
                 "summary": "Get Status",
                 "tags": ["index"],
@@ -21,7 +22,7 @@
                 "responses": {}
             }
         },
-        "/abbr/languages": {
+        "/languages": {
             "get": {
                 "summary": "Get company & supported languages",
                 "tags": ["index"],
@@ -29,7 +30,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/password": {
+        "/auth/password": {
             "post": {
                 "summary": "Password Login",
                 "tags": ["auth"],
@@ -62,7 +63,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/register": {
+        "/auth/register": {
             "post": {
                 "summary": "Register",
                 "tags": ["auth"],
@@ -95,7 +96,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/reset": {
+        "/auth/reset": {
             "post": {
                 "summary": "Reset Password",
                 "tags": ["auth"],
@@ -124,7 +125,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/mfa": {
+        "/auth/mfa": {
             "post": {
                 "summary": "MFA Login",
                 "tags": ["auth"],
@@ -153,7 +154,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/email": {
+        "/auth/email": {
             "post": {
                 "summary": "Email Auth (Confirmation Link)",
                 "tags": ["auth"],
@@ -191,7 +192,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/discord/redirect": {
+        "/auth/discord/redirect": {
             "get": {
                 "summary": "Redirects to Discord OAuth2",
                 "tags": ["auth"],
@@ -212,7 +213,7 @@
                 }
             }
         },
-        "/abbr/auth/discord/connect": {
+        "/auth/discord/connect": {
             "get": {
                 "summary": "Discord OAuth Callback (To connect account)",
                 "tags": ["auth"],
@@ -220,7 +221,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/discord/callback": {
+        "/auth/discord/callback": {
             "get": {
                 "summary": "Discord OAuth2 Callback",
                 "tags": ["auth"],
@@ -245,7 +246,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/steam/redirect": {
+        "/auth/steam/redirect": {
             "get": {
                 "summary": "Redirect to Steam OAuth",
                 "tags": ["auth"],
@@ -266,7 +267,7 @@
                 }
             }
         },
-        "/abbr/auth/steam/connect": {
+        "/auth/steam/connect": {
             "get": {
                 "summary": "Steam OAuth Callback (To connect account)",
                 "tags": ["auth"],
@@ -274,7 +275,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/steam/callback": {
+        "/auth/steam/callback": {
             "get": {
                 "summary": "Steam OAuth Callback (To login)",
                 "tags": ["auth"],
@@ -282,7 +283,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token": {
+        "/token": {
             "get": {
                 "summary": "Validate Token",
                 "tags": ["auth"],
@@ -314,7 +315,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/list": {
+        "/token/list": {
             "get": {
                 "summary": "Get Token List (Hash)",
                 "tags": ["auth"],
@@ -359,7 +360,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/hash": {
+        "/token/hash": {
             "delete": {
                 "summary": "Revoke Specific Token (Hash)",
                 "tags": ["auth"],
@@ -388,7 +389,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/all": {
+        "/token/all": {
             "delete": {
                 "summary": "Revoke All Token",
                 "tags": ["auth"],
@@ -409,7 +410,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/profile": {
+        "/user/profile": {
             "get": {
                 "summary": "Get User Information",
                 "tags": ["user"],
@@ -518,7 +519,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/list": {
+        "/user/list": {
             "get": {
                 "summary": "Get User List",
                 "tags": ["user"],
@@ -570,7 +571,7 @@
                 }]
             }
         },
-        "/abbr/user/language": {
+        "/user/language": {
             "get": {
                 "summary": "Get User Language",
                 "tags": ["user"],
@@ -609,7 +610,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/list": {
+        "/user/notification/list": {
             "get": {
                 "summary": "Get User Notification List",
                 "tags": ["user"],
@@ -670,7 +671,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/{notificationid}": {
+        "/user/notification/{notificationid}": {
             "get": {
                 "summary": "Get User Notification",
                 "tags": ["user"],
@@ -691,7 +692,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/{notificationid}/status/{status}": {
+        "/user/notification/{notificationid}/status/{status}": {
             "patch": {
                 "summary": "Update User Notification Status",
                 "tags": ["user"],
@@ -720,7 +721,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/settings": {
+        "/user/notification/settings": {
             "get": {
                 "summary": "Get Notification Settings",
                 "tags": ["user"],
@@ -732,7 +733,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/settings/{notification_type}/enable": {
+        "/user/notification/settings/{notification_type}/enable": {
             "post": {
                 "summary": "Enable Notification",
                 "tags": ["user"],
@@ -753,7 +754,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/notification/settings/{notification_type}/disable": {
+        "/user/notification/settings/{notification_type}/disable": {
             "post": {
                 "summary": "Disable Notification",
                 "tags": ["user"],
@@ -774,7 +775,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/bio": {
+        "/user/bio": {
             "patch": {
                 "summary": "Update Bio",
                 "tags": ["user"],
@@ -803,7 +804,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/password": {
+        "/user/password": {
             "patch": {
                 "summary": "Update Password",
                 "tags": ["user"],
@@ -836,7 +837,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/password/disable": {
+        "/user/password/disable": {
             "post": {
                 "summary": "Disable Password Login",
                 "tags": ["user"],
@@ -865,7 +866,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/mfa/enable": {
+        "/user/mfa/enable": {
             "post": {
                 "summary": "Enable MFA",
                 "tags": ["user"],
@@ -898,7 +899,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/mfa/disable": {
+        "/user/mfa/disable": {
             "post": {
                 "summary": "Disable MFA",
                 "tags": ["user"],
@@ -936,7 +937,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/resendConfirmation": {
+        "/user/resendConfirmation": {
             "post": {
                 "summary": "Resend Email Confirmation (Only after register)",
                 "tags": ["user"],
@@ -948,7 +949,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/email": {
+        "/user/email": {
             "patch": {
                 "summary": "Update Email",
                 "tags": ["user"],
@@ -977,7 +978,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/discord": {
+        "/user/discord": {
             "patch": {
                 "summary": "Update Discord Account",
                 "tags": ["user"],
@@ -989,7 +990,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/steam": {
+        "/user/steam": {
             "patch": {
                 "summary": "Update Steam Account",
                 "tags": ["user"],
@@ -1001,7 +1002,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/truckersmp": {
+        "/user/truckersmp": {
             "patch": {
                 "summary": "Update TruckersMP Account",
                 "tags": ["user"],
@@ -1030,7 +1031,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/{uid}/accept": {
+        "/user/{uid}/accept": {
             "post": {
                 "summary": "Accept user as member",
                 "tags": ["user"],
@@ -1051,7 +1052,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/{uid}": {
+        "/user/{uid}": {
             "delete": {
                 "summary": "Delete User",
                 "tags": ["user"],
@@ -1072,7 +1073,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/{uid}/ban": {
+        "/user/{uid}/ban": {
             "put": {
                 "summary": "Ban User",
                 "tags": ["user"],
@@ -1133,7 +1134,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/{uid}/discord": {
+        "/user/{uid}/discord": {
             "patch": {
                 "summary": "Update User Dicsord Snowflake",
                 "tags": ["user"],
@@ -1171,7 +1172,7 @@
                 "responses": {}
             }
         },
-        "/abbr/user/{uid}/connections": {
+        "/user/{uid}/connections": {
             "delete": {
                 "summary": "Delete User Account Connections",
                 "tags": ["user"],
@@ -1192,7 +1193,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/applications/list": {
+        "/token/applications/list": {
             "get": {
                 "summary": "Get Application Token List (Hash)",
                 "tags": ["auth"],
@@ -1237,7 +1238,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/application": {
+        "/token/application": {
             "post": {
                 "summary": "Generate Application Token",
                 "tags": ["auth"],
@@ -1297,7 +1298,7 @@
                 "responses": {}
             }
         },
-        "/abbr/token/applications/all": {
+        "/token/applications/all": {
             "delete": {
                 "summary": "Revoke All Application Token",
                 "tags": ["auth"],
@@ -1309,7 +1310,7 @@
                 "responses": {}
             }
         },
-        "/abbr/auth/ticket": {
+        "/auth/ticket": {
             "post": {
                 "summary": "Generate Temporary Identity Proof Token",
                 "tags": ["auth"],
@@ -1336,7 +1337,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/roles": {
+        "/member/roles": {
             "get": {
                 "summary": "Get All Roles",
                 "tags": ["member"],
@@ -1344,7 +1345,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/ranks": {
+        "/member/ranks": {
             "get": {
                 "summary": "Get All Ranks",
                 "tags": ["member"],
@@ -1352,7 +1353,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/perms": {
+        "/member/perms": {
             "get": {
                 "summary": "Get All Permissions",
                 "tags": ["member"],
@@ -1360,7 +1361,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/list": {
+        "/member/list": {
             "get": {
                 "summary": "Get Member List",
                 "tags": ["member"],
@@ -1429,7 +1430,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/banner": {
+        "/member/banner": {
             "get": {
                 "summary": "Get Banner",
                 "tags": ["member"],
@@ -1482,7 +1483,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/roles/rank": {
+        "/member/roles/rank": {
             "patch": {
                 "summary": "Update Rank Role",
                 "tags": ["member"],
@@ -1494,7 +1495,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/resign": {
+        "/member/resign": {
             "post": {
                 "summary": "Member Resign",
                 "tags": ["member"],
@@ -1523,7 +1524,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/{userid}/roles": {
+        "/member/{userid}/roles": {
             "patch": {
                 "summary": "Update Member Roles",
                 "tags": ["member"],
@@ -1561,7 +1562,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/{userid}/points": {
+        "/member/{userid}/points": {
             "patch": {
                 "summary": "Update Member Points",
                 "tags": ["member"],
@@ -1603,7 +1604,7 @@
                 "responses": {}
             }
         },
-        "/abbr/member/{userid}/dismiss": {
+        "/member/{userid}/dismiss": {
             "post": {
                 "summary": "Dismiss Member",
                 "tags": ["member"],
@@ -1624,7 +1625,7 @@
                 "responses": {}
             }
         },
-        "/abbr/discord/role-connection/enable": {
+        "/discord/role-connection/enable": {
             "post": {
                 "summary": "Enable Discord Role Connection",
                 "tags": ["admin"],
@@ -1636,7 +1637,7 @@
                 "responses": {}
             }
         },
-        "/abbr/discord/role-connection/disable": {
+        "/discord/role-connection/disable": {
             "post": {
                 "summary": "Disable Discord Role Connection",
                 "tags": ["admin"],
@@ -1648,7 +1649,7 @@
                 "responses": {}
             }
         },
-        "/abbr/config": {
+        "/config": {
             "get": {
                 "summary": "Get Config",
                 "tags": ["admin"],
@@ -1687,7 +1688,7 @@
                 "responses": {}
             }
         },
-        "/abbr/restart": {
+        "/restart": {
             "post": {
                 "summary": "Restart API Service",
                 "tags": ["admin"],
@@ -1716,7 +1717,7 @@
                 "responses": {}
             }
         },
-        "/abbr/audit/list": {
+        "/audit/list": {
             "get": {
                 "summary": "Get Audit Log",
                 "tags": ["admin"],
@@ -1761,7 +1762,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/{logid}": {
+        "/dlog/{logid}": {
             "get": {
                 "summary": "Get Delivery Log",
                 "tags": ["dlog"],
@@ -1801,7 +1802,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/list": {
+        "/dlog/list": {
             "get": {
                 "summary": "Get Delivery Log List",
                 "tags": ["dlog"],
@@ -1910,7 +1911,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/statistics/summary": {
+        "/dlog/statistics/summary": {
             "get": {
                 "summary": "Get Summary Statistics",
                 "tags": ["dlog"],
@@ -1947,7 +1948,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/statistics/chart": {
+        "/dlog/statistics/chart": {
             "get": {
                 "summary": "Get Chart Statistics",
                 "tags": ["dlog"],
@@ -2000,7 +2001,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/leaderboard": {
+        "/dlog/leaderboard": {
             "get": {
                 "summary": "Get Leaderboard",
                 "tags": ["dlog"],
@@ -2077,7 +2078,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/export": {
+        "/dlog/export": {
             "get": {
                 "summary": "Export Delivery Log",
                 "tags": ["dlog"],
@@ -2114,7 +2115,7 @@
                 "responses": {}
             }
         },
-        "/abbr/tracksim/setup": {
+        "/tracksim/setup": {
             "post": {
                 "summary": "TrackSim Setup",
                 "tags": ["tracker"],
@@ -2126,7 +2127,7 @@
                 "responses": {}
             }
         },
-        "/abbr/tracksim/update": {
+        "/tracksim/update": {
             "post": {
                 "summary": "TrackSim Webhook",
                 "tags": ["tracker"],
@@ -2163,7 +2164,7 @@
                 "responses": {}
             }
         },
-        "/abbr/tracksim/update/route": {
+        "/tracksim/update/route": {
             "post": {
                 "summary": "Update TrackSim Route",
                 "tags": ["tracker"],
@@ -2192,7 +2193,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcements/list": {
+        "/announcements/list": {
             "get": {
                 "summary": "Get Announcement List",
                 "tags": ["announcement"],
@@ -2245,7 +2246,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcements": {
+        "/announcements": {
             "post": {
                 "summary": "Create Announcement",
                 "tags": ["announcement"],
@@ -2294,7 +2295,7 @@
                 "responses": {}
             }
         },
-        "/abbr/announcements/{announcementid}": {
+        "/announcements/{announcementid}": {
             "get": {
                 "summary": "Get Announcement",
                 "tags": ["announcement"],
@@ -2390,7 +2391,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications/types": {
+        "/applications/types": {
             "get": {
                 "summary": "Get Application Types",
                 "tags": ["application"],
@@ -2398,7 +2399,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications/positions": {
+        "/applications/positions": {
             "get": {
                 "summary": "Get Application Positions",
                 "tags": ["application"],
@@ -2433,7 +2434,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications/list": {
+        "/applications/list": {
             "get": {
                 "summary": "Get Application List",
                 "tags": ["application"],
@@ -2494,7 +2495,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications": {
+        "/applications": {
             "post": {
                 "summary": "Create Application",
                 "tags": ["application"],
@@ -2527,7 +2528,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications/{applicationid}": {
+        "/applications/{applicationid}": {
             "get": {
                 "summary": "Get Application",
                 "tags": ["application"],
@@ -2603,7 +2604,7 @@
                 "responses": {}
             }
         },
-        "/abbr/applications/{applicationid}/status": {
+        "/applications/{applicationid}/status": {
             "patch": {
                 "summary": "Update Application Status",
                 "tags": ["application"],
@@ -2645,7 +2646,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenges/list": {
+        "/challenges/list": {
             "get": {
                 "summary": "Get Challenge List",
                 "tags": ["challenge"],
@@ -2762,7 +2763,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenges": {
+        "/challenges": {
             "post": {
                 "summary": "Create Challenge",
                 "tags": ["challenge"],
@@ -2831,7 +2832,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenges/{challengeid}": {
+        "/challenges/{challengeid}": {
             "get": {
                 "summary": "Get Challenge",
                 "tags": ["challenge"],
@@ -2955,7 +2956,7 @@
                 "responses": {}
             }
         },
-        "/abbr/challenges/{challengeid}/delivery/{logid}": {
+        "/challenges/{challengeid}/delivery/{logid}": {
             "put": {
                 "summary": "Add Challenge Delivery",
                 "tags": ["challenge"],
@@ -3011,7 +3012,7 @@
                 "responses": {}
             }
         },
-        "/abbr/divisions/list": {
+        "/divisions/list": {
             "get": {
                 "summary": "Get Division List",
                 "tags": ["division"],
@@ -3019,7 +3020,7 @@
                 "responses": {}
             }
         },
-        "/abbr/divisions": {
+        "/divisions": {
             "get": {
                 "summary": "Get Division Info",
                 "tags": ["division"],
@@ -3048,7 +3049,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/{logid}/division": {
+        "/dlog/{logid}/division": {
             "get": {
                 "summary": "Get Delivery Log Division Info",
                 "tags": ["dlog"],
@@ -3069,7 +3070,7 @@
                 "responses": {}
             }
         },
-        "/abbr/dlog/{logid}/division/{divisionid}": {
+        "/dlog/{logid}/division/{divisionid}": {
             "post": {
                 "summary": "Create Division Delivery Validation Request",
                 "tags": ["dlog"],
@@ -3146,7 +3147,7 @@
                 "responses": {}
             }
         },
-        "/abbr/divisions/list/pending": {
+        "/divisions/list/pending": {
             "get": {
                 "summary": "Get Pending Division Validation",
                 "tags": ["division"],
@@ -3183,7 +3184,7 @@
                 "responses": {}
             }
         },
-        "/abbr/downloads/list": {
+        "/downloads/list": {
             "get": {
                 "summary": "Get Downloads List",
                 "tags": ["downloads"],
@@ -3244,7 +3245,7 @@
                 "responses": {}
             }
         },
-        "/abbr/downloads": {
+        "/downloads": {
             "post": {
                 "summary": "Create Downloadable Item",
                 "tags": ["downloads"],
@@ -3285,7 +3286,7 @@
                 "responses": {}
             }
         },
-        "/abbr/downloads/{downloadsid}": {
+        "/downloads/{downloadsid}": {
             "get": {
                 "summary": "Get Downloadable Item",
                 "tags": ["downloads"],
@@ -3373,7 +3374,7 @@
                 "responses": {}
             }
         },
-        "/abbr/downloads/redirect/{secret}": {
+        "/downloads/redirect/{secret}": {
             "get": {
                 "summary": "Redirect to Original URL",
                 "tags": ["downloads"],
@@ -3401,7 +3402,7 @@
                 }
             }
         },
-        "/abbr/economy": {
+        "/economy": {
             "get": {
                 "summary": "Get Economy Config",
                 "tags": ["economy"],
@@ -3413,7 +3414,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/leaderboard": {
+        "/economy/balance/leaderboard": {
             "get": {
                 "summary": "Get Balance Leaderboard",
                 "tags": ["economy_balance"],
@@ -3474,7 +3475,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance": {
+        "/economy/balance": {
             "get": {
                 "summary": "Get Current User's Balance",
                 "tags": ["economy_balance"],
@@ -3486,7 +3487,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}": {
+        "/economy/balance/{userid}": {
             "get": {
                 "summary": "Get User Balance",
                 "tags": ["economy_balance"],
@@ -3507,7 +3508,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/transfer": {
+        "/economy/balance/transfer": {
             "post": {
                 "summary": "Transfer Balance",
                 "tags": ["economy_balance"],
@@ -3548,7 +3549,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}/visibility/public": {
+        "/economy/balance/{userid}/visibility/public": {
             "post": {
                 "summary": "Make Balance Visibility Public",
                 "tags": ["economy_balance"],
@@ -3569,7 +3570,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}/visibility/private": {
+        "/economy/balance/{userid}/visibility/private": {
             "post": {
                 "summary": "Make Balance Visibility Private",
                 "tags": ["economy_balance"],
@@ -3590,7 +3591,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}/transactions/list": {
+        "/economy/balance/{userid}/transactions/list": {
             "get": {
                 "summary": "Get User Transaction History",
                 "tags": ["economy_balance"],
@@ -3691,7 +3692,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/balance/{userid}/transactions/export": {
+        "/economy/balance/{userid}/transactions/export": {
             "get": {
                 "summary": "Export Transaction History",
                 "tags": ["economy_balance"],
@@ -3728,7 +3729,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages": {
+        "/economy/garages": {
             "get": {
                 "summary": "Get Garages (Full list, including unpurchased)",
                 "tags": ["economy_garages"],
@@ -3740,7 +3741,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/list": {
+        "/economy/garages/list": {
             "get": {
                 "summary": "Get Garages List (Owned)",
                 "tags": ["economy_garages"],
@@ -3817,7 +3818,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}": {
+        "/economy/garages/{garageid}": {
             "get": {
                 "summary": "Get Garage Info",
                 "tags": ["economy_garages"],
@@ -3838,7 +3839,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/purchase": {
+        "/economy/garages/{garageid}/purchase": {
             "post": {
                 "summary": "Purchase a Garage",
                 "tags": ["economy_garages"],
@@ -3876,7 +3877,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/transfer": {
+        "/economy/garages/{garageid}/transfer": {
             "post": {
                 "summary": "Transfer a Garage",
                 "tags": ["economy_garages"],
@@ -3918,7 +3919,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/sell": {
+        "/economy/garages/{garageid}/sell": {
             "post": {
                 "summary": "Sell a Garage",
                 "tags": ["economy_garages"],
@@ -3939,7 +3940,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/slots/list": {
+        "/economy/garages/{garageid}/slots/list": {
             "get": {
                 "summary": "Get Garage Slots",
                 "tags": ["economy_garages"],
@@ -4016,7 +4017,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/slots/{slotid}": {
+        "/economy/garages/{garageid}/slots/{slotid}": {
             "get": {
                 "summary": "Get Garage Slot Info",
                 "tags": ["economy_garages"],
@@ -4045,7 +4046,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/slots/purchase": {
+        "/economy/garages/{garageid}/slots/purchase": {
             "post": {
                 "summary": "Purchase a Garage Slot",
                 "tags": ["economy_garages"],
@@ -4083,7 +4084,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/slots/{slotid}/transfer": {
+        "/economy/garages/{garageid}/slots/{slotid}/transfer": {
             "post": {
                 "summary": "Transfer a Garage Slot",
                 "tags": ["economy_garages"],
@@ -4133,7 +4134,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/garages/{garageid}/slots/{slotid}/sell": {
+        "/economy/garages/{garageid}/slots/{slotid}/sell": {
             "post": {
                 "summary": "Sell a Garage Slot",
                 "tags": ["economy_garages"],
@@ -4162,7 +4163,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks": {
+        "/economy/trucks": {
             "get": {
                 "summary": "Get Truck Models",
                 "tags": ["economy_trucks"],
@@ -4174,7 +4175,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/list": {
+        "/economy/trucks/list": {
             "get": {
                 "summary": "Get Trucks List (Owned)",
                 "tags": ["economy_trucks"],
@@ -4323,7 +4324,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}": {
+        "/economy/trucks/{vehicleid}": {
             "get": {
                 "summary": "Get Truck Info",
                 "tags": ["economy_trucks"],
@@ -4344,7 +4345,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/{operation}/history": {
+        "/economy/trucks/{vehicleid}/{operation}/history": {
             "get": {
                 "summary": "Get Truck Operation History",
                 "tags": ["economy_trucks"],
@@ -4397,7 +4398,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{truckid}/purchase": {
+        "/economy/trucks/{truckid}/purchase": {
             "post": {
                 "summary": "Purchase a Truck",
                 "tags": ["economy_trucks"],
@@ -4443,7 +4444,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/transfer": {
+        "/economy/trucks/{vehicleid}/transfer": {
             "post": {
                 "summary": "Transfer / Reassign a Truck",
                 "tags": ["economy_trucks"],
@@ -4489,7 +4490,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/relocate": {
+        "/economy/trucks/{vehicleid}/relocate": {
             "post": {
                 "summary": "Relocate a Truck",
                 "tags": ["economy_trucks"],
@@ -4527,7 +4528,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/activate": {
+        "/economy/trucks/{vehicleid}/activate": {
             "post": {
                 "summary": "Activate a Truck",
                 "tags": ["economy_trucks"],
@@ -4548,7 +4549,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/deactivate": {
+        "/economy/trucks/{vehicleid}/deactivate": {
             "post": {
                 "summary": "Deactivate a Truck",
                 "tags": ["economy_trucks"],
@@ -4569,7 +4570,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/repair": {
+        "/economy/trucks/{vehicleid}/repair": {
             "post": {
                 "summary": "Repair a Truck",
                 "tags": ["economy_trucks"],
@@ -4590,7 +4591,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/sell": {
+        "/economy/trucks/{vehicleid}/sell": {
             "post": {
                 "summary": "Sell a Truck",
                 "tags": ["economy_trucks"],
@@ -4611,7 +4612,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/trucks/{vehicleid}/scrap": {
+        "/economy/trucks/{vehicleid}/scrap": {
             "post": {
                 "summary": "Sell a Truck",
                 "tags": ["economy_trucks"],
@@ -4632,7 +4633,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/merch": {
+        "/economy/merch": {
             "get": {
                 "summary": "Get Merch Products",
                 "tags": ["economy_merch"],
@@ -4644,7 +4645,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/merch/list": {
+        "/economy/merch/list": {
             "get": {
                 "summary": "Get Merch List (Owned)",
                 "tags": ["economy_merch"],
@@ -4737,7 +4738,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/merch/{merchid}/purchase": {
+        "/economy/merch/{merchid}/purchase": {
             "post": {
                 "summary": "Purchase a Merch",
                 "tags": ["economy_merch"],
@@ -4775,7 +4776,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/merch/{itemid}/transfer": {
+        "/economy/merch/{itemid}/transfer": {
             "post": {
                 "summary": "Transfer a Merch",
                 "tags": ["economy_merch"],
@@ -4817,7 +4818,7 @@
                 "responses": {}
             }
         },
-        "/abbr/economy/merch/{itemid}/sell": {
+        "/economy/merch/{itemid}/sell": {
             "post": {
                 "summary": "Sell a Merch",
                 "tags": ["economy_merch"],
@@ -4838,7 +4839,7 @@
                 "responses": {}
             }
         },
-        "/abbr/events/list": {
+        "/events/list": {
             "get": {
                 "summary": "Get Event List",
                 "tags": ["event"],
@@ -4883,7 +4884,7 @@
                 "responses": {}
             }
         },
-        "/abbr/events": {
+        "/events": {
             "post": {
                 "summary": "Create Event",
                 "tags": ["event"],
@@ -4944,7 +4945,7 @@
                 "responses": {}
             }
         },
-        "/abbr/events/{eventid}": {
+        "/events/{eventid}": {
             "get": {
                 "summary": "Get Event",
                 "tags": ["event"],
@@ -5052,7 +5053,7 @@
                 "responses": {}
             }
         },
-        "/abbr/events/{eventid}/vote": {
+        "/events/{eventid}/vote": {
             "put": {
                 "summary": "Vote Event",
                 "tags": ["event"],
@@ -5092,7 +5093,7 @@
                 "responses": {}
             }
         },
-        "/abbr/events/{eventid}/attendees": {
+        "/events/{eventid}/attendees": {
             "patch": {
                 "summary": "Update Event Attendees",
                 "tags": ["event"],
