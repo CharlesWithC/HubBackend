@@ -15,10 +15,18 @@ from api import tracebackHandler
 
 
 async def get_export(request: Request, response: Response, authorization: str = Header(None), \
-        after: Optional[int] = None, before: Optional[int] = None, include_ids: Optional[bool] = False):
+        after: Optional[int] = None, before: Optional[int] = None, \
+        include_ids: Optional[bool] = False, userid: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
+    
+    if userid is not None:
+        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid} AND userid >= 0")
+        t = await app.db.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found")}
 
     rl = await ratelimit(request, 'GET /dlog/export', 300, 3)
     if rl[0]:
@@ -36,7 +44,12 @@ async def get_export(request: Request, response: Response, authorization: str = 
         after = 0
     if before is None:
         before = max(int(time.time()), 32503651200)
+    
+    limit = ""
+    if userid is not None:
+        limit += f"AND dlog.userid = {userid}"
 
+    st = time.time()
     f = BytesIO()
     if not include_ids:
         f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
@@ -46,7 +59,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
-        WHERE dlog.timestamp >= {after} AND dlog.timestamp <= {before} AND dlog.logid >= 0")
+        WHERE dlog.timestamp >= {after} AND dlog.timestamp <= {before} {limit} AND dlog.logid >= 0")
     d = await app.db.fetchall(dhrid)
     for di in range(len(d)):
         dd = d[di]

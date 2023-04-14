@@ -145,38 +145,38 @@ async def get_summary(request: Request, response: Response, authorization: str =
         ats_profit_0_0 AS profit_cancelled_tot_dollar, \
         ats_profit_0_1 AS profit_cancelled_new_dollar \
         FROM ( SELECT \
-        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ets2_job_1_0, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_1_1, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ets2_job_0_0, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ets2_job_0_1, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END) AS ats_job_1_0, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_1_1, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END) AS ats_job_0_0, \
-        COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END) AS ats_job_0_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN distance END) AS ets2_distance_1_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ets2_distance_1_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN distance END) AS ets2_distance_0_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ets2_distance_0_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN distance END) AS ats_distance_1_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ats_distance_1_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN distance END) AS ats_distance_0_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END) AS ats_distance_0_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END) AS ets2_fuel_1_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ets2_fuel_1_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END) AS ets2_fuel_0_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ets2_fuel_0_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END) AS ats_fuel_1_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ats_fuel_1_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END) AS ats_fuel_0_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END) AS ats_fuel_0_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN profit END) AS ets2_profit_1_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ets2_profit_1_1, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ets2_profit_0_0, \
-        SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ets2_profit_0_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN profit END) AS ats_profit_1_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_1_1, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END) AS ats_profit_0_0, \
-        SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END) AS ats_profit_0_1 \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END), 0) AS ets2_job_1_0, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END), 0) AS ets2_job_1_1, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END), 0) AS ets2_job_0_0, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END), 0) AS ets2_job_0_1, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN 1 END), 0) AS ats_job_1_0, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END), 0) AS ats_job_1_1, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN 1 END), 0) AS ats_job_0_0, \
+        IFNULL(COUNT(CASE WHEN logid >= 0 AND unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN 1 END), 0) AS ats_job_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN distance END), 0) AS ets2_distance_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END), 0) AS ets2_distance_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN distance END), 0) AS ets2_distance_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END), 0) AS ets2_distance_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN distance END), 0) AS ats_distance_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN distance END), 0) AS ats_distance_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN distance END), 0) AS ats_distance_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN distance END), 0) AS ats_distance_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END), 0) AS ets2_fuel_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END), 0) AS ets2_fuel_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END), 0) AS ets2_fuel_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END), 0) AS ets2_fuel_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN fuel END), 0) AS ats_fuel_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END), 0) AS ats_fuel_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN fuel END), 0) AS ats_fuel_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN fuel END), 0) AS ats_fuel_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp <= {before} THEN profit END), 0) AS ets2_profit_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ets2_profit_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp <= {before} THEN profit END), 0) AS ets2_profit_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 1 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ets2_profit_0_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp <= {before} THEN profit END), 0) AS ats_profit_1_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ats_profit_1_1, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END), 0) AS ats_profit_0_0, \
+        IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ats_profit_0_1 \
         FROM dlog WHERE {quser} logid >= -1) AS stats")
     t = list(await app.db.fetchone(dhrid))
     t = [nint(x) for x in t]
@@ -290,11 +290,11 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     queries = []
     for (start_time, end_time) in timerange:
-        queries.append(f"COUNT(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END)")
-        queries.append(f"SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN distance END)")
-        queries.append(f"SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END)")
-        queries.append(f"SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END)")
-        queries.append(f"SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END)")
+        queries.append(f"IFNULL(COUNT(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
     querystr = "SELECT " + ",".join(queries) + f" FROM dlog WHERE {limit} logid >= 0"
     await app.db.execute(dhrid, querystr)
     t = list(await app.db.fetchone(dhrid))

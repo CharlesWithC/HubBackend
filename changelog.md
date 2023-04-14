@@ -3,9 +3,12 @@
 **v2.5.4**  
 1.Fixed audit log on user resignation and when removing driver from tracker company  
 2.Fixed **PATCH** `/applications/positions` route  
-3.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
-4.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
-5.Improved `openapi` (to use `servers:[]` instead of `/abbr`)  
+3.Fixed issue updating member's distance point  
+4.Fixed dlog summary statistics issue with summing up due to `None` data in one or more columns  
+5.Added `?userid` to **GET** `/dlog/export`  
+6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
+7.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+8.Improved `openapi` (to use `servers:[]` instead of `/abbr`)  
 
 **v2.5.3**  
 1.Fixed BannerGen 500 error  

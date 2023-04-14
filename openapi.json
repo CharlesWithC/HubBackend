@@ -2111,6 +2111,14 @@
                     },
                     "name": "include_ids",
                     "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "User ID",
+                        "type": "integer"
+                    },
+                    "name": "userid",
+                    "in": "query"
                 }],
                 "responses": {}
             }

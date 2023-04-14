@@ -140,6 +140,9 @@ async def SendDiscordNotification(request, uid, data):
     QueueDiscordMessage(request.app, t, data)
 
 async def CheckNotificationEnabled(request, notification_type, uid):
+    if uid is None:
+        return False
+    
     (app, dhrid) = (request.app, request.state.dhrid)
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
