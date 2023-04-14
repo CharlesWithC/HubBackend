@@ -256,6 +256,8 @@ async def post_resign(request: Request, response: Response, authorization: str =
         await AuditLog(request, uid, ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
         await AuditLog(request, uid, ml.ctr(request, "added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        
+    await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))

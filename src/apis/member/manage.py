@@ -142,6 +142,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         else:
             await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
         
+        await UpdateRoleConnection(request, discordid)
+        
         if discordid is not None and app.config.member_welcome.role_change != [] and app.config.discord_bot_token != "":
             for role in app.config.member_welcome.role_change:
                 try:
@@ -185,6 +187,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
         else:
             await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
+            
+        await UpdateRoleConnection(request, discordid)
 
         if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
             for role in app.config.member_leave.role_change:
@@ -359,6 +363,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
         await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+    
+    await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
@@ -366,7 +372,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     if app.config.member_leave.webhook_url != "" or app.config.member_leave.channel_id != "":
         meta = app.config.member_leave
         await AutoMessage(app, meta, setvar)
-    
+
     if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
         for role in app.config.member_leave.role_change:
             try:

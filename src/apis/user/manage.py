@@ -332,16 +332,15 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             del au["code"]
             return au
 
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-        userid = t[0][0]
+        (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
-        username = t[0][1]
         
         await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
@@ -354,6 +353,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
+        await UpdateRoleConnection(request, discordid)
         await AuditLog(request, au["uid"], ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
@@ -361,10 +361,9 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     else:
         uid = auth_uid
         
-        await app.db.execute(dhrid, f"SELECT userid, name FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
-        userid = t[0][0]
-        username = t[0][1]
+        (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
@@ -380,6 +379,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
+        await UpdateRoleConnection(request, discordid)
         await AuditLog(request, uid, ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)

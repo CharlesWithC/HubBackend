@@ -254,6 +254,8 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
+        await UpdateRoleConnection(request, discordid)
+
     else:
         if not staffmode and not app.config.allow_custom_profile:
             response.status_code = 403
@@ -288,6 +290,8 @@ async def patch_profile(request: Request, response: Response, authorization: str
         
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
+        
+        await UpdateRoleConnection(request, discordid)
 
     return Response(status_code=204)
     

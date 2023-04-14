@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.5.4**  
+1.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion.  
+
 **v2.5.3**  
 1.Fixed BannerGen 500 error  
 2.Added thousands separator to distance in banners  
