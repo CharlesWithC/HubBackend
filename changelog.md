@@ -7,9 +7,11 @@
 4.Fixed dlog summary statistics issue with summing up due to `None` data in one or more columns  
 5.Added `?userid` to **GET** `/dlog/export`  
 6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
-7.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
-8.Improved `openapi` (to use `servers:[]` instead of `/abbr`)  
-9.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
+7.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
+8.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+9.Improved `openapi`  
+i) use `servers:[]` instead of `/abbr`  
+ii) added `parent-openapi` for multi-hub-doc  
 
 **v2.5.3**  
 1.Fixed BannerGen 500 error  

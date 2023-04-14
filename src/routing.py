@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from starlette.routing import Mount
 
 import app as base
+import static
 from logger import logger
 
 app = FastAPI()
@@ -15,10 +16,11 @@ app = FastAPI()
 def shutdownEvent():
     os._exit(42)
 
-def initRoutes(config_paths, first_init = False):
+def initRoutes(config_paths, openapi_path, first_init = False):
     global app
     routes = []
     scopes = {}
+    servers = []
 
     for config_path in config_paths:
         dh = base.createApp(config_path, first_init = first_init)
@@ -32,6 +34,7 @@ def initRoutes(config_paths, first_init = False):
             else:
                 dh.multi_mode = False
             routes.append(Mount(f"{dh.config.prefix}", dh, name = f"{dh.config.name} Drivers Hub"))
+            servers.append({"url": f"https://{dh.config.apidomain}{dh.config.prefix}", "description": dh.config.name})
 
     if len(routes) == 0:
         logger.warning("No valid config is loaded, quited.")
@@ -40,7 +43,19 @@ def initRoutes(config_paths, first_init = False):
     if first_init:
         logger.info("")
 
-    app = FastAPI(routes = routes)
+    if openapi_path != "":
+        app = FastAPI(title = "Drivers Hub", routes = routes, version = base.version, \
+                      openapi_url = f"{openapi_path.rstrip('/')}/openapi.json", docs_url = f"{openapi_path}", redoc_url=None)
+
+        def openapi():
+            data = static.OPENAPI
+            data["servers"] = servers
+            data["info"]["version"] = base.version
+            return static.OPENAPI
+        app.openapi = openapi
+    else:
+        app = FastAPI(title = "Drivers Hub", version = base.version, routes = routes)
+
     app.add_event_handler("shutdown", shutdownEvent)
 
     if len(routes) == 1:
