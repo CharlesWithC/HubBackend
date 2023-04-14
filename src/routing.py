@@ -31,7 +31,7 @@ def initRoutes(config_paths, first_init = False):
                 dh.multi_mode = True
             else:
                 dh.multi_mode = False
-            routes.append(Mount(f"/{dh.config.abbr}", dh, name = f"{dh.config.name} Drivers Hub"))
+            routes.append(Mount(f"{dh.config.prefix}", dh, name = f"{dh.config.name} Drivers Hub"))
 
     if len(routes) == 0:
         logger.warning("No valid config is loaded, quited.")

@@ -9,6 +9,7 @@
 6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
 7.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
 8.Improved `openapi` (to use `servers:[]` instead of `/abbr`)  
+9.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
 
 **v2.5.3**  
 1.Fixed BannerGen 500 error  

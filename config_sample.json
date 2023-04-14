@@ -20,6 +20,7 @@
     },
 
     "apidomain": "drivershub.charlws.com",
+    "prefix": "",
     "domain": "",
     "server_host": "127.0.0.1",
     "server_port": 7777,

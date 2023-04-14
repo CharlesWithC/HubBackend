@@ -82,7 +82,7 @@ def initApp(app, first_init = False):
         cur.close()
         conn.close()
         
-    logger.info(f"[{app.config.abbr}] Name: {app.config.name}")
+    logger.info(f"[{app.config.abbr}] Name: {app.config.name} | Prefix: {app.config.prefix}")
     if app.config.openapi:
         logger.info(f"[{app.config.abbr}] OpenAPI: Enabled")
     else:
@@ -125,7 +125,7 @@ def createApp(config_path, first_init = False):
         app = FastAPI(title="Drivers Hub", version=version, openapi_url=f"/doc/openapi.json", docs_url=f"/doc", redoc_url=None)
         def openapi():
             data = static.OPENAPI
-            data["servers"] = [{"url": f"https://{config.apidomain}/{config.abbr}", "description": config.name}]
+            data["servers"] = [{"url": f"https://{config.apidomain}{config.prefix}", "description": config.name}]
             data["info"]["version"] = version
             return static.OPENAPI
         app.openapi = openapi
