@@ -5,6 +5,7 @@
     "invalid_api_token": "Token de API no válido",
     "rate_limit": "Estás siendo limitado por la tasa.",
     "bad_json": "JSON no válido: falta el campo o no se pueden analizar los datos.",
+    "invalid_params": "Parámetros de solicitud no válidos.",
     "content_too_long": "La longitud máxima de \"{item}\" es de {limit} caracteres.",
 
     "value_too_large": "El valor máximo de \"{elemento}\" es {límite}.",

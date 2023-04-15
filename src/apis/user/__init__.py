@@ -41,7 +41,7 @@ routes = [
     APIRoute("/user/ban", manage.put_ban, methods=["PUT"], response_class=JSONResponse),
     APIRoute("/user/ban", manage.delete_ban, methods=["DELETE"], response_class=JSONResponse),
 
-    APIRoute("/user/resendConfirmation", connections.post_resend_confirmation, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/user/resend-confirmation", connections.post_resend_confirmation, methods=["POST"], response_class=JSONResponse),
     APIRoute("/user/email", connections.patch_email, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/discord", connections.patch_discord, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/steam", connections.patch_steam, methods=["PATCH"], response_class=JSONResponse),

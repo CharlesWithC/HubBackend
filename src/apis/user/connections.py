@@ -3,6 +3,7 @@
 
 import json
 import traceback
+from typing import Optional
 
 from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
@@ -18,7 +19,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /user/resendConfirmation', 60, 1)
+    rl = await ratelimit(request, 'POST /user/resend-confirmation', 60, 1)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -118,11 +119,19 @@ async def patch_email(request: Request, response: Response, authorization: str =
 
     return Response(status_code=204)
 
-async def patch_discord(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_discord(request: Request, response: Response, authorization: str = Header(None), code: Optional[str] = None, error_description: Optional[str] = None, callback_url: Optional[str] = None):
     """Updates Discord account connection for the authorized user, returns 204
     
     JSON: `{"code": str}`"""
     app = request.app
+    if code is None and error_description is None or callback_url is None:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_params")}
+    
+    if code is None and error_description is not None:
+        response.status_code = 400
+        return {"error": error_description}
+    
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -139,15 +148,8 @@ async def patch_discord(request: Request, response: Response, authorization: str
         return au
     uid = au["uid"]
 
-    data = await request.json()
     try:
-        code = str(data["code"])
-    except:
-        response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-
-    try:
-        discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, f"https://{app.config.apidomain}/{app.config.abbr}/auth/discord/connect")
+        discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, callback_url)
         tokens = discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
             await app.db.extend_conn(dhrid, 30)
@@ -211,6 +213,11 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     
     JSON: `{"callback": str}`"""
     app = request.app
+    data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
+    if data == "":
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_params")}
+    
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -227,15 +234,9 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         return au
     uid = au["uid"]
     
-    data = await request.json()
-    try:
-        openid = str(data["callback"]).replace("openid.mode=id_res", "openid.mode=check_authentication")
-    except:
-        response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     r = None
     try:
-        r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + openid, dhrid = dhrid)
+        r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         response.status_code = 503
         return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
@@ -245,7 +246,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_steam_auth", force_lang = au["language"])}
-    steamid = openid.split("openid.identity=")[1].split("&")[0]
+    steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
 
     await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND steamid = {steamid}")

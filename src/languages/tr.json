@@ -5,6 +5,7 @@
     "invalid_api_token": "Geçersiz API Simgesi",
     "rate_limit": "Oturumunuza hız sınırlandırması uygulandı. Lütfen daha yavaş işlem yapınız..",
     "bad_json": "Geçersiz JSON: Alan eksik veya veriler ayrıştırılamıyor.",
+    "invalid_params": "Geçersiz istek parametreleri.",
     "content_too_long": "Maksimum \"{item}\" uzunluğu {limit} karakter ile sınırlıdır.",
 
     "value_too_large": "\"{item}\" için maksimum değer: {limit}.",

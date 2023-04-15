@@ -34,11 +34,6 @@ default_config = {
 
     "openapi": False,
     "frontend_urls": {
-        "steam_callback": "https://{domain}/connectSteam",
-        "discord_callback": "https://{domain}/connectDiscord",
-        "auth_message": "https://{domain}/auth?message={message}",
-        "auth_token": "https://{domain}/auth?token={token}",
-        "auth_mfa": "https://{domain}/auth?token={token}&mfa=true",
         "member": "https://{domain}/member?userid={userid}",
         "delivery": "https://{domain}/delivery?logid={logid}",
         "email_confirm": "https://{domain}/emailConfirm?secret={secret}"

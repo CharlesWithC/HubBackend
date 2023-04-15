@@ -8,18 +8,20 @@
 5.Added `?userid` to **GET** `/dlog/export`  
 6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
 7.Improved user ban system  
-i) When a user connects a banned third-party account, his/her current account will be banned.  
-ii) Staff may ban users who don't exist in Drivers Hub with their email, discordid etc.  
+i) When a user connects a banned third-party account, his/her current account will be banned  
+ii) Staff may ban users who don't exist in Drivers Hub with their email, discordid etc  
 8.Improved user deletion procedure  
-i) When a user requests to delete his/her account, it'll be deleted after 14 days.  
-ii) User may login twice to recover account.  
-iii) When a staff deletes a user's account, his/her account will be deleted immediately.  
-9.Added automatic config reloader (by detecting file changes) - To solve the issue that config cannot be synced between workers  
-10.Allowed public access of **GET** `/config` for partial config that is available to public  
-11.Updated config saving/reloading mechanism: New config will be saved to `.saved`, and original config will be replaced by `.saved` on config reload / restart  
-12.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
-13.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
-14.Improved `openapi`  
+i) When a user requests to delete his/her account, it'll be deleted after 14 days  
+ii) User may login twice to recover account  
+iii) When a staff deletes a user's account, his/her account will be deleted immediately  
+9.Updated Discord and Steam callback to return JSON response. Web client should handle callback from third-party servers and forward request params to API for validation  
+**Note** For Discord OAuth, web client must add `callback_url` (`redirect_uri`) in request params which is required by Discord  
+10.Added automatic config reloader (by detecting file changes) - To solve the issue that config cannot be synced between workers  
+11.Allowed public access of **GET** `/config` for partial config that is available to public  
+12.Updated config saving/reloading mechanism: New config will be saved to `.saved`, and original config will be replaced by `.saved` on config reload / restart  
+13.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
+14.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+15.Improved `openapi`  
 i) use `servers:[]` instead of `/abbr`  
 ii) added `parent-openapi` for multi-hub-doc  
 
@@ -125,7 +127,7 @@ Added support to Email/Password registration and updating email
 
 -> Register with **POST** `/auth/register`  
 -> After register, confirm email with **POST** `/auth/email` with secret  
--> To resend register confirmation email, use **POST** `/user/resendConfirmation`  
+-> To resend register confirmation email, use **POST** `/user/resend-confirmation`  
 
 -> To update email, use **PATCH** `/user/email`  
 -> To reset password, use **POST** `/auth/reset`  

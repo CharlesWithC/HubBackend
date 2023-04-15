@@ -28,15 +28,6 @@ def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
 
-def getUrl4Msg(app, message):
-    return app.config.frontend_urls.auth_message.replace("{message}", str(message))
-
-def getUrl4Token(app, token):
-    return app.config.frontend_urls.auth_token.replace("{token}", str(token))
-
-def getUrl4MFA(app, token):
-    return app.config.frontend_urls.auth_mfa.replace("{token}", str(token))
-
 def genrid():
     return str(int(time.time()*10000000)) + str(random.randint(0, 10000)).zfill(5)
 

@@ -192,35 +192,6 @@
                 "responses": {}
             }
         },
-        "/auth/discord/redirect": {
-            "get": {
-                "summary": "Redirects to Discord OAuth2",
-                "tags": ["auth"],
-                "operationId": "get_auth_discord_redirect",
-                "parameters": [{
-                    "required": false,
-                    "schema": {
-                        "title": "Whether to connect account or login",
-                        "type": "boolean"
-                    },
-                    "name": "connect_account",
-                    "in": "query"
-                }],
-                "responses": {
-                    "302": {
-                        "description": "Redirects to Discord OAuth2"
-                    }
-                }
-            }
-        },
-        "/auth/discord/connect": {
-            "get": {
-                "summary": "Discord OAuth Callback (To connect account)",
-                "tags": ["auth"],
-                "operationId": "get_auth_discord_connect",
-                "responses": {}
-            }
-        },
         "/auth/discord/callback": {
             "get": {
                 "summary": "Discord OAuth2 Callback",
@@ -229,7 +200,7 @@
                 "parameters": [{
                     "required": false,
                     "schema": {
-                        "title": "Callback code from Discord.",
+                        "title": "Code from Discord",
                         "type": "string"
                     },
                     "name": "code",
@@ -237,47 +208,26 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Error message from Discord when authorization fails.",
+                        "title": "Error description from Discord",
                         "type": "string"
                     },
                     "name": "error_description",
                     "in": "query"
-                }],
-                "responses": {}
-            }
-        },
-        "/auth/steam/redirect": {
-            "get": {
-                "summary": "Redirect to Steam OAuth",
-                "tags": ["auth"],
-                "operationId": "get_auth_steam_redirect",
-                "parameters": [{
-                    "required": false,
+                }, {
+                    "required": true,
                     "schema": {
-                        "title": "Whether to connect account or login",
-                        "type": "boolean"
+                        "title": "Callback URL",
+                        "type": "string"
                     },
-                    "name": "connect_account",
+                    "name": "callback_url",
                     "in": "query"
                 }],
-                "responses": {
-                    "302": {
-                        "description": "Redirect to Steam OAuth"
-                    }
-                }
-            }
-        },
-        "/auth/steam/connect": {
-            "get": {
-                "summary": "Steam OAuth Callback (To connect account)",
-                "tags": ["auth"],
-                "operationId": "get_auth_steam_connect",
                 "responses": {}
             }
         },
         "/auth/steam/callback": {
             "get": {
-                "summary": "Steam OAuth Callback (To login)",
+                "summary": "Steam OAuth Callback (Params from Steam must be forwarded)",
                 "tags": ["auth"],
                 "operationId": "get_auth_steam_callback",
                 "responses": {}
@@ -937,7 +887,7 @@
                 "responses": {}
             }
         },
-        "/user/resendConfirmation": {
+        "/user/resend-confirmation": {
             "post": {
                 "summary": "Resend Email Confirmation (Only after register)",
                 "tags": ["user"],
@@ -987,12 +937,37 @@
                     "bearerAuth": [],
                     "applicationAuth": []
                 }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Code from Discord",
+                        "type": "string"
+                    },
+                    "name": "code",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Error description from Discord",
+                        "type": "string"
+                    },
+                    "name": "error_description",
+                    "in": "query"
+                }, {
+                    "required": true,
+                    "schema": {
+                        "title": "Callback URL",
+                        "type": "string"
+                    },
+                    "name": "callback_url",
+                    "in": "query"
+                }],
                 "responses": {}
             }
         },
         "/user/steam": {
             "patch": {
-                "summary": "Update Steam Account",
+                "summary": "Update Steam Account (Params from Steam must be forwarded)",
                 "tags": ["user"],
                 "operationId": "patch_user_steam",
                 "security": [{

@@ -5,6 +5,7 @@
     "invalid_api_token": "Jeton d'API invalide",
     "rate_limit": "Vous êtes limité en débit.",
     "bad_json": "JSON invalide : champ manquant ou données impossibles à analyser.",
+    "invalid_params": "Paramètres de requête invalides.",
     "content_too_long": "La longueur maximale de \"{item}\" est de {limit} caractères.",
 
     "value_too_large": "La valeur maximale de \"{item}\" est {limit}.",

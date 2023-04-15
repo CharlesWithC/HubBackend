@@ -5,6 +5,7 @@
     "invalid_api_token": "Invalid API Token",
     "rate_limit": "You are being rate limited.",
     "bad_json": "Invalid JSON: Field missing or data cannot be parsed.",
+    "invalid_params": "Invalid request params.",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
     "value_too_large": "Maximum value of \"{item}\" is {limit}.",
 

@@ -17,12 +17,8 @@ routes = [
     APIRoute("/auth/mfa", generic.post_mfa, methods=["POST"], response_class=JSONResponse),
     APIRoute("/auth/email", generic.post_email, methods=["POST"], response_class=JSONResponse),
     
-    APIRoute("/auth/discord/redirect", discord.get_redirect, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/auth/discord/connect", discord.get_connect, methods=["GET"], response_class=JSONResponse),
     APIRoute("/auth/discord/callback", discord.get_callback, methods=["GET"], response_class=JSONResponse),
 
-    APIRoute("/auth/steam/redirect", steam.get_redirect, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/auth/steam/connect", steam.get_connect, methods=["GET"], response_class=JSONResponse),
     APIRoute("/auth/steam/callback", steam.get_callback, methods=["GET"], response_class=JSONResponse),
     
     APIRoute("/auth/ticket", ticket.post_ticket, methods=["POST"], response_class=JSONResponse),
