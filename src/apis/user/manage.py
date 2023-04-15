@@ -50,7 +50,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     email = t[0][6]
     if email == "" and "email" in app.config.required_connections:
         response.status_code = 428
-        return {"error": ml.tr(request, "connection_invalid", var = {"app": "email"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
     if discordid is None and "discord" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"}, force_lang = au["language"])}

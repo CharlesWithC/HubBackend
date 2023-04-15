@@ -299,7 +299,7 @@ async def post_application(request: Request, response: Response, authorization: 
     t = await app.db.fetchall(dhrid)
     if t[0][2] is None and "email" in app.config.required_connections:
         response.status_code = 428
-        return {"error": ml.tr(request, "must_have_connection", var = {"app": "email"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, "must_have_connection", var = {"app": "Email"}, force_lang = au["language"])}
     if t[0][6] is None and ("discord" in app.config.required_connections or app.config.must_join_guild):
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Discord"}, force_lang = au["language"])}
