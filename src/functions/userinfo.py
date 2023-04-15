@@ -211,13 +211,13 @@ async def GetUserLanguage(request, uid):
 async def UpdateRoleConnection(request, discordid):
     (app, dhrid) = (request.app, request.state.dhrid)
 
+    if discordid is None:
+        return
+
     userinfo = await GetUserInfo(request, discordid = discordid)
     userid = userinfo["userid"]
     discordid = userinfo["discordid"]
     roles = userinfo["roles"]
-
-    if discordid is None:
-        return
 
     await app.db.execute(dhrid, f"SELECT access_token FROM discord_access_token WHERE discordid = {discordid} AND expire_timestamp > {int(time.time())}")
     t = await app.db.fetchall(dhrid)
