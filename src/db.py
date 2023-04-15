@@ -25,6 +25,8 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
     # Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
+    cur.execute(f"CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
+
     cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # unit = 1: euro | 2: dollar
@@ -89,6 +91,8 @@ def init(app):
     "CREATE INDEX user_activity_uid ON user_activity (uid)",
     "CREATE INDEX user_password_uid ON user_password (uid)",
     "CREATE INDEX user_password_email ON user_password (email)",
+    "CREATE INDEX pending_user_deletion_uid ON pending_user_deletion (uid)",
+    "CREATE INDEX pending_user_deletion_expire_timestamp ON pending_user_deletion (expire_timestamp)",
 
     "CREATE INDEX banned_uid ON banned (uid)",
     "CREATE INDEX banned_discordid ON banned (discordid)",

@@ -1,16 +1,17 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import asyncio
 import time
-from fastapi import Request
+
+from discord_oauth2 import DiscordAuth
 
 import multilang as ml
+from functions.arequests import *
 from functions.dataop import *
 from functions.general import *
 from functions.security import auth, checkPerm
-from functions.arequests import *
 from static import *
-from discord_oauth2 import DiscordAuth
 
 
 async def getHighestActiveRole(request):
@@ -222,8 +223,16 @@ async def UpdateRoleConnection(request, discordid):
     t = await app.db.fetchall(dhrid)
     if len(t) != 0:
         access_token = t[0][0]
-        is_driver = checkPerm(app, roles, "driver")
         headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+        if userinfo["name"] is None:
+            # deleted account
+            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "", "platform_username": "", "metadata": {"member_since": "", "is_driver": "", "dlog": "", "distance": ""}}), headers = headers, dhrid = dhrid)
+            if r.status_code in [401, 403]:
+                await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
+                await app.db.commit(dhrid)
+
+        is_driver = checkPerm(app, roles, "driver")
         if is_driver:
             await app.db.execute(dhrid, f"SELECT COUNT(logid) FROM dlog WHERE userid = {userid} AND logid >= 0")
             t = await app.db.fetchone(dhrid)
@@ -233,9 +242,32 @@ async def UpdateRoleConnection(request, discordid):
             t = await app.db.fetchone(dhrid)
             if len(t) != 0:
                 discord_distance = nint(t[0])
-            await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false", "dlog": str(discord_jobs), "distance": str(discord_distance)}}), headers = headers, dhrid = dhrid)
+            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false", "dlog": str(discord_jobs), "distance": str(discord_distance)}}), headers = headers, dhrid = dhrid)
+            if r.status_code in [401, 403]:
+                await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
+                await app.db.commit(dhrid)
         else:
-            await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false"}}), headers = headers, dhrid = dhrid)
+            r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "Drivers Hub", "platform_username": userinfo["name"], "metadata": {"member_since": str(datetime.fromtimestamp(userinfo["join_timestamp"])), "is_driver": "true" if is_driver else "false"}}), headers = headers, dhrid = dhrid)
+            if r.status_code in [401, 403]:
+                await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
+                await app.db.commit(dhrid)
+                
+async def DeleteRoleConnection(request, discordid):
+    (app, dhrid) = (request.app, request.state.dhrid)
+
+    if discordid is None:
+        return
+
+    await app.db.execute(dhrid, f"SELECT access_token FROM discord_access_token WHERE discordid = {discordid} AND expire_timestamp > {int(time.time())}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) != 0:
+        access_token = t[0][0]
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+        r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "", "platform_username": "", "metadata": {"member_since": "", "is_driver": "", "dlog": "", "distance": ""}}), headers = headers, dhrid = dhrid)
+        if r.status_code in [401, 403]:
+            await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
+            await app.db.commit(dhrid)
 
 async def RefreshDiscordAccessToken(app):
     while 1:

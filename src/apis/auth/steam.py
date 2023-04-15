@@ -126,6 +126,18 @@ async def get_callback(request: Request, response: Response):
         await app.db.commit(dhrid)
         return RedirectResponse(url=getUrl4MFA(app, stoken), status_code=302)
 
+    await app.db.execute(dhrid, f"SELECT status FROM pending_user_deletion WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        status = t[0][0]
+        if status == 1:
+            await app.db.execute(dhrid, f"UPDATE pending_user_deletion SET status = 0 WHERE uid = {uid}")
+            await app.db.commit(dhrid)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "user_pending_deletion")), status_code=302)
+        elif status == 0:
+            await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
+            await app.db.commit(dhrid)
+
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
         stoken = str(uuid.uuid4())

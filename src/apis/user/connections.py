@@ -172,8 +172,9 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
             await app.db.commit(dhrid)
 
+            await DeleteRoleConnection(request, au["discordid"])
             await UpdateRoleConnection(request, discordid)
-            
+
             await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = {discordid}")
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
@@ -185,7 +186,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
                     expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
                 else:
                     expire = ml.tr(request, "forever")
-                response.status_code = 403
+                response.status_code = 423
                 if reason != "":
                     return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
                 else:
@@ -280,7 +281,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
             expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
         else:
             expire = ml.tr(request, "forever")
-        response.status_code = 403
+        response.status_code = 423
         if reason != "":
             return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
@@ -306,7 +307,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                         expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
                     else:
                         expire = ml.tr(request, "forever")
-                    response.status_code = 403
+                    response.status_code = 423
                     if reason != "":
                         return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
                     else:
@@ -391,7 +392,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
             expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
         else:
             expire = ml.tr(request, "forever")
-        response.status_code = 403
+        response.status_code = 423
         if reason != "":
             return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:

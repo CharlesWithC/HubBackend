@@ -124,7 +124,8 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
     old_uid = t[0][0]
     name = t[0][1]
 
-    await app.db.execute(dhrid, f"SELECT uid, userid FROM user WHERE discordid = {new_discord_id}")
+    old_discord_id = None
+    await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE discordid = {new_discord_id}")
     t = await app.db.fetchall(dhrid)
     if len(t) >= 0:
         # delete account of new discord, and both sessions
@@ -138,8 +139,10 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
                 response.status_code = 409
                 return {"error": ml.tr(request, "new_discord_user_must_not_be_member", force_lang = au["language"])}
             new_uid = t[0][0]
+            old_discord_id = t[0][2]
 
             await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
+            await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {new_uid}")
             await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {new_uid}")
             await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
             await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
@@ -152,6 +155,10 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
     # update discord binding
     await app.db.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
     await app.db.commit(dhrid)
+
+    if old_discord_id is not None:
+        await DeleteRoleConnection(request, old_discord_id)
+        await UpdateRoleConnection(request, new_discord_id)
 
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
 
@@ -385,6 +392,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
         
         await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
@@ -395,7 +403,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await UpdateRoleConnection(request, discordid)
+        await DeleteRoleConnection(request, discordid)
         await AuditLog(request, au["uid"], ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
@@ -410,18 +418,11 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
         
-        await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"INSERT INTO pending_user_deletion VALUES ({uid}, {int(time.time()+86400*14)}, 1)")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
-        await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
-        await UpdateRoleConnection(request, discordid)
-        await AuditLog(request, uid, ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
+        await DeleteRoleConnection(request, discordid)
+        await AuditLog(request, uid, ml.ctr(request, "deleted_user_pending", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)

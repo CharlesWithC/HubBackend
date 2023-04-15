@@ -95,6 +95,7 @@ EN_STRINGTABLE = {
     
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",
+    "user_pending_deletion": "Account is pending deletion. Login again to recover account.",
     "user_in_guild_check_failed": "Failed to check if the user is in the Discord Server.",
     "current_user_in_guild_check_failed": "Failed to check if you are in the Discord Server.",
     "user_didnt_join_discord": "The user didn't join the Discord Server.",
@@ -109,7 +110,7 @@ EN_STRINGTABLE = {
     "language_not_supported": "The language is not supported.",
     "invalid_avatar_url": "Invalid avatar URL.",
     "avatar_domain_not_whitelisted": "The domain of the avatar is not whitelisted.",
-    "smtp_configuration_invalid": "SMTP configuration is invalid, unable to send email.",
+    "smtp_configuration_invalid": "SMTP configuration is invalid. Unable to send email.",
     "auth_secret_invalid_or_expired": "Authorization secret is invalid or has expired.",
 
     "connection_not_found": "{app} account is not connected.",
@@ -380,6 +381,7 @@ EN_STRINGTABLE = {
     "banned_user": "Banned `{username}` (UID: `{uid}`) {expire}.",
     "unbanned_user": "Unbanned `{username}` (UID: `{uid}`)",
     "deleted_user": "Deleted user: `{username}` (UID: `{uid}`)",
+    "deleted_user_pending": "Received user deletion request: `{username}` (UID: `{uid}`)\nUser will be deleted after a cooldown period of 14 days.",
     "disabled_mfa": "Disabled MFA for `{username}` (UID: `{uid}`)",
     "created_announcement": "Created announcement `#{id}`",
     "updated_announcement": "Updated announcement `#{id}`",

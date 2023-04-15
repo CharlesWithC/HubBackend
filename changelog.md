@@ -8,14 +8,18 @@
 5.Added `?userid` to **GET** `/dlog/export`  
 6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
 7.Improved user ban system  
-i) When a user connects a banned third-party account, him/her current account will be banned.  
+i) When a user connects a banned third-party account, his/her current account will be banned.  
 ii) Staff may ban users who don't exist in Drivers Hub with their email, discordid etc.  
-8.Added automatic config reloader (by detecting file changes) - To solve the issue that config cannot be synced between workers  
-9.Allowed public access of **GET** `/config` for partial config that is available to public  
-10.Updated config saving/reloading mechanism: New config will be saved to `.saved`, and original config will be replaced by `.saved` on config reload / restart  
-11.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
-12.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
-13.Improved `openapi`  
+8.Improved user deletion procedure  
+i) When a user requests to delete his/her account, it'll be deleted after 14 days.  
+ii) User may login twice to recover account.  
+iii) When a staff deletes a user's account, his/her account will be deleted immediately.  
+9.Added automatic config reloader (by detecting file changes) - To solve the issue that config cannot be synced between workers  
+10.Allowed public access of **GET** `/config` for partial config that is available to public  
+11.Updated config saving/reloading mechanism: New config will be saved to `.saved`, and original config will be replaced by `.saved` on config reload / restart  
+12.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
+13.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+14.Improved `openapi`  
 i) use `servers:[]` instead of `/abbr`  
 ii) added `parent-openapi` for multi-hub-doc  
 

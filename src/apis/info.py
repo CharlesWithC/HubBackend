@@ -4,11 +4,10 @@
 import time
 from datetime import datetime, timedelta
 
-from fastapi import Header, Request, Response
+from fastapi import Header, Request
 
 from multilang import LANGUAGES
 from functions import *
-import static
 
 
 async def get_index(request: Request, authorization: str = Header(None)):
