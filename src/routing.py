@@ -39,7 +39,7 @@ def initRoutes(config_paths, openapi_path, first_init = False):
     if first_init:
         logger.info("")
 
-    if openapi_path != "":
+    if openapi_path != "" and static.OPENAPI is not None:
         app = FastAPI(title = "Drivers Hub", routes = routes, version = base.version, \
                       openapi_url = f"{openapi_path.rstrip('/')}/openapi.json", docs_url = f"{openapi_path}", redoc_url=None)
 
