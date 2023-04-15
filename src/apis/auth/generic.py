@@ -79,9 +79,9 @@ async def post_password(request: Request, response: Response):
             expire = ml.tr(request, "forever")
         response.status_code = 403
         if reason != "":
-            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
-            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
+            return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
         
     stoken = str(uuid.uuid4())
     stoken = "e" + stoken[1:]
@@ -169,9 +169,9 @@ async def post_register(request: Request, response: Response):
             expire = ml.tr(request, "forever")
         response.status_code = 403
         if reason != "":
-            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
-            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
+            return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
 
     if not emailConfigured(app):
         response.status_code = 428
@@ -351,9 +351,9 @@ async def post_mfa(request: Request, response: Response):
             expire = ml.tr(request, "forever")
         response.status_code = 403
         if reason != "":
-            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})}
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
-            return {"error": ml.tr(request, "ban_with_expire", var = {"duration": expire})}
+            return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
 
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":

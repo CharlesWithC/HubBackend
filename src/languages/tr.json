@@ -17,8 +17,8 @@
     "application_token_not_allowed": "Erişim engellendi: Uygulama belirtecine izin verilmiyor.",
     "access_sensitive_data": "Hassas verilere erişmek için Discord veya Steam ile giriş yapmanız veya MFA'yı (çok faktörlü doğrulama) etkinleştirmeniz gerekir.",
     "mfa_required": "Erişim reddedildi: Bu uç noktaya erişim için MFA'yı etkinleştirmeniz ve OTP sağlamanız gerekir.",
-    "ban_with_expire": "{expire} UTC'ye kadar yasaklandınız",
-    "ban_with_reason_expire": "{expire} UTC'ye kadar {reason} süreyle yasaklandınız",
+    "ban_with_expire": "Sen yasaklandın {expire}",
+    "ban_with_reason_expire": "Sen yasaklandın {reason} {expire}",
     "user_in_guild_check_failed": "Kullanıcının Discord Sunucusunda olup olmadığı kontrol edilemedi.",
     "current_user_in_guild_check_failed": "Discord Sunucusunda olup olmadığınız kontrol edilemedi.",
     "user_didnt_join_discord": "Kullanıcı, Discord Sunucusuna katılmadı.",
@@ -40,6 +40,7 @@
     "connection_conflict": "{app} hesabı zaten başka bir kullanıcıya bağlı.",
     "connection_invalid": "{app} hesap bağlantısı geçersiz.",
 
+    "connections_belong_to_multiple_users": "Bağlantılar birden çok kullanıcıya aittir. Yalnızca tek bir kullanıcı için bağlantılar kabul edilir.",
     "dismiss_before_ban": "Üyenin yasaklanmadan önce görevden alınması gerekir.",
     "dismiss_before_delete_connections": "Hesap bağlantılarını silmeden önce üyenin görevden alınması gerekir.",
     "dismiss_before_delete": "Hesabı silmeden önce üyenin görevden alınması gerekir.",

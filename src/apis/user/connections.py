@@ -173,6 +173,23 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.commit(dhrid)
 
             await UpdateRoleConnection(request, discordid)
+            
+            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE discordid = {discordid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) > 0:
+                await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+                await app.db.commit(dhrid)
+                reason = t[0][0]
+                expire = t[0][1]
+                if expire != 253402272000:
+                    expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
+                else:
+                    expire = ml.tr(request, "forever")
+                response.status_code = 403
+                if reason != "":
+                    return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
+                else:
+                    return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
 
             return Response(status_code=204)
         
@@ -251,6 +268,23 @@ async def patch_steam(request: Request, response: Response, authorization: str =
 
     await app.db.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
+            
+    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE steamid = {steamid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+        await app.db.commit(dhrid)
+        reason = t[0][0]
+        expire = t[0][1]
+        if expire != 253402272000:
+            expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
+        else:
+            expire = ml.tr(request, "forever")
+        response.status_code = 403
+        if reason != "":
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
+        else:
+            return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
 
     try:
         r = await arequests.get(app, f"https://api.truckersmp.com/v2/player/{steamid}", dhrid = dhrid)
@@ -260,6 +294,24 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                 truckersmpid = d["response"]["id"]
                 await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
                 await app.db.commit(dhrid)
+            
+                await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
+                t = await app.db.fetchall(dhrid)
+                if len(t) > 0:
+                    await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+                    await app.db.commit(dhrid)
+                    reason = t[0][0]
+                    expire = t[0][1]
+                    if expire != 253402272000:
+                        expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
+                    else:
+                        expire = ml.tr(request, "forever")
+                    response.status_code = 403
+                    if reason != "":
+                        return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
+                    else:
+                        return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
+        
                 return Response(status_code=204)
     except:
         pass
@@ -327,4 +379,22 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
+            
+    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
+        await app.db.commit(dhrid)
+        reason = t[0][0]
+        expire = t[0][1]
+        if expire != 253402272000:
+            expire = ml.tr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
+        else:
+            expire = ml.tr(request, "forever")
+        response.status_code = 403
+        if reason != "":
+            return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
+        else:
+            return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
+        
     return Response(status_code=204)

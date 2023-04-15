@@ -17,8 +17,8 @@
     "application_token_not_allowed": "Accesso negato: il token dell'applicazione non è consentito.",
     "access_sensitive_data": "Accesso negato: stai accedendo a dati sensibili e devi accedere con Discord, Steam o abilitare MFA per proteggere il tuo account.",
     "mfa_required": "Accesso negato: devi abilitare MFA e fornire OTP per accedere a questo endpoint.",
-    "ban_with_expire": "Sei bannato fino alle {expire} UTC",
-    "ban_with_reason_expire": "Sei bannato per le {reason} fino alle {expire} UTC",
+    "ban_with_expire": "Sei bannato {expire}",
+    "ban_with_reason_expire": "Sei bannato per {reason} {expire}",
     "user_in_guild_check_failed": "Impossibile verificare se l'utente è nel server Discord.",
     "current_user_in_guild_check_failed": "Impossibile controllare se sei nel server Discord.",
     "user_didnt_join_discord": "L'utente non si è unito al server Discord.",
@@ -40,6 +40,7 @@
     "connection_conflict": "Account {app} già connesso a un altro utente.",
     "connection_invalid": "La connessione dell'account {app} non è valida.",
 
+    "connections_belong_to_multiple_users": "Le connessioni appartengono a più utenti. Sono accettate solo connessioni per un singolo utente.",
     "dismiss_before_ban": "Il membro deve essere licenziato prima di essere bannato.",
     "dismiss_before_delete_connections": "Il membro deve essere licenziato prima di eliminare le connessioni dell'account.",
     "dismiss_before_delete": "Il membro deve essere licenziato prima di eliminare l'account.",

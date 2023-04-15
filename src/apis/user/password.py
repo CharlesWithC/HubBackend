@@ -79,7 +79,7 @@ async def patch_password(request: Request, response: Response, authorization: st
 
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
-    await app.db.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{email}', '{b64e(pwdhash)}')")
+    await app.db.execute(dhrid, f"INSERT INTO user_password VALUES ({uid}, '{convertQuotation(email)}', '{b64e(pwdhash)}')")
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

@@ -115,7 +115,7 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 await app.db.commit(dhrid)
                 return RedirectResponse(url=getUrl4MFA(app, stoken), status_code=302)
 
-            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid}")
+            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR email = '{email}'")
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
                 reason = t[0][0]
@@ -125,9 +125,9 @@ async def get_callback(request: Request, code: Optional[str] = "", error_descrip
                 else:
                     expire = ml.tr(request, "forever")
                 if reason != "":
-                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
                 else:
-                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
+                    return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"expire": expire})), status_code=302)
             
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":

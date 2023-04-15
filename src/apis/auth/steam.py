@@ -112,9 +112,9 @@ async def get_callback(request: Request, response: Response):
         else:
             expire = ml.tr(request, "forever")
         if reason != "":
-            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "duration": expire})), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})), status_code=302)
         else:
-            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"duration": expire})), status_code=302)
+            return RedirectResponse(url=getUrl4Msg(app, ml.tr(request, "ban_with_expire", var = {"expire": expire})), status_code=302)
 
     await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)

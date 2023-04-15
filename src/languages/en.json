@@ -18,8 +18,8 @@
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
     "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
     
-    "ban_with_expire": "You are banned until {expire} UTC",
-    "ban_with_reason_expire": "You are banned for {reason} until {expire} UTC",
+    "ban_with_expire": "You are banned {expire}",
+    "ban_with_reason_expire": "You are banned for {reason} {expire}",
     "user_in_guild_check_failed": "Failed to check if the user is in the Discord Server.",
     "current_user_in_guild_check_failed": "Failed to check if you are in the Discord Server.",
     "user_didnt_join_discord": "The user didn't join the Discord Server.",
@@ -41,6 +41,7 @@
     "connection_conflict": "{app} account already connected to another user.",
     "connection_invalid": "{app} account connection is invalid.",
 
+    "connections_belong_to_multiple_users": "The connections belong multiple users. Only connections for a single user are accepted.",
     "dismiss_before_ban": "Member has to be dismissed before banning.",
     "dismiss_before_delete_connections": "Member has to be dismissed before deleting account connections.",
     "dismiss_before_delete": "Member has to be dismissed before deleting account.",
@@ -301,7 +302,7 @@
     "deleted_connections": "Deleted connections of `{username}` (UID: `{uid}`)",
     "forever": "forever",
     "until": "until `{datetime}` UTC",
-    "banned_user": "Banned `{username}` (UID: `{uid}`) {duration}.",
+    "banned_user": "Banned `{username}` (UID: `{uid}`) {expire}.",
     "unbanned_user": "Unbanned `{username}` (UID: `{uid}`)",
     "deleted_user": "Deleted user: `{username}` (UID: `{uid}`)",
     "disabled_mfa": "Disabled MFA for `{username}` (UID: `{uid}`)",
