@@ -94,6 +94,7 @@
     "config_invalid_data_url": "Неверный тип данных для \"{item}\": Должен быть действительный URL.",
     "config_invalid_permission_admin_not_found": "Недопустимое значение для \"perms\": разрешение \"admin\" не найдено.",
     "config_invalid_permission_admin_protection": "Обновление разрешений отклонено: новое разрешение \"admin\" не включает ни одной роли, которую имеет текущий пользователь.",
+    "no_config_reload_available": "Новая конфигурация не сохранена. Невозможно перезагрузить конфигурацию.",
     "discord_integrations_disabled": "Интеграции Discord были временно отключены из-за недействительного Discord бот токен.",
     "discord_api_inaccessible": "API Discord недоступен.",
 

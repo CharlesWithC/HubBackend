@@ -94,6 +94,7 @@
     "config_invalid_data_url": "Tipo de datos no válido para \"{item}\": debe ser una URL válida.",
     "config_invalid_permission_admin_not_found": "Valor no válido para \"perms\": no se encontró el permiso \"admin\".",
     "config_invalid_permission_admin_protection": "Actualización de permiso rechazada: el nuevo permiso \"admin\" no incluye ninguna función que tenga el usuario actual.",
+    "no_config_reload_available": "No new config has been saved. Unable to reload config.",
     "discord_integrations_disabled": "Las integraciones de Discord se han deshabilitado temporalmente debido a un token de bot no válido.",
     "discord_api_inaccessible": "La API de Discord es inaccesible.",
 

@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import asyncio
+import copy
 import json
 import os
 import random
@@ -12,10 +13,21 @@ from datetime import datetime
 
 import requests
 
+from config import validateConfig
 from functions.dataop import *
+from logger import logger
 from static import *
 
 
+class Dict2Obj(object):
+    def __init__(self, d):
+        for key in d:
+            if type(d[key]) is dict:
+                data = Dict2Obj(d[key])
+                setattr(self, key, data)
+            else:
+                setattr(self, key, d[key])
+                
 def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
@@ -95,6 +107,36 @@ async def EnsureEconomyBalance(request, userid):
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         await app.db.execute(dhrid, f"INSERT INTO economy_balance VALUES ({userid}, 0)")
+
+async def DetectConfigChanges(app):
+    # NOTE Why? When running in multiple workers, app is not synced between workers, hence config cannot be synced
+    while 1:
+        try:
+            if not os.path.exists(app.config_path):
+                # just in case
+                try:
+                    await asyncio.sleep(600)
+                except:
+                    return
+                continue
+
+            if app.config_last_modified != os.path.getmtime(app.config_path):
+                # modified
+                config_txt = open(app.config_path, "r", encoding="utf-8").read()
+                config = validateConfig(json.loads(config_txt))
+                config = Dict2Obj(config)
+                app.config = config
+                app.backup_config = copy.deepcopy(config.__dict__)
+                app.config_last_modified = os.path.getmtime(app.config_path)
+                logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
+
+        except:
+            pass
+
+        try:
+            await asyncio.sleep(30)
+        except:
+            return
 
 async def ClearOutdatedData(app):
     while 1:

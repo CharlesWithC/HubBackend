@@ -95,16 +95,35 @@ async def get_config(request: Request, response: Response, authorization: str = 
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-
-    au = await auth(authorization, request, required_permission = ["admin", "config"])
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
     
+    permOk = False
+    if authorization is not None:
+        au = await auth(authorization, request)
+        if au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+        permOk = checkPerm(app, au["roles"], ["admin", "config"])
+    
+    if not permOk:
+        t = copy.deepcopy(app.backup_config)
+        ttconfig = {}
+
+        for tt in t.keys():
+            if tt in public_config_whitelist:
+                ttconfig[tt] = t[tt]
+
+        return {"config": ttconfig}
+        
     # current config
+    last_modified = 0
     try:
-        orgcfg = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
+        if os.path.exists(app.config_path + ".saved"):
+            orgcfg = validateConfig(json.loads(open(app.config_path + ".saved", "r", encoding="utf-8").read()))
+            last_modified = os.path.getmtime(app.config_path + ".saved")
+        else:
+            orgcfg = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
+            last_modified = os.path.getmtime(app.config_path)
         f = copy.deepcopy(orgcfg)
         ffconfig = {}
 
@@ -147,7 +166,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
                 if tt in ffconfig.keys():
                     del ttconfig[tt]
 
-    return {"config": ffconfig, "backup": ttconfig}
+    return {"config": ffconfig, "backup": ttconfig, "config_last_modified": int(last_modified), "backup_last_modified": int(app.config_last_modified)}
 
 def restart(app):
     time.sleep(3)
@@ -184,7 +203,10 @@ async def patch_config(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    ttconfig = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
+    if os.path.exists(app.config_path + ".saved"):
+        ttconfig = validateConfig(json.loads(open(app.config_path + ".saved", "r", encoding="utf-8").read()))
+    else:
+        ttconfig = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
 
     tracker = ""
     if "tracker" in new_config.keys():
@@ -286,7 +308,8 @@ async def patch_config(request: Request, response: Response, authorization: str 
     if len(out) > 512000:
         response.status_code = 400
         return {"error": ml.tr(request, "content_too_long", var = {"item": "config", "limit": "512,000"}, force_lang = au["language"])}
-    open(app.config_path, "w", encoding="utf-8").write(out)
+    # write to .saved until reload
+    open(app.config_path + ".saved", "w", encoding="utf-8").write(out)
 
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_config"))
 
@@ -329,21 +352,32 @@ async def post_config_reload(request: Request, response: Response, authorization
 
     await AuditLog(request, au["uid"], ml.ctr(request, "reloaded_config"))
 
-    config_txt = open(app.config_path, "r", encoding="utf-8").read()
+    if not os.path.exists(app.config_path + ".saved"):
+        response.status_code = 428
+        return {"error": ml.tr(request, "no_config_reload_available", force_lang = au["language"])}
+
+    config_txt = open(app.config_path + ".saved", "r", encoding="utf-8").read()
     config = validateConfig(json.loads(config_txt))
     config = Dict2Obj(config)
     app.config = config
     app.backup_config = copy.deepcopy(config.__dict__)
+
+    os.replace(app.config_path + ".saved", app.config_path)
+    app.config_last_modified = os.path.getmtime(app.config_path)
+    
+    try:
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+    except:
+        pass
 
     return Response(status_code=204)
 
 async def post_restart(request: Request, response: Response, authorization: str = Header(None)):
     """Restarts API service in a thread, returns 204"""
     app = request.app
-    if app.multi_mode:
-        response.status_code = 404
-        return {"error": "Not Found"}
-    
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -375,6 +409,23 @@ async def post_restart(request: Request, response: Response, authorization: str 
     if not valid_totp(otp, mfa_secret):
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+
+    if not os.path.exists(app.config_path + ".saved"):
+        config_txt = open(app.config_path + ".saved", "r", encoding="utf-8").read()
+        config = validateConfig(json.loads(config_txt))
+        config = Dict2Obj(config)
+        app.config = config
+        app.backup_config = copy.deepcopy(config.__dict__)
+        os.replace(app.config_path + ".saved", app.config_path)
+        app.config_last_modified = os.path.getmtime(app.config_path)
+    
+    try:
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+    except:
+        pass
 
     await AuditLog(request, au["uid"], ml.ctr(request, "restarted_service"))
 

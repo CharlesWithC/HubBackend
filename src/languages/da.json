@@ -94,6 +94,7 @@
     "config_invalid_data_url": "Ugyldig datatype for \"{item}\": Skal være en gyldig URL.",
     "config_invalid_permission_admin_not_found": "Ugyldig værdi for \"perms\": \"admin\"-tilladelse blev ikke fundet.",
     "config_invalid_permission_admin_protection": "Tilladelsesopdatering afvist: Ny \"admin\"-tilladelse inkluderer ikke nogen rolle, som den nuværende bruger har.",
+    "no_config_reload_available": "Ingen ny konfiguration er blevet gemt. Kan ikke genindlæse konfiguration.",
     "discord_integrations_disabled": "Discord-integrationer er blevet deaktiveret midlertidigt på grund af ugyldigt Discord Bot-token.",
     "discord_api_inaccessible": "Discord API er utilgængelig.",
 

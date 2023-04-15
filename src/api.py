@@ -32,6 +32,7 @@ async def startup_event(app):
 
     loop = asyncio.get_event_loop()
     loop.create_task(ClearOutdatedData(app))
+    loop.create_task(DetectConfigChanges(app))
     loop.create_task(RefreshDiscordAccessToken(app))
     loop.create_task(ProcessDiscordMessage(app))
     from plugins.events import EventNotification

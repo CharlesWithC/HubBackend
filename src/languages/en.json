@@ -34,7 +34,7 @@
     "language_not_supported": "The language is not supported.",
     "invalid_avatar_url": "Invalid avatar URL.",
     "avatar_domain_not_whitelisted": "The domain of the avatar is not whitelisted.",
-    "smtp_configuration_invalid": "SMTP configuration is invalid, unable to send email.",
+    "smtp_configuration_invalid": "SMTP configuration is invalid. Unable to send email.",
     "auth_secret_invalid_or_expired": "Authorization secret is invalid or has expired.",
 
     "connection_not_found": "{app} account is not connected.",
@@ -95,6 +95,7 @@
     "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
     "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
     "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "no_config_reload_available": "No new config has been saved. Unable to reload config.",
     "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
     "discord_api_inaccessible": "Discord API is inaccessible.",
 

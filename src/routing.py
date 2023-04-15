@@ -23,16 +23,12 @@ def initRoutes(config_paths, openapi_path, first_init = False):
     servers = []
 
     for config_path in config_paths:
-        dh = base.createApp(config_path, first_init = first_init)
+        dh = base.createApp(config_path, multi_mode = len(config_paths) > 1, first_init = first_init)
         if dh is not None:
             try:
                 scopes = {"host": dh.config.server_host, "port": int(dh.config.server_port), "workers": int(dh.config.server_workers)}
             except:
                 continue
-            if len(config_paths) > 1:
-                dh.multi_mode = True
-            else:
-                dh.multi_mode = False
             routes.append(Mount(f"{dh.config.prefix}", dh, name = f"{dh.config.name} Drivers Hub"))
             servers.append({"url": f"https://{dh.config.apidomain}{dh.config.prefix}", "description": dh.config.name})
 

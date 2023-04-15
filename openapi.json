@@ -1688,9 +1688,38 @@
                 "responses": {}
             }
         },
+        "/config/reload": {
+            "post": {
+                "summary": "Reload Config",
+                "tags": ["admin"],
+                "operationId": "post_config_reload",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "otp": {
+                                        "description": "OTP",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["otp"]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/restart": {
             "post": {
-                "summary": "Restart API Service",
+                "summary": "Restart Service",
                 "tags": ["admin"],
                 "operationId": "post_restart",
                 "security": [{

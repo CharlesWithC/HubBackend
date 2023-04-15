@@ -5,11 +5,14 @@
 2.Fixed **PATCH** `/applications/positions` route  
 3.Fixed issue updating member's distance point  
 4.Fixed dlog summary statistics issue with summing up due to `None` data in one or more columns  
-5.Added `?userid` to **GET** `/dlog/export`  
-6.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
-7.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
-8.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
-9.Improved `openapi`  
+4.Added `?userid` to **GET** `/dlog/export`  
+5.Added more triggers of **Role Connection** update: on profile update, driver role addition/removal, member resignation, member dismissal and user deletion  
+6.Added automatic config reloader (by detecting file changes) - To solve the issue that config cannot be synced between workers  
+7.Allowed public access of **GET** `/config` for partial config that is available to public  
+8.Updated config saving/reloading mechanism: New config will be saved to `.saved`, and original config will be replaced by `.saved` on config reload / restart  
+9.Added `config.prefix` (default `/{config.abbr}`) for customizable prefix  
+10.Updated data type of `config.openapi` to `bool`, hard-coded `openapi.json` path to `{abspath}/openapi.json`  
+11.Improved `openapi`  
 i) use `servers:[]` instead of `/abbr`  
 ii) added `parent-openapi` for multi-hub-doc  
 

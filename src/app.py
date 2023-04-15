@@ -25,6 +25,7 @@ import plugins
 import static
 from config import validateConfig
 from logger import logger
+from functions import Dict2Obj
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
@@ -33,15 +34,6 @@ version = "2.5.4"
 for argv in sys.argv:
     if argv.endswith(".py"):
         version += ".dev"
-
-class Dict2Obj(object):
-    def __init__(self, d):
-        for key in d:
-            if type(d[key]) is dict:
-                data = Dict2Obj(d[key])
-                setattr(self, key, data)
-            else:
-                setattr(self, key, d[key])
 
 def initApp(app, first_init = False):
     if not first_init:
@@ -101,13 +93,18 @@ def initApp(app, first_init = False):
         logger.info(f"[{app.config.abbr}] External Plugins: {', '.join(sorted(extp))}")
     else:
         logger.info(f"[{app.config.abbr}] External Plugins: /")
-
-    os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}.png")
-    os.system(f"rm -rf /tmp/hub/logo/{app.config.abbr}_bg.png")
+    
+    try:
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+    except:
+        pass
 
     return app
 
-def createApp(config_path, first_init = False):
+def createApp(config_path, multi_mode = False, first_init = False):
     if not os.path.exists(config_path):
         return None
     
@@ -135,7 +132,9 @@ def createApp(config_path, first_init = False):
     app.config = config
     app.backup_config = copy.deepcopy(config.__dict__)
     app.config_path = config_path
+    app.config_last_modified = os.path.getmtime(app.config_path)
     app.start_time = int(time.time())
+    app.multi_mode = multi_mode
     app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
@@ -207,6 +206,8 @@ def createApp(config_path, first_init = False):
         routes += plugins.routes_event
     for route in routes:
         if not route.path in external_routes:
+            if multi_mode and route.path == "/restart":
+                continue
             app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
 
     app.add_exception_handler(StarletteHTTPException, api.errorHandler)

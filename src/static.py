@@ -62,7 +62,7 @@ def load(app):
 
 TF = {-1: False, 0: False, 1: True}
 
-OPENAPI_RESPONSES = '"responses": {"200": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success"}, "204": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success (No Content)"}, "400": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Bad Request - You need to correct the json data."}, "401": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Unauthorized - You need to use a valid token."}, "403": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Forbidden - You don\'t have permission to access the response."}, "404": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Not Found - The resource could not be found."}, "429": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Too Many Requests - You are being ratelimited."}, "500": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Internal Server Error - Usually caused by a bug or database issue."}, "503": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Service Unavailable - Database outage or rate limited."}}'
+OPENAPI_RESPONSES = '"responses": {"200": {"content": {"application/json": {"schema": {"type": "object"}}},  "description": "Success"}}'
 
 if os.path.exists(os.path.join(abspath, "openapi.json")):
     OPENAPI = json.loads(open(os.path.join(abspath, "openapi.json"), "r", encoding="utf-8").read().replace('"responses": {}', OPENAPI_RESPONSES))
@@ -170,6 +170,7 @@ EN_STRINGTABLE = {
     "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
     "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
     "config_invalid_permission_admin_protection": "Permission update rejected: New \"admin\" permission does not include any role the current user has.",
+    "no_config_reload_available": "No new config has been saved. Unable to reload config.",
     "discord_integrations_disabled": "Discord Integrations have been disabled temporarily due to invalid Discord Bot Token.",
     "discord_api_inaccessible": "Discord API is inaccessible.",
 

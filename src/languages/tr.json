@@ -94,6 +94,7 @@
     "config_invalid_data_url": "\"{item}\" için geçersiz veri türü: İlgili URL, geçerli bir URL olmalıdır.",
     "config_invalid_permission_admin_not_found": "\"izinleri\" için geçersiz değer: \"yönetici(admin)\" izni bulunamadı.",
     "config_invalid_permission_admin_protection": "İzin güncellemesi reddedildi: Yeni \"yönetici(admin)\" izni, geçerli kullanıcının sahip olduğu herhangi bir rolü içermiyor.",
+    "no_config_reload_available": "Kaydedilmiş yeni yapılandırma yok. Yapılandırma yeniden yüklenemiyor.",
     "discord_integrations_disabled": "Discord Entegrasyonları, geçersiz Discord Bot Tokeni sebebiyle geçici olarak devre dışı bırakıldı.",
     "discord_api_inaccessible": "Discord API'sine erişilemiyor.",
 

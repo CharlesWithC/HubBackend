@@ -94,6 +94,7 @@
     "config_invalid_data_url": "Tipo de dados inválido para \" {item} \": deve ser uma URL válida.",
     "config_invalid_permission_admin_not_found": "Valor inválido para \"perms\": permissão \"admin\" não encontrada.",
     "config_invalid_permission_admin_protection": "Atualização de permissão rejeitada: a nova permissão \"admin\" não inclui nenhuma função do usuário atual.",
+    "no_config_reload_available": "Nenhuma nova configuração foi salva. Não foi possível recarregar a configuração.",
     "discord_integrations_disabled": "As integrações do Discord foram desativadas temporariamente devido ao Discord Bot Token inválido.",
     "discord_api_inaccessible": "A API do Discord está inacessível.",
 

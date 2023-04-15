@@ -94,6 +94,7 @@
     "config_invalid_data_url": "Type de données invalide pour \"{item}\": Doit être une URL valide.",
     "config_invalid_permission_admin_not_found": "Valeur invalide pour \"perms\": \"admin\" permission introuvable.",
     "config_invalid_permission_admin_protection": "Mise à jour des autorisations rejetée : La nouvelle autorisation \"admin\" n'inclut aucun rôle de l'utilisateur actuel.",
+    "no_config_reload_available": "Aucune nouvelle configuration n'a été enregistrée. Impossible de recharger la configuration.",
     "discord_integrations_disabled": "Les intégrations Discord ont été temporairement désactivées en raison d'un jeton de bot Discord invalide.",
     "discord_api_inaccessible": "L'API Discord est inaccessible.",
 
