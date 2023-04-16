@@ -29,7 +29,7 @@ from functions import Dict2Obj
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.5.4"
+version = "2.5.5"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

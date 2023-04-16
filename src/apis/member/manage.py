@@ -126,7 +126,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     if "error" in resp.keys() and resp["error"] is not None:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                     elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + err["message"] + "`"
+                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
                     elif len(r.text) <= 64:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                     else:
@@ -143,22 +143,6 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
         
         await UpdateRoleConnection(request, discordid)
-        
-        if discordid is not None and app.config.member_welcome.role_change != [] and app.config.discord_bot_token != "":
-            for role in app.config.member_welcome.role_change:
-                try:
-                    if int(role) < 0:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
-                    elif int(role) > 0:
-                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
-                except:
-                    pass
 
     if app.config.perms.driver[0] in removedroles:
         try:
@@ -172,7 +156,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                     if "error" in resp.keys() and resp["error"] is not None:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                     elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + err["message"] + "`"
+                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
                     elif len(r.text) <= 64:
                         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                     else:
@@ -189,22 +173,6 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
             
         await UpdateRoleConnection(request, discordid)
-
-        if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
-            for role in app.config.member_leave.role_change:
-                try:
-                    if int(role) < 0:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
-                    elif int(role) > 0:
-                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed in Drivers Hub."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
-                except:
-                    pass
     
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""

@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.5.5**  
+1.Moved add/remove `member_welcome` discord roles from when driver role is added to when member is accepted  
+2.Removed add/remove `member_leave` discord roles from when driver role is removed  
+
 **v2.5.4**  
 1.Fixed audit log on user resignation and when removing driver from tracker company  
 2.Fixed **PATCH** `/applications/positions` route  

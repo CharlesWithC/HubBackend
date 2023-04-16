@@ -78,10 +78,26 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     if app.config.member_accept.webhook_url != "" or app.config.member_accept.channel_id != "":
         meta = app.config.member_accept
         await AutoMessage(app, meta, setvar)
-    
+
     if app.config.member_welcome.webhook_url != "" or app.config.member_welcome.channel_id != "":
         meta = app.config.member_welcome
         await AutoMessage(app, meta, setvar)
+        
+    if discordid is not None and app.config.member_welcome.role_change != [] and app.config.discord_bot_token != "":
+        for role in app.config.member_welcome.role_change:
+            try:
+                if int(role) < 0:
+                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                elif int(role) > 0:
+                    r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added in Drivers Hub."}, timeout = 3, dhrid = dhrid)
+                    if r.status_code // 100 != 2:
+                        err = json.loads(r.text)
+                        await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+            except:
+                pass
 
     return {"userid": userid}   
 
