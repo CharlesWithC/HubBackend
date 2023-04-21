@@ -6,6 +6,7 @@
 3.Added support to multiple embeds for automatic embeds  
 4.Merged `member_welcome` into `member_accept`  
 5.Added embed validator to prevent 500 errors due to invalid embed config  
+6.Added `config.driver_role_add/remove`  
 
 **v2.5.5**  
 1.Moved add/remove `member_welcome` discord roles from when driver role is added to when member is accepted  
@@ -494,7 +495,7 @@ Removed unncessary `convert_quotation` that led to `\'` visible by user
 1.Improved internal / external API handling to prevent 500 errors when request failed  
 2.Added `config.member_leave` to automate Discord message & role updates when driver leaves  
 3.Added automatic rank role removal when driver leaves  
-*Note: "leave" is defined by either driver role is removed, driver resigns, or driver is dismissed.  
+*Note: "leave" is defined by either driver role is removed, member resigns, or member is dismissed.  
 
 **v1.21.7**  
 1.Fixed **POST** `/user/tip` 500 error  

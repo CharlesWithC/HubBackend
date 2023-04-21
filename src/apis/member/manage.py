@@ -105,7 +105,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             response.status_code = 400
             return {"error": ml.tr(request, "losing_admin_permission", force_lang = au["language"])}
 
-    if app.config.perms.driver[0] in addedroles:
+    if checkPerm(app, addedroles, "driver"):
         if steamid is None:
             response.status_code = 428
             return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"}, force_lang = au["language"])}
@@ -113,8 +113,11 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await app.db.execute(dhrid, f"UPDATE user SET roles = ',{list2str(new_roles)},' WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
+
     tracker_app_error = ""
-    if app.config.perms.driver[0] in addedroles:
+    if checkPerm(app, addedroles, "driver"):
         try:
             if app.config.tracker == "tracksim":
                 r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
@@ -143,8 +146,29 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
         
         await UpdateRoleConnection(request, discordid)
+            
+        for meta in app.config.driver_role_add:
+            meta = Dict2Obj(meta)
+            if meta.webhook_url != "" or meta.channel_id != "":
+                await AutoMessage(app, meta, setvar)
+            
+            if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+                for role in meta.role_change:
+                    try:
+                        if int(role) < 0:
+                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, timeout = 3, dhrid = dhrid)
+                            if r.status_code // 100 != 2:
+                                err = json.loads(r.text)
+                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                        elif int(role) > 0:
+                            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, timeout = 3, dhrid = dhrid)
+                            if r.status_code // 100 != 2:
+                                err = json.loads(r.text)
+                                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                    except:
+                        pass
 
-    if app.config.perms.driver[0] in removedroles:
+    if checkPerm(app, removedroles, "driver"):
         try:
             if app.config.tracker == "tracksim":
                 r = await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
@@ -173,6 +197,27 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
             
         await UpdateRoleConnection(request, discordid)
+
+        for meta in app.config.driver_role_remove:
+            meta = Dict2Obj(meta)
+            if meta.webhook_url != "" or meta.channel_id != "":
+                await AutoMessage(app, meta, setvar)
+            
+            if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+                for role in meta.role_change:
+                    try:
+                        if int(role) < 0:
+                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, timeout = 3, dhrid = dhrid)
+                            if r.status_code // 100 != 2:
+                                err = json.loads(r.text)
+                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                        elif int(role) > 0:
+                            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, timeout = 3, dhrid = dhrid)
+                            if r.status_code // 100 != 2:
+                                err = json.loads(r.text)
+                                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                    except:
+                        pass
     
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""
@@ -348,12 +393,12 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
             for role in meta.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
                     elif int(role) > 0:
-                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}, timeout = 3, dhrid = dhrid)
+                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, timeout = 3, dhrid = dhrid)
                         if r.status_code // 100 != 2:
                             err = json.loads(r.text)
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
@@ -361,7 +406,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                     pass
     
     if discordid is not None and app.config.discord_bot_token != "":
-        headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver is dismissed."}
+        headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}
         try:
             r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
             d = json.loads(r.text)

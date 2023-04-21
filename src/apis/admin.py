@@ -365,6 +365,7 @@ async def post_config_reload(request: Request, response: Response, authorization
 
     os.replace(app.config_path + ".saved", app.config_path)
     app.config_last_modified = os.path.getmtime(app.config_path)
+    logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
     
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):

@@ -133,10 +133,44 @@
         "content": "{mention}",
         "embed": {
             "title": "",
-            "description": "Welcome {name}.",
+            "description": "Bye {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
             "footer": {
-                "text": "You are our #{userid} driver",
+                "text": "Goodbye!",
+                "icon_url": ""
+            },
+            "timestamp": true
+        },
+        "role_change": []
+    }],
+    
+    "driver_role_add": [{
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "{name} became a driver!",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "Hooray!",
+                "icon_url": ""
+            },
+            "timestamp": true
+        },
+        "role_change": []
+    }],
+    
+    "driver_role_remove": [{
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "{name} left as a driver!",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "Oops!",
                 "icon_url": ""
             },
             "timestamp": true
