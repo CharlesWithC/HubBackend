@@ -16,7 +16,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(request, 'GET /dlog/statistics/summary', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/statistics/summary', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -217,7 +217,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(request, 'GET /dlog/statistics/chart', 60, 15)
+    rl = await ratelimit(request, 'GET /dlog/statistics/chart', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -262,7 +262,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     
     basedriver = 0
     if sum_up:
-        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp < {timerange[0][0]}")
+        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp < {timerange[1][0]}")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if not checkPerm(app, str2list(tt[2]), "driver"):
@@ -272,7 +272,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     # NOTE int(sum_up) will be 1 if sum_up is True, hence it will start from timerange[1] as timerange[0] is for base counting
     # driver_changes cannot act like timerange to add a "base" for idx=0 due to later data calculation
     driver_changes = [0] * len(timerange[int(sum_up):]) # init to be 0
-    await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp >= {timerange[0][0]} AND join_timestamp < {before}")
+    await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp >= {timerange[sum_up][0]} AND join_timestamp < {before}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         if not checkPerm(app, str2list(tt[2]), "driver"):
@@ -281,7 +281,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
             if tt[1] >= timerange[i][0] and tt[1] < timerange[i][1]:
                 driver_changes[i-int(sum_up)] += 1
     driver_history = [basedriver] + [0] * len(driver_changes)
-    for i in range(1, len(driver_changes)):
+    for i in range(1, len(driver_changes) + 1):
         if sum_up:
             driver_history[i] = driver_history[i-1] + driver_changes[i-1]
         else:

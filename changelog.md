@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.5.6**  
+1.Fixed incorrect `driver` value in **GET** `/dlog/statistics/chart`  
+
 **v2.5.5**  
 1.Moved add/remove `member_welcome` discord roles from when driver role is added to when member is accepted  
 2.Removed add/remove `member_leave` discord roles from when driver role is removed  
