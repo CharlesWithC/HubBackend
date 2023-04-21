@@ -54,7 +54,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(request, au["uid"], f"economy_garages")
+    await ActivityUpdate(request, au["uid"], "economy_garages")
 
     if page_size <= 1:
         page_size = 1
@@ -76,11 +76,11 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     cvt = {"income": "tot_income", "truck": "tot_truck", "slot": "tot_slot"}
     if order_by in cvt.keys():
         order_by = cvt[order_by]
-    if not order_by in ["tot_income", "tot_truck", "tot_slot"]:
+    if order_by not in ['tot_income', 'tot_truck', 'tot_slot']:
         order_by = "tot_income"
         order = "desc"
     
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ['asc', 'desc']:
         order = "asc"
     
     await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
@@ -167,7 +167,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     elif page_size >= 250:
         page_size = 250
 
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ['asc', 'desc']:
         order = "asc"
 
     garageid = convertQuotation(garageid)
@@ -265,7 +265,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not garageid in app.garages.keys():
+    if garageid not in app.garages.keys():
         response.status_code = 404
         return {"error": ml.tr(request, "garage_not_found", force_lang = au["language"])}
     garage = app.garages[garageid]
@@ -327,7 +327,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
         p = garage['price'] if i == 0 else 0
         await app.db.execute(dhrid, f"INSERT INTO economy_garage(garageid, userid, price, note, purchase_timestamp) VALUES ('{garageid}', {foruser}, {p}, 'garage-owner', {ts})")
         await app.db.commit(dhrid)
-        await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+        await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         slotid = (await app.db.fetchone(dhrid))[0]
         slotids.append(slotid)
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['price']}, 'g-{garageid}-purchase', 'for-user-{foruser}', {round(balance - garage['price'])}, NULL, {ts})")
@@ -370,7 +370,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not garageid in app.garages.keys():
+    if garageid not in app.garages.keys():
         response.status_code = 404
         return {"error": ml.tr(request, "garage_not_found", force_lang = au["language"])}
     garage = app.garages[garageid]
@@ -428,7 +428,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {garage['slot_price']} WHERE userid = {opuserid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_garage(garageid, userid, price, note, purchase_timestamp) VALUES ('{garageid}', {foruser}, {garage['slot_price']}, 'slot-owner', {int(time.time())})")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     slotid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1002, {garage['slot_price']}, 'gs{slotid}-purchase', 'for-user-{foruser}', {round(balance - garage['slot_price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)

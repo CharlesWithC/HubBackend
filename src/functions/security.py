@@ -291,7 +291,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         user_agent = t[0][4]
 
         # check country
-        if not request.client.host in app.config.whitelist_ips:
+        if request.client.host not in app.config.whitelist_ips:
             curCountry = getRequestCountry(request, abbr = True)
             if curCountry != country and country != "":
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")

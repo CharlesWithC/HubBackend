@@ -155,7 +155,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.extend_conn(dhrid, 30)
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
             await app.db.extend_conn(dhrid, 2)
-            if not 'id' in user_data:
+            if 'id' not in user_data:
                 response.status_code = 400
                 return {"error": "Discord Error: " + user_data['message']}
             discordid = user_data['id']
@@ -263,7 +263,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         if not (await auth(authorization, request, required_permission = ["driver"]))["error"]:
             try:
                 if app.config.tracker == "tracksim":
-                    await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                    await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
                     await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
             except:
                 pass

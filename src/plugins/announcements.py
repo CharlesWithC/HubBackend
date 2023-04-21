@@ -4,7 +4,6 @@
 import json
 import math
 import time
-import traceback
 from datetime import datetime
 from typing import Optional
 
@@ -50,10 +49,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 100:
         page_size = 100
     
-    if not order_by in ["announcementid", "title"]:
+    if order_by not in ["announcementid", "title"]:
         order_by = "announcementidid"
         order = "asc"
-    if not order in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
 
@@ -144,7 +143,7 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     announcementid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_announcement", var = {"id": announcementid}))
 

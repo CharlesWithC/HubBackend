@@ -3,7 +3,6 @@
 
 import json
 import math
-import traceback
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -40,11 +39,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     query = convertQuotation(query).lower()
     
-    if not order_by in ["content", "notificationid"]:
+    if order_by not in ['content', 'notificationid']:
         order_by = "notificationid"
         order = "desc"
 
-    if not order in ["asc", "desc"]:
+    if order not in ['asc', 'desc']:
         if order_by == "notificationid":
             order = "desc"
         elif order_by == "content":
@@ -53,9 +52,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     limit = ""
     if status == 0:
-        limit += f"AND status = 0"
+        limit += "AND status = 0"
     elif status == 1:
-        limit += f"AND status = 1"
+        limit += "AND status = 1"
 
     await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
@@ -206,7 +205,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
             if dd in settings.keys():
                 settings[dd] = True
     
-    if settings[notification_type] == True:
+    if settings[notification_type] is True:
         return Response(status_code=204)
     
     if notification_type != "discord":

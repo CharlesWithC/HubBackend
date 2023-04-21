@@ -54,7 +54,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(request, au["uid"], f"economy_merch")
+    await ActivityUpdate(request, au["uid"], "economy_merch")
 
     if page_size <= 1:
         page_size = 1
@@ -79,13 +79,13 @@ async def get_merch_list(request: Request, response: Response, authorization: st
     if purchased_before is not None:
         limit += f"AND purchase_timestamp <= {purchased_before} "
 
-    if not order_by in ["merchid", "itemid", "userid", "price", "purchase_timestamp"]:
+    if order_by not in ['merchid', 'itemid', 'userid', 'price', 'purchase_timestamp']:
         order_by = "price"
         order = "desc"
     
     order_by = "buy_price" if order_by == "price" else order_by
 
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ['asc', 'desc']:
         order = "asc"
     
     await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
@@ -135,7 +135,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not merchid in app.merch.keys():
+    if merchid not in app.merch.keys():
         response.status_code = 404
         return {"error": ml.tr(request, "merch_not_found", force_lang = au["language"])}
     merch = app.merch[merchid]
@@ -173,7 +173,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, opuserid) if balance == 0 else None
-    await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
+    await app.db.execute(dhrid, "SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
     company_balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, -1000) if company_balance == 0 else None
     
@@ -186,7 +186,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {merch['buy_price']} WHERE userid = {opuserid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_merch(merchid, userid, buy_price, sell_price, purchase_timestamp) VALUES ('{merchid}', {foruser}, {merch['buy_price']}, {merch['sell_price']}, {ts})")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     itemid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1000, {merch['buy_price']}, 'm{itemid}-purchase', 'for-user-{foruser}', {round(balance - merch['buy_price'])}, {int(company_balance + merch['buy_price'])}, {ts})")
     await app.db.commit(dhrid)
@@ -317,7 +317,7 @@ async def post_merch_sell(request: Request, response: Response, itemid: int, aut
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, current_owner) if balance == 0 else None
-    await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
+    await app.db.execute(dhrid, "SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
     company_balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, -1000) if company_balance == 0 else None
     

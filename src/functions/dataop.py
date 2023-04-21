@@ -48,20 +48,20 @@ def nfloat(t):
     except:
         return 0
 
-def str2list(l):
+def str2list(lst):
     # converts comma-separated list str of int elements to list
     # e.g. "1,2,3" -> [1,2,3]
-    l = l.split(",")
-    return [int(x) for x in l if isint(x)]
+    lst = lst.split(",")
+    return [int(x) for x in lst if isint(x)]
 
-def intify(l):
-    return [int(x) for x in l if isint(x)]
+def intify(lst):
+    return [int(x) for x in lst if isint(x)]
 
-def list2str(l):
+def list2str(lst):
     # converts list to comma-separated list str
     # e.g. [1,2,3] -> "1,2,3"
-    l = [str(x) for x in l if isint(x)]
-    return ",".join(l)
+    lst = [str(x) for x in lst if isint(x)]
+    return ",".join(lst)
 
 def b64e(s):
     s = str(s)
@@ -102,15 +102,15 @@ def decompress(s):
 
 def b62encode(d):
     ret = ""
-    l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    st = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     if d == 0:
-        return l[0]
+        return st[0]
     flag = ""
     if d < 0:
         flag = "-"
         d = abs(d)
     while d:
-        ret += l[d % 62]
+        ret += st[d % 62]
         d //= 62
     return flag + ret[::-1]
 
@@ -120,9 +120,9 @@ def b62decode(d):
         flag = -1
         d = d[1:]
     ret = 0
-    l = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    st = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     for i in range(len(d)):
-        ret += l.find(d[i]) * 62 ** (len(d) - i - 1)
+        ret += st.find(d[i]) * 62 ** (len(d) - i - 1)
     return ret * flag
 
 def tseparator(num):

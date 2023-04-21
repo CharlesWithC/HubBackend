@@ -60,23 +60,23 @@ if app == "bannergen":
         os.system(f"{bfi}")
 
     elif op == "start":
-        os.system(f"systemctl --user start bannergen.service")
+        os.system("systemctl --user start bannergen.service")
 
     elif op == "restart":
-        os.system(f"systemctl --user start bannergen.service")
+        os.system("systemctl --user start bannergen.service")
 
     elif op == "stop":
-        os.system(f"systemctl --user stop bannergen.service")
+        os.system("systemctl --user stop bannergen.service")
 
     elif op == "enable":
         os.system(f"rm -f {serdir}/bannergen.service")
         open(f"{serdir}/bannergen.service", "w").write(bgenconf)
-        os.system(f"systemctl --user enable bannergen.service")
+        os.system("systemctl --user enable bannergen.service")
     
     elif op == "disable":
-        os.system(f"systemctl --user disable bannergen.service")
+        os.system("systemctl --user disable bannergen.service")
         os.system(f"rm -f {serdir}/bannergen.service")
-        os.system(f"systemctl --user daemon-reload")
+        os.system("systemctl --user daemon-reload")
 
     sys.exit(0)
     
@@ -120,7 +120,7 @@ if app == "hub":
     elif op == "disable":
         os.system(f"systemctl --user disable hub{abbr}.service")
         os.system(f"rm -f {serdir}/hub{abbr}.service")
-        os.system(f"systemctl --user daemon-reload")
+        os.system("systemctl --user daemon-reload")
 
     else:
         print("Unknown verb")

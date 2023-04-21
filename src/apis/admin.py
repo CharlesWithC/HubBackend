@@ -140,7 +140,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
         # remove disabled plugins
         for t in config_plugins.keys():
-            if not t in app.config.plugins:
+            if t not in app.config.plugins:
                 for tt in config_plugins[t]:
                     if tt in ffconfig.keys():
                         del ffconfig[tt]
@@ -163,7 +163,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
     # remove disabled plugins
     for t in config_plugins.keys():
-        if not t in app.config.plugins:
+        if t not in app.config.plugins:
             for tt in config_plugins[t]:
                 if tt in ffconfig.keys():
                     del ttconfig[tt]
@@ -220,7 +220,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     for tt in new_config.keys():
         if tt in config_whitelist:
-            if tt == "tracker" and not new_config[tt] in ["tracksim"]:
+            if tt == "tracker" and new_config[tt] not in ['tracksim']:
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
     
@@ -235,7 +235,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
             if tt == "distance_unit":
-                if not new_config[tt] in ["metric", "imperial"]:
+                if new_config[tt] not in ['metric', 'imperial']:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
                 
@@ -288,7 +288,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
             if tt == "perms":
                 newperms = new_config[tt]
-                if not "admin" in newperms:
+                if 'admin' not in newperms:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
                 perm_roles = intify(newperms["admin"])
@@ -478,7 +478,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     for tt in t:
         ret.append({"user": await GetUserInfo(request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog")
+    await app.db.execute(dhrid, "SELECT COUNT(*) FROM auditlog")
     t = await app.db.fetchall(dhrid)
     tot = t[0][0]
 

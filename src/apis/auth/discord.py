@@ -43,7 +43,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
             await app.db.extend_conn(dhrid, 2)
 
-            if not 'id' in user_data:
+            if "id" not in user_data:
                 response.status_code = 400
                 return {"error": user_data['message']}
             
@@ -69,7 +69,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             t = await app.db.fetchall(dhrid)
             mfa_secret = ""
             if len(t) == 0:
-                if not "discord" in app.config.register_methods:
+                if "discord" not in app.config.register_methods:
                     response.status_code = 404
                     return {"error": ml.tr(request, "user_not_found")}
         
@@ -84,7 +84,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                         pass
                         
                 await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '')")
-                await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+                await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
                 uid = (await app.db.fetchone(dhrid))[0]
                 await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
                 await app.db.commit(dhrid)

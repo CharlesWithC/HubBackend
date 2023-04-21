@@ -44,7 +44,7 @@ async def ProcessDiscordMessage(app): # thread
             for i in range(1, len(app.state.discord_message_queue)):
                 (chnid, d) = app.state.discord_message_queue[i]
                 if chnid == channelid and \
-                        not "content" in d.keys() and "embeds" in d.keys():
+                        "content" not in d.keys() and "embeds" in d.keys():
                     # not a text message but a rich embed
                     if len(str(data["embeds"])) + len(str(d["embeds"])) > 5000:
                         break # make sure this will not exceed character limit
@@ -134,7 +134,7 @@ async def CheckDiscordNotification(request, uid):
 
 async def SendDiscordNotification(request, uid, data):
     t = await CheckDiscordNotification(request, uid)
-    if t == False:
+    if t is False:
         return
     QueueDiscordMessage(request.app, t, data)
 

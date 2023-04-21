@@ -44,18 +44,18 @@ def initApp(app, first_init = False):
     pre_version = cur_version.lstrip("v")
     conn = db.genconn(app)
     cur = conn.cursor()
-    cur.execute(f"SELECT sval FROM settings WHERE skey = 'version'")
+    cur.execute("SELECT sval FROM settings WHERE skey = 'version'")
     t = cur.fetchall()
     cur.close()
     conn.close()
     if len(t) != 0:
         pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
     if pre_version != cur_version:
-        if not pre_version in upgrades.manager.VERSION_CHAIN:
+        if pre_version not in upgrades.manager.VERSION_CHAIN:
             logger.warning(f"[{app.config.abbr}] Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
             return None
         pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
-        if not cur_version in upgrades.manager.VERSION_CHAIN:
+        if cur_version not in upgrades.manager.VERSION_CHAIN:
             logger.warning(f"[{app.config.abbr}] Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
             return None
         cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
@@ -113,13 +113,13 @@ def createApp(config_path, multi_mode = False, first_init = False):
         config_json = json.loads(config_txt)
     except:
         return None
-    if not "abbr" in config_json.keys() or not "name" in config_json.keys():
+    if "abbr" not in config_json.keys() or "name" not in config_json.keys():
         return None
     config = validateConfig(config_json)
     config = Dict2Obj(config)
 
     if config.openapi and static.OPENAPI is not None:
-        app = FastAPI(title="Drivers Hub", version=version, openapi_url=f"/doc/openapi.json", docs_url=f"/doc", redoc_url=None)
+        app = FastAPI(title="Drivers Hub", version=version, openapi_url="/doc/openapi.json", docs_url="/doc", redoc_url=None)
         def openapi():
             data = static.OPENAPI
             data["servers"] = [{"url": f"https://{config.apidomain}{config.prefix}", "description": config.name}]
@@ -158,12 +158,12 @@ def createApp(config_path, multi_mode = False, first_init = False):
             # NOTE: The 'app_to_modify' object will be modified by external plugin
             # We'll copy back additional state to original app
             app_to_modify = copy.copy(app)
-            if external_plugin.init(app_to_modify, first_init) != True:
+            if external_plugin.init(app_to_modify, first_init) is not True:
                 if first_init:
                     logger.warning(f"[{app.config.abbr}] [External Plugin] '{plugin_name}' is not loaded: 'init' function did not return True.")
                 continue
             for state in app_to_modify.state.__dict__.keys():
-                if not state in app.state.__dict__.keys():
+                if state not in app.state.__dict__.keys():
                     app.state.__dict__[state] = app_to_modify.state.__dict__[state]
         except Exception as exc:
             if first_init:
@@ -205,7 +205,7 @@ def createApp(config_path, multi_mode = False, first_init = False):
     if "event" in app.config.plugins:
         routes += plugins.routes_event
     for route in routes:
-        if not route.path in external_routes:
+        if route.path not in external_routes:
             if multi_mode and route.path == "/restart":
                 continue
             app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)

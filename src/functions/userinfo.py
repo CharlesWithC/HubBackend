@@ -134,7 +134,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 
     uid = p[0][0]
 
-    if not request is None:
+    if request is not None:
         if "authorization" in request.headers.keys():
             authorization = request.headers["authorization"]
             au = await auth(authorization, request, check_member = False)
@@ -277,11 +277,11 @@ async def RefreshDiscordAccessToken(app):
 
             npid = -1
             nlup = -1
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-discord-refresh-pid'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'process-discord-refresh-pid'")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-discord-refresh-last-update'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'process-discord-refresh-last-update'")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 nlup = int(t[0][0])
@@ -291,7 +291,7 @@ async def RefreshDiscordAccessToken(app):
                 except:
                     return
                 continue
-            await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-discord-refresh-pid' OR skey = 'process-discord-refresh-last-update'")
+            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'process-discord-refresh-pid' OR skey = 'process-discord-refresh-last-update'")
             await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-discord-refresh-pid', '{os.getpid()}')")
             await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-discord-refresh-last-update', '{int(time.time())}')")
             await app.db.commit(dhrid)

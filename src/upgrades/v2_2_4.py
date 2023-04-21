@@ -1,3 +1,6 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 from db import genconn
 
 
@@ -27,4 +30,4 @@ def run(app):
     cur.close()
     conn.close()
     
-    print(f"Upgrade finished")
+    print("Upgrade finished")

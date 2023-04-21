@@ -72,7 +72,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         if role not in new_roles:
             removedroles.append(role)
     for role in new_roles:
-        if not role in app.roles.keys():
+        if role not in app.roles.keys():
             response.status_code = 400
             return {"error": ml.tr(request, "role_not_found", force_lang = au["language"])}
 
@@ -179,7 +179,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     if checkPerm(app, removedroles, "driver"):
         try:
             if app.config.tracker == "tracksim":
-                r = await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
             if r.status_code == 401:
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
             elif r.status_code // 100 != 2:
@@ -283,7 +283,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if distance != 0:
-        await app.db.execute(dhrid, f"SELECT MIN(logid) FROM dlog WHERE logid < 0")
+        await app.db.execute(dhrid, "SELECT MIN(logid) FROM dlog WHERE logid < 0")
         plogid = nint(await app.db.fetchone(dhrid)) - 1
         if distance > 0:
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '', 0, {int(time.time())}, 1, 0, 1, 0, {distance}, -1, 0, 0)")
@@ -362,7 +362,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     tracker_app_error = ""
     try:
         if app.config.tracker == "tracksim":
-            r = await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
         if r.status_code == 401:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
         elif r.status_code // 100 != 2:

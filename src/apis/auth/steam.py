@@ -45,7 +45,7 @@ async def get_callback(request: Request, response: Response):
     await app.db.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        if not "steam" in app.config.register_methods:
+        if "steam" not in app.config.register_methods:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found")}
         
@@ -63,7 +63,7 @@ async def get_callback(request: Request, response: Response):
         
         # register user
         await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '', '{avatar}', '', '', NULL, {steamid}, NULL, {int(time.time())}, '')")
-        await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+        await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         uid = (await app.db.fetchone(dhrid))[0]
         await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
         await app.db.commit(dhrid)

@@ -43,9 +43,9 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     if max_balance is not None:
         limit += f"AND balance <= {max_balance} "
     if exclude_company:
-        limit += f"AND userid >= 0 "
+        limit += "AND userid >= 0 "
 
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ["asc", "desc"]:
         order = "asc"
 
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
@@ -53,9 +53,9 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     included_userids = []
 
     if not permok:
-        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'public-balance'")
+        await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'public-balance'")
     else:
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0")
+        await app.db.execute(dhrid, "SELECT userid FROM user WHERE userid >= 0")
         public_userids.append(-1000)
     t = await app.db.fetchall(dhrid)
     for tt in t:
@@ -300,7 +300,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
         response.status_code = 403
         return {"error": ml.tr(request, "view_transaction_history_forbidden", force_lang = au["language"])}
 
-    await ActivityUpdate(request, au["uid"], f"economy_transactions")
+    await ActivityUpdate(request, au["uid"], "economy_transactions")
 
     if page_size <= 1:
         page_size = 1
@@ -323,11 +323,11 @@ async def get_balance_transaction_list(request: Request, response: Response, use
     if max_amount is not None:
         limit += f"AND amount <= {max_amount} "
 
-    if not order_by in ["timestamp", "amount"]:
+    if order_by not in ["timestamp", "amount"]:
         order_by = "timestamp"
         order = "desc"
     
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ["asc", "desc"]:
         order = "asc"
 
     await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
@@ -437,7 +437,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
 async def post_balance_visibility(request: Request, response: Response, userid: int, visibility: str, authorization: str = Header(None)):
     '''Make user balance public.'''
     app = request.app
-    if not visibility in ["public", "private"]:
+    if visibility not in ["public", "private"]:
         response.status_code = 404
         return {"error": "Not Found"}
     

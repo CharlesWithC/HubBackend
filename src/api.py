@@ -27,7 +27,7 @@ async def startup_event(app):
 
     dhrid = 0
     await app.db.new_conn(dhrid)
-    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
+    await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
     await app.db.commit(dhrid)
     await app.db.close_conn(dhrid)
 
@@ -107,7 +107,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 
         logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-        if not -1 in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
+        if -1 not in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
             app.state.dberr.append(time.time())
             app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
             if len(app.state.dberr) > 5:
@@ -149,7 +149,7 @@ class HubMiddleware(BaseHTTPMiddleware):
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json."}, status_code=400)
-        if not "started" in app.state.__dict__["_state"].keys(): 
+        if "started" not in app.state.__dict__["_state"].keys(): 
             app.state.started = True
             await startup_event(app)
         dhrid = genrid()

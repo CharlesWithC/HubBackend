@@ -1,3 +1,6 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 from db import genconn
 import traceback
 
@@ -20,20 +23,20 @@ def run(app):
     conn = genconn(autocommit = True)
     cur = conn.cursor()
 
-    print(f"Updating user table (reorder, add uid column)...")
+    print("Updating user table (reorder, add uid column)...")
     try:
-        cur.execute(f"ALTER TABLE user RENAME TO user_old")
+        cur.execute("ALTER TABLE user RENAME TO user_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE user")
-    cur.execute(f"SELECT * FROM user_old WHERE userid >= 0 ORDER BY userid ASC")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE user")
+    cur.execute("SELECT * FROM user_old WHERE userid >= 0 ORDER BY userid ASC")
     rows1 = cur.fetchall()
-    cur.execute(f"SELECT * FROM user_old WHERE userid = -1 ORDER BY join_timestamp ASC")
+    cur.execute("SELECT * FROM user_old WHERE userid = -1 ORDER BY join_timestamp ASC")
     rows2 = cur.fetchall()
     rows = rows1 + rows2
     # userid INT, discordid BIGINT UNSIGNED, name TEXT, avatar TEXT, bio TEXT, email TEXT, truckersmpid BIGINT, steamid BIGINT, roles TEXT, join_timestamp BIGINT, mfa_secret VARCHAR(16)
-    cur.execute(f"CREATE TABLE user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
+    cur.execute("CREATE TABLE user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
     for row in rows:
         row = process_row(row)
         userinfo[row[1]] = row
@@ -44,12 +47,12 @@ def run(app):
         try: 
             if row[0] == 0:
                 cur.execute(f"INSERT INTO user(uid, userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (0, {row[0]}, '{row[2]}', '{row[5]}', '{row[3]}', '{row[4]}', '{row[8]}', {row[1]}, {row[7]}, {row[6]}, {row[9]}, '{row[10]}')")
-                cur.execute(f"ALTER TABLE user AUTO_INCREMENT = 0;")
+                cur.execute("ALTER TABLE user AUTO_INCREMENT = 0;")
             else:
                 cur.execute(f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES ({row[0]}, '{row[2]}', '{row[5]}', '{row[3]}', '{row[4]}', '{row[8]}', {row[1]}, {row[7]}, {row[6]}, {row[9]}, '{row[10]}')")
         except:
             traceback.print_exc()
-        cur.execute(f"SELECT LAST_INSERT_ID();")
+        cur.execute("SELECT LAST_INSERT_ID();")
         t = cur.fetchone()
         uid = t[0]
         discordid2uid[row[1]] = uid
@@ -57,19 +60,19 @@ def run(app):
             userid2uid[row[0]] = uid
     print(f"Created {len(list(discordid2uid.keys()))} discordid -> uid links.")
     
-    print(f"Updating user_password table (discordid -> uid)...")
+    print("Updating user_password table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE user_password RENAME TO user_password_old")
+        cur.execute("ALTER TABLE user_password RENAME TO user_password_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE user_password")
-    cur.execute(f"SELECT * FROM user_password_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE user_password")
+    cur.execute("SELECT * FROM user_password_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE user_password (uid INT, email TEXT, password TEXT)")
+    cur.execute("CREATE TABLE user_password (uid INT, email TEXT, password TEXT)")
     for row in rows:
         row = process_row(row)
-        if not row[0] in discordid2uid.keys():
+        if row[0] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
@@ -77,19 +80,19 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating user_activity table (discordid -> uid)...")
+    print("Updating user_activity table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE user_activity RENAME TO user_activity_old")
+        cur.execute("ALTER TABLE user_activity RENAME TO user_activity_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE user_activity")
-    cur.execute(f"SELECT * FROM user_activity_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE user_activity")
+    cur.execute("SELECT * FROM user_activity_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE user_activity (uid INT, activity TEXT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE user_activity (uid INT, activity TEXT, timestamp BIGINT)")
     for row in rows:
         row = process_row(row)
-        if not row[0] in discordid2uid.keys():
+        if row[0] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
@@ -97,19 +100,19 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating user_notification table (discordid -> uid)...")
+    print("Updating user_notification table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE user_notification RENAME TO user_notification_old")
+        cur.execute("ALTER TABLE user_notification RENAME TO user_notification_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE user_notification")
-    cur.execute(f"SELECT * FROM user_notification_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE user_notification")
+    cur.execute("SELECT * FROM user_notification_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
+    cur.execute("CREATE TABLE user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
     for row in rows:
         row = process_row(row)
-        if not row[1] in discordid2uid.keys():
+        if row[1] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
@@ -117,19 +120,19 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating banned table (discordid -> uid)...")
+    print("Updating banned table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE banned RENAME TO banned_old")
+        cur.execute("ALTER TABLE banned RENAME TO banned_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE banned")
-    cur.execute(f"SELECT * FROM banned_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE banned")
+    cur.execute("SELECT * FROM banned_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
+    cur.execute("CREATE TABLE banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
     for row in rows:
         row = process_row(row)
-        if not row[0] in discordid2uid.keys():
+        if row[0] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         email = userinfo[row[0]][5]
@@ -140,19 +143,19 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating application table (discordid -> uid)...")
+    print("Updating application table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE application RENAME TO application_old")
+        cur.execute("ALTER TABLE application RENAME TO application_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE application")
-    cur.execute(f"SELECT * FROM application_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE application")
+    cur.execute("SELECT * FROM application_old")
     rows = cur.fetchall()
     cur.execute(f"CREATE TABLE application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     for row in rows:
         row = process_row(row)
-        if not row[2] in discordid2uid.keys():
+        if row[2] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[2]}: User does not exist.")
             continue
         try:
@@ -160,19 +163,19 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating session table (discordid -> uid)...")
+    print("Updating session table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE session RENAME TO session_old")
+        cur.execute("ALTER TABLE session RENAME TO session_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE session")
-    cur.execute(f"SELECT * FROM session_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE session")
+    cur.execute("SELECT * FROM session_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
+    cur.execute("CREATE TABLE session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
     for row in rows:
         row = process_row(row)
-        if not row[1] in discordid2uid.keys():
+        if row[1] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
@@ -180,23 +183,23 @@ def run(app):
         except:
             traceback.print_exc()
 
-    print(f"Updating auth_ticket table (discordid -> uid)...")
+    print("Updating auth_ticket table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE temp_identity_proof RENAME TO temp_identity_proof_old")
+        cur.execute("ALTER TABLE temp_identity_proof RENAME TO temp_identity_proof_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE auth_ticket")
-    cur.execute(f"SELECT * FROM temp_identity_proof_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE auth_ticket")
+    cur.execute("SELECT * FROM temp_identity_proof_old")
     rows = cur.fetchall()
     try:
-        cur.execute(f"CREATE TABLE auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
+        cur.execute("CREATE TABLE auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            cur.execute(f"DELETE FROM auth_ticket")
+            cur.execute("DELETE FROM auth_ticket")
     for row in rows:
         row = process_row(row)
-        if not row[1] in discordid2uid.keys():
+        if row[1] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[1]}: User does not exist.")
             continue
         try:
@@ -204,19 +207,19 @@ def run(app):
         except:
             traceback.print_exc()
 
-    print(f"Updating application_token table (discordid -> uid)...")
+    print("Updating application_token table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE application_token RENAME TO application_token_old")
+        cur.execute("ALTER TABLE application_token RENAME TO application_token_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE application_token")
-    cur.execute(f"SELECT * FROM application_token_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE application_token")
+    cur.execute("SELECT * FROM application_token_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
+    cur.execute("CREATE TABLE application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
     for row in rows:
         row = process_row(row)
-        if not row[2] in discordid2uid.keys():
+        if row[2] not in discordid2uid.keys():
             # print(f"[WARN] Skipped {row[2]}: User does not exist.")
             continue
         try:
@@ -224,19 +227,19 @@ def run(app):
         except:
             traceback.print_exc()
 
-    print(f"Updating auditlog table (userid -> uid)...")
+    print("Updating auditlog table (userid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE auditlog RENAME TO auditlog_old")
+        cur.execute("ALTER TABLE auditlog RENAME TO auditlog_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE auditlog")
-    cur.execute(f"SELECT * FROM auditlog_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE auditlog")
+    cur.execute("SELECT * FROM auditlog_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE auditlog (uid INT, operation TEXT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE auditlog (uid INT, operation TEXT, timestamp BIGINT)")
     for row in rows:
         row = process_row(row)
-        if not row[0] in userid2uid.keys():
+        if row[0] not in userid2uid.keys():
             # print(f"[WARN] Skipped {row[0]}: User does not exist.")
             continue
         try:
@@ -244,16 +247,16 @@ def run(app):
         except:
             traceback.print_exc()
     
-    print(f"Updating settings table (discordid -> uid)...")
+    print("Updating settings table (discordid -> uid)...")
     try:
-        cur.execute(f"ALTER TABLE settings RENAME TO settings_old")
+        cur.execute("ALTER TABLE settings RENAME TO settings_old")
     except Exception as exc:
         if str(exc).find("already exists") != -1:
-            print(f"Last upgrade seems to be failed, fixing up...")
-            cur.execute(f"DROP TABLE settings")
-    cur.execute(f"SELECT * FROM settings_old")
+            print("Last upgrade seems to be failed, fixing up...")
+            cur.execute("DROP TABLE settings")
+    cur.execute("SELECT * FROM settings_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
+    cur.execute("CREATE TABLE settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
     for row in rows:
         if row[0] <= 0:
             try:
@@ -261,7 +264,7 @@ def run(app):
             except:
                 traceback.print_exc()
         else:
-            if not row[0] in discordid2uid.keys():
+            if row[0] not in discordid2uid.keys():
                 # print(f"[WARN] Skipped {row[0]}: User does not exist.")
                 continue
             try:
@@ -270,7 +273,7 @@ def run(app):
                 traceback.print_exc()
     
     skey2table = {"nxtnotificationid": "user_notification", "nxtlogid": "dlog", "nxtappid": "application", "nxtannid": "announcement", "nxtchallengeid": "challenge", "nxtdownloadsid": "downloads", "nxteventid": "event"}
-    print(f"Updating tables (add AUTO_INCREMENT property)")
+    print("Updating tables (add AUTO_INCREMENT property)")
     for skey in skey2table.keys():
         table = skey2table[skey]
         if table in ["user", "user_notification"]:
@@ -292,7 +295,7 @@ def run(app):
                 pass
             cur.execute(f"ALTER IGNORE TABLE {table} MODIFY COLUMN {idcolumn} INT NOT NULL AUTO_INCREMENT PRIMARY KEY")
 
-    print(f"Updating settings table (nxtid)...")
+    print("Updating settings table (nxtid)...")
     for skey in skey2table.keys():
         cur.execute(f"SELECT sval FROM settings WHERE skey = '{skey}'")
         sval = cur.fetchone()[0]
@@ -302,4 +305,4 @@ def run(app):
     cur.close()
     conn.close()
     
-    print(f"Upgrade finished")
+    print("Upgrade finished")

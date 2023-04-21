@@ -49,7 +49,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
     if userid is not None:
         limit += f"AND dlog.userid = {userid}"
 
-    st = time.time()
+    time.time()
     f = BytesIO()
     if not include_ids:
         f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")

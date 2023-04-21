@@ -67,8 +67,8 @@ async def patch_password(request: Request, response: Response, authorization: st
         return {"error": ml.tr(request, "email_not_unique", force_lang = au["language"])}
         
     if len(password) >= 8:
-        if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
-            (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
+        if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
+            (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
             return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
     else:
         return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}

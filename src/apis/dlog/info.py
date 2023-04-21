@@ -44,10 +44,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if not order_by in ["logid", "max_speed", "profit", "fuel", "distance", "views"]:
+    if order_by not in ["logid", "max_speed", "profit", "fuel", "distance", "views"]:
         order_by = "logid"
         order = "desc"
-    if not order in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "desc"
     if order_by == "max_speed":
         order_by = "topspeed"
@@ -61,9 +61,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if challenge == "include":
         limit = limit
     elif challenge == "only":
-        limit += f"AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record) "
+        limit += "AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record) "
     elif challenge == "none":
-        limit += f"AND dlog.logid NOT IN (SELECT challenge_record.logid FROM challenge_record) "
+        limit += "AND dlog.logid NOT IN (SELECT challenge_record.logid FROM challenge_record) "
     else:
         try:
             challengeid = int(challenge)
@@ -73,9 +73,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if division == "include":
         limit = limit
     elif division == "only":
-        limit += f"AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1) "
+        limit += "AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1) "
     elif division == "none":
-        limit += f"AND dlog.logid NOT IN (SELECT division.logid FROM division WHERE division.status = 1) "
+        limit += "AND dlog.logid NOT IN (SELECT division.logid FROM division WHERE division.status = 1) "
     else:
         try:
             divisionid = int(division)
@@ -94,9 +94,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     status_limit = ""
     if status == 1:
-        status_limit = f" AND dlog.isdelivered = 1"
+        status_limit = " AND dlog.isdelivered = 1"
     elif status == 2:
-        status_limit = f" AND dlog.isdelivered = 0"
+        status_limit = " AND dlog.isdelivered = 0"
 
     gamelimit = ""
     if game == 1 or game == 2:

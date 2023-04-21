@@ -3,7 +3,6 @@
 
 import json
 import math
-import traceback
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -41,13 +40,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
     
     query = convertQuotation(query).lower()
     
-    if not order_by in ["name", "uid", "discord_id", "join_timestamp"]:
+    if order_by not in ['name', 'uid', 'discord_id', 'join_timestamp']:
         order_by = "discord_id"
         order = "asc"
     cvt = {"name": "user.name", "uid": "user.uid", "discord_id": "user.discordid", "join_timestamp": "user.join_timestamp"}
     order_by = cvt[order_by]
 
-    if not order in ["asc", "desc"]:
+    if order not in ['asc', 'desc']:
         order = "asc"
     order = order.upper()
     

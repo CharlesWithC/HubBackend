@@ -54,7 +54,7 @@ elif args.config_directory is not None:
     config_paths = [os.path.join(args.config_directory, x) for x in config_files]
 
 openapi_path = ""
-if args.enable_parent_openapi == True:
+if args.enable_parent_openapi is True:
     if args.parent_openapi_path is not None:
         openapi_path = args.parent_openapi_path
         if not openapi_path.startswith("/"):
@@ -66,7 +66,7 @@ if config_paths is not None:
     os.environ["HUB_CONFIG"] = base64.b64encode(json.dumps(config_paths).encode()).decode()
     os.environ["OPENAPI_PATH"] = openapi_path
 else:
-    if not "HUB_CONFIG" in os.environ.keys():
+    if 'HUB_CONFIG' not in os.environ.keys():
         logger.warning("No config is provided, quited.")
         os._exit(42)
     config_paths = json.loads(base64.b64decode(os.environ["HUB_CONFIG"].encode()).decode())

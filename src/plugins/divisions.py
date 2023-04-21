@@ -2,7 +2,6 @@
 # Author: @CharlesWithC
 
 import time
-import traceback
 from datetime import datetime
 from typing import Optional
 
@@ -39,7 +38,7 @@ async def get_division(request: Request, response: Response, authorization: str 
     if before is None:
         before = max(int(time.time()), 32503651200)
         
-    await ActivityUpdate(request, au["uid"], f"divisions")
+    await ActivityUpdate(request, au["uid"], "divisions")
     
     stats = []
     for division in app.config.divisions:
@@ -189,7 +188,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
                         joined_divisions.append(division["id"])
                 except:
                     pass
-    if not checkPerm(app, roles, "admin") and not divisionid in joined_divisions:
+    if not checkPerm(app, roles, "admin") and divisionid not in joined_divisions:
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
     
@@ -256,7 +255,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "division_validation_not_found", force_lang = au["language"])}
-    if not divisionid in app.division_name.keys():
+    if divisionid not in app.division_name.keys():
         divisionid = t[0][0]
     userid = t[0][2]
         

@@ -17,17 +17,17 @@ def init(app):
 
     # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS discord_access_token (discordid BIGINT UNSIGNED, source TEXT, access_token TEXT, refresh_token TEXT, expire_timestamp BIGINT)") # source is callback|connect
+    cur.execute("CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
+    cur.execute("CREATE TABLE IF NOT EXISTS discord_access_token (discordid BIGINT UNSIGNED, source TEXT, access_token TEXT, refresh_token TEXT, expire_timestamp BIGINT)") # source is callback|connect
     # uid is unique identifier, userid is actually member id
-    cur.execute(f"CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
     # Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
-    cur.execute(f"CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS mythpoint (userid INT, point INT, timestamp BIGINT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # unit = 1: euro | 2: dollar
 
@@ -49,7 +49,7 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS downloads (downloadsid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, orderid INT, click_count INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     cur.execute(f"CREATE TABLE IF NOT EXISTS downloads_templink (downloadsid INT, secret CHAR(8), expire BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS economy_balance (userid INT, balance BIGINT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS economy_truck (vehicleid INT AUTO_INCREMENT PRIMARY KEY, truckid TEXT, garageid TEXT, slotid INT, userid INT, assigneeid INT, price INT UNSIGNED, income BIGINT, service_cost BIGINT, odometer BIGINT UNSIGNED, damage FLOAT, purchase_timestamp BIGINT, status INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # NOTE damage is a percentage (e.g. 0.01 => 1%)
     cur.execute(f"CREATE TABLE IF NOT EXISTS economy_garage (slotid INT AUTO_INCREMENT PRIMARY KEY, garageid TEXT, userid INT, price INT UNSIGNED, note TEXT, purchase_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
@@ -65,21 +65,21 @@ def init(app):
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS application_token (app_name TEXT, token CHAR(36), uid BIGINT UNSIGNED, timestamp BIGINT, last_used_timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS email_confirmation (uid INT, secret TEXT, operation TEXT, expire BIGINT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS auditlog (uid INT, operation TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-    cur.execute(f"CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS settings (uid BIGINT UNSIGNED, skey TEXT, sval TEXT)")
 
-    cur.execute(f"SELECT skey FROM settings")
+    cur.execute("SELECT skey FROM settings")
     t = cur.fetchall()
     keys = ["nxtuserid", "nxtlogid"]
     for key in keys:
-        if not (key,) in t:
+        if (key,) not in t:
             cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
-    if not ("version",) in t:
+    if ("version",) not in t:
         cur.execute(f"INSERT INTO settings VALUES (NULL, 'version', '{app.version}')")
 
     indexes = ["CREATE INDEX user_uid ON user (uid)",
@@ -230,7 +230,7 @@ class aiosql:
 
     async def new_conn(self, dhrid, extra_time = 0):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"[aiosql] Shutting down in progress")
+            raise pymysql.err.OperationalError("[aiosql] Shutting down in progress")
 
         if self.pool is None: # init pool
             self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
@@ -244,9 +244,9 @@ class aiosql:
             try:
                 conn = await asyncio.wait_for(self.pool.acquire(), timeout=3)
             except asyncio.TimeoutError:
-                raise pymysql.err.OperationalError(f"[aiosql] Timeout")
+                raise pymysql.err.OperationalError("[aiosql] Timeout")
             cur = await conn.cursor()
-            await cur.execute(f"SET lock_wait_timeout=5;")
+            await cur.execute("SET lock_wait_timeout=5;")
             conns = self.conns
             conns[dhrid] = [conn, cur, time.time() + extra_time, extra_time]
             self.conns = conns
@@ -256,14 +256,14 @@ class aiosql:
     
     async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
-            raise pymysql.err.OperationalError(f"[aiosql] Shutting down")
+            raise pymysql.err.OperationalError("[aiosql] Shutting down")
 
         conns = self.conns
         try:
             conns[dhrid][2] = time.time() + conns[dhrid][3]
             cur = conns[dhrid][1]
             if extend:
-                await cur.execute(f"SET lock_wait_timeout=5;")
+                await cur.execute("SET lock_wait_timeout=5;")
         except:
             try:
                 conn = await self.pool.acquire()
@@ -271,13 +271,13 @@ class aiosql:
                 conns = self.conns
                 conns[dhrid] = [conn, cur, time.time() + conns[dhrid][3], conns[dhrid][3]]
                 if extend:
-                    await cur.execute(f"SET lock_wait_timeout=5;")
+                    await cur.execute("SET lock_wait_timeout=5;")
             except:
                 pass
         self.conns = conns
         
     async def extend_conn(self, dhrid, seconds):
-        if not dhrid in self.conns.keys():
+        if dhrid not in self.conns.keys():
             return
         conns = self.conns
         try:

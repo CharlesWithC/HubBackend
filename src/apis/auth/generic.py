@@ -3,7 +3,6 @@
 
 import json
 import time
-import traceback
 import uuid
 
 import bcrypt
@@ -101,7 +100,7 @@ async def post_password(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, uid = uid))["name"]
+    (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
 
@@ -117,7 +116,7 @@ async def post_password(request: Request, response: Response):
 
 async def post_register(request: Request, response: Response):
     app = request.app
-    if not "email" in app.config.register_methods:
+    if 'email' not in app.config.register_methods:
         response.status_code = 404
         return {"error": "Not Found"}
         
@@ -150,8 +149,8 @@ async def post_register(request: Request, response: Response):
         return {"error": "Service Unavailable"}
 
     if len(password) >= 8:
-        if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
-            (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
+        if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
+            (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
             return {"error": ml.tr(request, "weak_password")}
     else:
         return {"error": ml.tr(request, "weak_password")}
@@ -203,7 +202,7 @@ async def post_register(request: Request, response: Response):
 
     # register user
     await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', 'pending', '', '', '', NULL, NULL, NULL, {int(time.time())}, '')")
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     uid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")
     await app.db.commit(dhrid)
@@ -387,7 +386,7 @@ async def post_mfa(request: Request, response: Response):
     await app.db.execute(dhrid, f"INSERT INTO session VALUES ('{stoken}', '{uid}', '{int(time.time())}', '{request.client.host}', '{getRequestCountry(request, abbr = True)}', '{getUserAgent(request)}', '{int(time.time())}')")
     await app.db.commit(dhrid)
 
-    username = (await GetUserInfo(request, uid = uid))["name"]
+    (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "mfa_login", var = {"country": getRequestCountry(request)}))
     await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
@@ -451,8 +450,8 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
             return {"error": ml.tr(request, "bad_json")}
     
         if len(password) >= 8:
-            if not (bool(re.match('((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})',password))==True) and \
-                (bool(re.match('((\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})',password))==True):
+            if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
+                (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
                 return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
         else:
             return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}

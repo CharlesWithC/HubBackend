@@ -48,7 +48,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     steamid = t[0][4]
     truckersmpid = t[0][5]
     email = t[0][6]
-    if not "@" in email and "email" in app.config.required_connections:
+    if '@' not in email and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
     if discordid is None and "discord" in app.config.required_connections:
@@ -61,7 +61,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "TruckersMP"}, force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
+    await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
     t = await app.db.fetchall(dhrid)
     userid = int(t[0][0])
 
@@ -249,7 +249,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     try:
         fields = ["uid", "email", "discordid", "steamid", "truckersmpid"]
         for field in fields:
-            if not field in data.keys():
+            if field not in data.keys():
                 data[field] = "NULL"
             else:
                 if field == "email":
@@ -334,7 +334,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     try:
         fields = ["uid", "email", "discordid", "steamid", "truckersmpid"]
         for field in fields:
-            if not field in data.keys():
+            if field not in data.keys():
                 data[field] = "NULL"
             else:
                 if field == "email":
@@ -356,7 +356,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
         await app.db.commit(dhrid)
         
         for tt in t:
-            if tt[0] != None:
+            if tt[0] is not None:
                 username = (await GetUserInfo(request, uid = tt[0]))["name"]
                 await AuditLog(request, au["uid"], ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
 

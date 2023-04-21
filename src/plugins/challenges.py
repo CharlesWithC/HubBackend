@@ -65,7 +65,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(request, au["uid"], f"challenges")
+    await ActivityUpdate(request, au["uid"], "challenges")
     if page_size <= 0:
         page_size = 1
     elif page_size >= 100:
@@ -99,11 +99,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
         userid = au["userid"]
     
     # start_time / end_time / title / required_distance / reward_points / delivery_count
-    if not order_by in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
+    if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
         order_by = "reward_points"
         order = "desc"
     
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ["asc", "desc"]:
         order = "asc"
     
     query_limit += f"ORDER BY {order_by} {order.upper()}"
@@ -191,7 +191,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     if not staffau["error"]:
         isstaff = True
 
-    await ActivityUpdate(request, au["uid"], f"challenges")
+    await ActivityUpdate(request, au["uid"], "challenges")
 
     await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
             required_distance, reward_points, public_details, job_requirements, description FROM challenge WHERE challengeid = {challengeid} \
@@ -332,7 +332,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
 
-    if not challenge_type in [1, 2, 3, 4, 5]:
+    if challenge_type not in [1, 2, 3, 4, 5]:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_challenge_type", force_lang = au["language"])}
     
@@ -373,7 +373,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
 
     await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     challengeid = (await app.db.fetchone(dhrid))[0]
 
     await AuditLog(request, au["uid"], ml.ctr(request, "created_challenge", var = {"id": challengeid}))
@@ -674,7 +674,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             usercnt = {}
             for tt in t:
                 tuserid = tt[0]
-                if not tuserid in usercnt.keys():
+                if tuserid not in usercnt.keys():
                     usercnt[tuserid] = 1
                 else:
                     usercnt[tuserid] += 1
@@ -732,7 +732,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             for tt in t:
                 totalcnt += tt[1]
                 tuserid = tt[0]
-                if not tuserid in usercnt.keys():
+                if tuserid not in usercnt.keys():
                     usercnt[tuserid] = tt[1] - max(totalcnt - delivery_count, 0)
                 else:
                     usercnt[tuserid] += tt[1] - max(totalcnt - delivery_count, 0)
@@ -904,7 +904,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 usercnt = {}
                 for tt in t:
                     tuserid = tt[0]
-                    if not tuserid in usercnt.keys():
+                    if tuserid not in usercnt.keys():
                         usercnt[tuserid] = 1
                     else:
                         usercnt[tuserid] += 1
@@ -931,7 +931,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 for tt in t:
                     totalcnt += tt[1]
                     tuserid = tt[0]
-                    if not tuserid in usercnt.keys():
+                    if tuserid not in usercnt.keys():
                         usercnt[tuserid] = tt[1] - max(totalcnt - delivery_count, 0)
                     else:
                         usercnt[tuserid] += tt[1] - max(totalcnt - delivery_count, 0)
@@ -1063,7 +1063,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                 usercnt = {}
                 for tt in t:
                     tuserid = tt[0]
-                    if not tuserid in usercnt.keys():
+                    if tuserid not in usercnt.keys():
                         usercnt[tuserid] = 1
                     else:
                         usercnt[tuserid] += 1
@@ -1125,7 +1125,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                 for tt in t:
                     totalcnt += tt[1]
                     tuserid = tt[0]
-                    if not tuserid in usercnt.keys():
+                    if tuserid not in usercnt.keys():
                         usercnt[tuserid] = tt[1] - max(totalcnt - delivery_count, 0)
                     else:
                         usercnt[tuserid] += tt[1] - max(totalcnt - delivery_count, 0)

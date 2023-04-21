@@ -4,7 +4,6 @@
 import json
 import math
 import time
-import traceback
 from datetime import datetime
 from typing import Optional
 
@@ -24,7 +23,7 @@ async def get_positions(request: Request):
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
+    await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return []
@@ -71,7 +70,7 @@ async def patch_positions(request: Request, response: Response, authorization: s
     positions = [b64e(x) for x in positions]
     positions = ",".join([b64e(x) for x in data["positions"]])
 
-    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'applicationpositions'")
+    await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'applicationpositions'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'applicationpositions', '{positions}')")
@@ -96,7 +95,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if not order in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
     order = order.upper()
         
@@ -107,7 +106,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         return au
     uid = au["uid"]
     roles = au["roles"]
-    await ActivityUpdate(request, au["uid"], f"applications")
+    await ActivityUpdate(request, au["uid"], "applications")
 
     if page_size <= 1:
         page_size = 1
@@ -116,7 +115,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     t = None
     tot = 0
-    if all_user == False:
+    if all_user is False:
         limit = ""
         if application_type is not None:
             limit = f" AND application_type = {application_type} "
@@ -156,7 +155,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 limit = f" WHERE application_type = {application_type} "
         
         if status is not None and status in [0,1,2]:
-            if not "WHERE" in limit:
+            if "WHERE" not in limit:
                 limit = f" WHERE status = {status} "
             else:
                 limit += f" AND status = {status} "
@@ -297,7 +296,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid, discordid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    if not "@" in t[0][2] and "email" in app.config.required_connections:
+    if "@" not in t[0][2] and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Email"}, force_lang = au["language"])}
     if t[0][6] is None and ("discord" in app.config.required_connections or app.config.must_join_guild):
@@ -326,7 +325,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"INSERT INTO application(application_type, uid, data, status, submit_timestamp, update_staff_userid, update_staff_timestamp) VALUES ({application_type}, {uid}, '{compress(json.dumps(application,separators=(',', ':')))}', 0, {int(time.time())}, -1, 0)")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     applicationid = (await app.db.fetchone(dhrid))[0]
 
     if discordid is not None and applicantrole != 0 and app.config.discord_bot_token != "":
@@ -417,7 +416,7 @@ async def patch_application(request: Request, response: Response, applicationid:
     application_type = t[0][3]
     i = 1
     while 1:
-        if not f"[Message] {name} ({userid}) #{i}" in data.keys():
+        if f"[Message] {name} ({userid}) #{i}" not in data.keys():
             break
         i += 1
         
@@ -487,7 +486,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     STATUS = {0: "pending", 1: "accepted", 2: "declined"}
-    statustxt = f"N/A"
+    statustxt = "N/A"
     if status in STATUS.keys():
         statustxt = STATUS[int(status)]
 
@@ -521,7 +520,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     data = json.loads(decompress(t[0][3]))
     i = 1
     while 1:
-        if not f"[Message] {au['name']} ({au['userid']}) #{i}" in data.keys():
+        if f"[Message] {au['name']} ({au['userid']}) #{i}" not in data.keys():
             break
         i += 1
     if message != "":

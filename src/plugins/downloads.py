@@ -50,10 +50,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if not order_by in ["orderid", "downloadsid", "title", "click_count"]:
+    if order_by not in ["orderid", "downloadsid", "title", "click_count"]:
         order_by = "orderid"
         order = "asc"
-    if not order in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
     order = order.upper()    
 
@@ -197,7 +197,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
     
     await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({au['userid']}, '{title}', '{description}', '{link}', {orderid}, 0)")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     downloadsid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_downloads", var = {"id": downloadsid}))
 

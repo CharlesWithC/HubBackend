@@ -1,9 +1,6 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import copy
-
-
 def isfloat(t):
     try:
         float(t)
@@ -323,12 +320,12 @@ DEFAULT_EMBED = {
 
 def validateEmbed(embed):
     for k in DEFAULT_EMBED.keys():
-        if not k in embed.keys():
+        if k not in embed.keys():
             embed[k] = DEFAULT_EMBED[k]
     return embed
 
 def validateConfig(cfg):
-    if not "hex_color" in cfg.keys():
+    if 'hex_color' not in cfg.keys():
         cfg["hex_color"] = "2fc1f7"
     hex_color = cfg["hex_color"][-6:]
     try:
@@ -339,7 +336,7 @@ def validateConfig(cfg):
         hex_color = "2fc1f7"
         cfg["hex_color"] = "2fc1f7"
 
-    if not "perms" in cfg.keys():
+    if 'perms' not in cfg.keys():
         cfg["perms"] = default_config["perms"]
     perms = cfg["perms"]
     for perm in perms.keys():
@@ -356,7 +353,7 @@ def validateConfig(cfg):
         perms[perm] = newroles
     cfg["perms"] = perms
 
-    if not "roles" in cfg.keys():
+    if 'roles' not in cfg.keys():
         cfg["roles"] = default_config["roles"]
     roles = cfg["roles"]
     newroles = []
@@ -368,7 +365,7 @@ def validateConfig(cfg):
             continue
         
         # v2.5.6
-        if not "order_id" in role.keys():
+        if 'order_id' not in role.keys():
             role["order_id"] = role["id"]
         else:
             try:
@@ -380,7 +377,7 @@ def validateConfig(cfg):
             newroles.append(role)
     cfg["roles"] = newroles
 
-    if not "ranks" in cfg.keys():
+    if 'ranks' not in cfg.keys():
         cfg["ranks"] = default_config["ranks"]
     ranks = cfg["ranks"]
     newranks = []
@@ -402,7 +399,7 @@ def validateConfig(cfg):
             newranks.append(rank)
     cfg["ranks"] = newranks
 
-    if not "divisions" in cfg.keys():
+    if 'divisions' not in cfg.keys():
         cfg["divisions"] = default_config["divisions"]
     divisions = cfg["divisions"]
     newdivisions = []
@@ -421,10 +418,10 @@ def validateConfig(cfg):
                 pass
     cfg["divisions"] = newdivisions
     
-    if not "economy" in cfg.keys():
+    if 'economy' not in cfg.keys():
         cfg["economy"] = default_config["economy"]
 
-    if not "trucks" in cfg["economy"].keys():
+    if 'trucks' not in cfg['economy'].keys():
         cfg["economy"]["trucks"] = default_config["economy"]["trucks"]
     economy_trucks = cfg["economy"]["trucks"]
     new_economy_trucks = []
@@ -439,7 +436,7 @@ def validateConfig(cfg):
             new_economy_trucks.append(truck)
     cfg["economy"]["trucks"] = new_economy_trucks
     
-    if not "garages" in cfg["economy"].keys():
+    if 'garages' not in cfg['economy'].keys():
         cfg["economy"]["garages"] = default_config["economy"]["garages"]
     economy_garages = cfg["economy"]["garages"]
     new_economy_garages = []
@@ -457,7 +454,7 @@ def validateConfig(cfg):
             new_economy_garages.append(garage)
     cfg["economy"]["garages"] = new_economy_garages
     
-    if not "merch" in cfg["economy"].keys():
+    if 'merch' not in cfg['economy'].keys():
         cfg["economy"]["merch"] = default_config["economy"]["merch"]
     economy_merch = cfg["economy"]["merch"]
     new_economy_merch = []
@@ -474,20 +471,20 @@ def validateConfig(cfg):
 
     economy_must_float = ['truck_refund', 'scrap_refund', 'garage_refund', 'slot_refund', 'usd_to_coin', 'eur_to_coin', 'wear_ratio', 'revenue_share_to_company', 'truck_rental_cost', 'max_wear_before_service', 'max_distance_before_scrap', 'unit_service_price']
     for item in economy_must_float:
-        if not item in cfg["economy"].keys() or not isfloat(cfg["economy"][item]):
+        if item not in cfg['economy'].keys() or not isfloat(cfg["economy"][item]):
             cfg["economy"][item] = default_config["economy"][item]
         else:
             cfg["economy"][item] = float(cfg["economy"][item])
 
     economy_must_bool = ['allow_purchase_truck', 'allow_purchase_garage', 'allow_purchase_slot', 'enable_balance_leaderboard']
     for item in economy_must_bool:
-        if not item in cfg["economy"].keys() or type(cfg["economy"][item]) != bool:
+        if item not in cfg['economy'].keys() or type(cfg["economy"][item]) != bool:
             cfg["economy"][item] = default_config["economy"][item]
     
-    if not "currency_name" in cfg["economy"].keys():
+    if 'currency_name' not in cfg['economy'].keys():
         cfg["economy"]["currency_name"] = "coin"
 
-    if not "application_types" in cfg.keys():
+    if 'application_types' not in cfg.keys():
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
@@ -507,13 +504,13 @@ def validateConfig(cfg):
             application_type["discord_role_id"] = None
         ok = True
         for req in reqs:
-            if not req in application_type.keys():
+            if req not in application_type.keys():
                 ok = False
         if ok:
             new_application_types.append(application_type)
     cfg["application_types"] = new_application_types
     
-    if not "external_plugins" in cfg.keys():
+    if 'external_plugins' not in cfg.keys():
         cfg["external_plugins"] = default_config["external_plugins"]
     external_plugins = cfg["external_plugins"]
     new_external_plugins = []
@@ -536,29 +533,29 @@ def validateConfig(cfg):
         cfg["allowed_tracker_ips"] = cfg["allowed_navio_ips"]
         del cfg["allowed_navio_ips"]
 
-    if not "member_accept" in cfg.keys() and "team_update" in cfg.keys():
+    if 'member_accept' not in cfg.keys() and "team_update" in cfg.keys():
         cfg["member_accept"] = cfg["team_update"]
         del cfg["team_update"]
     
-    if not "discord_callback" in cfg["frontend_urls"].keys():
+    if 'discord_callback' not in cfg['frontend_urls'].keys():
         cfg["frontend_urls"]["discord_callback"] = f"https://{cfg['domain']}/connectDiscord"
     
-    if not "email_confirm" in cfg["frontend_urls"].keys():
+    if 'email_confirm' not in cfg['frontend_urls'].keys():
         cfg["frontend_urls"]["email_confirm"] = f"https://{cfg['domain']}/emailConfirm?secret={{secret}}"
 
-    if not "server_host" in cfg.keys() and "server_ip" in cfg.keys():
+    if 'server_host' not in cfg.keys() and "server_ip" in cfg.keys():
         cfg["server_host"] = cfg["server_ip"]
         del cfg["server_ip"]
     
     # v2.4.4
-    if not "plugins" in cfg.keys() and "enabled_plugins" in cfg.keys():
+    if 'plugins' not in cfg.keys() and "enabled_plugins" in cfg.keys():
         cfg["plugins"] = cfg["enabled_plugins"]
         del cfg["enabled_plugins"]
 
     # v2.5.4
     if "openapi" in cfg.keys() and type(cfg["openapi"]) is not bool:
         cfg["openapi"] = False
-    if not "prefix" in cfg.keys() and "abbr" in cfg.keys():
+    if 'prefix' not in cfg.keys() and "abbr" in cfg.keys():
         cfg["prefix"] = "/" + cfg["abbr"]
     if not cfg["prefix"].startswith("/"):
         cfg["prefix"] = "/" + cfg["prefix"]
@@ -567,7 +564,7 @@ def validateConfig(cfg):
     embed_auto_validate = ["member_accept", "member_leave", "rank_up", "driver_role_add", "driver_role_remove"]
     discord_msg_ensure = ["webhook_url", "channel_id", "content"]
     for embed_type in embed_auto_validate:
-        if not embed_type in cfg.keys():
+        if embed_type not in cfg.keys():
             cfg[embed_type] = default_config[embed_type]
         if type(cfg[embed_type]) is dict:
             cfg[embed_type] = [cfg[embed_type]]
@@ -581,10 +578,10 @@ def validateConfig(cfg):
             else:
                 cfg[embed_type][i]["embed"] = DEFAULT_EMBED
             for to_ensure in discord_msg_ensure:
-                if not to_ensure in cfg[embed_type][i].keys():
+                if to_ensure not in cfg[embed_type][i].keys():
                     cfg[embed_type][i][to_ensure] = ""
             if embed_type not in ["rank_up"]:
-                if not "role_change" in cfg[embed_type][i].keys():
+                if 'role_change' not in cfg[embed_type][i].keys():
                     cfg[embed_type][i]["role_change"] = []
 
     tcfg = {}

@@ -91,10 +91,9 @@ async def banner(request: Request, response: Response):
     except:
         hex_color = "2fc1f7"
     
-    l = os.listdir(f"/tmp/hub/banner")
-    for ll in l:
-        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{ll}") > 1800:
-            os.remove(f"/tmp/hub/banner/{ll}")
+    for fi in os.listdir("/tmp/hub/banner"):
+        if time.time() - os.path.getmtime(f"/tmp/hub/banner/{fi}") > 1800:
+            os.remove(f"/tmp/hub/banner/{fi}")
 
     if os.path.exists(f"/tmp/hub/banner/{company_abbr}_{userid}.png"):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{company_abbr}_{userid}.png") <= 600:
@@ -109,10 +108,10 @@ async def banner(request: Request, response: Response):
         banner = Image.open(f"/tmp/hub/template/{company_abbr}.png")
     else:
         try:
-            r = await arequests.get(logo_url, timeout = 5)
+            right = await arequests.get(logo_url, timeout = 5)
 
-            if r.status_code == 200:
-                logo = r.content
+            if right.status_code == 200:
+                logo = right.content
                 logo = Image.open(BytesIO(logo)).convert("RGBA")
                 logo_large = logo # to copy properties
                 logo_datas = logo.getdata()
@@ -164,25 +163,24 @@ async def banner(request: Request, response: Response):
     avatar = data["avatar"]
     avatarh = hashlib.sha256(avatar.encode()).hexdigest()[:16]
 
-    l = os.listdir(f"/tmp/hub/avatar")
-    for ll in l:
-        if len(ll.split("_")) != 3:
-            os.remove(f"/tmp/hub/avatar/{ll}")
+    for fi in os.listdir("/tmp/hub/avatar"):
+        if len(fi.split("_")) != 3:
+            os.remove(f"/tmp/hub/avatar/{fi}")
             continue
 
-        lcompanyabbr = ll.split("_")[0]
-        luserid = ll.split("_")[1]
-        lavatarh = "_".join(ll.split("_")[2:]).split(".")[0]
+        lcompanyabbr = fi.split("_")[0]
+        luserid = fi.split("_")[1]
+        lavatarh = "_".join(fi.split("_")[2:]).split(".")[0]
         if lcompanyabbr == company_abbr and luserid == str(userid) and lavatarh != avatarh:
             # user changed avatar
-            os.remove(f"/tmp/hub/avatar/{ll}")
+            os.remove(f"/tmp/hub/avatar/{fi}")
             continue
         if lcompanyabbr == company_abbr and luserid == str(userid) and lavatarh == avatarh:
             # user didn't change avatar, and user is active, preserve avatar longer
-            mtime = os.path.getmtime(f"/tmp/hub/avatar/{ll}")
-            os.utime(f"/tmp/hub/avatar/{ll}", (time.time(), mtime))
-        if time.time() - os.path.getatime(f"/tmp/hub/avatar/{ll}") > 86400 * 7:
-            os.remove(f"/tmp/hub/avatar/{ll}")
+            mtime = os.path.getmtime(f"/tmp/hub/avatar/{fi}")
+            os.utime(f"/tmp/hub/avatar/{fi}", (time.time(), mtime))
+        if time.time() - os.path.getatime(f"/tmp/hub/avatar/{fi}") > 86400 * 7:
+            os.remove(f"/tmp/hub/avatar/{fi}")
             continue
 
     if os.path.exists(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png"):
@@ -193,10 +191,10 @@ async def banner(request: Request, response: Response):
         else:
             # pre-process avatar
             try: # in case image is invalid
-                r = await arequests.get(avatar, timeout = 5)
-                if r.status_code == 200:
+                right = await arequests.get(avatar, timeout = 5)
+                if right.status_code == 200:
                     try:
-                        avatar = Image.open(BytesIO(r.content)).resize((250, 250)).convert("RGBA")
+                        avatar = Image.open(BytesIO(right.content)).resize((250, 250)).convert("RGBA")
                     except:
                         avatar = logo.resize((250, 250)).convert("RGBA")
                 else:
@@ -251,20 +249,20 @@ async def banner(request: Request, response: Response):
             all_printable = False
     name = tname
 
-    l = 0
-    r = 80
+    left = 0
+    right = 80
     fontsize = 80
-    while r - l > 1:
-        fontsize = (l + r) // 2
+    while right - left > 1:
+        fontsize = (left + right) // 2
         if all_printable:
             namew = ubuntu_mono_bold_font_wsize[fontsize] * len(name)
         else:
             namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
             namew = namefont.getlength(f"{name}")
         if namew > 450:
-            r = fontsize - 1
+            right = fontsize - 1
         else:
-            l = fontsize + 1
+            left = fontsize + 1
     namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
     namebb = namefont.getbbox(f"{name}")
     nameh = namebb[3] - namebb[1]

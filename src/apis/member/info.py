@@ -5,7 +5,6 @@ import json
 import math
 import os
 import time
-import traceback
 from datetime import datetime
 from typing import Optional
 
@@ -49,7 +48,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             response.status_code = au["code"]
             del au["code"]
             return au
-        await ActivityUpdate(request, au["uid"], f"members")
+        await ActivityUpdate(request, au["uid"], "members")
 
     if page_size <= 1:
         page_size = 1
@@ -63,7 +62,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     query = convertQuotation(query).lower()
     
     order_by_last_seen = False
-    if not order_by in ["user_id", "name", "uid", "discord_id", "highest_role", "join_timestamp", "last_seen"]:
+    if order_by not in ['user_id', 'name', 'uid', 'discord_id', 'highest_role', 'join_timestamp', 'last_seen']:
         order_by = "user_id"
         order = "asc"
     if order_by == "last_seen":
@@ -77,7 +76,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         sort_by_highest_role = True
         order_by = "userid"
 
-    if not order in ["asc", "desc"]:
+    if order not in ['asc', 'desc']:
         order = "asc"
     order = order.upper()
 

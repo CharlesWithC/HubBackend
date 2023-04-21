@@ -69,7 +69,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    await ActivityUpdate(request, au["uid"], f"economy_trucks")
+    await ActivityUpdate(request, au["uid"], "economy_trucks")
 
     if page_size <= 1:
         page_size = 1
@@ -113,11 +113,11 @@ async def get_truck_list(request: Request, response: Response, authorization: st
     if max_damage is not None:
         limit += f"AND damage <= {max_damage} "
 
-    if not order_by in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp"]:
+    if order_by not in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp"]:
         order_by = "odometer"
         order = "desc"
     
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ["asc", "desc"]:
         order = "asc"
     
     STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
@@ -212,7 +212,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     elif page_size >= 250:
         page_size = 250
 
-    if not order.lower() in ["asc", "desc"]:
+    if order.lower() not in ["asc", "desc"]:
         order = "asc"
 
     if operation == "all":
@@ -342,7 +342,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
         return {"error": ml.tr(request, "purchase_company_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
     
     # check truckid
-    if not truckid in app.trucks.keys():
+    if truckid not in app.trucks.keys():
         response.status_code = 404
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     truck = app.trucks[truckid]
@@ -414,7 +414,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuserid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, assigneeid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     vehicleid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({opuserid}, -1001, {truck['price']}, 't{vehicleid}-purchase', 'for-user-{foruser}', {round(balance - truck['price'])}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)

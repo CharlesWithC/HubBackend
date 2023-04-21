@@ -66,8 +66,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     nluserrank = {}
 
     # cache
-    l = list(app.state.cache_leaderboard.keys())
-    for ll in l:
+    for ll in list(app.state.cache_leaderboard.keys()):
         if ll < int(time.time()) - 120:
             del app.state.cache_leaderboard[ll]
         else:
@@ -84,8 +83,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     usermyth = t["usermyth"]
                     break
                 
-    l = list(app.state.cache_nleaderboard.keys())
-    for ll in l:
+    for ll in list(app.state.cache_nleaderboard.keys()):
         if ll < int(time.time()) - 120:
             del app.state.cache_nleaderboard[ll]
         else:
@@ -106,7 +104,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         allusers = app.state.cache_all_users
     else:
         allusers = []
-        await app.db.execute(dhrid, f"SELECT userid, roles FROM user WHERE userid >= 0")
+        await app.db.execute(dhrid, "SELECT userid, roles FROM user WHERE userid >= 0")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             roles = str2list(tt[1])
@@ -145,9 +143,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} {limit} {gamelimit} GROUP BY userid")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if not tt[0] in allusers:
+            if tt[0] not in allusers:
                 continue
-            if not tt[0] in userdistance.keys():
+            if tt[0] not in userdistance.keys():
                 userdistance[tt[0]] = tt[1]
             else:
                 userdistance[tt[0]] += tt[1]
@@ -157,9 +155,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in userchallenge.keys():
+            if oo[0] not in userchallenge.keys():
                 userchallenge[oo[0]] = 0
             userchallenge[oo[0]] += oo[1]
 
@@ -169,9 +167,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         for tt in t:
             attendees = str2list(tt[0])
             for attendee in attendees:
-                if not attendee in allusers:
+                if attendee not in allusers:
                     continue
-                if not attendee in userevent.keys():
+                if attendee not in userevent.keys():
                     userevent[attendee] = tt[1]
                 else:
                     userevent[attendee] += tt[1]
@@ -192,9 +190,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in userdivision.keys():
+            if oo[0] not in userdivision.keys():
                 userdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
@@ -203,9 +201,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in usermyth.keys():
+            if oo[0] not in usermyth.keys():
                 usermyth[oo[0]] = 0
             usermyth[oo[0]] += oo[1]
 
@@ -216,22 +214,22 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         if "distance" in limittype:
             usertot[k] = round(userdistance[k] * ratio)
     for k in userchallenge.keys():
-        if not k in usertot.keys():
+        if k not in usertot.keys():
             usertot[k] = 0
         if "challenge" in limittype:
             usertot[k] += userchallenge[k]
     for k in userevent.keys():
-        if not k in usertot.keys():
+        if k not in usertot.keys():
             usertot[k] = 0
         if "event" in limittype:
             usertot[k] += userevent[k]
     for k in userdivision.keys():
-        if not k in usertot.keys():
+        if k not in usertot.keys():
             usertot[k] = 0
         if "division" in limittype:
             usertot[k] += userdivision[k]
     for k in usermyth.keys():
-        if not k in usertot.keys():
+        if k not in usertot.keys():
             usertot[k] = 0
         if "myth" in limittype:
             usertot[k] += usermyth[k]
@@ -250,65 +248,65 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         userrank[userid] = rank
         usertot[userid] = int(usertot[userid])
     for userid in allusers:
-        if not userid in userrank.keys():
+        if userid not in userrank.keys():
             userrank[userid] = rank
             usertot[userid] = 0
 
     if not nlusecache:
         ##### WITHOUT LIMIT
         # calculate distance
-        await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
+        await app.db.execute(dhrid, "SELECT userid, SUM(distance) FROM dlog WHERE userid >= 0 GROUP BY userid")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if not tt[0] in allusers:
+            if tt[0] not in allusers:
                 continue
-            if not tt[0] in nluserdistance.keys():
+            if tt[0] not in nluserdistance.keys():
                 nluserdistance[tt[0]] = tt[1]
             else:
                 nluserdistance[tt[0]] += tt[1]
             nluserdistance[tt[0]] = int(nluserdistance[tt[0]])
 
         # calculate challenge
-        await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
+        await app.db.execute(dhrid, "SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in nluserchallenge.keys():
+            if oo[0] not in nluserchallenge.keys():
                 nluserchallenge[oo[0]] = 0
             nluserchallenge[oo[0]] += oo[1]
 
         # calculate event
-        await app.db.execute(dhrid, f"SELECT attendee, points FROM event")
+        await app.db.execute(dhrid, "SELECT attendee, points FROM event")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             attendees = str2list(tt[0])
             for attendee in attendees:
-                if not attendee in allusers:
+                if attendee not in allusers:
                     continue
-                if not attendee in nluserevent.keys():
+                if attendee not in nluserevent.keys():
                     nluserevent[attendee] = tt[1]
                 else:
                     nluserevent[attendee] += tt[1]
         
         # calculate division    
-        await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
+        await app.db.execute(dhrid, "SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in nluserdivision.keys():
+            if oo[0] not in nluserdivision.keys():
                 nluserdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
         # calculate myth
-        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
+        await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
-            if not oo[0] in allusers:
+            if oo[0] not in allusers:
                 continue
-            if not oo[0] in nlusermyth.keys():
+            if oo[0] not in nlusermyth.keys():
                 nlusermyth[oo[0]] = 0
             nlusermyth[oo[0]] += oo[1]
 
@@ -316,19 +314,19 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         for k in nluserdistance.keys():
             nlusertot[k] = round(nluserdistance[k] * ratio)
         for k in nluserchallenge.keys():
-            if not k in nlusertot.keys():
+            if k not in nlusertot.keys():
                 nlusertot[k] = 0
             nlusertot[k] += nluserchallenge[k]
         for k in nluserevent.keys():
-            if not k in nlusertot.keys():
+            if k not in nlusertot.keys():
                 nlusertot[k] = 0
             nlusertot[k] += nluserevent[k]
         for k in nluserdivision.keys():
-            if not k in nlusertot.keys():
+            if k not in nlusertot.keys():
                 nlusertot[k] = 0
             nlusertot[k] += nluserdivision[k]
         for k in nlusermyth.keys():
-            if not k in nlusertot.keys():
+            if k not in nlusertot.keys():
                 nlusertot[k] = 0
             nlusertot[k] += nlusermyth[k]
 
@@ -346,7 +344,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             nluserrank[userid] = nlrank
             nlusertot[userid] = int(nlusertot[userid])
         for userid in allusers:
-            if not userid in nluserrank.keys():
+            if userid not in nluserrank.keys():
                 nluserrank[userid] = nlrank
                 nlusertot[userid] = 0
 
@@ -367,7 +365,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     # drivers with points (WITH LIMIT)
     for userid in usertot_id:
         # check if have driver role
-        if not userid in allusers:
+        if userid not in allusers:
             continue
 
         withpoint.append(userid)
@@ -400,7 +398,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             continue
 
         # check if have driver role
-        if not userid in allusers:
+        if userid not in allusers:
             continue
 
         withpoint.append(userid)
@@ -422,7 +420,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
 
     if not usecache:
         ts = int(time.time())
-        if not ts in app.state.cache_leaderboard.keys():
+        if ts not in app.state.cache_leaderboard.keys():
             app.state.cache_leaderboard[ts] = []
         app.state.cache_leaderboard[ts].append({"start_time": after, "end_time": before, "speed_limit": speed_limit, "game": game,\
             "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \

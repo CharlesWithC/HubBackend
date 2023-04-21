@@ -1,7 +1,6 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import os
 
 from fastapi import Header, Request, Response
 
@@ -58,7 +57,7 @@ async def patch_language(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if not language in ml.LANGUAGES:
+    if language not in ml.LANGUAGES:
         response.status_code = 400
         return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
     

@@ -38,8 +38,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         quser = f"userid = {userid} AND "
 
     # cache
-    l = list(app.state.cache_statistics.keys())
-    for ll in l:
+    for ll in list(app.state.cache_statistics.keys()):
         if ll < int(time.time()) - 15:
             del app.state.cache_statistics[ll]
         else:
@@ -60,13 +59,13 @@ async def get_summary(request: Request, response: Response, authorization: str =
         await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if not tt[0] in totdid:
+            if tt[0] not in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
         await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {after} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
-            if not tt[0] in newdid:
+            if tt[0] not in newdid:
                 newdid.append(tt[0])
                 newdrivers += 1
 
@@ -202,7 +201,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         current_dict[parts[-1]] = value
 
     ts = int(time.time())
-    if not ts in app.state.cache_statistics.keys():
+    if ts not in app.state.cache_statistics.keys():
         app.state.cache_statistics[ts] = []
     app.state.cache_statistics[ts].append({"start_time": after, "end_time": before, "userid": userid, "result": ret})
 

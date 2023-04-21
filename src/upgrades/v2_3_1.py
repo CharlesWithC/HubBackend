@@ -1,3 +1,6 @@
+# Copyright (C) 2023 CharlesWithC All rights reserved.
+# Author: @CharlesWithC
+
 from db import genconn
 
 
@@ -12,7 +15,7 @@ def run(app):
 
     print("Fixing ultra-high User ID / UID...")
     print("Fetching highest User ID below 1000: ", end = '')
-    cur.execute(f"SELECT MAX(userid) FROM user WHERE userid < 1000")
+    cur.execute("SELECT MAX(userid) FROM user WHERE userid < 1000")
     max_userid = cur.fetchone()
     if max_userid is None:
         print("No user found, fix aborted.")
@@ -23,7 +26,7 @@ def run(app):
         else:
             print(max_userid)
             print("Fetching User ID above 1000...")
-            cur.execute(f"SELECT userid FROM user WHERE userid >= 1000")
+            cur.execute("SELECT userid FROM user WHERE userid >= 1000")
             t = cur.fetchall()
             if len(t) == 0:
                 print("No user ID is above 1000, fix aborted.")
@@ -43,7 +46,7 @@ def run(app):
 
     print("Fixing ultra-high UID...")
     print("Fetching highest UID below 1000: ", end = '')
-    cur.execute(f"SELECT MAX(uid) FROM user WHERE uid < 1000")
+    cur.execute("SELECT MAX(uid) FROM user WHERE uid < 1000")
     max_uid = cur.fetchone()
     if max_uid is None:
         print("No user found, fix aborted.")
@@ -54,7 +57,7 @@ def run(app):
         else:
             print(max_uid)
             print("Fetching UID above 1000...")
-            cur.execute(f"SELECT uid FROM user WHERE uid >= 1000")
+            cur.execute("SELECT uid FROM user WHERE uid >= 1000")
             t = cur.fetchall()
             if len(t) == 0:
                 print("No UID is above 1000, fix aborted.")
@@ -72,4 +75,4 @@ def run(app):
     cur.close()
     conn.close()
     
-    print(f"Fix finished")
+    print("Fix finished")

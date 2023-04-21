@@ -5,7 +5,6 @@ import asyncio
 import math
 import os
 import time
-import traceback
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -26,11 +25,11 @@ async def EventNotification(app):
 
             npid = -1
             nlup = -1
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-event-notification-pid'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'process-event-notification-pid'")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'process-event-notification-last-update'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'process-event-notification-last-update'")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 nlup = int(t[0][0])
@@ -40,13 +39,13 @@ async def EventNotification(app):
                 except:
                     return
                 continue
-            await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
+            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
             await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-event-notification-pid', '{os.getpid()}')")
             await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'process-event-notification-last-update', '{int(time.time())}')")
             await app.db.commit(dhrid)
 
             notified_event = []
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'notified-event'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event'")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 sval = tt[0].split("-")
@@ -58,11 +57,11 @@ async def EventNotification(app):
 
             notification_enabled = []
             tonotify = {}
-            await app.db.execute(dhrid, f"SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
+            await app.db.execute(dhrid, "SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
             d = await app.db.fetchall(dhrid)
             for dd in d:
                 notification_enabled.append(dd[0])
-            await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
+            await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
             d = await app.db.fetchall(dhrid)
             for dd in d:
                 if dd[0] in notification_enabled:
@@ -140,7 +139,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             return au
         else:
             userid = au["userid"]
-            await ActivityUpdate(request, au["uid"], f"events")
+            await ActivityUpdate(request, au["uid"], "events")
     
     if first_event_after is None:
         first_event_after = int(time.time()) - 86400
@@ -219,7 +218,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
         else:
             userid = au["userid"]
             aulanguage = au["language"]
-            await ActivityUpdate(request, au["uid"], f"events")
+            await ActivityUpdate(request, au["uid"], "events")
     
     await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
@@ -358,7 +357,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
 
     await app.db.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({au['userid']}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
     await app.db.commit(dhrid)
-    await app.db.execute(dhrid, f"SELECT LAST_INSERT_ID();")
+    await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_event", var = {"id": eventid}))
 
@@ -506,7 +505,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
         ret1 += f"`{name}` (`{attendee}`), "
         cnt += 1
     ret1 = ret1[:-2]
-    ret1 += f".  \n"
+    ret1 += ".  \n"
     if cnt > 0:
         ret = ret + ret1
 
@@ -514,7 +513,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     cnt = 0
     toremove = []
     for attendee in old_attendees:
-        if not attendee in attendees:
+        if attendee not in attendees:
             toremove.append(attendee)
             name = (await GetUserInfo(request, userid = attendee))["name"]
             uid = (await GetUserInfo(request, userid = attendee))["uid"]
@@ -522,7 +521,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
             ret2 += f"`{name}` (`{attendee}`), "
             cnt += 1
     ret2 = ret2[:-2]
-    ret2 += f".  \n"
+    ret2 += ".  \n"
     if cnt > 0:
         ret = ret + ret2
     for attendee in toremove:
@@ -544,7 +543,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
             ret3 += f"`{name}` (`{attendee}`), "
             cnt += 1
         ret3 = ret3[:-2]
-        ret3 += f".  \n  "
+        ret3 += ".  \n  "
         if cnt > 0:
             ret = ret + ret3
 

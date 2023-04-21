@@ -111,12 +111,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if not order_by in ["ip", "timestamp", "country_code", "user_agent", "last_used_timestamp"]:
+    if order_by not in ['ip', 'timestamp', 'country_code', 'user_agent', 'last_used_timestamp']:
         order_by = "last_used_timestamp"
         order = "desc"
     if order_by == "country_code":
         order_by = "country"
-    if not order in ["asc", "desc"]:
+    if order not in ['asc', 'desc']:
         order = "asc"
     order = order.upper()
 
@@ -239,10 +239,10 @@ async def get_application_list(request: Request, response: Response, authorizati
     elif page_size >= 250:
         page_size = 250
 
-    if not order_by in ["timestamp", "last_used_timestamp"]:
+    if order_by not in ['timestamp', 'last_used_timestamp']:
         order_by = "last_used_timestamp"
         order = "desc"
-    if not order in ["asc", "desc"]:
+    if order not in ['asc', 'desc']:
         order = "asc"
     order = order.upper()
 

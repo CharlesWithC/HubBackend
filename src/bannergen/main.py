@@ -5,7 +5,6 @@ import os
 
 import uvicorn
 
-from app import app # uvicorn / nuitka import
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -20,7 +19,7 @@ if __name__ == "__main__":
     date = currentDateTime.date()
     year = date.strftime("%Y")
     print(drivershub)
-    print(f"Drivers Hub: Backend | Banner Generator")
+    print("Drivers Hub: Backend | Banner Generator")
     print(f"Copyright (C) {year} CharlesWithC All rights reserved.")
     print("")
 

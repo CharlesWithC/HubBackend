@@ -6,7 +6,6 @@ import traceback
 
 from fastapi import Header, Request, Response
 
-from datetime import datetime
 import multilang as ml
 from functions import *
 from api import tracebackHandler
@@ -47,7 +46,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
     t = await app.db.fetchall(dhrid)
     for tt in t:
-        if not tt[0] in userdistance.keys():
+        if tt[0] not in userdistance.keys():
             userdistance[tt[0]] = nint(tt[1])
         else:
             userdistance[tt[0]] += nint(tt[1])
@@ -58,7 +57,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
     o = await app.db.fetchall(dhrid)
     for oo in o:
-        if not oo[0] in userchallenge.keys():
+        if oo[0] not in userchallenge.keys():
             userchallenge[oo[0]] = 0
         userchallenge[oo[0]] += oo[1]
 
@@ -69,7 +68,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     for tt in t:
         attendees = str2list(tt[0])
         for attendee in attendees:
-            if not attendee in userevent.keys():
+            if attendee not in userevent.keys():
                 userevent[attendee] = tt[1]
             else:
                 userevent[attendee] += tt[1]
@@ -79,7 +78,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
     o = await app.db.fetchall(dhrid)
     for oo in o:
-        if not oo[0] in userdivision.keys():
+        if oo[0] not in userdivision.keys():
             userdivision[oo[0]] = 0
         if oo[1] in app.division_points.keys():
             userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
@@ -89,7 +88,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
     o = await app.db.fetchall(dhrid)
     for oo in o:
-        if not oo[0] in usermyth.keys():
+        if oo[0] not in usermyth.keys():
             usermyth[oo[0]] = 0
         usermyth[oo[0]] += oo[1]
     
@@ -233,7 +232,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     tracker_app_error = ""
     try:
         if app.config.tracker == "tracksim":
-            r = await arequests.delete(app, f"https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+            r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
         if r.status_code == 401:
             tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
         elif r.status_code // 100 != 2:
