@@ -301,7 +301,9 @@ default_config = {
     },
 
     "roles": [
-        {"id": 0, "name": "root", "color": "#000000"}
+        {"id": 0, "order_id": 0, "name": "root"},
+        {"id": 1, "order_id": 100, "name": "Driver"},
+        {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
     "webhook_audit": ""
@@ -364,6 +366,16 @@ def validateConfig(cfg):
             role["id"] = int(role["id"])
         except:
             continue
+        
+        # v2.5.6
+        if not "order_id" in role.keys():
+            role["order_id"] = role["id"]
+        else:
+            try:
+                role["order_id"] = int(role["order_id"])
+            except:
+                pass
+
         if "id" in role.keys() and "name" in role.keys():
             newroles.append(role)
     cfg["roles"] = newroles
@@ -553,7 +565,7 @@ def validateConfig(cfg):
     
     # v2.5.6
     embed_auto_validate = ["member_accept", "member_leave", "rank_up", "driver_role_add", "driver_role_remove"]
-    discord_msg_ensure = ["webhook_url", "channelid", "content"]
+    discord_msg_ensure = ["webhook_url", "channel_id", "content"]
     for embed_type in embed_auto_validate:
         if not embed_type in cfg.keys():
             cfg[embed_type] = default_config[embed_type]

@@ -277,9 +277,9 @@
     },
 
     "roles": [
-        {"id": 0, "name": "root", "color": "#000000"},
-        {"id": 100, "name": "Driver", "color": "#000000"},
-        {"id": 251, "name": "Construction Division", "color": "#000000"}
+        {"id": 0, "order_id": 0, "name": "root"},
+        {"id": 1, "order_id": 100, "name": "Driver"},
+        {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
     "webhook_audit": ""

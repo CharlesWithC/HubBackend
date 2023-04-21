@@ -9,12 +9,12 @@ import time
 
 from fastapi import Request
 
+import static
 from config import validateConfig
 from functions.dataop import *
 from functions.general import *
 from functions.userinfo import DeleteRoleConnection
 from logger import logger
-from static import *
 
 
 async def DetectConfigChanges(app):
@@ -38,6 +38,7 @@ async def DetectConfigChanges(app):
                 app.backup_config = copy.deepcopy(config.__dict__)
                 app.config_last_modified = os.path.getmtime(app.config_path)
                 logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
+                app = static.load(app)
 
         except:
             pass

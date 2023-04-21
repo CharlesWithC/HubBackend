@@ -62,6 +62,7 @@
 
     "user_not_found": "Brugeren blev ikke fundet.",
     "member_not_found": "Medlemet blev ikke fundet.",
+    "role_not_found": "En eller flere roller, der skal tilføjes eller fjernes, blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Forbudte brugere kan ikke accepteres som medlemmer.",
     "user_is_already_member": "Brugeren er allerede medlem.",
     "new_discord_user_must_not_be_member": "Den nye Discord-konto må ikke være forbundet til et medlem.",

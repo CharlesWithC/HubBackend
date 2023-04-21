@@ -31,10 +31,14 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         del au["code"]
         return au
 
-    staff_highest_role = 99999
-    for i in au["roles"]:
-        if i < staff_highest_role:
-            staff_highest_role = i
+    staff_highest_order_id = None
+    for role in au["roles"]:
+        if role in app.roles.keys():
+            if staff_highest_order_id is None or app.roles[role]["order_id"] < staff_highest_order_id:
+                staff_highest_order_id = app.roles[role]["order_id"]
+    if staff_highest_order_id is None:
+        response.status_code = 403
+        return {"error": "Forbidden"}
             
     data = await request.json()
     try:
@@ -67,17 +71,21 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     for role in oldroles:
         if role not in new_roles:
             removedroles.append(role)
+    for role in new_roles:
+        if not role in app.roles.keys():
+            response.status_code = 400
+            return {"error": ml.tr(request, "role_not_found", force_lang = au["language"])}
 
-    if staff_highest_role != (await getHighestActiveRole(request)): 
+    if staff_highest_order_id != app.roles[(await getHighestActiveRole(request))]["order_id"]: 
         # if staff doesn't have the highest role,
         # then check if the role to add is lower than staff's highest role
         for add in addedroles:
-            if add <= staff_highest_role:
+            if app.roles[add]["order_id"] <= staff_highest_order_id:
                 response.status_code = 403
                 return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
     
         for remove in removedroles:
-            if remove <= staff_highest_role:
+            if app.roles[remove]["order_id"] <= staff_highest_order_id:
                 response.status_code = 403
                 return {"error": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
 
@@ -224,13 +232,13 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     for add in addedroles:
         role_name = f"{ml.ctr(request, 'role')} #{add}\n"
         if add in app.roles.keys():
-            role_name = app.roles[add]
+            role_name = app.roles[add]["name"]
         upd += f"`+ {role_name}`  \n"
         audit += f"`+ {role_name}`  \n"
     for remove in removedroles:
         role_name = f"{ml.ctr(request, 'role')} #{remove}\n"
         if remove in app.roles.keys():
-            role_name = app.roles[remove]
+            role_name = app.roles[remove]["name"]
         upd += f"`- {role_name}`  \n"
         audit += f"`- {role_name}`  \n"
     audit = audit[:-1]

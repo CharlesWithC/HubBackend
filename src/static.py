@@ -1,9 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import collections
-
-import inspect, os, json
+import inspect
+import json
+import os
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
@@ -12,14 +12,14 @@ def load(app):
     if app.config.tracker == "tracksim":
         app.tracker = "TrackSim"
 
-    app.roles = {}
+    app.roles = {} # sorted based on order_id
     sroles = app.config.roles
     for srole in sroles:
         try:
-            app.roles[srole["id"]] = srole["name"]
+            app.roles[srole["id"]] = srole
         except:
             pass
-    app.roles = dict(collections.OrderedDict(sorted(app.roles.items())))
+    app.roles = dict(sorted(app.roles.items(), key=lambda x: x[1]["order_id"]))
 
     app.rankrole = {}
     app.rankname = {}
@@ -32,8 +32,8 @@ def load(app):
             app.rankname[t["points"]] = t["name"]
         except:
             pass
-    app.rankrole = dict(collections.OrderedDict(sorted(app.rankrole.items())))
-    app.rankname = dict(collections.OrderedDict(sorted(app.rankname.items())))
+    app.rankrole = dict(sorted(app.rankrole.items(), key=lambda x: x[0]))
+    app.rankname = dict(sorted(app.rankname.items(), key=lambda x: x[0]))
 
     app.division_roles = []
     for division in app.config.divisions:

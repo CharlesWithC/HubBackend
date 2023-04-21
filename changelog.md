@@ -3,10 +3,13 @@
 **v2.5.6**  
 1.Fixed incorrect `driver` value in **GET** `/dlog/statistics/chart`  
 2.Fixed `email` connection validation  
-3.Added support to multiple embeds for automatic embeds  
-4.Merged `member_welcome` into `member_accept`  
-5.Added embed validator to prevent 500 errors due to invalid embed config  
-6.Added `config.driver_role_add/remove`  
+3.Fixed specific configs are not reloaded after config reload  
+4.Added support to multiple embeds for automatic embeds  
+5.Merged `member_welcome` into `member_accept`  
+6.Added embed validator to prevent 500 errors due to invalid embed config  
+7.Added `config.driver_role_add/remove`  
+8.Added `config.roles[].order_id`  
+**Hint** The order of `roles` no longer relies on `role_id`  
 
 **v2.5.5**  
 1.Moved add/remove `member_welcome` discord roles from when driver role is added to when member is accepted  

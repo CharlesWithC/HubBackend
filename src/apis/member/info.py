@@ -173,13 +173,16 @@ async def get_banner(request: Request, response: Response,
     avatar = t[2]
     join_timestamp = t[3]
     roles = str2list(t[4])
-    highest = 99999
-    for role in roles:
-        if role < highest:
-            highest = role
+    highest = None
     highest_role = ""
-    if highest in app.roles.keys():
-        highest_role = app.roles[highest]
+    for role in roles:
+        if highest is None or role < highest:
+            highest = role
+            if highest in app.roles.keys():
+                highest_role = app.roles[highest]["name"]
+                break
+            else:
+                highest = None
     joined = datetime.fromtimestamp(join_timestamp)
     joined = f"{joined.year}/{str(joined.month).zfill(2)}/{str(joined.day).zfill(2)}"
 

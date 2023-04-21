@@ -16,7 +16,7 @@ from static import *
 
 async def getHighestActiveRole(request):
     (app, dhrid) = (request.app, request.state.dhrid)
-    for roleid in app.roles.keys():
+    for roleid in app.roles.keys(): # this is sorted based on the order_id
         await app.db.execute(dhrid, f"SELECT uid FROM user WHERE roles LIKE '%,{roleid},%'")
         t = await app.db.fetchall(dhrid)
         if len(t) > 0:

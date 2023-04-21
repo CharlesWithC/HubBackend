@@ -63,6 +63,7 @@
 
     "user_not_found": "User not found.",
     "member_not_found": "Member not found.",
+    "role_not_found": "One or more role to add or remove is not found.",
     "banned_user_cannot_be_accepted": "Banned users cannot be accepted as members.",
     "user_is_already_member": "User is already a member.",
     "new_discord_user_must_not_be_member": "The new Discord account must not be connected to a member.",

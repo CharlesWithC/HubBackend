@@ -13,6 +13,7 @@ from typing import Optional
 from fastapi import Header, Request, Response
 
 import multilang as ml
+import static
 from api import tracebackHandler
 from config import *
 from functions import *
@@ -366,6 +367,8 @@ async def post_config_reload(request: Request, response: Response, authorization
     os.replace(app.config_path + ".saved", app.config_path)
     app.config_last_modified = os.path.getmtime(app.config_path)
     logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
+
+    app = static.load(app)
     
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
@@ -420,6 +423,10 @@ async def post_restart(request: Request, response: Response, authorization: str 
         app.backup_config = copy.deepcopy(config.__dict__)
         os.replace(app.config_path + ".saved", app.config_path)
         app.config_last_modified = os.path.getmtime(app.config_path)
+        
+        logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
+        
+        app = static.load(app)
     
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
