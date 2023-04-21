@@ -150,7 +150,7 @@ async def get_banner(request: Request, response: Response,
     
     await app.db.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = await app.db.fetchall(dhrid)
-    if len(t) == 0:
+    if len(t) == 0 or t[0][5] == -1:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
 
