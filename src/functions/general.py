@@ -75,9 +75,10 @@ def getRequestCountry(request, abbr = False):
 
 def getUserAgent(request):
     if "user-agent" in request.headers.keys():
-        if len(request.headers["user-agent"]) <= 200:
+        if len(request.headers["user-agent"]) < 256:
             return convertQuotation(request.headers["user-agent"])
-        return ""
+        else:
+            return convertQuotation(request.headers["user-agent"])[:256]
     else:
         return ""
     

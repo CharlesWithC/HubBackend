@@ -3,6 +3,9 @@
 **v2.5.6**  
 1.Fixed incorrect `driver` value in **GET** `/dlog/statistics/chart`  
 2.Fixed `email` connection validation  
+3.Added support to multiple embeds for automatic embeds  
+4.Merged `member_welcome` into `member_accept`  
+5.Added embed validator to prevent 500 errors due to invalid embed config  
 
 **v2.5.5**  
 1.Moved add/remove `member_welcome` discord roles from when driver role is added to when member is accepted  

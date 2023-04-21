@@ -95,7 +95,7 @@
         }
     },
 
-    "member_accept": {
+    "member_accept": [{
         "webhook_url": "",
         "channel_id": "",
         "content": "{mention}",
@@ -108,10 +108,26 @@
                 "icon_url": ""
             },
             "timestamp": true
-        }
-    },
-
-    "member_welcome": {
+        },
+        "role_change": []
+    },{
+        "webhook_url": "",
+        "channel_id": "",
+        "content": "{mention}",
+        "embed": {
+            "title": "",
+            "description": "Welcome {name}.",
+            "image_url": "https://{domain}/images/bg.jpg",
+            "footer": {
+                "text": "You are our #{userid} member",
+                "icon_url": ""
+            },
+            "timestamp": true
+        },
+        "role_change": []
+    }],
+    
+    "member_leave": [{
         "webhook_url": "",
         "channel_id": "",
         "content": "{mention}",
@@ -125,27 +141,10 @@
             },
             "timestamp": true
         },
-        "role_change": ["+1237912873213", "-43953495734"]
-    },
+        "role_change": []
+    }],
 
-    "member_leave": {
-        "webhook_url": "",
-        "channel_id": "",
-        "content": "{mention}",
-        "embed": {
-            "title": "",
-            "description": "{name} left.",
-            "image_url": "https://{domain}/images/bg.jpg",
-            "footer": {
-                "text": "Goodbye!",
-                "icon_url": ""
-            },
-            "timestamp": true
-        },
-        "role_change": ["-1237912873213", "+43953495734"]
-    },
-
-    "rank_up": {
+    "rank_up": [{
         "webhook_url": "",
         "channel_id": "",
         "content": "{mention}",
@@ -159,7 +158,7 @@
             },
             "timestamp": true
         }
-    },
+    }],
     "ranks": [
         {"points": 0, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
     ],

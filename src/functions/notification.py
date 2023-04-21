@@ -4,7 +4,6 @@
 import asyncio
 import json
 import time
-import traceback
 from datetime import datetime
 
 import requests

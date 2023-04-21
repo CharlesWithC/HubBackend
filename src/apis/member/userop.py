@@ -168,9 +168,10 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                 def setvar(msg):
                     return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention)
 
-                if app.config.rank_up.webhook_url != "" or app.config.rank_up.channel_id != "":
-                    meta = app.config.rank_up
-                    await AutoMessage(app, meta, setvar)
+                for meta in app.config.rank_up:
+                    meta = Dict2Obj(meta)
+                    if meta.webhook_url != "" or meta.channel_id != "":
+                        await AutoMessage(app, meta, setvar)
 
                 rankname = point2rankname(app, totalpnt)
                 await notification(request, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(request, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(request, uid)), "description": f"**{rankname}**", "fields": []})
@@ -262,25 +263,26 @@ async def post_resign(request: Request, response: Response, authorization: str =
     def setvar(msg):
         return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
 
-    if app.config.member_leave.webhook_url != "" or app.config.member_leave.channel_id != "":
-        meta = app.config.member_leave
-        await AutoMessage(app, meta, setvar)
-    
-    if discordid is not None and app.config.member_leave.role_change != [] and app.config.discord_bot_token != "":
-        for role in app.config.member_leave.role_change:
-            try:
-                if int(role) < 0:
-                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
-                    if r.status_code // 100 != 2:
-                        err = json.loads(r.text)
-                        await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
-                elif int(role) > 0:
-                    r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
-                    if r.status_code // 100 != 2:
-                        err = json.loads(r.text)
-                        await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
-            except:
-                pass
+    for meta in app.config.member_leave:
+        meta = Dict2Obj(meta)
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
+        
+        if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+            for role in meta.role_change:
+                try:
+                    if int(role) < 0:
+                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                    elif int(role) > 0:
+                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}, timeout = 3, dhrid = dhrid)
+                        if r.status_code // 100 != 2:
+                            err = json.loads(r.text)
+                            await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                except:
+                    pass
     
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver resigns."}
