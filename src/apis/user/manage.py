@@ -48,7 +48,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     steamid = t[0][4]
     truckersmpid = t[0][5]
     email = t[0][6]
-    if email == "" and "email" in app.config.required_connections:
+    if not "@" in email and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
     if discordid is None and "discord" in app.config.required_connections:
