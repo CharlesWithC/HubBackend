@@ -101,7 +101,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
 async def patch_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
     """[Permission Control] Updates Discord account connection for a specific user, returns 204
     
-    JSON: `{"discord_id": int}`"""
+    JSON: `{"discordid": int}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -223,6 +223,114 @@ async def delete_connections(request: Request, response: Response, uid: Optional
 
     return Response(status_code=204)
 
+async def get_ban_list(request: Request, response: Response, authorization: str = Header(None), \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
+        order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
+    """Returns the information of a list of banned users"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'GET /user/ban/list', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 250:
+        page_size = 250
+    
+    query = convertQuotation(query).lower()
+    
+    if order_by not in ['uid', 'email', 'discordid', 'steamid', 'truckersmpid']:
+        order_by = "uid"
+        order = "asc"
+
+    if order not in ['asc', 'desc']:
+        order = "asc"
+    order = order.upper()
+    
+    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    t = await app.db.fetchall(dhrid)
+    ret = []
+    for tt in t:
+        userinfo = await GetUserInfo(request, uid = tt[0])
+        if userinfo["join_timestamp"] is None:
+            userinfo = await GetUserInfo(request, discordid = tt[2])
+        if userinfo["join_timestamp"] is None:
+            userinfo = None
+        discordid = str(tt[2]) if tt[2] is not None else None
+        steamid = str(tt[3]) if tt[3] is not None else None
+        ret.append({"user": userinfo, "meta": {"uid": tt[0], "email": tt[1], "discordid": discordid, "steamid": steamid, "truckersmpid": tt[4]}, "ban": {"reason": tt[5], "expire": tt[6]}})
+
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM banned WHERE reason LIKE '%{query}%'")
+    t = await app.db.fetchall(dhrid)
+    tot = 0
+    if len(t) > 0:
+        tot = t[0][0]
+
+    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+
+async def get_ban(request: Request, response: Response, authorization: str = Header(None), \
+    uid: Optional[int] = None, email: Optional[str] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):
+    """Returns info of specific banned user if exists"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'GET /user/ban', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hr", "hrm", "ban_user"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    
+    qu = ""
+    if uid is not None:
+        qu = f"uid = {uid}"
+    elif email is not None:
+        qu = f"email = '{convertQuotation(email)}'"
+    elif discordid is not None:
+        qu = f"discordid = {discordid}"
+    elif steamid is not None:
+        qu = f"steamid = {steamid}"
+    elif truckersmpid is not None:
+        qu = f"truckersmpid = {truckersmpid}"
+    else:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found")}
+    
+    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE {qu}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found")}
+    
+    tt = t[0]
+    userinfo = await GetUserInfo(request, uid = tt[0])
+    if userinfo["join_timestamp"] is None:
+        userinfo = await GetUserInfo(request, discordid = tt[2])
+    if userinfo["join_timestamp"] is None:
+        userinfo = None
+    
+    discordid = str(tt[2]) if tt[2] is not None else None
+    steamid = str(tt[3]) if tt[3] is not None else None
+
+    return {"user": userinfo, "meta": {"uid": tt[0], "email": tt[1], "discordid": discordid, "steamid": steamid, "truckersmpid": tt[4]}, "ban": {"reason": tt[5], "expire": tt[6]}}
+
 async def put_ban(request: Request, response: Response, authorization: str = Header(None)):
     """Bans user with specific connections, returns 204
     
@@ -253,7 +361,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
                 data[field] = "NULL"
             else:
                 if field == "email":
-                    data[field] = convertQuotation(data[field])
+                    data[field] = f"'{convertQuotation(data[field])}'"
                 else:
                     data[field] = int(data[field])
             connections.append(data[field])
@@ -272,8 +380,12 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     if expire <= 0:
         expire = 253402272000
+    
+    if connections[1] != "NULL" and '@' not in connections[1]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT uid, userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {connections[0]} OR email = '{connections[1]}' OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
+    await app.db.execute(dhrid, f"SELECT uid, userid, name, email, discordid, steamid, truckersmpid FROM user WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)
     username = ml.ctr(request, "unknown_user")
     if len(t) == 0:
@@ -282,7 +394,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         uid = t[0][0]
         userid = t[0][1]
         username = t[0][2]
-        email = t[0][3] if t[0][3] is not None else "NULL"
+        email = f"'{convertQuotation(t[0][3])}'" if t[0][3] is not None else "NULL"
         discordid = t[0][4] if t[0][4] is not None else "NULL"
         steamid = t[0][5] if t[0][5] is not None else "NULL"
         truckersmpid = t[0][6] if t[0][6] is not  None else "NULL"
@@ -294,10 +406,10 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         response.status_code = 409
         return {"error": ml.tr(request, "connections_belong_to_multiple_users", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {connections[0]} OR email = '{connections[1]}' OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
+    await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
-        await app.db.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, '{convertQuotation(email)}', {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
+        await app.db.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, {email}, {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
         await app.db.commit(dhrid)
         if uid != "NULL":
@@ -338,21 +450,25 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
                 data[field] = "NULL"
             else:
                 if field == "email":
-                    data[field] = convertQuotation(data[field])
+                    data[field] = f"'{convertQuotation(data[field])}'"
                 else:
                     data[field] = int(data[field])
             connections.append(data[field])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    
+    if connections[1] != "NULL" and '@' not in connections[1]:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT uid FROM banned WHERE uid = {connections[0]} OR email = '{connections[1]}' OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
+    await app.db.execute(dhrid, f"SELECT uid FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 409
         return {"error": ml.tr(request, "user_not_banned", force_lang = au["language"])}
     else:
-        await app.db.execute(dhrid, f"DELETE FROM banned WHERE uid = {connections[0]} OR email = '{connections[1]}' OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
+        await app.db.execute(dhrid, f"DELETE FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
         await app.db.commit(dhrid)
         
         for tt in t:
@@ -361,7 +477,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
                 await AuditLog(request, au["uid"], ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
 
         return Response(status_code=204)
-   
+
 async def delete_user(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Deletes a specific user, returns 204"""
     app = request.app

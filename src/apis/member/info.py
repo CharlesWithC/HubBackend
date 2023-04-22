@@ -62,12 +62,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
     query = convertQuotation(query).lower()
     
     order_by_last_seen = False
-    if order_by not in ['user_id', 'name', 'uid', 'discord_id', 'highest_role', 'join_timestamp', 'last_seen']:
+    if order_by not in ['user_id', 'name', 'uid', 'discordid', 'highest_role', 'join_timestamp', 'last_seen']:
         order_by = "user_id"
         order = "asc"
     if order_by == "last_seen":
         order_by_last_seen = True
-    cvt = {"user_id": "userid", "name": "name", "uid": "uid", "discord_id": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
+    cvt = {"user_id": "userid", "name": "name", "uid": "uid", "discordid": "discordid", "join_timestamp": "join_timestamp", "highest_role": "highest_role", "last_seen": "userid"}
     order_by = cvt[order_by]
 
     sort_by_highest_role = False

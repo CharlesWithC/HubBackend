@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.5.7**  
+1.Improved `/user/list` to attach banned info when any connections match  
+2.Improved `/user/profile` to attach banned info  
+3.Added **GET** `/user/ban/list` and **GET** `/user/ban`  
+
 **v2.5.6**  
 1.Fixed incorrect `driver` value in **GET** `/dlog/statistics/chart`  
 2.Fixed `email` connection validation  

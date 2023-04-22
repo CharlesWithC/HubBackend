@@ -40,17 +40,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
     
     query = convertQuotation(query).lower()
     
-    if order_by not in ['name', 'uid', 'discord_id', 'join_timestamp']:
-        order_by = "discord_id"
+    if order_by not in ['name', 'email', 'uid', 'discordid', 'steamid', 'truckersmpid', 'join_timestamp']:
+        order_by = "discordid"
         order = "asc"
-    cvt = {"name": "user.name", "uid": "user.uid", "discord_id": "user.discordid", "join_timestamp": "user.join_timestamp"}
+    cvt = {"name": "user.name", "email": "user.email", "uid": "user.uid", "discordid": "user.discordid", "steamid": "user.steamid", "truckersmpid": "user.truckersmpid", "join_timestamp": "user.join_timestamp"}
     order_by = cvt[order_by]
 
     if order not in ['asc', 'desc']:
         order = "asc"
     order = order.upper()
     
-    await app.db.execute(dhrid, f"SELECT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -134,8 +134,23 @@ async def get_profile(request: Request, response: Response, authorization: str =
     
     if userid >= 0:
         await ActivityUpdate(request, request_uid, f"member_{userid}")
+    
+    userinfo = await GetUserInfo(request, uid = uid)
+    (uid, discordid, steamid, truckersmpid, email) = (userinfo["uid"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"], userinfo["email"])
+    uid = uid if uid is not None else "NULL"
+    email = f"'{email}'" if email is not None else "NULL"
+    discordid = discordid if discordid is not None else "NULL"
+    steamid = steamid if steamid is not None else "NULL"
+    truckersmpid = truckersmpid if truckersmpid is not None else "NULL"
 
-    return (await GetUserInfo(request, uid = uid))
+    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR steamid = {steamid} OR truckersmpid = {truckersmpid} OR email = {email}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) > 0:
+        userinfo["ban"] = {"reason": t[0][0], "expire": t[0][1]}
+    else:
+        userinfo["ban"] = None
+
+    return userinfo
 
 async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
     """Updates the profile of a specific user

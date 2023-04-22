@@ -64,8 +64,8 @@ def ClearUserCache(app):
 
 async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
     (app, dhrid) = (request.app, request.state.dhrid)
-    if userid is None:
-        return None
+    if None in [userid, discordid, uid]:
+        return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
     
     miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
     if userid == -1000:

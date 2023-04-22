@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.5.6"
+        "version": "2.5.7"
     },
     "servers": [],
     "paths": {
@@ -493,7 +493,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (name, uid, discord_id, join_timestamp)",
+                        "title": "Order by (name, email, uid, discordid, steamid, truckersmpid, join_timestamp)",
                         "type": "string"
                     },
                     "name": "order_by",
@@ -1048,7 +1048,110 @@
                 "responses": {}
             }
         },
+        "/user/ban/list": {
+            "get": {
+                "summary": "Get Banned User List",
+                "tags": ["user"],
+                "operationId": "get_user_ban_list",
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "Page",
+                        "type": "integer"
+                    },
+                    "name": "page",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Page Size",
+                        "type": "integer"
+                    },
+                    "name": "page_size",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order by (name, email, uid, discordid, steamid, truckersmpid)",
+                        "type": "string"
+                    },
+                    "name": "order_by",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Order (asc, desc)",
+                        "type": "string"
+                    },
+                    "name": "order",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Query with ban reason",
+                        "type": "string"
+                    },
+                    "name": "query",
+                    "in": "query"
+                }],
+                "responses": {},
+                "security": [{
+                    "bearerAuth": []
+                }]
+            }
+        },
         "/user/ban": {
+            "get": {
+                "summary": "Get Banned User",
+                "tags": ["user"],
+                "operationId": "get_user_ban",
+                "security": [{
+                    "bearerAuth": [],
+                    "applicationAuth": []
+                }],
+                "parameters": [{
+                    "required": false,
+                    "schema": {
+                        "title": "UID",
+                        "type": "integer"
+                    },
+                    "name": "uid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "name": "email",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Discord Snowflake",
+                        "type": "integer"
+                    },
+                    "name": "discordid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "Steam ID",
+                        "type": "integer"
+                    },
+                    "name": "steamid",
+                    "in": "query"
+                }, {
+                    "required": false,
+                    "schema": {
+                        "title": "TruckersMP User ID",
+                        "type": "integer"
+                    },
+                    "name": "truckersmpid",
+                    "in": "query"
+                }],
+                "responses": {}
+            },
             "put": {
                 "summary": "Ban User",
                 "tags": ["user"],
@@ -1169,13 +1272,13 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "discord_id": {
+                                    "discordid": {
                                         "description": "New Discord Snowflake",
                                         "type": "integer"
                                     }
                                 }
                             },
-                            "required": ["old_discord_id", "new_discord_id"]
+                            "required": ["discordid"]
                         }
                     }
                 },
@@ -1399,7 +1502,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Order by (user_id, name, uid, discord_id, highest_role, join_timestamp, last_seen)",
+                        "title": "Order by (user_id, name, uid, discordid, highest_role, join_timestamp, last_seen)",
                         "type": "string"
                     },
                     "name": "order_by",
