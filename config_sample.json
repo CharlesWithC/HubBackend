@@ -14,9 +14,8 @@
         "email_confirm": "https://{domain}/emailConfirm?secret={secret}"
     },
 
-    "apidomain": "drivershub.charlws.com",
-    "prefix": "",
     "domain": "",
+    "prefix": "",
     "server_host": "127.0.0.1",
     "server_port": 7777,
     "server_workers": 1,

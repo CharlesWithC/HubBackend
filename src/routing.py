@@ -30,7 +30,7 @@ def initRoutes(config_paths, openapi_path, first_init = False):
             except:
                 continue
             routes.append(Mount(f"{dh.config.prefix}", dh, name = f"{dh.config.name} Drivers Hub"))
-            servers.append({"url": f"https://{dh.config.apidomain}{dh.config.prefix}", "description": dh.config.name})
+            servers.append({"url": f"https://{dh.config.domain}{dh.config.prefix}", "description": dh.config.name})
 
     if len(routes) == 0:
         logger.warning("No valid config is loaded, quited.")

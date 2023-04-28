@@ -122,7 +122,7 @@ def createApp(config_path, multi_mode = False, first_init = False):
         app = FastAPI(title="Drivers Hub", version=version, openapi_url="/doc/openapi.json", docs_url="/doc", redoc_url=None)
         def openapi():
             data = static.OPENAPI
-            data["servers"] = [{"url": f"https://{config.apidomain}{config.prefix}", "description": config.name}]
+            data["servers"] = [{"url": f"https://{config.domain}{config.prefix}", "description": config.name}]
             data["info"]["version"] = version
             return static.OPENAPI
         app.openapi = openapi
