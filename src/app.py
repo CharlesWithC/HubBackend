@@ -108,7 +108,10 @@ def createApp(config_path, multi_mode = False, first_init = False):
     if not os.path.exists(config_path):
         return None
     
-    config_txt = open(config_path, "r", encoding="utf-8").read()
+    try:
+        config_txt = open(config_path, "r", encoding="utf-8").read()
+    except:
+        return None
     try:
         config_json = json.loads(config_txt)
     except:

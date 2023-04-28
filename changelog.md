@@ -8,7 +8,8 @@
 5.Updated Discord Access Token to store callback url for refresh use  
 6.Updated `Attention Required` message and added localization  
 7.Improved JSON request body error parsing handler  
-8.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
+8.Improved config validator to prevent duplicate role id  
+9.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
 
 **v2.5.7**  
 1.Improved `/user/list` to attach banned info when any connections match  

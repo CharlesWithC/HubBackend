@@ -356,10 +356,14 @@ def validateConfig(cfg):
         cfg["roles"] = default_config["roles"]
     roles = cfg["roles"]
     newroles = []
+    roleids = []
     for i in range(len(roles)):
         role = roles[i]
         try:
             role["id"] = int(role["id"])
+            if role["id"] in roleids:
+                continue
+            roleids.append(role["id"])
         except:
             continue
         
