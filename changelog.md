@@ -6,11 +6,12 @@
 3.Renamed `myth_point` to `bonus_point`  
 4.Updated `Attention Required` message and added localization  
 5.Added `?unsafe` to **PATCH** `/config` for setting protected values to ""  
-6.Improved config validator to prevent duplicate role id  
-7.Updated Discord Access Token to store callback url for refresh use  
-8.Improved JSON request body error parsing handler  
-9.Replaced `/{config.abbr}` with `{config.prefix}` for outgoing API calls announcing Drivers Hub URL  
-10.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
+6.Added `config.security_level` for user session (0 => no additional check | 1 => country check | 2 => ip check)  
+7.Improved config validator to prevent duplicate role id  
+8.Updated Discord Access Token to store callback url for refresh use  
+9.Improved JSON request body error parsing handler  
+10.Replaced `/{config.abbr}` with `{config.prefix}` for outgoing API calls announcing Drivers Hub URL  
+11.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
 
 **v2.5.7**  
 1.Improved `/user/list` to attach banned info when any connections match  

@@ -4,6 +4,7 @@
     "language": "en",
     "distance_unit": "metric",
     "privacy": false,
+    "security_level": 1,
     "hex_color": "FFFFFF",
     "logo_url": "https://{domain}/images/logo.png",
 

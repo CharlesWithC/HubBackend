@@ -254,12 +254,12 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
-            if tt in ["guild_id", "tracker_company_id", "delivery_log_channel_id", "discord_client_id", "smtp_port"]:
+            if tt in ["guild_id", "tracker_company_id", "delivery_log_channel_id", "discord_client_id", "smtp_port", "security_level"]:
                 try:
-                    int(new_config[tt])
+                    new_config[tt] = int(new_config[tt])
                 except:
-                    if tt in ["delivery_log_channel_id", "tracker_company_id"] and new_config[tt] == "":
-                        new_config[tt] = "0"
+                    if unsafe and new_config[tt] == "":
+                        new_config[tt] = 0
                     else:
                         response.status_code = 400
                         return {"error": ml.tr(request, "config_invalid_datatype_integer", var = {"item": tt}, force_lang = au["language"])}

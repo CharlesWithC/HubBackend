@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import ipaddress
 import time
 
 from fastapi.responses import JSONResponse
@@ -8,7 +9,9 @@ from fastapi.responses import JSONResponse
 import multilang as ml
 from functions.dataop import *
 from functions.general import *
+from functions.iptype import *
 from static import *
+
 
 def checkPerm(app, roles, perms):
     '''`perms` is "or"-based, aka matching any `perms` will return `True`.'''
@@ -236,9 +239,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         uid = t[0][0]
         last_used_timestamp = t[0][1]
 
-        # application token will skip ip check
-
-        # additional check
+        # application token will skip ip / country check
         
         # this should not happen but just in case
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
@@ -291,22 +292,39 @@ async def auth(authorization, request, allow_application_token = False, check_me
         user_agent = t[0][4]
 
         # check country
-        if request.client.host not in app.config.whitelist_ips:
-            curCountry = getRequestCountry(request, abbr = True)
+        curCountry = getRequestCountry(request, abbr = True)
+        if app.config.security_level >= 1 and request.client.host not in app.config.whitelist_ips:
             if curCountry != country and country != "":
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await app.db.commit(dhrid)
                 return {"error": "Unauthorized", "code": 401}
-
+        
+        if app.config.security_level >= 2 and request.client.host not in app.config.whitelist_ips:
+            orgiptype = iptype(ip)
+            if orgiptype != 0:
+                curiptype = iptype(request.client.host)
+                if orgiptype == curiptype:
+                    if curiptype == 6:
+                        curip = ipaddress.ip_address(request.client.host).exploded
+                        orgip = ipaddress.ip_address(ip).exploded
+                        if curip.split(":")[:4] != orgip.split(":")[:4]:
+                            await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
+                            await app.db.commit(dhrid)
+                            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                    elif curiptype == 4:
+                        if ip.split(".")[:3] != request.client.host.split(".")[:3]:
+                            await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
+                            await app.db.commit(dhrid)
+                            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+        
+        if request.client.host not in app.config.whitelist_ips:
             if ip != request.client.host:
                 await app.db.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
-            if curCountry != country and not curCountry != "" and country != "":
+            if curCountry != country:
                 await app.db.execute(dhrid, f"UPDATE session SET country = '{curCountry}' WHERE token = '{stoken}'")
             if getUserAgent(request) != user_agent:
                 await app.db.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
-        
-        # additional check
         
         # this should not happen but just in case
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
