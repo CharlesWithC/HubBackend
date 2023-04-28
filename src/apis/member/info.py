@@ -155,11 +155,11 @@ async def get_banner(request: Request, response: Response,
         return {"error": ml.tr(request, "user_not_found")}
 
     if userid == -1:
-        return RedirectResponse(url=f"/{app.config.abbr}/member/banner?userid={t[0][5]}", status_code=302)
+        return RedirectResponse(url=f"{app.config.prefix}/member/banner?userid={t[0][5]}", status_code=302)
 
     for param in request.query_params:
         if param != "userid":
-            return RedirectResponse(url=f"/{app.config.abbr}/member/banner?userid={userid}", status_code=302)
+            return RedirectResponse(url=f"{app.config.prefix}/member/banner?userid={userid}", status_code=302)
             
     t = t[0]
     userid = t[5]

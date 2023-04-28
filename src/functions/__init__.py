@@ -9,7 +9,6 @@ from functions.mail import *
 from functions.notification import *
 from functions.ranking import *
 from functions.security import *
-from functions.threads import *
 from functions.totp import *
 from functions.userinfo import *
 from static import *

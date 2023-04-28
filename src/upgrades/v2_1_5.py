@@ -6,7 +6,7 @@ from functions.userinfo import getAvatarSrc
 
 
 def run(app):
-    conn = genconn(autocommit = True)
+    conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
     print("Updating ratelimit table...")

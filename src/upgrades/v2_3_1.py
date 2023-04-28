@@ -5,7 +5,7 @@ from db import genconn
 
 
 def run(app):
-    conn = genconn(autocommit = True)
+    conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
     USERID_TABLES = ["user", "mythpoint", "dlog", "telemetry", "announcement", "application", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]

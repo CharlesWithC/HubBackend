@@ -20,7 +20,7 @@ def run(app):
     userinfo = {}
     userid2uid = {}
 
-    conn = genconn(autocommit = True)
+    conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
     print("Updating user table (reorder, add uid column)...")

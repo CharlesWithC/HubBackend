@@ -61,7 +61,7 @@ def initApp(app, first_init = False):
         cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
         for idx in range(pre_idx + 1, cur_idx + 1):
             v = upgrades.manager.VERSION_CHAIN[idx]
-            if v in upgrades.manager.UPGRADEABLE_VERSION:
+            if v in upgrades.manager.UPGRADER.keys():
                 logger.info(f"[{app.config.abbr}] Updating data to be compatible with {v.replace('_', '.')}...")
                 upgrades.manager.UPGRADER[v].run(app)
     upgrades.manager.unload()

@@ -63,7 +63,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             
             (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
-            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, 'callback', '{access_token}', '{refresh_token}', {expire_timestamp})")
+            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, '{convertQuotation(callback_url)}', '{access_token}', '{refresh_token}', {expire_timestamp})")
 
             await app.db.execute(dhrid, f"SELECT uid, mfa_secret, email FROM user WHERE discordid = {discordid}")
             t = await app.db.fetchall(dhrid)

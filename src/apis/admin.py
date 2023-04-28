@@ -17,6 +17,7 @@ import static
 from api import tracebackHandler
 from config import *
 from functions import *
+from logger import logger
 
 
 class Dict2Obj(object):

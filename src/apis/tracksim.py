@@ -142,7 +142,7 @@ async def post_setup(response: Response, request: Request, authorization: str = 
     uinfo = await GetUserInfo(request, userid = au["userid"], include_email = True)
     email = uinfo["email"]
 
-    r = await arequests.post(app, "https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": app.config.name, "vtc_logo": app.config.logo_url, "email": email, "webhook": f"https://{app.config.apidomain}/{app.config.abbr}/tracksim/update"}, dhrid = dhrid)
+    r = await arequests.post(app, "https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": app.config.name, "vtc_logo": app.config.logo_url, "email": email, "webhook": f"https://{app.config.apidomain}{app.config.prefix}/tracksim/update"}, dhrid = dhrid)
     if r.status_code != 200:
         response.status_code = r.status_code
         try:

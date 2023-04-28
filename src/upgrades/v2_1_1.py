@@ -5,7 +5,7 @@ from db import genconn
 
 
 def run(app):
-    conn = genconn(autocommit = True)
+    conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
     print("Moving application to DATA DIRECTORY...")
