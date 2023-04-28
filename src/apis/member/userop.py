@@ -83,20 +83,20 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         if oo[1] in app.division_points.keys():
             userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
     
-    # calculate myth
-    usermyth = {}
-    await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid = {userid} GROUP BY userid")
+    # calculate bonus
+    userbonus = {}
+    await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
     o = await app.db.fetchall(dhrid)
     for oo in o:
-        if oo[0] not in usermyth.keys():
-            usermyth[oo[0]] = 0
-        usermyth[oo[0]] += oo[1]
+        if oo[0] not in userbonus.keys():
+            userbonus[oo[0]] = 0
+        userbonus[oo[0]] += oo[1]
     
     distance = 0
     challengepnt = 0
     eventpnt = 0
     divisionpnt = 0
-    mythpnt = 0
+    bonuspnt = 0
     if userid in userdistance.keys():
         distance = userdistance[userid]
     if userid in userchallenge.keys():
@@ -105,10 +105,10 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         eventpnt = userevent[userid]
     if userid in userdivision.keys():
         divisionpnt = userdivision[userid]
-    if userid in usermyth.keys():
-        mythpnt = usermyth[userid]
+    if userid in userbonus.keys():
+        bonuspnt = userbonus[userid]
 
-    totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + mythpnt
+    totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + bonuspnt
     rankroleid = point2rankroleid(app, totalpnt)
 
     if rankroleid == -1:

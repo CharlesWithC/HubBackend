@@ -8,7 +8,7 @@ def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
 
-    USERID_TABLES = ["user", "mythpoint", "dlog", "telemetry", "announcement", "application", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]
+    USERID_TABLES = ["user", "bonus_point", "dlog", "telemetry", "announcement", "application", "challenge", "challenge_record", "challenge_completed", "division", "downloads", "economy_balance", "economy_truck", "economy_garage", "event"]
     SPECIAL_USERID_TABLES = {"application": ["update_staff_userid"], "division": ["update_staff_userid"], "economy_transaction": ["from_userid", "to_userid"]}
 
     UID_TABLES = ["user", "user_password", "user_activity", "user_notification", "banned", "session", "auth_ticket", "application_token", "email_confirmation", "auditlog", "settings"]

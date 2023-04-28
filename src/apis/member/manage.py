@@ -274,10 +274,10 @@ async def patch_points(request: Request, response: Response, userid: int, author
     data = await request.json()
     try:
         distance = int(data["distance"])
-        mythpoint = int(data["mythpoint"])
-        if mythpoint > 2147483647:
+        bonus_points = int(data["bonus"])
+        if bonus_points > 2147483647:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "mythpoint", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -291,17 +291,17 @@ async def patch_points(request: Request, response: Response, userid: int, author
             await app.db.execute(dhrid, f"INSERT INTO dlog(logid, userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({plogid}, {userid}, '', 0, {int(time.time())}, 0, 0, 1, 0, {distance}, -1, 0, 0)")
         await UpdateRoleConnection(request, (await GetUserInfo(request, userid = userid))["discordid"])
         await app.db.commit(dhrid)
-    if mythpoint != 0:
-        await app.db.execute(dhrid, f"INSERT INTO mythpoint VALUES ({userid}, {mythpoint}, {int(time.time())})")
+    if bonus_points != 0:
+        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonus_points}, {int(time.time())})")
         await app.db.commit(dhrid)
     
     if int(distance) > 0:
         distance = "+" + data["distance"]
     
     username = (await GetUserInfo(request, userid = userid))["name"]
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "mythpoint": mythpoint}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
     uid = (await GetUserInfo(request, userid = userid))["uid"]
-    await notification(request, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "mythpoint": mythpoint}, force_lang = await GetUserLanguage(request, uid)))
+    await notification(request, "member", uid, ml.tr(request, "point_updated", var = {"distance": distance, "bonus_points": bonus_points}, force_lang = await GetUserLanguage(request, uid)))
 
     return Response(status_code=204)
 

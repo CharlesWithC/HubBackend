@@ -1702,15 +1702,15 @@
                                 "properties": {
                                     "distance": {
                                         "description": "Distance (km)",
-                                        "type": "string"
+                                        "type": "integer"
                                     },
-                                    "mythpoint": {
-                                        "description": "Myth Point",
-                                        "type": "string"
+                                    "bonus": {
+                                        "description": "Bonus Points",
+                                        "type": "integer"
                                     }
                                 }
                             },
-                            "required": ["distance", "mythpoint"]
+                            "required": ["distance", "bonus"]
                         }
                     }
                 },
@@ -2203,7 +2203,7 @@
                 }, {
                     "required": false,
                     "schema": {
-                        "title": "Point Types, default 'distance,challenge,event,division,myth' | Select (multiple) from distance, challenge, event, division, myth",
+                        "title": "Point Types, default 'distance,challenge,event,division,bonus' | Select (multiple) from distance, challenge, event, division, bonus",
                         "type": "string"
                     },
                     "name": "point_types",

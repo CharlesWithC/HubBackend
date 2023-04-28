@@ -14,6 +14,12 @@ def run(app):
         cur.execute("DELETE FROM discord_access_token") # previous source cannot be used as callback_url
     except:
         pass
+    
+    print("Renaming 'mythpoint' TABLE to 'bonus_point`")
+    try:
+        cur.execute("ALTER TABLE mythpoint RENAME bonus_point")
+    except:
+        pass
 
     cur.close()
     conn.close()

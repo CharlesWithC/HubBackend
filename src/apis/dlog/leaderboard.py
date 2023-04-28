@@ -18,7 +18,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after: Optional[int] = None, before: Optional[int] = None, \
         speed_limit: Optional[int] = None, game: Optional[int] = None, \
-        point_types: Optional[str] = "distance,challenge,event,division,myth", userids: Optional[str] = ""):
+        point_types: Optional[str] = "distance,challenge,event,division,bonus", userids: Optional[str] = ""):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
@@ -53,13 +53,13 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     userchallenge = {}
     userevent = {}
     userdivision = {}
-    usermyth = {}
+    userbonus = {}
 
     nluserdistance = {}
     nluserchallenge = {}
     nluserevent = {}
     nluserdivision = {}
-    nlusermyth = {}
+    nluserbonus = {}
     nlusertot = {}
     nlusertot_id = []
     nlrank = 1
@@ -80,7 +80,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     userchallenge = t["userchallenge"]
                     userevent = t["userevent"]
                     userdivision = t["userdivision"]
-                    usermyth = t["usermyth"]
+                    userbonus = t["userbonus"]
                     break
                 
     for ll in list(app.state.cache_nleaderboard.keys()):
@@ -94,7 +94,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             nluserchallenge = t["nluserchallenge"]
             nluserevent = t["nluserevent"]
             nluserdivision = t["nluserdivision"]
-            nlusermyth = t["nlusermyth"]
+            nluserbonus = t["nluserbonus"]
             nlusertot = t["nlusertot"]
             nlusertot_id = list(nlusertot.keys())[::-1]
             nlrank = t["nlrank"]
@@ -197,15 +197,15 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             if oo[1] in app.division_points.keys():
                 userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
-        # calculate myth
-        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
+        # calculate bonus
+        await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
                 continue
-            if oo[0] not in usermyth.keys():
-                usermyth[oo[0]] = 0
-            usermyth[oo[0]] += oo[1]
+            if oo[0] not in userbonus.keys():
+                userbonus[oo[0]] = 0
+            userbonus[oo[0]] += oo[1]
 
     # calculate total point
     limittype = limittype.split(",")
@@ -228,11 +228,11 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             usertot[k] = 0
         if "division" in limittype:
             usertot[k] += userdivision[k]
-    for k in usermyth.keys():
+    for k in userbonus.keys():
         if k not in usertot.keys():
             usertot[k] = 0
-        if "myth" in limittype:
-            usertot[k] += usermyth[k]
+        if "bonus" in limittype:
+            usertot[k] += userbonus[k]
 
     usertot = dict(sorted(usertot.items(),key=lambda x:x[1]))
     usertot_id = list(usertot.keys())[::-1]
@@ -300,15 +300,15 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             if oo[1] in app.division_points.keys():
                 nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
         
-        # calculate myth
-        await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM mythpoint WHERE userid >= 0 GROUP BY userid")
+        # calculate bonus
+        await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 GROUP BY userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
                 continue
-            if oo[0] not in nlusermyth.keys():
-                nlusermyth[oo[0]] = 0
-            nlusermyth[oo[0]] += oo[1]
+            if oo[0] not in nluserbonus.keys():
+                nluserbonus[oo[0]] = 0
+            nluserbonus[oo[0]] += oo[1]
 
         # calculate total point
         for k in nluserdistance.keys():
@@ -325,10 +325,10 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             if k not in nlusertot.keys():
                 nlusertot[k] = 0
             nlusertot[k] += nluserdivision[k]
-        for k in nlusermyth.keys():
+        for k in nluserbonus.keys():
             if k not in nlusertot.keys():
                 nlusertot[k] = 0
-            nlusertot[k] += nlusermyth[k]
+            nlusertot[k] += nluserbonus[k]
 
         nlusertot = dict(sorted(nlusertot.items(),key=lambda x:x[1]))
         nlusertot_id = list(nlusertot.keys())[::-1]
@@ -374,7 +374,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         challengepnt = 0
         eventpnt = 0
         divisionpnt = 0
-        mythpnt = 0
+        bonuspnt = 0
         if userid in userdistance.keys():
             distance = userdistance[userid]
         if userid in userchallenge.keys():
@@ -383,13 +383,13 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             eventpnt = userevent[userid]
         if userid in userdivision.keys():
             divisionpnt = userdivision[userid]
-        if userid in usermyth.keys():
-            mythpnt = usermyth[userid]
+        if userid in userbonus.keys():
+            bonuspnt = userbonus[userid]
 
         if userid in limituser or len(limituser) == 0:
             ret.append({"user": await GetUserInfo(request, userid = userid), \
                 "points": {"distance": distance, "challenge": challengepnt, "event": eventpnt, \
-                    "division": divisionpnt, "myth": mythpnt, "total": usertot[userid], \
+                    "division": divisionpnt, "bonus": bonuspnt, "total": usertot[userid], \
                     "rank": userrank[userid], "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
     # drivers with points (WITHOUT LIMIT)
@@ -405,7 +405,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
 
         if userid in limituser or len(limituser) == 0:
             ret.append({"user": await GetUserInfo(request, userid = userid), \
-                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
+                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "bonus": "0", "total": "0", \
                 "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
@@ -415,7 +415,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         
         if userid in limituser or len(limituser) == 0:
             ret.append({"user": await GetUserInfo(request, userid = userid), 
-                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "myth": "0", "total": "0", \
+                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "bonus": "0", "total": "0", \
                     "rank": rank, "total_no_limit": "0", "rank_no_limit": nlrank}})
 
     if not usecache:
@@ -424,12 +424,12 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             app.state.cache_leaderboard[ts] = []
         app.state.cache_leaderboard[ts].append({"start_time": after, "end_time": before, "speed_limit": speed_limit, "game": game,\
             "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
-            "userdivision": userdivision, "usermyth": usermyth})
+            "userdivision": userdivision, "userbonus": userbonus})
 
     if not nlusecache:
         ts = int(time.time())
         app.state.cache_nleaderboard[ts]={"nluserdistance": nluserdistance, "nluserchallenge": nluserchallenge, \
-            "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nlusermyth": nlusermyth, \
+            "nluserevent": nluserevent, "nluserdivision": nluserdivision, "nluserbonus": nluserbonus, \
             "nlusertot": nlusertot, "nlrank": nlrank, "nluserrank": nluserrank}
 
     if max(page-1, 0) * page_size >= len(ret):

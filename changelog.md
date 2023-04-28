@@ -4,9 +4,10 @@
 1.Fixed BannerGen `app` loading issue  
 2.Fixed rare issue of `UpdateRoleConnection`  
 3.Replaced `/{config.abbr}` with `{config.prefix}` for outgoing API calls announcing Drivers Hub URL  
-4.Updated Discord Access Token to store callback url for refresh use  
-5.Updated `Attention Required` message and added localization  
-6.Improved JSON request body error parsing handler  
+4.Renamed `myth_point` to `bonus_point`  
+5.Updated Discord Access Token to store callback url for refresh use  
+6.Updated `Attention Required` message and added localization  
+7.Improved JSON request body error parsing handler  
 
 **v2.5.7**  
 1.Improved `/user/list` to attach banned info when any connections match  
