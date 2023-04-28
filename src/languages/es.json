@@ -7,8 +7,10 @@
     "bad_json": "JSON no válido: falta el campo o no se pueden analizar los datos.",
     "invalid_params": "Parámetros de solicitud no válidos.",
     "content_too_long": "La longitud máxima de \"{item}\" es de {limit} caracteres.",
-
     "value_too_large": "El valor máximo de \"{elemento}\" es {límite}.",
+    "attention_required": "Atención requerida",
+
+    "invalid_discord_token": "Error al validar el token del bot de Discord. Todas las integraciones de Discord se han deshabilitado temporalmente. Establecer un token válido en la configuración y volver a cargar la configuración restaurará la funcionalidad.",
     "invalid_captcha": "Captcha no válido.",
     "invalid_email_or_password": "Correo electrónico o contraseña no válidos.",
     "invalid_authorization_token": "Token de autorización no válido.",

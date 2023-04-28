@@ -83,6 +83,8 @@ EN_STRINGTABLE = {
     "invalid_params": "Invalid request params.",
     "content_too_long": "Maximum length of \"{item}\" is {limit} characters.",
     "value_too_large": "Maximum value of \"{item}\" is {limit}.",
+    "attention_required": "Attention Required",
+    "invalid_discord_token": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled. Setting a valid token in config and reloading config will restore the functionality.",
 
     "invalid_captcha": "Invalid captcha.",
     "invalid_email_or_password": "Invalid email or password.",

@@ -89,7 +89,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
     err = "\n".join(fmt)
     err_hash = str(hashlib.sha256(err.encode()).hexdigest())[:16]
 
-    if "await request.json()" in err and "json.decoder.JSONDecodeError" in err:
+    if "json.decoder.JSONDecodeError" in err:
         # unable to parse json
         return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
 
@@ -116,10 +116,6 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
                 await app.db.restart_pool()
             elif len(app.state.dberr) > 10:
                 logger.info("Restarting service due to database errors")
-                try:
-                    await arequests.post(app, app.config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Detected too many database errors. API will restart automatically.", "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
-                except:
-                    pass
                 threading.Thread(target=restart, args=(app,)).start()
                 app.state.dberr.append(-1)
                 

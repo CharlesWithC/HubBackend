@@ -7,8 +7,10 @@
     "bad_json": "Ugyldig JSON: Feltet mangler, eller data kan ikke parses.",
     "invalid_params": "Ugyldige anmodningsparametre.",
     "content_too_long": "Maksimal længde af \"{item}\" er {limit} tegn.",
-
     "value_too_large": "Maksimal værdi af \"{item}\" er {limit}.",
+    "attention_required": "Opmærksomhed påkrævet",
+
+    "invalid_discord_token": "Kunne ikke validere Discord Bot Token. Alle Discord-integrationer er blevet midlertidigt deaktiveret. Indstilling af et gyldigt token i config og genindlæsning af config vil genoprette funktionaliteten.",
     "invalid_captcha": "Ugyldig captcha.",
     "invalid_email_or_password": "Ugyldig email eller kodeord.",
     "invalid_authorization_token": "Ugyldig godkendelsestoken.",

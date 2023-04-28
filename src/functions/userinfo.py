@@ -225,7 +225,7 @@ async def UpdateRoleConnection(request, discordid):
         access_token = t[0][0]
         headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
 
-        if userinfo["name"] is None:
+        if userinfo["join_timestamp"] is None:
             # deleted account
             r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "", "platform_username": "", "metadata": {"member_since": "", "is_driver": "", "dlog": "", "distance": ""}}), headers = headers, dhrid = dhrid)
             if r.status_code in [401, 403]:

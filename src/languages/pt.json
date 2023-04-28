@@ -7,8 +7,10 @@
     "bad_json": "JSON inválido: campo ausente ou dados não podem ser analisados.",
     "invalid_params": "Parâmetros de solicitação inválidos.",
     "content_too_long": "O comprimento máximo de \" {item} \" é de {limit} caracteres.",
-
     "value_too_large": "O valor máximo de \" {item} \" é {limit} .",
+    "attention_required": "Attenzione richiesta",
+
+    "invalid_discord_token": "Impossibile convalidare Discord Bot Token. Tutte le integrazioni Discord sono state temporaneamente disabilitate. L'impostazione di un token valido nella configurazione e il ricaricamento della configurazione ripristineranno la funzionalità.",
     "invalid_captcha": "Captcha inválido.",
     "invalid_email_or_password": "E-mail ou senha inválidos.",
     "invalid_authorization_token": "Token de autorização inválido.",

@@ -7,8 +7,10 @@
     "bad_json": "Geçersiz JSON: Alan eksik veya veriler ayrıştırılamıyor.",
     "invalid_params": "Geçersiz istek parametreleri.",
     "content_too_long": "Maksimum \"{item}\" uzunluğu {limit} karakter ile sınırlıdır.",
-
     "value_too_large": "\"{item}\" için maksimum değer: {limit}.",
+    "attention_required": "Attention Required",
+
+    "invalid_discord_token": "Discord Bot Simgesi doğrulanamadı. Tüm Discord Entegrasyonları geçici olarak devre dışı bırakıldı. Yapılandırmada geçerli bir belirteç ayarlamak ve yapılandırmayı yeniden yüklemek işlevselliği geri yükleyecektir.",
     "invalid_captcha": "Geçersiz doğrulama işlemi. (captcha)",
     "invalid_email_or_password": "Geçersiz e-posta veya şifre.",
     "invalid_authorization_token": "Geçersiz yetkilendirme belirteci.",

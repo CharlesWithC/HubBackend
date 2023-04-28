@@ -10,7 +10,9 @@ import time
 from datetime import datetime
 
 import requests
+from fastapi import Request
 
+import multilang as ml
 from functions.dataop import *
 from static import *
 
@@ -83,9 +85,10 @@ def getUserAgent(request):
         return ""
     
 def DisableDiscordIntegration(app):
+    request = Request(scope={"type":"http", "app": app})
     app.config.discord_bot_token = ""
     try:
-        requests.post(app.config.webhook_audit, data=json.dumps({"embeds": [{"title": "Attention Required", "description": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled within the current session. Setting a valid token in config and restarting API will restore the functions.", "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
+        requests.post(app.config.webhook_audit, data=json.dumps({"embeds": [{"title": ml.ctr(request, "attention_required"), "description": ml.ctr(request, "invalid_discord_token"), "color": int(app.config.hex_color, 16), "footer": {"text": "System"}, "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"})
     except:
         pass
 
