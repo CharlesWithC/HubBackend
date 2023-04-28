@@ -3,13 +3,14 @@
 **v2.5.8**  
 1.Fixed BannerGen `app` loading issue  
 2.Fixed rare issue of `UpdateRoleConnection`  
-3.Replaced `/{config.abbr}` with `{config.prefix}` for outgoing API calls announcing Drivers Hub URL  
-4.Renamed `myth_point` to `bonus_point`  
-5.Updated Discord Access Token to store callback url for refresh use  
-6.Updated `Attention Required` message and added localization  
-7.Improved JSON request body error parsing handler  
-8.Improved config validator to prevent duplicate role id  
-9.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
+3.Renamed `myth_point` to `bonus_point`  
+4.Updated `Attention Required` message and added localization  
+5.Added `?unsafe` to **PATCH** `/config` for setting protected values to ""  
+6.Improved config validator to prevent duplicate role id  
+7.Updated Discord Access Token to store callback url for refresh use  
+8.Improved JSON request body error parsing handler  
+9.Replaced `/{config.abbr}` with `{config.prefix}` for outgoing API calls announcing Drivers Hub URL  
+10.Removed `config.domain`, renamed `config.apidomain` to `config.domain`  
 
 **v2.5.7**  
 1.Improved `/user/list` to attach banned info when any connections match  

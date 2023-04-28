@@ -1781,6 +1781,15 @@
                     "bearerAuth": [],
                     "applicationAuth": []
                 }],
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Unsafe? (Allow setting protected values to '')",
+                        "type": "boolean"
+                    },
+                    "name": "unsafe",
+                    "in": "query"
+                }],
                 "requestBody": {
                     "required": true,
                     "content": {

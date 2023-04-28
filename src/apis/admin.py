@@ -175,7 +175,7 @@ def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
 
-async def patch_config(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_config(request: Request, response: Response, authorization: str = Header(None), unsafe: Optional[bool] = False):
     """Updates the config, only those specified in `config` will be updated
     
     JSON: `{"config": {}}`"""
@@ -225,12 +225,12 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
     
-            if tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
+            if not unsafe and tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
-            if tt in config_protected and tt not in ["tracker_webhook_secret", "tracker_api_token"]:
+            if not unsafe and tt in config_protected and tt not in ["tracker_webhook_secret", "tracker_api_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
