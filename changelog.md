@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.5.8**  
+1.Fixed BannerGen `app` loading issue  
+
 **v2.5.7**  
 1.Improved `/user/list` to attach banned info when any connections match  
 2.Improved `/user/profile` to attach banned info  

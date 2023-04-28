@@ -5,6 +5,10 @@ import os
 
 import uvicorn
 
+import api
+from app import app
+
+app.add_api_route(path="/banner", endpoint=api.get_banner, methods=["POST"])
 
 drivershub = """    ____       _                         __  __      __  
    / __ \_____(_)   _____  __________   / / / /_  __/ /_ 
@@ -33,4 +37,4 @@ if __name__ == "__main__":
         os.mkdir("/tmp/hub/template")
     if not os.path.exists("/tmp/hub/avatar"):
         os.mkdir("/tmp/hub/avatar")
-    uvicorn.run("app:app", host="127.0.0.1", port=8700, log_level="info", timeout_keep_alive=15)
+    uvicorn.run("app:app", host="127.0.0.1", port=8700, workers=2, log_level="info", timeout_keep_alive=15)
