@@ -1247,11 +1247,11 @@
                 "responses": {}
             }
         },
-        "/user/{uid}/discord": {
+        "/user/{uid}/connections": {
             "patch": {
-                "summary": "Update User Dicsord Snowflake",
+                "summary": "Update User Account Connections",
                 "tags": ["user"],
-                "operationId": "patch_user_discord",
+                "operationId": "patch_user_connections",
                 "security": [{
                     "bearerAuth": [],
                     "applicationAuth": []
@@ -1272,22 +1272,32 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
+                                    "email": {
+                                        "description": "Email",
+                                        "type": "string"
+                                    },
                                     "discordid": {
-                                        "description": "New Discord Snowflake",
+                                        "description": "Discord Snowflake",
+                                        "type": "integer"
+                                    },
+                                    "steamid": {
+                                        "description": "Steam ID",
+                                        "type": "integer"
+                                    },
+                                    "truckersmpid": {
+                                        "description": "TruckersMP User ID",
                                         "type": "integer"
                                     }
                                 }
                             },
-                            "required": ["discordid"]
+                            "required": []
                         }
                     }
                 },
                 "responses": {}
-            }
-        },
-        "/user/{uid}/connections": {
+            },
             "delete": {
-                "summary": "Delete User Account Connections",
+                "summary": "Delete User Account Connections (Steam & TruckersMP)",
                 "tags": ["user"],
                 "operationId": "delete_user_connections",
                 "security": [{

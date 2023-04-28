@@ -244,8 +244,7 @@
 
         "hrm": [],
         "disable_user_mfa": [],
-        "update_user_discord": [],
-        "delete_account_connections": [],
+        "update_user_connections": [],
         "delete_user": [],
         "update_application_positions": [],
         "delete_application": [],

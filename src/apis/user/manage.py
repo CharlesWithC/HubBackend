@@ -98,21 +98,21 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
 
     return {"userid": userid}   
 
-async def patch_discord(request: Request, response: Response, uid: int,  authorization: str = Header(None)):
-    """[Permission Control] Updates Discord account connection for a specific user, returns 204
+async def patch_connections(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+    """[Permission Control] Updates account connections for a specific user, returns 204
     
-    JSON: `{"discordid": int}`"""
+    JSON: `{"email": Optional[str], "discordid": Optional[int], "steamid": Optional[int], "truckersmpid": Optional[int]}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /user/discord', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/connections', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_discord"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -122,63 +122,86 @@ async def patch_discord(request: Request, response: Response, uid: int,  authori
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
     
-    data = await request.json()
-    try:
-        new_discord_id = int(data["discordid"])
-    except:
-        response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    userinfo = await GetUserInfo(request, uid = uid)
+    connections = [userinfo["email"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"]]
+    new_connections = [None, None, None, None]
+    connections_key = ["email", "discordid", "steamid", "truckersmpid"]
     
     await app.db.execute(dhrid, f"SELECT uid, name FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-    old_uid = t[0][0]
-    name = t[0][1]
+    
+    data = await request.json()
+    try:
+        if "email" in data.keys():
+            new_connections[0] = data["email"]
+        elif "discordid" in data.keys():
+            new_connections[1] = int(data["discordid"])
+        elif "steamid" in data.keys():
+            new_connections[2] = int(data["steamid"])
+        elif "truckersmpid" in data.keys():
+            new_connections[3] = int(data["truckersmpid"])
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    old_discord_id = None
-    await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE discordid = {new_discord_id}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) >= 0:
-        # delete account of new discord, and both sessions
-        await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {old_uid}")
-        await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {old_uid}")
-        await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {old_uid}")
+    # check first
+    for i in range(0,4):
+        if new_connections[i] is None:
+            continue
 
-        # an account exists with the new discordid
+        await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
+        t = await app.db.fetchall(dhrid)
         if len(t) > 0:
             if t[0][1] != -1:
                 response.status_code = 409
-                return {"error": ml.tr(request, "new_discord_user_must_not_be_member", force_lang = au["language"])}
-            new_uid = t[0][0]
-            old_discord_id = t[0][2]
+                return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
+    
+    # then delete
+    for i in range(0,4):
+        if new_connections[i] is None:
+            continue
 
-            await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {new_uid}")
-            await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {new_uid}")
+        await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
+        t = await app.db.fetchall(dhrid)
+        if len(t) > 0:
+            if t[0][1] != -1:
+                response.status_code = 409
+                return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
+
+            await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {t[0][0]}")
+            await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {t[0][0]}")
+
+            if t[0][2] is not None:
+                await DeleteRoleConnection(request, t[0][2])
+    
+    connections = [new_connections[i] if new_connections[i] is not None else connections[i] for i in range(0,4)]
+    connections = [x if x is not None else "NULL" for x in connections]
+    connections[0] = f"'{convertQuotation(connections[0])}'" if connections[0] != "NULL" else "NULL"
 
     # update discord binding
-    await app.db.execute(dhrid, f"UPDATE user SET discordid = {new_discord_id} WHERE uid = {old_uid}")
+    await app.db.execute(dhrid, f"UPDATE user SET email = {connections[0]}, discordid = {connections[1]}, steamid = {connections[2]}, truckersmpid = {connections[3]} WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
-    if old_discord_id is not None:
-        await DeleteRoleConnection(request, old_discord_id)
-        await UpdateRoleConnection(request, new_discord_id)
+    if connections[1] is not None:
+        await UpdateRoleConnection(request, connections[1])
 
-    await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_discord", var = {"username": name, "uid": old_uid, "discordid": new_discord_id}))
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
     return Response(status_code=204)
     
 async def delete_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
-    """[Permission Control] Deletes all Steam & TruckersMP connection for a specific user.
+    """[Permission Control] Deletes Steam & TruckersMP connections for a specific user.
     
     [Note] This function will be updated when the user system no longer relies on Discord."""
     app = request.app
@@ -191,7 +214,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "delete_account_connections"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

@@ -163,7 +163,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
 
             (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
-            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, '{convertQuotation(callback_url)}', '{access_token}', '{refresh_token}', {expire_timestamp}, '{convertQuotation(callback_url)}')")
+            await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, '{convertQuotation(callback_url)}', '{access_token}', '{refresh_token}', {expire_timestamp})")
 
             await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND discordid = {discordid}")
             t = await app.db.fetchall(dhrid)

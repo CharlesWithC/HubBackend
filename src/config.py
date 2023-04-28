@@ -264,8 +264,7 @@ default_config = {
 
         "hrm": [],
         "disable_user_mfa": [],
-        "update_user_discord": [],
-        "delete_account_connections": [],
+        "update_user_connections": [],
         "delete_user": [],
         "update_application_positions": [],
         "delete_dlog": [],
@@ -592,7 +591,7 @@ def validateConfig(cfg):
     if "apidomain" in cfg.keys():
         cfg["domain"] = cfg["apidomain"]
         del cfg["apidomain"]
-    if not "security_level" in cfg.keys():
+    if 'security_level' not in cfg.keys():
         cfg["security_level"] = 1
     else:
         try:
@@ -602,7 +601,7 @@ def validateConfig(cfg):
     if cfg["security_level"] < 0 or cfg["security_level"] > 2:
         cfg["security_level"] = max(cfg["security_level"], 0)
         cfg["security_level"] = min(cfg["security_level"], 2)
-    if not "economy" in cfg["plugins"]:
+    if 'economy' not in cfg['plugins']:
         cfg["economy"]["trucks"] = []
         cfg["economy"]["garages"] = []
         cfg["economy"]["merch"] = []

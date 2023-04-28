@@ -36,7 +36,7 @@ routes = [
     APIRoute("/user/notification/{notificationid}/status/{status}", notification.patch_status, methods=["PATCH"], response_class=JSONResponse),
 
     APIRoute("/user/{uid}/accept", manage.post_accept, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/user/{uid}/discord", manage.patch_discord, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/user/{uid}/connections", manage.patch_connections, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/{uid}/connections", manage.delete_connections, methods=["DELETE"], response_class=JSONResponse),
     APIRoute("/user/ban/list", manage.get_ban_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/user/ban", manage.get_ban, methods=["GET"], response_class=JSONResponse),
