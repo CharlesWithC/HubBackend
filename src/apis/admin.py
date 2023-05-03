@@ -101,7 +101,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     
     permOk = False
     if authorization is not None:
-        au = await auth(authorization, request)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]

@@ -61,7 +61,6 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
             # global ratelimit active
             maxban = app.state.cache_ratelimit[cidentifier][0] + 600
             resp_headers = {}
-            resp_headers["Out-Of-Database"] = "true"
             resp_headers["Retry-After"] = str(maxban - int(time.time()))
             resp_headers["X-RateLimit-Limit"] = str(limitcnt)
             resp_headers["X-RateLimit-Remaining"] = str(0)
@@ -251,7 +250,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         roles = str2list(t[0][2])
         name = t[0][3]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": "Forbidden", "code": 403}
 
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
@@ -310,12 +309,12 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         if curip.split(":")[:4] != orgip.split(":")[:4]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
-                            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                            return {"error": "Unauthorized", "code": 401}
                     elif curiptype == 4:
                         if ip.split(".")[:3] != request.client.host.split(".")[:3]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
-                            return {"error": True, "descriptor": ml.tr(request, "unauthorized")}
+                            return {"error": "Unauthorized", "code": 401}
         
         if request.client.host not in app.config.whitelist_ips:
             if ip != request.client.host:
@@ -336,7 +335,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         roles = str2list(t[0][2])
         name = t[0][3]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": "Forbidden", "code": 403}
         
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced

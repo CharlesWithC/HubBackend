@@ -28,7 +28,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     userid = -1
     if authorization is not None:
-        au = await auth(authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -82,7 +82,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
         response.headers[k] = rl[1][k]
 
     if authorization is not None:
-        au = await auth(authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]

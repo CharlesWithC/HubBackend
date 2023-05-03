@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.5.9**  
+1.Added `config.mysql_err_keywords`, removed hardcoded keywords  
+2.Removed protected config values from being passed to `external_plugins`  
+3.Updated `external_plugins` loading mechanism to take config and return routes & states (app will not be passed for security concerns)  
+
 **v2.5.8**  
 1.Fixed BannerGen `app` loading issue  
 2.Fixed rare issue of `UpdateRoleConnection`  

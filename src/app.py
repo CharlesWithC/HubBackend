@@ -23,13 +23,13 @@ import apis.user
 import db
 import plugins
 import static
-from config import validateConfig
+from config import validateConfig, config_protected
 from logger import logger
 from functions import Dict2Obj
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.5.8"
+version = "2.5.9"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -133,7 +133,7 @@ def createApp(config_path, multi_mode = False, first_init = False):
         app = FastAPI(title="Drivers Hub", version=version)
 
     app.config = config
-    app.backup_config = copy.deepcopy(config.__dict__)
+    app.backup_config = copy.copy(config.__dict__)
     app.config_path = config_path
     app.config_last_modified = os.path.getmtime(app.config_path)
     app.start_time = int(time.time())
@@ -153,38 +153,48 @@ def createApp(config_path, multi_mode = False, first_init = False):
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': File not found.")
             continue
 
-        app_bak = copy.copy(app)
-        app.state.external_routes = []
-        
         # init external plugin
         try:
-            # NOTE: The 'app_to_modify' object will be modified by external plugin
-            # We'll copy back additional state to original app
-            app_to_modify = copy.copy(app)
-            if external_plugin.init(app_to_modify, first_init) is not True:
+            protected_config = copy.deepcopy(app.config.__dict__)
+            for key in config_protected:
+                protected_config[key] = ""
+            res = external_plugin.init(protected_config, first_init)
+            if res is False:
                 if first_init:
                     logger.warning(f"[{app.config.abbr}] [External Plugin] '{plugin_name}' is not loaded: 'init' function did not return True.")
                 continue
-            for state in app_to_modify.state.__dict__.keys():
-                if state not in app.state.__dict__.keys():
-                    app.state.__dict__[state] = app_to_modify.state.__dict__[state]
+            routes = res[1]
+            states = res[2]
         except Exception as exc:
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
-            app = copy.copy(app_bak)
             continue
         
-        # load routes from app.state
+        # test routes and state
         try:
-            for route in app.state.external_routes:
-                app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
-                external_routes.append(route.path)
+            test_app = FastAPI()
+            for route in routes:
+                test_app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
+            for state in states.keys():
+                if state not in app.state.__dict__.keys():
+                    test_app.state.__dict__[state] = states[state]
         except Exception as exc:
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
-            app = copy.copy(app_bak)
             continue
-        del app.state.external_routes
+        
+        # load routes and state
+        try:
+            for route in routes:
+                app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
+                external_routes.append(route.path)
+            for state in states.keys():
+                if state not in app.state.__dict__.keys():
+                    app.state.__dict__[state] = states[state]
+        except Exception as exc:
+            if first_init:
+                logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
+            continue
 
         app.loaded_external_plugins.append(plugin_name)
 

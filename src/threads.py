@@ -56,6 +56,7 @@ async def ClearOutdatedData(app):
             dhrid = genrid()
             await app.db.new_conn(dhrid)
             request = Request(scope={"type":"http", "app": app})
+            request.state.dhrid = dhrid
 
             await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 3600)}")
             await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")

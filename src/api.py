@@ -51,91 +51,99 @@ pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith(
 # app.state.dberr = []
 # app.state.session_errs = []
 async def tracebackHandler(request: Request, exc: Exception, err: str):
-    app = request.app
+    try:
+        app = request.app
 
-    if type(exc) is asyncio.exceptions.TimeoutError:
-        # ascynio timeout error (usually triggered by arequests)
-        return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+        if type(exc) is asyncio.exceptions.TimeoutError:
+            # ascynio timeout error (usually triggered by arequests)
+            return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
-    ismysqlerr = False
-    if type(exc) in pymysql_errs:
-        ismysqlerr = True
+        ismysqlerr = False
+        if type(exc) in pymysql_errs:
+            ismysqlerr = True
 
-    lines = err.split("\n")
-    idx = 0
-    # remove anyio.EndOfStream error
-    for i in range(len(lines)):
-        if lines[i].find("During handling of the above exception") != -1:
-            idx = i+1
-    lines = lines[idx:]
-    while lines[0].startswith("\n") or lines[0] == "":
-        lines = lines[1:]
-    fmt = [lines[0]]
-    i = 1
-    IGNORE_TRACE = ["/fastapi/", "/starlette/", "/anyio/", "/pymysql/", "/aiomysql/"]
-    while i < len(lines):
-        ignore = False
-        if lines[i].find("File") != -1 and lines[i].find("line") != -1:
-            for to_ignore in IGNORE_TRACE:
-                if lines[i].find(to_ignore) != -1:
-                    ignore = True
-        if ignore:
-            if i + 1 < len(lines) and app.version.endswith(".dev"):
-                # not compiled, has detail code in next line
-                i += 1
-            # else: compiled, next line is file trace
+        lines = err.split("\n")
+        idx = 0
+        # remove anyio.EndOfStream error
+        for i in range(len(lines)):
+            if lines[i].find("During handling of the above exception") != -1:
+                idx = i+1
+        lines = lines[idx:]
+        while lines[0].startswith("\n") or lines[0] == "":
+            lines = lines[1:]
+        fmt = [lines[0]]
+        i = 1
+        IGNORE_TRACE = ["/fastapi/", "/starlette/", "/anyio/", "/pymysql/", "/aiomysql/"]
+        while i < len(lines):
+            ignore = False
+            if lines[i].find("File") != -1 and lines[i].find("line") != -1:
+                for to_ignore in IGNORE_TRACE:
+                    if lines[i].find(to_ignore) != -1:
+                        ignore = True
+            if ignore:
+                if i + 1 < len(lines) and app.version.endswith(".dev"):
+                    # not compiled, has detail code in next line
+                    i += 1
+                # else: compiled, next line is file trace
+            else:
+                fmt.append(lines[i])
+            i += 1
+        err = "\n".join(fmt)
+        err_hash = str(hashlib.sha256(err.encode()).hexdigest())[:16]
+
+        if "json.decoder.JSONDecodeError" in err:
+            # unable to parse json
+            return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
+        
+        for keyword in app.config.mysql_err_keywords:
+            if keyword in err.lower():
+                ismysqlerr = True
+                break
+
+        if ismysqlerr:
+            # this will filter mysql error + connection/timeout error (including custom errors flagged by "[aiosql]")
+            # it's literally impossible to identify programming (query) error from database-side errors from error code
+            # as they are mixed up
+            # hence we'll just check and filter connection/timeout errors
+            err = err.replace("[aiosql] ", "")
+            if err_hash in app.state.session_errs:
+                # recognized error, do not print log or send webhook
+                logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+                return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
+            app.state.session_errs.append(err_hash)
+
+            logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
+
+            if -1 not in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
+                app.state.dberr.append(time.time())
+                app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
+                if len(app.state.dberr) > 5:
+                    # try restarting database connection first
+                    logger.info("Restarting database connection pool")
+                    await app.db.restart_pool()
+                elif len(app.state.dberr) > 10:
+                    logger.info("Restarting service due to database errors")
+                    threading.Thread(target=restart, args=(app,)).start()
+                    app.state.dberr.append(-1)
+                    
+            return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+        
         else:
-            fmt.append(lines[i])
-        i += 1
-    err = "\n".join(fmt)
-    err_hash = str(hashlib.sha256(err.encode()).hexdigest())[:16]
+            if err_hash in app.state.session_errs:
+                # recognized error, do not print log or send webhook
+                logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+                return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
+            app.state.session_errs.append(err_hash)
 
-    if "json.decoder.JSONDecodeError" in err:
-        # unable to parse json
-        return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
+            logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-    if ismysqlerr and ("lost connection" in err.lower() or "timeout" in err.lower() or "[aiosql]" in err.lower()):
-        # this will filter mysql error + connection/timeout error (including custom errors flagged by "[aiosql]")
-        # it's literally impossible to identify programming (query) error from database-side errors from error code
-        # as they are mixed up
-        # hence we'll just check and filter connection/timeout errors
-        err = err.replace("[aiosql] ", "")
-        if err_hash in app.state.session_errs:
-            # recognized error, do not print log or send webhook
-            logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
+            if app.config.webhook_error != "":
+                try:
+                    await arequests.post(app, app.config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
+                except:
+                    pass
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-        app.state.session_errs.append(err_hash)
-
-        logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
-
-        if -1 not in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
-            app.state.dberr.append(time.time())
-            app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
-            if len(app.state.dberr) > 5:
-                # try restarting database connection first
-                logger.info("Restarting database connection pool")
-                await app.db.restart_pool()
-            elif len(app.state.dberr) > 10:
-                logger.info("Restarting service due to database errors")
-                threading.Thread(target=restart, args=(app,)).start()
-                app.state.dberr.append(-1)
-                
-        return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
-    
-    else:
-        if err_hash in app.state.session_errs:
-            # recognized error, do not print log or send webhook
-            logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
-            return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-        app.state.session_errs.append(err_hash)
-
-        logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
-
-        if app.config.webhook_error != "":
-            try:
-                await arequests.post(app, app.config.webhook_error, data=json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), headers={"Content-Type": "application/json"}, timeout = 10)
-            except:
-                pass
+    except:
         return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
 
 # middleware to manage database connection
@@ -149,6 +157,11 @@ class HubMiddleware(BaseHTTPMiddleware):
         if "started" not in app.state.__dict__["_state"].keys(): 
             app.state.started = True
             await startup_event(app)
+        if request.client is None:
+            client_host = request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+            request.client = client_host
+            if client_host is None:
+                return JSONResponse({"error": "Invalid request."}, status_code=400)
         dhrid = genrid()
         request.state.dhrid = dhrid
         try:

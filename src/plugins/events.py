@@ -132,7 +132,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     userid = -1
     if authorization is not None:
-        au = await auth(authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -210,7 +210,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
 
     userid = -1
     if authorization is not None:
-        au = await auth(authorization, request, allow_application_token = True)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]

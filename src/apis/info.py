@@ -15,7 +15,7 @@ async def get_index(request: Request, authorization: str = Header(None)):
     if authorization is not None:
         dhrid = request.state.dhrid
         await app.db.new_conn(dhrid)
-        au = await auth(authorization, request, check_member = False)
+        au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if not au["error"]:
             await ActivityUpdate(request, au["uid"], "index")
     currentDateTime = datetime.now()
