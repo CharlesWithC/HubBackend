@@ -4,6 +4,7 @@
 1.Prevented **POST** `/tracksim/update/route` from being loaded when `tracker` plugin is not activated  
 2.Fixed `UpdateRoleConnection` not working as expected due to `GetUserInfo` cache  
 3.Fixed `DeleteRoleConnection` not working due to invalid `metadata`  
+4.Replaced dependency `discord_oauth2` with custom async-enabled class  
 
 **v2.5.9**  
 1.Added `config.mysql_err_keywords`, removed hardcoded keywords  

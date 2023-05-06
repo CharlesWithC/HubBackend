@@ -5,12 +5,12 @@ import json
 import traceback
 from typing import Optional
 
-from discord_oauth2 import DiscordAuth
 from fastapi import Header, Request, Response
 
 import multilang as ml
 from api import tracebackHandler
 from functions import *
+from functions.discord import DiscordAuth
 
 
 async def post_resend_confirmation(request: Request, response: Response, authorization: str = Header(None)):
@@ -150,10 +150,10 @@ async def patch_discord(request: Request, response: Response, authorization: str
 
     try:
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, callback_url)
-        tokens = discord_auth.get_tokens(code)
+        tokens = await discord_auth.get_tokens(code)
         if "access_token" in tokens.keys():
             await app.db.extend_conn(dhrid, 30)
-            user_data = discord_auth.get_user_data_from_token(tokens["access_token"])
+            user_data = await discord_auth.get_user_data_from_token(tokens["access_token"])
             await app.db.extend_conn(dhrid, 2)
             if 'id' not in user_data:
                 response.status_code = 400

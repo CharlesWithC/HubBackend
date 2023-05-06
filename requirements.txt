@@ -7,7 +7,6 @@ aiosmtplib==2.0.1
 pysocks==1.7.1
 websockets==10.4
 bcrypt==3.2.2
-discord_oauth2==0.2
 pillow==9.3.0
 python-dateutil==2.8.2
 python-multipart==0.0.5

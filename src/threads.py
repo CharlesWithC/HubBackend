@@ -7,12 +7,12 @@ import json
 import os
 import time
 
-from discord_oauth2 import DiscordAuth
 from fastapi import Request
 
 import static
 from config import validateConfig
 from functions.dataop import *
+from functions.discord import DiscordAuth
 from functions.general import *
 from functions.userinfo import DeleteRoleConnection
 from logger import logger
@@ -145,7 +145,7 @@ async def RefreshDiscordAccessToken(app):
                 (discordid, callback_url, refresh_token) = (tt[0], tt[1], tt[2])
                 await app.db.extend_conn(dhrid, 30)
                 discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, callback_url)
-                tokens = discord_auth.refresh_token(refresh_token)
+                tokens = await discord_auth.refresh_token(refresh_token)
                 await app.db.extend_conn(dhrid, 2)
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
                 if "error" in tokens.keys():
