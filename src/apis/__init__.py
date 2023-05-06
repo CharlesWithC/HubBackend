@@ -25,6 +25,9 @@ routes = [
 
 routes_tracksim = [
     APIRoute("/tracksim/setup", tracksim.post_setup, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/tracksim/update", tracksim.post_update, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/tracksim/update/route", tracksim.post_update_route, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/tracksim/update", tracksim.post_update, methods=["POST"], response_class=JSONResponse)
+]
+
+routes_tracksim_route = [
+    APIRoute("/tracksim/update/route", tracksim.post_update_route, methods=["POST"], response_class=JSONResponse)
 ]

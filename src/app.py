@@ -29,7 +29,7 @@ from functions import Dict2Obj
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.5.9"
+version = "2.5.10"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -201,6 +201,8 @@ def createApp(config_path, multi_mode = False, first_init = False):
     routes = apis.routes + apis.auth.routes + apis.dlog.routes + apis.member.routes + apis.user.routes
     if app.config.tracker == "tracksim":
         routes += apis.routes_tracksim
+        if "tracker" in app.config.plugins:
+            routes += apis.routes_tracksim_route
     if "banner" in app.config.plugins:
         routes += apis.member.routes_banner
     if "announcement" in app.config.plugins:

@@ -59,7 +59,7 @@ def ClearUserCache(app):
         if int(time.time()) > app.state_cache_activity[user]["expire"]:
             del app.state_cache_activity[user]
 
-async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False):
+async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_email = False, ignore_activity = False, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
         return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
@@ -81,34 +81,35 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 
     ClearUserCache(app)
     
-    if userid != -1 and f"userid={userid}" in app.state.cache_userinfo.keys():
-        if int(time.time()) < app.state.cache_userinfo[f"userid={userid}"]["expire"]:
-            uid = app.state.cache_userinfo[f"userid={userid}"]["uid"]
-    if discordid != -1 and f"discordid={discordid}" in app.state.cache_userinfo.keys():
-        if int(time.time()) < app.state.cache_userinfo[f"discordid={discordid}"]["expire"]:
-            uid = app.state.cache_userinfo[f"discordid={discordid}"]["uid"]
-    if uid != -1 and f"uid={uid}" in app.state.cache_userinfo.keys():
-        if int(time.time()) < app.state.cache_userinfo[f"uid={uid}"]["expire"]:
-            ret = app.state.cache_userinfo[f"uid={uid}"]["data"]
-            if ignore_activity:
-                ret["activity"] = None
-            if not ignore_activity and (f"uid={uid}" not in app.state_cache_activity.keys() or \
-                f"uid={uid}" in app.state_cache_activity.keys() and int(time.time()) >= app.state_cache_activity[f"uid={uid}"]["expire"]):
-                activity = None
-                await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
-                ac = await app.db.fetchall(dhrid)
-                if len(ac) != 0:
-                    if int(time.time()) - ac[0][1] >= 300:
-                        activity = {"status": "offline", "last_seen": ac[0][1]}
-                    elif int(time.time()) - ac[0][1] >= 120:
-                        activity = {"status": "online", "last_seen": ac[0][1]}
+    if not nocache:
+        if userid != -1 and f"userid={userid}" in app.state.cache_userinfo.keys():
+            if int(time.time()) < app.state.cache_userinfo[f"userid={userid}"]["expire"]:
+                uid = app.state.cache_userinfo[f"userid={userid}"]["uid"]
+        if discordid != -1 and f"discordid={discordid}" in app.state.cache_userinfo.keys():
+            if int(time.time()) < app.state.cache_userinfo[f"discordid={discordid}"]["expire"]:
+                uid = app.state.cache_userinfo[f"discordid={discordid}"]["uid"]
+        if uid != -1 and f"uid={uid}" in app.state.cache_userinfo.keys():
+            if int(time.time()) < app.state.cache_userinfo[f"uid={uid}"]["expire"]:
+                ret = app.state.cache_userinfo[f"uid={uid}"]["data"]
+                if ignore_activity:
+                    ret["activity"] = None
+                if not ignore_activity and (f"uid={uid}" not in app.state_cache_activity.keys() or \
+                    f"uid={uid}" in app.state_cache_activity.keys() and int(time.time()) >= app.state_cache_activity[f"uid={uid}"]["expire"]):
+                    activity = None
+                    await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
+                    ac = await app.db.fetchall(dhrid)
+                    if len(ac) != 0:
+                        if int(time.time()) - ac[0][1] >= 300:
+                            activity = {"status": "offline", "last_seen": ac[0][1]}
+                        elif int(time.time()) - ac[0][1] >= 120:
+                            activity = {"status": "online", "last_seen": ac[0][1]}
+                        else:
+                            activity = {"status": ac[0][0], "last_seen": ac[0][1]}
+                        app.state_cache_activity[f"uid={uid}"] = {"data": activity, "expire": int(time.time()) + 2}
                     else:
-                        activity = {"status": ac[0][0], "last_seen": ac[0][1]}
-                    app.state_cache_activity[f"uid={uid}"] = {"data": activity, "expire": int(time.time()) + 2}
-                else:
-                    app.state_cache_activity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
-                ret["activity"] = app.state_cache_activity[f"uid={uid}"]["data"]
-            return ret
+                        app.state_cache_activity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
+                    ret["activity"] = app.state_cache_activity[f"uid={uid}"]["data"]
+                return ret
 
     query = ""
     if userid != -1:
@@ -211,7 +212,7 @@ async def UpdateRoleConnection(request, discordid):
     if discordid is None:
         return
 
-    userinfo = await GetUserInfo(request, discordid = discordid)
+    userinfo = await GetUserInfo(request, discordid = discordid, nocache = True)
     userid = userinfo["userid"]
     discordid = userinfo["discordid"]
     roles = userinfo["roles"]
@@ -261,7 +262,7 @@ async def DeleteRoleConnection(request, discordid):
         access_token = t[0][0]
         headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
 
-        r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "", "platform_username": "", "metadata": {"member_since": "", "is_driver": "", "dlog": "", "distance": ""}}), headers = headers, dhrid = dhrid)
+        r = await arequests.put(app, f"https://discord.com/api/v10/users/@me/applications/{app.config.discord_client_id}/role-connection", data = json.dumps({"platform_name": "", "platform_username": "", "metadata": {}}), headers = headers, dhrid = dhrid)
         if r.status_code in [401, 403]:
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
             await app.db.commit(dhrid)
