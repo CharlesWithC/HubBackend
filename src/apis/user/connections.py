@@ -196,9 +196,12 @@ async def patch_discord(request: Request, response: Response, authorization: str
 
             return Response(status_code=204)
         
-        if 'error_description' in tokens.keys():
+        elif 'error_description' in tokens.keys():
             response.status_code = 400
             return {"error": tokens['error_description']}
+        elif 'error' in tokens.keys():
+            response.status_code = 400
+            return {"error": tokens['error']}
         else:
             response.status_code = 400
             return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}

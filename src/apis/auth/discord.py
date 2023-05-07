@@ -93,7 +93,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             else:
                 uid = t[0][0]
                 mfa_secret = t[0][1]
-                if t[0][2] == "":
+                if t[0][2] == "" or app.config.sync_discord_email:
                     await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
                     await app.db.commit(dhrid)
 

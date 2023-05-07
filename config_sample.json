@@ -39,6 +39,7 @@
     "guild_id": "",
     "must_join_guild": true,
     "use_server_nickname": true,
+    "sync_discord_email": true,
     "allow_custom_profile": true,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
     "required_connections": ["discord", "email", "truckersmp"],
