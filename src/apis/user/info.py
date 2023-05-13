@@ -12,7 +12,7 @@ from functions import *
 
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = '', \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, query: Optional[str] = '', \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
     """Returns the information of a list of users
     
@@ -48,9 +48,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    order = order.upper()
     
-    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -63,13 +62,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
             del user["roles"]
         ret.append(user)
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE userid < 0 AND LOWER(name) LIKE '%{query}%'")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
+    if after_uid is not None:
+        while len(ret) > 0 and ret[0]["uid"] != after_uid:
+            ret = ret[1:]
 
-    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+    return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_profile(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):

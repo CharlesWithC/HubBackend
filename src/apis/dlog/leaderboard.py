@@ -16,7 +16,8 @@ from functions import *
 
 async def get_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        after: Optional[int] = None, before: Optional[int] = None, \
+        after_userid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
+        min_point: Optional[int] = None, max_point: Optional[int] = None, \
         speed_limit: Optional[int] = None, game: Optional[int] = None, \
         point_types: Optional[str] = "distance,challenge,event,division,bonus", userids: Optional[str] = ""):
     app = request.app
@@ -234,7 +235,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         if "bonus" in limittype:
             usertot[k] += userbonus[k]
 
-    usertot = dict(sorted(usertot.items(),key=lambda x:x[1]))
+    usertot = dict(sorted(usertot.items(),key=lambda x: (x[1], x[0])))
     usertot_id = list(usertot.keys())[::-1]
 
     # calculate rank
@@ -330,7 +331,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 nlusertot[k] = 0
             nlusertot[k] += nluserbonus[k]
 
-        nlusertot = dict(sorted(nlusertot.items(),key=lambda x:x[1]))
+        nlusertot = dict(sorted(nlusertot.items(),key=lambda x: (x[1], x[0])))
         nlusertot_id = list(nlusertot.keys())[::-1]
 
         # calculate rank
@@ -405,7 +406,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
 
         if userid in limituser or len(limituser) == 0:
             ret.append({"user": await GetUserInfo(request, userid = userid), \
-                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "bonus": "0", "total": "0", \
+                "points": {"distance": 0, "challenge": 0, "event": 0, "division": 0, "bonus": 0, "total": 0, \
                 "rank": rank, "total_no_limit": nlusertot[userid], "rank_no_limit": nluserrank[userid]}})
 
     # drivers without ponts (EVEN WITHOUT LIMIT)
@@ -415,8 +416,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         
         if userid in limituser or len(limituser) == 0:
             ret.append({"user": await GetUserInfo(request, userid = userid), 
-                "points": {"distance": "0", "challenge": "0", "event": "0", "division": "0", "bonus": "0", "total": "0", \
-                    "rank": rank, "total_no_limit": "0", "rank_no_limit": nlrank}})
+                "points": {"distance": 0, "challenge": 0, "event": 0, "division": 0, "bonus": 0, "total": 0, \
+                    "rank": rank, "total_no_limit": 0, "rank_no_limit": nlrank}})
 
     if not usecache:
         ts = int(time.time())
@@ -436,6 +437,18 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         return {"list": [], "total_items": len(ret), \
             "total_pages": int(math.ceil(len(ret) / page_size)), \
                 "cache": cachetime, "cache_no_limit": nlcachetime}
+    
+    if after_userid is not None:
+        while len(ret) > 0 and ret[0]["user"]["userid"] != after_userid:
+            ret = ret[1:]
+    
+    if max_point is not None:
+        while len(ret) > 0 and ret[0]["points"]["total"] > max_point:
+            ret = ret[1:]
+    
+    if min_point is not None:
+        while len(ret) > 0 and ret[-1]["points"]["total"] < min_point:
+            ret = ret[:-1]
 
     return {"list": ret[max(page-1, 0) * page_size : page * page_size], \
         "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size)), \

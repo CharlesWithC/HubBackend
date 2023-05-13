@@ -46,13 +46,14 @@ async def get_all_trucks(request: Request, response: Response, authorization: st
     return app.config.economy.trucks
 
 async def get_truck_list(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, truckid: Optional[str] = "", garageid: Optional[str] = "",\
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_vehicleid: Optional[int] = None, \
+        truckid: Optional[str] = "", garageid: Optional[str] = "",\
         owner: Optional[int] = None, min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
         min_income: Optional[int] = None, max_income: Optional[int] = None,
         min_odometer: Optional[int] = None, max_odometer: Optional[int] = None,
         min_damage: Optional[float] = None, max_damage: Optional[float] = None,
-        order_by: Optional[str] = "odometer", order: Optional[int] = "desc"):
+        order_by: Optional[str] = "odometer", order: Optional[str] = "desc"):
     '''Get a list of owned trucks.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -117,12 +118,26 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         order_by = "odometer"
         order = "desc"
     
-    if order.lower() not in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
     
     STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
+    
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_vehicleid is not None:
+        for tt in t:
+            if tt[0] == after_vehicleid:
+                break
+            base_rows += 1
+        tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -130,12 +145,6 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         if tt[1] in app.trucks.keys():
             (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
         ret.append({"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price),"purchase_timestamp": tt[8], "status": STATUS[tt[9]]})
-    
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_truck WHERE vehicleid >= 0 {limit}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -174,7 +183,7 @@ async def get_truck(request: Request, response: Response, vehicleid: int, author
     
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
-async def get_truck_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, order: Optional[str] = "desc"):
+async def get_truck_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, after_txid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, order: Optional[str] = "desc"):
     '''Get the transaction history of a specific truck.
 
     `order_by` is `timestamp`.'''
@@ -212,7 +221,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     elif page_size >= 250:
         page_size = 250
 
-    if order.lower() not in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
 
     if operation == "all":
@@ -234,6 +243,16 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     else:
         response.status_code = 404
         return {"error": "Not Found"}
+    
+    if after is not None:
+        query += f" AND timestamp >= {after} "
+    if before is not None:
+        query += f" AND timestamp <= {before} "
+    if after_txid is not None:
+        if order == "asc":
+            query += f" AND txid >= {after_txid} "
+        elif order == "desc":
+            query += f" AND txid <= {after_txid} "
     
     await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, timestamp FROM economy_transaction WHERE note {query} ORDER BY timestamp {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)

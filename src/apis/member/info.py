@@ -28,8 +28,9 @@ async def get_perms(request: Request):
     return app.config.perms
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        query: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = None,\
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        after_userid: Optional[int] = None, \
+        query: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = None, \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     """Returns a list of members"""
     app = request.app
@@ -78,7 +79,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    order = order.upper()
 
     if sort_by_highest_role:
         hrole_order_by = order
@@ -95,7 +95,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if order_by_last_seen:
         await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {activity_limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
     else:
-        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}")
+        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {activity_limit} ORDER BY {order_by} {order}, user.userid ASC")
     t = await app.db.fetchall(dhrid)
     rret = {}
     for tt in t:
@@ -118,11 +118,15 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     ret = []
     if sort_by_highest_role:
-        hrole = dict(sorted(hrole.items(), key=lambda x:x[1]))
+        hrole = dict(sorted(hrole.items(), key=lambda x: (x[1], x[0])))
         if hrole_order_by == "ASC":
             hrole = dict(reversed(list(hrole.items())))
     for userid in hrole.keys():
         ret.append(rret[userid])
+        
+    if after_userid is not None:
+        while len(ret) > 0 and ret[0]["userid"] != after_userid:
+            ret = ret[1:]
         
     return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 

@@ -32,10 +32,10 @@ async def get_all_garages(request: Request, response: Response, authorization: s
     return app.config.economy.garages
 
 async def get_garage_list(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, 
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_garageid: Optional[str] = None,
         min_trucks: Optional[int] = None, max_trucks: Optional[int] = None,
         min_income: Optional[int] = None, max_income: Optional[int] = None,
-        order_by: Optional[str] = "income", order: Optional[int] = "desc"):
+        order_by: Optional[str] = "income", order: Optional[str] = "desc"):
     '''Get a list of owned garages.
     
     `order_by` can be `income`, `truck`, `slot`'''
@@ -80,13 +80,30 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         order_by = "tot_income"
         order = "desc"
     
-    if order.lower() not in ['asc', 'desc']:
+    if order not in ['asc', 'desc']:
         order = "asc"
-    
+
+    base_rows = 0
+    tot = 0
     await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
                          LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 \
-                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_garageid is not None:
+        for tt in t:
+            if tt[0] == after_garageid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
+    await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
+                         WHERE economy_garage.slotid >= 0 \
+                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     tot = len(t)
     ret = []
@@ -94,13 +111,6 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid FROM economy_garage WHERE garageid = '{tt[0]}' AND note = 'garage-owner'")
         p = await app.db.fetchall(dhrid)
         ret.append({"garageid": tt[0], "garage_owner": (await GetUserInfo(request, userid = p[0][0])), "slots": tt[2], "slot_owners": nint(tt[3]), "trucks": nint(tt[4]), "income": nint(tt[5]), "purchase_timestamp": tt[1]})
-
-    await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
-                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
-                         WHERE economy_garage.slotid >= 0 \
-                         GROUP BY economy_garage.garageid {having}")
-    t = await app.db.fetchall(dhrid)
-    tot = len(t)
     
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -139,8 +149,9 @@ async def get_garage(request: Request, response: Response, garageid: str, author
     return {"garageid": tt[0], "garage_owner": (await GetUserInfo(request, userid = p[0][0])), "slots": tt[2], "slot_owners": nint(tt[3]), "trucks": nint(tt[4]), "income": nint(tt[5]), "purchase_timestamp": tt[1]}
 
 async def get_garage_slots_list(request: Request, response: Response, garageid: str, authorization: str = Header(None),
-        page: Optional[int] = 1, page_size: Optional[int] = 20, owner: Optional[int] = None, \
-        must_have_truck: Optional[bool] = False, purchased_after: Optional[int] = None, purchased_before: Optional[int] = None,
+        page: Optional[int] = 1, page_size: Optional[int] = 20, after_slotid: Optional[int] = None, \
+        owner: Optional[int] = None, must_have_truck: Optional[bool] = False, \
+        purchased_after: Optional[int] = None, purchased_before: Optional[int] = None,
         order: Optional[str] = "asc"):
     '''Get the slots of a specific garage.
     
@@ -167,7 +178,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     elif page_size >= 250:
         page_size = 250
 
-    if order.lower() not in ['asc', 'desc']:
+    if order not in ['asc', 'desc']:
         order = "asc"
 
     garageid = convertQuotation(garageid)
@@ -181,21 +192,32 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
         having += f"AND economy_garage.purchase_timestamp <= {purchased_before} "
     if owner is not None:
         having += f"AND economy_garage.userid = {owner} "
+    
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT economy_garage.slotid, economy_garage.userid, economy_truck.vehicleid, economy_truck.userid, economy_garage.purchase_timestamp FROM economy_garage \
+                         LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
+                         WHERE economy_garage.slotid >= 0 AND economy_garage.garageid = '{garageid}' \
+                         ORDER BY economy_garage.purchase_timestamp {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_slotid is not None:
+        for tt in t:
+            if tt[0] == after_slotid:
+                break
+            base_rows += 1
+        tot -= base_rows
 
     await app.db.execute(dhrid, f"SELECT economy_garage.slotid, economy_garage.userid, economy_truck.vehicleid, economy_truck.userid, economy_garage.purchase_timestamp, economy_garage.note FROM economy_garage \
                          LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 AND economy_garage.garageid = '{garageid}' \
-                         ORDER BY economy_garage.purchase_timestamp {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+                         ORDER BY economy_garage.purchase_timestamp {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"slotid": tt[0], "slot_owner": await GetUserInfo(request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(request, tt[2]), "truck_owner": await GetUserInfo(request, userid = tt[3])})
-
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_garage WHERE economy_garage.garageid = '{garageid}'")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 

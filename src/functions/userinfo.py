@@ -229,6 +229,7 @@ async def UpdateRoleConnection(request, discordid):
             if r.status_code in [401, 403]:
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
                 await app.db.commit(dhrid)
+            return
 
         is_driver = checkPerm(app, roles, "driver")
         if is_driver:

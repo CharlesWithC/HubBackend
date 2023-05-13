@@ -281,7 +281,9 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     return Response(status_code=204)
 
 async def get_list_pending(request: Request, response: Response, authorization: str = Header(None), \
-        divisionid: Optional[int] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
+        divisionid: Optional[int] = None, \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_logid: Optional[int] = None,
+        order_by: Optional[str] = "request_timestamp", order: Optional[str] = "asc"):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -302,21 +304,38 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         page_size = 1
     elif page_size >= 250:
         page_size = 250
+
+    if order_by not in ["logid", "userid", "request_timestamp"]:
+        order_by = "request_timestamp"
+        order = "asc"
+    
+    if order not in ["asc", "desc"]:
+        order = "asc"
         
     limit = ""
     if divisionid is not None:
         limit = f"AND divisionid = {divisionid}"
+
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT logid FROM division WHERE status = 0 {limit} AND logid >= 0 \
+    ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_logid is not None:
+        for tt in t:
+            if tt[0] == after_logid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
     await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
-        LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"logid": tt[0], "divisionid": tt[2], "user": await GetUserInfo(request, userid = tt[1])})
-    
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 0 {limit} AND logid >= 0")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}

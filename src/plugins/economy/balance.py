@@ -14,7 +14,8 @@ from functions import *
 
 
 async def get_balance_leaderboard(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 20, exclude_company: Optional[bool] = True, \
+        page: Optional[int] = 1, page_size: Optional[int] = 20, after_userid: Optional[int] = None, \
+        exclude_company: Optional[bool] = True, \
         min_balance: Optional[int] = None, max_balance: Optional[int] = None, order: Optional[str] = "desc"):
     '''Get balance leaderboard.
     
@@ -45,7 +46,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     if exclude_company:
         limit += "AND userid >= 0 "
 
-    if order.lower() not in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
 
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
@@ -92,6 +93,12 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     for dd in d:
         if (min_balance is None or dd[1] >= min_balance) and (max_balance is None or dd[1] <= max_balance):
             p.append(dd)
+
+    # select ?after_userid
+    if after_userid is not None:
+        while len(p) > 0 and p[0][0] != after_userid:
+            p = p[1:]
+            
     tot = len(p)
 
     # select only those in page
@@ -262,7 +269,7 @@ async def get_balance(request: Request, response: Response, authorization: str =
     return {"balance": balance}
 
 async def get_balance_transaction_list(request: Request, response: Response, userid: int, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_txid: Optional[int] = None, \
         after: Optional[int] = None, before: Optional[int] = None, \
         from_userid: Optional[int] = None, to_userid: Optional[int] = None, \
         min_amount: Optional[int] = None, max_amount: Optional[int] = None, \
@@ -327,10 +334,24 @@ async def get_balance_transaction_list(request: Request, response: Response, use
         order_by = "timestamp"
         order = "desc"
     
-    if order.lower() not in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
 
-    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT txid FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_txid is not None:
+        for tt in t:
+            if tt[0] == after_txid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
+    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -343,12 +364,6 @@ async def get_balance_transaction_list(request: Request, response: Response, use
             elif tt[2] != au["userid"]:
                 d["to_new_balance"] = None
         ret.append(d)
-    
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 

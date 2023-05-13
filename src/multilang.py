@@ -14,7 +14,7 @@ import inspect
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
 LANGUAGES = os.listdir(os.path.join(abspath, "languages/"))
-LANGUAGES = [x.split(".")[0] for x in LANGUAGES]
+LANGUAGES = [x.split(".")[0].lower() for x in LANGUAGES]
 LANG_DATAS = {}
 for LANGUAGE in LANGUAGES:
     try:
@@ -26,7 +26,7 @@ LANGUAGES = sorted(list(LANG_DATAS.keys())) # must be valid language file
 def get_lang(request: Request):
     if request is None:
         return request.app.config.language
-    lang = request.headers.get('Accept-Language', 'en')
+    lang = request.headers.get('Accept-Language', 'en').lower()
     lang = lang.split(',')[0]
     lang = lang.split(';')[0]
 

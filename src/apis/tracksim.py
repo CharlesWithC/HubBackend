@@ -725,11 +725,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     uid = (await GetUserInfo(request, userid = tuserid))["uid"]
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
                                 await app.db.commit(dhrid)
-                except:
-                    pass
+                except Exception as exc:
+                    await tracebackHandler(request, exc, traceback.format_exc())
                 
-    except:
-        pass
+    except Exception as exc:
+        await tracebackHandler(request, exc, traceback.format_exc())
 
     try:
         if "economy" in app.config.plugins and isdelivered and not duplicate:

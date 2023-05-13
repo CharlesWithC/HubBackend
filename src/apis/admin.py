@@ -444,13 +444,14 @@ async def post_restart(request: Request, response: Response, authorization: str 
     return Response(status_code=204)
 
 async def get_audit_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 30, uid: Optional[int] = None, operation: Optional[str] = ""):
+    page: Optional[int] = 1, page_size: Optional[int] = 30, order: Optional[str] = "desc", after: Optional[int] = None, \
+    uid: Optional[int] = None, operation: Optional[str] = ""):
     """Returns a list of audit log"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /audit', 60, 60)
+    rl = await ratelimit(request, 'GET /audit/list', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -463,23 +464,31 @@ async def get_audit_list(request: Request, response: Response, authorization: st
         return au
 
     operation = convertQuotation(operation.lower())
-
-    limit = ""
-    if uid is not None:
-        limit = f"AND uid = {uid}"
     
     if page_size <= 1:
         page_size = 1
     elif page_size >= 500:
         page_size = 500
 
-    await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    if order not in ["asc", "desc"]:
+        order = "desc"
+
+    limit = ""
+    if uid is not None:
+        limit = f"AND uid = {uid} "
+    if after is not None:
+        if order == "asc":
+            limit += f"AND timestamp >= {after} "
+        elif order == "desc":
+            limit += f"AND timestamp <= {after} "
+
+    await app.db.execute(dhrid, f"SELECT * FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit} ORDER BY timestamp {order.upper()} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"user": await GetUserInfo(request, uid = tt[0]), "operation": tt[1], "timestamp": tt[2]})
 
-    await app.db.execute(dhrid, "SELECT COUNT(*) FROM auditlog")
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM auditlog WHERE LOWER(operation) LIKE '%{operation}%' {limit}")
     t = await app.db.fetchall(dhrid)
     tot = t[0][0]
 

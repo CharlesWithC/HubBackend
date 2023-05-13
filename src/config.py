@@ -615,6 +615,10 @@ def validateConfig(cfg):
     # v2.5.10
     if 'sync_discord_email' not in cfg.keys():
         cfg["sync_discord_email"] = True
+    
+    # v2.5.11
+    if "language" in cfg.keys():
+        cfg["language"] = cfg["language"].lower()
 
     tcfg = {}
     for key in config_keys_order:

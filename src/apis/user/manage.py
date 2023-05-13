@@ -247,7 +247,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     return Response(status_code=204)
 
 async def get_ban_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, query: Optional[str] = "", \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
     """Returns the information of a list of banned users"""
     app = request.app
@@ -279,9 +279,8 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    order = order.upper()
     
-    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{query}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{query}%' ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -294,13 +293,11 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
         steamid = str(tt[3]) if tt[3] is not None else None
         ret.append({"user": userinfo, "meta": {"uid": tt[0], "email": tt[1], "discordid": discordid, "steamid": steamid, "truckersmpid": tt[4]}, "ban": {"reason": tt[5], "expire": tt[6]}})
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM banned WHERE reason LIKE '%{query}%'")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
+    if after_uid is not None:
+        while len(ret) > 0 and ret[0]["meta"]["uid"] != after_uid:
+            ret = ret[1:]
 
-    return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
+    return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_ban(request: Request, response: Response, authorization: str = Header(None), \
     uid: Optional[int] = None, email: Optional[str] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):

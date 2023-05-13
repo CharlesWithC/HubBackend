@@ -34,8 +34,9 @@ async def get_all_merch(request: Request, response: Response, authorization: str
     return app.config.economy.merch
 
 async def get_merch_list(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, merchid: Optional[str] = "", \
-        owner: Optional[int] = None, min_price: Optional[int] = None, max_price: Optional[int] = None, \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_itemid: Optional[int] = None, \
+        merchid: Optional[str] = "", owner: Optional[int] = None, \
+        min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
         order_by: Optional[str] = "price", order: Optional[int] = "desc"):
     '''Get a list of owned merch.'''
@@ -85,20 +86,28 @@ async def get_merch_list(request: Request, response: Response, authorization: st
     
     order_by = "buy_price" if order_by == "price" else order_by
 
-    if order.lower() not in ['asc', 'desc']:
+    if order not in ['asc', 'desc']:
         order = "asc"
     
-    await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT itemid FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_itemid is not None:
+        for tt in t:
+            if tt[0] == after_itemid:
+                break
+            base_rows += 1
+        tot -= base_rows
+            
+    await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         ret.append({"itemid": tt[0], "merchid": tt[1], "owner": await GetUserInfo(request, userid = tt[2]), "price": tt[3], "purchase_timestamp": tt[5]})
-    
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_merch WHERE itemid >= 0 {limit}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 

@@ -119,7 +119,7 @@ async def EventNotification(app):
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
-        first_event_after: Optional[int] = None):
+        after: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -141,8 +141,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
             userid = au["userid"]
             await ActivityUpdate(request, au["uid"], "events")
     
-    if first_event_after is None:
-        first_event_after = int(time.time()) - 86400
+    if after is None:
+        after = int(time.time()) - 86400
 
     limit = ""
     if userid == -1:
@@ -156,7 +156,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -170,13 +170,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
                     "attendees": attendee_cnt, "votes": vote_cnt})
     
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {first_event_after} {limit}")
+    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {after} {limit}")
     t = await app.db.fetchall(dhrid)
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
         
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {first_event_after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(max(page-1, 0) * page_size - tot,0)}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(max(page-1, 0) * page_size - tot,0)}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         attendee_cnt = 0

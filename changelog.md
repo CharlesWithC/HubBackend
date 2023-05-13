@@ -1,5 +1,26 @@
 # Changelog
 
+**v2.5.11**  
+1.Added `?after` to **GET** `/audit/list`  
+2.Added `?after_logid` to **GET** `/dlog/list`  
+3.Added `?after_userid`, `?min_point`/`?max_point` to **GET** `/dlog/leaderboard`  
+4.Added `?after_userid` to **GET** `/member/list`  
+5.Added `?after_uid` to **GET** `/user/list`, `/user/ban/list`  
+6.Added `?after_notificationid` to **GET** `/user/notification/list`  
+7.Added `?after_announcementid` to **GET** `/announcements/list`  
+\* Note: `?order_by` has been removed from the above endpoint  
+8.Added `?after_applicationid` to **GET** `/applications/list`  
+9.Added `?after_challengeid` to **GET** `/challenges/list`  
+10.Added `?after_logid`, `?order`/`?order_by=logid|user|request_timestamp` to **GET** `/divisions/list/pending`  
+11.Added `?after_downloadsid` to **GET** `/downloads/list`  
+12.Renamed `?first_event_after` to `?after` for **GET** `/events/list`  
+13.Added `?after_userid` to **GET** `/economy/balance/leaderboard`  
+14.Added `?after_garageid` to **GET** `/economy/garages/list`  
+15.Added `?after_slotid` to **GET** `/economy/garages/slots/list`  
+16.Added `?after_itemid` to **GET** `/economy/merch/list`  
+17.Added `?after_vehicleid` to **GET** `/economy/trucks/list`  
+18.Added `?after_txid`/`?after`/`?before` to **GET** `/economy/trucks/{vehicleid}/{operation}/history`  
+
 **v2.5.10**  
 1.Prevented **POST** `/tracksim/update/route` from being loaded when `tracker` plugin is not activated  
 2.Fixed `UpdateRoleConnection` not working as expected due to `GetUserInfo` cache  

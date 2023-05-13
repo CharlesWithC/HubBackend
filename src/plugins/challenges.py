@@ -44,7 +44,8 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # if userid is specified, then add "finished_delivery_count"
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, after_challengeid: Optional[int] = None, \
+        query: Optional[str] = "", \
         after: Optional[int] = None, before: Optional[int] = None, challenge_type: Optional[int] = None,
         required_role: Optional[int] = None, \
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
@@ -103,14 +104,28 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "reward_points"
         order = "desc"
     
-    if order.lower() not in ["asc", "desc"]:
+    if order not in ["asc", "desc"]:
         order = "asc"
     
-    query_limit += f"ORDER BY {order_by} {order.upper()}"
+    query_limit += f"ORDER BY {order_by} {order}"
 
     ret = []
+    
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT challengeid FROM challenge {query_limit}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_challengeid is not None:
+        for tt in t:
+            if tt[0] == after_challengeid:
+                break
+            base_rows += 1
+        tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -152,13 +167,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 "start_time": tt[2], "end_time": tt[3],\
                 "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
                 "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "completed": completed})
-    
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge {query_limit}")
-    t = await app.db.fetchall(dhrid)
-    
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -207,7 +215,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         p = json.loads(decompress(tt[10]))
         jobreq = {}
         for i in range(0,len(p)):
-            jobreq[JOB_REQUIREMENTS[i]] = str(p[i])
+            jobreq[JOB_REQUIREMENTS[i]] = JOB_REQUIREMENT_TYPE[JOB_REQUIREMENTS[i]](p[i])
 
     current_delivery_count = 0
     if tt[4] in [1,3]:

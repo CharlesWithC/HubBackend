@@ -15,7 +15,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
         speed_limit: Optional[int] = None, userid: Optional[int] = None, \
-        after: Optional[int] = None, before: Optional[int] = None, game: Optional[int] = None, status: Optional[int] = 1,\
+        after_logid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
+        game: Optional[int] = None, status: Optional[int] = 1,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
     app = request.app
     dhrid = request.state.dhrid
@@ -53,7 +54,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "topspeed"
     if order_by == "views":
         order_by = "view_count"
-    order = order.upper()
 
     limit = ""
     if quserid is not None:
@@ -84,8 +84,15 @@ async def get_list(request: Request, response: Response, authorization: str = He
             pass
     
     timelimit = ""
-    if after is not None and before is not None:
-        timelimit = f"AND dlog.timestamp >= {after} AND dlog.timestamp <= {before}"
+    if after is not None:
+        timelimit += f"AND dlog.timestamp >= {after} "
+    if before is not None:
+        timelimit += f"AND dlog.timestamp <= {before} "
+    if after_logid is not None:
+        if order == "asc":
+            timelimit += f"AND dlog.logid >= {after_logid} "
+        elif order == "desc":
+            timelimit += f"AND dlog.logid <= {after_logid} "
     
     if speed_limit is not None:
         speed_limit = f" AND dlog.topspeed <= {speed_limit}"

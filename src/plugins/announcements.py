@@ -14,8 +14,9 @@ from functions import *
 
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int]= -1, page_size: Optional[int] = 10, order: Optional[str] = "desc", \
-        order_by: Optional[str] = "announcementid", query: Optional[str] = ""):
+        page: Optional[int]= -1, page_size: Optional[int] = 10, \
+        order: Optional[str] = "desc", \
+        after_announcementid: Optional[int] = None, query: Optional[str] = ""):
     app = request.app    
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -37,26 +38,27 @@ async def get_list(request: Request, response: Response, authorization: str = He
             userid = au["userid"]
             await ActivityUpdate(request, au["uid"], "announcements")
     
+    if page_size <= 1:
+        page_size = 1
+    elif page_size >= 100:
+        page_size = 100
+    
+    if order not in ["asc", "desc"]:
+        order = "asc"
+
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0 "
     if query != "":
         query = convertQuotation(query)
         limit += f"AND title LIKE '%{query[:200]}%' "
+    if after_announcementid is not None:
+        if order == "asc":
+            limit += f"AND announcementid >= {after_announcementid} "
+        elif order == "desc":
+            limit += f"AND announcementid <= {after_announcementid} "
 
-    if page_size <= 1:
-        page_size = 1
-    elif page_size >= 100:
-        page_size = 100
-    
-    if order_by not in ["announcementid", "title"]:
-        order_by = "announcementidid"
-        order = "asc"
-    if order not in ["asc", "desc"]:
-        order = "asc"
-    order = order.upper()
-
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY announcementid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

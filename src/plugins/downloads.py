@@ -14,8 +14,8 @@ from functions import *
 
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None),
-        page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        order_by: Optional[str] = "orderid", order: Optional[int] = "asc", \
+        page: Optional[int] = 1, page_size: Optional[int] = 10, after_downloadsid: Optional[int] = None, \
+        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
         query: Optional[str] = "", creator_userid: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
@@ -50,14 +50,27 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["orderid", "downloadsid", "title", "click_count"]:
+    if order_by not in ["orderid", "downloadsid", "click_count"]:
         order_by = "orderid"
         order = "asc"
     if order not in ["asc", "desc"]:
         order = "asc"
-    order = order.upper()    
 
-    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT downloadsid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_downloadsid is not None:
+        for tt in t:
+            if tt[0] == after_downloadsid:
+                break
+            base_rows += 1
+        tot -= base_rows
+            
+    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -65,12 +78,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
             ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[6], "click_count": tt[5]})
         else:
             ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "click_count": tt[5]})
-        
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 

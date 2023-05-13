@@ -118,7 +118,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "country"
     if order not in ['asc', 'desc']:
         order = "asc"
-    order = order.upper()
 
     ret = []
     await app.db.execute(dhrid, f"SELECT token, ip, timestamp, country, user_agent, last_used_timestamp FROM session \
@@ -244,7 +243,6 @@ async def get_application_list(request: Request, response: Response, authorizati
         order = "desc"
     if order not in ['asc', 'desc']:
         order = "asc"
-    order = order.upper()
 
     ret = []
     await app.db.execute(dhrid, f"SELECT app_name, token, timestamp, last_used_timestamp FROM application_token \
