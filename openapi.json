@@ -778,10 +778,46 @@
                         "required": true,
                         "schema": {
                             "title": "Notification ID",
-                            "type": "string"
+                            "type": "integer"
                         },
                         "name": "notificationid",
                         "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/user/notification": {
+            "delete": {
+                "summary": "Delete Notification",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "delete_user_notification",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "After (Notification ID)",
+                            "type": "integer"
+                        },
+                        "name": "after_notificationid",
+                        "in": "query"
+                    },
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Before (Notification ID)",
+                            "type": "integer"
+                        },
+                        "name": "before_notificationid",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

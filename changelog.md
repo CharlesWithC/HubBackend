@@ -20,6 +20,7 @@
 16.Added `?after_itemid` to **GET** `/economy/merch/list`  
 17.Added `?after_vehicleid` to **GET** `/economy/trucks/list`  
 18.Added `?after_txid`/`?after`/`?before` to **GET** `/economy/trucks/{vehicleid}/{operation}/history`  
+19.Added **DELETE** `/user/notification` to delete notifications for current user / all users  
 
 **v2.5.10**  
 1.Prevented **POST** `/tracksim/update/route` from being loaded when `tracker` plugin is not activated  

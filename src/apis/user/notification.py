@@ -102,6 +102,37 @@ async def get_notification(request: Request, response: Response, notificationid:
     tt = t[0]
     return {"notificationid": tt[0], "content": tt[1], "timestamp": tt[2], "read": TF[tt[3]]}
 
+async def delete_notification(request: Request, response: Response, after_notificationid: int, before_notificationid: int, authorization: str = Header(None)):
+    """Delete a range of notifications (for authorized users / for all users)"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'DELETE /user/notification', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+    
+    # first delete for current user
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid} AND notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
+    await app.db.commit(dhrid)
+    
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "delete_notifications"])
+    if not au["error"]:
+        # then delete for all users
+        await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
+        await app.db.commit(dhrid)
+    
+    return Response(status_code=204)
+
 async def patch_status(request: Request, response: Response, notificationid: str, status: int, authorization: str = Header(None)):
     """Updates status of a specific notification of the authorized user"""
     app = request.app

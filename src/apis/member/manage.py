@@ -317,7 +317,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hr", "hrm", "dismiss_member"])
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "dismiss_member"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

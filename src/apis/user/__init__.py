@@ -33,6 +33,7 @@ routes = [
     APIRoute("/user/notification/settings/{notification_type}/disable", notification.post_settings_disable, methods=["POST"], response_class=JSONResponse),
     # this has to be put in the end, due to the speciality of the path
     APIRoute("/user/notification/{notificationid}", notification.get_notification, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/user/notification", notification.delete_notification, methods=["DELETE"], response_class=JSONResponse),
     APIRoute("/user/notification/{notificationid}/status/{status}", notification.patch_status, methods=["PATCH"], response_class=JSONResponse),
 
     APIRoute("/user/{uid}/accept", manage.post_accept, methods=["POST"], response_class=JSONResponse),

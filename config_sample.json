@@ -251,6 +251,7 @@
         "update_application_positions": [],
         "delete_application": [],
         "delete_dlog": [],
+        "delete_notifications": [],
 
         "hr": [],
         "manage_profile": [],
