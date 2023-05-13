@@ -34,7 +34,7 @@ async def ProcessDiscordMessage(app): # thread
                 except:
                     return
                 continue
-            
+
             # get first in queue
             channelid = app.state.discord_message_queue[0][0]
             data = app.state.discord_message_queue[0][1]
@@ -77,7 +77,7 @@ async def ProcessDiscordMessage(app): # thread
                 if len(t) != 0:
                     uid = t[0][0]
                     await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
-                    
+
                     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
                     settingsok = False
 
@@ -112,10 +112,10 @@ async def ProcessDiscordMessage(app): # thread
             elif r.status_code == 200 or r.status_code >= 400 and r.status_code <= 499:
                 for i in to_delete[::-1]:
                     app.state.discord_message_queue.pop(i)
-            
+
         except:
             pass
-            
+
         try:
             await asyncio.sleep(1)
         except:
@@ -141,7 +141,7 @@ async def SendDiscordNotification(request, uid, data):
 async def CheckNotificationEnabled(request, notification_type, uid):
     if uid is None:
         return False
-    
+
     (app, dhrid) = (request.app, request.state.dhrid)
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
@@ -161,9 +161,9 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
         no_discord_notification = False, discord_embed = {}):
     if uid is None or int(uid) < 0:
         return
-    
+
     dhrid = request.state.dhrid
-    app = request.app    
+    app = request.app
     settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -180,14 +180,14 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
     if settings["drivershub"] and not no_drivershub_notification:
         await app.db.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{convertQuotation(content)}', {int(time.time())}, 0)")
         await app.db.commit(dhrid)
-    
+
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"], 
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"],
                 "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
         else:
-            await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
                 "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
 
@@ -229,19 +229,19 @@ async def AutoMessage(app, meta, setvar):
         data = json.dumps({
             "content": setvar(meta.content),
             "embeds": [{
-                "title": setvar(meta.embed.title), 
-                "description": setvar(meta.embed.description), 
+                "title": setvar(meta.embed.title),
+                "description": setvar(meta.embed.description),
                 "footer": {
-                    "text": setvar(meta.embed.footer.text), 
+                    "text": setvar(meta.embed.footer.text),
                     "icon_url": setvar(meta.embed.footer.icon_url)
-                }, 
+                },
                 "image": {
                     "url": setvar(meta.embed.image_url)
                 },
                 "timestamp": timestamp,
                 "color": int(app.config.hex_color, 16)
             }]})
-        
+
         if meta.webhook_url != "":
             r = await arequests.post(app, meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
             if r.status_code == 401:

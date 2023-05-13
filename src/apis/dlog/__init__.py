@@ -13,7 +13,7 @@ routes = [
     APIRoute("/dlog/list", info.get_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/leaderboard", leaderboard.get_leaderboard, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/export", export.get_export, methods=["GET"], response_class=JSONResponse),
-    
+
     APIRoute("/dlog/statistics/summary", statistics.get_summary, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/statistics/chart", statistics.get_chart, methods=["GET"], response_class=JSONResponse),
 

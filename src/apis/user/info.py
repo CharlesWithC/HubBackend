@@ -15,7 +15,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, query: Optional[str] = '', \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
     """Returns the information of a list of users
-    
+
     Not all information is included, use `/user/profile` for detailed profile."""
     app = request.app
     dhrid = request.state.dhrid
@@ -37,9 +37,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page_size = 1
     elif page_size >= 250:
         page_size = 250
-    
+
     query = convertQuotation(query).lower()
-    
+
     if order_by not in ['name', 'email', 'uid', 'discordid', 'steamid', 'truckersmpid', 'join_timestamp']:
         order_by = "discordid"
         order = "asc"
@@ -48,7 +48,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    
+
     await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -71,7 +71,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 async def get_profile(request: Request, response: Response, authorization: str = Header(None), \
     userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):
     """Returns the profile of a specific user
-    
+
     If no request param is provided, then returns the profile of the authorized user."""
     app = request.app
     dhrid = request.state.dhrid
@@ -82,7 +82,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     request_uid = -1
     aulanguage = ""
     if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None:
@@ -128,10 +128,10 @@ async def get_profile(request: Request, response: Response, authorization: str =
         return {"error": ml.tr(request, "user_not_found", force_lang = aulanguage)}
     userid = t[0][0]
     uid = t[0][1]
-    
+
     if userid >= 0:
         await ActivityUpdate(request, request_uid, f"member_{userid}")
-    
+
     userinfo = await GetUserInfo(request, uid = uid)
     (uid, discordid, steamid, truckersmpid, email) = (userinfo["uid"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"], userinfo["email"])
     uid = uid if uid is not None else "NULL"
@@ -153,7 +153,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
     """Updates the profile of a specific user
 
     If `sync_to_discord` is `true`, then syncs to their Discord profile.
-    
+
     If `uid` in request param is not provided, then syncs the profile for the authorized user."""
     app = request.app
     dhrid = request.state.dhrid
@@ -198,7 +198,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
                 return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
             else:
                 return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"}, force_lang = au["language"])}
-        
+
         if app.config.discord_bot_token == "":
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
@@ -230,10 +230,10 @@ async def patch_profile(request: Request, response: Response, authorization: str
             name = convertQuotation(d["nick"])
         if d["user"]["avatar"] is not None:
             avatar = getAvatarSrc(discordid, d["user"]["avatar"])
-            
+
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
-    
+
     elif sync_to_steam:
         await app.db.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
@@ -271,7 +271,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
         if not staffmode and not app.config.allow_custom_profile:
             response.status_code = 403
             return {"error": ml.tr(request, "custom_profile_disabled", force_lang = au["language"])}
-        
+
         data = await request.json()
         try:
             name = convertQuotation(data["name"])
@@ -285,12 +285,12 @@ async def patch_profile(request: Request, response: Response, authorization: str
         except:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-            
+
         avatar_domain = getDomainFromUrl(avatar)
         if not avatar_domain:
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_avatar_url", force_lang = au["language"])}
-        
+
         ok = False
         for domain in app.config.avatar_domain_whitelist:
             if avatar_domain == domain or avatar_domain.endswith("." + domain): # domain / subdomain
@@ -298,17 +298,17 @@ async def patch_profile(request: Request, response: Response, authorization: str
         if not ok:
             response.status_code = 400
             return {"error": ml.tr(request, "avatar_domain_not_whitelisted", force_lang = au["language"])}
-        
+
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
-        
+
         await UpdateRoleConnection(request, discordid)
 
     return Response(status_code=204)
-    
+
 async def patch_bio(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the bio of the authorized user, returns 204
-    
+
     JSON: `{"bio": str}`"""
     app = request.app
     dhrid = request.state.dhrid

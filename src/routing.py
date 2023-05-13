@@ -35,7 +35,7 @@ def initRoutes(config_paths, openapi_path, first_init = False, enable_performanc
     if len(routes) == 0:
         logger.warning("No valid config is loaded, quited.")
         os._exit(42)
-    
+
     if first_init:
         logger.info("")
 

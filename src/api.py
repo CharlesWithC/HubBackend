@@ -23,7 +23,7 @@ from threads import *
 
 # NOTE Due to FastAPI not supporting events for sub-applications, we'll have to detour like this
 # The startup_event will be called by middleware once at least one request is sent
-async def startup_event(app):   
+async def startup_event(app):
     await app.db.create_pool()
 
     dhrid = 0
@@ -94,7 +94,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
         if "json.decoder.JSONDecodeError" in err:
             # unable to parse json
             return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
-        
+
         for keyword in app.config.mysql_err_keywords:
             if keyword in err.lower():
                 ismysqlerr = True
@@ -125,9 +125,9 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
                     logger.info("Restarting service due to database errors")
                     threading.Thread(target=restart, args=(app,)).start()
                     app.state.dberr.append(-1)
-                    
+
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
-        
+
         else:
             if err_hash in app.state.session_errs:
                 # recognized error, do not print log or send webhook
@@ -154,7 +154,7 @@ class HubMiddleware(BaseHTTPMiddleware):
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json."}, status_code=400)
-        if "started" not in app.state.__dict__["_state"].keys(): 
+        if "started" not in app.state.__dict__["_state"].keys():
             app.state.started = True
             await startup_event(app)
         if request.client is None:

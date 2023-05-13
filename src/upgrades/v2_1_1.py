@@ -29,8 +29,8 @@ def run(app):
             print(f"updated nxtuserid in settings to {nxtuserid}")
             cur.execute(f"UPDATE settings SET sval = '{nxtuserid}' WHERE skey = 'nxtuserid'")
     conn.commit()
-    
+
     cur.close()
     conn.close()
-    
+
     print("Upgrade finished")

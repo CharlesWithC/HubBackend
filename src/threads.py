@@ -84,7 +84,7 @@ async def ClearOutdatedData(app):
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 uid = tt[0]
-                
+
                 await app.db.execute(dhrid, f"SELECT discordid FROM user WHERE uid = {uid}")
                 p = await app.db.fetchall(dhrid)
                 if len(p) > 0:
@@ -101,17 +101,17 @@ async def ClearOutdatedData(app):
                 await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {uid}")
                 await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
                 await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid}")
-            
+
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
         except:
             pass
-        
+
         try:
             await asyncio.sleep(30)
         except:
             return
-        
+
 async def RefreshDiscordAccessToken(app):
     while 1:
         try:

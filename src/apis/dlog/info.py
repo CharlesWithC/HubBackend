@@ -29,7 +29,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.headers[k] = rl[1][k]
 
     quserid = userid
-    
+
     userid = -1
     if authorization is not None:
         au = await auth(authorization, request, allow_application_token = True, check_member = False)
@@ -39,7 +39,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             return au
         userid = au["userid"]
         await ActivityUpdate(request, au["uid"], "dlogs")
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
@@ -82,7 +82,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             limit += f"AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1 AND division.divisionid = {divisionid}) "
         except:
             pass
-    
+
     timelimit = ""
     if after is not None:
         timelimit += f"AND dlog.timestamp >= {after} "
@@ -93,7 +93,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             timelimit += f"AND dlog.logid >= {after_logid} "
         elif order == "desc":
             timelimit += f"AND dlog.logid <= {after_logid} "
-    
+
     if speed_limit is not None:
         speed_limit = f" AND dlog.topspeed <= {speed_limit}"
     else:
@@ -139,7 +139,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 continue
             challengeids.append(pp[1])
             challengenames.append(pp[2])
-        
+
         challenge = []
         for i in range(len(challengeids)):
             challenge.append({"challengeid": challengeids[i], "name": challengenames[i]})
@@ -170,7 +170,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         profit = tt[4]
         unit = tt[5]
-        
+
         userinfo = await GetUserInfo(request, userid = tt[0])
         if userid == -1 and app.config.privacy:
             userinfo = await GetUserInfo(request, privacy = True)
@@ -216,7 +216,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
             return au
         userid = au["userid"]
         uid = au["uid"]
-    
+
     if logid is None:
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
@@ -234,7 +234,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
         del data["data"]["object"]["driver"]
     distance = t[0][3]
     view_count = t[0][4] + 1
-    
+
     tracker = "unknown"
     trackerid = t[0][5]
     tracker_type = t[0][6]
@@ -275,7 +275,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     o = await app.db.fetchall(dhrid)
     for oo in o:
         challenge_record.append(oo[0])
-    
+
     await app.db.execute(dhrid, f"UPDATE dlog SET view_count = view_count + 1 WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
@@ -319,7 +319,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
         response.status_code = 404
         return {"error": ml.tr(request, "delivery_log_not_found")}
     userid = t[0][0]
-    
+
     await app.db.execute(dhrid, f"DELETE FROM dlog WHERE logid = {logid}")
     await app.db.commit(dhrid)
 

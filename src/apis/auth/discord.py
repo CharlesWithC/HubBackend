@@ -20,11 +20,11 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
     if code is None and error_description is None or callback_url is None:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_params")}
-    
+
     if code is None and error_description is not None:
         response.status_code = 400
         return {"error": error_description}
-    
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -37,7 +37,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
     try:
         discord_auth = DiscordAuth(app.config.discord_client_id, app.config.discord_client_secret, callback_url)
         tokens = await discord_auth.get_tokens(code)
-        
+
         if "access_token" in tokens.keys():
             await app.db.extend_conn(dhrid, 30)
             user_data = await discord_auth.get_user_data_from_token(tokens["access_token"])
@@ -46,7 +46,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             if "id" not in user_data:
                 response.status_code = 400
                 return {"error": user_data['message']}
-            
+
             discordid = user_data['id']
             username = str(user_data['username'])
             username = convertQuotation(username).replace(",","")
@@ -60,7 +60,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
 
             await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
             await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
-            
+
             (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE discordid = {discordid}")
             await app.db.execute(dhrid, f"INSERT INTO discord_access_token VALUES ({discordid}, '{convertQuotation(callback_url)}', '{access_token}', '{refresh_token}', {expire_timestamp})")
@@ -72,7 +72,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 if "discord" not in app.config.register_methods:
                     response.status_code = 404
                     return {"error": ml.tr(request, "user_not_found")}
-        
+
                 if app.config.use_server_nickname:
                     try:
                         r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
@@ -82,7 +82,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                                 username = convertQuotation(d["nick"])
                     except:
                         pass
-                        
+
                 await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '{email}', '{avatar}', '', '', {discordid}, NULL, NULL, {int(time.time())}, '')")
                 await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
                 uid = (await app.db.fetchone(dhrid))[0]
@@ -118,7 +118,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                     return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
                 else:
                     return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
-            
+
             await app.db.execute(dhrid, f"SELECT status FROM pending_user_deletion WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
@@ -131,7 +131,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 elif status == 0:
                     await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
                     await app.db.commit(dhrid)
-            
+
             stoken = str(uuid.uuid4())
             while stoken[0] == "e":
                 stoken = str(uuid.uuid4())
@@ -144,16 +144,16 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
             language = await GetUserLanguage(request, uid)
             await AuditLog(request, uid, ml.ctr(request, "discord_login", var = {"country": getRequestCountry(request)}))
 
-            await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
-                discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
-                                 "description": "", 
-                                 "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True}, 
+            await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
+                discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
+                                 "description": "",
+                                 "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
                                             {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
                 }
             )
 
             return {"token": stoken, "mfa": False}
-        
+
         elif 'error_description' in tokens.keys():
             response.status_code = 400
             return {"error": tokens['error_description']}

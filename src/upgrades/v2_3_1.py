@@ -74,5 +74,5 @@ def run(app):
 
     cur.close()
     conn.close()
-    
+
     print("Fix finished")

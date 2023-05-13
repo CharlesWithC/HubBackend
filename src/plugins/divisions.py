@@ -37,9 +37,9 @@ async def get_division(request: Request, response: Response, authorization: str 
         after = 0
     if before is None:
         before = max(int(time.time()), 32503651200)
-        
+
     await ActivityUpdate(request, au["uid"], "divisions")
-    
+
     stats = []
     for division in app.config.divisions:
         division_id = division["id"]
@@ -60,13 +60,13 @@ async def get_division(request: Request, response: Response, authorization: str 
         t = await app.db.fetchone(dhrid)
         distancetot = nint(t[0])
         fueltot = nint(t[1])
-        
+
         await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
                              LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 1 \
                              WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
                              AND division.request_timestamp >= {after} AND division.request_timestamp <= {before}")
         europrofit = nint(await app.db.fetchone(dhrid))
-        
+
         await app.db.execute(dhrid, f"SELECT SUM(dlog.profit) FROM division \
                              LEFT JOIN dlog ON division.logid = dlog.logid AND dlog.unit = 2 \
                              WHERE division.status = 1 AND division.divisionid = {division_id} AND division.logid >= 0 \
@@ -74,9 +74,9 @@ async def get_division(request: Request, response: Response, authorization: str 
         dollarprofit = nint(await app.db.fetchone(dhrid))
 
         profit = {"euro": europrofit, "dollar": dollarprofit}
-        
+
         stats.append({"divisionid": division_id, "name": division['name'], "drivers": usertot, "points": pointtot, "jobs": jobstot, "distance": distancetot, "fuel": fueltot, "profit": profit})
-    
+
     return stats
 
 async def get_dlog_division(request: Request, response: Response, logid: int, authorization: str = Header(None)):
@@ -97,7 +97,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
         return au
     userid = au["userid"]
     roles = au["roles"]
-        
+
     await app.db.execute(dhrid, f"SELECT divisionid, userid, request_timestamp, status, update_timestamp, update_staff_userid, message FROM division WHERE logid = {logid} AND logid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -153,7 +153,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     discordid = au["discordid"]
     userid = au["userid"]
     roles = au["roles"]
-        
+
     await app.db.execute(dhrid, f"SELECT userid FROM dlog WHERE logid = {logid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -175,7 +175,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
             return {"error": ml.tr(request, "division_already_validated", force_lang = au["language"])}
         elif status == 2:
             return {"error": ml.tr(request, "division_already_denied", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT roles FROM user WHERE userid = {userid}")
     t = await app.db.fetchall(dhrid)
     roles = str2list(t[0][0])
@@ -191,10 +191,10 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     if not checkPerm(app, roles, "admin") and divisionid not in joined_divisions:
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"INSERT INTO division VALUES ({logid}, {divisionid}, {userid}, {int(time.time())}, 0, -1, -1, '')")
     await app.db.commit(dhrid)
-    
+
     language = await GetUserLanguage(request, uid)
     await notification(request, "division", uid, ml.tr(request, "division_validation_request_submitted", var = {"logid": logid}, force_lang = language), \
         discord_embed = {"title": ml.tr(request, "division_validation_request_submitted_title", force_lang = language), "description": "", \
@@ -213,13 +213,13 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     if app.config.webhook_division != "":
         try:
             author = {"name": tt[1], "icon_url": avatar}
-                
+
             r = await arequests.post(app, app.config.webhook_division, data=json.dumps({"content": app.config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
             pass
-        
+
     return Response(status_code=204)
 
 async def patch_dlog_division(request: Request, response: Response, logid: int, divisionid: int, authorization: str = Header(None)):
@@ -238,7 +238,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-        
+
     data = await request.json()
     try:
         message = str(data["message"])
@@ -249,7 +249,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT divisionid, status, userid FROM division WHERE logid = {logid} AND logid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -258,7 +258,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     if divisionid not in app.division_name.keys():
         divisionid = t[0][0]
     userid = t[0][2]
-        
+
     await app.db.execute(dhrid, f"UPDATE division SET divisionid = {divisionid}, status = {status}, update_staff_userid = {au['userid']}, update_timestamp = {int(time.time())}, message = '{compress(message)}' WHERE logid = {logid}")
     await app.db.commit(dhrid)
 
@@ -299,7 +299,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
@@ -308,10 +308,10 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     if order_by not in ["logid", "userid", "request_timestamp"]:
         order_by = "request_timestamp"
         order = "asc"
-    
+
     if order not in ["asc", "desc"]:
         order = "asc"
-        
+
     limit = ""
     if divisionid is not None:
         limit = f"AND divisionid = {divisionid}"

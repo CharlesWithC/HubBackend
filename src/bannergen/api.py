@@ -84,10 +84,10 @@ async def get_banner(request: Request, response: Response):
     try:
         # validate color
         tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-        int(hex_color, 16) 
+        int(hex_color, 16)
     except:
         hex_color = "2fc1f7"
-    
+
     for fi in os.listdir("/tmp/hub/banner"):
         if time.time() - os.path.getmtime(f"/tmp/hub/banner/{fi}") > 1800:
             os.remove(f"/tmp/hub/banner/{fi}")
@@ -123,7 +123,7 @@ async def get_banner(request: Request, response: Response):
                 logo = logo.resize((200, 200), resample=Image.ANTIALIAS).convert("RGBA")
                 logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
                 logo_datas = logo.getdata()
-                
+
                 logo_large.putdata(logo_large_datas)
                 logo_large = logo_large.resize((1700, 1700), resample=Image.ANTIALIAS).convert("RGB")
 
@@ -143,7 +143,7 @@ async def get_banner(request: Request, response: Response):
                             fg = logo_datas[i*200+j]
                             datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
                 logo_bg.putdata(datas)
-                banner.paste(logo_bg, (1475, 25, 1675, 225))              
+                banner.paste(logo_bg, (1475, 25, 1675, 225))
 
         except:
             pass
@@ -156,7 +156,7 @@ async def get_banner(request: Request, response: Response):
         draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH45)
 
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
-    
+
     avatar = data["avatar"]
     avatarh = hashlib.sha256(avatar.encode()).hexdigest()[:16]
 
@@ -310,6 +310,6 @@ async def get_banner(request: Request, response: Response):
     output = BytesIO()
     banner.save(output, "jpeg", optimize = True)
     open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","wb").write(output.getvalue())
-    
+
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
     return response

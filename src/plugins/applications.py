@@ -15,7 +15,7 @@ from functions import *
 # Basic Info
 async def get_types(request: Request):
     app = request.app
-    
+
     return app.config.application_types
 
 async def get_positions(request: Request):
@@ -98,7 +98,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ["asc", "desc"]:
         order = "asc"
-        
+
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
@@ -122,7 +122,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
-        
+
         if after_applicationid is not None:
             if order == "asc":
                 limit += f"AND applicationid >= {after_applicationid} "
@@ -131,7 +131,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
-        
+
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} {limit}")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
@@ -150,7 +150,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             if len(allowed_application_types) == 0:
                 response.status_code = 403
                 return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
-        
+
             if application_type is None: # show all type
                 limit = " WHERE ("
                 for tt in allowed_application_types:
@@ -159,13 +159,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 limit += ")"
             else:
                 limit = f" WHERE application_type = {application_type} "
-        
+
         if status is not None and status in [0,1,2]:
             if "WHERE" not in limit:
                 limit = f" WHERE status = {status} "
             else:
                 limit += f" AND status = {status} "
-                
+
         if after_applicationid is not None:
             if order == "asc":
                 limit += f"AND applicationid >= {after_applicationid} "
@@ -174,7 +174,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
-        
+
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")
         p = await app.db.fetchall(dhrid)
         if len(t) > 0:
@@ -212,7 +212,7 @@ async def get_application(request: Request, response: Response, applicationid: i
         return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
 
     application_type = t[0][1]
-    
+
     if not checkPerm(app, roles, "admin") and uid != t[0][2]:
         ok = False
         for tt in app.config.application_types:
@@ -294,7 +294,7 @@ async def post_application(request: Request, response: Response, authorization: 
                 ok = True
         if not ok:
             response.status_code = 403
-            return {"error": ml.tr(request, "must_be_driver_to_submit_division_application", force_lang = au["language"])}        
+            return {"error": ml.tr(request, "must_be_driver_to_submit_division_application", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND submit_timestamp >= {int(time.time()) - 7200}")
     p = await app.db.fetchall(dhrid)
@@ -352,9 +352,9 @@ async def post_application(request: Request, response: Response, authorization: 
             pass
 
     language = await GetUserLanguage(request, uid)
-    await notification(request, "application", uid, ml.tr(request, "application_submitted", 
-            var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language), 
-        discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "", 
+    await notification(request, "application", uid, ml.tr(request, "application_submitted",
+            var = {"application_type": application_type_text, "applicationid": applicationid}, force_lang = language),
+        discord_embed = {"title": ml.tr(request, "application_submitted_title", force_lang = language), "description": "",
             "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True},
                        {"name": ml.tr(request, "status", force_lang = language), "value": ml.tr(request, "pending", force_lang = language), "inline": True}]})
 
@@ -367,10 +367,10 @@ async def post_application(request: Request, response: Response, authorization: 
     if webhookurl != "":
         try:
             author = {"name": t[0][0], "icon_url": t[0][1]}
-            
+
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
-                
+
             r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
@@ -431,7 +431,7 @@ async def patch_application(request: Request, response: Response, applicationid:
         if f"[Message] {name} ({userid}) #{i}" not in data.keys():
             break
         i += 1
-        
+
     data[f"[Message] {name} ({userid}) #{i}"] = message
 
     await app.db.execute(dhrid, f"UPDATE application SET data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
@@ -457,10 +457,10 @@ async def patch_application(request: Request, response: Response, applicationid:
     if webhookurl != "":
         try:
             author = {"name": t[0][0], "icon_url": t[0][1]}
-            
+
             if len(msg) > 4000:
                 msg = "*Message too long, please view application in Drivers Hub.*"
-                
+
             r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
@@ -507,7 +507,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
-    
+
     application_type = t[0][1]
     applicant_uid = t[0][2]
 
@@ -544,7 +544,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
 
     await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(request, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
-    await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language), 
+    await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language),
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await app.db.commit(dhrid)
 
@@ -570,13 +570,13 @@ async def delete_application(request: Request, response: Response, applicationid
         del au["code"]
         return au
     roles = au["roles"]
-    
+
     await app.db.execute(dhrid, f"SELECT * FROM application WHERE applicationid = {applicationid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "application_not_found", force_lang = au["language"])}
-    
+
     application_type = t[0][1]
 
     if not checkPerm(app, roles, "admin"):
@@ -591,7 +591,7 @@ async def delete_application(request: Request, response: Response, applicationid
         if not ok:
             response.status_code = 403
             return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
-        
+
     await app.db.execute(dhrid, f"DELETE FROM application WHERE applicationid = {applicationid}")
     await app.db.commit(dhrid)
 

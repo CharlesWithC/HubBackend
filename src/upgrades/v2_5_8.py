@@ -7,14 +7,14 @@ from db import genconn
 def run(app):
     conn = genconn(app, autocommit = True)
     cur = conn.cursor()
-    
+
     print("Renaming 'source' COLUMN to `callback_url` in 'discord_access_token' TABLE")
     try:
         cur.execute("ALTER TABLE discord_access_token RENAME COLUMN source TO callback_url")
         cur.execute("DELETE FROM discord_access_token") # previous source cannot be used as callback_url
     except:
         pass
-    
+
     print("Renaming 'mythpoint' TABLE to 'bonus_point`")
     try:
         cur.execute("ALTER TABLE mythpoint RENAME bonus_point")
@@ -23,5 +23,5 @@ def run(app):
 
     cur.close()
     conn.close()
-    
+
     print("Upgrade finished")

@@ -70,7 +70,7 @@ routes_economy = [
     APIRoute("/economy/balance/{userid}/transactions/list", economy.get_balance_transaction_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/{userid}/transactions/export", economy.get_balance_transaction_export, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/balance/{userid}/visibility/{visibility}", economy.post_balance_visibility, methods=["POST"], response_class=JSONResponse),
-    
+
     APIRoute("/economy/garages", economy.get_all_garages, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/garages/list", economy.get_garage_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}", economy.get_garage, methods=["GET"], response_class=JSONResponse),
@@ -82,7 +82,7 @@ routes_economy = [
     APIRoute("/economy/garages/{garageid}/slots/purchase", economy.post_garage_slot_purchase, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}/slots/{slotid}/transfer", economy.post_garage_slot_transfer, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/garages/{garageid}/slots/{slotid}/sell", economy.post_garage_slot_sell, methods=["POST"], response_class=JSONResponse),
-    
+
     APIRoute("/economy/trucks", economy.get_all_trucks, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/trucks/list", economy.get_truck_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{vehicleid}", economy.get_truck, methods=["GET"], response_class=JSONResponse),
@@ -95,7 +95,7 @@ routes_economy = [
     APIRoute("/economy/trucks/{truckid}/repair", economy.post_truck_repair, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{truckid}/sell", economy.post_truck_sell, methods=["POST"], response_class=JSONResponse),
     APIRoute("/economy/trucks/{truckid}/scrap", economy.post_truck_scrap, methods=["POST"], response_class=JSONResponse),
-    
+
     APIRoute("/economy/merch", economy.get_all_merch, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/merch/list", economy.get_merch_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/economy/merch/{merchid}/purchase", economy.post_merch_purchase, methods=["POST"], response_class=JSONResponse),

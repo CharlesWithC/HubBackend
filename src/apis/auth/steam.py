@@ -17,7 +17,7 @@ async def get_callback(request: Request, response: Response):
     if data == "":
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_params")}
-    
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -41,14 +41,14 @@ async def get_callback(request: Request, response: Response):
         return {"error": ml.tr(request, "invalid_steam_auth")}
     steamid = data.split("openid.identity=")[1].split("&")[0]
     steamid = int(steamid[steamid.rfind("%2F") + 3 :])
-    
+
     await app.db.execute(dhrid, f"SELECT uid, discordid FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         if "steam" not in app.config.register_methods:
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found")}
-        
+
         username = f"Steam User {steamid}"
         avatar = ""
 
@@ -60,7 +60,7 @@ async def get_callback(request: Request, response: Response):
                 avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])
             except:
                 pass
-        
+
         # register user
         await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', '', '{avatar}', '', '', NULL, {steamid}, NULL, {int(time.time())}, '')")
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
@@ -70,7 +70,7 @@ async def get_callback(request: Request, response: Response):
         await AuditLog(request, uid, ml.ctr(request, "steam_register", var = {"country": getRequestCountry(request)}))
     else:
         uid = t[0][0]
-    
+
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
@@ -121,9 +121,9 @@ async def get_callback(request: Request, response: Response):
     username = (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "steam_login", var = {"country": getRequestCountry(request)}))
-    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
-        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
-                         "description": "", 
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
+                         "description": "",
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
                                     {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
         }

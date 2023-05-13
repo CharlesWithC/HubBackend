@@ -70,7 +70,7 @@ def b64e(s):
         return b64encode(s.encode()).decode()
     except:
         return s
-    
+
 def b64d(s):
     s = str(s)
     try:
@@ -127,7 +127,7 @@ def b62decode(d):
 
 def tseparator(num):
     """Thousand Separator"""
-    
+
     flag = ""
     if int(num) < 0:
         flag = "-"

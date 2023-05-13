@@ -13,7 +13,7 @@ from functions import *
 
 
 async def get_token(request: Request, response: Response, authorization: str = Header(None)):
-    app = request.app 
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -34,7 +34,7 @@ async def get_token(request: Request, response: Response, authorization: str = H
     return {"token_type": token_type}
 
 async def patch_token(request: Request, response: Response, authorization: str = Header(None)):
-    app = request.app  
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -105,7 +105,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
@@ -127,7 +127,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         tk = tt[0]
         tk = sha256(tk.encode()).hexdigest()
         ret.append({"hash": tk, "ip": tt[1], "country": getFullCountry(tt[3]), "user_agent": tt[4], "create_timestamp": tt[2], "last_used_timestamp": tt[5]})
-    
+
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM session WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     tot = 0
@@ -232,7 +232,7 @@ async def get_application_list(request: Request, response: Response, authorizati
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
@@ -251,7 +251,7 @@ async def get_application_list(request: Request, response: Response, authorizati
     for tt in t:
         tk = sha256(tt[1].encode()).hexdigest()
         ret.append({"app_name": tt[0], "hash": tk, "create_timestamp": tt[2], "last_used_timestamp": tt[3]})
-    
+
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application_token WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     tot = 0
@@ -277,11 +277,11 @@ async def post_application(request: Request, response: Response, authorization: 
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     data = await request.json()
 
     await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
@@ -296,13 +296,13 @@ async def post_application(request: Request, response: Response, authorization: 
         if not valid_totp(otp, mfa_secret):
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
-    
+
     try:
         app_name = convertQuotation(data["app_name"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     if len(app_name) >= 128:
         response.status_code = 400
         return {"error": ml.tr(request, "content_too_long", var = {"item": "app_name", "limit": "128"}, force_lang = au["language"])}
@@ -310,7 +310,7 @@ async def post_application(request: Request, response: Response, authorization: 
     stoken = str(uuid.uuid4())
     await app.db.execute(dhrid, f"INSERT INTO application_token VALUES ('{app_name}', '{stoken}', {uid}, {int(time.time())}, 0)")
     await app.db.commit(dhrid)
-    
+
     return {"token": stoken}
 
 async def delete_application(request: Request, response: Response, authorization: str = Header(None)):
@@ -330,7 +330,7 @@ async def delete_application(request: Request, response: Response, authorization
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     data = await request.json()
     try:
         hsh = data["hash"]
@@ -348,7 +348,7 @@ async def delete_application(request: Request, response: Response, authorization
             await app.db.execute(dhrid, f"DELETE FROM application_token WHERE token = '{tt[0]}' AND uid = {uid}")
             await app.db.commit(dhrid)
             break
-    
+
     if ok:
         return Response(status_code=204)
     else:
@@ -372,7 +372,7 @@ async def delete_application_all(request: Request, response: Response, authoriza
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {uid}")
     await app.db.commit(dhrid)
 

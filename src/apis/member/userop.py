@@ -32,11 +32,11 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     discordid = au["discordid"]
     userid = au["userid"]
     username = au["name"]
-    
+
     if discordid is None:
         response.status_code = 409
         return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
-    
+
     ratio = 1
     if app.config.distance_unit == "imperial":
         ratio = 0.621371
@@ -72,7 +72,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                 userevent[attendee] = tt[1]
             else:
                 userevent[attendee] += tt[1]
-    
+
     # calculate division
     userdivision = {}
     await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
@@ -82,7 +82,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
             userdivision[oo[0]] = 0
         if oo[1] in app.division_points.keys():
             userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
-    
+
     # calculate bonus
     userbonus = {}
     await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
@@ -91,7 +91,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         if oo[0] not in userbonus.keys():
             userbonus[oo[0]] = 0
         userbonus[oo[0]] += oo[1]
-    
+
     distance = 0
     challengepnt = 0
     eventpnt = 0
@@ -114,7 +114,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     if rankroleid == -1:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
-    
+
     await UpdateRoleConnection(request, discordid)
 
     try:
@@ -128,7 +128,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         except:
             response.status_code = 503
             return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
-            
+
         if r.status_code == 401:
             DisableDiscordIntegration(app)
             response.status_code = 503
@@ -161,7 +161,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                                 await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
                 except:
                     pass
-                
+
                 usermention = f"<@{discordid}>"
                 rankmention = f"<@&{rankroleid}>"
                 def setvar(msg):
@@ -207,7 +207,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT mfa_secret, steamid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
@@ -256,7 +256,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
         await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
         await AuditLog(request, uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
-        
+
     await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
@@ -266,7 +266,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
         meta = Dict2Obj(meta)
         if meta.webhook_url != "" or meta.channel_id != "":
             await AutoMessage(app, meta, setvar)
-        
+
         if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
             for role in meta.role_change:
                 try:
@@ -282,7 +282,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                 except:
                     pass
-    
+
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}
         try:
@@ -304,5 +304,5 @@ async def post_resign(request: Request, response: Response, authorization: str =
 
     await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit"))
     await notification(request, "member", uid, ml.tr(request, "member_resigned", force_lang = await GetUserLanguage(request, uid)))
-    
+
     return Response(status_code=204)

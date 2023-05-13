@@ -15,7 +15,7 @@ def init(app):
     conn = pymysql.connect(host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
     cur = conn.cursor()
 
-    # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL 
+    # NOTE DATA DIRECTORY requires FILE privilege, which does not seems to be included in ALL
 
     cur.execute("CREATE TABLE IF NOT EXISTS user (uid INT AUTO_INCREMENT PRIMARY KEY, userid INT, name TEXT, email TEXT, avatar TEXT, bio TEXT, roles TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, join_timestamp BIGINT, mfa_secret VARCHAR(16))")
     cur.execute("CREATE TABLE IF NOT EXISTS discord_access_token (discordid BIGINT UNSIGNED, callback_url TEXT, access_token TEXT, refresh_token TEXT, expire_timestamp BIGINT)") # source is callback|connect
@@ -169,7 +169,7 @@ def init(app):
             cur.execute(idx)
         except:
             pass
-        
+
     conn.commit()
     cur.close()
     conn.close()
@@ -204,7 +204,7 @@ class aiosql:
         self.shutdown_lock = True
         self.POOL_START_TIME = 0
         self.pool.terminate()
-    
+
     async def restart_pool(self):
         self.POOL_START_TIME = 0
         self.pool.terminate()
@@ -253,7 +253,7 @@ class aiosql:
             return conn
         except Exception as exc:
             raise pymysql.err.OperationalError(f"[aiosql] Failed to create connection ({dhrid}): {str(exc)}")
-    
+
     async def refresh_conn(self, dhrid, extend = False):
         while self.shutdown_lock:
             raise pymysql.err.OperationalError("[aiosql] Shutting down")
@@ -275,7 +275,7 @@ class aiosql:
             except:
                 pass
         self.conns = conns
-        
+
     async def extend_conn(self, dhrid, seconds):
         if dhrid not in self.conns.keys():
             return

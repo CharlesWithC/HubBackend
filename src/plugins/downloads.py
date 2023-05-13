@@ -37,7 +37,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if not staffau["error"]:
         isstaff = True
     await ActivityUpdate(request, au["uid"], "downloads")
-        
+
     limit = ""
     if query != "":
         query = convertQuotation(query).lower()
@@ -69,7 +69,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 break
             base_rows += 1
         tot -= base_rows
-            
+
     await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -106,7 +106,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     if downloadsid <= 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -134,7 +134,7 @@ async def get_redirect(request: Request, response: Response, secret: str):
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     await app.db.execute(dhrid, f"DELETE FROM downloads_templink WHERE expire <= {int(time.time())}")
     await app.db.commit(dhrid)
 
@@ -194,14 +194,14 @@ async def post_downloads(request: Request, response: Response, authorization: st
         if orderid > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
-    except:        
+    except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({au['userid']}, '{title}', '{description}', '{link}', {orderid}, 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
@@ -226,17 +226,17 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = au["code"]
         del au["code"]
         return au
-        
+
     if downloadsid <= 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    
+
     data = await request.json()
     try:
         title = convertQuotation(data["title"])
@@ -255,20 +255,20 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         if orderid > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
-    except:        
+    except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     if not isurl(link):
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
-    
+
 async def delete_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
@@ -285,13 +285,13 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     await app.db.execute(dhrid, f"SELECT * FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM downloads WHERE downloadsid = {downloadsid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "deleted_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)

@@ -37,7 +37,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         min_income: Optional[int] = None, max_income: Optional[int] = None,
         order_by: Optional[str] = "income", order: Optional[str] = "desc"):
     '''Get a list of owned garages.
-    
+
     `order_by` can be `income`, `truck`, `slot`'''
     app = request.app
     dhrid = request.state.dhrid
@@ -72,14 +72,14 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         having += f"AND tot_income <= {max_income} "
     if having.startswith("AND "):
         having = "HAVING " + having[4:]
-    
+
     cvt = {"income": "tot_income", "truck": "tot_truck", "slot": "tot_slot"}
     if order_by in cvt.keys():
         order_by = cvt[order_by]
     if order_by not in ['tot_income', 'tot_truck', 'tot_slot']:
         order_by = "tot_income"
         order = "desc"
-    
+
     if order not in ['asc', 'desc']:
         order = "asc"
 
@@ -111,7 +111,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         await app.db.execute(dhrid, f"SELECT userid FROM economy_garage WHERE garageid = '{tt[0]}' AND note = 'garage-owner'")
         p = await app.db.fetchall(dhrid)
         ret.append({"garageid": tt[0], "garage_owner": (await GetUserInfo(request, userid = p[0][0])), "slots": tt[2], "slot_owners": nint(tt[3]), "trucks": nint(tt[4]), "income": nint(tt[5]), "purchase_timestamp": tt[1]})
-    
+
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def get_garage(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
@@ -154,7 +154,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None,
         order: Optional[str] = "asc"):
     '''Get the slots of a specific garage.
-    
+
     `order_by` is `purchase_timestamp`.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -192,7 +192,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
         having += f"AND economy_garage.purchase_timestamp <= {purchased_before} "
     if owner is not None:
         having += f"AND economy_garage.userid = {owner} "
-    
+
     base_rows = 0
     tot = 0
     await app.db.execute(dhrid, f"SELECT economy_garage.slotid, economy_garage.userid, economy_truck.vehicleid, economy_truck.userid, economy_garage.purchase_timestamp FROM economy_garage \
@@ -249,14 +249,14 @@ async def get_garage_slot(request: Request, response: Response, garageid: str, s
         response.status_code = 404
         return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
     tt = t[0]
-    
+
     return {"slotid": tt[0], "slot_owner": await GetUserInfo(request, userid = tt[1]), "purchase_timestamp": tt[4], "note": tt[5], "truck": await GetTruckInfo(request, tt[2]), "truck_owner": await GetUserInfo(request, userid = tt[3])}
 
 async def post_garage_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Purchase a garage, returns `slotids`, `cost`, `balance`.
-    
+
     JSON: `{"owner": Optional[str]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] The garage must not have been purchased before, aka there must be no slots connected to the garage. Otherwise it should be /{garageid}/slots/purchase.'''
@@ -292,16 +292,16 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
         return {"error": ml.tr(request, "garage_not_found", force_lang = au["language"])}
     garage = app.garages[garageid]
     garageid = convertQuotation(garageid)
-    
+
     await app.db.execute(dhrid, f"SELECT COUNT(slotid) FROM economy_garage WHERE garageid = '{garageid}'")
     slotcnt = nint(await app.db.fetchone(dhrid))
     if slotcnt > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "garage_already_purchased", force_lang = au["language"])}
-    
+
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])    
-    
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+
     # check access
     if not app.config.economy.allow_purchase_garage and not permok:
         response.status_code = 403
@@ -309,7 +309,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
     if owner == "company" and not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "purchase_company_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -332,12 +332,12 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, opuserid) if balance == 0 else None
-    
+
     if garage["price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
@@ -359,9 +359,9 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
 
 async def post_garage_slot_purchase(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Purchase a slot of a garage, returns `slotid`, `cost`, `balance`.
-    
+
     JSON: `{"owner": Optional[str]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] The garage must have been purchased before, aka there must be slots connected to the garage. Otherwise it should be /{garageid}/purchase.'''
@@ -397,16 +397,16 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
         return {"error": ml.tr(request, "garage_not_found", force_lang = au["language"])}
     garage = app.garages[garageid]
     garageid = convertQuotation(garageid)
-    
+
     await app.db.execute(dhrid, f"SELECT COUNT(slotid) FROM economy_garage WHERE garageid = '{garageid}'")
     slotcnt = nint(await app.db.fetchone(dhrid))
     if slotcnt == 0:
         response.status_code = 409
         return {"error": ml.tr(request, "garage_not_purchased_before_purchase_slots", force_lang = au["language"])}
-    
+
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])    
-    
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+
     # check access
     if not app.config.economy.allow_purchase_slot and not permok:
         response.status_code = 403
@@ -414,7 +414,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     if owner == "company" and not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "purchase_company_forbidden", var = {"item": ml.tr(request, "garage_slot", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -437,12 +437,12 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, opuserid) if balance == 0 else None
-    
+
     if garage["slot_price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
@@ -459,9 +459,9 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
 
 async def post_garage_transfer(request: Request, response: Response, garageid: str, authorization: str = Header(None)):
     '''Transfer a garage (ownership).
-    
+
     JSON: `{"owner": Optional[str], "message": Optional[str]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] This will transfer the garage ownership and the base slots when purchased.'''
@@ -498,7 +498,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -528,7 +528,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
     if current_owner == foruser:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
 
@@ -538,7 +538,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE garageid = '{garageid}' AND note = 'garage-owner'")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'g-{garageid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
@@ -553,9 +553,9 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
 
 async def post_garage_slot_transfer(request: Request, response: Response, garageid: str, slotid: int, authorization: str = Header(None)):
     '''Transfer a garage (ownership).
-    
+
     JSON: `{"owner": Optional[str], "message": Optional[str]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     [NOTE] This will transfer the slot ownership.'''
@@ -612,7 +612,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT userid FROM economy_garage WHERE slotid = {slotid} AND garageid = '{garageid}'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -622,7 +622,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
     if current_owner != -1000 and current_owner == foruser:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
 
@@ -632,7 +632,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage_slot", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE slotid = {slotid} AND garageid = '{garageid}'")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'gs{slotid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
@@ -673,7 +673,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     current_owner = t[0][0]
     price = t[0][1]
     refund = price * app.config.economy.garage_refund
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
 
@@ -683,7 +683,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
-        
+
     await app.db.execute(dhrid, f"SELECT COUNT(slotid) FROM economy_garage WHERE garageid = '{garageid}' AND note != 'garage-owner'")
     t = nint(await app.db.fetchone(dhrid))
     if t != 0:
@@ -694,7 +694,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     if len(t) != 0:
         response.status_code = 428
         return {"error": ml.tr(request, "garage_has_truck", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM economy_garage WHERE garageid = '{garageid}'")
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
@@ -746,7 +746,7 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
     if note == "garage-owner":
         response.status_code = 403
         return {"error": ml.tr(request, "garage_slot_is_base_slot", force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
 
@@ -756,13 +756,13 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
-        
+
     await app.db.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE slotid = {slotid}")
     t = await app.db.fetchall(dhrid)
     if len(t) != 0:
         response.status_code = 428
         return {"error": ml.tr(request, "garage_slot_has_truck", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM economy_garage WHERE slotid = {slotid}")
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))

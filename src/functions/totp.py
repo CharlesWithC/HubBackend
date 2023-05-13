@@ -15,7 +15,7 @@ def get_hotp_token(secret, intervals_no):
     o = o = h[19] & 15
     h = (struct.unpack(">I", h[o:o+4])[0] & 0x7fffffff) % 1000000
     return h
-    
+
 def get_totp_token(secret):
     ret = []
     for k in range(-2,2):

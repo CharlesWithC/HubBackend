@@ -22,10 +22,10 @@ async def post_password(request: Request, response: Response):
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     data = await request.json()
     try:
-        email = convertQuotation(data["email"])  
+        email = convertQuotation(data["email"])
         password = str(data["password"]).encode('utf-8')
         hcaptcha_response = data["h-captcha-response"]
     except:
@@ -41,7 +41,7 @@ async def post_password(request: Request, response: Response):
     except:
         response.status_code = 503
         return {"error": "Service Unavailable"}
-    
+
     await app.db.execute(dhrid, f"SELECT uid, password FROM user_password WHERE email = '{email}'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -53,7 +53,7 @@ async def post_password(request: Request, response: Response):
     if not ok:
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_email_or_password")}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
@@ -81,7 +81,7 @@ async def post_password(request: Request, response: Response):
             return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
             return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
-        
+
     await app.db.execute(dhrid, f"SELECT status FROM pending_user_deletion WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
@@ -104,9 +104,9 @@ async def post_password(request: Request, response: Response):
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
 
-    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
-        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
-                         "description": "", 
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
+                         "description": "",
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
                                     {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
         }
@@ -119,7 +119,7 @@ async def post_register(request: Request, response: Response):
     if 'email' not in app.config.register_methods:
         response.status_code = 404
         return {"error": "Not Found"}
-        
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -128,10 +128,10 @@ async def post_register(request: Request, response: Response):
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     data = await request.json()
     try:
-        email = convertQuotation(data["email"])  
+        email = convertQuotation(data["email"])
         password = str(data["password"])
         hcaptcha_response = data["h-captcha-response"]
     except:
@@ -160,13 +160,13 @@ async def post_register(request: Request, response: Response):
     if len(t) != 0:
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"})}
-    
+
     await app.db.execute(dhrid, f"SELECT uid FROM email_confirmation WHERE operation = 'register/{email}'")
     t = await app.db.fetchall(dhrid)
     if len(t) != 0:
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"})}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
@@ -188,7 +188,7 @@ async def post_register(request: Request, response: Response):
     if not emailConfigured(app):
         response.status_code = 428
         return {"error": ml.tr(request, "smtp_configuration_invalid")}
-    
+
     rl = await ratelimit(request, 'POST /auth/register', 60, 2)
     if rl[0]:
         return rl[1]
@@ -215,7 +215,7 @@ async def post_register(request: Request, response: Response):
     await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
     await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'register/{email}', {int(time.time() + 86400)})")
     await app.db.commit(dhrid)
-    
+
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(app, username, email, "register", link))
@@ -234,9 +234,9 @@ async def post_register(request: Request, response: Response):
     username = (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "password_login", var = {"country": getRequestCountry(request)}))
-    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
-        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
-                         "description": "", 
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
+                         "description": "",
                          "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
                                     {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
         }
@@ -254,7 +254,7 @@ async def post_reset(request: Request, response: Response):
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     data = await request.json()
     try:
         email = convertQuotation(data["email"])
@@ -289,12 +289,12 @@ async def post_reset(request: Request, response: Response):
         return Response(status_code=204)
     uid = t[0][0]
     username = t[0][1]
-    
+
     secret = "rp" + gensecret(length = 30)
     await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
     await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'reset-password/{email}', {int(time.time() + 3600)})")
     await app.db.commit(dhrid)
-    
+
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(app, username, email, "reset_password", link))
@@ -317,7 +317,7 @@ async def post_mfa(request: Request, response: Response):
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     data = await request.json()
     try:
         token = data["token"]
@@ -333,7 +333,7 @@ async def post_mfa(request: Request, response: Response):
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_authorization_token")}
     uid = t[0][0]
-    
+
     await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -343,7 +343,7 @@ async def post_mfa(request: Request, response: Response):
     if secret == "":
         response.status_code = 428
         return {"error": ml.tr(request, "mfa_not_enabled")}
-        
+
     if not valid_totp(otp, secret):
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp")}
@@ -379,7 +379,7 @@ async def post_mfa(request: Request, response: Response):
         elif status == 0:
             await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
             await app.db.commit(dhrid)
-            
+
     stoken = str(uuid.uuid4())
     while stoken[0] == "e":
         stoken = str(uuid.uuid4()) # All MFA logins won't be counted as unsafe
@@ -389,9 +389,9 @@ async def post_mfa(request: Request, response: Response):
     (await GetUserInfo(request, uid = uid))["name"]
     language = await GetUserLanguage(request, uid)
     await AuditLog(request, uid, ml.ctr(request, "mfa_login", var = {"country": getRequestCountry(request)}))
-    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language), 
-        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language), 
-                        "description": "", 
+    await notification(request, "login", uid, ml.tr(request, "new_login", var = {"country": getRequestCountry(request), "ip": request.client.host}, force_lang = language),
+        discord_embed = {"title": ml.tr(request, "new_login_title", force_lang = language),
+                        "description": "",
                         "fields": [{"name": ml.tr(request, "country", force_lang = language), "value": getRequestCountry(request), "inline": True},
                                    {"name": ml.tr(request, "ip", force_lang = language), "value": request.client.host, "inline": True}]
         }
@@ -435,12 +435,12 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         await app.db.commit(dhrid)
         response.status_code = 409
         return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = au["language"])}
-    
+
     if operation.startswith("update-email/") or operation.startswith("register/"):
         # on email register, the email in user table is "pending"
         await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
-    
+
     elif operation.startswith("reset-password/"):
         data = await request.json()
         try:
@@ -448,14 +448,14 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         except:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json")}
-    
+
         if len(password) >= 8:
             if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
                 (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
                 return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
         else:
             return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
-        
+
         password = password.encode('utf-8')
         salt = bcrypt.gensalt()
         pwdhash = bcrypt.hashpw(password, salt).decode()
@@ -465,5 +465,5 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
 
     await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)

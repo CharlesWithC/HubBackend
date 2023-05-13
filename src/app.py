@@ -38,7 +38,7 @@ for argv in sys.argv:
 def initApp(app, first_init = False):
     if not first_init:
         return app
-    
+
     import upgrades.manager
     cur_version = app.version.replace(".dev", "").replace(".", "_")
     pre_version = cur_version.lstrip("v")
@@ -65,7 +65,7 @@ def initApp(app, first_init = False):
                 logger.info(f"[{app.config.abbr}] Updating data to be compatible with {v.replace('_', '.')}...")
                 upgrades.manager.UPGRADER[v].run(app)
     upgrades.manager.unload()
-    
+
     if not version.endswith(".dev"):
         conn = db.genconn(app)
         cur = conn.cursor()
@@ -73,7 +73,7 @@ def initApp(app, first_init = False):
         conn.commit()
         cur.close()
         conn.close()
-        
+
     logger.info(f"[{app.config.abbr}] Name: {app.config.name} | Prefix: {app.config.prefix}")
     if app.config.openapi:
         logger.info(f"[{app.config.abbr}] OpenAPI: Enabled")
@@ -93,7 +93,7 @@ def initApp(app, first_init = False):
         logger.info(f"[{app.config.abbr}] External Plugins: {', '.join(sorted(extp))}")
     else:
         logger.info(f"[{app.config.abbr}] External Plugins: /")
-    
+
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
@@ -107,7 +107,7 @@ def initApp(app, first_init = False):
 def createApp(config_path, multi_mode = False, first_init = False, enable_performance_header = False):
     if not os.path.exists(config_path):
         return None
-    
+
     try:
         config_txt = open(config_path, "r", encoding="utf-8").read()
     except:
@@ -170,7 +170,7 @@ def createApp(config_path, multi_mode = False, first_init = False, enable_perfor
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
             continue
-        
+
         # test routes and state
         try:
             test_app = FastAPI()
@@ -183,7 +183,7 @@ def createApp(config_path, multi_mode = False, first_init = False, enable_perfor
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
             continue
-        
+
         # load routes and state
         try:
             for route in routes:
@@ -247,7 +247,7 @@ def createApp(config_path, multi_mode = False, first_init = False, enable_perfor
     app.state.cache_ratelimit = {}
     app.state.cache_userinfo = {} # user info cache (15 seconds)
     app.state_cache_activity = {} # activity cache (2 seconds)
-    
+
     try:
         db.init(app)
         app = initApp(app, first_init = first_init)

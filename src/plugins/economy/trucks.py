@@ -23,7 +23,7 @@ async def GetTruckInfo(request, vehicleid):
     truck = {"id": tt[1], "brand": None, "model": None}
     if tt[1] in app.trucks.keys():
         (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
-    
+
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 async def get_all_trucks(request: Request, response: Response, authorization: str = Header(None)):
@@ -42,7 +42,7 @@ async def get_all_trucks(request: Request, response: Response, authorization: st
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     return app.config.economy.trucks
 
 async def get_truck_list(request: Request, response: Response, authorization: str = Header(None), \
@@ -117,12 +117,12 @@ async def get_truck_list(request: Request, response: Response, authorization: st
     if order_by not in ["vehicleid", "userid", "truckid", "slotid", "garageid", "price", "odometer", "damage", "purchase_timestamp"]:
         order_by = "odometer"
         order = "desc"
-    
+
     if order not in ["asc", "desc"]:
         order = "asc"
-    
+
     STATUS = {0: "inactive", 1: "active", -1: "require_service", -2: "scrapped"}
-    
+
     base_rows = 0
     tot = 0
     await app.db.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order}")
@@ -180,7 +180,7 @@ async def get_truck(request: Request, response: Response, vehicleid: int, author
     truck = {"id": tt[1], "brand": None, "model": None}
     if tt[1] in app.trucks.keys():
         (truck["brand"], truck["model"]) = (app.trucks[tt[1]]["brand"], app.trucks[tt[1]]["model"])
-    
+
     return {"vehicleid": tt[0], "truck": truck, "garageid": tt[2], "slotid": tt[3], "owner": await GetUserInfo(request, userid = tt[4]), "assignee": await GetUserInfo(request, userid = tt[12]), "price": tt[5], "income": tt[10], "service": tt[11], "odometer": tt[6], "damage": tt[7], "repair_cost": round(tt[7] * 100 * app.config.economy.unit_service_price), "purchase_timestamp": tt[8], "status": STATUS[tt[9]]}
 
 async def get_truck_operation_history(request: Request, response: Response, vehicleid: int, operation: str, authorization: str = Header(None), page: Optional[int] = 1, page_size: Optional[int] = 10, after_txid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, order: Optional[str] = "desc"):
@@ -243,7 +243,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     else:
         response.status_code = 404
         return {"error": "Not Found"}
-    
+
     if after is not None:
         query += f" AND timestamp >= {after} "
     if before is not None:
@@ -253,7 +253,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
             query += f" AND txid >= {after_txid} "
         elif order == "desc":
             query += f" AND txid <= {after_txid} "
-    
+
     await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, timestamp FROM economy_transaction WHERE note {query} ORDER BY timestamp {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -269,7 +269,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
             p = tt[5].split("/")
             logid = int(p[0].split("-")[1])
             revenue = int(p[2].split("-")[1])
-            ret.append({"type": "dlog", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": revenue, "logid": logid, "timestamp": tt[6]}) 
+            ret.append({"type": "dlog", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": revenue, "logid": logid, "timestamp": tt[6]})
         elif tt[4] == f"t{vehicleid}-service":
             # from_user => tx sender / user that requested service
             ret.append({"type": "service", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[1]), "amount": tt[3], "damage": float(tt[5].split("-")[1]), "timestamp": tt[6]}) # message: damage-{damage}
@@ -293,7 +293,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
             damage = float(p[0].split("-")[1])
             odometer = int(p[1].split("-")[1])
             ret.append({"type": "scrap", "txid": tt[0], "user": await GetUserInfo(request, userid = tt[2]), "amount": tt[3], "damage": damage, "odometer": odometer, "timestamp": tt[6]})
-    
+
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM economy_transaction WHERE note {query}")
     t = await app.db.fetchall(dhrid)
     tot = 0
@@ -304,13 +304,13 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
 
 async def post_truck_purchase(request: Request, response: Response, truckid: str, authorization: str = Header(None), owner: Optional[str] = "self"):
     '''Purchase a truck, returns `vehicleid`, `cost`, `balance`.
-    
+
     JSON: `{"owner": Optional[str], "slotid": int, "assignee": Optional[int]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     `assignee` is only required when `owner = company`
-    
+
     [NOTE] If the owner / assignee already has a truck of the same model, the purchased truck will be deactivated to prevent conflict on job submission.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -328,7 +328,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
         del au["code"]
         return au
     userid = au["userid"]
-    
+
     data = await request.json()
     try:
         if "owner" in data.keys():
@@ -348,7 +348,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -359,14 +359,14 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     if owner == "company" and not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "purchase_company_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check truckid
     if truckid not in app.trucks.keys():
         response.status_code = 404
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     truck = app.trucks[truckid]
     truckid = convertQuotation(truckid)
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -391,7 +391,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
-    
+
     # check garage slot (existence)
     await app.db.execute(dhrid, f"SELECT garageid FROM economy_garage WHERE slotid = {slotid}")
     t = await app.db.fetchall(dhrid)
@@ -399,14 +399,14 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
         response.status_code = 400
         return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
     garageid = t[0][0]
-    
+
     # check garage slot (occupied)
     await app.db.execute(dhrid, f"SELECT slotid FROM economy_truck WHERE slotid = {slotid}")
     t = await app.db.fetchall(dhrid)
     if len(t) != 0:
         response.status_code = 400
         return {"error": ml.tr(request, "garage_slot_occupied", force_lang = au["language"])}
-    
+
     # check truck model conflict
     model_conflict = False
     if foruser != -1000:
@@ -425,11 +425,11 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, opuserid) if balance == 0 else None
-    
+
     if truck["price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {truck['price']} WHERE userid = {opuserid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_truck(truckid, garageid, slotid, userid, assigneeid, price, income, service_cost, odometer, damage, purchase_timestamp, status) VALUES ('{truckid}', '{garageid}', {slotid}, {foruser}, {assigneeid}, {truck['price']}, 0, 0, 0, 0, {int(time.time())}, {status})")
     await app.db.commit(dhrid)
@@ -445,13 +445,13 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
 
 async def post_truck_transfer(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
-    
+
     JSON: `{"owner": Optional[str], "assignee": Optional[int], "message": Optional[str]}`
-    
+
     `owner` can be `self` | `company` | `user-{userid}`
 
     `assignee` is only required when `owner = company`
-    
+
     [NOTE] If the new owner / assignee already has a truck of the same model, the transferred truck will be deactivated to prevent conflict on job submission.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -469,7 +469,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         del au["code"]
         return au
     userid = au["userid"]
-    
+
     data = await request.json()
     try:
         # to reassign a truck, set owner to company and update assigneeid
@@ -478,7 +478,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
             owner = data["owner"] # owner = self | company | user-{userid}
         else:
             owner = "self"
-        
+
         # assignee only work for company trucks
         assigneeid = "NULL"
         if "assigneeid" in data.keys():
@@ -495,7 +495,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     # check new owner
     if owner == "self":
         # company => me
@@ -537,7 +537,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
     if current_owner in [-1001, -1005]:
         response.status_code = 403
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
 
@@ -547,7 +547,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check truck model conflict
     model_conflict = False
     if foruser != -1000:
@@ -582,12 +582,12 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
             await AuditLog(request, au["uid"], ml.ctr(request, "removed_truck_assignee", var = {"id": vehicleid}))
 
     await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)
 
 async def post_truck_relocate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Transfer / Reassign a truck, returns 204.
-    
+
     JSON: `{"slotid": int"}`'''
     app = request.app
     dhrid = request.state.dhrid
@@ -605,14 +605,14 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
         del au["code"]
         return au
     userid = au["userid"]
-    
+
     data = await request.json()
     try:
         slotid = int(data["slotid"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     # check current owner
     await app.db.execute(dhrid, f"SELECT userid FROM economy_truck WHERE vehicleid = {vehicleid}")
     t = await app.db.fetchall(dhrid)
@@ -634,7 +634,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check garage slot (existence)
     await app.db.execute(dhrid, f"SELECT garageid FROM economy_garage WHERE slotid = {slotid}")
     t = await app.db.fetchall(dhrid)
@@ -642,7 +642,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
         response.status_code = 400
         return {"error": ml.tr(request, "garage_slot_not_found", force_lang = au["language"])}
     garageid = t[0][0]
-    
+
     # check garage slot (occupied)
     await app.db.execute(dhrid, f"SELECT slotid FROM economy_truck WHERE slotid = {slotid}")
     t = await app.db.fetchall(dhrid)
@@ -663,7 +663,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
 
 async def post_truck_activate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Activate a truck, returns 204.
-    
+
     [NOTE] If the owner / assignee has multiple trucks of the same model, other trucks of the same model will be deactivated.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -681,7 +681,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: i
         del au["code"]
         return au
     userid = au["userid"]
-    
+
     # check current owner
     await app.db.execute(dhrid, f"SELECT truckid, userid, assigneeid, status FROM economy_truck WHERE vehicleid = {vehicleid}")
     t = await app.db.fetchall(dhrid)
@@ -706,7 +706,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: i
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     if status == -1:
         response.status_code = 428
         return {"error": ml.tr(request, "truck_repair_required", force_lang = au["language"])}
@@ -726,7 +726,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: i
 
 async def post_truck_deactivate(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Deactivate a truck, returns 204.
-    
+
     [NOTE] If there's no status truck of a model, new jobs of that model will be charged a rental cost.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -766,7 +766,7 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_truck SET status = 0 WHERE vehicleid = {vehicleid}")
     await app.db.commit(dhrid)
 
@@ -774,7 +774,7 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
 
 async def post_truck_repair(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Repair a truck, returns `cost`, `balance`.
-    
+
     [NOTE] If the truck's damage > app.config.economy.max_wear_before_service, new jobs will be charged a rental cost. Once the issue is noticed, status state of the truck will be modified to -1. If the truck's state is -1 and a repair is performed, it will be reactivated automatically if there's no other status trucks.'''
     app = request.app
     dhrid = request.state.dhrid
@@ -818,20 +818,20 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: int
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, userid) if balance == 0 else None
-    
+
     cost = round(damage * 100 * app.config.economy.unit_service_price)
     if cost > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
-    
+
     if cost == 0:
         return {"cost": cost, "balance": round(balance - cost)}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {cost} WHERE userid = {userid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({userid}, -1004, {cost}, 't{vehicleid}-service', 'damage-{damage}', {round(balance - cost)}, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
@@ -859,7 +859,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: int
 
 async def post_truck_sell(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Sell a truck, returns `refund`, `balance`.
-    
+
     [Note] refund = price * (1 - damage) * app.config.economy.truck_refund (ratio)'''
     app = request.app
     dhrid = request.state.dhrid
@@ -903,7 +903,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: int, 
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"UPDATE economy_truck SET userid = -1001, status = 0, slotid = NULL, garageid = NULL WHERE vehicleid = {vehicleid}")
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
@@ -917,7 +917,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: int, 
 
 async def post_truck_scrap(request: Request, response: Response, vehicleid: int, authorization: str = Header(None)):
     '''Scrap a truck, returns `refund`, `balance`.
-    
+
     [Note] refund = price * app.config.economy.scrap_refund (ratio)'''
     app = request.app
     dhrid = request.state.dhrid
@@ -961,7 +961,7 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: int,
         if current_owner == -1000 or current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     if odometer < 0.9 * app.config.economy.max_distance_before_scrap:
         response.status_code = 428
         return {"error": ml.tr(request, "truck_scrap_unncessary", force_lang = au["language"])}

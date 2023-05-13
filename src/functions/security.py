@@ -87,7 +87,7 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
     # whitelist ip (only active when request is not authed)
     if identifier.startswith("ip") and request.client.host in app.config.whitelist_ips:
         return (False, {})
-    
+
     # check global ratelimit
     await app.db.execute(dhrid, f"SELECT first_request_timestamp, endpoint FROM ratelimit WHERE identifier = '{identifier}' AND endpoint LIKE 'global-ban-%'")
     t = await app.db.fetchall(dhrid)
@@ -113,7 +113,7 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
         resp_content = {"error": ml.tr(request, "rate_limit"), \
             "retry_after": str(maxban - int(time.time())), "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-    
+
     # check route ratelimit
     await app.db.execute(dhrid, f"SELECT SUM(request_count) FROM ratelimit WHERE identifier = '{identifier}' AND first_request_timestamp > {int(time.time() - 60)}")
     t = await app.db.fetchall(dhrid)
@@ -134,7 +134,7 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
         resp_content = {"error": ml.tr(request, "rate_limit"), \
             "retry_after": "600", "global": True}
         return (True, JSONResponse(content = resp_content, headers = resp_headers, status_code = 429))
-    
+
     await app.db.execute(dhrid, f"SELECT first_request_timestamp, request_count FROM ratelimit WHERE identifier = '{identifier}' AND endpoint = '{endpoint}'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -197,7 +197,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         return {"error": "Unauthorized", "code": 401}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
         return {"error": "Unauthorized", "code": 401}
-    
+
     tokentype = authorization.split(" ")[0]
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
@@ -223,7 +223,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         cache = app.state.cache_session[authorization]
         if cache["settings"] == (allow_application_token, check_member, required_permission):
             return cache["result"]
-        
+
     # application token
     if tokentype.lower() == "application":
         # check if allowed
@@ -239,7 +239,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         last_used_timestamp = t[0][1]
 
         # application token will skip ip / country check
-        
+
         # this should not happen but just in case
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
@@ -259,7 +259,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 for perm in required_permission:
                     if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
                         ok = True
-            
+
             if not ok:
                 return {"error": "Forbidden", "code": 403}
 
@@ -272,7 +272,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         language = ""
         if len(t) != 0:
             language = t[0][0]
-        
+
         app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
         app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
@@ -297,7 +297,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await app.db.commit(dhrid)
                 return {"error": "Unauthorized", "code": 401}
-        
+
         if app.config.security_level >= 2 and request.client.host not in app.config.whitelist_ips:
             orgiptype = iptype(ip)
             if orgiptype != 0:
@@ -315,7 +315,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
                             return {"error": "Unauthorized", "code": 401}
-        
+
         if request.client.host not in app.config.whitelist_ips:
             if ip != request.client.host:
                 await app.db.execute(dhrid, f"UPDATE session SET ip = '{request.client.host}' WHERE token = '{stoken}'")
@@ -324,7 +324,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             if getUserAgent(request) != user_agent:
                 await app.db.execute(dhrid, f"UPDATE session SET user_agent = '{getUserAgent(request)}' WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
-        
+
         # this should not happen but just in case
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
@@ -336,16 +336,16 @@ async def auth(authorization, request, allow_application_token = False, check_me
         name = t[0][3]
         if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": "Forbidden", "code": 403}
-        
+
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
             ok = False
-            
+
             for role in roles:
                 for perm in required_permission:
                     if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
                         ok = True
-            
+
             if not ok:
                 return {"error": "Forbidden", "code": 403}
 
@@ -358,12 +358,12 @@ async def auth(authorization, request, allow_application_token = False, check_me
         language = ""
         if len(t) != 0:
             language = t[0][0]
-        
+
         app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
         app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
         return app.state.cache_session[authorization]["result"]
-    
+
     return {"error": "Unauthorized", "code": 401}
 
 async def isSecureAuth(authorization, request):
@@ -371,12 +371,12 @@ async def isSecureAuth(authorization, request):
     stoken = authorization.split(" ")[1]
     if not stoken.startswith("e"):
         return True
-    
+
     au = await auth(authorization, request, check_member=False)
     if au["error"]:
         return False
     uid = au["uid"]
-    
+
     await app.db.execute(dhrid, f"SELECT discordid, steamid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:

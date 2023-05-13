@@ -39,7 +39,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page_size = 250
 
     query = convertQuotation(query).lower()
-    
+
     if order_by not in ['content', 'notificationid']:
         order_by = "notificationid"
         order = "desc"
@@ -72,7 +72,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     tot = 0
     if len(t) > 0:
         tot = t[0][0]
-        
+
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
 async def get_notification(request: Request, response: Response, notificationid: int, authorization: str = Header(None)):
@@ -86,14 +86,14 @@ async def get_notification(request: Request, response: Response, notificationid:
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-        
+
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE notificationid = {notificationid} AND uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -113,7 +113,7 @@ async def delete_notification(request: Request, response: Response, after_notifi
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     # first delete for current user
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -124,13 +124,13 @@ async def delete_notification(request: Request, response: Response, after_notifi
 
     await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid} AND notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
     await app.db.commit(dhrid)
-    
+
     au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "delete_notifications"])
     if not au["error"]:
         # then delete for all users
         await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
         await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)
 
 async def patch_status(request: Request, response: Response, notificationid: str, status: int, authorization: str = Header(None)):
@@ -144,14 +144,14 @@ async def patch_status(request: Request, response: Response, notificationid: str
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-        
+
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     if notificationid == "all":
         await app.db.execute(dhrid, f"UPDATE user_notification SET status = {status} WHERE uid = {uid}")
         await app.db.commit(dhrid)
@@ -168,10 +168,10 @@ async def patch_status(request: Request, response: Response, notificationid: str
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "notification_not_found")}
-    
+
     await app.db.execute(dhrid, f"UPDATE user_notification SET status = {status} WHERE notificationid = {notificationid} AND uid = {uid}")
     await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)
 
 async def get_settings(request: Request, response: Response, authorization: str = Header(None)):
@@ -202,7 +202,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
         for dd in d:
             if dd in settings.keys():
                 settings[dd] = True
-    
+
     return settings
 
 async def post_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
@@ -240,10 +240,10 @@ async def post_settings_enable(request: Request, response: Response, notificatio
         for dd in d:
             if dd in settings.keys():
                 settings[dd] = True
-    
+
     if settings[notification_type] is True:
         return Response(status_code=204)
-    
+
     if notification_type != "discord":
         settings[notification_type] = True
 
@@ -251,7 +251,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
         if discordid is None:
             response.status_code = 409
             return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
-        
+
         if app.config.discord_bot_token == "":
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
@@ -281,7 +281,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 
             r = None
             try:
-                r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers = headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)), 
+                r = await arequests.post(app, f"https://discord.com/api/v10/channels/{channelid}/messages", headers = headers, data=json.dumps({"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
                 "description": ml.tr(request, "discord_notification_enabled", force_lang = await GetUserLanguage(request, uid)), \
                 "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}))
@@ -353,7 +353,7 @@ async def post_settings_disable(request: Request, response: Response, notificati
         for dd in d:
             if dd in settings.keys():
                 settings[dd] = True
-    
+
     settings[notification_type] = False
 
     if notification_type == "discord":
@@ -369,5 +369,5 @@ async def post_settings_disable(request: Request, response: Response, notificati
     else:
         await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', '{res}')")
     await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)

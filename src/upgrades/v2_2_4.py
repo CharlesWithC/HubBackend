@@ -18,7 +18,7 @@ def run(app):
             cur.execute(tt[0])
     else:
         print("No %_old TABLE found")
-    
+
     print("Deleting abandoned tables...")
     TABLES = ["appsession", "dlogcache"]
     for TABLE in TABLES:
@@ -29,5 +29,5 @@ def run(app):
 
     cur.close()
     conn.close()
-    
+
     print("Upgrade finished")

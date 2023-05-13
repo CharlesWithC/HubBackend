@@ -41,7 +41,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         after = 0
     if before is None:
         before = max(int(time.time()), 32503651200)
-        
+
     limittype = point_types
     limituser = userids
 
@@ -83,7 +83,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     userdivision = t["userdivision"]
                     userbonus = t["userbonus"]
                     break
-                
+
     for ll in list(app.state.cache_nleaderboard.keys()):
         if ll < int(time.time()) - 120:
             del app.state.cache_nleaderboard[ll]
@@ -122,7 +122,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     ratio = 1
     if app.config.distance_unit == "imperial":
         ratio = 0.621371
-    
+
     # validate parameter
     page = max(page, 1)
     page_size = max(min(page_size, 250), 1)
@@ -137,7 +137,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     gamelimit = ""
     if game == 1 or game == 2:
         gamelimit = f" AND unit = {game}"
-    
+
     if not usecache:
         ##### WITH LIMIT (Parameter)
         # calculate distance
@@ -151,7 +151,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             else:
                 userdistance[tt[0]] += tt[1]
             userdistance[tt[0]] = int(userdistance[tt[0]])
-        
+
         # calculate challenge
         await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
@@ -174,7 +174,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     userevent[attendee] = tt[1]
                 else:
                     userevent[attendee] += tt[1]
-        
+
         # calculate division
         await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE userid >= 0 AND logid >= 0 AND timestamp >= {after} AND timestamp <= {before} ORDER BY logid ASC LIMIT 1")
         t = await app.db.fetchall(dhrid)
@@ -187,7 +187,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         lastlogid = -1
         if len(t) > 0:
             lastlogid = t[0][0]
-        
+
         await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
@@ -197,7 +197,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 userdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
-        
+
         # calculate bonus
         await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
         o = await app.db.fetchall(dhrid)
@@ -289,8 +289,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     nluserevent[attendee] = tt[1]
                 else:
                     nluserevent[attendee] += tt[1]
-        
-        # calculate division    
+
+        # calculate division
         await app.db.execute(dhrid, "SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
         o = await app.db.fetchall(dhrid)
         for oo in o:
@@ -300,7 +300,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                 nluserdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
                 nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
-        
+
         # calculate bonus
         await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 GROUP BY userid")
         o = await app.db.fetchall(dhrid)
@@ -413,9 +413,9 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
     for userid in allusers:
         if userid in withpoint:
             continue
-        
+
         if userid in limituser or len(limituser) == 0:
-            ret.append({"user": await GetUserInfo(request, userid = userid), 
+            ret.append({"user": await GetUserInfo(request, userid = userid),
                 "points": {"distance": 0, "challenge": 0, "event": 0, "division": 0, "bonus": 0, "total": 0, \
                     "rank": rank, "total_no_limit": 0, "rank_no_limit": nlrank}})
 
@@ -437,15 +437,15 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         return {"list": [], "total_items": len(ret), \
             "total_pages": int(math.ceil(len(ret) / page_size)), \
                 "cache": cachetime, "cache_no_limit": nlcachetime}
-    
+
     if after_userid is not None:
         while len(ret) > 0 and ret[0]["user"]["userid"] != after_userid:
             ret = ret[1:]
-    
+
     if max_point is not None:
         while len(ret) > 0 and ret[0]["points"]["total"] > max_point:
             ret = ret[1:]
-    
+
     if min_point is not None:
         while len(ret) > 0 and ret[-1]["points"]["total"] < min_point:
             ret = ret[:-1]

@@ -30,7 +30,7 @@ async def patch_password(request: Request, response: Response, authorization: st
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
@@ -59,13 +59,13 @@ async def patch_password(request: Request, response: Response, authorization: st
     if email == "" or "@" not in email: # make sure it's not empty
         response.status_code = 403
         return {"error": ml.tr(request, "invalid_discord_email", force_lang = au["language"])}
-        
+
     await app.db.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
     t = await app.db.fetchall(dhrid)
     if len(t) > 1:
         response.status_code = 409
         return {"error": ml.tr(request, "email_not_unique", force_lang = au["language"])}
-        
+
     if len(password) >= 8:
         if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
             (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
@@ -83,7 +83,7 @@ async def patch_password(request: Request, response: Response, authorization: st
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
-    
+
 async def post_password_disable(request: Request, response: Response, authorization: str = Header(None)):
     """Disables password login for the authorized user, returns 204"""
     app = request.app
@@ -128,7 +128,7 @@ async def post_password_disable(request: Request, response: Response, authorizat
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")
     await app.db.commit(dhrid)

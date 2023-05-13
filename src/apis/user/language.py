@@ -31,7 +31,7 @@ async def get_language(request: Request, response: Response, authorization: str 
 
 async def patch_language(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the language of the authorized user, returns 204
-    
+
     JSON: `{"language": str}`"""
     app = request.app
     dhrid = request.state.dhrid
@@ -60,7 +60,7 @@ async def patch_language(request: Request, response: Response, authorization: st
     if language not in ml.LANGUAGES:
         response.status_code = 400
         return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{language}')")
     await app.db.commit(dhrid)

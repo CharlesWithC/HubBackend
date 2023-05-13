@@ -25,8 +25,8 @@ def run(app):
         if "://" not in avatar:
             avatar = getAvatarSrc(discordid, avatar)
             cur.execute(f"UPDATE user SET avatar = '{avatar}' WHERE uid = {uid}")
-    
+
     cur.close()
     conn.close()
-    
+
     print("Upgrade finished")

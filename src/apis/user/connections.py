@@ -31,7 +31,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     await app.db.execute(dhrid, f"SELECT operation, expire FROM email_confirmation WHERE uid = {uid} AND operation LIKE 'register/%'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -50,7 +50,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
     await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'register/{email}', {expire})")
     await app.db.commit(dhrid)
-    
+
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(app, au["name"], email, "register", link))
@@ -65,7 +65,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
 
 async def patch_email(request: Request, response: Response, authorization: str = Header(None)):
     """Updates email for the authorized user, returns 204
-    
+
     JSON: `{"email": str}`"""
     app = request.app
     dhrid = request.state.dhrid
@@ -90,7 +90,7 @@ async def patch_email(request: Request, response: Response, authorization: str =
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND email = '{new_email}'")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
@@ -106,7 +106,7 @@ async def patch_email(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
     await app.db.execute(dhrid, f"INSERT INTO email_confirmation VALUES ({uid}, '{secret}', 'update-email/{new_email}', {int(time.time() + 3600)})")
     await app.db.commit(dhrid)
-    
+
     link = app.config.frontend_urls.email_confirm.replace("{secret}", secret)
     await app.db.extend_conn(dhrid, 15)
     ok = (await sendEmail(app, au["name"], new_email, "update_email", link))
@@ -121,17 +121,17 @@ async def patch_email(request: Request, response: Response, authorization: str =
 
 async def patch_discord(request: Request, response: Response, authorization: str = Header(None), code: Optional[str] = None, error_description: Optional[str] = None, callback_url: Optional[str] = None):
     """Updates Discord account connection for the authorized user, returns 204
-    
+
     JSON: `{"code": str}`"""
     app = request.app
     if code is None and error_description is None or callback_url is None:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_params")}
-    
+
     if code is None and error_description is not None:
         response.status_code = 400
         return {"error": error_description}
-    
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -195,7 +195,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
                     return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
 
             return Response(status_code=204)
-        
+
         elif 'error_description' in tokens.keys():
             response.status_code = 400
             return {"error": tokens['error_description']}
@@ -210,17 +210,17 @@ async def patch_discord(request: Request, response: Response, authorization: str
         await tracebackHandler(request, exc, traceback.format_exc())
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_error", force_lang = au["language"])}
-    
+
 async def patch_steam(request: Request, response: Response, authorization: str = Header(None)):
     """Updates Steam account connection for the authorized user, returns 204
-    
+
     JSON: `{"callback": str}`"""
     app = request.app
     data = str(request.query_params).replace("openid.mode=id_res", "openid.mode=check_authentication")
     if data == "":
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_params")}
-    
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -236,7 +236,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     r = None
     try:
         r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
@@ -273,7 +273,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
 
     await app.db.execute(dhrid, f"UPDATE user SET steamid = {steamid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
-            
+
     await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
@@ -299,7 +299,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                 truckersmpid = d["response"]["id"]
                 await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
                 await app.db.commit(dhrid)
-            
+
                 await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
                 t = await app.db.fetchall(dhrid)
                 if len(t) > 0:
@@ -316,7 +316,7 @@ async def patch_steam(request: Request, response: Response, authorization: str =
                         return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
                     else:
                         return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
-        
+
                 return Response(status_code=204)
     except:
         pass
@@ -324,12 +324,12 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     # in case user changed steam
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
-    
+
     return Response(status_code=204)
 
 async def patch_truckersmp(request: Request, response: Response, authorization: str = Header(None)):
     """Updates TruckersMP account connection for the authorized user, returns 204
-    
+
     JSON: `{"truckersmpid": int}`"""
     app = request.app
     dhrid = request.state.dhrid
@@ -347,7 +347,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
         del au["code"]
         return au
     uid = au["uid"]
-    
+
     data = await request.json()
     try:
         truckersmpid = data["truckersmpid"]
@@ -384,7 +384,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
 
     await app.db.execute(dhrid, f"UPDATE user SET truckersmpid = {truckersmpid} WHERE uid = {uid}")
     await app.db.commit(dhrid)
-            
+
     await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE truckersmpid = {truckersmpid}")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
@@ -401,5 +401,5 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
             return {"error": ml.tr(request, "ban_with_reason_expire", var = {"reason": reason, "expire": expire})}
         else:
             return {"error": ml.tr(request, "ban_with_expire", var = {"expire": expire})}
-        
+
     return Response(status_code=204)

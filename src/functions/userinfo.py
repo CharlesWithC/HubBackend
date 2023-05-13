@@ -45,7 +45,7 @@ async def ActivityUpdate(request, uid, activity):
     else:
         await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, '{activity}', {int(time.time())})")
     await app.db.commit(dhrid)
-    
+
 # app.state.cache_userinfo = {} # user info cache (15 seconds)
 # app.state_cache_activity = {} # activity cache (2 seconds)
 
@@ -63,13 +63,13 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
         return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
-    
+
     miscuserid = {-999: "system", -1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
     if userid == -1000:
         return {"uid": None, "userid": None, "name": app.config.name, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": app.config.logo_url, "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
     if userid in miscuserid.keys():
         return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
-        
+
     if privacy:
         return {"uid": None, "userid": None, "name": f'[{ml.tr(request, "protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None}
 
@@ -80,7 +80,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
             return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": "", "bio": "", "roles": [], "activity": None, "mfa": False, "join_timestamp": None, "is_deleted": True}
 
     ClearUserCache(app)
-    
+
     if not nocache:
         if userid != -1 and f"userid={userid}" in app.state.cache_userinfo.keys():
             if int(time.time()) < app.state.cache_userinfo[f"userid={userid}"]["expire"]:
@@ -118,7 +118,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
         query = f"discordid = {discordid}"
     elif uid != -1:
         query = f"uid = {uid}"
-    
+
     await app.db.execute(dhrid, f"SELECT uid, userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, mfa_secret, join_timestamp FROM user WHERE {query}")
     p = await app.db.fetchall(dhrid)
     if len(p) == 0:
@@ -179,7 +179,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
         userid = None
 
     app.state.cache_userinfo[f"uid={uid}"] = {"data": {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}, "expire": int(time.time()) + 15}
-    
+
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 # app.state.cache_language = {} # language cache (3 seconds)
@@ -250,7 +250,7 @@ async def UpdateRoleConnection(request, discordid):
             if r.status_code in [401, 403]:
                 await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
                 await app.db.commit(dhrid)
-                
+
 async def DeleteRoleConnection(request, discordid):
     (app, dhrid) = (request.app, request.state.dhrid)
 

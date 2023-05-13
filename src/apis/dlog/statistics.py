@@ -70,7 +70,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
                 newdrivers += 1
 
     ret["driver"] = {"tot": totdrivers, "new": newdrivers}
-    
+
     # job / delivered / cancelled
     # This query returns
     # ets2 tot delivered job, ets2 new delivered job, ets2 tot cancelled job, ets2 new cancelled job
@@ -234,12 +234,12 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         ranges = 100
     elif ranges <= 0:
         ranges = 30
-    
+
     if interval > 31536000: # a year
         interval = 31536000
     elif interval < 60:
         interval = 60
-    
+
     if before is None:
         before = int(time.time())
 
@@ -258,7 +258,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     limit = ""
     if quserid is not None:
         limit = f"userid = {quserid} AND"
-    
+
     basedriver = 0
     if sum_up:
         await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp < {timerange[1][0]}")
@@ -311,7 +311,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         dollar = basedollar + t[i+4]
         (start_time, end_time) = timerange[int(i/5)]
         ret.append({"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/5)], "job": job, "distance": distance, "fuel": fuel, "profit": {"euro": euro, "dollar": dollar}})
-    
+
         if sum_up:
             (basejob, basedistance, basefuel, baseeuro, basedollar) = \
                 (job, distance, fuel, euro, dollar)

@@ -20,7 +20,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
-    
+
     if userid is not None:
         await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid = {userid} AND userid >= 0")
         t = await app.db.fetchall(dhrid)
@@ -44,7 +44,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         after = 0
     if before is None:
         before = max(int(time.time()), 32503651200)
-    
+
     limit = ""
     if userid is not None:
         limit += f"AND dlog.userid = {userid}"
@@ -88,7 +88,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     di += 1
                 else:
                     break
-        
+
         challenge_id = ", ".join(challengeids)
         challenge = ", ".join(challengenames)
 
@@ -116,7 +116,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         username = user["name"]
         if "is_deleted" in user.keys():
             user_id = None
-            username = ml.ctr(request, "unknown")     
+            username = ml.ctr(request, "unknown")
 
         source_city = ""
         source_city_id = ""
@@ -143,7 +143,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         license_plate = ""
         license_plate_country = ""
         license_plate_country_id = ""
-        
+
         fuel = dd[6]
         avg_fuel = 0
         if logged_distance != 0:
@@ -172,9 +172,9 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 data = json.loads(decompress(dd[8]))["data"]["object"]
                 first_event = data["events"][0]
                 last_event = data["events"][-1]
-                
+
                 trackerid = data["id"]
-                
+
                 after = data["start_time"]
                 stop_time = data["stop_time"]
 
@@ -190,7 +190,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 if data["destination_company"] is not None:
                     destination_company = data["destination_company"]["name"]
                     destination_company_id = data["destination_company"]["unique_id"]
-                
+
                 planned_distance = data["planned_distance"]
                 if "distance" in last_event["meta"]:
                     reported_distance = last_event["meta"]["distance"]
@@ -228,7 +228,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
                         auto_park = last_event["meta"]["autoParked"]
                 else:
                     revenue = -float(last_event["meta"]["penalty"])
-                
+
                 expensedict = {"tollgate": 0, "ferry": 0, "train": 0, "total": 0}
                 allevents = data["events"]
                 for eve in allevents:
@@ -264,12 +264,12 @@ async def get_export(request: Request, response: Response, authorization: str = 
                 data[i] = '""'
             else:
                 data[i] = '"' + str(data[i]) + '"'
-        
+
         f.write(",".join(data).encode("utf-8"))
         f.write(b"\n")
 
     f.seek(0)
-    
+
     response = StreamingResponse(iter([f.getvalue()]), media_type="text/csv")
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]

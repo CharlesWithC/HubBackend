@@ -41,7 +41,7 @@ class arequests:
                 if app is not None:
                     await app.db.extend_conn(dhrid, 1)
                 return r
-                
+
     async def put(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
         if app is not None:
             await app.db.extend_conn(dhrid, timeout)
@@ -53,7 +53,7 @@ class arequests:
                 if app is not None:
                     await app.db.extend_conn(dhrid, 1)
                 return r
-                
+
     async def delete(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
         if app is not None:
             await app.db.extend_conn(dhrid, timeout)

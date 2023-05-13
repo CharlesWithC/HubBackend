@@ -68,7 +68,7 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
                         sz += dz
             else:
                 t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
-                
+
     if len(d) > 0:
         t.append((float(d[-1]["x"]), 0, float(d[-1]["z"])))
 
@@ -101,14 +101,14 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
     if dhrid is None:
         dhrid = genrid()
         await app.db.new_conn(dhrid, extra_time = 5)
-    
+
     for _ in range(3):
         try:
             await app.db.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
             p = await app.db.fetchall(dhrid)
             if len(p) > 0:
                 break
-                
+
             await app.db.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '', {userid}, '{compress(data)}')")
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)
@@ -117,9 +117,9 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
             dhrid = genrid()
             await app.db.new_conn(dhrid, extra_time = 5)
             continue
-    
+
     return True
-        
+
 async def post_setup(response: Response, request: Request, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
@@ -138,7 +138,7 @@ async def post_setup(response: Response, request: Request, authorization: str = 
         return au
 
     latest_config = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
-    
+
     uinfo = await GetUserInfo(request, userid = au["userid"], include_email = True)
     email = uinfo["email"]
 
@@ -178,7 +178,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_ip", var = {"ip": request.client.host}))
         return {"error": "Validation failed"}
-    
+
     if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
         d = await request.form()
     elif request.headers["Content-Type"] == "application/json":
@@ -191,7 +191,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_signature", var = {"ip": request.client.host}))
         return {"error": "Validation failed"}
-    
+
     if d["object"] != "event":
         response.status_code = 400
         return {"error": "Only events are accepted."}
@@ -208,18 +208,18 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         name = t[0][2]
         discordid = t[0][3]
         await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit", var = {"username": name, "uid": uid}))
-        
+
         await app.db.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         await app.db.commit(dhrid)
 
         def setvar(msg):
             return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
-        
+
         for meta in app.config.member_leave:
             meta = Dict2Obj(meta)
             if meta.webhook_url != "" or meta.channel_id != "":
                 await AutoMessage(app, meta, setvar)
-            
+
             if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
                 for role in meta.role_change:
                     try:
@@ -254,7 +254,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
             except:
                 pass
-        
+
         return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
@@ -314,7 +314,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             if eve["meta"]["max_speed"] > eve["meta"]["speed_limit"]:
                 has_overspeed = True
     revenue = revenue - offence - totalexpense
-    
+
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
@@ -322,7 +322,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     parser.parse(d["data"]["object"]["stop_time"]).timestamp()
 
     delivery_rule_ok = True
-    
+
     mod_revenue = revenue # modified revenue
     if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
             and app.config.__dict__["delivery_rules"].__dict__["action"] != "bypass":
@@ -341,7 +341,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     mod_revenue = 0
         except:
             pass
-        
+
     if not delivery_rule_ok:
         await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}))
         await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}, force_lang = await GetUserLanguage(request, uid)))
@@ -436,7 +436,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     dlglink = app.config.frontend_urls.delivery.replace("{logid}", str(logid))
                     data = "{}"
                     if app.config.distance_unit == "imperial":
-                        data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}",
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr(request, "driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr(request, "truck"), "value": truck, "inline": True},
@@ -450,7 +450,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
                     elif app.config.distance_unit == "metric":
-                        data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}",
                                 "url": dlglink,
                                 "fields": [{"name": ml.ctr(request, "driver"), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.ctr(request, "truck"), "value": truck, "inline": True},
@@ -469,12 +469,12 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             DisableDiscordIntegration(app)
                     except:
                         pass
-                    
+
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     language = await GetUserLanguage(request, uid)
                     data = {}
                     if app.config.distance_unit == "imperial":
-                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}",
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(request, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.tr(request, "truck", force_lang = language), "value": truck, "inline": True},
@@ -488,7 +488,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
                     elif app.config.distance_unit == "metric":
-                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}", 
+                        data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}",
                                 "url": dlglink,
                                 "fields": [{"name": ml.tr(request, "driver", force_lang = language), "value": f"[{username}]({dhulink})", "inline": True},
                                         {"name": ml.tr(request, "truck", force_lang = language), "value": truck, "inline": True},
@@ -504,7 +504,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     if await CheckNotificationEnabled(request, "dlog", uid):
                         await SendDiscordNotification(request, uid, data)
                     await UpdateRoleConnection(request, discordid)
-                  
+
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
 
@@ -545,7 +545,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     jobreq = JOB_REQUIREMENT_DEFAULT
                     for i in range(0,len(p)):
                         jobreq[JOB_REQUIREMENTS[i]] = p[i]
-                    
+
                     if jobreq["minimum_distance"] != -1 and driven_distance < jobreq["minimum_distance"]:
                         continue
 
@@ -587,19 +587,19 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         cargo_mass = d["data"]["object"]["cargo"]["mass"]
                     if d["data"]["object"]["cargo"] is not None and d["data"]["object"]["cargo"]["damage"] is not None:
                         cargo_mass = d["data"]["object"]["cargo"]["damage"]
-                    
+
                     if jobreq["cargo_id"] != "" and cargo not in jobreq["cargo_id"].split(","):
                         continue
                     if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
                         continue
                     if jobreq["maximum_cargo_damage"] != -1 and cargo_damage > jobreq["maximum_cargo_damage"]:
                         continue
-                    
+
                     if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
                         continue
                     if jobreq["maximum_fuel"] != -1 and fuel_used > jobreq["maximum_fuel"]:
                         continue
-                    
+
                     profit = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
                     if jobreq["minimum_profit"] != -1 and profit < jobreq["minimum_profit"]:
                         continue
@@ -607,7 +607,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         continue
                     if jobreq["maximum_offence"] != -1 and abs(offence) > jobreq["maximum_offence"]:
                         continue
-                    
+
                     if not jobreq["allow_overspeed"] and has_overspeed:
                         continue
 
@@ -637,10 +637,10 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             continue
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
-                    
+
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
-                    await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")    
+                    await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")
                     await app.db.commit(dhrid)
 
                     current_delivery_count = 0
@@ -727,7 +727,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                 await app.db.commit(dhrid)
                 except Exception as exc:
                     await tracebackHandler(request, exc, traceback.format_exc())
-                
+
     except Exception as exc:
         await tracebackHandler(request, exc, traceback.format_exc())
 
@@ -754,7 +754,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
 
             driver_revenue = round(economy_revenue * (1 - app.config.economy.revenue_share_to_company))
             company_revenue = round(economy_revenue * app.config.economy.revenue_share_to_company)
-            
+
             await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid} FOR UPDATE")
             driver_balance = nint(await app.db.fetchone(dhrid))
             await EnsureEconomyBalance(request, userid) if driver_balance == 0 else None
@@ -764,17 +764,17 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             await EnsureEconomyBalance(request, -1000) if company_balance == 0 else None
             await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {company_revenue} WHERE userid = -1000")
             await app.db.commit(dhrid)
-            
+
             uid = (await GetUserInfo(request, userid = userid))["uid"]
             user_language = await GetUserLanguage(request, uid)
             message = "  \n" + ml.tr(request, "economy_message_for_delivery", var = {"logid": logid}, force_lang = user_language)
             await notification(request, "economy", uid, ml.tr(request, "economy_received_transaction", var = {"amount": driver_revenue, "currency_name": app.config.economy.currency_name, "from_user": ml.tr(request, "client"), "from_userid": "N/A", "message": message}, force_lang = user_language))
-            
+
             if not isrented:
                 message = convertQuotation(f'dlog-{logid}/garage-{garageid}-{slotid}/revenue-{economy_revenue}')
             else:
                 message = convertQuotation(f'dlog-{logid}/rental-{app.config.economy.truck_rental_cost}/revenue-{economy_revenue}')
-            
+
             await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, {userid}, {driver_revenue}, '{note}', '{message}', NULL, {int(driver_balance + driver_revenue)}, {int(time.time())})")
             await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES (-1003, -1000, {company_revenue}, 'c{note}', '{message}', NULL, {int(company_balance + company_revenue)}, {int(time.time())})")
             await app.db.commit(dhrid)
@@ -791,12 +791,12 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                 if current_odometer + driven_distance > app.config.economy.max_distance_before_scrap:
                     await app.db.execute(dhrid, f"UPDATE economy_truck SET status = -2 WHERE vehicleid = {vehicleid}")
                 await app.db.commit(dhrid)
-                
+
     except Exception as exc:
         await tracebackHandler(request, exc, traceback.format_exc())
 
     return Response(status_code=204)
-    
+
 async def post_update_route(response: Response, request: Request, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
@@ -820,7 +820,7 @@ async def post_update_route(response: Response, request: Request, authorization:
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT unit, tracker_type, trackerid, userid FROM dlog WHERE logid = {logid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -837,7 +837,7 @@ async def post_update_route(response: Response, request: Request, authorization:
     if len(t) != 0:
         response.status_code = 409
         return {"error": ml.tr(request, "route_already_fetched", force_lang = au["language"])}
-    
+
     r = await FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid)
 
     if r is True:

@@ -34,7 +34,7 @@ def get_lang(request: Request):
     if lang not in LANGUAGES:
         # aa-bb (e.g. en-us) exists
         return lang
-    
+
     # aa-bb doesn't exist, returns aa
     lang = lang.split('-')[0]
     return lang
@@ -42,7 +42,7 @@ def get_lang(request: Request):
 def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
     lang = get_lang(request) if force_lang == "" else force_lang
     if lang not in LANGUAGES:
-        lang = "en" 
+        lang = "en"
 
     LANG_DATA = EN_STRINGTABLE
     if lang != "en":
@@ -72,7 +72,7 @@ def tr(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optiona
 def company_translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
     lang = request.app.config.language if force_lang == "" else force_lang
     if lang not in LANGUAGES:
-        lang = "en" 
+        lang = "en"
 
     LANG_DATA = EN_STRINGTABLE
     if lang != "en":

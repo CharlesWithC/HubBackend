@@ -17,7 +17,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
         order: Optional[str] = "desc", \
         after_announcementid: Optional[int] = None, query: Optional[str] = ""):
-    app = request.app    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -37,12 +37,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
         else:
             userid = au["userid"]
             await ActivityUpdate(request, au["uid"], "announcements")
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 100:
         page_size = 100
-    
+
     if order not in ["asc", "desc"]:
         order = "asc"
 
@@ -63,7 +63,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     ret = []
     for tt in t:
         ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]})
-        
+
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = await app.db.fetchall(dhrid)
     tot = 0
@@ -209,7 +209,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"):
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
@@ -251,7 +251,7 @@ async def delete_announcement(request: Request, response: Response, announcement
     if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"): # creator or leadership
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)

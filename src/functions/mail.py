@@ -29,7 +29,7 @@ async def sendEmail(app, name, email, category, link):
     message.attach(plain_text)
     html_text = MIMEText(app.config.__dict__["email_template"].__dict__[category].__dict__["html"].replace("{link}", link), 'html')
     message.attach(html_text)
-    
+
     s = socks.socksocket()
 
     proxy_url = os.environ.get('SOCKS_PROXY')

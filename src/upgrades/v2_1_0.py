@@ -44,7 +44,7 @@ def run(app):
             row[7] = "NULL"
         if row[6] <= 0:
             row[6] = "NULL"
-        try: 
+        try:
             if row[0] == 0:
                 cur.execute(f"INSERT INTO user(uid, userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (0, {row[0]}, '{row[2]}', '{row[5]}', '{row[3]}', '{row[4]}', '{row[8]}', {row[1]}, {row[7]}, {row[6]}, {row[9]}, '{row[10]}')")
                 cur.execute("ALTER TABLE user AUTO_INCREMENT = 0;")
@@ -59,7 +59,7 @@ def run(app):
         if row[0] >= 0:
             userid2uid[row[0]] = uid
     print(f"Created {len(list(discordid2uid.keys()))} discordid -> uid links.")
-    
+
     print("Updating user_password table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_password RENAME TO user_password_old")
@@ -79,7 +79,7 @@ def run(app):
             cur.execute(f"INSERT INTO user_password VALUES ({discordid2uid[row[0]]}, '{row[1]}', '{row[2]}')")
         except:
             traceback.print_exc()
-    
+
     print("Updating user_activity table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_activity RENAME TO user_activity_old")
@@ -99,7 +99,7 @@ def run(app):
             cur.execute(f"INSERT INTO user_activity VALUES ({discordid2uid[row[0]]}, '{row[1]}', {row[2]})")
         except:
             traceback.print_exc()
-    
+
     print("Updating user_notification table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE user_notification RENAME TO user_notification_old")
@@ -119,7 +119,7 @@ def run(app):
             cur.execute(f"INSERT INTO user_notification VALUES ({row[0]}, {discordid2uid[row[1]]}, '{row[2]}', {row[3]}, {row[4]})")
         except:
             traceback.print_exc()
-    
+
     print("Updating banned table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE banned RENAME TO banned_old")
@@ -142,7 +142,7 @@ def run(app):
             cur.execute(f"INSERT INTO banned VALUES ({discordid2uid[row[0]]}, '{email}', {row[0]}, {steamid}, {truckersmpid}, {row[1]}, '{row[2]}')")
         except:
             traceback.print_exc()
-    
+
     print("Updating application table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE application RENAME TO application_old")
@@ -162,7 +162,7 @@ def run(app):
             cur.execute(f"INSERT INTO application(applicationid, application_type, uid, data, status, submit_timestamp, update_staff_userid, update_staff_timestamp) VALUES ({row[0]}, {row[1]}, {discordid2uid[row[2]]}, '{row[3]}', {row[4]}, {row[5]}, {row[6]}, {row[5]})")
         except:
             traceback.print_exc()
-    
+
     print("Updating session table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE session RENAME TO session_old")
@@ -246,7 +246,7 @@ def run(app):
             cur.execute(f"INSERT INTO auditlog VALUES ({userid2uid[row[0]]}, '{row[1]}', {row[2]})")
         except:
             traceback.print_exc()
-    
+
     print("Updating settings table (discordid -> uid)...")
     try:
         cur.execute("ALTER TABLE settings RENAME TO settings_old")
@@ -271,7 +271,7 @@ def run(app):
                 cur.execute(f"INSERT INTO settings VALUES ({discordid2uid[row[0]]}, '{row[1]}', '{row[2]}')")
             except:
                 traceback.print_exc()
-    
+
     skey2table = {"nxtnotificationid": "user_notification", "nxtlogid": "dlog", "nxtappid": "application", "nxtannid": "announcement", "nxtchallengeid": "challenge", "nxtdownloadsid": "downloads", "nxteventid": "event"}
     print("Updating tables (add AUTO_INCREMENT property)")
     for skey in skey2table.keys():
@@ -301,8 +301,8 @@ def run(app):
         sval = cur.fetchone()[0]
         cur.execute(f"ALTER TABLE {skey2table[skey]} AUTO_INCREMENT={sval};")
         cur.execute(f"DELETE FROM settings WHERE skey = '{skey}'")
-    
+
     cur.close()
     conn.close()
-    
+
     print("Upgrade finished")

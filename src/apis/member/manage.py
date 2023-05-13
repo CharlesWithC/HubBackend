@@ -39,7 +39,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     if staff_highest_order_id is None:
         response.status_code = 403
         return {"error": "Forbidden"}
-            
+
     data = await request.json()
     try:
         new_roles = data["roles"]
@@ -76,14 +76,14 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             response.status_code = 400
             return {"error": ml.tr(request, "role_not_found", force_lang = au["language"])}
 
-    if staff_highest_order_id != app.roles[(await getHighestActiveRole(request))]["order_id"]: 
+    if staff_highest_order_id != app.roles[(await getHighestActiveRole(request))]["order_id"]:
         # if staff doesn't have the highest role,
         # then check if the role to add is lower than staff's highest role
         for add in addedroles:
             if app.roles[add]["order_id"] <= staff_highest_order_id:
                 response.status_code = 403
                 return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
-    
+
         for remove in removedroles:
             if app.roles[remove]["order_id"] <= staff_highest_order_id:
                 response.status_code = 403
@@ -91,7 +91,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     if len(addedroles) + len(removedroles) == 0:
         return Response(status_code=204)
-    
+
     # division staff are only allowed to update division roles
     # not admin, no role access, have division access
     if not checkPerm(app, au["roles"], "admin") and not checkPerm(app, au["roles"], ["hrm", "hr", "update_member_roles"]) and checkPerm(app, au["roles"], "division"):
@@ -152,14 +152,14 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
         else:
             await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
-        
+
         await UpdateRoleConnection(request, discordid)
-            
+
         for meta in app.config.driver_role_add:
             meta = Dict2Obj(meta)
             if meta.webhook_url != "" or meta.channel_id != "":
                 await AutoMessage(app, meta, setvar)
-            
+
             if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
                 for role in meta.role_change:
                     try:
@@ -203,14 +203,14 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
         else:
             await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
-            
+
         await UpdateRoleConnection(request, discordid)
 
         for meta in app.config.driver_role_remove:
             meta = Dict2Obj(meta)
             if meta.webhook_url != "" or meta.channel_id != "":
                 await AutoMessage(app, meta, setvar)
-            
+
             if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
                 for role in meta.role_change:
                     try:
@@ -226,7 +226,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                                 await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                     except:
                         pass
-    
+
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""
     for add in addedroles:
@@ -270,7 +270,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     data = await request.json()
     try:
         distance = int(data["distance"])
@@ -294,10 +294,10 @@ async def patch_points(request: Request, response: Response, userid: int, author
     if bonus_points != 0:
         await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonus_points}, {int(time.time())})")
         await app.db.commit(dhrid)
-    
+
     if int(distance) > 0:
         distance = "+" + data["distance"]
-    
+
     username = (await GetUserInfo(request, userid = userid))["name"]
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
     uid = (await GetUserInfo(request, userid = userid))["uid"]
@@ -386,7 +386,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
     else:
         await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
-    
+
     await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
@@ -396,7 +396,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         meta = Dict2Obj(meta)
         if meta.webhook_url != "" or meta.channel_id != "":
             await AutoMessage(app, meta, setvar)
-        
+
         if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
             for role in meta.role_change:
                 try:
@@ -412,7 +412,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                             await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
                 except:
                     pass
-    
+
     if discordid is not None and app.config.discord_bot_token != "":
         headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}
         try:
@@ -430,8 +430,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                         err = json.loads(r.text)
                         await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
         except:
-            pass   
-        
+            pass
+
     await AuditLog(request, au["uid"], ml.ctr(request, "dismissed_member", var = {"username": name, "uid": uid}))
     await notification(request, "member", uid, ml.tr(request, "member_dismissed", force_lang = await GetUserLanguage(request, uid)))
     return Response(status_code=204)

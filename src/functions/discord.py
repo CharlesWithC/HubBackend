@@ -28,7 +28,7 @@ class DiscordAuth:
 
         resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
         return json.loads(resp.text)
-    
+
     async def refresh_token(self, refresh_token):
         """ Refreshes access token and access tokens and will return a new set of tokens """
         data = {
@@ -41,7 +41,7 @@ class DiscordAuth:
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        
+
         resp = await arequests.post(None, 'https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
         return json.loads(resp.text)
 

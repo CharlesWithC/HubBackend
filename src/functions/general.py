@@ -25,7 +25,7 @@ class Dict2Obj(object):
                 setattr(self, key, data)
             else:
                 setattr(self, key, d[key])
-                
+
 def restart(app):
     time.sleep(3)
     os.system(f"nohup ./launcher hub restart {app.config.abbr} > /dev/null")
@@ -83,7 +83,7 @@ def getUserAgent(request):
             return convertQuotation(request.headers["user-agent"])[:256]
     else:
         return ""
-    
+
 def DisableDiscordIntegration(app):
     request = Request(scope={"type":"http", "app": app})
     app.config.discord_bot_token = ""

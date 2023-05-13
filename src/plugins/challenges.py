@@ -19,7 +19,7 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 # Remember to add challenge points for /member/roles/rank and /dlog/leaderboard
 # Remember to add "challenge_record" = challengeid[] for /dlog/list and /dlog
 
-# For company challenge, challenge_record will still be bound to personal userid. 
+# For company challenge, challenge_record will still be bound to personal userid.
 # Completed company challenges are no longer allowed to be edited.
 
 
@@ -71,7 +71,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page_size = 1
     elif page_size >= 100:
         page_size = 100
-    
+
     query_limit = "WHERE challengeid >= 0 "
 
     if query != "":
@@ -82,10 +82,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query_limit += f"AND start_time >= {after} "
     if before is not None:
         query_limit += f"AND end_time <= {before} "
-    
+
     if challenge_type in [1,2,3]:
         query_limit += f"AND challenge_type = {challenge_type} "
-    
+
     if required_role is not None:
         query_limit += f"AND required_roles LIKE '%,{required_role},%' "
 
@@ -93,24 +93,24 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query_limit += f"AND required_distance >= {minimum_required_distance} "
     if maximum_required_distance is not None:
         query_limit += f"AND required_distance <= {maximum_required_distance} "
-    
+
     if userid is not None:
         query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {userid}) "
     if userid is None:
         userid = au["userid"]
-    
+
     # start_time / end_time / title / required_distance / reward_points / delivery_count
     if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
         order_by = "reward_points"
         order = "desc"
-    
+
     if order not in ["asc", "desc"]:
         order = "asc"
-    
+
     query_limit += f"ORDER BY {order_by} {order}"
 
     ret = []
-    
+
     base_rows = 0
     tot = 0
     await app.db.execute(dhrid, f"SELECT challengeid FROM challenge {query_limit}")
@@ -145,7 +145,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
         required_roles = str2list(tt[6])
-        
+
         completed = 0
         await app.db.execute(dhrid, f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {tt[0]} ORDER BY points DESC, timestamp ASC, userid ASC")
         p = await app.db.fetchall(dhrid)
@@ -234,7 +234,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
 
     required_roles = str2list(tt[6])
-    
+
     completed = []
     await app.db.execute(dhrid, f"SELECT userid, points, timestamp FROM challenge_completed WHERE challengeid = {challengeid} ORDER BY points DESC, timestamp ASC, userid ASC")
     p = await app.db.fetchall(dhrid)
@@ -335,7 +335,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     if start_time >= end_time:
         response.status_code = 400
         return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
@@ -343,7 +343,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
     if challenge_type not in [1, 2, 3, 4, 5]:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_challenge_type", force_lang = au["language"])}
-    
+
     roles = required_roles
     rolereq = []
     for role in roles:
@@ -449,11 +449,11 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     if start_time >= end_time:
         response.status_code = 400
         return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
-    
+
     roles = required_roles
     rolereq = []
     for role in roles:
@@ -504,7 +504,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             original_points[tt[0]] = tt[1]
         await app.db.execute(dhrid, f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
         await app.db.commit(dhrid)
-        
+
         if org_delivery_count < delivery_count:
             await app.db.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid} \
                 GROUP BY userid HAVING COUNT(*) >= {org_delivery_count} AND COUNT(*) < {delivery_count}")
@@ -547,7 +547,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             original_points[tt[0]] = tt[1]
         await app.db.execute(dhrid, f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
         await app.db.commit(dhrid)
-        
+
         if org_delivery_count < delivery_count:
             await app.db.execute(dhrid, f"SELECT challenge_record.userid FROM challenge_record \
                 INNER JOIN dlog ON dlog.logid = challenge_record.logid \
@@ -599,10 +599,10 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         t = await app.db.fetchall(dhrid)
         for tt in t:
             completed_count[tt[0]] = tt[1]
-        
+
         await app.db.execute(dhrid, f"UPDATE challenge_completed SET points = {reward_points} WHERE challengeid = {challengeid}")
         await app.db.commit(dhrid)
-        
+
         if org_delivery_count < delivery_count:
             await app.db.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid}")
             t = await app.db.fetchall(dhrid)
@@ -627,7 +627,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                         else:
                             await notification(request, "challenge", uid, ml.tr(request, "one_personal_recurring_challenge_uncompelted_increased_delivery_count", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0]), "total_points": tseparator(left_cnt * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.commit(dhrid)
-            
+
         elif org_delivery_count > delivery_count:
             await app.db.execute(dhrid, f"SELECT userid FROM challenge_record WHERE challengeid = {challengeid}")
             t = await app.db.fetchall(dhrid)
@@ -728,7 +728,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             WHERE challenge_record.challengeid = {challengeid}")
         current_delivery_count = await app.db.fetchone(dhrid)
         current_delivery_count = 0 if current_delivery_count is None or current_delivery_count[0] is None else int(current_delivery_count[0])
-        
+
         if current_delivery_count >= delivery_count:
             await app.db.execute(dhrid, f"SELECT challenge_record.userid, SUM(dlog.distance) FROM challenge_record \
                 INNER JOIN dlog ON dlog.logid = challenge_record.logid \
@@ -802,7 +802,7 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"DELETE FROM challenge WHERE challengeid = {challengeid}")
     await app.db.execute(dhrid, f"DELETE FROM challenge_record WHERE challengeid = {challengeid}")
     await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
@@ -854,7 +854,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
     if len(t) != 0:
         response.status_code = 409
         return {"error": ml.tr(request, "challenge_delivery_already_accepted", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT userid, timestamp FROM dlog WHERE logid = {logid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -862,7 +862,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
         return {"error": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
     userid = t[0][0]
     timestamp = t[0][1]
-    await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")    
+    await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {timestamp})")
     await app.db.commit(dhrid)
     uid = (await GetUserInfo(request, userid = userid))["uid"]
     await notification(request, "challenge", uid, ml.tr(request, "delivery_added_to_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
@@ -892,7 +892,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.commit(dhrid)
                 uid = (await GetUserInfo(request, userid = userid))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "personal_onetime_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
-        
+
         elif challenge_type == 3:
             await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
             t = await app.db.fetchall(dhrid)
@@ -954,7 +954,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
                 await app.db.commit(dhrid)
 
     await AuditLog(request, au["uid"], ml.ctr(request, "added_delivery_to_challenge", var = {"id": challengeid, "logid": logid}))
-    
+
     return Response(status_code=204)
 
 # DELETE /challenges/delivery
@@ -979,7 +979,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type, reward_points, title FROM challenge WHERE challengeid = {challengeid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -996,7 +996,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_delivery_not_found", force_lang = au["language"])}
     userid = t[0][0]
-    
+
     await app.db.execute(dhrid, f"DELETE FROM challenge_record WHERE challengeid = {challengeid} AND logid = {logid}")
     await app.db.commit(dhrid)
     uid = (await GetUserInfo(request, userid = userid))["uid"]
@@ -1027,7 +1027,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                 await app.db.commit(dhrid)
                 uid = (await GetUserInfo(request, userid = userid))["uid"]
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(p[0][0])}, force_lang = await GetUserLanguage(request, uid)))
-      
+
     elif challenge_type == 3:
         await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
         p = await app.db.fetchall(dhrid)
@@ -1051,10 +1051,10 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await app.db.commit(dhrid)
-        
+
         else:
             curtime = int(time.time())
-            
+
             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = await app.db.fetchall(dhrid)
             previously_completed = {}
@@ -1108,10 +1108,10 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
                 await notification(request, "challenge", uid, ml.tr(request, "challenge_uncompleted_lost_points", var = {"title": title, "challengeid": challengeid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
             await app.db.execute(dhrid, f"DELETE FROM challenge_completed WHERE challengeid = {challengeid}")
             await app.db.commit(dhrid)
-        
+
         else:
             curtime = int(time.time())
-            
+
             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid} LIMIT 1")
             t = await app.db.fetchall(dhrid)
             previously_completed = {}

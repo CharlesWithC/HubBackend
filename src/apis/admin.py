@@ -46,7 +46,7 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
     try:
         r = await arequests.put(app, f"https://discord.com/api/v10/applications/{app.config.discord_client_id}/role-connections/metadata", data = json.dumps([{"type": 2, "key": "dlog", "name": "Deliveries", "description": "Deliveries submitted", "name_localizations": {"es-ES": "Entregas"}}, {"type": 2, "key": "distance", "name": "Distance(km)", "description": "Distance(km) driven", "name_localizations": {"es-ES": "Distancia(km)"}}, {"type": 7, "key": "is_driver", "name": "Driver", "description": "Must be a driver", "name_localizations": {"es-ES": "Conductor"}}, {"type": 6, "key": "member_since", "name": "Member since", "description": "Days since creating an account", "name_localizations": {"es-ES": "Miembro desde"}}]), headers = headers, dhrid = dhrid)
@@ -57,7 +57,7 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
     except:
         response.status_code = 503
         return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
-    
+
 async def post_discord_role_connection_disable(request: Request, response: Response, authorization: str = Header(None)):
     """Disable Discord Role Connection"""
     app = request.app
@@ -75,7 +75,7 @@ async def post_discord_role_connection_disable(request: Request, response: Respo
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
     try:
         r = await arequests.put(app, f"https://discord.com/api/v10/applications/{app.config.discord_client_id}/role-connections/metadata", data = json.dumps([]), headers = headers, dhrid = dhrid)
@@ -98,7 +98,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    
+
     permOk = False
     if authorization is not None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
@@ -107,7 +107,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
             del au["code"]
             return au
         permOk = checkPerm(app, au["roles"], ["admin", "config"])
-    
+
     if not permOk:
         t = copy.deepcopy(app.backup_config)
         ttconfig = {}
@@ -117,7 +117,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
                 ttconfig[tt] = t[tt]
 
         return {"config": ttconfig}
-        
+
     # current config
     last_modified = 0
     try:
@@ -148,7 +148,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     except Exception as exc:
         ffconfig = {}
         await tracebackHandler(request, exc, traceback.format_exc())
-    
+
     # old config
     t = copy.deepcopy(app.backup_config)
     ttconfig = {}
@@ -177,7 +177,7 @@ def restart(app):
 
 async def patch_config(request: Request, response: Response, authorization: str = Header(None), unsafe: Optional[bool] = False):
     """Updates the config, only those specified in `config` will be updated
-    
+
     JSON: `{"config": {}}`"""
     app = request.app
     dhrid = request.state.dhrid
@@ -224,7 +224,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
             if tt == "tracker" and new_config[tt] not in ['tracksim']:
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
-    
+
             if not unsafe and tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
@@ -239,7 +239,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 if new_config[tt] not in ['metric', 'imperial']:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_distance_unit", force_lang = au["language"])}
-                
+
             if tt == "economy":
                 if "garages" in new_config[tt].keys():
                     garages = new_config[tt]["garages"]
@@ -248,7 +248,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                             if garage["base_slots"] > 10:
                                 response.status_code = 400
                                 return {"error": ml.tr(request, "value_too_large", var = {"item": "economy.garages.base_slots", "limit": "10"}, force_lang = au["language"])}
-                
+
             if tt in ["privacy", "must_join_guild", "use_server_nickname"]:
                 if type(new_config[tt]) != bool:
                     response.status_code = 400
@@ -305,7 +305,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                 ttconfig[tt] = copy.deepcopy(str(new_config[tt]))
             else:
                 ttconfig[tt] = copy.deepcopy(new_config[tt])
-    
+
     ttconfig = validateConfig(ttconfig)
     out = json.dumps(ttconfig, indent=4, ensure_ascii=False)
     if len(out) > 512000:
@@ -320,7 +320,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
 async def post_config_reload(request: Request, response: Response, authorization: str = Header(None)):
     """Reloads config, returns 204"""
-    app = request.app    
+    app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -342,7 +342,7 @@ async def post_config_reload(request: Request, response: Response, authorization
     if mfa_secret == "":
         response.status_code = 428
         return {"error": ml.tr(request, "mfa_required", force_lang = au["language"])}
-    
+
     data = await request.json()
     try:
         otp = data["otp"]
@@ -370,7 +370,7 @@ async def post_config_reload(request: Request, response: Response, authorization
     logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
 
     app = static.load(app)
-    
+
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
@@ -405,7 +405,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     if mfa_secret == "":
         response.status_code = 428
         return {"error": ml.tr(request, "mfa_required", force_lang = au["language"])}
-    
+
     data = await request.json()
     try:
         otp = data["otp"]
@@ -424,11 +424,11 @@ async def post_restart(request: Request, response: Response, authorization: str 
         app.backup_config = copy.deepcopy(config.__dict__)
         os.replace(app.config_path + ".saved", app.config_path)
         app.config_last_modified = os.path.getmtime(app.config_path)
-        
+
         logger.info(f"[{app.config.abbr}] [PID: {os.getpid()}] Config modification detected, reloaded config.")
-        
+
         app = static.load(app)
-    
+
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
             os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
@@ -464,7 +464,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
         return au
 
     operation = convertQuotation(operation.lower())
-    
+
     if page_size <= 1:
         page_size = 1
     elif page_size >= 500:

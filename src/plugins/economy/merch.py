@@ -30,7 +30,7 @@ async def get_all_merch(request: Request, response: Response, authorization: str
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     return app.config.economy.merch
 
 async def get_merch_list(request: Request, response: Response, authorization: str = Header(None), \
@@ -83,12 +83,12 @@ async def get_merch_list(request: Request, response: Response, authorization: st
     if order_by not in ['merchid', 'itemid', 'userid', 'price', 'purchase_timestamp']:
         order_by = "price"
         order = "desc"
-    
+
     order_by = "buy_price" if order_by == "price" else order_by
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    
+
     base_rows = 0
     tot = 0
     await app.db.execute(dhrid, f"SELECT itemid FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order}")
@@ -102,7 +102,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
                 break
             base_rows += 1
         tot -= base_rows
-            
+
     await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -113,9 +113,9 @@ async def get_merch_list(request: Request, response: Response, authorization: st
 
 async def post_merch_purchase(request: Request, response: Response, merchid: str, authorization: str = Header(None)):
     '''Purchase a merch, returns `itemid`, `cost`, `balance`.
-    
+
     JSON: `{"owner": Optional[str]}`
-    
+
     `owner` can be `self` | `user-{userid}`'''
     app = request.app
     dhrid = request.state.dhrid
@@ -149,15 +149,15 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
         return {"error": ml.tr(request, "merch_not_found", force_lang = au["language"])}
     merch = app.merch[merchid]
     merchid = convertQuotation(merchid)
-    
+
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])    
-    
+    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])
+
     # check access
     if owner == "company" and not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "purchase_company_forbidden", var = {"item": ml.tr(request, "merch", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -177,7 +177,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
     else:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {opuserid} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
@@ -185,7 +185,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
     await app.db.execute(dhrid, "SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
     company_balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, -1000) if company_balance == 0 else None
-    
+
     if merch["buy_price"] > balance:
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
@@ -204,9 +204,9 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
 
 async def post_merch_transfer(request: Request, response: Response, itemid: int, authorization: str = Header(None)):
     '''Transfer a merch (ownership).
-    
+
     JSON: `{"owner": Optional[str], "message": Optional[str]}`
-    
+
     `owner` can be `self` | `user-{userid}`'''
     app = request.app
     dhrid = request.state.dhrid
@@ -239,7 +239,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     # check owner
     if owner == "self":
         foruser = userid
@@ -267,7 +267,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
     if current_owner == foruser:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
-    
+
     # check perm
     permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])
 
@@ -277,7 +277,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
         if current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "merch", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_merch SET userid = {foruser} WHERE itemid = {itemid}")
     await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'm{itemid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
@@ -321,7 +321,7 @@ async def post_merch_sell(request: Request, response: Response, itemid: int, aut
         if current_owner != userid:
             response.status_code = 403
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "merch", force_lang = au["language"])}, force_lang = au["language"])}
-    
+
     # check balance
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {current_owner} FOR UPDATE")
     balance = nint(await app.db.fetchone(dhrid))
@@ -329,7 +329,7 @@ async def post_merch_sell(request: Request, response: Response, itemid: int, aut
     await app.db.execute(dhrid, "SELECT balance FROM economy_balance WHERE userid = -1000 FOR UPDATE")
     company_balance = nint(await app.db.fetchone(dhrid))
     await EnsureEconomyBalance(request, -1000) if company_balance == 0 else None
-    
+
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {refund} WHERE userid = {current_owner}")
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {refund} WHERE userid = -1000")
     await app.db.execute(dhrid, f"DELETE FROM economy_merch WHERE itemid = {itemid}")

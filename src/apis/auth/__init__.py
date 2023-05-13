@@ -16,11 +16,11 @@ routes = [
     APIRoute("/auth/reset", generic.post_reset, methods=["POST"], response_class=JSONResponse),
     APIRoute("/auth/mfa", generic.post_mfa, methods=["POST"], response_class=JSONResponse),
     APIRoute("/auth/email", generic.post_email, methods=["POST"], response_class=JSONResponse),
-    
+
     APIRoute("/auth/discord/callback", discord.get_callback, methods=["GET"], response_class=JSONResponse),
 
     APIRoute("/auth/steam/callback", steam.get_callback, methods=["GET"], response_class=JSONResponse),
-    
+
     APIRoute("/auth/ticket", ticket.post_ticket, methods=["POST"], response_class=JSONResponse),
     APIRoute("/auth/ticket", ticket.get_ticket, methods=["GET"], response_class=JSONResponse),
 

@@ -51,7 +51,7 @@ args = sys.argv[1:]
 if len(args) != 3 and len(args) != 2:
     print("Usage: launcher <hub|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
     sys.exit(1)
-    
+
 app = args[0]
 op = args[1]
 if app == "bannergen":
@@ -72,14 +72,14 @@ if app == "bannergen":
         os.system(f"rm -f {serdir}/bannergen.service")
         open(f"{serdir}/bannergen.service", "w").write(bgenconf)
         os.system("systemctl --user enable bannergen.service")
-    
+
     elif op == "disable":
         os.system("systemctl --user disable bannergen.service")
         os.system(f"rm -f {serdir}/bannergen.service")
         os.system("systemctl --user daemon-reload")
 
     sys.exit(0)
-    
+
 if len(args) != 3:
     print("Usage: launcher <hub|bannergen> <test|main|start|restart|stop|enable|disable> <abbr>")
     sys.exit(1)
@@ -116,7 +116,7 @@ if app == "hub":
         os.system(f"rm -f {serdir}/hub{abbr}.service")
         open(f"{serdir}/hub{abbr}.service", "w").write(serconf.format(name, abbr))
         os.system(f"systemctl --user enable hub{abbr}.service")
-    
+
     elif op == "disable":
         os.system(f"systemctl --user disable hub{abbr}.service")
         os.system(f"rm -f {serdir}/hub{abbr}.service")

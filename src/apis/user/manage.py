@@ -27,13 +27,13 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -71,7 +71,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     await app.db.commit(dhrid)
 
     await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
-    
+
     def setvar(msg):
         return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
 
@@ -79,7 +79,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         meta = Dict2Obj(meta)
         if meta.webhook_url != "" or meta.channel_id != "":
             await AutoMessage(app, meta, setvar)
-            
+
         if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
             for role in meta.role_change:
                 try:
@@ -96,11 +96,11 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
                 except:
                     pass
 
-    return {"userid": userid}   
+    return {"userid": userid}
 
 async def patch_connections(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """[Permission Control] Updates account connections for a specific user, returns 204
-    
+
     JSON: `{"email": Optional[str], "discordid": Optional[int], "steamid": Optional[int], "truckersmpid": Optional[int]}`"""
     app = request.app
     dhrid = request.state.dhrid
@@ -121,18 +121,18 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     userinfo = await GetUserInfo(request, uid = uid)
     connections = [userinfo["email"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"]]
     new_connections = [None, None, None, None]
     connections_key = ["email", "discordid", "steamid", "truckersmpid"]
-    
+
     await app.db.execute(dhrid, f"SELECT uid, name FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-    
+
     data = await request.json()
     try:
         if "email" in data.keys():
@@ -158,7 +158,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
             if t[0][1] != -1:
                 response.status_code = 409
                 return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
-    
+
     # then delete
     for i in range(0,4):
         if new_connections[i] is None:
@@ -184,7 +184,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
 
             if t[0][2] is not None:
                 await DeleteRoleConnection(request, t[0][2])
-    
+
     connections = [new_connections[i] if new_connections[i] is not None else connections[i] for i in range(0,4)]
     connections = [x if x is not None else "NULL" for x in connections]
     connections[0] = f"'{convertQuotation(connections[0])}'" if connections[0] != "NULL" else "NULL"
@@ -199,10 +199,10 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_connections", var = {"username": userinfo["name"], "uid": uid}))
 
     return Response(status_code=204)
-    
+
 async def delete_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
     """[Permission Control] Deletes Steam & TruckersMP connections for a specific user.
-    
+
     [Note] This function will be updated when the user system no longer relies on Discord."""
     app = request.app
     dhrid = request.state.dhrid
@@ -223,7 +223,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
-    
+
     if uid is None:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
@@ -237,7 +237,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
     if userid != -1:
         response.status_code = 428
         return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
-    
+
     await app.db.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
@@ -270,16 +270,16 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
         page_size = 1
     elif page_size >= 250:
         page_size = 250
-    
+
     query = convertQuotation(query).lower()
-    
+
     if order_by not in ['uid', 'email', 'discordid', 'steamid', 'truckersmpid']:
         order_by = "uid"
         order = "asc"
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    
+
     await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{query}%' ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -317,7 +317,7 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     qu = ""
     if uid is not None:
         qu = f"uid = {uid}"
@@ -332,20 +332,20 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
     else:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
-    
+
     await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE {qu}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
-    
+
     tt = t[0]
     userinfo = await GetUserInfo(request, uid = tt[0])
     if userinfo["join_timestamp"] is None:
         userinfo = await GetUserInfo(request, discordid = tt[2])
     if userinfo["join_timestamp"] is None:
         userinfo = None
-    
+
     discordid = str(tt[2]) if tt[2] is not None else None
     steamid = str(tt[3]) if tt[3] is not None else None
 
@@ -353,7 +353,7 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
 
 async def put_ban(request: Request, response: Response, authorization: str = Header(None)):
     """Bans user with specific connections, returns 204
-    
+
     JSON: {"expire": Optional[int], "reason": str}"""
     app = request.app
     dhrid = request.state.dhrid
@@ -370,9 +370,9 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     connections = []
-    
+
     data = await request.json()
     try:
         fields = ["uid", "email", "discordid", "steamid", "truckersmpid"]
@@ -400,7 +400,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     if expire <= 0:
         expire = 253402272000
-    
+
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -459,9 +459,9 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
         response.status_code = au["code"]
         del au["code"]
         return au
-    
+
     connections = []
-    
+
     data = await request.json()
     try:
         fields = ["uid", "email", "discordid", "steamid", "truckersmpid"]
@@ -477,7 +477,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -490,7 +490,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     else:
         await app.db.execute(dhrid, f"DELETE FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
         await app.db.commit(dhrid)
-        
+
         for tt in t:
             if tt[0] is not None:
                 username = (await GetUserInfo(request, uid = tt[0]))["name"]
@@ -539,7 +539,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
-        
+
         await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {uid}")
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid}")
@@ -556,17 +556,17 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await AuditLog(request, au["uid"], ml.ctr(request, "deleted_user", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
-    
+
     else:
         uid = auth_uid
-        
+
         await app.db.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
         if userid != -1:
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
-        
+
         await app.db.execute(dhrid, f"INSERT INTO pending_user_deletion VALUES ({uid}, {int(time.time()+86400*14)}, 1)")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
         await app.db.commit(dhrid)
