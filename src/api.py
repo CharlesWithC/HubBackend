@@ -165,11 +165,15 @@ class HubMiddleware(BaseHTTPMiddleware):
         dhrid = genrid()
         request.state.dhrid = dhrid
         try:
+            request_start_time = time.time()
             rl = await ratelimit(request, 'MIDDLEWARE', 60, 150, cGlobalOnly=True)
             if rl[0]:
                 return rl[1]
             response = await call_next(request)
             await app.db.close_conn(dhrid)
+            request_end_time = time.time()
+            if app.enable_performance_header:
+                response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
             return response
         except Exception as exc:
             await app.db.close_conn(dhrid)

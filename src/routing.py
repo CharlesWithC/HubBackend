@@ -16,14 +16,14 @@ app = FastAPI()
 def shutdownEvent():
     os._exit(42)
 
-def initRoutes(config_paths, openapi_path, first_init = False):
+def initRoutes(config_paths, openapi_path, first_init = False, enable_performance_header = False):
     global app
     routes = []
     scopes = {}
     servers = []
 
     for config_path in config_paths:
-        dh = base.createApp(config_path, multi_mode = len(config_paths) > 1, first_init = first_init)
+        dh = base.createApp(config_path, multi_mode = len(config_paths) > 1, first_init = first_init, enable_performance_header = enable_performance_header)
         if dh is not None:
             try:
                 scopes = {"host": dh.config.server_host, "port": int(dh.config.server_port), "workers": int(dh.config.server_workers)}

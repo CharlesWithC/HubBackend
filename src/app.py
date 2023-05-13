@@ -104,7 +104,7 @@ def initApp(app, first_init = False):
 
     return app
 
-def createApp(config_path, multi_mode = False, first_init = False):
+def createApp(config_path, multi_mode = False, first_init = False, enable_performance_header = False):
     if not os.path.exists(config_path):
         return None
     
@@ -139,6 +139,7 @@ def createApp(config_path, multi_mode = False, first_init = False):
     app.start_time = int(time.time())
     app.multi_mode = multi_mode
     app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
+    app.enable_performance_header = enable_performance_header
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
