@@ -48,6 +48,16 @@ def nfloat(t):
     except:
         return 0
 
+def dictF2I(data):
+    if isinstance(data, float):
+        return int(data)
+    elif isinstance(data, dict):
+        return {key: dictF2I(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [dictF2I(item) for item in data]
+    else:
+        return data
+
 def str2list(lst):
     # converts comma-separated list str of int elements to list
     # e.g. "1,2,3" -> [1,2,3]

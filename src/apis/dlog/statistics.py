@@ -35,7 +35,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
                 response.status_code = au["code"]
                 del au["code"]
                 return au
-        quser = f"userid = {userid} AND "
+        quser = f"AND userid = {userid}"
 
     # cache
     for ll in list(app.state.cache_statistics.keys()):
@@ -56,13 +56,13 @@ async def get_summary(request: Request, response: Response, authorization: str =
     totdrivers = 0
     newdrivers = 0
     for rid in app.config.perms.driver:
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
+        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0 {quser} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if tt[0] not in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE {quser} userid >= 0 AND join_timestamp >= {after} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
+        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0 {quser} AND join_timestamp >= {after} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if tt[0] not in newdid:
@@ -176,7 +176,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 1 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ats_profit_1_1, \
         IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp <= {before} THEN profit END), 0) AS ats_profit_0_0, \
         IFNULL(SUM(CASE WHEN unit = 2 AND isdelivered = 0 AND timestamp >= {after} AND timestamp <= {before} THEN profit END), 0) AS ats_profit_0_1 \
-        FROM dlog WHERE {quser} logid >= -1) AS stats")
+        FROM dlog WHERE userid >= 0 {quser}) AS stats")
     t = list(await app.db.fetchone(dhrid))
     t = [nint(x) for x in t]
     keys = [desc[0] for desc in app.db.conns[dhrid][1].description]
@@ -255,9 +255,9 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     if sum_up:
         timerange = [(0, timerange[0][0])] + timerange
 
-    limit = ""
+    quser = ""
     if quserid is not None:
-        limit = f"userid = {quserid} AND"
+        quser = f"AND userid = {quserid}"
 
     basedriver = 0
     if sum_up:
@@ -289,31 +289,33 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     queries = []
     for (start_time, end_time) in timerange:
-        queries.append(f"IFNULL(COUNT(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
-        queries.append(f"IFNULL(SUM(CASE WHEN timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
+        queries.append(f"IFNULL(COUNT(CASE WHEN unit = 1 AND logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
+        queries.append(f"IFNULL(COUNT(CASE WHEN unit = 2 AND logid >= 0 AND timestamp >= {start_time} AND timestamp < {end_time} THEN 1 END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN distance END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
+        queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN fuel END), 0)")
         queries.append(f"IFNULL(SUM(CASE WHEN unit = 1 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
         queries.append(f"IFNULL(SUM(CASE WHEN unit = 2 AND timestamp >= {start_time} AND timestamp < {end_time} THEN profit END), 0)")
-    querystr = "SELECT " + ",".join(queries) + f" FROM dlog WHERE {limit} logid >= 0"
+    querystr = "SELECT " + ",".join(queries) + f" FROM dlog WHERE userid >= 0 {quser}"
     await app.db.execute(dhrid, querystr)
     t = list(await app.db.fetchone(dhrid))
-    t = [nint(x) for x in t]
-    (basejob, basedistance, basefuel, baseeuro, basedollar) = [0] * 5
+    base = [0] * 8
     if sum_up:
-        (basejob, basedistance, basefuel, baseeuro, basedollar) = t[0:5]
-        t = t[5:]
+        base = t[0:8]
+        t = t[8:]
         timerange = timerange[1:]
-    for i in range(0, len(t), 5):
-        job = basejob + t[i]
-        distance = basedistance + t[i+1]
-        fuel = basefuel + t[i+2]
-        euro = baseeuro + t[i+3]
-        dollar = basedollar + t[i+4]
-        (start_time, end_time) = timerange[int(i/5)]
-        ret.append({"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/5)], "job": job, "distance": distance, "fuel": fuel, "profit": {"euro": euro, "dollar": dollar}})
+    for i in range(0, len(t), 8):
+        p = t[i:i+8]
+        (start_time, end_time) = timerange[int(i/8)]
+        row = {"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/8)], 
+                    "job": {"ets2": base[0] + p[0], "ats": base[1] + p[1], "sum": base[0] + base[1] + p[0] + p[1]},
+                    "distance": {"ets2": base[2] + p[2], "ats": base[3] + p[3], "sum": base[2] + base[3] + p[2] + p[3]}, 
+                    "fuel": {"ets2": base[4] + p[4], "ats": base[5] + p[5], "sum": base[4] + base[5] + p[4] + p[5]}, 
+                    "profit": {"euro": base[6] + p[6], "dollar": base[7] + p[7]}}
+        ret.append(dictF2I(row))
 
         if sum_up:
-            (basejob, basedistance, basefuel, baseeuro, basedollar) = \
-                (job, distance, fuel, euro, dollar)
+            base = [base[j] + p[j] for j in range(8)]
 
     return ret

@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.6.0**  
+1.Converted partial `INT` columns in `economy_*` TABLE to `BIGINT`  
+2.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  
+3.Separated `ETS2/ATS` data of **GET** `/dlog/statistics/chart`  
+
 **v2.5.11**  
 1.Added `?after` to **GET** `/audit/list`  
 2.Added `?after_logid` to **GET** `/dlog/list`  
