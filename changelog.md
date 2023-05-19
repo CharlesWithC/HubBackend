@@ -4,6 +4,7 @@
 1.Converted partial `INT` columns in `economy_*` TABLE to `BIGINT`  
 2.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  
 3.Separated `ETS2/ATS` data of **GET** `/dlog/statistics/chart`  
+4.Added `--disable-upgrader` cli switch to prevent running upgrader  
 
 **v2.5.11**  
 1.Added `?after` to **GET** `/audit/list`  

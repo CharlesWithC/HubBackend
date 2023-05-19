@@ -35,44 +35,9 @@ for argv in sys.argv:
     if argv.endswith(".py"):
         version += ".dev"
 
-def initApp(app, first_init = False):
+def initApp(app, first_init = False, args = {}):
     if not first_init:
         return app
-
-    import upgrades.manager
-    cur_version = app.version.replace(".dev", "").replace(".", "_")
-    pre_version = cur_version.lstrip("v")
-    conn = db.genconn(app)
-    cur = conn.cursor()
-    cur.execute("SELECT sval FROM settings WHERE skey = 'version'")
-    t = cur.fetchall()
-    cur.close()
-    conn.close()
-    if len(t) != 0:
-        pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
-    if pre_version != cur_version:
-        if pre_version not in upgrades.manager.VERSION_CHAIN:
-            logger.warning(f"[{app.config.abbr}] Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
-            return None
-        pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
-        if cur_version not in upgrades.manager.VERSION_CHAIN:
-            logger.warning(f"[{app.config.abbr}] Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
-            return None
-        cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
-        for idx in range(pre_idx + 1, cur_idx + 1):
-            v = upgrades.manager.VERSION_CHAIN[idx]
-            if v in upgrades.manager.UPGRADER.keys():
-                logger.info(f"[{app.config.abbr}] Updating data to be compatible with {v.replace('_', '.')}...")
-                upgrades.manager.UPGRADER[v].run(app)
-    upgrades.manager.unload()
-
-    if not version.endswith(".dev"):
-        conn = db.genconn(app)
-        cur = conn.cursor()
-        cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
-        conn.commit()
-        cur.close()
-        conn.close()
 
     logger.info(f"[{app.config.abbr}] Name: {app.config.name} | Prefix: {app.config.prefix}")
     if app.config.openapi:
@@ -93,18 +58,51 @@ def initApp(app, first_init = False):
         logger.info(f"[{app.config.abbr}] External Plugins: {', '.join(sorted(extp))}")
     else:
         logger.info(f"[{app.config.abbr}] External Plugins: /")
+    
+    if app.enable_performance_header:
+        logger.warning(f"[{app.config.abbr}] Performance header enabled")
 
-    try:
-        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
-            os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
-        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
-            os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
-    except:
-        pass
+    if not "disable_upgrader" in args.keys() and not args["disable_upgrader"]:
+        import upgrades.manager
+        cur_version = app.version.replace(".dev", "").replace(".", "_")
+        pre_version = cur_version.lstrip("v")
+        conn = db.genconn(app)
+        cur = conn.cursor()
+        cur.execute("SELECT sval FROM settings WHERE skey = 'version'")
+        t = cur.fetchall()
+        cur.close()
+        conn.close()
+        if len(t) != 0:
+            pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
+        if pre_version != cur_version:
+            if pre_version not in upgrades.manager.VERSION_CHAIN:
+                logger.warning(f"[{app.config.abbr}] Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
+                return None
+            pre_idx = upgrades.manager.VERSION_CHAIN.index(pre_version)
+            if cur_version not in upgrades.manager.VERSION_CHAIN:
+                logger.warning(f"[{app.config.abbr}] Current version ({version}) is not recognized. Aborted launch to prevent incompatability.")
+                return None
+            cur_idx = upgrades.manager.VERSION_CHAIN.index(cur_version)
+            for idx in range(pre_idx + 1, cur_idx + 1):
+                v = upgrades.manager.VERSION_CHAIN[idx]
+                if v in upgrades.manager.UPGRADER.keys():
+                    logger.info(f"[{app.config.abbr}] Updating data to be compatible with {v.replace('_', '.')}...")
+                    upgrades.manager.UPGRADER[v].run(app)
+        upgrades.manager.unload()
+    else:
+        logger.warning(f"[{app.config.abbr}] Upgrader disabled")
+
+    if not version.endswith(".dev"):
+        conn = db.genconn(app)
+        cur = conn.cursor()
+        cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
+        conn.commit()
+        cur.close()
+        conn.close()
 
     return app
 
-def createApp(config_path, multi_mode = False, first_init = False, enable_performance_header = False):
+def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     if not os.path.exists(config_path):
         return None
 
@@ -139,7 +137,7 @@ def createApp(config_path, multi_mode = False, first_init = False, enable_perfor
     app.start_time = int(time.time())
     app.multi_mode = multi_mode
     app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
-    app.enable_performance_header = enable_performance_header
+    app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
@@ -249,8 +247,16 @@ def createApp(config_path, multi_mode = False, first_init = False, enable_perfor
     app.state_cache_activity = {} # activity cache (2 seconds)
 
     try:
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}.png")
+        if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}_bg.png"):
+            os.remove(f"/tmp/hub/logo/{app.config.abbr}_bg.png")
+    except:
+        pass
+
+    try:
         db.init(app)
-        app = initApp(app, first_init = first_init)
+        app = initApp(app, first_init = first_init, args = args)
     except Exception as exc:
         if first_init:
             logger.error(f"[{app.config.abbr}] Error initializing app: {exc}")
