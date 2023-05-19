@@ -615,6 +615,24 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Joined After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "joined_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Joined Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "joined_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Query with username",
                             "type": "string"
                         },
@@ -1904,6 +1922,24 @@
                             "type": "integer"
                         },
                         "name": "after_userid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Joined After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "joined_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Joined Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "joined_before",
                         "in": "query"
                     },
                     {

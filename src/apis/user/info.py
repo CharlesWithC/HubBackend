@@ -13,6 +13,7 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, query: Optional[str] = '', \
+        joined_after: Optional[int] = None, joined_before: Optional[int] = None, \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
     """Returns the information of a list of users
 
@@ -48,8 +49,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ['asc', 'desc']:
         order = "asc"
+    
+    limit = ""
+    if joined_after is not None:
+        limit += f"AND user.join_timestamp >= {joined_after} "
+    if joined_before is not None:
+        limit += f"AND user.join_timestamp <= {joined_before} "
 
-    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' {limit} ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
