@@ -174,15 +174,9 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                 for role in meta.role_change:
                     try:
                         if int(role) < 0:
-                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, f"remove_role,{-int(role)},{discordid}")
                         elif int(role) > 0:
-                            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, f"add_role,{int(role)},{discordid}")
                     except:
                         pass
 
@@ -198,10 +192,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         if role in list(app.rankrole.values()):
                             curroles.append(role)
                     for role in curroles:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers = headers, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
+                        opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
             except:
                 pass
 
@@ -416,11 +407,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     try:
                         if app.config.hook_delivery_log.channel_id != "":
                             durl = f"https://discord.com/api/v10/channels/{app.config.hook_delivery_log.channel_id}/messages"
+                            key = app.config.hook_delivery_log.channel_id
                         elif app.config.hook_delivery_log.webhook_url != "":
                             durl = app.config.hook_delivery_log.webhook_url
-                        r = await arequests.post(app, durl, headers = headers, data=json.dumps(data), dhrid = dhrid)
-                        if r.status_code == 401:
-                            DisableDiscordIntegration(app)
+                            key = app.config.hook_delivery_log.webhook_url
+                        opqueue.queue(app, "post", key, durl, json.dumps(data), headers, "disable")
                     except:
                         pass
 

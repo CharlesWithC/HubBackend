@@ -16,6 +16,7 @@ from functions.userinfo import *
 from static import *
 
 # app.state.discord_message_queue = []
+# app.state.discord_retry_after = {}
 
 def QueueDiscordMessage(app, channelid, data):
     if app.config.discord_bot_token == "":
@@ -35,9 +36,21 @@ async def ProcessDiscordMessage(app): # thread
                     return
                 continue
 
-            # get first in queue
-            channelid = app.state.discord_message_queue[0][0]
-            data = app.state.discord_message_queue[0][1]
+            # get an available one in queue
+            ok = False
+            for i in range(len(app.state.discord_message_queue)):
+                (channelid, data) = app.state.discord_message_queue[i]
+                if channelid not in app.state.discord_retry_after.keys() or\
+                    app.state.discord_retry_after[channelid] < time.time():
+                    ok = True
+                    break
+            
+            if not ok:
+                try:
+                    await asyncio.sleep(1)
+                except:
+                    return
+                continue
 
             # see if there's any more embed to send to the channel
             to_delete = [0]
@@ -64,10 +77,13 @@ async def ProcessDiscordMessage(app): # thread
 
             if r.status_code == 429:
                 d = json.loads(r.text)
-                try:
-                    await asyncio.sleep(d["retry_after"])
-                except:
-                    return
+                if d["global"]:
+                    try:
+                        await asyncio.sleep(d["retry_after"])
+                    except:
+                        return
+                    continue
+                app.state.discord_retry_after[channelid] = time.time() + float(d["retry_after"])
 
             elif r.status_code == 403:
                 dhrid = genrid()
@@ -117,7 +133,7 @@ async def ProcessDiscordMessage(app): # thread
             pass
 
         try:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
         except:
             return
 

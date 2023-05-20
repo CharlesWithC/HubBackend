@@ -240,6 +240,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.cache_all_users_ts = 0
     app.state.cache_statistics = {}
     app.state.discord_message_queue = []
+    app.state.discord_retry_after = {}
+    app.state.discord_opqueue = []
     app.state.cache_session = {} # session token cache, this only checks if a session token is valid
     app.state.cache_session_extended = {} # extended session storage for ratelimit
     app.state.cache_ratelimit = {}

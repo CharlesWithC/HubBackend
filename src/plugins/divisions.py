@@ -218,12 +218,12 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
 
             if app.config.hook_division.channel_id != "":
                 durl = f"https://discord.com/api/v10/channels/{app.config.hook_division.channel_id}/messages"
+                dkey = app.config.hook_division.channel_id
             elif app.config.hook_division.webhook_url != "":
                 durl = app.config.hook_division.webhook_url
+                dkey = app.config.hook_division.webhook_url
 
-            r = await arequests.post(app, durl, data=json.dumps({"content": app.config.hook_division.message_content,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
+            opqueue.queue(app, "post", dkey, durl, json.dumps({"content": app.config.hook_division.message_content,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 

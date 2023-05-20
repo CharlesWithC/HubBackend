@@ -526,7 +526,7 @@ def validateConfig(cfg):
         if "webhook" in application_type.keys():
             application_type["webhook_url"] = application_type["webhook"]
             del application_type["webhook"]
-        if not "channel_id" in application_type.keys():
+        if 'channel_id' not in application_type.keys():
             application_type["channel_id"] = ""
         #########
         

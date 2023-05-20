@@ -264,6 +264,7 @@ async def post_application(request: Request, response: Response, authorization: 
     applicantrole = 0
     discord_message_content = ""
     hook_url = ""
+    hook_key = ""
     note = ""
     for o in app.config.application_types:
         if application_type == o["id"]:
@@ -272,8 +273,10 @@ async def post_application(request: Request, response: Response, authorization: 
             discord_message_content = o["message"]
             if o["channel_id"] != "":
                 hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
+                hook_key = o["channel_id"]
             elif o["webhook_url"] != "":
                 hook_url = o["webhook_url"]
+                hook_key = o["webhook_url"]
             note = o["note"]
     if application_type_text == "":
         response.status_code = 400
@@ -345,12 +348,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
     if discordid is not None and applicantrole != 0 and app.config.discord_bot_token != "":
         try:
-            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{applicantrole}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, dhrid = dhrid)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
-            if r.status_code // 100 != 2:
-                err = json.loads(r.text)
-                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": applicantrole, "user_discordid": discordid, "message": err["message"]}))
+            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{applicantrole}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"add_role,{applicantrole},{discordid}")
         except:
             pass
 
@@ -376,9 +374,7 @@ async def post_application(request: Request, response: Response, authorization: 
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            r = await arequests.post(app, hook_url, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 
@@ -450,14 +446,17 @@ async def patch_application(request: Request, response: Response, applicationid:
     application_type_text = ""
     discord_message_content = ""
     hook_url = ""
+    hook_key = ""
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
             discord_message_content = o["message"]
             if o["channel_id"] != "":
                 hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
+                hook_key = o["channel_id"]
             elif o["webhook_url"] != "":
                 hook_url = o["webhook_url"]
+                hook_key = o["webhook_url"]
     if application_type < 1 and application_type > 4 and application_type_text == "":
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
@@ -471,9 +470,7 @@ async def patch_application(request: Request, response: Response, applicationid:
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
-            r = await arequests.post(app, hook_url, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
+            opqueue.queue(app, "post", hook_key, hook_url, json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
         except:
             pass
 

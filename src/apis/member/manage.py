@@ -164,15 +164,9 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                 for role in meta.role_change:
                     try:
                         if int(role) < 0:
-                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
                         elif int(role) > 0:
-                            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
                     except:
                         pass
 
@@ -215,15 +209,9 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                 for role in meta.role_change:
                     try:
                         if int(role) < 0:
-                            r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"remove_role,{-int(role)},{discordid}")
                         elif int(role) > 0:
-                            r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, timeout = 3, dhrid = dhrid)
-                            if r.status_code // 100 != 2:
-                                err = json.loads(r.text)
-                                await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"add_role,{int(role)},{discordid}")
                     except:
                         pass
 
@@ -371,7 +359,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                 if "error" in resp.keys() and resp["error"] is not None:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                 elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + err["message"] + "`"
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
                 elif len(r.text) <= 64:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
                 else:
@@ -401,15 +389,9 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
             for role in meta.role_change:
                 try:
                     if int(role) < 0:
-                        r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": str(-int(role)), "user_discordid": discordid, "message": err["message"]}))
+                        opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, f"remove_role,{-int(role)},{discordid}")
                     elif int(role) > 0:
-                        r = await arequests.put(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, timeout = 3, dhrid = dhrid)
-                        if r.status_code // 100 != 2:
-                            err = json.loads(r.text)
-                            await AuditLog(request, -998, ml.ctr(request, "error_adding_discord_role", var = {"code": err["code"], "discord_role": int(role), "user_discordid": discordid, "message": err["message"]}))
+                        opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member is dismissed."}, f"add_role,{int(role)},{discordid}")
                 except:
                     pass
 
@@ -425,10 +407,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                     if role in list(app.rankrole.values()):
                         curroles.append(role)
                 for role in curroles:
-                    r = await arequests.delete(app, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', headers = headers, timeout = 3, dhrid = dhrid)
-                    if r.status_code // 100 != 2:
-                        err = json.loads(r.text)
-                        await AuditLog(request, -998, ml.ctr(request, "error_removing_discord_role", var = {"code": err["code"], "discord_role": role, "user_discordid": discordid, "message": err["message"]}))
+                    opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
         except:
             pass
 

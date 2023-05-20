@@ -3,6 +3,7 @@
 
 from functions.arequests import *
 from functions.dataop import *
+from functions.discord import *
 from functions.general import *
 from functions.iptype import *
 from functions.mail import *
