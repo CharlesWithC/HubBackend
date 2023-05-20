@@ -10,7 +10,7 @@
 7.Increased `channel_id` priority in `AutoMessage`, which will try using `channel_id` before using `webhook_url` if set  
 8.Added queue for most Discord API calls to handle 429s  
 9.Improved notification DM rate limit handler  
-**10.Added `dlog_stats` building**  
+**10.Added `dlog_stats` building and GET `/dlog/statistics/details`**  
 11.Added `--disable-upgrader` cli switch to prevent running upgrader  
 
 **v2.5.11**  

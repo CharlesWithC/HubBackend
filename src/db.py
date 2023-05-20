@@ -34,7 +34,7 @@ def init(app):
     # item_type = 1: truck | 2: trailer | 3: plate_country | 4: cargo | 5: cargo_market | 6: source_city | 7: source_company | 8: destination_city | 9: destination_company | 10: fine | 11: speeding | 12: tollgate | 13: ferry | 14: train | 15: collision | 16: teleport
     # userid = >=0: user id | -1: company overall stats
     # count => number of events
-    # sum => sum of meta data in event (only for (10-13))
+    # sum => sum of meta data in event (only for (10,12,13,14))
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 

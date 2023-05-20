@@ -2738,6 +2738,33 @@
                 "responses": {}
             }
         },
+        "/dlog/statistics/details": {
+            "get": {
+                "summary": "Get Detailed Statistics",
+                "tags": [
+                    "dlog"
+                ],
+                "operationId": "get_dlog_statistics_details",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/dlog/leaderboard": {
             "get": {
                 "summary": "Get Leaderboard",

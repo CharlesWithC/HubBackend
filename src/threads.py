@@ -289,9 +289,23 @@ async def UpdateDlogStats(app):
                             if not duplicate:
                                 dlog_stats[K[etype]].append(item)
 
-                        elif etype in ["tollgate", "ferry", "train"]:
-                            K = {"tollgate": 12, "ferry": 13, "train": 14}
+                        elif etype in ["tollgate"]:
+                            K = {"tollgate": 12}
                             item = [etype, etype, 1, int(event["meta"]["cost"])]
+                            item[3] = item[3] if item[3] <= 51200 else 0
+                            duplicate = False
+                            for i in range(len(dlog_stats[K[etype]])):
+                                if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                                    dlog_stats[K[etype]][i][2] += 1
+                                    dlog_stats[K[etype]][i][3] += item[3]
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[K[etype]].append(item)
+
+                        elif etype in ["ferry", "train"]:
+                            K = {"ferry": 13, "train": 14}
+                            item = [f'{convertQuotation(event["meta"]["source_id"])}/{convertQuotation(event["meta"]["target_id"])}', f'{convertQuotation(event["meta"]["source_name"])}/{convertQuotation(event["meta"]["target_name"])}', 1, int(event["meta"]["cost"])]
                             item[3] = item[3] if item[3] <= 51200 else 0
                             duplicate = False
                             for i in range(len(dlog_stats[K[etype]])):

@@ -115,9 +115,23 @@ def rebuild(app):
                     if not duplicate:
                         dlog_stats[K[etype]].append(item)
 
-                elif etype in ["tollgate", "ferry", "train"]:
-                    K = {"tollgate": 12, "ferry": 13, "train": 14}
+                elif etype in ["tollgate"]:
+                    K = {"tollgate": 12}
                     item = [etype, etype, 1, int(event["meta"]["cost"])]
+                    item[3] = item[3] if item[3] <= 51200 else 0
+                    duplicate = False
+                    for i in range(len(dlog_stats[K[etype]])):
+                        if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                            dlog_stats[K[etype]][i][2] += 1
+                            dlog_stats[K[etype]][i][3] += item[3]
+                            duplicate = True
+                            break
+                    if not duplicate:
+                        dlog_stats[K[etype]].append(item)
+
+                elif etype in ["ferry", "train"]:
+                    K = {"ferry": 13, "train": 14}
+                    item = [f'{convertQuotation(event["meta"]["source_id"])}/{convertQuotation(event["meta"]["target_id"])}', f'{convertQuotation(event["meta"]["source_name"])}/{convertQuotation(event["meta"]["target_name"])}', 1, int(event["meta"]["cost"])]
                     item[3] = item[3] if item[3] <= 51200 else 0
                     duplicate = False
                     for i in range(len(dlog_stats[K[etype]])):
@@ -463,4 +477,40 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         if sum_up:
             base = [base[j] + p[j] for j in range(8)]
 
+    return ret
+
+async def get_details(request: Request, response: Response, authorization: Optional[str] = Header(None), userid: Optional[int] = None):
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid, extra_time = 3)
+
+    rl = await ratelimit(request, 'GET /dlog/statistics/details', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    quserid = userid
+    if quserid is not None:
+        au = await auth(authorization, request, allow_application_token = True)
+        if au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+    else:
+        quserid = -1
+    
+    ret = {}
+    K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
+
+    await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE userid = {quserid} ORDER BY item_type ASC, count DESC, sum DESC")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        if not K[tt[0]] in ret.keys():
+            ret[K[tt[0]]] = []
+        if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
+            ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
+        else:
+            ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
+    
     return ret

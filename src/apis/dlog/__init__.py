@@ -16,6 +16,7 @@ routes = [
 
     APIRoute("/dlog/statistics/summary", statistics.get_summary, methods=["GET"], response_class=JSONResponse),
     APIRoute("/dlog/statistics/chart", statistics.get_chart, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/dlog/statistics/details", statistics.get_details, methods=["GET"], response_class=JSONResponse),
 
     # these have to be put in the end, due to the speciality of the path
     APIRoute("/dlog/{logid}", info.get_dlog, methods=["GET"], response_class=JSONResponse),
