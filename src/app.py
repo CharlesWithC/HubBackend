@@ -23,9 +23,9 @@ import apis.user
 import db
 import plugins
 import static
-from config import validateConfig, config_protected
-from logger import logger
+from config import config_protected, validateConfig
 from functions import Dict2Obj
+from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
@@ -58,7 +58,7 @@ def initApp(app, first_init = False, args = {}):
         logger.info(f"[{app.config.abbr}] External Plugins: {', '.join(sorted(extp))}")
     else:
         logger.info(f"[{app.config.abbr}] External Plugins: /")
-    
+
     if app.enable_performance_header:
         logger.warning(f"[{app.config.abbr}] Performance header enabled")
 
@@ -263,5 +263,9 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         if first_init:
             logger.error(f"[{app.config.abbr}] Error initializing app: {exc}")
         return None
+
+    if first_init and "rebuild_dlog_stats" in args.keys() and args["rebuild_dlog_stats"]:
+        logger.warning(f"[{app.config.abbr}] Rebuilding dlog stats, this might take some time...")
+        apis.dlog.statistics.rebuild(app)
 
     return app

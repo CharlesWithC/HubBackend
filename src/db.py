@@ -30,6 +30,11 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, timestamp BIGINT)")
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # unit = 1: euro | 2: dollar
+    cur.execute("CREATE TABLE IF NOT EXISTS dlog_stats (item_type INT, userid INT, item_key TEXT, item_name TEXT, count BIGINT, sum BIGINT)")
+    # item_type = 1: truck | 2: trailer | 3: plate_country | 4: cargo | 5: cargo_market | 6: source_city | 7: source_company | 8: destination_city | 9: destination_company | 10: fine | 11: speeding | 12: tollgate | 13: ferry | 14: train | 15: collision | 16: teleport
+    # userid = >=0: user id | -1: company overall stats
+    # count => number of events
+    # sum => sum of meta data in event (only for (10-13))
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
@@ -75,7 +80,7 @@ def init(app):
 
     cur.execute("SELECT skey FROM settings")
     t = cur.fetchall()
-    keys = ["nxtuserid", "nxtlogid"]
+    keys = ["nxtuserid", "dlog_stats_up_to"]
     for key in keys:
         if (key,) not in t:
             cur.execute(f"INSERT INTO settings VALUES (NULL, '{key}', 1)")
@@ -111,6 +116,11 @@ def init(app):
     "CREATE INDEX dlog_unit ON dlog (unit)",
     "CREATE INDEX dlog_isdelivered ON dlog (isdelivered)",
     "CREATE INDEX dlog_timestamp ON dlog (timestamp)",
+
+    "CREATE INDEX dlog_stats_item_type ON dlog_stats (item_type)",
+    "CREATE INDEX dlog_stats_userid ON dlog_stats (userid)",
+    "CREATE INDEX dlog_stats_count ON dlog_stats (count)",
+    "CREATE INDEX dlog_stats_sum ON dlog_stats (sum)",
 
     "CREATE INDEX telemetry_logid ON telemetry (logid)",
 

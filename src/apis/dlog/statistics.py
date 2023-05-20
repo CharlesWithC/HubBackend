@@ -4,9 +4,154 @@
 import time
 from typing import Optional
 
+from alive_progress import alive_bar
 from fastapi import Header, Request, Response
 
+from db import genconn
 from functions import *
+
+
+def rebuild(app):
+    '''Delete all dlog_stats and rebuild stats from dlog detail.
+
+    NOTE Time consuming! Drivers Hub will not start before this is done once called.
+    NOTE This can only be called from cli switch --rebuild-dlog-stats'''
+
+    conn = genconn(app)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM dlog_stats")
+    conn.commit()
+    cur.execute("SELECT logid, userid, data FROM dlog WHERE logid >= 0 AND userid >= 0")
+    t = cur.fetchall()
+
+    max_log_id = 0
+    memtable = {}
+
+    with alive_bar(len(t), theme="classic") as bar_progress:
+        for tt in t:
+            max_log_id = max(max_log_id, tt[0])
+            userid = tt[1]
+            try:
+                d = json.loads(decompress(tt[2]))
+            except:
+                continue
+
+            dlog_stats = {}
+
+            obj = d["data"]["object"]
+
+            truck = obj["truck"]
+            if truck is not None:
+                if "unique_id" in truck.keys() and "name" in truck.keys() and \
+                        truck["brand"] is not None and "name" in truck["brand"].keys():
+                    dlog_stats[1] = [[convertQuotation(truck["unique_id"]), convertQuotation(truck["brand"]["name"]) + " " + convertQuotation(truck["name"]), 1, 0]]
+                if "license_plate_country" in truck.keys() and truck["license_plate_country"] is not None and \
+                        "unique_id" in truck["license_plate_country"].keys() and "name" in truck["license_plate_country"].keys():
+                    dlog_stats[3] = [[convertQuotation(truck["license_plate_country"]["unique_id"]), convertQuotation(truck["license_plate_country"]["name"]), 1, 0]]
+
+            for trailer in obj["trailers"]:
+                if "body_type" in trailer.keys():
+                    body_type = trailer["body_type"]
+                    dlog_stats[2]  = [[convertQuotation(body_type), convertQuotation(body_type), 1, 0]]
+                if "license_plate_country" in trailer.keys() and trailer["license_plate_country"] is not None and \
+                        "unique_id" in trailer["license_plate_country"].keys() and "name" in trailer["license_plate_country"].keys():
+                    item = [convertQuotation(trailer["license_plate_country"]["unique_id"]), convertQuotation(trailer["license_plate_country"]["name"]), 1, 0]
+                    duplicate = False
+                    for i in range(len(dlog_stats[3])):
+                        if dlog_stats[3][i][0] == item[0] and dlog_stats[3][i][1] == item[1]:
+                            dlog_stats[3][i][2] += 1
+                            duplicate = True
+                            break
+                    if not duplicate:
+                        dlog_stats[3].append(item)
+
+            cargo = obj["cargo"]
+            if cargo is not None and "unique_id" in cargo.keys() and "name" in cargo.keys():
+                dlog_stats[4] = [[convertQuotation(cargo["unique_id"]), convertQuotation(cargo["name"]), 1, 0]]
+
+            if "market" in obj.keys():
+                dlog_stats[5] = [[convertQuotation(obj["market"]), convertQuotation(obj["market"]), 1, 0]]
+
+            source_city = obj["source_city"]
+            if source_city is not None and "unique_id" in source_city.keys() and "name" in source_city.keys():
+                dlog_stats[6] = [[convertQuotation(source_city["unique_id"]), convertQuotation(source_city["name"]), 1, 0]]
+            source_company = obj["source_company"]
+            if source_company is not None and "unique_id" in source_company.keys() and "name" in source_company.keys():
+                dlog_stats[7] = [[convertQuotation(source_company["unique_id"]), convertQuotation(source_company["name"]), 1, 0]]
+            destination_city = obj["destination_city"]
+            if destination_city is not None and "unique_id" in destination_city.keys() and "name" in destination_city.keys():
+                dlog_stats[8] = [[convertQuotation(destination_city["unique_id"]), convertQuotation(destination_city["name"]), 1, 0]]
+            destination_company = obj["destination_company"]
+            if destination_company is not None and "unique_id" in destination_company.keys() and "name" in destination_company.keys():
+                dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
+
+            for i in range(10, 17):
+                dlog_stats[i] = []
+
+            for event in d["data"]["object"]["events"]:
+                etype = event["type"]
+                if etype == "fine":
+                    item = [event["meta"]["offence"], event["meta"]["offence"], 1, int(event["meta"]["amount"])]
+                    item[3] = item[3] if item[3] <= 51200 else 0
+                    duplicate = False
+                    for i in range(len(dlog_stats[10])):
+                        if dlog_stats[10][i][0] == item[0] and dlog_stats[10][i][1] == item[1]:
+                            dlog_stats[10][i][2] += 1
+                            dlog_stats[10][i][3] += item[3]
+                            duplicate = True
+                            break
+                    if not duplicate:
+                        dlog_stats[10].append(item)
+
+                elif etype in ["collision", "speeding", "teleport"]:
+                    K = {"collision": 15, "speeding": 11, "teleport": 16}
+                    item = [etype, etype, 1, 0]
+                    duplicate = False
+                    for i in range(len(dlog_stats[K[etype]])):
+                        if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                            dlog_stats[K[etype]][i][2] += 1
+                            duplicate = True
+                            break
+                    if not duplicate:
+                        dlog_stats[K[etype]].append(item)
+
+                elif etype in ["tollgate", "ferry", "train"]:
+                    K = {"tollgate": 12, "ferry": 13, "train": 14}
+                    item = [etype, etype, 1, int(event["meta"]["cost"])]
+                    item[3] = item[3] if item[3] <= 51200 else 0
+                    duplicate = False
+                    for i in range(len(dlog_stats[K[etype]])):
+                        if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                            dlog_stats[K[etype]][i][2] += 1
+                            dlog_stats[K[etype]][i][3] += item[3]
+                            duplicate = True
+                            break
+                    if not duplicate:
+                        dlog_stats[K[etype]].append(item)
+
+            for stat_userid in [userid, -1]:
+                for itype in dlog_stats.keys():
+                    for dd in dlog_stats[itype]:
+                        if (itype, stat_userid, dd[0]) not in memtable.keys():
+                            memtable[(itype, stat_userid, dd[0])] = [dd[1], dd[2], dd[3]]
+                        else:
+                            memtable[(itype, stat_userid, dd[0])][0] = dd[1]
+                            memtable[(itype, stat_userid, dd[0])][1] += dd[2]
+                            memtable[(itype, stat_userid, dd[0])][2] += dd[3]
+            bar_progress()
+
+    with alive_bar(len(memtable.keys()), theme="classic") as bar_progress:
+        for (item_type, stat_userid, item_key) in memtable.keys():
+            if item_key == "None":
+                continue
+            [item_name, count, sum] = memtable[(item_type, stat_userid, item_key)]
+            cur.execute(f"INSERT INTO dlog_stats VALUES ({item_type}, {stat_userid}, '{item_key}', '{item_name}', {count}, {sum})")
+            bar_progress()
+    cur.execute(f"UPDATE settings SET sval = '{max_log_id}' WHERE skey = 'dlog_stats_up_to'")
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # app.state.cache_statistics = {}
 
@@ -308,10 +453,10 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     for i in range(0, len(t), 8):
         p = t[i:i+8]
         (start_time, end_time) = timerange[int(i/8)]
-        row = {"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/8)], 
+        row = {"start_time": start_time, "end_time": end_time, "driver": driver_history[int(i/8)],
                     "job": {"ets2": base[0] + p[0], "ats": base[1] + p[1], "sum": base[0] + base[1] + p[0] + p[1]},
-                    "distance": {"ets2": base[2] + p[2], "ats": base[3] + p[3], "sum": base[2] + base[3] + p[2] + p[3]}, 
-                    "fuel": {"ets2": base[4] + p[4], "ats": base[5] + p[5], "sum": base[4] + base[5] + p[4] + p[5]}, 
+                    "distance": {"ets2": base[2] + p[2], "ats": base[3] + p[3], "sum": base[2] + base[3] + p[2] + p[3]},
+                    "fuel": {"ets2": base[4] + p[4], "ats": base[5] + p[5], "sum": base[4] + base[5] + p[4] + p[5]},
                     "profit": {"euro": base[6] + p[6], "dollar": base[7] + p[7]}}
         ret.append(dictF2I(row))
 

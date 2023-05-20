@@ -117,7 +117,7 @@ class opqueue:
                                 return
                             continue
                         app.state.discord_retry_after[key] = time.time() + float(d["retry_after"])
-                    
+
                     elif r.status_code == 401 and (error_msg == "disable" or error_msg.startswith("add_role") or error_msg.startswith("remove_role")):
                         DisableDiscordIntegration(app)
 
@@ -138,13 +138,13 @@ class opqueue:
 
                 except:
                     app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))
-                    
+
                     try:
                         await asyncio.sleep(5)
                     except:
                         return
                     continue
-                
+
             except:
                 pass
 

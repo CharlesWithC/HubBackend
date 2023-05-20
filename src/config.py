@@ -529,7 +529,7 @@ def validateConfig(cfg):
         if 'channel_id' not in application_type.keys():
             application_type["channel_id"] = ""
         #########
-        
+
         ok = True
         for req in reqs:
             if req not in application_type.keys():
@@ -673,7 +673,7 @@ def validateConfig(cfg):
                 new_hook["message_content"] = str(cfg[hook]["message_content"])
             else:
                 new_hook["message_content"] = ""
-            
+
         cfg[hook] = new_hook
 
     tcfg = {}

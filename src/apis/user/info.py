@@ -49,7 +49,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     if order not in ['asc', 'desc']:
         order = "asc"
-    
+
     limit = ""
     if joined_after is not None:
         limit += f"AND user.join_timestamp >= {joined_after} "

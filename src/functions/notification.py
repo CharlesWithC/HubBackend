@@ -44,7 +44,7 @@ async def ProcessDiscordMessage(app): # thread
                     app.state.discord_retry_after[channelid] < time.time():
                     ok = True
                     break
-            
+
             if not ok:
                 try:
                     await asyncio.sleep(1)

@@ -38,6 +38,7 @@ async def startup_event(app):
     loop.create_task(RefreshDiscordAccessToken(app))
     loop.create_task(ProcessDiscordMessage(app))
     loop.create_task(opqueue.run(app))
+    loop.create_task(UpdateDlogStats(app))
     from plugins.events import EventNotification
     loop.create_task(EventNotification(app))
 
