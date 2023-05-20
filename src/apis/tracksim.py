@@ -120,55 +120,6 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhri
 
     return True
 
-async def post_setup(response: Response, request: Request, authorization: str = Header(None)):
-    app = request.app
-    dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
-    rl = await ratelimit(request, 'POST /tracksim/setup', 60, 5)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    au = await auth(authorization, request, required_permission = ["admin"], allow_application_token = True)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-
-    latest_config = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
-
-    uinfo = await GetUserInfo(request, userid = au["userid"], include_email = True)
-    email = uinfo["email"]
-
-    r = await arequests.post(app, "https://api.tracksim.app/oauth/setup/chub-start", data = {"vtc_name": app.config.name, "vtc_logo": app.config.logo_url, "email": email, "webhook": f"https://{app.config.domain}{app.config.prefix}/tracksim/update"}, dhrid = dhrid)
-    if r.status_code != 200:
-        response.status_code = r.status_code
-        try:
-            d = json.loads(r.text)
-            return {"error": d["error"]}
-        except:
-            return {"error": r.text}
-
-    d = json.loads(r.text)
-    company_id = d["company_id"]
-    api_key = d["api_key"]["key"]
-    webhook_secret = d["webhook_secret"]
-
-    latest_config["tracker_company_id"] = str(company_id)
-    app.config.tracker_company_id = str(company_id)
-    latest_config["tracker_api_token"] = api_key
-    app.config.tracker_api_token = api_key
-    latest_config["tracker_webhook_secret"] = webhook_secret
-    app.config.tracker_webhook_secret = webhook_secret
-    latest_config["allowed_tracker_ips"] = ["109.106.1.243"]
-    app.config.allowed_tracker_ips = ["109.106.1.243"]
-    out = json.dumps(latest_config, indent=4, ensure_ascii=False)
-    open(app.config_path, "w", encoding="utf-8").write(out)
-
-    return Response(status_code=204)
-
 async def post_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
