@@ -62,7 +62,7 @@ def initApp(app, first_init = False, args = {}):
     if app.enable_performance_header:
         logger.warning(f"[{app.config.abbr}] Performance header enabled")
 
-    if not "disable_upgrader" in args.keys() and not args["disable_upgrader"]:
+    if "disable_upgrader" not in args.keys() and not args["disable_upgrader"]:
         import upgrades.manager
         cur_version = app.version.replace(".dev", "").replace(".", "_")
         pre_version = cur_version.lstrip("v")

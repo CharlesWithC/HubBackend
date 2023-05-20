@@ -416,7 +416,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    if not os.path.exists(app.config_path + ".saved"):
+    if os.path.exists(app.config_path + ".saved"):
         config_txt = open(app.config_path + ".saved", "r", encoding="utf-8").read()
         config = validateConfig(json.loads(config_txt))
         config = Dict2Obj(config)

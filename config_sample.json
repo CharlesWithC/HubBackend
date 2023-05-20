@@ -55,7 +55,10 @@
         "max_profit": 1000000,
         "action": "block"
     },
-    "delivery_log_channel_id": "",
+    "hook_delivery_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    },
     "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
@@ -98,8 +101,8 @@
     },
 
     "member_accept": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -113,8 +116,8 @@
         },
         "role_change": []
     },{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -130,8 +133,8 @@
     }],
     
     "member_leave": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -147,8 +150,8 @@
     }],
     
     "driver_role_add": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -164,8 +167,8 @@
     }],
     
     "driver_role_remove": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -181,8 +184,8 @@
     }],
 
     "rank_up": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -200,17 +203,20 @@
     ],
 
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": "driver"},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "webhook": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
     ],
 
-    "webhook_division": "",
-    "webhook_division_message": "",
     "divisions": [
         {"id": 1, "name": "Construction", "role_id": 251, "points": 500}
     ],
+    "hook_division": {
+        "channel_id": "",
+        "webhook_url": "",
+        "message_content": ""
+    },
 
     "economy": {
         "trucks": [{"id": "daf.xf", "brand": "DAF", "model": "XF 105", "price": 160000}, {"id": "iveco.as2", "brand": "Iveco", "model": "Stralis", "price": 160000}, {"id": "iveco.h_u01", "brand": "Iveco", "model": "Stralis Hi-Way", "price": 180000}, {"id": "man.tgx", "brand": "MAN", "model": "TGX", "price": 150000}, {"id": "man.tgx_euro6", "brand": "MAN", "model": "TGX Euro 6", "price": 180000}, {"id": "actros.towing", "brand": "Mercedes", "model": "New Actros", "price": 205000}, {"id": "renault.magnum", "brand": "Renault", "model": "Magnum", "price": 165000}, {"id": "renault.premium", "brand": "Renault", "model": "Premium", "price": 160000}, {"id": "renault.t", "brand": "Renault", "model": "T", "price": 190000}, {"id": "scania.r_2016", "brand": "Scania", "model": "R", "price": 230000}, {"id": "scania_r", "brand": "Scania", "model": "R2009", "price": 200000}, {"id": "scania.s_2016", "brand": "Scania", "model": "S", "price": 225000}, {"id": "scania.streamline", "brand": "Scania", "model": "Streamline", "price": 220000}, {"id": "volvo.fh3", "brand": "Volvo", "model": "FH16 2009", "price": 195000}, {"id": "volvo.fh16_2012", "brand": "Volvo", "model": "FH16 2012", "price": 210000}, {"id": "freightliner.cascadia2019", "brand": "Freightliner", "model": "Cascadia", "price": 158000}, {"id": "intnational.9900i", "brand": "International", "model": "9900i", "price": 230000}, {"id": "intnational.lonestar", "brand": "International", "model": "Lonestar", "price": 206000}, {"id": "intnational.lt", "brand": "International", "model": "LT", "price": 170000}, {"id": "kenworth.t680", "brand": "Kenworth", "model": "T680", "price": 160000}, {"id": "kenworth.wp", "brand": "Kenworth", "model": "W900", "price": 154000}, {"id": "mack.anthem", "brand": "Mack", "model": "Anthem", "price": 180000}, {"id": "peterbilt.389", "brand": "Peterbilt", "model": "389", "price": 170000}, {"id": "peterbilt.579", "brand": "Peterbilt", "model": "579", "price": 164000}, {"id": "volvo.vnl", "brand": "Volvo", "model": "VNL", "price": 170000}, {"id": "ws", "brand": "Western Star", "model": "5700XE", "price": 210000}, {"id": "westernstar.57x", "brand": "Western Star", "model": "57X", "price": 180000}],
@@ -284,5 +290,8 @@
         {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
-    "webhook_audit": ""
+    "hook_audit_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    }
 }

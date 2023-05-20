@@ -210,11 +210,18 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
     msg += f"**Delivery ID**: [{logid}]({dlglink})\n**Division**: {app.division_name[divisionid]}"
     avatar = tt[2]
 
-    if app.config.webhook_division != "":
+    if app.config.hook_division.channel_id != "" or app.config.hook_division.webhook_url != "":
         try:
             author = {"name": tt[1], "icon_url": avatar}
 
-            r = await arequests.post(app, app.config.webhook_division, data=json.dumps({"content": app.config.webhook_division_message,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+
+            if app.config.hook_division.channel_id != "":
+                durl = f"https://discord.com/api/v10/channels/{app.config.hook_division.channel_id}/messages"
+            elif app.config.hook_division.webhook_url != "":
+                durl = app.config.hook_division.webhook_url
+
+            r = await arequests.post(app, durl, data=json.dumps({"content": app.config.hook_division.message_content,"embeds": [{"title": f"New Division Validation Request for Delivery #{logid}", "description": msg, "author": author, "footer": {"text": f"Delivery ID: {logid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:

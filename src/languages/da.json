@@ -129,6 +129,7 @@
     "application_already_accepted": "Ansøgningen er allerede accepteret",
     "application_already_declined": "Ansøgningen er allerede afvist",
     "application_already_processed": "Ansøgningen er allerede behandlet, status ukendt.",
+    "application_message_too_long": "Beskeden er for lang, se venligst programmet i Drivers Hub.",
 
     "start_time_must_be_earlier_than_end_time": "Starttidspunktet skal være tidligere end sluttidspunktet.",
     "invalid_challenge_type": "Ugyldig udfordringstype.",

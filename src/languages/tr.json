@@ -129,6 +129,7 @@
     "application_already_accepted": "Başvuru zaten kabul edildi",
     "application_already_declined": "Başvuru zaten reddedildi",
     "application_already_processed": "Uygulama zaten işleniyor, durum bilinmiyor.",
+    "application_message_too_long": "Mesaj çok uzun, lütfen uygulamayı Drivers Hub'da görüntüleyin.",
 
     "start_time_must_be_earlier_than_end_time": "Başlangıç ​​zamanı, bitiş zamanından önce olmalıdır.",
     "invalid_challenge_type": "Geçersiz mücadele türü.",

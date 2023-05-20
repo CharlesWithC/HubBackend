@@ -263,14 +263,17 @@ async def post_application(request: Request, response: Response, authorization: 
     application_type_text = ""
     applicantrole = 0
     discord_message_content = ""
-    webhookurl = ""
+    hook_url = ""
     note = ""
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
             applicantrole = o["discord_role_id"]
             discord_message_content = o["message"]
-            webhookurl = o["webhook"]
+            if o["channel_id"] != "":
+                hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
+            elif o["webhook_url"] != "":
+                hook_url = o["webhook_url"]
             note = o["note"]
     if application_type_text == "":
         response.status_code = 400
@@ -364,14 +367,16 @@ async def post_application(request: Request, response: Response, authorization: 
     for d in application.keys():
         msg += f"**{d}**:\n{application[d]}\n\n"
 
-    if webhookurl != "":
+    if hook_url != "":
         try:
             author = {"name": t[0][0], "icon_url": t[0][1]}
 
             if len(msg) > 4000:
-                msg = "*Message too long, please view application in Drivers Hub.*"
+                msg = f"*{ml.ctr(request, 'application_message_too_long')}*"
 
-            r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+
+            r = await arequests.post(app, hook_url, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"New {application_type_text} Application", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:
@@ -444,24 +449,29 @@ async def patch_application(request: Request, response: Response, applicationid:
 
     application_type_text = ""
     discord_message_content = ""
-    webhookurl = ""
+    hook_url = ""
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
             discord_message_content = o["message"]
-            webhookurl = o["webhook"]
+            if o["channel_id"] != "":
+                hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
+            elif o["webhook_url"] != "":
+                hook_url = o["webhook_url"]
     if application_type < 1 and application_type > 4 and application_type_text == "":
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
 
-    if webhookurl != "":
+    if hook_url != "":
         try:
             author = {"name": t[0][0], "icon_url": t[0][1]}
 
             if len(msg) > 4000:
-                msg = "*Message too long, please view application in Drivers Hub.*"
+                msg = f"*{ml.ctr(request, 'application_message_too_long')}*"
 
-            r = await arequests.post(app, webhookurl, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+
+            r = await arequests.post(app, hook_url, data=json.dumps({"content": discord_message_content, "embeds": [{"title": f"Application #{applicationid} - New Message", "description": msg, "author": author, "footer": {"text": f"Application ID: {applicationid} "}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = headers)
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
         except:

@@ -129,6 +129,7 @@
     "application_already_accepted": "La domanda è già stata accettata",
     "application_already_declined": "L'applicazione è già stata rifiutata",
     "application_already_processed": "L'applicazione è già stata elaborata, stato sconosciuto.",
+    "application_message_too_long": "Messaggio troppo lungo, visualizza l'applicazione in Drivers Hub.",
 
     "start_time_must_be_earlier_than_end_time": "L'ora di inizio deve essere precedente all'ora di fine.",
     "invalid_challenge_type": "Tipo di sfida non valido.",

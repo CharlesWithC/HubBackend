@@ -14,7 +14,6 @@ from dateutil import parser
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from config import validateConfig
 from functions import *
 from api import tracebackHandler
 
@@ -311,7 +310,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
 
-    if app.config.delivery_log_channel_id != "" and not duplicate:
+    if (app.config.hook_delivery_log.channel_id != "" or app.config.hook_delivery_log.webhook_url != "") and not duplicate:
         try:
             source_city = d["data"]["object"]["source_city"]
             source_company = d["data"]["object"]["source_company"]
@@ -415,7 +414,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
                     try:
-                        r = await arequests.post(app, f"https://discord.com/api/v10/channels/{app.config.delivery_log_channel_id}/messages", headers = headers, data=json.dumps(data), dhrid = dhrid)
+                        if app.config.hook_delivery_log.channel_id != "":
+                            durl = f"https://discord.com/api/v10/channels/{app.config.hook_delivery_log.channel_id}/messages"
+                        elif app.config.hook_delivery_log.webhook_url != "":
+                            durl = app.config.hook_delivery_log.webhook_url
+                        r = await arequests.post(app, durl, headers = headers, data=json.dumps(data), dhrid = dhrid)
                         if r.status_code == 401:
                             DisableDiscordIntegration(app)
                     except:

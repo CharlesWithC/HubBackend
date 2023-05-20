@@ -204,6 +204,7 @@ EN_STRINGTABLE = {
     "application_already_accepted": "The application is already accepted",
     "application_already_declined": "The application is already declined",
     "application_already_processed": "The application is already processed, status unknown.",
+    "application_message_too_long": "Message too long, please view application in Drivers Hub.",
 
     "start_time_must_be_earlier_than_end_time": "Start time must be earlier than end time.",
     "invalid_challenge_type": "Invalid challenge type.",

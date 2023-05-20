@@ -208,12 +208,20 @@ async def AuditLog(request, uid, text, discord_message_only = False):
         if uid != -998 and not discord_message_only:
             await app.db.execute(dhrid, f"INSERT INTO auditlog VALUES ({uid}, '{convertQuotation(text)}', {int(time.time())})")
             await app.db.commit(dhrid)
-        if app.config.webhook_audit != "":
-            footer = {"text": name}
-            if uid not in [-999, -998]:
-                footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
+        if app.config.hook_audit_log.channel_id != "" or app.config.hook_audit_log.webhook_url != "":
             try:
-                r = await arequests.post(app, app.config.webhook_audit, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers = {"Content-Type": "application/json"})
+                footer = {"text": name}
+                if uid not in [-999, -998]:
+                    footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
+
+                headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+
+                if app.config.hook_audit_log.channel_id != "":
+                    durl = f"https://discord.com/api/v10/channels/{app.config.hook_audit_log.channel_id}/messages"
+                elif app.config.hook_audit_log.webhook_url != "":
+                    durl = app.config.hook_audit_log.webhook_url
+
+                r = await arequests.post(app, durl, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers =  headers)
                 if r.status_code == 401:
                     DisableDiscordIntegration(app)
             except:
@@ -242,12 +250,7 @@ async def AutoMessage(app, meta, setvar):
                 "color": int(app.config.hex_color, 16)
             }]})
 
-        if meta.webhook_url != "":
-            r = await arequests.post(app, meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
-
-        elif meta.channel_id != "":
+        if meta.channel_id != "":
             if app.config.discord_bot_token == "":
                 return
 
@@ -256,5 +259,11 @@ async def AutoMessage(app, meta, setvar):
             r = await arequests.post(app, ddurl, headers = headers, data=data)
             if r.status_code == 401:
                 DisableDiscordIntegration(app)
+
+        elif meta.webhook_url != "":
+            r = await arequests.post(app, meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
+            if r.status_code == 401:
+                DisableDiscordIntegration(app)
+
     except:
         pass

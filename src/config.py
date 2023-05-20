@@ -8,14 +8,14 @@ def isfloat(t):
     except:
         return False
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'hcaptcha_secret', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'hcaptcha_secret', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'webhook_division', 'webhook_division_message', 'divisions', 'economy', 'perms', 'roles', 'webhook_audit']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
 
 public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id']
 
 config_plugins = {"application": ["application_types"],
-    "division": ["webhook_division", "webhook_division_message", "divisions"],
+    "division": ["divisions", "hook_division"],
     "economy": ["economy"]}
 
 config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key", "smtp_passwd"]
@@ -77,7 +77,10 @@ default_config = {
         "max_profit": 1000000,
         "action": "block"
     },
-    "delivery_log_channel_id": "",
+    "hook_delivery_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    },
     "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
@@ -120,8 +123,8 @@ default_config = {
     },
 
     "member_accept": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -135,8 +138,8 @@ default_config = {
         },
         "role_change": []
     },{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -152,8 +155,8 @@ default_config = {
     }],
 
     "member_leave": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -169,8 +172,8 @@ default_config = {
     }],
 
     "driver_role_add": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -186,8 +189,8 @@ default_config = {
     }],
 
     "driver_role_remove": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -203,8 +206,8 @@ default_config = {
     }],
 
     "rank_up": [{
-        "webhook_url": "",
         "channel_id": "",
+        "webhook_url": "",
         "content": "{mention}",
         "embed": {
             "title": "",
@@ -222,15 +225,18 @@ default_config = {
     ],
 
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": "driver"},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "webhook": "", "note": ""},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "webhook": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
     ],
 
-    "webhook_division": "",
-    "webhook_division_message": "",
     "divisions": [],
+    "hook_division": {
+        "channel_id": "",
+        "webhook_url": "",
+        "message_content": ""
+    },
 
     "economy": {
         "trucks": [{"id": "daf.xf", "brand": "DAF", "model": "XF 105", "price": 160000}, {"id": "iveco.as2", "brand": "Iveco", "model": "Stralis", "price": 160000}, {"id": "iveco.h_u01", "brand": "Iveco", "model": "Stralis Hi-Way", "price": 180000}, {"id": "man.tgx", "brand": "MAN", "model": "TGX", "price": 150000}, {"id": "man.tgx_euro6", "brand": "MAN", "model": "TGX Euro 6", "price": 180000}, {"id": "actros.towing", "brand": "Mercedes", "model": "New Actros", "price": 205000}, {"id": "renault.magnum", "brand": "Renault", "model": "Magnum", "price": 165000}, {"id": "renault.premium", "brand": "Renault", "model": "Premium", "price": 160000}, {"id": "renault.t", "brand": "Renault", "model": "T", "price": 190000}, {"id": "scania.r_2016", "brand": "Scania", "model": "R", "price": 230000}, {"id": "scania_r", "brand": "Scania", "model": "R2009", "price": 200000}, {"id": "scania.s_2016", "brand": "Scania", "model": "S", "price": 225000}, {"id": "scania.streamline", "brand": "Scania", "model": "Streamline", "price": 220000}, {"id": "volvo.fh3", "brand": "Volvo", "model": "FH16 2009", "price": 195000}, {"id": "volvo.fh16_2012", "brand": "Volvo", "model": "FH16 2012", "price": 210000}, {"id": "freightliner.cascadia2019", "brand": "Freightliner", "model": "Cascadia", "price": 158000}, {"id": "intnational.9900i", "brand": "International", "model": "9900i", "price": 230000}, {"id": "intnational.lonestar", "brand": "International", "model": "Lonestar", "price": 206000}, {"id": "intnational.lt", "brand": "International", "model": "LT", "price": 170000}, {"id": "kenworth.t680", "brand": "Kenworth", "model": "T680", "price": 160000}, {"id": "kenworth.wp", "brand": "Kenworth", "model": "W900", "price": 154000}, {"id": "mack.anthem", "brand": "Mack", "model": "Anthem", "price": 180000}, {"id": "peterbilt.389", "brand": "Peterbilt", "model": "389", "price": 170000}, {"id": "peterbilt.579", "brand": "Peterbilt", "model": "579", "price": 164000}, {"id": "volvo.vnl", "brand": "Volvo", "model": "VNL", "price": 170000}, {"id": "ws", "brand": "Western Star", "model": "5700XE", "price": 210000}, {"id": "westernstar.57x", "brand": "Western Star", "model": "57X", "price": 180000}],
@@ -304,7 +310,10 @@ default_config = {
         {"id": 2, "order_id": 200, "name": "Construction Division"}
     ],
 
-    "webhook_audit": ""
+    "hook_audit_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    }
 }
 
 
@@ -493,7 +502,7 @@ def validateConfig(cfg):
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
-    reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "webhook", "note"]
+    reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "channel_id", "webhook_url", "note"]
     for i in range(len(application_types)):
         application_type = application_types[i]
         try:
@@ -507,6 +516,20 @@ def validateConfig(cfg):
             # just validation, no need t oconvert, as discord_role_id is not mandatory
         except:
             application_type["discord_role_id"] = None
+        try:
+            int(application_type["channel_id"])
+            # just validation, no need t oconvert, as discord_role_id is not mandatory
+        except:
+            application_type["channel_id"] = ""
+
+        # v2.6.0
+        if "webhook" in application_type.keys():
+            application_type["webhook_url"] = application_type["webhook"]
+            del application_type["webhook"]
+        if not "channel_id" in application_type.keys():
+            application_type["channel_id"] = ""
+        #########
+        
         ok = True
         for req in reqs:
             if req not in application_type.keys():
@@ -567,7 +590,7 @@ def validateConfig(cfg):
 
     # v2.5.6
     embed_auto_validate = ["member_accept", "member_leave", "rank_up", "driver_role_add", "driver_role_remove"]
-    discord_msg_ensure = ["webhook_url", "channel_id", "content"]
+    discord_msg_ensure = ["channel_id", "webhook_url", "content"]
     for embed_type in embed_auto_validate:
         if embed_type not in cfg.keys():
             cfg[embed_type] = default_config[embed_type]
@@ -619,6 +642,39 @@ def validateConfig(cfg):
     # v2.5.11
     if "language" in cfg.keys():
         cfg["language"] = cfg["language"].lower()
+
+    # v2.6.0
+    if 'hook_delivery_log' not in cfg.keys() and "delivery_log_channel_id" in cfg.keys():
+        cfg["hook_delivery_log"] = {"channel_id": cfg["delivery_log_channel_id"], "webhook_url": ""}
+        del cfg["delivery_log_channel_id"]
+    if 'hook_division' not in cfg.keys() and "webhook_division" in cfg.keys():
+        cfg["hook_division"] = {"channel_id": "", "webhook_url": cfg["webhook_division"], "message_content": ""}
+        del cfg["webhook_division"]
+        if "webhook_division_message" in cfg.keys():
+            cfg["hook_division"]["message_content"] = cfg["webhook_division_message"]
+            del cfg["webhook_division_message"]
+    if 'hook_audit_log' not in cfg.keys() and "webhook_audit" in cfg.keys():
+        cfg["hook_audit_log"] = {"channel_id": "", "webhook_url": cfg["webhook_audit"]}
+        del cfg["webhook_audit"]
+
+    hook_audit_validate = ["hook_delivery_log", "hook_division", "hook_audit_log"]
+    for hook in hook_audit_validate:
+        new_hook = {"channel_id": "", "webhook_url": ""}
+        if "channel_id" in cfg[hook].keys():
+            try:
+                new_hook["channel_id"] = str(int(cfg[hook]["channel_id"]))
+            except:
+                pass
+        if "webhook_url" in cfg[hook].keys():
+            new_hook["webhook_url"] = cfg[hook]["webhook_url"]
+
+        if hook == "hook_division":
+            if "message_content" in cfg[hook].keys():
+                new_hook["message_content"] = str(cfg[hook]["message_content"])
+            else:
+                new_hook["message_content"] = ""
+            
+        cfg[hook] = new_hook
 
     tcfg = {}
     for key in config_keys_order:

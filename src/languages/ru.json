@@ -129,6 +129,7 @@
     "application_already_accepted": "Заявка уже принята",
     "application_already_declined": "Заявка уже отклонена",
     "application_already_processed": "Заявка уже обработана, статус неизвестен.",
+    "application_message_too_long": "Сообщение слишком длинное, пожалуйста, просмотрите приложение в Drivers Hub.",
 
     "start_time_must_be_earlier_than_end_time": "Время начала должно быть раньше времени окончания.",
     "invalid_challenge_type": "Неверный тип вызова.",
