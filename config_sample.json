@@ -199,7 +199,10 @@
         }
     }],
     "ranks": [
-        {"points": 0, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}},
+        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}},
+        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}},
+        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}}
     ],
 
     "application_types": [

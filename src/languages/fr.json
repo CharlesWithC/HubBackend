@@ -221,6 +221,7 @@
     "country": "Pays",
     "job_submitted": "Tâche soumise : `#{logid}`",
     "job_deleted": "Tâche supprimée : `#{logid}`",
+    "earned_bonus_point": "Vous avez gagné `{bonus_points}` points bonus pour la livraison `#{logid}` puisque votre rang est `{rankname}`",
     "new_rank": "Vous avez reçu un nouveau rang : `{rankname}`",
     "new_rank_title": "Nouveau rang",
     "member_accepted": "Vous avez été accepté en tant que membre !\nVotre ID utilisateur est `{userid}`",

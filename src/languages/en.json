@@ -222,6 +222,7 @@
     "country": "Country",
     "job_submitted": "Job Submitted: `#{logid}`",
     "job_deleted": "Job Deleted: `#{logid}`",
+    "earned_bonus_point": "You earned `{bonus_points}` bonus points for delivery `#{logid}` since your rank is `{rankname}`",
     "new_rank": "You have received a new rank: `{rankname}`",
     "new_rank_title": "New Rank",
     "member_accepted": "You have been accepted as a member!\nYour User ID is `{userid}`",

@@ -189,11 +189,11 @@ async def UpdateDlogStats(app):
             await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-last-update', '{int(time.time())}')")
             await app.db.commit(dhrid)
 
-            await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE skey = 'dlog_stats_up_to'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'dlog_stats_up_to'")
             t = await app.db.fetchall(dhrid)
             dlog_stats_up_to = int(t[0][0])
 
-            await app.db.execute(dhrid, f"SELECT MAX(logid) FROM dlog")
+            await app.db.execute(dhrid, "SELECT MAX(logid) FROM dlog")
             t = await app.db.fetchone(dhrid)
             max_log_id = t[0]
 

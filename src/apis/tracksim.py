@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import hmac
 import json
+import random
 import time
 import traceback
 from datetime import datetime
@@ -14,15 +15,13 @@ from dateutil import parser
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from functions import *
 from api import tracebackHandler
+from functions import *
 
 JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
 JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
 
-async def FetchRoute(app, gameid, userid, logid, trackerid, request = None, dhrid = None):
-    if request is None:
-        request = Request(scope={"type":"http", "app": app})
+async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
     try:
         r = await arequests.get(app, f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {app.config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
     except:
@@ -296,10 +295,111 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         logid = (await app.db.fetchone(dhrid))[0]
 
         if "tracker" in app.config.plugins:
-            asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid))
+            asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid, request))
 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
+
+        try:
+            # handle bonus point on different rank
+            ratio = 1
+            if app.config.distance_unit == "imperial":
+                ratio = 0.621371
+
+            # calculate distance
+            userdistance = {}
+            await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                if tt[0] not in userdistance.keys():
+                    userdistance[tt[0]] = nint(tt[1])
+                else:
+                    userdistance[tt[0]] += nint(tt[1])
+                userdistance[tt[0]] = int(userdistance[tt[0]])
+
+            # calculate challenge
+            userchallenge = {}
+            await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
+            o = await app.db.fetchall(dhrid)
+            for oo in o:
+                if oo[0] not in userchallenge.keys():
+                    userchallenge[oo[0]] = 0
+                userchallenge[oo[0]] += oo[1]
+
+            # calculate event
+            userevent = {}
+            await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                attendees = str2list(tt[0])
+                for attendee in attendees:
+                    if attendee not in userevent.keys():
+                        userevent[attendee] = tt[1]
+                    else:
+                        userevent[attendee] += tt[1]
+
+            # calculate division
+            userdivision = {}
+            await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
+            o = await app.db.fetchall(dhrid)
+            for oo in o:
+                if oo[0] not in userdivision.keys():
+                    userdivision[oo[0]] = 0
+                if oo[1] in app.division_points.keys():
+                    userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
+
+            # calculate bonus
+            userbonus = {}
+            await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
+            o = await app.db.fetchall(dhrid)
+            for oo in o:
+                if oo[0] not in userbonus.keys():
+                    userbonus[oo[0]] = 0
+                userbonus[oo[0]] += oo[1]
+
+            distancepnt = 0
+            challengepnt = 0
+            eventpnt = 0
+            divisionpnt = 0
+            bonuspnt = 0
+            if userid in userdistance.keys():
+                distancepnt = userdistance[userid]
+            if userid in userchallenge.keys():
+                challengepnt = userchallenge[userid]
+            if userid in userevent.keys():
+                eventpnt = userevent[userid]
+            if userid in userdivision.keys():
+                divisionpnt = userdivision[userid]
+            if userid in userbonus.keys():
+                bonuspnt = userbonus[userid]
+
+            totalpnt = distancepnt * ratio + challengepnt + eventpnt + divisionpnt + bonuspnt
+            bonus = point2bonus(app, totalpnt)
+            rankname = point2rankname(app, totalpnt)
+
+            if bonus is not None or bonus == -1:
+                ok = True
+                if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
+                    ok = False
+                if bonus["max_distance"] != -1 and driven_distance > bonus["max_distance"]:
+                    ok = False
+                if ok and random.uniform(0, 1) <= bonus["probability"]:
+                    bonuspoint = 0
+                    if bonus["type"] == "fixed_value":
+                        bonuspoint = bonus["value"]
+                    elif bonus["type"] == "fixed_percentage":
+                        bonuspoint = round(bonus["value"] * driven_distance)
+                    elif bonus["type"] == "random_value":
+                        bonuspoint = random.randint(bonus["min"], bonus["max"])
+                    elif bonus["type"] == "random_percentage":
+                        bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
+                    if bonuspoint != 0:
+                        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
+                        await app.db.commit(dhrid)
+                        await notification(request, "dlog", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
+
+        except Exception as exc:
+            await tracebackHandler(request, exc, traceback.format_exc())
 
     if (app.config.hook_delivery_log.channel_id != "" or app.config.hook_delivery_log.webhook_url != "") and not duplicate:
         try:

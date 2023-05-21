@@ -54,7 +54,7 @@ async def get_callback(request: Request, response: Response):
 
         if app.config.steam_api_key != "":
             try:
-                r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
+                r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid, timeout = 10)
                 d = json.loads(r.text)
                 username = convertQuotation(d["response"]["players"][0]["personaname"])
                 avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])

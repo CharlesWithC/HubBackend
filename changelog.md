@@ -1,17 +1,18 @@
 # Changelog
 
 **v2.6.0**  
-1.Converted partial `INT` columns in `economy_*` TABLE to `BIGINT`  
-2.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  
-3.Separated `ETS2/ATS` data of **GET** `/dlog/statistics/chart`  
-4.Added `?joined_after|before` to **GET** `/user/list`, `/member/list`  
-5.Converted `delivery_log_channel_id`, `webhook_division(_message)`, `webhook_audit` to `hook_delivery_log`, `hook_division`, `hook_audit_log` to support both `webhook_url` and `channel_id`  
-6.Renamed `config.application_types[].webhook` to `webhook_url`, added `channel_id`  
-7.Increased `channel_id` priority in `AutoMessage`, which will try using `channel_id` before using `webhook_url` if set  
-8.Added queue for most Discord API calls to handle 429s  
-9.Improved notification DM rate limit handler  
-**10.Added `dlog_stats` building and GET `/dlog/statistics/details`**  
-11.Added `--disable-upgrader` cli switch to prevent running upgrader  
+1.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  
+2.Separated `ETS2/ATS` data of **GET** `/dlog/statistics/chart`  
+3.Added `?joined_after|before` to **GET** `/user/list`, `/member/list`  
+4.Converted `delivery_log_channel_id`, `webhook_division(_message)`, `webhook_audit` to `hook_delivery_log`, `hook_division`, `hook_audit_log` to support both `webhook_url` and `channel_id`  
+5.Renamed `config.application_types[].webhook` to `webhook_url`, added `channel_id`  
+6.Increased `channel_id` priority in `AutoMessage`, which will try using `channel_id` before using `webhook_url` if set  
+7.Added queue for most Discord API calls to handle 429s  
+8.Improved notification DM rate limit handler  
+**9.Added `dlog_stats` building and GET `/dlog/statistics/details`**  
+10.Added `config.ranks[].bonus` for bonus points when submitting a job after driver reaches a rank  
+11.Converted partial `INT` columns in `economy_*` TABLE to `BIGINT`  
+12.Added `--disable-upgrader` cli switch to prevent running upgrader  
 
 **v2.5.11**  
 1.Added `?after` to **GET** `/audit/list`  

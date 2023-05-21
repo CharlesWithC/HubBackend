@@ -221,6 +221,7 @@
     "country": "País",
     "job_submitted": "Trabalho enviado: `# {logid} `",
     "job_deleted": "Trabalho excluído: `# {logid} `",
+    "earned_bonus_point": "Você ganhou `{bonus_points}` pontos de bônus pela entrega `#{logid}` já que sua classificação é `{rankname}`",
     "new_rank": "Você recebeu uma nova classificação: ` {rankname} `",
     "new_rank_title": "Nova Classif",
     "member_accepted": "Você foi aceito como membro!\nSeu ID de usuário é ` {userid} `",

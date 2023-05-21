@@ -111,7 +111,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + bonuspnt
     rankroleid = point2rankroleid(app, totalpnt)
 
-    if rankroleid == -1:
+    if rankroleid == -1 or rankroleid is None:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
 

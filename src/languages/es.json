@@ -221,6 +221,7 @@
     "country": "País",
     "job_submitted": "Trabajo enviado: `#{logid}`",
     "job_deleted": "Trabajo eliminado: `#{logid}`",
+    "earned_bonus_point": "Du har optjent `{bonus_points}` bonuspoint for levering `#{logid}`, da din rang er `{rankname}`",
     "new_rank": "Has recibido un nuevo rango: `{rankname}`",
     "new_rank_title": "Nuevo rango",
     "member_accepted": "¡Has sido aceptado como miembro!\nSu ID de usuario es `{userid}`",

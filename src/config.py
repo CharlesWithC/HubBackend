@@ -8,6 +8,15 @@ def isfloat(t):
     except:
         return False
 
+'''
+config.ranks[].bonus format
+- \* `min_distance`/`max_distance`: int
+- \*`probability`: float = 0~1
+- \* `type`: str = `fixed_value`/`fixed_percentage`/`random_value`/`random_percentage`
+- `val`: int/float when `type` is `fixed_*`
+- `min`/`max`: int/float when `type` is `random_*`
+'''
+
 config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'hcaptcha_secret', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
 
 config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
@@ -221,7 +230,10 @@ default_config = {
         }
     }],
     "ranks": [
-        {"points": 0, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": ""}
+        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}},
+        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}},
+        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}},
+        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}}
     ],
 
     "application_types": [
@@ -409,6 +421,84 @@ def validateConfig(cfg):
             # just validation, no need t oconvert, as discord_role_id is not mandatory
         except:
             rank["discord_role_id"] = None
+
+        # v2.6.0
+        if 'bonus' not in rank.keys() or rank["bonus"] is None:
+            rank["bonus"] = None
+        else:
+            if 'min_distance' not in rank['bonus'].keys():
+                rank['bonus']['min_distance'] = -1
+            else:
+                try:
+                    rank['bonus']['min_distance'] = int(rank['bonus']['min_distance'])
+                except:
+                    rank['bonus']['min_distance'] = -1
+
+            if 'max_distance' not in rank['bonus'].keys():
+                rank['bonus']['max_distance'] = -1
+            else:
+                try:
+                    rank['bonus']['max_distance'] = int(rank['bonus']['max_distance'])
+                except:
+                    rank['bonus']['max_distance'] = -1
+
+            if 'probability' not in rank['bonus'].keys():
+                rank["bonus"] = None
+            else:
+                try:
+                    rank["bonus"]["probability"] = float(rank["bonus"]["probability"])
+                    if rank["bonus"]["probability"] > 1 or rank["bonus"]["probability"] < 0:
+                        rank["bonus"]["probability"] = 1
+                except:
+                    rank["bonus"]["probability"] = 1
+
+            if 'type' not in rank['bonus'].keys() or \
+                    rank["bonus"]["type"] not in ["fixed_value", "fixed_percentage", "random_value", "random_percentage"]:
+                rank["bonus"] = None
+            else:
+                if rank["bonus"]["type"] == "fixed_value":
+                    if 'value' not in rank['bonus'].keys():
+                        rank["bonus"] = None
+                    else:
+                        try:
+                            rank["bonus"]["value"] = int(rank["bonus"]["value"])
+                        except:
+                            rank["bonus"]["value"] = 0
+                elif rank["bonus"]["type"] == "fixed_percentage":
+                    if 'value' not in rank['bonus'].keys():
+                        rank["bonus"] = None
+                    else:
+                        try:
+                            rank["bonus"]["value"] = float(rank["bonus"]["value"])
+                        except:
+                            rank["bonus"]["value"] = 0
+                elif rank["bonus"]["type"] == "random_value":
+                    if 'min' not in rank['bonus'].keys() or 'max' not in rank['bonus'].keys():
+                        rank["bonus"] = None
+                    else:
+                        try:
+                            rank["bonus"]["min"] = int(rank["bonus"]["min"])
+                            rank["bonus"]["max"] = int(rank["bonus"]["max"])
+                            if rank["bonus"]["min"] > rank["bonus"]["max"]:
+                                (rank["bonus"]["min"], rank["bonus"]["max"]) = (rank["bonus"]["max"], rank["bonus"]["min"])
+                        except:
+                            rank["bonus"]["min"] = 0
+                            rank["bonus"]["max"] = 0
+                elif rank["bonus"]["type"] == "random_percentage":
+                    if 'min' not in rank['bonus'].keys() or 'max' not in rank['bonus'].keys():
+                        rank["bonus"] = None
+                    else:
+                        try:
+                            rank["bonus"]["min"] = float(rank["bonus"]["min"])
+                            rank["bonus"]["max"] = float(rank["bonus"]["max"])
+                            if rank["bonus"]["min"] > rank["bonus"]["max"]:
+                                (rank["bonus"]["min"], rank["bonus"]["max"]) = (rank["bonus"]["max"], rank["bonus"]["min"])
+                        except:
+                            rank["bonus"]["min"] = 0
+                            rank["bonus"]["max"] = 0
+
+        ########
+
         if "discord_role_id" in rank.keys() and "points" in rank.keys() and "name" in rank.keys():
             newranks.append(rank)
     cfg["ranks"] = newranks

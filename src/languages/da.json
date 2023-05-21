@@ -221,6 +221,7 @@
     "country": "Land",
     "job_submitted": "Job indsendt: `#{logid}`",
     "job_deleted": "Job slettet: `#{logid}`",
+    "earned_bonus_point": "Du har optjent `{bonus_points}` bonuspoint for levering `#{logid}`, da din rang er `{rankname}`",
     "new_rank": "Du har modtaget en ny rang: `{rankname}`",
     "new_rank_title": "Ny rang",
     "member_accepted": "Du er blevet accepteret som medlem!\nDit bruger-id er `{userid}`",

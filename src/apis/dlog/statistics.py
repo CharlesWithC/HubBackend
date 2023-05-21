@@ -499,18 +499,18 @@ async def get_details(request: Request, response: Response, authorization: Optio
             return au
     else:
         quserid = -1
-    
+
     ret = {}
     K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
 
     await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE userid = {quserid} ORDER BY item_type ASC, count DESC, sum DESC")
     t = await app.db.fetchall(dhrid)
     for tt in t:
-        if not K[tt[0]] in ret.keys():
+        if K[tt[0]] not in ret.keys():
             ret[K[tt[0]]] = []
         if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
             ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
         else:
             ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
-    
+
     return ret

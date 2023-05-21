@@ -221,6 +221,7 @@
     "country": "Ülke",
     "job_submitted": "Teslimat Kaydedildi: `#{logid}`",
     "job_deleted": "Teslimat Silindi: `#{logid}`",
+    "earned_bonus_point": "Sıralamanız `{rankname}` olduğundan, `#{logid}` teslimatı için `{bonus_points}` bonus puan kazandınız",
     "new_rank": "Yeni bir rütbe kazandınız: `{rankname}`",
     "new_rank_title": "Yeni Rütbe",
     "member_accepted": "Üye olarak kabul edildiniz!\nKullanıcı kimliğiniz (ID): `{userid}`",

@@ -221,6 +221,7 @@
     "country": "Страна",
     "job_submitted": "Задание отправлено: `#{logid}`",
     "job_deleted": "Задание удалено: `#{logid}`",
+    "earned_bonus_point": "Sıralamanız `{rankname}` olduğundan, `#{logid}` teslimatı için `{bonus_points}` bonus puan kazandınız",
     "new_rank": "Вы получили новый ранг: `{rankname}`",
     "new_rank_title": "Новый ранг",
     "member_accepted": "Вы приняты в качестве участника!\nВаш идентификатор пользователя: `{userid}`",

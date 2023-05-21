@@ -14,9 +14,10 @@
 1.Asynchronous IO (database), making FastAPI really fast  
 2.Generic authentication and rate limiting algorithm  
 3.Discord / Steam / Password Login & MFA Support  
-4.Role-based permission management  
-5.Notification system (Drivers Hub & Discord)  
-6.Multiple languages  
+4.Advanced statistics including summary, chart and details (e.g. the most-driven truck)  
+5.Role-based permission management  
+6.Notification system (Drivers Hub & Discord)  
+7.Multiple languages  
 
 **Official Plugins**  
 Announcement, Application, Banner, Challenge, Division, Downloads, Economy, Event, Tracker  

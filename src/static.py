@@ -23,6 +23,7 @@ def load(app):
 
     app.rankrole = {}
     app.rankname = {}
+    app.rankbonus = {}
     for t in app.config.ranks:
         try:
             if t["discord_role_id"] is not None:
@@ -30,10 +31,12 @@ def load(app):
             else:
                 app.rankrole[t["points"]] = 0
             app.rankname[t["points"]] = t["name"]
+            app.rankbonus[t["points"]] = t["bonus"]
         except:
             pass
     app.rankrole = dict(sorted(app.rankrole.items(), key=lambda x: x[0]))
     app.rankname = dict(sorted(app.rankname.items(), key=lambda x: x[0]))
+    app.rankbonus = dict(sorted(app.rankbonus.items(), key=lambda x: x[0]))
 
     app.division_roles = []
     for division in app.config.divisions:
@@ -296,6 +299,7 @@ EN_STRINGTABLE = {
     "country": "Country",
     "job_submitted": "Job Submitted: `#{logid}`",
     "job_deleted": "Job Deleted: `#{logid}`",
+    "earned_bonus_point": "You earned `{bonus_points}` bonus points for delivery `#{logid}` since your rank is `{rankname}`",
     "new_rank": "You have received a new rank: `{rankname}`",
     "new_rank_title": "New Rank",
     "member_accepted": "You have been accepted as a member!\nYour User ID is `{userid}`",
