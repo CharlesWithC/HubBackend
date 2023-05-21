@@ -33,9 +33,9 @@ async def EventNotification(app):
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 nlup = int(t[0][0])
-            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 30:
+            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 90:
                 try:
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(90)
                 except:
                     return
                 continue

@@ -377,7 +377,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             bonus = point2bonus(app, totalpnt)
             rankname = point2rankname(app, totalpnt)
 
-            if bonus is not None or bonus == -1:
+            if bonus is not None and type(bonus) is dict:
                 ok = True
                 if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
                     ok = False

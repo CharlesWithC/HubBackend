@@ -8,6 +8,5 @@ pysocks==1.7.1
 websockets==10.4
 bcrypt==3.2.2
 pillow==9.3.0
-alive_progress==3.1.2
 python-dateutil==2.8.2
 python-multipart==0.0.5

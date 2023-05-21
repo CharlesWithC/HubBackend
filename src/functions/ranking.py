@@ -6,7 +6,7 @@ def point2bonus(app, point):
 
     keys = list(app.rankbonus.keys())
     if point < keys[0]:
-        return -1
+        return None
     if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
         return app.rankbonus[keys[0]]
     for i in range(1, len(keys)):

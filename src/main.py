@@ -54,7 +54,7 @@ elif args.config_directory is not None:
         logger.warning("Invalid config-directory, quited.")
         os._exit(42)
     config_files = sorted(os.listdir(args.config_directory))
-    config_paths = [os.path.join(args.config_directory, x) for x in config_files]
+    config_paths = [os.path.join(args.config_directory, x) for x in config_files if x.endswith(".json")]
 
 openapi_path = ""
 if args.enable_parent_openapi is True:

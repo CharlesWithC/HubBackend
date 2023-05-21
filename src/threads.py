@@ -108,7 +108,7 @@ async def ClearOutdatedData(app):
             pass
 
         try:
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
         except:
             return
 
@@ -128,9 +128,9 @@ async def RefreshDiscordAccessToken(app):
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 nlup = int(t[0][0])
-            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 30:
+            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 90:
                 try:
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(90)
                 except:
                     return
                 continue
@@ -178,9 +178,9 @@ async def UpdateDlogStats(app):
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 nlup = int(t[0][0])
-            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 30:
+            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 90:
                 try:
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(90)
                 except:
                     return
                 continue
@@ -213,6 +213,8 @@ async def UpdateDlogStats(app):
                     dlog_stats = {}
 
                     obj = d["data"]["object"]
+
+                    dlog_stats[3] = []
 
                     truck = obj["truck"]
                     if truck is not None:
@@ -364,4 +366,4 @@ async def UpdateDlogStats(app):
         except:
             pass
 
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
