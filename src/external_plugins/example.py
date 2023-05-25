@@ -31,6 +31,21 @@ async def get_external(request: Request):
     '''New route responding with `app.state.message`'''
     return {"message": request.app.state.message}
 
+async def startup(app):
+    print("STARTUP")
+
+async def request(request):
+    print(f"NEW REQUEST from {request.client.host}")
+
+async def response_ok(request, response):
+    print(f"RESPONSE OK: {response}")
+
+async def response_fail(request, exception, traceback):
+    print(f"RESPONSE FAIL: {exception}")
+
+async def error_handler(request, exception, traceback):
+    return JSONResponse({"error": str(exception)}, status_code=400)
+
 def init(config: dict, print_log: bool = False):
     # Define routes
     routes = [
@@ -45,4 +60,4 @@ def init(config: dict, print_log: bool = False):
 
     # Plugin can be loaded, return (True, routes, state)
     # If plugin should not be loaded (e.g. due to specific conditions), return False
-    return (True, routes, states)
+    return (True, routes, states, {"startup": startup, "request": request, "response_ok": response_ok, "response_fail": response_fail, "error_handler": error_handler})

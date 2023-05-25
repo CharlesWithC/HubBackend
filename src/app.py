@@ -142,6 +142,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []
     app.loaded_external_plugins = []
+    app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": []}
     for plugin_name in app.config.external_plugins:
         if os.path.exists(f"external_plugins/{plugin_name}.py"):
             spec = importlib.util.spec_from_file_location(plugin_name, os.path.join(os.path.join(abspath, "external_plugins"), plugin_name + ".py"))
@@ -154,16 +155,14 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
         # init external plugin
         try:
-            protected_config = copy.deepcopy(app.config.__dict__)
-            for key in config_protected:
-                protected_config[key] = ""
-            res = external_plugin.init(protected_config, first_init)
+            res = external_plugin.init(app.config.__dict__, first_init)
             if res is False:
                 if first_init:
                     logger.warning(f"[{app.config.abbr}] [External Plugin] '{plugin_name}' is not loaded: 'init' function did not return True.")
                 continue
             routes = res[1]
             states = res[2]
+            middlewares = res[3]
         except Exception as exc:
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
@@ -172,11 +171,21 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         # test routes and state
         try:
             test_app = FastAPI()
+            test_app.external_middleware = {"startup": [], "request": [], "response_ok": [], "response_fail": [], "error_handler": []}
             for route in routes:
                 test_app.add_api_route(path=route.path, endpoint=route.endpoint, methods=route.methods, response_class=route.response_class)
             for state in states.keys():
                 if state not in app.state.__dict__.keys():
                     test_app.state.__dict__[state] = states[state]
+            for middleware_type in middlewares.keys():
+                if middleware_type in test_app.external_middleware:
+                    middleware = middlewares[middleware_type]
+                    if callable(middleware):
+                        test_app.external_middleware[middleware_type].append(middleware)
+                    elif type(middleware) == list:
+                        for mdw in middleware:
+                            if callable(mdw):
+                                test_app.external_middleware[middleware_type].append(mdw)
         except Exception as exc:
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")
@@ -190,6 +199,15 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
             for state in states.keys():
                 if state not in app.state.__dict__.keys():
                     app.state.__dict__[state] = states[state]
+            for middleware_type in middlewares.keys():
+                if middleware_type in app.external_middleware:
+                    middleware = middlewares[middleware_type]
+                    if callable(middleware):
+                        app.external_middleware[middleware_type].append(middleware)
+                    elif type(middleware) == list:
+                        for mdw in middleware:
+                            if callable(mdw):
+                                app.external_middleware[middleware_type].append(mdw)
         except Exception as exc:
             if first_init:
                 logger.error(f"[{app.config.abbr}] [External Plugin] Error loading '{plugin_name}': {exc}")

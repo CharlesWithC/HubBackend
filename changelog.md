@@ -6,6 +6,9 @@
 3.Added `Authorization` header check to middleware if the header exists  
 4.Added `get_sensitive_profile` permission to access user `email` and `mfa`  
 5.Added `config.perms` validator to ensure default permissions are included  
+6.Improved external plugin handling:  
+i) Protected config will be included in the config when calling `init`  
+ii) Added `external_middleware` with four types (`startup`, `request`, `response_ok`, `response_fail`). See [README.md](./README.md) for more.  
 
 **v2.6.0**  
 1.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  

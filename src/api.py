@@ -3,6 +3,7 @@
 
 import asyncio
 import hashlib
+import inspect
 import json
 import threading
 import time
@@ -41,6 +42,12 @@ async def startup_event(app):
     loop.create_task(UpdateDlogStats(app))
     from plugins.events import EventNotification
     loop.create_task(EventNotification(app))
+
+    for middleware in app.external_middleware["startup"]:
+        if inspect.iscoroutinefunction(middleware):
+            await middleware(app = app)
+        else:
+            middleware(app = app)
 
 # request param is needed as `call_next` will include it
 async def errorHandler(request: Request, exc: StarletteHTTPException):
@@ -149,6 +156,37 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 class HubMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         app = request.app
+
+        try:
+            for middleware in app.external_middleware["request"]:
+                if inspect.iscoroutinefunction(middleware):
+                    await middleware(request = request)
+                else:
+                    middleware(request = request)
+        except Exception as exc:
+            err = traceback.format_exc()
+
+            for middleware in app.external_middleware["response_fail"]:
+                if inspect.iscoroutinefunction(middleware):
+                    await middleware(request = request, exception = exc, traceback = err)
+                else:
+                    middleware(request = request, exception = exc, traceback = err)
+
+            if len(app.external_middleware["error_handler"]) != 0:
+                middleware = app.external_middleware["error_handler"][0]
+                try:
+                    if inspect.iscoroutinefunction(middleware):
+                        response = await middleware(request = request, exception = exc, traceback = err)
+                    else:
+                        response = middleware(request = request, exception = exc, traceback = err)
+                    return response
+                except:
+                    pass
+            
+            response = (await tracebackHandler(request, exc, err))
+            
+            return response
+
         if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim"]:
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
@@ -172,19 +210,47 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             # validate token after all (only to formalize responses in case auth is not necessarily needed)
             if request.headers.get("Authorization") is not None:
-                au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True)
+                au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)
                 if au["error"]:
                     response = JSONResponse({"error": au["error"]}, status_code=au["code"])
 
-            await app.db.close_conn(dhrid)
             request_end_time = time.time()
                 
             if app.enable_performance_header:
                 response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
 
+            for middleware in app.external_middleware["response_ok"]:
+                if inspect.iscoroutinefunction(middleware):
+                    await middleware(request = request, response = response)
+                else:
+                    middleware(request = request, response = response)
+
+            await app.db.close_conn(dhrid)
+
             return response
         
         except Exception as exc:
-            await app.db.close_conn(dhrid)
             err = traceback.format_exc()
-            return (await tracebackHandler(request, exc, err))
+
+            for middleware in app.external_middleware["response_fail"]:
+                if inspect.iscoroutinefunction(middleware):
+                    await middleware(request = request, exception = exc, traceback = err)
+                else:
+                    middleware(request = request, exception = exc, traceback = err)
+
+            if len(app.external_middleware["error_handler"]) != 0:
+                middleware = app.external_middleware["error_handler"][0]
+                try:
+                    if inspect.iscoroutinefunction(middleware):
+                        response = await middleware(request = request, exception = exc, traceback = err)
+                    else:
+                        response = middleware(request = request, exception = exc, traceback = err)
+                    return response
+                except:
+                    pass
+            
+            response = (await tracebackHandler(request, exc, err))
+            
+            await app.db.close_conn(dhrid)
+            
+            return response
