@@ -190,7 +190,7 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
                 resp_headers["X-RateLimit-Reset-After"] = str(limittime - (int(time.time()) - first_request_timestamp))
                 return (False, resp_headers)
 
-async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = []):
+async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = [], only_validate_token = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     # authorization header basic check
     if authorization is None:
@@ -221,8 +221,14 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
     if authorization in app.state.cache_session.keys():
         cache = app.state.cache_session[authorization]
-        if cache["settings"] == (allow_application_token, check_member, required_permission):
+        if (allow_application_token or not allow_application_token and cache["settings"][0] == False) and \
+                (not check_member or check_member and cache["settings"][1] == True) and \
+                (required_permission == [] or required_permission == cache["settings"][2]):
             return cache["result"]
+    
+    if only_validate_token:
+        if authorization in app.state.cache_session_extended.keys():
+            return {"error": False}
 
     # application token
     if tokentype.lower() == "application":

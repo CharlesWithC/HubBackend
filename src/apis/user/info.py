@@ -56,6 +56,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if joined_before is not None:
         limit += f"AND user.join_timestamp <= {joined_before} "
 
+    au2 = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "get_sensitive_profile"])
+    get_sensitive_profile = False
+    if not au2["error"]:
+        get_sensitive_profile = True
+
     await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' {limit} ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -67,6 +72,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
             user["ban"] = None
         if "roles" in user.keys():
             del user["roles"]
+        if not get_sensitive_profile:
+            user["email"] = None
+            user["mfa"] = None
         ret.append(user)
 
     if after_uid is not None:
@@ -142,7 +150,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     userinfo = await GetUserInfo(request, uid = uid)
     (uid, discordid, steamid, truckersmpid, email) = (userinfo["uid"], userinfo["discordid"], userinfo["steamid"], userinfo["truckersmpid"], userinfo["email"])
     uid = uid if uid is not None else "NULL"
-    email = f"'{email}'" if email is not None else "NULL"
+    email = f"'{email}'" if email is not None and "@" in email else "NULL"
     discordid = discordid if discordid is not None else "NULL"
     steamid = steamid if steamid is not None else "NULL"
     truckersmpid = truckersmpid if truckersmpid is not None else "NULL"
@@ -153,6 +161,11 @@ async def get_profile(request: Request, response: Response, authorization: str =
         userinfo["ban"] = {"reason": t[0][0], "expire": t[0][1]}
     else:
         userinfo["ban"] = None
+    
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "get_sensitive_profile"])
+    if au["error"]:
+        userinfo["mfa"] = None
+        userinfo["email"] = None
 
     return userinfo
 

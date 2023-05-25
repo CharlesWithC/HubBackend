@@ -169,11 +169,21 @@ class HubMiddleware(BaseHTTPMiddleware):
             if rl[0]:
                 return rl[1]
             response = await call_next(request)
+
+            # validate token after all (only to formalize responses in case auth is not necessarily needed)
+            if request.headers.get("Authorization") is not None:
+                au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True)
+                if au["error"]:
+                    response = JSONResponse({"error": au["error"]}, status_code=au["code"])
+
             await app.db.close_conn(dhrid)
             request_end_time = time.time()
+                
             if app.enable_performance_header:
                 response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
+
             return response
+        
         except Exception as exc:
             await app.db.close_conn(dhrid)
             err = traceback.format_exc()

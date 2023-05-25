@@ -378,13 +378,15 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    quserid = userid
-    if quserid is not None:
-        au = await auth(authorization, request, allow_application_token = True)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
+    quser = ""
+    if userid is not None:
+        if app.config.privacy:
+            au = await auth(authorization, request, allow_application_token = True)
+            if au["error"]:
+                response.status_code = au["code"]
+                del au["code"]
+                return au
+        quser = f"AND userid = {userid}"
 
     if ranges > 100:
         ranges = 100
@@ -410,10 +412,6 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     timerange = timerange[::-1]
     if sum_up:
         timerange = [(0, timerange[0][0])] + timerange
-
-    quser = ""
-    if quserid is not None:
-        quser = f"AND userid = {quserid}"
 
     basedriver = 0
     if sum_up:
@@ -487,20 +485,20 @@ async def get_details(request: Request, response: Response, authorization: Optio
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    quserid = userid
-    if quserid is not None:
-        au = await auth(authorization, request, allow_application_token = True)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-    else:
-        quserid = -1
+    quser = ""
+    if userid is not None:
+        if app.config.privacy:
+            au = await auth(authorization, request, allow_application_token = True)
+            if au["error"]:
+                response.status_code = au["code"]
+                del au["code"]
+                return au
+        quser = f"userid = {userid}"
 
     ret = {}
     K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
 
-    await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE userid = {quserid} ORDER BY item_type ASC, count DESC, sum DESC")
+    await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE {quser} ORDER BY item_type ASC, count DESC, sum DESC")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         if K[tt[0]] not in ret.keys():

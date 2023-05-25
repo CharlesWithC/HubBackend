@@ -291,6 +291,7 @@ default_config = {
 
         "hr": [],
         "manage_profile": [],
+        "get_sensitive_profile": [],
         "add_member": [],
         "update_member_roles": [],
         "update_member_points": [],
@@ -373,6 +374,9 @@ def validateConfig(cfg):
         except:
             pass
         perms[perm] = newroles
+    for perm in default_config["perms"]:
+        if not perm in perms.keys():
+            perms[perm] = []
     cfg["perms"] = perms
 
     if 'roles' not in cfg.keys():

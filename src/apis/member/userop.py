@@ -50,7 +50,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
             userdistance[tt[0]] = nint(tt[1])
         else:
             userdistance[tt[0]] += nint(tt[1])
-        userdistance[tt[0]] = int(userdistance[tt[0]])
+        userdistance[tt[0]] = round(userdistance[tt[0]])
 
     # calculate challenge
     userchallenge = {}
@@ -108,7 +108,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     if userid in userbonus.keys():
         bonuspnt = userbonus[userid]
 
-    totalpnt = distance * ratio + challengepnt + eventpnt + divisionpnt + bonuspnt
+    totalpnt = round(distance * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)
     rankroleid = point2rankroleid(app, totalpnt)
 
     if rankroleid == -1 or rankroleid is None:

@@ -315,7 +315,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     userdistance[tt[0]] = nint(tt[1])
                 else:
                     userdistance[tt[0]] += nint(tt[1])
-                userdistance[tt[0]] = int(userdistance[tt[0]])
+                userdistance[tt[0]] = round(userdistance[tt[0]])
 
             # calculate challenge
             userchallenge = {}
@@ -373,7 +373,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             if userid in userbonus.keys():
                 bonuspnt = userbonus[userid]
 
-            totalpnt = distancepnt * ratio + challengepnt + eventpnt + divisionpnt + bonuspnt
+            totalpnt = round(distancepnt * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)
             bonus = point2bonus(app, totalpnt)
             rankname = point2rankname(app, totalpnt)
 

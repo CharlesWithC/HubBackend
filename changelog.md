@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.6.1**  
+1.Fixed `/user/profile` returning incorrect `ban` data  
+2.Added `config.privacy` check to **GET** `/dlog/statistics/details`  
+3.Added `Authorization` header check to middleware if the header exists  
+4.Added `get_sensitive_profile` permission to access user `email` and `mfa`  
+5.Added `config.perms` validator to ensure default permissions are included  
+
 **v2.6.0**  
 1.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  
 2.Separated `ETS2/ATS` data of **GET** `/dlog/statistics/chart`  
