@@ -9,6 +9,8 @@
 6.Improved external plugin handling:  
 i) Protected config will be included in the config when calling `init`  
 ii) Added `external_middleware` with four types (`startup`, `request`, `response_ok`, `response_fail`). See [README.md](./README.md) for more.  
+7.Removed `config.hcaptcha_secret`, added `config.captcha` with `provider` and `secret` property, `provider` supports `cloudflare` and `hcaptcha`.  
+**Note** `h-captcha-response` in JSON data has been renamed to `captcha-response`.  
 
 **v2.6.0**  
 1.Fixed inaccurate data of **GET** `/dlog/statistics/chart|summary`  

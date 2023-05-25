@@ -27,13 +27,16 @@ async def post_password(request: Request, response: Response):
     try:
         email = convertQuotation(data["email"])
         password = str(data["password"]).encode('utf-8')
-        hcaptcha_response = data["h-captcha-response"]
+        captcha_response = data["captcha-response"]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        if app.config.captcha.provider == "cloudflare":
+            r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)        
+        elif app.config.captcha.provider == "hcaptcha":
+            r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -133,13 +136,16 @@ async def post_register(request: Request, response: Response):
     try:
         email = convertQuotation(data["email"])
         password = str(data["password"])
-        hcaptcha_response = data["h-captcha-response"]
+        captcha_response = data["captcha-response"]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        if app.config.captcha.provider == "cloudflare":
+            r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)        
+        elif app.config.captcha.provider == "hcaptcha":
+            r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403
@@ -258,13 +264,16 @@ async def post_reset(request: Request, response: Response):
     data = await request.json()
     try:
         email = convertQuotation(data["email"])
-        hcaptcha_response = data["h-captcha-response"]
+        captcha_response = data["captcha-response"]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json")}
 
     try:
-        r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.hcaptcha_secret, "response": hcaptcha_response}, dhrid = dhrid)
+        if app.config.captcha.provider == "cloudflare":
+            r = await arequests.post(app, "https://challenges.cloudflare.com/turnstile/v0/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)        
+        elif app.config.captcha.provider == "hcaptcha":
+            r = await arequests.post(app, "https://hcaptcha.com/siteverify", data = {"secret": app.config.captcha.secret, "response": captcha_response, "remoteip": request.client.host}, dhrid = dhrid)
         d = json.loads(r.text)
         if not d["success"]:
             response.status_code = 403

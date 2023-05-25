@@ -58,8 +58,8 @@
                                         "description": "Password",
                                         "type": "string"
                                     },
-                                    "h-captcha-response": {
-                                        "description": "hCaptcha Response",
+                                    "captcha-response": {
+                                        "description": "Captcha Response",
                                         "type": "string"
                                     }
                                 }
@@ -96,8 +96,8 @@
                                         "description": "Password",
                                         "type": "string"
                                     },
-                                    "h-captcha-response": {
-                                        "description": "hCaptcha Response",
+                                    "captcha-response": {
+                                        "description": "Captcha Response",
                                         "type": "string"
                                     }
                                 }
@@ -130,8 +130,8 @@
                                         "description": "Email",
                                         "type": "string"
                                     },
-                                    "h-captcha-response": {
-                                        "description": "hCaptcha Response",
+                                    "captcha-response": {
+                                        "description": "Captcha Response",
                                         "type": "string"
                                     }
                                 }

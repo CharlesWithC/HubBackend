@@ -31,7 +31,10 @@
     "mysql_ext": "/var/lib/mysqlext/",
     "mysql_pool_size": 10,
     "mysql_err_keywords": ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"],
-    "hcaptcha_secret": "",
+    "captcha": {
+        "provider": "hcaptcha",
+        "secret": ""
+    },
 
     "plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
     "external_plugins": ["example"],
