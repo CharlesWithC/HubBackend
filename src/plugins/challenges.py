@@ -327,7 +327,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
         if reward_points > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        public_details = int(data["public_details"])
+        public_details = int(bool(data["public_details"]))
         job_requirements = data["job_requirements"]
         if type(required_roles) != list or type(job_requirements) != dict:
             response.status_code = 400
@@ -411,83 +411,94 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT delivery_count, challenge_type FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT challenge_type, title, description, start_time, end_time, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements FROM challenge WHERE challengeid = {challengeid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
-    org_delivery_count = t[0][0]
-    challenge_type = t[0][1]
+    (challenge_type, title, description, start_time, end_time, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) = t[0]
+    org_delivery_count = delivery_count
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
-        description = compress(data["description"])
-        if len(data["title"]) > 200:
+        if "title" in data.keys():
+            title = convertQuotation(data["title"])
+            if len(data["title"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+            
+        if "description" in data.keys():
+            description = compress(data["description"])
+            if len(data["description"]) > 2000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        
+        if "start_time" in data.keys():
+            start_time = int(data["start_time"])
+        if "end_time" in data.keys():
+            end_time = int(data["end_time"])
+        if start_time >= end_time:
             response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        if len(data["description"]) > 2000:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        start_time = int(data["start_time"])
-        end_time = int(data["end_time"])
-        delivery_count = int(data["delivery_count"])
-        if delivery_count > 2147483647:
-            response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        required_roles = data["required_roles"]
-        required_distance = int(data["required_distance"])
-        reward_points = int(data["reward_points"])
-        if reward_points > 2147483647:
-            response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        public_details = int(data["public_details"])
-        job_requirements = data["job_requirements"]
-        if type(required_roles) != list or type(job_requirements) != dict:
-            response.status_code = 400
-            return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+            return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
+
+        if "delivery_count" in data.keys():
+            delivery_count = int(data["delivery_count"])
+            if delivery_count > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            if delivery_count <= 0:
+                response.status_code = 400
+                if challenge_type in [1, 2, 3]:
+                    return {"error": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
+                elif challenge_type in [4, 5]:
+                    return {"error": ml.tr(request, "invalid_distance_sum", force_lang = au["language"])}
+        
+        if "required_roles" in data.keys():
+            required_roles = data["required_roles"]
+            roles = required_roles
+            rolereq = []
+            for role in roles:
+                if role == "":
+                    continue
+                try:
+                    rolereq.append(int(role))
+                except:
+                    response.status_code = 400
+                    return {"error": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
+            rolereq = rolereq[:20]
+            required_roles = "," + list2str(rolereq) + ","
+
+        if "required_distance" in data.keys():
+            required_distance = int(data["required_distance"])
+            if required_distance < 0:
+                required_distance = 0
+
+        if "reward_points" in data.keys():
+            reward_points = int(data["reward_points"])
+            if reward_points > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            if reward_points < 0:
+                response.status_code = 400
+                return {"error": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
+            
+        public_details = int(bool(data["public_details"]))
+
+        if "job_requirements" in data.keys():
+            job_requirements = data["job_requirements"]
+            if type(required_roles) != list or type(job_requirements) != dict:
+                response.status_code = 400
+                return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+            jobreq = []
+            for req in JOB_REQUIREMENTS:
+                if req in job_requirements:
+                    jobreq.append(JOB_REQUIREMENT_TYPE[req](job_requirements[req]))
+                else:
+                    jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
+            jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-
-    if start_time >= end_time:
-        response.status_code = 400
-        return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
-
-    roles = required_roles
-    rolereq = []
-    for role in roles:
-        if role == "":
-            continue
-        try:
-            rolereq.append(int(role))
-        except:
-            response.status_code = 400
-            return {"error": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
-    rolereq = rolereq[:20]
-    required_roles = "," + list2str(rolereq) + ","
-
-    if delivery_count <= 0:
-        response.status_code = 400
-        if challenge_type in [1, 2, 3]:
-            return {"error": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
-        elif challenge_type in [4, 5]:
-            return {"error": ml.tr(request, "invalid_distance_sum", force_lang = au["language"])}
-
-    if required_distance < 0:
-        required_distance = 0
-
-    if reward_points < 0:
-        response.status_code = 400
-        return {"error": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
-
-    jobreq = []
-    for req in JOB_REQUIREMENTS:
-        if req in job_requirements:
-            jobreq.append(JOB_REQUIREMENT_TYPE[req](job_requirements[req]))
-        else:
-            jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
-    jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
     await app.db.execute(dhrid, f"UPDATE challenge SET title = '{title}', description = '{description}', \
             start_time = '{start_time}', end_time = '{end_time}', \

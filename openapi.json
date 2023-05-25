@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.6.1"
+        "version": "2.6.2"
     },
     "servers": [],
     "paths": {
@@ -3067,6 +3067,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Order by (announcementid, orderid, title, timestamp)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Order (asc, desc)",
                             "type": "string"
                         },
@@ -3089,6 +3098,15 @@
                             "type": "string"
                         },
                         "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Announcement Type",
+                            "type": "integer"
+                        },
+                        "name": "announcement_type",
                         "in": "query"
                     }
                 ],
@@ -3131,13 +3149,13 @@
                                         "description": "Whether the announcement is visible only to members",
                                         "type": "boolean"
                                     },
-                                    "discord_channel_id": {
-                                        "description": "Discord Channel ID to forward announcement",
-                                        "type": "string"
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
                                     },
-                                    "discord_message_content": {
-                                        "description": "Discord Message Content when forwarding announcement",
-                                        "type": "string"
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
                                     }
                                 }
                             },
@@ -3146,7 +3164,8 @@
                                 "content",
                                 "announcement_type",
                                 "is_private",
-                                "channelid"
+                                "orderid",
+                                "is_pinned"
                             ]
                         }
                     }
@@ -3226,24 +3245,17 @@
                                         "description": "Whether the announcement is visible only to members",
                                         "type": "boolean"
                                     },
-                                    "discord_channel_id": {
-                                        "description": "Discord Channel ID to forward announcement",
-                                        "type": "string"
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
                                     },
-                                    "discord_message_content": {
-                                        "description": "Discord Message Content when forwarding announcement",
-                                        "type": "string"
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
                                     }
                                 }
                             },
-                            "required": [
-                                "announcementid",
-                                "title",
-                                "content",
-                                "announcement_type",
-                                "is_private",
-                                "channelid"
-                            ]
+                            "required": []
                         }
                     }
                 },
@@ -3935,18 +3947,7 @@
                                     }
                                 }
                             },
-                            "required": [
-                                "title",
-                                "after",
-                                "before",
-                                "challenge_type",
-                                "delivery_count",
-                                "required_roles",
-                                "required_distance",
-                                "reward_points",
-                                "public_details",
-                                "job_requirements"
-                            ]
+                            "required": []
                         }
                     }
                 },
@@ -4322,7 +4323,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (downloadsid, orderid, title, click_count)",
+                            "title": "Order by (downloadsid, orderid, timestamp, title, click_count)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -4403,6 +4404,10 @@
                                     "orderid": {
                                         "description": "Order ID",
                                         "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
                                     }
                                 }
                             },
@@ -4410,7 +4415,8 @@
                                 "title",
                                 "description",
                                 "link",
-                                "orderid"
+                                "orderid",
+                                "is_pinned"
                             ]
                         }
                     }
@@ -4489,15 +4495,14 @@
                                     "orderid": {
                                         "description": "Order ID",
                                         "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
                                     }
                                 }
                             },
-                            "required": [
-                                "title",
-                                "description",
-                                "link",
-                                "orderid"
-                            ]
+                            "required": []
                         }
                     }
                 },
@@ -6584,17 +6589,7 @@
                                     }
                                 }
                             },
-                            "required": [
-                                "title",
-                                "link",
-                                "departure",
-                                "destination",
-                                "distance",
-                                "meetup_timestamp",
-                                "departure_timestamp",
-                                "description",
-                                "is_private"
-                            ]
+                            "required": []
                         }
                     }
                 },

@@ -50,7 +50,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["orderid", "downloadsid", "click_count"]:
+    if order_by not in ["orderid", "downloadsid", "timestamp", "title", "click_count"]:
         order_by = "orderid"
         order = "asc"
     if order not in ["asc", "desc"]:
@@ -58,7 +58,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT downloadsid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT downloadsid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -70,14 +70,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         if not isstaff:
-            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[6], "click_count": tt[5]})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[6], "is_pinned": TF[tt[7]], "timestamp": tt[8], "click_count": tt[5]})
         else:
-            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "click_count": tt[5]})
+            ret.append({"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "link": tt[4], "orderid": tt[6], "is_pinned": TF[tt[7]], "timestamp": tt[8], "click_count": tt[5]})
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -107,7 +107,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -120,9 +120,9 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
     await app.db.commit(dhrid)
 
     if not isstaff:
-        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "secret": secret, "orderid": tt[6], "is_pinned": TF[tt[7]], "timestamp": tt[8], "click_count": tt[5]}
     else:
-        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "click_count": tt[5]}
+        return {"downloadsid": tt[0], "title": tt[2], "description": decompress(tt[3]), "creator": await GetUserInfo(request, userid = tt[1]), "link": tt[4], "secret": secret, "orderid": tt[6], "is_pinned": TF[tt[7]], "timestamp": tt[8], "click_count": tt[5]}
 
 async def get_redirect(request: Request, response: Response, secret: str):
     app = request.app
@@ -191,9 +191,10 @@ async def post_downloads(request: Request, response: Response, authorization: st
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         orderid = int(data["orderid"])
-        if orderid > 2147483647:
+        if orderid < -2147483647 or orderid > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -202,7 +203,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, click_count) VALUES ({au['userid']}, '{title}', '{description}', '{link}', {orderid}, 0)")
+    await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, is_pinned, timestamp, click_count) VALUES ({au['userid']}, '{title}', '{description}', '{link}', {orderid}, {is_pinned}, {int(time.time())}, 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     downloadsid = (await app.db.fetchone(dhrid))[0]
@@ -231,30 +232,37 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT userid FROM downloads WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"SELECT title, description, link, orderid, is_pinned FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
+    (title, description, link, orderid, is_pinned) = t[0]
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
-        if len(data["title"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(data["description"])
-        if len(data["description"]) > 2000:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convertQuotation(data["link"])
-        if len(data["link"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
-        orderid = int(data["orderid"])
-        if orderid > 2147483647:
-            response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "title" in data.keys():
+            title = convertQuotation(data["title"])
+            if len(data["title"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        if "description" in data.keys():
+            description = compress(data["description"])
+            if len(data["description"]) > 2000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        if "link" in data.keys():
+            link = convertQuotation(data["link"])
+            if len(data["link"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
+        if "orderid" in data.keys():
+            orderid = int(data["orderid"])
+            if orderid < -2147483647 or orderid > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "is_pinned" in data.keys():
+            is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -263,7 +271,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = 400
         return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid} WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid}, is_pinned = {is_pinned} WHERE downloadsid = {downloadsid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)
 

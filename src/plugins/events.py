@@ -328,29 +328,38 @@ async def post_event(request: Request, response: Response, authorization: str = 
     data = await request.json()
     try:
         title = convertQuotation(data["title"])
-        link = compress(data["link"])
-        departure = convertQuotation(data["departure"])
-        destination = convertQuotation(data["destination"])
-        distance = convertQuotation(data["distance"])
-        meetup_timestamp = int(data["meetup_timestamp"])
-        departure_timestamp = int(data["departure_timestamp"])
-        description = compress(data["description"])
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        link = compress(data["link"])
+        if len(data["link"]) > 1000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "1,000"}, force_lang = au["language"])}
+        departure = convertQuotation(data["departure"])
         if len(data["departure"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
+        destination = convertQuotation(data["destination"])
         if len(data["destination"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
+        distance = convertQuotation(data["distance"])
         if len(data["distance"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
+        meetup_timestamp = int(data["meetup_timestamp"])
+        if meetup_timestamp < -2147483647 or meetup_timestamp > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        departure_timestamp = int(data["departure_timestamp"])
+        if departure_timestamp < -2147483647 or departure_timestamp > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        description = compress(data["description"])
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        is_private = int(data["is_private"])
+        is_private = int(bool(data["is_private"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -380,7 +389,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT userid FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -388,30 +397,48 @@ async def patch_event(request: Request, response: Response, eventid: int, author
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
-        link = compress(data["link"])
-        departure = convertQuotation(data["departure"])
-        destination = convertQuotation(data["destination"])
-        distance = convertQuotation(data["distance"])
-        meetup_timestamp = int(data["meetup_timestamp"])
-        departure_timestamp = int(data["departure_timestamp"])
-        description = compress(data["description"])
-        if len(data["title"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        if len(data["departure"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
-        if len(data["destination"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
-        if len(data["distance"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
-        if len(data["description"]) > 2000:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        is_private = int(data["is_private"])
+        if "title" in data.keys():
+            title = convertQuotation(data["title"])
+            if len(data["title"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        if "link" in data.keys():
+            link = compress(data["link"])
+            if len(data["link"]) > 1000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "1,000"}, force_lang = au["language"])}
+        if "departure" in data.keys():
+            departure = convertQuotation(data["departure"])
+            if len(data["departure"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
+        if "destination" in data.keys():
+            destination = convertQuotation(data["destination"])
+            if len(data["destination"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
+        if "distance" in data.keys():
+            distance = convertQuotation(data["distance"])
+            if len(data["distance"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
+        if "meetup_timestamp" in data.keys():
+            meetup_timestamp = int(data["meetup_timestamp"])
+            if meetup_timestamp < -2147483647 or meetup_timestamp > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "departure_timestamp" in data.keys():
+            departure_timestamp = int(data["departure_timestamp"])
+            if departure_timestamp < -2147483647 or departure_timestamp > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "description" in data.keys():
+            description = compress(data["description"])
+            if len(data["description"]) > 2000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        if "is_private" in data.keys():
+            is_private = int(bool(data["is_private"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}

@@ -1,10 +1,8 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import json
 import math
 import time
-from datetime import datetime
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -15,8 +13,8 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
-        order: Optional[str] = "desc", \
-        after_announcementid: Optional[int] = None, query: Optional[str] = ""):
+        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
+        after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -43,6 +41,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 100:
         page_size = 100
 
+    if order_by not in ["orderid", "announcementid", "title", "timestamp"]:
+        order_by = "orderid"
+        order = "asc"
     if order not in ["asc", "desc"]:
         order = "asc"
 
@@ -52,17 +53,28 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if query != "":
         query = convertQuotation(query)
         limit += f"AND title LIKE '%{query[:200]}%' "
-    if after_announcementid is not None:
-        if order == "asc":
-            limit += f"AND announcementid >= {after_announcementid} "
-        elif order == "desc":
-            limit += f"AND announcementid <= {after_announcementid} "
+    if announcement_type is not None:
+        limit += f"AND announcement_type = {announcement_type} "
 
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid >= 0 {limit} ORDER BY announcementid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT announcementid FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_announcementid is not None:
+        for tt in t:
+            if tt[0] == after_announcementid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]})
+        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]})
 
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = await app.db.fetchall(dhrid)
@@ -93,14 +105,14 @@ async def get_announcement(request: Request, response: Response, announcementid:
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "announcements")
 
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
 
-    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "timestamp": tt[3]}
+    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]}
 
 async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
@@ -130,31 +142,23 @@ async def post_announcement(request: Request, response: Response, authorization:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         announcement_type = int(data["announcement_type"])
-        is_private = int(data["is_private"])
-        try:
-            discord_channel_id = None
-            discord_channel_id = int(data["discord_channel_id"])
-            discord_message_content = str(data["discord_message_content"])
-        except:
-            pass
+        is_private = int(bool(data["is_private"]))
+        orderid = int(data["orderid"])
+        if orderid < -2147483647 or orderid > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     timestamp = int(time.time())
 
-    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private})")
+    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid INT, is_pinned INT) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     announcementid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_announcement", var = {"id": announcementid}))
-
-    if discord_channel_id is not None and app.config.discord_bot_token != "":
-        headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
-        try:
-            opqueue.queue(app, "post", discord_channel_id, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au['userid']))["avatar"]}, "thumbnail": {"url": app.config.logo_url},"timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
-        except:
-            pass
 
     return {"announcementid": announcementid}
 
@@ -176,48 +180,47 @@ async def patch_announcement(request: Request, response: Response, announcementi
         return au
     staffroles = au["roles"]
 
-    data = await request.json()
-    try:
-        title = convertQuotation(data["title"])
-        content = compress(data["content"])
-        if len(data["title"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        if len(data["content"]) > 2000:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
-        announcement_type = int(data["announcement_type"])
-        is_private = int(data["is_private"])
-        try:
-            discord_channel_id = None
-            discord_channel_id = int(data["discord_channel_id"])
-            discord_message_content = str(data["discord_message_content"])
-        except:
-            pass
-    except:
-        response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-
-    await app.db.execute(dhrid, f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT userid, title, content, announcement_type, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
-    authorid = t[0][0]
+    (authorid, title, content, announcement_type, is_private, orderid, is_pinned) = t[0]
+
+    data = await request.json()
+    try:
+        if "title" in data.keys():
+            title = convertQuotation(data["title"])
+            if len(data["title"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        if "content" in data.keys():
+            content = compress(data["content"])
+            if len(data["content"]) > 2000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
+        if "announcement_type" in data.keys():
+            announcement_type = int(data["announcement_type"])
+        if "is_private" in data.keys():
+            is_private = int(bool(data["is_private"]))
+        if "orderid" in data.keys():
+            orderid = int(data["orderid"])
+            if orderid < -2147483647 or orderid > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "is_pinned" in data.keys():
+            is_pinned = int(bool(data["is_pinned"]))
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+    
     if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"):
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private} WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
-
-    if discord_channel_id is not None and app.config.discord_bot_token != "":
-        headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
-        try:
-            opqueue.queue(app, "post", discord_channel_id, f"https://discord.com/api/v10/channels/{discord_channel_id}/messages", json.dumps({"content": discord_message_content, "embeds": [{"title": title, "description": decompress(content), "footer": {"text": f"{au['name']}", "icon_url": (await GetUserInfo(request, userid = au["userid"]))["avatar"]}, "thumbnail": {"url": app.config.logo_url}, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers, "disable")
-        except:
-            pass
 
     return Response(status_code=204)
 

@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.6.2**  
+1.Added `order_id` and `is_pinned` to announcement  
+2.Removed "forward to Discord" function in announcement  
+3.Added `is_pinned` and `timestamp` to downloads  
+4.Improved announcement, challenge, downloads, event PATCHing to autofill unprovided fields  
+5.Improved announcement, downloads list ordering and filtering  
+
 **v2.6.1**  
 1.Fixed `/user/profile` returning incorrect `ban` data  
 2.Added `config.privacy` check to **GET** `/dlog/statistics/details`  
