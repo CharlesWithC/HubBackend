@@ -161,7 +161,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
         userinfo["ban"] = {"reason": t[0][0], "expire": t[0][1]}
     else:
         userinfo["ban"] = None
-    
+
     au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "get_sensitive_profile"])
     if au["error"]:
         userinfo["mfa"] = None

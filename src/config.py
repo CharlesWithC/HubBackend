@@ -10,9 +10,9 @@ def isfloat(t):
 
 '''
 config.ranks[].bonus format
-- \* `min_distance`/`max_distance`: int
-- \*`probability`: float = 0~1
-- \* `type`: str = `fixed_value`/`fixed_percentage`/`random_value`/`random_percentage`
+- \\* `min_distance`/`max_distance`: int
+- \\*`probability`: float = 0~1
+- \\* `type`: str = `fixed_value`/`fixed_percentage`/`random_value`/`random_percentage`
 - `val`: int/float when `type` is `fixed_*`
 - `min`/`max`: int/float when `type` is `random_*`
 '''
@@ -378,7 +378,7 @@ def validateConfig(cfg):
             pass
         perms[perm] = newroles
     for perm in default_config["perms"]:
-        if not perm in perms.keys():
+        if perm not in perms.keys():
             perms[perm] = []
     cfg["perms"] = perms
 
@@ -774,7 +774,7 @@ def validateConfig(cfg):
         cfg[hook] = new_hook
 
     # v2.6.1
-    if "hcaptcha_secret" in cfg.keys() and not "captcha" in cfg.keys():
+    if "hcaptcha_secret" in cfg.keys() and 'captcha' not in cfg.keys():
         cfg["captcha"] = {"provider": "hcaptcha", "secret": cfg["hcaptcha_secret"]}
         del cfg["hcaptcha_secret"]
 

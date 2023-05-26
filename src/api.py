@@ -182,9 +182,9 @@ class HubMiddleware(BaseHTTPMiddleware):
                     return response
                 except:
                     pass
-            
+
             response = (await tracebackHandler(request, exc, err))
-            
+
             return response
 
         if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim"]:
@@ -209,13 +209,13 @@ class HubMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             # validate token after all (only to formalize responses in case auth is not necessarily needed)
-            if request.headers.get("Authorization") is not None:
+            if request.headers.get("Authorization") is not None and request.headers.get("Authorization").split(" ")[0] in ["Bearer", "Application"]:
                 au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)
                 if au["error"]:
                     response = JSONResponse({"error": au["error"]}, status_code=au["code"])
 
             request_end_time = time.time()
-                
+
             if app.enable_performance_header:
                 response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
 
@@ -228,7 +228,7 @@ class HubMiddleware(BaseHTTPMiddleware):
             await app.db.close_conn(dhrid)
 
             return response
-        
+
         except Exception as exc:
             err = traceback.format_exc()
 
@@ -248,9 +248,9 @@ class HubMiddleware(BaseHTTPMiddleware):
                     return response
                 except:
                     pass
-            
+
             response = (await tracebackHandler(request, exc, err))
-            
+
             await app.db.close_conn(dhrid)
-            
+
             return response

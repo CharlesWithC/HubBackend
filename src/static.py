@@ -100,7 +100,7 @@ EN_STRINGTABLE = {
     "application_token_not_allowed": "Access denied: Application token is not allowed.",
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
     "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
-    
+
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",
     "user_pending_deletion": "Account is pending deletion. Login again to recover account.",
@@ -235,7 +235,7 @@ EN_STRINGTABLE = {
     "division_already_requested": "A division validation request has already been submitted.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you are not allowed to request validation again.",
-    "not_division_driver": "You are not a driver for the division.", 
+    "not_division_driver": "You are not a driver for the division.",
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated by a division supervisor.",
 

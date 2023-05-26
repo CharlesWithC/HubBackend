@@ -178,7 +178,7 @@ async def CheckNotificationEnabled(request, notification_type, uid):
 
 async def notification(request, notification_type, uid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}, force = False):
-    if uid is None or int(uid) < 0 or not notification_type in NOTIFICATION_SETTINGS.keys():
+    if uid is None or int(uid) < 0 or notification_type not in NOTIFICATION_SETTINGS.keys():
         return
 
     dhrid = request.state.dhrid
@@ -211,24 +211,24 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
 
 async def notification_to_everyone(request, notification_type, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}, only_to_members = False):
-    if not notification_type in NOTIFICATION_SETTINGS.keys():
+    if notification_type not in NOTIFICATION_SETTINGS.keys():
         return
-    
+
     dhrid = request.state.dhrid
     app = request.app
 
     # ensure members get notifications first
-    await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid >= 0")
+    await app.db.execute(dhrid, "SELECT uid FROM user WHERE userid >= 0")
     t = await app.db.fetchall(dhrid)
     member_uid = []
     for tt in t:
         member_uid.append(tt[0])
-    
+
     priority_dh_uid = []
     priority_dc_uid = []
-    regular_dh_uid = []    
-    regular_dc_uid = [] 
-    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'notification'")
+    regular_dh_uid = []
+    regular_dc_uid = []
+    await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'notification'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return
@@ -247,21 +247,21 @@ async def notification_to_everyone(request, notification_type, content, no_drive
                     regular_dc_uid.append(tt[0])
             break
 
-    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
+    await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
     channelids = {}
     t = await app.db.fetchall(dhrid)
     for tt in t:
         channelids[tt[0]] = tt[1]
-    
+
     userlang = {}
-    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'language'")
+    await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'language'")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         userlang[tt[0]] = tt[1]
     for uid in priority_dc_uid + priority_dh_uid + regular_dc_uid + regular_dh_uid:
-        if not uid in userlang.keys():
+        if uid not in userlang.keys():
             userlang[uid] = app.config.language
-    
+
     if not no_drivershub_notification:
         t = int(time.time())
         for uid in priority_dh_uid + regular_dh_uid:

@@ -221,15 +221,15 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
     if authorization in app.state.cache_session.keys():
         cache = app.state.cache_session[authorization]
-        if (allow_application_token or not allow_application_token and cache["settings"][0] == False) and \
-                (not check_member or check_member and cache["settings"][1] == True) and \
+        if (allow_application_token or not allow_application_token and cache["settings"][0] is False) and \
+                (not check_member or check_member and cache["settings"][1] is True) and \
                 (required_permission == [] or required_permission == cache["settings"][2]):
             return cache["result"]
-    
+
     if only_validate_token:
         if authorization in app.state.cache_session_extended.keys():
             return {"error": False}
-        
+
     if only_use_cache:
         return {"error": "Unauthorized", "code": 401}
 

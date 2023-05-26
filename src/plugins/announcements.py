@@ -143,9 +143,9 @@ async def post_announcement(request: Request, response: Response, authorization:
             return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         announcement_type = int(data["announcement_type"])
         is_private = int(bool(data["is_private"]))
-        if not "orderid" in data.keys():
+        if "orderid" not in data.keys():
             data["orderid"] = 0
-        if not "is_pinned" in data.keys():
+        if "is_pinned" not in data.keys():
             data["is_pinned"] = False
         orderid = int(data["orderid"])
         if orderid < -2147483647 or orderid > 2147483647:
@@ -220,7 +220,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    
+
     if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"):
         response.status_code = 403
         return {"error": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}

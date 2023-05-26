@@ -23,7 +23,7 @@ import apis.user
 import db
 import plugins
 import static
-from config import config_protected, validateConfig
+from config import validateConfig
 from functions import Dict2Obj
 from logger import logger
 

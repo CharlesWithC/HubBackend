@@ -332,9 +332,9 @@ async def post_challenge(request: Request, response: Response, authorization: st
         if type(required_roles) != list or type(job_requirements) != dict:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        if not "orderid" in data.keys():
+        if "orderid" not in data.keys():
             data["orderid"] = 0
-        if not "is_pinned" in data.keys():
+        if "is_pinned" not in data.keys():
             data["is_pinned"] = False
         orderid = int(data["orderid"])
         if orderid < -2147483647 or orderid > 2147483647:
@@ -437,13 +437,13 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-            
+
         if "description" in data.keys():
             description = compress(data["description"])
             if len(data["description"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        
+
         if "start_time" in data.keys():
             start_time = int(data["start_time"])
         if "end_time" in data.keys():
@@ -463,7 +463,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                     return {"error": ml.tr(request, "invalid_delivery_count", force_lang = au["language"])}
                 elif challenge_type in [4, 5]:
                     return {"error": ml.tr(request, "invalid_distance_sum", force_lang = au["language"])}
-        
+
         if "required_roles" in data.keys():
             required_roles = data["required_roles"]
             roles = required_roles
@@ -492,7 +492,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             if reward_points < 0:
                 response.status_code = 400
                 return {"error": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
-        
+
         if "public_details" in data.keys():
             public_details = int(bool(data["public_details"]))
 
@@ -514,7 +514,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             if orderid < -2147483647 or orderid > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
-            
+
         if "is_pinned" in data.keys():
             is_pinned = int(bool(data["is_pinned"]))
     except:
