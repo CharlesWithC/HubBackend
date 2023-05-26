@@ -15,8 +15,9 @@
     "invalid_email_or_password": "Ugyldig email eller kodeord.",
     "invalid_authorization_token": "Ugyldig godkendelsestoken.",
     "invalid_hash": "Ugyldig hash.",
-
     "invalid_userid": "Ugyldigt bruger-id.",
+
+    "invalid_timezone": "Ugyldig tidszone.",
     "application_token_not_allowed": "Adgang nægtet: Applikationstoken er ikke tilladt.",
     "access_sensitive_data": "Adgang nægtet: Du har adgang til følsomme data, og du skal logge ind med Discord, Steam eller aktivere MFA for at beskytte din konto.",
     "mfa_required": "Adgang nægtet: Du skal aktivere MFA og angive OTP for at få adgang til dette slutpunkt.",
@@ -53,6 +54,10 @@
     "user_not_banned": "Brugeren er ikke forbudt.",
     "unable_to_dm": "Vi kan ikke sende dig en DM i Discord.",
     "custom_profile_disabled": "Tilpasset profil er deaktiveret.",
+    "already_claimed_todays_bonus": "Du har allerede gjort krav på dagens bonuspoint!",
+    "claimed_daily_bonus": "Du hævdede `{points}` daglige bonuspoint.",
+    "claimed_daily_bonus_with_streak": "Du beholdt `{streak}` dag med streak og hævdede `{points}` daglige bonuspoint.",
+    "claimed_daily_bonus_with_streak_s": "Du beholdt `{streak}` dage med streak og gjorde krav på `{points}` daglige bonuspoint.",
 
     "steam_api_error": "Steam API er utilgængelig.",
     "steam_api_key_not_configured": "Steam API-nøgle er ikke konfigureret.",

@@ -252,6 +252,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.dberr = []
     app.state.session_errs = []
     app.state.cache_language = {} # language cache (3 seconds)
+    app.state.cache_timezone = {} # timezone cache (3 seconds)
     app.state.cache_privacy = {} # privacy cache (3 seconds)
     app.state.cache_leaderboard = {}
     app.state.cache_nleaderboard = {}

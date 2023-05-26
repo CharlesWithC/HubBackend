@@ -6,15 +6,16 @@ from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
+import pytz
 
 
-async def get_language(request: Request, response: Response, authorization: str = Header(None)):
-    """Returns the language of the authorized user"""
+async def get_timezone(request: Request, response: Response, authorization: str = Header(None)):
+    """Returns the timezone of the authorized user"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /user/language', 60, 60)
+    rl = await ratelimit(request, 'GET /user/timezone', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -27,17 +28,17 @@ async def get_language(request: Request, response: Response, authorization: str 
         return au
     uid = au["uid"]
 
-    return {"language": await GetUserLanguage(request, uid, nocache = True)}
+    return {"timezone": await GetUserTimezone(request, uid, nocache = True)}
 
-async def patch_language(request: Request, response: Response, authorization: str = Header(None)):
-    """Updates the language of the authorized user, returns 204
+async def patch_timezone(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates the timezone of the authorized user, returns 204
 
-    JSON: `{"language": str}`"""
+    JSON: `{"timezone": str}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /user/language', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/timezone', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -52,17 +53,17 @@ async def patch_language(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        language = data["language"]
+        timezone = data["timezone"]
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if language not in ml.LANGUAGES:
+    if timezone not in pytz.all_timezones:
         response.status_code = 400
-        return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_timezone", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
-    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{convertQuotation(language)}')")
+    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'timezone'")
+    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'timezone', '{convertQuotation(timezone)}')")
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

@@ -3,6 +3,7 @@
 **v2.6.3**  
 1.Added user role history  
 2.Added user ban history  
+3.Added `config.ranks[].daily_bonus` and `bonus` notification type  
 
 **v2.6.2**  
 1.Added `order_id` and `is_pinned` to announcement, challenges  

@@ -15,8 +15,9 @@
     "invalid_email_or_password": "Correo electrónico o contraseña no válidos.",
     "invalid_authorization_token": "Token de autorización no válido.",
     "invalid_hash": "Hash no válido.",
-
     "invalid_userid": "Identificación de usuario no válida.",
+
+    "invalid_timezone": "Zona horaria no válida.",
     "application_token_not_allowed": "Acceso denegado: el token de la aplicación no está permitido.",
     "access_sensitive_data": "Acceso denegado: estás accediendo a datos confidenciales y debes iniciar sesión con Discord, Steam o habilitar MFA para proteger tu cuenta.",
     "mfa_required": "Acceso denegado: debe habilitar MFA y proporcionar OTP para acceder a este extremo.",
@@ -53,6 +54,10 @@
     "user_not_banned": "El usuario no está baneado.",
     "unable_to_dm": "No podemos enviarle un mensaje directo en Discord.",
     "custom_profile_disabled": "El perfil personalizado está deshabilitado.",
+    "already_claimed_todays_bonus": "¡Ya reclamaste los puntos de bonificación de hoy!",
+    "claimed_daily_bonus": "Reclamaste `{points}` puntos de bonificación diarios.",
+    "claimed_daily_bonus_with_streak": "Mantuviste `{streak}` día de racha y reclamó `{points}` puntos de bonificación diarios.",
+    "claimed_daily_bonus_with_streak_s": "Mantuvo `{streak}` días de racha y reclamó `{points}` puntos de bonificación diarios.",
 
     "steam_api_error": "No se puede acceder a la API de Steam.",
     "steam_api_key_not_configured": "La clave API de Steam no está configurada.",
@@ -100,7 +105,7 @@
     "config_invalid_data_url": "Tipo de datos no válido para \"{item}\": debe ser una URL válida.",
     "config_invalid_permission_admin_not_found": "Valor no válido para \"perms\": no se encontró el permiso \"admin\".",
     "config_invalid_permission_admin_protection": "Actualización de permiso rechazada: el nuevo permiso \"admin\" no incluye ninguna función que tenga el usuario actual.",
-    "no_config_reload_available": "No new config has been saved. Unable to reload config.",
+    "no_config_reload_available": "No se ha guardado ninguna configuración nueva. No se puede volver a cargar la configuración.",
     "discord_integrations_disabled": "Las integraciones de Discord se han deshabilitado temporalmente debido a un token de bot no válido.",
     "discord_api_inaccessible": "La API de Discord es inaccesible.",
 
@@ -146,9 +151,9 @@
     "maximum_15_active_challenge": "Puede haber un máximo de 15 desafíos activos al mismo tiempo.",
     "new_challenge_with_title": "Nuevo desafío: `{title}`",
     "new_challenge": "Nuevo desafío",
-    "start": "Start",
+    "start": "Iniciar",
     "end": "Fin",
-    "reward_points": "Reward Points",
+    "reward_points": "Puntos de recompensa",
 
     "only_delivery_submitter_can_request_division_validation": "Solo el usuario que completó la entrega puede enviar una solicitud de validación de división.",
     "division_already_requested": "Ya se envió una solicitud de validación de división.",

@@ -15,6 +15,8 @@ routes = [
     APIRoute("/member/list", info.get_list, methods=["GET"], response_class=JSONResponse),
 
     APIRoute("/member/roles/rank", userop.patch_roles_rank, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/member/bonus/history", userop.get_bonus_history, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/member/bonus/claim", userop.post_bonus_claim, methods=["POST"], response_class=JSONResponse),
     APIRoute("/member/roles/history/{historyid}", userop.delete_role_history, methods=["DELETE"], response_class=JSONResponse),
     APIRoute("/member/resign", userop.post_resign, methods=["POST"], response_class=JSONResponse),
 

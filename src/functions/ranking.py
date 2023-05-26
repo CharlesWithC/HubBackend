@@ -15,6 +15,20 @@ def point2bonus(app, point):
     if point >= keys[-1]:
         return app.rankbonus[keys[-1]]
 
+def point2dbonus(app, point):
+    """Returns daily bonus of the rank of the point"""
+
+    keys = list(app.rankdbonus.keys())
+    if point < keys[0]:
+        return None
+    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
+        return app.rankdbonus[keys[0]]
+    for i in range(1, len(keys)):
+        if point >= keys[i-1] and point < keys[i]:
+            return app.rankdbonus[keys[i-1]]
+    if point >= keys[-1]:
+        return app.rankdbonus[keys[-1]]
+
 def point2rankroleid(app, point):
     """Returns Discord Snowflake of the rank of the point"""
 

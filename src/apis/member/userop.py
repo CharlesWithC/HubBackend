@@ -3,12 +3,14 @@
 
 import json
 import traceback
+from datetime import datetime, timedelta
+from typing import Optional
 
 from fastapi import Header, Request, Response
 
 import multilang as ml
-from functions import *
 from api import tracebackHandler
+from functions import *
 
 
 async def patch_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
@@ -37,78 +39,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         response.status_code = 409
         return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
 
-    ratio = 1
-    if app.config.distance_unit == "imperial":
-        ratio = 0.621371
-
-    # calculate distance
-    userdistance = {}
-    await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
-    t = await app.db.fetchall(dhrid)
-    for tt in t:
-        if tt[0] not in userdistance.keys():
-            userdistance[tt[0]] = nint(tt[1])
-        else:
-            userdistance[tt[0]] += nint(tt[1])
-        userdistance[tt[0]] = round(userdistance[tt[0]])
-
-    # calculate challenge
-    userchallenge = {}
-    await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
-    o = await app.db.fetchall(dhrid)
-    for oo in o:
-        if oo[0] not in userchallenge.keys():
-            userchallenge[oo[0]] = 0
-        userchallenge[oo[0]] += oo[1]
-
-    # calculate event
-    userevent = {}
-    await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
-    t = await app.db.fetchall(dhrid)
-    for tt in t:
-        attendees = str2list(tt[0])
-        for attendee in attendees:
-            if attendee not in userevent.keys():
-                userevent[attendee] = tt[1]
-            else:
-                userevent[attendee] += tt[1]
-
-    # calculate division
-    userdivision = {}
-    await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
-    o = await app.db.fetchall(dhrid)
-    for oo in o:
-        if oo[0] not in userdivision.keys():
-            userdivision[oo[0]] = 0
-        if oo[1] in app.division_points.keys():
-            userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
-
-    # calculate bonus
-    userbonus = {}
-    await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
-    o = await app.db.fetchall(dhrid)
-    for oo in o:
-        if oo[0] not in userbonus.keys():
-            userbonus[oo[0]] = 0
-        userbonus[oo[0]] += oo[1]
-
-    distance = 0
-    challengepnt = 0
-    eventpnt = 0
-    divisionpnt = 0
-    bonuspnt = 0
-    if userid in userdistance.keys():
-        distance = userdistance[userid]
-    if userid in userchallenge.keys():
-        challengepnt = userchallenge[userid]
-    if userid in userevent.keys():
-        eventpnt = userevent[userid]
-    if userid in userdivision.keys():
-        divisionpnt = userdivision[userid]
-    if userid in userbonus.keys():
-        bonuspnt = userbonus[userid]
-
-    totalpnt = round(distance * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)
+    totalpnt = await GetPoints(request, userid)
     rankroleid = point2rankroleid(app, totalpnt)
 
     if rankroleid == -1 or rankroleid is None:
@@ -174,6 +105,131 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
 
     except Exception as exc:
         return await tracebackHandler(request, exc, traceback.format_exc())
+
+async def get_bonus_history(request: Request, response: Response, authorization: str = Header(None), month: Optional[str] = None):
+    """Returns bonus history
+
+    `month` must be a 6-digit code, like `202305` refers to May 2023"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'GET /member/bonus/history', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token=True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    userid = au["userid"]
+    usertz = await GetUserTimezone(request, au["uid"])
+    utcnow = pytz.utc.localize(datetime.utcnow())
+    user_dt = utcnow.astimezone(pytz.timezone(usertz)) # to get user's today, may be different from system
+
+    # all use utc time as we store utc timestamp in database
+    start_dt = datetime(user_dt.year, user_dt.month, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+    if month is not None:
+        try:
+            start_dt = datetime(int(month[0:4]), int(month[4:6]), 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+        except:
+            response.status_Code = 422
+            return {"error": "Unprocessable Entity"}
+
+    start_ts = int(start_dt.timestamp())
+
+    if start_dt.month == 12:
+        end_dt = datetime(start_dt.year + 1, 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+    else:
+        end_dt = datetime(start_dt.year, start_dt.month + 1, 1, 0, 0, 0, tzinfo = pytz.timezone("UTC"))
+    end_ts = int(end_dt.timestamp())
+
+    await app.db.execute(dhrid, f"SELECT point, streak, timestamp FROM daily_bonus_history WHERE userid = {userid} AND timestamp >= {start_ts} AND timestamp <= {end_ts}")
+    t = await app.db.fetchall(dhrid)
+    ret = []
+    for tt in t:
+        ret.append({"points": tt[0], "streak": tt[1], "timestamp": tt[2]})
+
+    return ret
+
+async def post_bonus_claim(request: Request, response: Response, authorization: str = Header(None)):
+    """Claims "daily_bonus", returns 204"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'POST /member/bonus/claim', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    userid = au["userid"]
+    uid = au["uid"]
+
+    usertz = await GetUserTimezone(request, uid)
+
+    streak = 0
+    lcts = 0
+    await app.db.execute(dhrid, f"SELECT streak, timestamp FROM daily_bonus_history WHERE userid = {userid} ORDER BY timestamp DESC LIMIT 1")
+    t = await app.db.fetchall(dhrid)
+    if len(t) != 0:
+        streak = int(t[0][0])
+        lcts = int(t[0][1])
+
+    utcnow = pytz.utc.localize(datetime.utcnow())
+    user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
+
+    lcdt = pytz.utc.localize(datetime.utcfromtimestamp(lcts))
+    lc_date = lcdt.astimezone(pytz.timezone(usertz)).date()
+
+    timediff = user_date - lc_date
+
+    if timediff == timedelta(days=0):
+        response.status_code = 409
+        return {"error": ml.tr(request, "already_claimed_todays_bonus", force_lang = au["language"])}
+
+    if timediff == timedelta(days=1):
+        streak += 1
+    else:
+        streak = 0
+
+    totalpnt = await GetPoints(request, userid)
+    bonus = point2dbonus(app, totalpnt)
+
+    bonuspnt = bonus["base"]
+
+    if bonus["type"] == "streak":
+        if bonus["streak_type"] == "fixed":
+            bonuspnt += bonus["streak_value"] * streak
+        elif bonus["streak_type"] == "percentage":
+            bonuspnt *= (1+bonus["streak_value"]) ** streak
+    bonuspnt = round(bonuspnt)
+    if bonuspnt < -2147483647 or bonuspnt > 2147483647:
+        response.status_code = 400
+        return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspnt}, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO daily_bonus_history VALUES ({userid}, {bonuspnt}, {streak}, {int(time.time())})")
+    await app.db.commit(dhrid)
+
+    if streak == 0 or bonus["type"] == "fixed":
+        await notification(request, "bonus", uid, ml.tr(request, "claimed_daily_bonus", var = {"points": bonuspnt}, force_lang = await GetUserLanguage(request, uid)))
+    elif streak == 1 and bonus["type"] == "streak":
+        await notification(request, "bonus", uid, ml.tr(request, "claimed_daily_bonus_with_streak", var = {"points": bonuspnt, "streak": streak}, force_lang = await GetUserLanguage(request, uid)))
+    elif streak > 1 and bonus["type"] == "streak":
+        await notification(request, "bonus", uid, ml.tr(request, "claimed_daily_bonus_with_streak_s", var = {"points": bonuspnt, "streak": streak}, force_lang = await GetUserLanguage(request, uid)))
+
+    return Response(status_code=204)
 
 async def delete_role_history(request: Request, response: Response, historyid: int, authorization: str = Header(None)):
     """Deletes a specific row of user role history with historyid, returns 204"""

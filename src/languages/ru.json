@@ -15,8 +15,9 @@
     "invalid_email_or_password": "Неверный email или пароль.",
     "invalid_authorization_token": "Недействительный токен авторизации.",
     "invalid_hash": "Неверный хэш.",
-
     "invalid_userid": "Неверный идентификатор пользователя.",
+
+    "invalid_timezone": "Неверный часовой пояс.",
     "application_token_not_allowed": "Доступ запрещен: токен приложения не разрешен.",
     "access_sensitive_data": "Доступ запрещен: вы получаете доступ к конфиденциальным данным, и вы должны войти в систему с помощью Discord, Steam или включить MFA, чтобы защитить свою учетную запись.",
     "mfa_required": "Доступ запрещен: вам необходимо включить MFA и предоставить одноразовый пароль для доступа к этой конечной точке.",
@@ -53,6 +54,10 @@
     "user_not_banned": "Пользователь не забанен.",
     "unable_to_dm": "Мы не можем написать вам личное сообщение в Discord.",
     "custom_profile_disabled": "Пользовательский профиль отключен.",
+    "already_claimed_todays_bonus": "Вы уже получили сегодняшние бонусные баллы!",
+    "claimed_daily_bonus": "Вы получили `{points}` ежедневных бонусных баллов.",
+    "claimed_daily_bonus_with_streak": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
+    "claimed_daily_bonus_with_streak_s": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
 
     "steam_api_error": "API Steam недоступен.",
     "steam_api_key_not_configured": "Ключ Steam API не настроен.",

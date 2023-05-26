@@ -60,19 +60,19 @@ def getDomainFromUrl(s):
         return False
 
 def getFullCountry(abbr):
-    if abbr.upper() in ISO3166_COUNTRIES.keys():
-        return convertQuotation(ISO3166_COUNTRIES[abbr.upper()])
+    if abbr.upper() in ISO_COUNTRIES.keys():
+        return convertQuotation(ISO_COUNTRIES[abbr.upper()])
     else:
         return ""
 
 def getRequestCountry(request, abbr = False):
     if "cf-ipcountry" in request.headers.keys():
         country = request.headers["cf-ipcountry"]
-        if country.upper() in ISO3166_COUNTRIES.keys(): # makre sure abbr is a valid country code
+        if country.upper() in ISO_COUNTRIES.keys(): # makre sure abbr is a valid country code
             if abbr:
                 return convertQuotation(request.headers["cf-ipcountry"])
             else:
-                return convertQuotation(ISO3166_COUNTRIES[country.upper()])
+                return convertQuotation(ISO_COUNTRIES[country.upper()])
     return ""
 
 def getUserAgent(request):

@@ -31,6 +31,8 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
 
     cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS daily_bonus_history (userid INT, point INT, streak INT, timestamp BIGINT)")
+
     cur.execute(f"CREATE TABLE IF NOT EXISTS dlog (logid INT AUTO_INCREMENT, userid INT, data MEDIUMTEXT, topspeed FLOAT, timestamp BIGINT, isdelivered INT, profit DOUBLE, unit INT, fuel DOUBLE, distance DOUBLE, trackerid BIGINT, tracker_type INT, view_count INT, KEY dlog_logid (logid)) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # unit = 1: euro | 2: dollar
     cur.execute("CREATE TABLE IF NOT EXISTS dlog_stats (item_type INT, userid INT, item_key TEXT, item_name TEXT, count BIGINT, sum BIGINT)")

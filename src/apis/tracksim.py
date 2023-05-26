@@ -301,79 +301,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
 
         try:
-            # handle bonus point on different rank
-            ratio = 1
-            if app.config.distance_unit == "imperial":
-                ratio = 0.621371
-
-            # calculate distance
-            userdistance = {}
-            await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
-            t = await app.db.fetchall(dhrid)
-            for tt in t:
-                if tt[0] not in userdistance.keys():
-                    userdistance[tt[0]] = nint(tt[1])
-                else:
-                    userdistance[tt[0]] += nint(tt[1])
-                userdistance[tt[0]] = round(userdistance[tt[0]])
-
-            # calculate challenge
-            userchallenge = {}
-            await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
-            o = await app.db.fetchall(dhrid)
-            for oo in o:
-                if oo[0] not in userchallenge.keys():
-                    userchallenge[oo[0]] = 0
-                userchallenge[oo[0]] += oo[1]
-
-            # calculate event
-            userevent = {}
-            await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
-            t = await app.db.fetchall(dhrid)
-            for tt in t:
-                attendees = str2list(tt[0])
-                for attendee in attendees:
-                    if attendee not in userevent.keys():
-                        userevent[attendee] = tt[1]
-                    else:
-                        userevent[attendee] += tt[1]
-
-            # calculate division
-            userdivision = {}
-            await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
-            o = await app.db.fetchall(dhrid)
-            for oo in o:
-                if oo[0] not in userdivision.keys():
-                    userdivision[oo[0]] = 0
-                if oo[1] in app.division_points.keys():
-                    userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
-
-            # calculate bonus
-            userbonus = {}
-            await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
-            o = await app.db.fetchall(dhrid)
-            for oo in o:
-                if oo[0] not in userbonus.keys():
-                    userbonus[oo[0]] = 0
-                userbonus[oo[0]] += oo[1]
-
-            distancepnt = 0
-            challengepnt = 0
-            eventpnt = 0
-            divisionpnt = 0
-            bonuspnt = 0
-            if userid in userdistance.keys():
-                distancepnt = userdistance[userid]
-            if userid in userchallenge.keys():
-                challengepnt = userchallenge[userid]
-            if userid in userevent.keys():
-                eventpnt = userevent[userid]
-            if userid in userdivision.keys():
-                divisionpnt = userdivision[userid]
-            if userid in userbonus.keys():
-                bonuspnt = userbonus[userid]
-
-            totalpnt = round(distancepnt * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)
+            totalpnt = await GetPoints(request, userid)
             bonus = point2bonus(app, totalpnt)
             rankname = point2rankname(app, totalpnt)
 
@@ -396,7 +324,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     if bonuspoint != 0:
                         await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
                         await app.db.commit(dhrid)
-                        await notification(request, "dlog", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
+                        await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
 
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())

@@ -1,6 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
+
 import apis.user.connections as connections
 import apis.user.info as info
 import apis.user.language as language
@@ -9,9 +12,7 @@ import apis.user.mfa as mfa
 import apis.user.notification as notification
 import apis.user.password as password
 import apis.user.privacy as privacy
-
-from fastapi.routing import APIRoute
-from fastapi.responses import JSONResponse
+import apis.user.timezone as timezone
 
 routes = [
     APIRoute("/user/list", info.get_list, methods=["GET"], response_class=JSONResponse),
@@ -21,6 +22,9 @@ routes = [
 
     APIRoute("/user/language", language.get_language, methods=["GET"], response_class=JSONResponse),
     APIRoute("/user/language", language.patch_language, methods=["PATCH"], response_class=JSONResponse),
+
+    APIRoute("/user/timezone", timezone.get_timezone, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/user/timezone", timezone.patch_timezone, methods=["PATCH"], response_class=JSONResponse),
 
     APIRoute("/user/privacy", privacy.get_privacy, methods=["GET"], response_class=JSONResponse),
     APIRoute("/user/privacy", privacy.patch_privacy, methods=["PATCH"], response_class=JSONResponse),

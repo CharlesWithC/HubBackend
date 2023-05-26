@@ -15,8 +15,9 @@
     "invalid_email_or_password": "Email ou mot de passe invalide.",
     "invalid_authorization_token": "Jeton d'autorisation invalide.",
     "invalid_hash": "Hachage invalide.",
-
     "invalid_userid": "ID utilisateur invalide.",
+
+    "invalid_timezone": "Fuseau horaire invalide.",
     "application_token_not_allowed": "Accès refusé: le jeton d'application n'est pas autorisé.",
     "access_sensitive_data": "Accès refusé: vous accédez à des données sensibles et vous devez vous connecter avec Discord, Steam ou activer MFA pour protéger votre compte.",
     "mfa_required": "Accès refusé: vous devez activer MFA et fournir OTP pour accéder à ce point de terminaison.",
@@ -53,6 +54,10 @@
     "user_not_banned": "L'utilisateur n'est pas banni.",
     "unable_to_dm": "Nous ne pouvons pas vous contacter par DM dans Discord.",
     "custom_profile_disabled": "Le profil personnalisé est désactivé.",
+    "already_claimed_todays_bonus": "Vous avez déjà réclamé les points bonus d'aujourd'hui !",
+    "claimed_daily_bonus": "Vous avez réclamé `{points}` points bonus quotidiens.",
+    "claimed_daily_bonus_with_streak": "Vous avez conservé `{streak}` jour de séquence et réclamé `{points}` points bonus quotidiens.",
+    "claimed_daily_bonus_with_streak_s": "Vous avez conservé `{streak}` jours de séquence et réclamé `{points}` points bonus quotidiens.",
 
     "steam_api_error": "L'API Steam est inaccessible.",
     "steam_api_key_not_configured": "La clé API Steam n'est pas configurée.",

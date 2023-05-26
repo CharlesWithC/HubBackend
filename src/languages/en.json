@@ -16,6 +16,7 @@
     "invalid_authorization_token": "Invalid authorization token.",
     "invalid_hash": "Invalid hash.",
     "invalid_userid": "Invalid User ID.",
+    "invalid_timezone": "Invalid timezone.",
 
     "application_token_not_allowed": "Access denied: Application token is not allowed.",
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
@@ -54,6 +55,10 @@
     "user_not_banned": "User is not banned.",
     "unable_to_dm": "We are unable to DM you in Discord.",
     "custom_profile_disabled": "Custom profile is disabled.",
+    "already_claimed_todays_bonus": "You have already claimed today's bonus points!",
+    "claimed_daily_bonus": "You claimed `{points}` daily bonus points.",
+    "claimed_daily_bonus_with_streak": "You kept `{streak}` day of streak and claimed `{points}` daily bonus points.",
+    "claimed_daily_bonus_with_streak_s": "You kept `{streak}` days of streak and claimed `{points}` daily bonus points.",
 
     "steam_api_error": "Steam API is inaccessible.",
     "steam_api_key_not_configured": "Steam API Key is not configured.",

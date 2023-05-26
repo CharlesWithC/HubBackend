@@ -184,6 +184,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 # app.state.cache_language = {} # language cache (3 seconds)
+# app.state.cache_timezone = {} # timezone cache (3 seconds)
 # app.state.cache_privacy = {} # privacy cache (3 seconds)
 
 def ClearUserLanguageCache(app):
@@ -210,6 +211,32 @@ async def GetUserLanguage(request, uid, nocache = False):
         app.state.cache_language[uid] = {"language": app.config.language, "expire": int(time.time()) + 3}
         return app.config.language
     app.state.cache_language[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
+    return t[0][0]
+
+def ClearUserTimeZoneCache(app):
+    users = list(app.state.cache_timezone.keys())
+    for user in users:
+        if int(time.time()) > app.state.cache_timezone[user]["expire"]:
+            del app.state.cache_timezone[user]
+
+async def GetUserTimezone(request, uid, nocache = False):
+    (app, dhrid) = (request.app, request.state.dhrid)
+    if uid is None:
+        return "UTC"
+    ClearUserTimeZoneCache(app)
+
+    if not nocache:
+        if uid in app.state.cache_timezone.keys():
+            cache = app.state.cache_timezone[uid]
+            if "expire" in cache.keys() and "timezone" in cache.keys() and int(time.time()) <= app.state.cache_timezone[uid]["expire"]:
+                return cache["timezone"]
+
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'timezone'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        app.state.cache_timezone[uid] = {"timezone": "UTC", "expire": int(time.time()) + 3}
+        return "UTC"
+    app.state.cache_timezone[uid] = {"timezone": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]
 
 def ClearUserPrivacyCache(app):
@@ -301,3 +328,82 @@ async def DeleteRoleConnection(request, discordid):
         if r.status_code in [401, 403]:
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
             await app.db.commit(dhrid)
+
+async def GetPoints(request, userid):
+    (app, dhrid) = (request.app, request.state.dhrid)
+
+    # handle bonus point on different rank
+    ratio = 1
+    if app.config.distance_unit == "imperial":
+        ratio = 0.621371
+
+    # calculate distance
+    userdistance = {}
+    await app.db.execute(dhrid, f"SELECT userid, SUM(distance) FROM dlog WHERE userid = {userid} GROUP BY userid")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        if tt[0] not in userdistance.keys():
+            userdistance[tt[0]] = nint(tt[1])
+        else:
+            userdistance[tt[0]] += nint(tt[1])
+        userdistance[tt[0]] = round(userdistance[tt[0]])
+
+    # calculate challenge
+    userchallenge = {}
+    await app.db.execute(dhrid, f"SELECT userid, SUM(points) FROM challenge_completed WHERE userid = {userid} GROUP BY userid")
+    o = await app.db.fetchall(dhrid)
+    for oo in o:
+        if oo[0] not in userchallenge.keys():
+            userchallenge[oo[0]] = 0
+        userchallenge[oo[0]] += oo[1]
+
+    # calculate event
+    userevent = {}
+    await app.db.execute(dhrid, f"SELECT attendee, points FROM event WHERE attendee LIKE '%,{userid},%'")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        attendees = str2list(tt[0])
+        for attendee in attendees:
+            if attendee not in userevent.keys():
+                userevent[attendee] = tt[1]
+            else:
+                userevent[attendee] += tt[1]
+
+    # calculate division
+    userdivision = {}
+    await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
+    o = await app.db.fetchall(dhrid)
+    for oo in o:
+        if oo[0] not in userdivision.keys():
+            userdivision[oo[0]] = 0
+        if oo[1] in app.division_points.keys():
+            userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
+
+    # calculate bonus
+    userbonus = {}
+    await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid = {userid} GROUP BY userid")
+    o = await app.db.fetchall(dhrid)
+    for oo in o:
+        if oo[0] not in userbonus.keys():
+            userbonus[oo[0]] = 0
+        userbonus[oo[0]] += oo[1]
+
+    distancepnt = 0
+    challengepnt = 0
+    eventpnt = 0
+    divisionpnt = 0
+    bonuspnt = 0
+    if userid in userdistance.keys():
+        distancepnt = userdistance[userid]
+    if userid in userchallenge.keys():
+        challengepnt = userchallenge[userid]
+    if userid in userevent.keys():
+        eventpnt = userevent[userid]
+    if userid in userdivision.keys():
+        divisionpnt = userdivision[userid]
+    if userid in userbonus.keys():
+        bonuspnt = userbonus[userid]
+
+    totalpnt = round(distancepnt * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)
+
+    return totalpnt

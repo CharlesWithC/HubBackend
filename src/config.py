@@ -15,6 +15,12 @@ config.ranks[].bonus format
 - \\* `type`: str = `fixed_value`/`fixed_percentage`/`random_value`/`random_percentage`
 - `val`: int/float when `type` is `fixed_*`
 - `min`/`max`: int/float when `type` is `random_*`
+
+config.ranks[].daily_bonus format
+- \\* `base`: int
+- \\* `type`: str = `fixed`/`streak`
+- `streak_type`: str = `fixed`/`percentage` when `type` is `streak`
+- `streak_value`: int when `streak_type` is `fixed` / float when `streak_type` is `percentage` when `type` is `streak`
 '''
 
 config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
@@ -233,10 +239,10 @@ default_config = {
         }
     }],
     "ranks": [
-        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}},
-        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}},
-        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}},
-        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}}
+        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
+        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "fixed", "streak_value": 100}},
+        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}},
+        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}}
     ],
 
     "application_types": [
@@ -504,6 +510,40 @@ def validateConfig(cfg):
                             rank["bonus"]["min"] = 0
                             rank["bonus"]["max"] = 0
 
+        ########
+        # v2.6.3
+        if 'daily_bonus' not in rank.keys() or rank["daily_bonus"] is None:
+            rank["daily_bonus"] = None
+        else:
+            cbonus = rank['daily_bonus']
+
+            if 'type' not in cbonus.keys() or cbonus["type"] not in ["fixed", "streak"]:
+                cbonus = None
+            else:
+                if "base" not in cbonus.keys():
+                    cbonus["base"] = 0
+                else:
+                    try:
+                        cbonus["base"] = int(cbonus["base"])
+                    except:
+                        cbonus["base"] = 0
+
+            if cbonus is not None and cbonus["type"] == "streak":
+                if "streak_type" not in cbonus.keys() or cbonus["streak_type"] not in ["fixed", "percentage"] or 'streak_value' not in cbonus.keys():
+                    cbonus = None
+                else:
+                    if cbonus["streak_type"] == "fixed":
+                        try:
+                            cbonus['streak_value'] = int(cbonus['streak_value'])
+                        except:
+                            cbonus['streak_value'] = 0
+                    elif cbonus["streak_type"] == "percentage":
+                        try:
+                            cbonus['streak_value'] = float(cbonus['streak_value'])
+                        except:
+                            cbonus['streak_value'] = 0
+
+            rank["daily_bonus"] = cbonus
         ########
 
         if "discord_role_id" in rank.keys() and "points" in rank.keys() and "name" in rank.keys():

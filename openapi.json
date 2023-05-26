@@ -715,6 +715,55 @@
                 "responses": {}
             }
         },
+        "/user/timezone": {
+            "get": {
+                "summary": "Get User Timezone",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "get_user_timezone",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "responses": {}
+            },
+            "patch": {
+                "summary": "Update User Timezone",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "patch_user_timezone",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "timezone": {
+                                        "description": "Timezone",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "timezone"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/user/privacy": {
             "get": {
                 "summary": "Get User Privacy Settings",
@@ -2142,6 +2191,49 @@
                     "member"
                 ],
                 "operationId": "patch_member_roles_rank",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/member/bonus/history": {
+            "get": {
+                "summary": "Get Daily Bonus History",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "get_member_bonus_history",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Month (6-digit, like 202305)",
+                            "type": "string"
+                        },
+                        "name": "month",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/member/bonus/claim": {
+            "post": {
+                "summary": "Claim Daily Bonus",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "post_member_bonus_claim",
                 "security": [
                     {
                         "bearerAuth": [],

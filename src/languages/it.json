@@ -15,8 +15,9 @@
     "invalid_email_or_password": "E-mail o password non validi.",
     "invalid_authorization_token": "Token di autorizzazione non valido.",
     "invalid_hash": "Hash non valido.",
-
     "invalid_userid": "ID utente non valido.",
+
+    "invalid_timezone": "Fuso orario non valido.",
     "application_token_not_allowed": "Accesso negato: il token dell'applicazione non è consentito.",
     "access_sensitive_data": "Accesso negato: stai accedendo a dati sensibili e devi accedere con Discord, Steam o abilitare MFA per proteggere il tuo account.",
     "mfa_required": "Accesso negato: devi abilitare MFA e fornire OTP per accedere a questo endpoint.",
@@ -53,6 +54,10 @@
     "user_not_banned": "L'utente non è stato bannato.",
     "unable_to_dm": "Non siamo in grado di inviarti DM in3Discord.",
     "custom_profile_disabled": "Il profilo personalizzato è disabilitato.",
+    "already_claimed_todays_bonus": "Hai già richiesto i punti bonus di oggi!",
+    "claimed_daily_bonus": "Hai richiesto `{points}` punti bonus giornalieri.",
+    "claimed_daily_bonus_with_streak": "Hai mantenuto `{streak}` giorno di serie e hai richiesto `{points}` punti bonus giornalieri.",
+    "claimed_daily_bonus_with_streak_s": "Hai mantenuto `{streak}` giorni di serie e hai richiesto `{points}` punti bonus giornalieri.",
 
     "steam_api_error": "L'API di Steam è inaccessibile.",
     "steam_api_key_not_configured": "La chiave API di Steam non è configurata.",
