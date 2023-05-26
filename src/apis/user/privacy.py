@@ -43,7 +43,7 @@ async def patch_privacy(request: Request, response: Response, authorization: str
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, check_member = False)
+    au = await auth(authorization, request, check_member = False)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

@@ -49,7 +49,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.status_code = au["code"]
         del au["code"]
         return au
-    else:
+    elif not au["error"]:
         await ActivityUpdate(request, au["uid"], "members")
 
     if page_size <= 1:

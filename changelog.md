@@ -2,6 +2,7 @@
 
 **v2.6.3**  
 1.Added user role history  
+2.Added user ban history  
 
 **v2.6.2**  
 1.Added `order_id` and `is_pinned` to announcement, challenges  

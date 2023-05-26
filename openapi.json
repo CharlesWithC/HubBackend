@@ -499,6 +499,15 @@
                         },
                         "name": "role_history_limit",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Ban History Limit",
+                            "type": "integer"
+                        },
+                        "name": "ban_history_limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -1637,6 +1646,33 @@
                         }
                     }
                 },
+                "responses": {}
+            }
+        },
+        "/user/ban/history/{historyid}": {
+            "delete": {
+                "summary": "Delete Ban History",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "delete_member_ban_history",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "History ID",
+                            "type": "integer"
+                        },
+                        "name": "historyid",
+                        "in": "path"
+                    }
+                ],
                 "responses": {}
             }
         },

@@ -359,7 +359,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -448,7 +448,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -491,6 +491,35 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
                 await AuditLog(request, au["uid"], ml.ctr(request, "unbanned_user", var = {"username": username, "uid": tt[0]}))
 
         return Response(status_code=204)
+
+async def delete_ban_history(request: Request, response: Response, historyid: int, authorization: str = Header(None)):
+    """Deletes a specific row of user ban history with historyid, returns 204"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'DELETE /user/ban/history', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    await app.db.execute(dhrid, f"SELECT historyid FROM ban_history WHERE historyid = {historyid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": "Not Found"}
+
+    await app.db.execute(dhrid, f"DELETE FROM ban_history WHERE historyid = {historyid}")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)
 
 async def delete_user(request: Request, response: Response, uid: int, authorization: str = Header(None)):
     """Deletes a specific user, returns 204"""

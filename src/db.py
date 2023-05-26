@@ -26,6 +26,8 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS user_role_history (historyid INT AUTO_INCREMENT PRIMARY KEY, uid INT, added_roles TEXT, removed_roles TEXT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
     # Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
+    cur.execute("CREATE TABLE IF NOT EXISTS ban_history (historyid INT AUTO_INCREMENT PRIMARY KEY, uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
+    # ban_history only records expired bans (not including manual unbans)
     cur.execute("CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
 
     cur.execute("CREATE TABLE IF NOT EXISTS bonus_point (userid INT, point INT, timestamp BIGINT)")
@@ -105,6 +107,7 @@ def init(app):
     "CREATE INDEX banned_discordid ON banned (discordid)",
     "CREATE INDEX banned_steamid ON banned (steamid)",
     "CREATE INDEX banned_expire_timestamp ON banned (expire_timestamp)",
+    "CREATE INDEX banned_history_historyid ON banned_history (historyid)",
 
     "CREATE INDEX bonus_point_userid ON bonus_point (userid)",
     "CREATE INDEX bonus_point_timestamp ON bonus_point (timestamp)",
