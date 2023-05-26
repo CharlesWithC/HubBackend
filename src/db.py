@@ -75,6 +75,12 @@ def init(app):
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, description TEXT, is_private INT, title TEXT, attendee TEXT, points INT, vote TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
+    # cur.execute(f"CREATE TABLE IF NOT EXISTS poll (pollid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, orderid INT, is_pinned INT, config TEXT, timestamp BIGINT, expire BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # # config: max_choice / allow_modify_vote / show_vote_count / show_voter / show_data_before_vote
+    # cur.execute(f"CREATE TABLE IF NOT EXISTS poll_choice (choiceid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, content TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # cur.execute(f"CREATE TABLE IF NOT EXISTS poll_vote (voteid INT AUTO_INCREMENT PRIMARY KEY, pollid INT, choiceid INT, userid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    # new_poll, poll_result notification
+
     cur.execute("CREATE TABLE IF NOT EXISTS session (token CHAR(36), uid INT, timestamp BIGINT, ip TEXT, country TEXT, user_agent TEXT, last_used_timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS ratelimit (identifier TEXT, endpoint TEXT, first_request_timestamp BIGINT, request_count INT)")
     cur.execute("CREATE TABLE IF NOT EXISTS auth_ticket (token CHAR(36), uid BIGINT UNSIGNED, expire BIGINT)")
