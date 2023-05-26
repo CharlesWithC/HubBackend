@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.6.2"
+        "version": "2.6.3"
     },
     "servers": [],
     "paths": {
@@ -490,6 +490,15 @@
                         },
                         "name": "truckersmpid",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Role History Limit",
+                            "type": "integer"
+                        },
+                        "name": "role_history_limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -690,6 +699,60 @@
                             },
                             "required": [
                                 "language"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/user/privacy": {
+            "get": {
+                "summary": "Get User Privacy Settings",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "get_user_privacy",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "responses": {}
+            },
+            "patch": {
+                "summary": "Update User Privacy Settings",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "patch_user_privacy",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "role_history": {
+                                        "description": "Protect Role History?",
+                                        "type": "boolean"
+                                    },
+                                    "ban_history": {
+                                        "description": "Protect Ban History?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "role_history",
+                                "ban_history"
                             ]
                         }
                     }
@@ -2052,6 +2115,33 @@
                 "responses": {}
             }
         },
+        "/member/roles/history/{historyid}": {
+            "delete": {
+                "summary": "Delete Role History",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "delete_member_roles_history",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "History ID",
+                            "type": "integer"
+                        },
+                        "name": "historyid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/member/resign": {
             "post": {
                 "summary": "Member Resign",
@@ -2729,7 +2819,7 @@
                         "required": false,
                         "schema": {
                             "title": "Whether to sum up previous deliveries",
-                            "type": "bool"
+                            "type": "boolean"
                         },
                         "name": "sum_up",
                         "in": "query"

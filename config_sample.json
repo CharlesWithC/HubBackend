@@ -268,6 +268,7 @@
         "hr": [],
         "manage_profile": [],
         "get_sensitive_profile": [],
+        "get_privacy_protected_data": [],
         "add_member": [],
         "update_member_roles": [],
         "update_member_points": [],

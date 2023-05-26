@@ -23,6 +23,7 @@ def init(app):
     cur.execute("CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_role_history (historyid INT AUTO_INCREMENT PRIMARY KEY, uid INT, added_roles TEXT, removed_roles TEXT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")
     # Either ID / email matched will result a block on login / signup, or an automatic ban on new account registered with a new email that is being connected to banned discord / steam.
     cur.execute("CREATE TABLE IF NOT EXISTS pending_user_deletion (uid INT, expire_timestamp BIGINT, status INT)")
@@ -93,6 +94,7 @@ def init(app):
     "CREATE INDEX user_truckersmpid ON user (truckersmpid)",
     "CREATE INDEX user_steamid ON user (steamid)",
 
+    "CREATE INDEX user_role_history_userid ON user_role_history (userid)",
     "CREATE INDEX user_activity_uid ON user_activity (uid)",
     "CREATE INDEX user_password_uid ON user_password (uid)",
     "CREATE INDEX user_password_email ON user_password (email)",

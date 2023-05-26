@@ -29,7 +29,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.6.2"
+version = "2.6.3"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -252,6 +252,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.dberr = []
     app.state.session_errs = []
     app.state.cache_language = {} # language cache (3 seconds)
+    app.state.cache_privacy = {} # privacy cache (3 seconds)
     app.state.cache_leaderboard = {}
     app.state.cache_nleaderboard = {}
     app.state.cache_all_users = []

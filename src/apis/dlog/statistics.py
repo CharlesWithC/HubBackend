@@ -184,13 +184,12 @@ async def get_summary(request: Request, response: Response, authorization: str =
         before = max(int(time.time()), 32503651200)
 
     quser = ""
-    if userid is not None:
-        if app.config.privacy:
-            au = await auth(authorization, request, allow_application_token = True)
-            if au["error"]:
-                response.status_code = au["code"]
-                del au["code"]
-                return au
+    au = await auth(authorization, request, allow_application_token = True)
+    if app.config.privacy and userid is not None and au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    elif userid is not None:
         quser = f"AND userid = {userid}"
 
     # cache
@@ -379,13 +378,12 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
         response.headers[k] = rl[1][k]
 
     quser = ""
-    if userid is not None:
-        if app.config.privacy:
-            au = await auth(authorization, request, allow_application_token = True)
-            if au["error"]:
-                response.status_code = au["code"]
-                del au["code"]
-                return au
+    au = await auth(authorization, request, allow_application_token = True)
+    if app.config.privacy and userid is not None and au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    elif userid is not None:
         quser = f"AND userid = {userid}"
 
     if ranges > 100:
@@ -486,13 +484,12 @@ async def get_details(request: Request, response: Response, authorization: Optio
         response.headers[k] = rl[1][k]
 
     quser = ""
-    if userid is not None:
-        if app.config.privacy:
-            au = await auth(authorization, request, allow_application_token = True)
-            if au["error"]:
-                response.status_code = au["code"]
-                del au["code"]
-                return au
+    au = await auth(authorization, request, allow_application_token = True)
+    if app.config.privacy and userid is not None and au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    elif userid is not None:
         quser = f"userid = {userid}"
 
     ret = {}

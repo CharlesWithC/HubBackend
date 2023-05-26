@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.6.3**  
+1.Added user role history  
+
 **v2.6.2**  
 1.Added `order_id` and `is_pinned` to announcement, challenges  
 2.Removed "forward to Discord" function in announcement  

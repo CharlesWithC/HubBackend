@@ -132,10 +132,10 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 
     uid = p[0][0]
 
-    if request is not None and "headers" in request.__dict__.keys():
+    if request is not None and "_headers" in request.__dict__.keys():
         if "authorization" in request.headers.keys():
             authorization = request.headers["authorization"]
-            au = await auth(authorization, request, check_member = False)
+            au = await auth(authorization, request, allow_application_token = True, check_member = False)
             if not au["error"]:
                 roles = au["roles"]
                 for i in roles:
@@ -184,6 +184,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     return {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
 # app.state.cache_language = {} # language cache (3 seconds)
+# app.state.cache_privacy = {} # privacy cache (3 seconds)
 
 def ClearUserLanguageCache(app):
     users = list(app.state.cache_language.keys())
@@ -191,14 +192,18 @@ def ClearUserLanguageCache(app):
         if int(time.time()) > app.state.cache_language[user]["expire"]:
             del app.state.cache_language[user]
 
-async def GetUserLanguage(request, uid):
+async def GetUserLanguage(request, uid, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None:
         return app.config.language
     ClearUserLanguageCache(app)
 
-    if uid in app.state.cache_language.keys() and int(time.time()) <= app.state.cache_language[uid]["expire"]:
-        return app.state.cache_language[uid]["language"]
+    if not nocache:
+        if uid in app.state.cache_language.keys():
+            cache = app.state.cache_language[uid]
+            if "expire" in cache.keys() and "language" in cache.keys() and int(time.time()) <= app.state.cache_language[uid]["expire"]:
+                return cache["language"]
+
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -206,6 +211,34 @@ async def GetUserLanguage(request, uid):
         return app.config.language
     app.state.cache_language[uid] = {"language": t[0][0], "expire": int(time.time()) + 3}
     return t[0][0]
+
+def ClearUserPrivacyCache(app):
+    users = list(app.state.cache_privacy.keys())
+    for user in users:
+        if int(time.time()) > app.state.cache_privacy[user]["expire"]:
+            del app.state.cache_privacy[user]
+
+async def GetUserPrivacy(request, uid, nocache = False):
+    # False => Not Protected | True => Protected
+    (app, dhrid) = (request.app, request.state.dhrid)
+    if uid is None:
+        return {"role_history": False, "ban_history": False}
+    ClearUserPrivacyCache(app)
+
+    if not nocache:
+        if uid in app.state.cache_privacy.keys():
+            cache = app.state.cache_privacy[uid]
+            if "expire" in cache.keys() and "result" in cache.keys() and int(time.time()) <= app.state.cache_privacy[uid]["expire"]:
+                return cache["result"]
+
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'privacy'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        app.state.cache_language[uid] = {"result": {"role_history": False, "ban_history": False}, "expire": int(time.time()) + 3}
+        return {"role_history": False, "ban_history": False}
+    d = intify(t[0][0].split(","))
+    app.state.cache_language[uid] = {"result": {"role_history": TF[d[0]], "ban_history": TF[d[1]]}, "expire": int(time.time()) + 3}
+    return {"role_history": TF[d[0]], "ban_history": TF[d[1]]}
 
 async def UpdateRoleConnection(request, discordid):
     (app, dhrid) = (request.app, request.state.dhrid)

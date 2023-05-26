@@ -8,13 +8,13 @@ import multilang as ml
 from functions import *
 
 
-async def get_language(request: Request, response: Response, authorization: str = Header(None)):
-    """Returns the language of the authorized user"""
+async def get_privacy(request: Request, response: Response, authorization: str = Header(None)):
+    """Returns the privacy settings of the authorized user"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /user/language', 60, 60)
+    rl = await ratelimit(request, 'GET /user/privacy', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -27,17 +27,17 @@ async def get_language(request: Request, response: Response, authorization: str 
         return au
     uid = au["uid"]
 
-    return {"language": await GetUserLanguage(request, uid, nocache = True)}
+    return (await GetUserPrivacy(request, uid, nocache = True))
 
-async def patch_language(request: Request, response: Response, authorization: str = Header(None)):
-    """Updates the language of the authorized user, returns 204
+async def patch_privacy(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates the privacy settings of the authorized user, returns 204
 
-    JSON: `{"language": str}`"""
+    JSON: `{"role_history": bool, "ban_history": bool}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /user/language', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/privacy', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -52,17 +52,14 @@ async def patch_language(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        language = convertQuotation(data["language"])
+        role_history = int(bool(data["role_history"]))
+        ban_history = int(bool(data["ban_history"]))
     except:
         response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+        return {"error": ml.tr(request, "bad_json", force_lang = au["privacy"])}
 
-    if language not in ml.LANGUAGES:
-        response.status_code = 400
-        return {"error": ml.tr(request, "language_not_supported", force_lang = au["language"])}
-
-    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'language'")
-    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'language', '{language}')")
+    await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'privacy'")
+    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'privacy', '{role_history},{ban_history}')")
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

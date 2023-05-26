@@ -175,6 +175,39 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     except Exception as exc:
         return await tracebackHandler(request, exc, traceback.format_exc())
 
+async def delete_role_history(request: Request, response: Response, historyid: int, authorization: str = Header(None)):
+    """Deletes a specific row of user role history with historyid, returns 204"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'DELETE /member/roles/history', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    await app.db.execute(dhrid, f"SELECT uid FROM user_role_history WHERE historyid = {historyid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": "Not Found"}
+    if t[0][0] != uid and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "update_member_roles"]):
+        response.status_code = 403
+        return {"error": "Forbidden"}
+
+    await app.db.execute(dhrid, f"DELETE FROM user_role_history WHERE historyid = {historyid}")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)
+
 async def post_resign(request: Request, response: Response, authorization: str = Header(None)):
     """Resigns the authorized user, set userid to -1, returns 204"""
     app = request.app

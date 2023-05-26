@@ -56,11 +56,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if joined_before is not None:
         limit += f"AND user.join_timestamp <= {joined_before} "
 
-    au2 = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "get_sensitive_profile"])
-    get_sensitive_profile = False
-    if not au2["error"]:
-        get_sensitive_profile = True
-
     await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{query}%' {limit} ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
@@ -72,9 +67,6 @@ async def get_list(request: Request, response: Response, authorization: str = He
             user["ban"] = None
         if "roles" in user.keys():
             del user["roles"]
-        if not get_sensitive_profile:
-            user["email"] = None
-            user["mfa"] = None
         ret.append(user)
 
     if after_uid is not None:
@@ -84,7 +76,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_profile(request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None):
+    userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None, role_history_limit: Optional[int] = 50):
     """Returns the profile of a specific user
 
     If no request param is provided, then returns the profile of the authorized user."""
@@ -100,6 +92,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
 
     request_uid = -1
     aulanguage = ""
+    au = None
     if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
@@ -112,11 +105,10 @@ async def get_profile(request: Request, response: Response, authorization: str =
             aulanguage = au["language"]
     else:
         au = await auth(authorization, request, allow_application_token = True)
-        if au["error"]:
-            if app.config.privacy:
-                response.status_code = au["code"]
-                del au["code"]
-                return au
+        if au["error"] and app.config.privacy:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
         else:
             request_uid = au["uid"]
             aulanguage = au["language"]
@@ -162,10 +154,18 @@ async def get_profile(request: Request, response: Response, authorization: str =
     else:
         userinfo["ban"] = None
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "get_sensitive_profile"])
-    if au["error"]:
+    if au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_sensitive_profile"]):
         userinfo["mfa"] = None
         userinfo["email"] = None
+
+    if (await GetUserPrivacy(request, userinfo['uid']))["role_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_privacy_protected_data"])):
+        userinfo["role_history"] = None
+    else:
+        await app.db.execute(dhrid, f"SELECT historyid, added_roles, removed_roles, timestamp FROM user_role_history WHERE uid = {userinfo['uid']} ORDER BY timestamp DESC LIMIT {role_history_limit}")
+        p = await app.db.fetchall(dhrid)
+        userinfo["role_history"] = []
+        for pp in p:
+            userinfo["role_history"].append({"historyid": pp[0], "added_roles": intify(pp[1]), "removed_roles": intify(pp[2]), "timestamp": pp[3]})
 
     return userinfo
 

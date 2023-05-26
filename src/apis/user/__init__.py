@@ -8,6 +8,7 @@ import apis.user.manage as manage
 import apis.user.mfa as mfa
 import apis.user.notification as notification
 import apis.user.password as password
+import apis.user.privacy as privacy
 
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
@@ -20,6 +21,9 @@ routes = [
 
     APIRoute("/user/language", language.get_language, methods=["GET"], response_class=JSONResponse),
     APIRoute("/user/language", language.patch_language, methods=["PATCH"], response_class=JSONResponse),
+
+    APIRoute("/user/privacy", privacy.get_privacy, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/user/privacy", privacy.patch_privacy, methods=["PATCH"], response_class=JSONResponse),
 
     APIRoute("/user/password", password.patch_password, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/password/disable", password.post_password_disable, methods=["POST"], response_class=JSONResponse),

@@ -231,6 +231,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         audit += f"`- {role_name}`  \n"
     audit = audit[:-1]
     await AuditLog(request, au["uid"], audit)
+    await app.db.execute(dhrid, f"INSERT INTO user_role_history(uid, added_roles, removed_roles, timestamp) VALUES ({uid}, ',{list2str(addedroles)},', ',{list2str(removedroles)},', {int(time.time())})")
     await app.db.commit(dhrid)
 
     uid = (await GetUserInfo(request, userid = userid))["uid"]

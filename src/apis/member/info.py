@@ -44,12 +44,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if app.config.privacy:
-        au = await auth(authorization, request, allow_application_token = True)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
+    au = await auth(authorization, request, allow_application_token = True)
+    if app.config.privacy and au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    else:
         await ActivityUpdate(request, au["uid"], "members")
 
     if page_size <= 1:
