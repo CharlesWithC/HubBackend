@@ -243,7 +243,7 @@ async def delete_role_history(request: Request, response: Response, historyid: i
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True)
+    au = await auth(authorization, request)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
