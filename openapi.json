@@ -3163,9 +3163,7 @@
                                 "title",
                                 "content",
                                 "announcement_type",
-                                "is_private",
-                                "orderid",
-                                "is_pinned"
+                                "is_private"
                             ]
                         }
                     }
@@ -3792,6 +3790,14 @@
                                         "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
                                         "type": "integer"
                                     },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
+                                    },
                                     "delivery_count": {
                                         "description": "Delivery Count",
                                         "type": "integer"
@@ -3820,8 +3826,8 @@
                             },
                             "required": [
                                 "title",
-                                "after",
-                                "before",
+                                "start_time",
+                                "end_time",
                                 "challenge_type",
                                 "delivery_count",
                                 "required_roles",
@@ -3917,9 +3923,13 @@
                                         "description": "End Time (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "challenge_type": {
-                                        "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
+                                    "orderid": {
+                                        "description": "Order ID",
                                         "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
                                     },
                                     "delivery_count": {
                                         "description": "Delivery Count",
@@ -4414,9 +4424,7 @@
                             "required": [
                                 "title",
                                 "description",
-                                "link",
-                                "orderid",
-                                "is_pinned"
+                                "link"
                             ]
                         }
                     }

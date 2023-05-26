@@ -190,6 +190,10 @@ async def post_downloads(request: Request, response: Response, authorization: st
         if len(data["link"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
+        if not "orderid" in data.keys():
+            data["orderid"] = 0
+        if not "is_pinned" in data.keys():
+            data["is_pinned"] = False
         orderid = int(data["orderid"])
         if orderid < -2147483647 or orderid > 2147483647:
             response.status_code = 400

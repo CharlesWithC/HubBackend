@@ -100,14 +100,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
         userid = au["userid"]
 
     # start_time / end_time / title / required_distance / reward_points / delivery_count
-    if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count"]:
+    if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count", "orderid"]:
         order_by = "reward_points"
         order = "desc"
 
     if order not in ["asc", "desc"]:
         order = "asc"
 
-    query_limit += f"ORDER BY {order_by} {order}"
+    query_limit += f"ORDER BY is_pinned DESC, {order_by} {order}, challengeid DESC"
 
     ret = []
 
@@ -125,7 +125,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -166,7 +166,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         ret.append({"challengeid": tt[0], "title": tt[1], "description": decompress(tt[9]), \
                 "start_time": tt[2], "end_time": tt[3],\
                 "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
-                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "completed": completed})
+                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "completed": completed})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -202,7 +202,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     await ActivityUpdate(request, au["uid"], "challenges")
 
     await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
-            required_distance, reward_points, public_details, job_requirements, description FROM challenge WHERE challengeid = {challengeid} \
+            required_distance, reward_points, public_details, job_requirements, description, orderid, is_pinned FROM challenge WHERE challengeid = {challengeid} \
                 AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -241,7 +241,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     for pp in p:
         completed.append({"user": await GetUserInfo(request, userid = pp[0]), "points": pp[1], "timestamp": pp[2]})
 
-    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "job_requirements": jobreq, "completed": completed}
+    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "job_requirements": jobreq, "completed": completed}
 
 # POST /challenge
 # Note: Check if there're at most 15 active challenges
@@ -332,6 +332,15 @@ async def post_challenge(request: Request, response: Response, authorization: st
         if type(required_roles) != list or type(job_requirements) != dict:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+        if not "orderid" in data.keys():
+            data["orderid"] = 0
+        if not "is_pinned" in data.keys():
+            data["is_pinned"] = False
+        orderid = int(data["orderid"])
+        if orderid < -2147483647 or orderid > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -379,7 +388,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
             jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
     jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
-    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
+    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     challengeid = (await app.db.fetchone(dhrid))[0]
@@ -413,12 +422,12 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT challenge_type, title, description, start_time, end_time, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements FROM challenge WHERE challengeid = {challengeid}")
+    await app.db.execute(dhrid, f"SELECT title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements FROM challenge WHERE challengeid = {challengeid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
-    (challenge_type, title, description, start_time, end_time, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) = t[0]
+    (title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, jobreq) = t[0]
     org_delivery_count = delivery_count
 
     data = await request.json()
@@ -483,8 +492,9 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             if reward_points < 0:
                 response.status_code = 400
                 return {"error": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
-            
-        public_details = int(bool(data["public_details"]))
+        
+        if "public_details" in data.keys():
+            public_details = int(bool(data["public_details"]))
 
         if "job_requirements" in data.keys():
             job_requirements = data["job_requirements"]
@@ -498,12 +508,22 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 else:
                     jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
             jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
+
+        if "orderid" in data.keys():
+            orderid = int(data["orderid"])
+            if orderid < -2147483647 or orderid > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            
+        if "is_pinned" in data.keys():
+            is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE challenge SET title = '{title}', description = '{description}', \
             start_time = '{start_time}', end_time = '{end_time}', \
+            orderid = {orderid}, is_pinned = {is_pinned}, \
             delivery_count = {delivery_count}, required_roles = '{required_roles}', \
             required_distance = {required_distance}, reward_points = {reward_points}, public_details = {public_details}, \
             job_requirements = '{jobreq}' WHERE challengeid = {challengeid}")

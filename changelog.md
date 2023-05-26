@@ -1,7 +1,7 @@
 # Changelog
 
 **v2.6.2**  
-1.Added `order_id` and `is_pinned` to announcement  
+1.Added `order_id` and `is_pinned` to announcement, challenges  
 2.Removed "forward to Discord" function in announcement  
 3.Added `is_pinned` and `timestamp` to downloads  
 4.Improved announcement, challenge, downloads, event PATCHing to autofill unprovided fields  

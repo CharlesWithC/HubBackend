@@ -17,6 +17,14 @@ def run(app):
         cur.execute("UPDATE announcement SET orderid = 0, is_pinned = 0")
 
     try:
+        cur.execute("SELECT is_pinned FROM challenge LIMIT 1")
+    except:
+        print("Updating challenge TABLE")
+        cur.execute("ALTER TABLE challenge ADD orderid INT AFTER challenge_type")
+        cur.execute("ALTER TABLE challenge ADD is_pinned INT AFTER orderid")
+        cur.execute("UPDATE challenge SET orderid = 0, is_pinned = 0")
+
+    try:
         cur.execute("SELECT is_pinned FROM downloads LIMIT 1")
     except:
         print("Updating downloads TABLE")

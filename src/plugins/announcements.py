@@ -143,6 +143,10 @@ async def post_announcement(request: Request, response: Response, authorization:
             return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         announcement_type = int(data["announcement_type"])
         is_private = int(bool(data["is_private"]))
+        if not "orderid" in data.keys():
+            data["orderid"] = 0
+        if not "is_pinned" in data.keys():
+            data["is_pinned"] = False
         orderid = int(data["orderid"])
         if orderid < -2147483647 or orderid > 2147483647:
             response.status_code = 400
