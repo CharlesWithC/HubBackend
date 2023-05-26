@@ -108,6 +108,9 @@
     "announcement_not_found": "Announcement not found.",
     "announcement_only_creator_can_edit": "Only the author of the announcement or an administrator can edit it.",
     "announcement_only_creator_can_delete": "Only the author of the announcement or an administrator can delete it.",
+    "new_announcement_with_title": "New Announcement: `{title}`",
+    "new_announcement": "New Announcement",
+    "author": "Author",
 
     "unknown_application_type": "Unknown Application Type",
     "status": "Status",
@@ -142,6 +145,11 @@
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
     "maximum_15_active_challenge": "There can be at most 15 active challenges at the same time.",
+    "new_challenge_with_title": "New Challenge: `{title}`",
+    "new_challenge": "New Challenge",
+    "start": "Start",
+    "end": "End",
+    "reward_points": "Reward Points",
 
     "only_delivery_submitter_can_request_division_validation": "Only the user who completed the delivery is allowed to submit division validation request.",
     "division_already_requested": "A division validation request has already been submitted.",
@@ -153,10 +161,14 @@
 
     "downloads_not_found": "Downloadable item not found.",
     "downloads_invalid_link": "Invalid link.",
+    "new_downloadable_item_with_title": "New Downloadable Item: `{title}`",
+    "new_downloadable_item": "New Downloadable Item",
+    "download_link": "[Download]({link})",
 
     "event_not_found": "Event not found.",
     "event_notification": "Event Notification",
     "event_notification_description": "An event that you have voted is starting soon!",
+    "event_starting": "Event `{title}` (Event ID: `{eventid}`) is starting soon!",
     "event_not_voted": "You have not voted the event!",
     "event_already_voted": "You have already voted the event!",
     "title": "Title",
@@ -164,6 +176,8 @@
     "destination": "Destination",
     "meetup_time": "Meetup Time",
     "departure_time": "Departure Time",
+    "new_event_with_title": "New Event: `{title}`",
+    "new_event": "New Event",
 
     "garage": "garage",
     "garage_slot": "garage slot",

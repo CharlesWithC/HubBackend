@@ -107,6 +107,9 @@
     "announcement_not_found": "Bekendtgørelse ikke funder.",
     "announcement_only_creator_can_edit": "Kun forfatteren af ​​meddelelsen eller en administrator kan redigere den.",
     "announcement_only_creator_can_delete": "Kun forfatteren af ​​meddelelsen eller en administrator kan slette den.",
+    "new_announcement_with_title": "Ny meddelelse: `{title}`",
+    "new_announcement": "Ny meddelelse",
+    "author": "Forfatter",
 
     "unknown_application_type": "Ukendt applikationstype",
     "status": "Status",
@@ -141,6 +144,11 @@
     "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
     "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
     "maximum_15_active_challenge": "Der kan højst være 15 aktive udfordringer på samme tid.",
+    "new_challenge_with_title": "Ny udfordring: `{title}`",
+    "new_challenge": "Ny udfordring",
+    "start": "Start",
+    "end": "Slut",
+    "reward_points": "Belønningspoint",
 
     "only_delivery_submitter_can_request_division_validation": "Kun den bruger, der gennemførte leveringen, har tilladelse til at indsende anmodning om divisionsvalidering.",
     "division_already_requested": "Der er allerede indsendt en anmodning om validering af division.",
@@ -152,10 +160,14 @@
 
     "downloads_not_found": "Downloadbar element blev ikke fundet.",
     "downloads_invalid_link": "Ugyldigt link.",
+    "new_downloadable_item_with_title": "Nyt element, der kan downloades: `{title}`",
+    "new_downloadable_item": "Nyt element, der kan downloades",
+    "download_link": "[Download]({link})",
 
     "event_not_found": "Begivenhed ikke fundet.",
     "event_notification": "Begivenhedsmeddelelse",
     "event_notification_description": "En begivenhed, som du har stemt, starter snart!",
+    "event_starting": "Begivenhed `{title}` (Begivenheds-id: `{eventid}` ) starter snart!",
     "event_not_voted": "Du har ikke stemt på begivenheden!",
     "event_already_voted": "Du har allerede stemt på begivenheden!",
     "title": "Titel",
@@ -163,6 +175,8 @@
     "destination": "Destination",
     "meetup_time": "Mødetid",
     "departure_time": "Afgangstid",
+    "new_event_with_title": "Ny begivenhed: `{title}`",
+    "new_event": "Ny begivenhed",
 
     "garage": "garage",
     "garage_slot": "garageplads",

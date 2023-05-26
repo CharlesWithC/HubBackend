@@ -6,6 +6,8 @@
 3.Added `is_pinned` and `timestamp` to downloads  
 4.Improved announcement, challenge, downloads, event PATCHing to autofill unprovided fields  
 5.Improved announcement, downloads list ordering and filtering  
+6.Renamed `event` notification to `upcoming_event`  
+7.Added `new_announcement`, `new_challenge`, `new_downloads`, `new_event` notifications  
 
 **v2.6.1**  
 1.Fixed `/user/profile` returning incorrect `ban` data  

@@ -24,6 +24,12 @@ def run(app):
         cur.execute("ALTER TABLE downloads ADD timestamp INT AFTER is_pinned")
         cur.execute("UPDATE downloads SET timestamp = 0, is_pinned = 0")
 
+    try:
+        print("Renaming `event` notification to `upcoming_event`")
+        cur.execute("UPDATE settings SET sval = REPLACE(sval, ',event,', ',upcoming_event,') ")
+    except:
+        pass
+
     cur.close()
     conn.close()
 

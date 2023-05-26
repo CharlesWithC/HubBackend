@@ -132,7 +132,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
 
     uid = p[0][0]
 
-    if request is not None:
+    if request is not None and "headers" in request.__dict__.keys():
         if "authorization" in request.headers.keys():
             authorization = request.headers["authorization"]
             au = await auth(authorization, request, check_member = False)

@@ -94,7 +94,7 @@ async def ProcessDiscordMessage(app): # thread
                     uid = t[0][0]
                     await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
 
-                    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
+                    settings = NOTIFICATION_SETTINGS
                     settingsok = False
 
                     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -148,18 +148,21 @@ async def CheckDiscordNotification(request, uid):
         return False
     return ret
 
-async def SendDiscordNotification(request, uid, data):
-    t = await CheckDiscordNotification(request, uid)
-    if t is False:
+async def SendDiscordNotification(request, uid, data, channelid = None):
+    if channelid is False:
         return
-    QueueDiscordMessage(request.app, t, data)
+    if channelid is None:
+        channelid = await CheckDiscordNotification(request, uid)
+        if channelid is False:
+            return
+    QueueDiscordMessage(request.app, channelid, data)
 
 async def CheckNotificationEnabled(request, notification_type, uid):
     if uid is None:
         return False
 
     (app, dhrid) = (request.app, request.state.dhrid)
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
+    settings = NOTIFICATION_SETTINGS
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await app.db.fetchall(dhrid)
@@ -174,24 +177,25 @@ async def CheckNotificationEnabled(request, notification_type, uid):
     return True
 
 async def notification(request, notification_type, uid, content, no_drivershub_notification = False, \
-        no_discord_notification = False, discord_embed = {}):
-    if uid is None or int(uid) < 0:
+        no_discord_notification = False, discord_embed = {}, force = False):
+    if uid is None or int(uid) < 0 or not notification_type in NOTIFICATION_SETTINGS.keys():
         return
 
     dhrid = request.state.dhrid
     app = request.app
-    settings = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "application": False, "challenge": False, "division": False, "economy": False, "event": False}
+    settings = NOTIFICATION_SETTINGS
 
-    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
-    t = await app.db.fetchall(dhrid)
-    if len(t) != 0:
-        d = t[0][0].split(",")
-        for dd in d:
-            if dd in settings.keys():
-                settings[dd] = True
+    if not force:
+        await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
+        t = await app.db.fetchall(dhrid)
+        if len(t) != 0:
+            d = t[0][0].split(",")
+            for dd in d:
+                if dd in settings.keys():
+                    settings[dd] = True
 
-    if notification_type in settings.keys() and not settings[notification_type]:
-        return
+        if not settings[notification_type]:
+            return
 
     if settings["drivershub"] and not no_drivershub_notification:
         await app.db.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{convertQuotation(content)}', {int(time.time())}, 0)")
@@ -199,13 +203,87 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
 
     if settings["discord"] and not no_discord_notification:
         if discord_embed != {}:
-            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"],
-                "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
-                "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
+            await SendDiscordNotification(request, uid, {"embeds": [{"title": discord_embed["title"], "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": discord_embed["description"], "fields": discord_embed["fields"], "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else discord_embed["footer"], "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
         else:
             await SendDiscordNotification(request, uid, {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
                 "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
                 "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
+
+async def notification_to_everyone(request, notification_type, content, no_drivershub_notification = False, \
+        no_discord_notification = False, discord_embed = {}, only_to_members = False):
+    if not notification_type in NOTIFICATION_SETTINGS.keys():
+        return
+    
+    dhrid = request.state.dhrid
+    app = request.app
+
+    # ensure members get notifications first
+    await app.db.execute(dhrid, f"SELECT uid FROM user WHERE userid >= 0")
+    t = await app.db.fetchall(dhrid)
+    member_uid = []
+    for tt in t:
+        member_uid.append(tt[0])
+    
+    priority_dh_uid = []
+    priority_dc_uid = []
+    regular_dh_uid = []    
+    regular_dc_uid = [] 
+    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'notification'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return
+    for tt in t:
+        d = tt[1].split(",")
+        if notification_type in d:
+            if tt[0] in member_uid:
+                if "drivershub" in d:
+                    priority_dh_uid.append(tt[0])
+                if "discord" in d:
+                    priority_dc_uid.append(tt[0])
+            elif not only_to_members:
+                if "drivershub" in d:
+                    regular_dh_uid.append(tt[0])
+                if "discord" in d:
+                    regular_dc_uid.append(tt[0])
+            break
+
+    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
+    channelids = {}
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        channelids[tt[0]] = tt[1]
+    
+    userlang = {}
+    await app.db.execute(dhrid, f"SELECT uid, sval FROM settings WHERE skey = 'language'")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        userlang[tt[0]] = tt[1]
+    for uid in priority_dc_uid + priority_dh_uid + regular_dc_uid + regular_dh_uid:
+        if not uid in userlang.keys():
+            userlang[uid] = app.config.language
+    
+    if not no_drivershub_notification:
+        t = int(time.time())
+        for uid in priority_dh_uid + regular_dh_uid:
+            c = convertQuotation(ml.hspl(request, content, force_lang=userlang[uid]))
+            await app.db.execute(dhrid, f"INSERT INTO user_notification(uid, content, timestamp, status) VALUES ({uid}, '{c}', {t}, 0)")
+            await app.db.commit(dhrid)
+
+    if not no_discord_notification:
+        data = {}
+        for uid in priority_dc_uid + regular_dc_uid:
+            if discord_embed != {}:
+                fields = []
+                if "fields" in discord_embed.keys():
+                    for field in discord_embed["fields"]:
+                        fields.append({"name": ml.hspl(request, field["name"], force_lang=userlang[uid]), "value": ml.hspl(request, field["value"], force_lang=userlang[uid]), "inline": field["inline"]})
+                footer = {"text": ml.hspl(request, discord_embed["footer"]["text"], force_lang=userlang[uid]), "icon_url": discord_embed["footer"]["icon_url"]}
+                data = {"embeds": [{"title": ml.hspl(request, discord_embed["title"], force_lang=userlang[uid]), "url": discord_embed["url"] if "url" in discord_embed.keys() else "", "description": ml.hspl(request, discord_embed["description"], force_lang=userlang[uid]), "fields": fields, "footer": {"text": app.config.name, "icon_url": app.config.logo_url} if "footer" not in discord_embed.keys() else footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
+            else:
+                data = {"embeds": [{"title": ml.tr(request, "notification", force_lang = await GetUserLanguage(request, uid)),
+                    "description": content, "footer": {"text": app.config.name, "icon_url": app.config.logo_url}, \
+                    "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}
+            await SendDiscordNotification(request, uid, data, channelid = channelids[uid] if uid in channelids.keys() else False)
 
 async def AuditLog(request, uid, text, discord_message_only = False):
     try:

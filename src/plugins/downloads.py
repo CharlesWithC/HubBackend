@@ -209,6 +209,8 @@ async def post_downloads(request: Request, response: Response, authorization: st
     downloadsid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_downloads", var = {"id": downloadsid}))
 
+    await notification_to_everyone(request, "new_downloads", ml.spl("new_downloadable_item_with_title", var = {"title": title}), discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": "‎ ", "value": ml.spl("download_link", var = {"link": link}), "inline": True}], "footer": {"text": ml.spl("new_downloadable_item"), "icon_url": app.config.logo_url}})
+
     return {"downloadsid": downloadsid}
 
 async def patch_downloads(request: Request, response: Response, downloadsid: int, authorization: str = Header(None)):

@@ -69,6 +69,15 @@ def translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: 
 def tr(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""): # abbreviation of translate
     return translate(request, key, var, force_lang)
 
+def spl(key: str, var: Optional[dict] = {}):
+    return {"key": key, "var": var}
+
+def hspl(request: Request, data, force_lang: Optional[str] = ""):
+    if type(data) == str:
+        return data
+    elif type(data) == dict:
+        return translate(request, data["key"], data["var"], force_lang)
+
 def company_translate(request: Request, key: str, var: Optional[dict] = {}, force_lang: Optional[str] = ""):
     lang = request.app.config.language if force_lang == "" else force_lang
     if lang not in LANGUAGES:

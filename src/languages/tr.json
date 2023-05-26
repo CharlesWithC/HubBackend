@@ -107,6 +107,9 @@
     "announcement_not_found": "Duyuru bulunamadı.",
     "announcement_only_creator_can_edit": "Duyuruyu yalnızca yazarı veya bir yönetici düzenleyebilir.",
     "announcement_only_creator_can_delete": "Duyuruyu yalnızca yazarı veya bir yönetici silebilir.",
+    "new_announcement_with_title": "Yeni Duyuru: `{title}`",
+    "new_announcement": "Yeni Duyuru",
+    "author": "Yazar",
 
     "unknown_application_type": "Bilinmeyen Başvuru Türü",
     "status": "Durum",
@@ -141,6 +144,11 @@
     "challenge_delivery_not_found": "Teslimat mücadele için kabul edilmedi.",
     "challenge_delivery_already_accepted": "Teslimat mücadele için zaten kabul edildi.",
     "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif meydan okuma olabilir.",
+    "new_challenge_with_title": "Yeni Görev: `{title}`",
+    "new_challenge": "New Challenge",
+    "start": "Start",
+    "end": "End",
+    "reward_points": "Ödül Puanları",
 
     "only_delivery_submitter_can_request_division_validation": "Yalnızca teslimatı tamamlayan kullanıcının bölüm doğrulama isteği göndermesine izin verilir.",
     "division_already_requested": "Bir bölüm doğrulama isteği zaten gönderildi.",
@@ -152,10 +160,14 @@
 
     "downloads_not_found": "İndirilebilir öğe bulunamadı.",
     "downloads_invalid_link": "Geçersiz indirme bağlantısı linki.",
+    "new_downloadable_item_with_title": "Yeni İndirilebilir Öğe: `{title}`",
+    "new_downloadable_item": "New Downloadable Item",
+    "download_link": "[Download]({link})",
 
     "event_not_found": "Etkinlik bulunamadı.",
     "event_notification": "Etkinlik Bildirimi",
     "event_notification_description": "Katılacağınızı belirttiğiniz bir etkinlik yakında başlıyor!",
+    "event_starting": "`{title}` Etkinliği (Etkinlik Kimliği: `{eventid}`) yakında başlıyor!",
     "event_not_voted": "Etkinliği oylamadınız!",
     "event_already_voted": "Etkinliği zaten oyladınız!",
     "title": "Başlık",
@@ -163,6 +175,8 @@
     "destination": "Hedef",
     "meetup_time": "Toplanma Zamanı",
     "departure_time": "Kalkış Zamanı",
+    "new_event_with_title": "Yeni Etkinlik: `{title}`",
+    "new_event": "Yeni Etkinlik",
 
     "garage": "garaj",
     "garage_slot": "garaj yuvası",

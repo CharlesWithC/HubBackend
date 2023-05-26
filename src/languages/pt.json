@@ -107,6 +107,9 @@
     "announcement_not_found": "Anúncio não encontrado.",
     "announcement_only_creator_can_edit": "Somente o autor do anúncio ou um administrador pode editá-lo.",
     "announcement_only_creator_can_delete": "Somente o autor do anúncio ou um administrador pode excluí-lo.",
+    "new_announcement_with_title": "Novo anúncio: `{title}`",
+    "new_announcement": "Novo anúncio",
+    "author": "Autor",
 
     "unknown_application_type": "Tipo de aplicativo desconhecido",
     "status": "Status",
@@ -141,6 +144,11 @@
     "challenge_delivery_not_found": "A entrega não é aceita para o desafio.",
     "challenge_delivery_already_accepted": "A entrega já está aceita para o desafio.",
     "maximum_15_active_challenge": "Pode haver no máximo 15 desafios ativos ao mesmo tempo.",
+    "new_challenge_with_title": "Novo desafio: `{title}`",
+    "new_challenge": "Novo Desafio",
+    "start": "Início",
+    "end": "Fim",
+    "reward_points": "Pontos de Recompensa",
 
     "only_delivery_submitter_can_request_division_validation": "Somente o usuário que concluiu a entrega pode enviar a solicitação de validação da divisão.",
     "division_already_requested": "Uma solicitação de validação de divisão já foi enviada.",
@@ -152,10 +160,14 @@
 
     "downloads_not_found": "Item para download não encontrado.",
     "downloads_invalid_link": "Link inválido.",
+    "new_downloadable_item_with_title": "Novo Item para Download: `{title}`",
+    "new_downloadable_item": "Novo item para download",
+    "download_link": "[Download]({link})",
 
     "event_not_found": "Evento não encontrado.",
     "event_notification": "Notificação de evento",
     "event_notification_description": "Um evento que você votou está começando em breve!",
+    "event_starting": "Evento `{title}` (Event ID: `{eventid}`) começará em breve!",
     "event_not_voted": "Você não votou no evento!",
     "event_already_voted": "Você já votou no evento!",
     "title": "Título",
@@ -163,6 +175,8 @@
     "destination": "Destino",
     "meetup_time": "Hora do encontro",
     "departure_time": "Hora de partida",
+    "new_event_with_title": "Novo Evento: `{title}`",
+    "new_event": "Novo Evento",
 
     "garage": "garagem",
     "garage_slot": "vaga de garagem",

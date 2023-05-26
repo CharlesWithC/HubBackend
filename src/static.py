@@ -72,6 +72,8 @@ if os.path.exists(os.path.join(abspath, "openapi.json")):
 else:
     OPENAPI = None
 
+NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False}
+
 ISO3166_COUNTRIES = {'AF': 'Afghanistan', 'AX': 'Åland Islands', 'AL': 'Albania', 'DZ': 'Algeria', 'AS': 'American Samoa', 'AD': 'Andorra', 'AO': 'Angola', 'AI': 'Anguilla', 'AQ': 'Antarctica', 'AG': 'Antigua and Barbuda', 'AR': 'Argentina', 'AM': 'Armenia', 'AW': 'Aruba', 'AU': 'Australia', 'AT': 'Austria', 'AZ': 'Azerbaijan', 'BS': 'Bahamas', 'BH': 'Bahrain', 'BD': 'Bangladesh', 'BB': 'Barbados', 'BY': 'Belarus', 'BE': 'Belgium', 'BZ': 'Belize', 'BJ': 'Benin', 'BM': 'Bermuda', 'BT': 'Bhutan', 'BO': 'Bolivia, Plurinational State of', 'BQ': 'Bonaire, Sint Eustatius and Saba', 'BA': 'Bosnia and Herzegovina', 'BW': 'Botswana', 'BV': 'Bouvet Island', 'BR': 'Brazil', 'IO': 'British Indian Ocean Territory', 'BN': 'Brunei Darussalam', 'BG': 'Bulgaria', 'BF': 'Burkina Faso', 'BI': 'Burundi', 'KH': 'Cambodia', 'CM': 'Cameroon', 'CA': 'Canada', 'CV': 'Cabo Verde', 'KY': 'Cayman Islands', 'CF': 'Central African Republic', 'TD': 'Chad', 'CL': 'Chile', 'CN': 'China', 'CX': 'Christmas Island', 'CC': 'Cocos (Keeling) Islands', 'CO': 'Colombia', 'KM': 'Comoros', 'CG': 'Congo', 'CD': 'Congo, Democratic Republic of the', 'CK': 'Cook Islands', 'CR': 'Costa Rica', 'CI': "Côte d'Ivoire", 'HR': 'Croatia', 'CU': 'Cuba', 'CW': 'Curaçao', 'CY': 'Cyprus', 'CZ': 'Czechia', 'DK': 'Denmark', 'DJ': 'Djibouti', 'DM': 'Dominica', 'DO': 'Dominican Republic', 'EC': 'Ecuador', 'EG': 'Egypt', 'SV': 'El Salvador', 'GQ': 'Equatorial Guinea', 'ER': 'Eritrea', 'EE': 'Estonia', 'ET': 'Ethiopia', 'FK': 'Falkland Islands (Malvinas)', 'FO': 'Faroe Islands', 'FJ': 'Fiji', 'FI': 'Finland', 'FR': 'France', 'GF': 'French Guiana', 'PF': 'French Polynesia', 'TF': 'French Southern Territories', 'GA': 'Gabon', 'GM': 'Gambia', 'GE': 'Georgia', 'DE': 'Germany', 'GH': 'Ghana', 'GI': 'Gibraltar', 'GR': 'Greece', 'GL': 'Greenland', 'GD': 'Grenada', 'GP': 'Guadeloupe', 'GU': 'Guam', 'GT': 'Guatemala', 'GG': 'Guernsey', 'GN': 'Guinea', 'GW': 'Guinea-Bissau', 'GY': 'Guyana', 'HT': 'Haiti', 'HM': 'Heard Island and McDonald Islands', 'VA': 'Holy See', 'HN': 'Honduras', 'HK': 'Hong Kong', 'HU': 'Hungary', 'IS': 'Iceland', 'IN': 'India', 'ID': 'Indonesia', 'IR': 'Iran, Islamic Republic of', 'IQ': 'Iraq', 'IE': 'Ireland', 'IM': 'Isle of Man', 'IL': 'Israel', 'IT': 'Italy', 'JM': 'Jamaica', 'JP': 'Japan', 'JE': 'Jersey', 'JO': 'Jordan', 'KZ': 'Kazakhstan', 'KE': 'Kenya', 'KI': 'Kiribati', 'KP': "Korea, Democratic People's Republic of", 'KR': 'Korea, Republic of', 'XK': 'Kosovo', 'KW': 'Kuwait', 'KG': 'Kyrgyzstan', 'LA': "Lao People's Democratic Republic", 'LV': 'Latvia', 'LB': 'Lebanon', 'LS': 'Lesotho', 'LR': 'Liberia', 'LY': 'Libya', 'LI': 'Liechtenstein', 'LT': 'Lithuania', 'LU': 'Luxembourg', 'MO': 'Macao', 'MK': 'North Macedonia', 'MG': 'Madagascar', 'MW': 'Malawi', 'MY': 'Malaysia', 'MV': 'Maldives', 'ML': 'Mali', 'MT': 'Malta', 'MH': 'Marshall Islands', 'MQ': 'Martinique', 'MR': 'Mauritania', 'MU': 'Mauritius', 'YT': 'Mayotte', 'MX': 'Mexico', 'FM': 'Micronesia, Federated States of', 'MD': 'Moldova, Republic of', 'MC': 'Monaco', 'MN': 'Mongolia', 'ME': 'Montenegro', 'MS': 'Montserrat', 'MA': 'Morocco', 'MZ': 'Mozambique', 'MM': 'Myanmar', 'NA': 'Namibia', 'NR': 'Nauru', 'NP': 'Nepal', 'NL': 'Netherlands', 'NC': 'New Caledonia', 'NZ': 'New Zealand', 'NI': 'Nicaragua', 'NE': 'Niger', 'NG': 'Nigeria', 'NU': 'Niue', 'NF': 'Norfolk Island', 'MP': 'Northern Mariana Islands', 'NO': 'Norway', 'OM': 'Oman', 'PK': 'Pakistan', 'PW': 'Palau', 'PS': 'Palestine, State of', 'PA': 'Panama', 'PG': 'Papua New Guinea', 'PY': 'Paraguay', 'PE': 'Peru', 'PH': 'Philippines', 'PN': 'Pitcairn', 'PL': 'Poland', 'PT': 'Portugal', 'PR': 'Puerto Rico', 'QA': 'Qatar', 'RE': 'Réunion', 'RO': 'Romania', 'RU': 'Russian Federation', 'RW': 'Rwanda', 'BL': 'Saint Barthélemy', 'SH': 'Saint Helena, Ascension and Tristan da Cunha', 'KN': 'Saint Kitts and Nevis', 'LC': 'Saint Lucia', 'MF': 'Saint Martin (French part)', 'PM': 'Saint Pierre and Miquelon', 'VC': 'Saint Vincent and the Grenadines', 'WS': 'Samoa', 'SM': 'San Marino', 'ST': 'Sao Tome and Principe', 'SA': 'Saudi Arabia', 'SN': 'Senegal', 'RS': 'Serbia', 'SC': 'Seychelles', 'SL': 'Sierra Leone', 'SG': 'Singapore', 'SX': 'Sint Maarten (Dutch part)', 'SK': 'Slovakia', 'SI': 'Slovenia', 'SB': 'Solomon Islands', 'SO': 'Somalia', 'ZA': 'South Africa', 'GS': 'South Georgia and the South Sandwich Islands', 'SS': 'South Sudan', 'ES': 'Spain', 'LK': 'Sri Lanka', 'SD': 'Sudan', 'SR': 'Suriname', 'SJ': 'Svalbard and Jan Mayen', 'SZ': 'Eswatini', 'SE': 'Sweden', 'CH': 'Switzerland', 'SY': 'Syrian Arab Republic', 'TW': 'Taiwan, Province of China', 'TJ': 'Tajikistan', 'TZ': 'Tanzania, United Republic of', 'TH': 'Thailand', 'TL': 'Timor-Leste', 'TG': 'Togo', 'TK': 'Tokelau', 'TO': 'Tonga', 'TT': 'Trinidad and Tobago', 'TN': 'Tunisia', 'TR': 'Türkiye', 'TM': 'Turkmenistan', 'TC': 'Turks and Caicos Islands', 'TV': 'Tuvalu', 'UG': 'Uganda', 'UA': 'Ukraine', 'AE': 'United Arab Emirates', 'GB': 'United Kingdom of Great Britain and Northern Ireland', 'US': 'United States of America', 'UM': 'United States Minor Outlying Islands', 'UY': 'Uruguay', 'UZ': 'Uzbekistan', 'VU': 'Vanuatu', 'VE': 'Venezuela, Bolivarian Republic of', 'VN': 'Viet Nam', 'VG': 'Virgin Islands, British', 'VI': 'Virgin Islands, U.S.', 'WF': 'Wallis and Futuna', 'EH': 'Western Sahara', 'YE': 'Yemen', 'ZM': 'Zambia', 'ZW': 'Zimbabwe', 'XX': 'Unknown', 'T1': 'Tor'}
 # XX and T1 are provided by CloudFlare, which are not ISO3166 standard
 
@@ -98,7 +100,7 @@ EN_STRINGTABLE = {
     "application_token_not_allowed": "Access denied: Application token is not allowed.",
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
     "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
-
+    
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",
     "user_pending_deletion": "Account is pending deletion. Login again to recover account.",
@@ -143,6 +145,7 @@ EN_STRINGTABLE = {
 
     "user_not_found": "User not found.",
     "member_not_found": "Member not found.",
+    "role_not_found": "One or more role to add or remove is not found.",
     "banned_user_cannot_be_accepted": "Banned users cannot be accepted as members.",
     "user_is_already_member": "User is already a member.",
     "member_exists_with_new_connections": "There is a member with the new connections. Dismiss the member to proceed.",
@@ -185,6 +188,9 @@ EN_STRINGTABLE = {
     "announcement_not_found": "Announcement not found.",
     "announcement_only_creator_can_edit": "Only the author of the announcement or an administrator can edit it.",
     "announcement_only_creator_can_delete": "Only the author of the announcement or an administrator can delete it.",
+    "new_announcement_with_title": "New Announcement: `{title}`",
+    "new_announcement": "New Announcement",
+    "author": "Author",
 
     "unknown_application_type": "Unknown Application Type",
     "status": "Status",
@@ -219,21 +225,30 @@ EN_STRINGTABLE = {
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
     "maximum_15_active_challenge": "There can be at most 15 active challenges at the same time.",
+    "new_challenge_with_title": "New Challenge: `{title}`",
+    "new_challenge": "New Challenge",
+    "start": "Start",
+    "end": "End",
+    "reward_points": "Reward Points",
 
     "only_delivery_submitter_can_request_division_validation": "Only the user who completed the delivery is allowed to submit division validation request.",
     "division_already_requested": "A division validation request has already been submitted.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you are not allowed to request validation again.",
-    "not_division_driver": "You are not a driver for the division.",
+    "not_division_driver": "You are not a driver for the division.", 
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated by a division supervisor.",
 
     "downloads_not_found": "Downloadable item not found.",
     "downloads_invalid_link": "Invalid link.",
+    "new_downloadable_item_with_title": "New Downloadable Item: `{title}`",
+    "new_downloadable_item": "New Downloadable Item",
+    "download_link": "[Download]({link})",
 
     "event_not_found": "Event not found.",
     "event_notification": "Event Notification",
     "event_notification_description": "An event that you have voted is starting soon!",
+    "event_starting": "Event `{title}` (Event ID: `{eventid}`) is starting soon!",
     "event_not_voted": "You have not voted the event!",
     "event_already_voted": "You have already voted the event!",
     "title": "Title",
@@ -241,6 +256,8 @@ EN_STRINGTABLE = {
     "destination": "Destination",
     "meetup_time": "Meetup Time",
     "departure_time": "Departure Time",
+    "new_event_with_title": "New Event: `{title}`",
+    "new_event": "New Event",
 
     "garage": "garage",
     "garage_slot": "garage slot",

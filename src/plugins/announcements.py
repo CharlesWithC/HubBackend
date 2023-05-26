@@ -154,11 +154,14 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     timestamp = int(time.time())
 
-    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid INT, is_pinned INT) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
+    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid, is_pinned) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     announcementid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_announcement", var = {"id": announcementid}))
+
+    author = await GetUserInfo(request, userid = au["userid"])
+    await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": decompress(content), "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
 
     return {"announcementid": announcementid}
 

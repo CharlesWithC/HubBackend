@@ -3780,12 +3780,12 @@
                                         "description": "Description",
                                         "type": "string"
                                     },
-                                    "after": {
-                                        "description": "After (Timestamp)",
+                                    "start_time": {
+                                        "description": "Start Time (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "before": {
-                                        "description": "Before (Timestamp)",
+                                    "end_time": {
+                                        "description": "End Time (Timestamp)",
                                         "type": "integer"
                                     },
                                     "challenge_type": {
@@ -3909,12 +3909,12 @@
                                         "description": "Description",
                                         "type": "string"
                                     },
-                                    "after": {
-                                        "description": "After (Timestamp)",
+                                    "start_time": {
+                                        "description": "Start Time (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "before": {
-                                        "description": "Before (Timestamp)",
+                                    "end_time": {
+                                        "description": "End Time (Timestamp)",
                                         "type": "integer"
                                     },
                                     "challenge_type": {

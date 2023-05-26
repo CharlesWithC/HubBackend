@@ -386,6 +386,8 @@ async def post_challenge(request: Request, response: Response, authorization: st
 
     await AuditLog(request, au["uid"], ml.ctr(request, "created_challenge", var = {"id": challengeid}))
 
+    await notification_to_everyone(request, "new_challenge", ml.spl("new_challenge_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": ml.spl("start"), "value": f"<t:{start_time}:R>", "inline": True}, {"name": ml.spl("end"), "value": f"<t:{end_time}:R>", "inline": True}, {"name": ml.spl("reward_points"), "value": f"{reward_points}", "inline": True}], "footer": {"text": ml.spl("new_challenge"), "icon_url": app.config.logo_url}})
+
     return {"challengeid": challengeid}
 
 # PATCH /challenge

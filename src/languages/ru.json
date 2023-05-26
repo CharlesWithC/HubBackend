@@ -107,6 +107,9 @@
     "announcement_not_found": "Объявление не найдено.",
     "announcement_only_creator_can_edit": "Редактировать его может только автор объявления или администратор.",
     "announcement_only_creator_can_delete": "Удалить объявление может только автор или администратор.",
+    "new_announcement_with_title": "Новое объявление: `{title}`",
+    "new_announcement": "Новое объявление",
+    "author": "Автор",
 
     "unknown_application_type": "Неизвестный тип приложения",
     "status": "Статус",
@@ -141,6 +144,11 @@
     "challenge_delivery_not_found": "Доставка не принимается для вызова.",
     "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
     "maximum_15_active_challenge": "Одновременно может быть не более 15 активных испытаний.",
+    "new_challenge_with_title": "Новое задание: `{title}`",
+    "new_challenge": "Новое испытание",
+    "start": "Начало",
+    "end": "Конец",
+    "reward_points": "Баллы вознаграждения",
 
     "only_delivery_submitter_can_request_division_validation": "Только пользователь, завершивший доставку, может отправить запрос на подтверждение разделения.",
     "division_already_requested": "Запрос на проверку подразделения уже отправлен.",
@@ -152,10 +160,14 @@
 
     "downloads_not_found": "Загружаемый элемент не найден.",
     "downloads_invalid_link": "Неверная ссылка.",
+    "new_downloadable_item_with_title": "Новый загружаемый предмет: `{title}`",
+    "new_downloadable_item": "Новый загружаемый элемент",
+    "download_link": "[Скачать]({link})",
 
     "event_not_found": "Событие не найдено.",
     "event_notification": "Уведомление о событии",
     "event_notification_description": "Событие, за которое вы проголосовали, скоро начнется!",
+    "event_starting": "Событие `{title}` (идентификатор события: `{eventid}`) скоро начнется!",
     "event_not_voted": "Вы не голосовали за событие!",
     "event_already_voted": "Вы уже проголосовали за событие!",
     "title": "Заголовок",
@@ -163,6 +175,8 @@
     "destination": "Пункт назначения",
     "meetup_time": "Время встречи",
     "departure_time": "Время отправления",
+    "new_event_with_title": "Новое событие: `{title}`",
+    "new_event": "Новое событие",
 
     "garage": "гараж",
     "garage_slot": "гаражный слот",

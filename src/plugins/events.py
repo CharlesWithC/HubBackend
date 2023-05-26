@@ -57,7 +57,7 @@ async def EventNotification(app):
 
             notification_enabled = []
             tonotify = {}
-            await app.db.execute(dhrid, "SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,event,%'")
+            await app.db.execute(dhrid, "SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,upcoming_event,%'")
             d = await app.db.fetchall(dhrid)
             for dd in d:
                 notification_enabled.append(dd[0])
@@ -92,16 +92,15 @@ async def EventNotification(app):
                     if uid in tonotify.keys():
                         channelid = tonotify[uid]
                         language = GetUserLanguage(request, uid)
-                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": ml.tr(request, "event_notification", force_lang = language), "description": ml.tr(request, "event_notification_description", force_lang = language), "url": link,
-                            "fields": [{"name": ml.tr(request, "title", force_lang = language), "value": title, "inline": False},
-                                {"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
+                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": ml.tr(request, "event_notification_description", force_lang = language), "url": link,
+                            "fields": [{"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
                                 {"name": ml.tr(request, "destination", force_lang = language), "value": destination, "inline": True},
                                 {"name": ml.tr(request, "distance", force_lang = language), "value": distance, "inline": True},
                                 {"name": ml.tr(request, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
                                 {"name": ml.tr(request, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
-                            "footer": {"text": app.config.name, "icon_url": app.config.logo_url},
+                            "footer": {"text": ml.tr(request, "event_notification", force_lang = language), "icon_url": app.config.logo_url},
                             "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
-
+                        await notification(request, "upcoming_event", uid, ml.tr(request, "event_starting", var = {"eventid": tt[0], "title": title}, force_lang = language), force = True, no_discord_notification = True)
                 await app.db.extend_conn(dhrid, 2)
                 try:
                     await asyncio.sleep(1)
@@ -369,6 +368,8 @@ async def post_event(request: Request, response: Response, authorization: str = 
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_event", var = {"id": eventid}))
+
+    await notification_to_everyone(request, "new_event", ml.spl("new_event_with_title", var = {"title": title}), discord_embed = {"title": title, "url": decompress(link), "description": decompress(description), "fields": [{"name": ml.spl("departure"), "value": departure, "inline": True}, {"name": ml.spl("destination"), "value": destination, "inline": True}, {"name": ml.spl("distance"), "value": distance, "inline": True}, {"name": ml.spl("meetup_time"), "value": f"<t:{meetup_timestamp}:R>", "inline": True}, {"name": ml.spl("departure_time"), "value": f"<t:{departure_timestamp}:R>", "inline": True}], "footer": {"text": ml.spl("new_event"), "icon_url": app.config.logo_url}}, only_to_members=is_private)
 
     return {"eventid": eventid}
 
