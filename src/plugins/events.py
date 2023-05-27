@@ -14,6 +14,7 @@ from functions import *
 
 
 async def EventNotification(app):
+    rrnd = 0
     while 1:
         try:
             dhrid = genrid()
@@ -24,25 +25,22 @@ async def EventNotification(app):
             request.state.dhrid = dhrid
 
             npid = -1
-            nlup = -1
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid'")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-last-update'")
-            t = await app.db.fetchall(dhrid)
-            if len(t) != 0:
-                nlup = int(t[0][0])
-            if npid != -1 and npid != os.getpid() and time.time() - nlup <= 90:
+            if npid != -1 and npid != os.getpid():
+                return
+            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
+            await app.db.commit(dhrid)
+            rrnd += 1
+            if rrnd == 1:
                 try:
-                    await asyncio.sleep(90)
+                    await asyncio.sleep(3)
                 except:
                     return
                 continue
-            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid' OR skey = 'multiprocess-last-update'")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
-            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-last-update', '{int(time.time())}')")
-            await app.db.commit(dhrid)
 
             notified_event = []
             await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event'")

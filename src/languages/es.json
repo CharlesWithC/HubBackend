@@ -193,6 +193,8 @@
     "new_poll_with_title": "Nueva encuesta: `{title}`",
     "new_poll": "Nueva encuesta",
     "choices": "Opciones",
+    "poll_result": "Resultado de la encuesta",
+    "poll_ended_with_title": "Encuesta finalizada: `{título}`",
 
     "garage": "garaje",
     "garage_slot": "plaza de garaje",

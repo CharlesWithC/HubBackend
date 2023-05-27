@@ -193,6 +193,8 @@
     "new_poll_with_title": "Yeni Anket: `{title}`",
     "new_poll": "Yeni Anket",
     "choices": "Seçenekler",
+    "poll_result": "Anket Sonucu",
+    "poll_ended_with_title": "Anket Sona Erdi: `{title}`",
 
     "garage": "garaj",
     "garage_slot": "garaj yuvası",

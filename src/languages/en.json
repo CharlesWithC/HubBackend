@@ -194,6 +194,8 @@
     "new_poll_with_title": "New Poll: `{title}`",
     "new_poll": "New Poll",
     "choices": "Choices",
+    "poll_result": "Poll Result",
+    "poll_ended_with_title": "Poll Ended: `{title}`",
 
     "garage": "garage",
     "garage_slot": "garage slot",

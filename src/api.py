@@ -27,12 +27,6 @@ from threads import *
 async def startup_event(app):
     await app.db.create_pool()
 
-    dhrid = 0
-    await app.db.new_conn(dhrid)
-    await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'process-event-notification-pid' OR skey = 'process-event-notification-last-update'")
-    await app.db.commit(dhrid)
-    await app.db.close_conn(dhrid)
-
     loop = asyncio.get_event_loop()
     loop.create_task(ClearOutdatedData(app))
     loop.create_task(DetectConfigChanges(app))
@@ -40,8 +34,12 @@ async def startup_event(app):
     loop.create_task(ProcessDiscordMessage(app))
     loop.create_task(opqueue.run(app))
     loop.create_task(UpdateDlogStats(app))
-    from plugins.events import EventNotification
-    loop.create_task(EventNotification(app))
+    if "event" in app.config.plugins:
+        from plugins.events import EventNotification
+        loop.create_task(EventNotification(app))
+    if "poll" in app.config.plugins:
+        from plugins.poll import PollResultNotification
+        loop.create_task(PollResultNotification(app))
 
     for middleware in app.external_middleware["startup"]:
         if inspect.iscoroutinefunction(middleware):

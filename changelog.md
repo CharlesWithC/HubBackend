@@ -1,7 +1,9 @@
 # Changelog
 
 **v2.7.0**  
-Added poll plugin  
+1.Added poll plugin  
+2.Improved multiprocess handling  
+3.Renamed `tracker` plugin to `route`  
 
 **v2.6.3**  
 1.Added user role history  

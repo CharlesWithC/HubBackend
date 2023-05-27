@@ -9,13 +9,147 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from functions import *
 
-POLL_CONFIG_KEYS = ["max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter"]
-POLL_DEFAULT_CONFIG = {"max_choice": 1, "allow_modify_vote": False, "show_stats": True, "show_stats_before_vote": False, "show_voter": False}
+POLL_CONFIG_KEYS = ["max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter", "show_stats_when_ended"]
+POLL_DEFAULT_CONFIG = {"max_choice": 1, "allow_modify_vote": False, "show_stats": True, "show_stats_before_vote": False, "show_voter": False, "show_stats_when_ended": True}
+POLL_CONFIG_TYPE = {"max_choice": int, "allow_modify_vote": bool, "show_stats": bool, "show_stats_before_vote": bool, "show_voter": bool, "show_stats_when_ended": bool}
 # show_stats(before_vote) must be 1 to show_voter
 # show_stats => show stats after vote
 # show_stats_before_vote => overwrite show_stats (aka show stats after/before vote)
 
 # NOTE: To end a poll, set its `end_time` to current timestamp
+
+async def PollResultNotification(app):
+    rrnd = 0
+    while 1:
+        try:
+            dhrid = genrid()
+            await app.db.new_conn(dhrid)
+            await app.db.extend_conn(dhrid, 5)
+
+            request = Request(scope={"type":"http", "app": app})
+            request.state.dhrid = dhrid
+
+            npid = -1
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid'")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                npid = int(t[0][0])
+            if npid != -1 and npid != os.getpid():
+                return
+            await app.db.execute(dhrid, "DELETE FROM settings WHERE skey = 'multiprocess-pid'")
+            await app.db.execute(dhrid, f"INSERT INTO settings VALUES (NULL, 'multiprocess-pid', '{os.getpid()}')")
+            await app.db.commit(dhrid)
+            rrnd += 1
+            if rrnd == 1:
+                try:
+                    await asyncio.sleep(3)
+                except:
+                    return
+                continue
+
+            notified_poll = []
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-poll'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                sval = tt[0].split("-")
+                if int(time.time()) - int(sval[1]) > 3600:
+                    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'notified-poll' AND sval = '{tt[0]}'")
+                else:
+                    notified_poll.append(int(sval[0]))
+            await app.db.commit(dhrid)
+
+            notification_enabled = []
+            tonotify = {}
+            await app.db.execute(dhrid, "SELECT uid FROM settings WHERE skey = 'notification' AND sval LIKE '%,poll_result,%'")
+            d = await app.db.fetchall(dhrid)
+            for dd in d:
+                notification_enabled.append(dd[0])
+            await app.db.execute(dhrid, "SELECT uid, sval FROM settings WHERE skey = 'discord-notification'")
+            d = await app.db.fetchall(dhrid)
+            for dd in d:
+                if dd[0] in notification_enabled:
+                    tonotify[dd[0]] = dd[1]
+
+            await app.db.execute(dhrid, f"SELECT pollid, title, description, end_time, config FROM poll WHERE end_time >= {int(time.time() - 3600)} AND end_time <= {int(time.time())}")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                if tt[0] in notified_poll:
+                    continue
+                notified_poll.append(tt[0])
+                await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-poll', '{tt[0]}-{int(time.time())}')")
+                await app.db.commit(dhrid)
+
+                pollid = tt[0]
+                title = tt[1] if tt[1] != "" else "N/A"
+                description = decompress(tt[2]) if tt[2] != "" else "N/A"
+                end_time = tt[3]
+                configl = str2list(tt[4])
+                config = POLL_DEFAULT_CONFIG
+                for i in range(len(POLL_CONFIG_KEYS)):
+                    if i < len(configl):
+                        config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
+
+                choices = {}
+                choice_vote = {}
+                await app.db.execute(dhrid, f"SELECT choiceid, content FROM poll_choice WHERE pollid = {pollid} ORDER BY orderid ASC")
+                p = await app.db.fetchall(dhrid)
+                for pp in p:
+                    choices[pp[0]] = pp[1]
+                    choice_vote[pp[0]] = 0
+
+                votes = {}
+                voted_userid = []
+                await app.db.execute(dhrid, f"SELECT choiceid, userid FROM poll_vote WHERE pollid = {pollid}")
+                p = await app.db.fetchall(dhrid)
+                for pp in p:
+                    if pp[1] not in votes.keys():
+                        votes[pp[1]] = [pp[0]]
+                    else:
+                        votes[pp[1]].append(pp[0])
+                    voted_userid.append(pp[1])
+                    choice_vote[pp[0]] += 1
+
+                total_vote = sum(choice_vote.values())
+
+                for userid in voted_userid:
+                    userinfo = await GetUserInfo(request, userid = userid, ignore_activity = True)
+                    uid = userinfo["uid"]
+                    isstaff = checkPerm(app, userinfo["roles"], ["admin", "poll"])
+                    if uid in tonotify.keys() and (isstaff or (config["show_stats_before_vote"] or config["show_stats"] or config["show_stats_when_ended"])):
+                        ctxt = ""
+                        for choiceid in choices.keys():
+                            content = choices[choiceid]
+                            if total_vote != 0:
+                                stats = f"{round((choice_vote[choiceid] / total_vote)*100, 2)}% ({choice_vote[choiceid]}/{total_vote})"
+                            else:
+                                stats = f"0% (0/0)"
+                            if choiceid in votes[userid]:
+                                ctxt += f":ballot_box_with_check:  {content} - {stats}\n"
+                            else:
+                                ctxt += f":white_square_button:  {content} - {stats}\n"
+                        channelid = tonotify[uid]
+                        language = GetUserLanguage(request, uid)
+                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": description,
+                            "fields": [{"name": ml.tr(request, "choices", force_lang = language), "value": ctxt, "inline": False}],
+                            "footer": {"text": ml.tr(request, "poll_result", force_lang = language), "icon_url": app.config.logo_url},
+                            "timestamp": str(datetime.fromtimestamp(end_time)), "color": int(app.config.hex_color, 16)}]})
+                        await notification(request, "poll_result", uid, ml.tr(request, "poll_ended_with_title", var = {"title": title}, force_lang = language), force = True, no_discord_notification = True)
+                await app.db.extend_conn(dhrid, 2)
+                try:
+                    await asyncio.sleep(1)
+                except:
+                    return
+
+            await app.db.close_conn(dhrid)
+        except:
+            import traceback
+            traceback.print_exc()
+            pass
+
+        try:
+            await asyncio.sleep(60)
+        except:
+            return
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_pollid: Optional[int] = None, \
@@ -99,7 +233,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for i in range(len(t)):
         (pollid, choiceid, orderid, content) = t[i]
         choiceidx[choiceid] = i
-        if isstaff or (config["show_stats_before_vote"] or pollid in voted and config["show_stats"]):
+        if isstaff or (config["show_stats_before_vote"] or pollid in voted and config["show_stats"] or config["show_stats_when_ended"] and ret[idx[pollid]]["end_time"] is not None and ret[idx[pollid]]["end_time"] < int(time.time())):
             ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": 0})
         else:
             ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": None})
@@ -109,7 +243,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for tt in t:
         (pollid, choiceid, count) = tt
         config = ret[idx[pollid]]["config"]
-        if isstaff or (config["show_stats_before_vote"] or pollid in voted and config["show_stats"]):
+        if isstaff or (config["show_stats_before_vote"] or pollid in voted and config["show_stats"] or config["show_stats_when_ended"] and ret[idx[pollid]]["end_time"] is not None and ret[idx[pollid]]["end_time"] < int(time.time())):
             ret[idx[pollid]]["choices"][choiceidx[choiceid]]["votes"] = count
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
@@ -142,9 +276,10 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
     tt = t[0]
 
     configl = str2list(tt[4])
-    config = {}
+    config = POLL_DEFAULT_CONFIG
     for i in range(len(POLL_CONFIG_KEYS)):
-        config[POLL_CONFIG_KEYS[i]] = configl[i]
+        if i < len(configl):
+            config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
     ret = {"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]}
 
     await app.db.execute(dhrid, f"SELECT DISTINCT pollid FROM poll_vote WHERE userid = {userid} AND pollid = {pollid}")
@@ -161,20 +296,20 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
         choiceidx[choiceid] = i
         votes = None
         voters = None
-        if isstaff or (ret["config"]["show_stats_before_vote"] or voted and ret["config"]["show_stats"]):
+        if isstaff or (config["show_stats_before_vote"] or voted and config["show_stats"] or config["show_stats_when_ended"] and ret["end_time"] is not None and ret["end_time"] < int(time.time())):
             votes = 0
-            if isstaff or ret["config"]["show_voter"]:
+            if isstaff or config["show_voter"]:
                 voters = []
         ret["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": votes, "voters": voters})
 
-    if isstaff or (ret["config"]["show_stats_before_vote"] or voted and ret["config"]["show_stats"]):
+    if isstaff or (config["show_stats_before_vote"] or voted and config["show_stats"] or config["show_stats_when_ended"] and ret["end_time"] is not None and ret["end_time"] < int(time.time())):
         await app.db.execute(dhrid, f"SELECT pollid, choiceid, COUNT(userid) FROM poll_vote WHERE pollid = {pollid} GROUP BY choiceid ORDER BY pollid ASC, choiceid ASC")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             (_, choiceid, count) = tt
             ret["choices"][choiceidx[choiceid]]["votes"] = count
 
-        if isstaff or ret["config"]["show_voter"]:
+        if isstaff or config["show_voter"]:
             await app.db.execute(dhrid, f"SELECT choiceid, userid FROM poll_vote WHERE pollid = {pollid} ORDER BY choiceid ASC, timestamp ASC")
             t = await app.db.fetchall(dhrid)
             for tt in t:
@@ -225,9 +360,10 @@ async def put_poll_vote(request: Request, response: Response, pollid: int, autho
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = {}
+    config = POLL_DEFAULT_CONFIG
     for i in range(len(POLL_CONFIG_KEYS)):
-        config[POLL_CONFIG_KEYS[i]] = configl[i]
+        if i < len(configl):
+            config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
 
     if end_time is not None and end_time < int(time.time()):
         response.status_code = 409
@@ -301,9 +437,10 @@ async def patch_poll_vote(request: Request, response: Response, pollid: int, aut
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = {}
+    config = POLL_DEFAULT_CONFIG
     for i in range(len(POLL_CONFIG_KEYS)):
-        config[POLL_CONFIG_KEYS[i]] = configl[i]
+        if i < len(config):
+            config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
 
     if end_time is not None and end_time < int(time.time()):
         response.status_code = 409
@@ -369,9 +506,10 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = {}
+    config = POLL_DEFAULT_CONFIG
     for i in range(len(POLL_CONFIG_KEYS)):
-        config[POLL_CONFIG_KEYS[i]] = configl[i]
+        if i < len(configl):
+            config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
 
     if end_time is not None and end_time < int(time.time()):
         response.status_code = 409
@@ -396,7 +534,7 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
 async def post_poll(request: Request, response: Response, authorization: str = Header(None)):
     '''Post a poll
 
-    `config`: dict containing optional keys "max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter"
+    `config`: dict containing optional keys "max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter", "show_stats_when_ended"
     `choices`: list of string choices
     `end_time`: int/null'''
     app = request.app
@@ -456,7 +594,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
             config = new_config
             try:
                 config["max_choice"] = int(config["max_choice"])
-                for key in ["allow_modify_vote", "show_stats", "show_voter", "show_stats_before_vote"]:
+                for key in ["allow_modify_vote", "show_stats", "show_voter", "show_stats_before_vote", "show_stats_when_ended"]:
                     config[key] = int(bool(config[key]))
             except:
                 response.status_code = 400
@@ -503,7 +641,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
 async def patch_poll(request: Request, response: Response, pollid: int, authorization: str = Header(None)):
     '''Patch a poll
 
-    `config`: dict containing keys "max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter"
+    `config`: dict containing keys "max_choice", "allow_modify_vote", "show_stats", "show_stats_before_vote", "show_voter", "show_stats_when_ended"
     `choices`: list of object choices {"choiceid": int, "orderid": int}
     `end_time`: int/null
     [NOTE] Editing choices is not allowed'''
@@ -529,13 +667,14 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
         response.status_code = 404
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (title, description, config, orderid, is_pinned, end_time) = t[0]
-    if end_time == None:
+    if end_time is None:
         end_time = "NULL"
 
     old_configl = str2list(config)
-    old_config = {}
+    old_config = POLL_DEFAULT_CONFIG
     for i in range(len(POLL_CONFIG_KEYS)):
-        old_config[POLL_CONFIG_KEYS[i]] = old_configl[i]
+        if i < len(old_config):
+            old_config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](old_configl[i])
 
     await app.db.execute(dhrid, f"SELECT choiceid, orderid FROM poll_choice WHERE pollid = {pollid}")
     t = await app.db.fetchall(dhrid)
@@ -583,7 +722,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
             config = new_config
             try:
                 config["max_choice"] = int(config["max_choice"])
-                for key in ["allow_modify_vote", "show_stats", "show_voter", "show_stats_before_vote"]:
+                for key in ["allow_modify_vote", "show_stats", "show_voter", "show_stats_before_vote", "show_stats_when_ended"]:
                     config[key] = int(bool(config[key]))
             except:
                 response.status_code = 400

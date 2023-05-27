@@ -193,6 +193,8 @@
     "new_poll_with_title": "Ny afstemning: `{title}`",
     "new_poll": "Ny afstemning",
     "choices": "Valg",
+    "poll_result": "Afstemningsresultat",
+    "poll_ended_with_title": "Afstemning afsluttet: `{title}`",
 
     "garage": "garage",
     "garage_slot": "garageplads",

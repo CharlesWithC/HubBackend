@@ -193,6 +193,8 @@
     "new_poll_with_title": "Новый опрос: `{title}`",
     "new_poll": "Новый опрос",
     "choices": "Выбор",
+    "poll_result": "Результат опроса",
+    "poll_ended_with_title": "Опрос завершен: `{title}`",
 
     "garage": "гараж",
     "garage_slot": "гаражный слот",

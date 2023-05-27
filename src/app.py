@@ -92,10 +92,12 @@ def initApp(app, first_init = False, args = {}):
     else:
         logger.warning(f"[{app.config.abbr}] Upgrader disabled")
 
-    if not version.endswith(".dev"):
+    if first_init:
         conn = db.genconn(app)
         cur = conn.cursor()
-        cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
+        cur.execute(f"DELETE FROM settings WHERE skey = 'multiprocess-pid' OR skey = 'multiprocess-last-update'")
+        if not version.endswith(".dev"):
+            cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
         conn.commit()
         cur.close()
         conn.close()
@@ -218,7 +220,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     routes = apis.routes + apis.auth.routes + apis.dlog.routes + apis.member.routes + apis.user.routes
     if app.config.tracker == "tracksim":
         routes += apis.routes_tracksim
-        if "tracker" in app.config.plugins:
+        if "route" in app.config.plugins:
             routes += apis.routes_tracksim_route
     if "banner" in app.config.plugins:
         routes += apis.member.routes_banner

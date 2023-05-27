@@ -36,7 +36,7 @@
         "secret": ""
     },
 
-    "plugins": ["announcement", "application", "banner", "division", "downloads", "event", "tracker"],
+    "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
     "external_plugins": ["example"],
 
     "guild_id": "",

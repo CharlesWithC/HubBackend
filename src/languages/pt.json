@@ -193,6 +193,8 @@
     "new_poll_with_title": "Nova enquete: `{title}`",
     "new_poll": "Nova enquete",
     "choices": "Choices",
+    "poll_result": "Resultado da enquete",
+    "poll_ended_with_title": "Enquete encerrada: `{title}`",
 
     "garage": "garagem",
     "garage_slot": "vaga de garagem",

@@ -818,6 +818,11 @@ def validateConfig(cfg):
         cfg["captcha"] = {"provider": "hcaptcha", "secret": cfg["hcaptcha_secret"]}
         del cfg["hcaptcha_secret"]
 
+    # v2.7.0
+    if "tracker" in cfg["plugins"]:
+        cfg["plugins"].append("route")
+        cfg["plugins"].remove("tracker")
+
     tcfg = {}
     for key in config_keys_order:
         if key in cfg.keys():
