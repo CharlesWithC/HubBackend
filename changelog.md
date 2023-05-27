@@ -2,6 +2,8 @@
 
 **v2.7.1**  
 1.Minor bug fixes and improvements  
+2.Added `algo` to `config.ranks[].daily_bonus.streak_type` - A generic algorithm making the growth rate of the reward decreases as streak increases, solving the issue of `percentage` that leads to ultra high reward when streak is high.  
+When `streak_type` is `algo`, there's a `algo_offset` property. It must be a positive number. The smaller it is, the higher the growth rate is when streak is small. Also, it's recommended to set `streak_value` around 1, the larger it is, the higher the growth rate is.  
 
 **v2.7.0**  
 1.Added poll plugin  

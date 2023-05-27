@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import json
+import math
 import traceback
 from datetime import datetime, timedelta
 from typing import Optional
@@ -11,6 +12,9 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from api import tracebackHandler
 from functions import *
+
+ALGO_OFFSET = 15
+# NOTE This offset controls the initial increase rate of the algo
 
 
 async def patch_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
@@ -213,6 +217,11 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
             bonuspnt += bonus["streak_value"] * streak
         elif bonus["streak_type"] == "percentage":
             bonuspnt *= (1+bonus["streak_value"]) ** streak
+        elif bonus["streak_type"] == "algo":
+            offset = ALGO_OFFSET
+            if "algo_offset" in bonus.keys():
+                offset = bonus["algo_offset"]
+            bonuspnt = bonuspnt * (1 + math.log(streak + offset, math.e ** (1 / bonus["streak_value"]))) - bonuspnt * math.log(offset, math.e ** (1 / bonus["streak_value"]))
     bonuspnt = round(bonuspnt)
     if bonuspnt < -2147483647 or bonuspnt > 2147483647:
         response.status_code = 400
@@ -229,7 +238,7 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     elif streak > 1 and bonus["type"] == "streak":
         await notification(request, "bonus", uid, ml.tr(request, "claimed_daily_bonus_with_streak_s", var = {"points": bonuspnt, "streak": streak}, force_lang = await GetUserLanguage(request, uid)))
 
-    return Response(status_code=204)
+    return {"bonus": bonuspnt}
 
 async def delete_role_history(request: Request, response: Response, historyid: int, authorization: str = Header(None)):
     """Deletes a specific row of user role history with historyid, returns 204"""
