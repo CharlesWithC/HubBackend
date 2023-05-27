@@ -312,16 +312,28 @@ async def post_challenge(request: Request, response: Response, authorization: st
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         start_time = int(data["start_time"])
+        if abs(start_time) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "start_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
         end_time = int(data["end_time"])
+        if abs(end_time) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
         challenge_type = int(data["challenge_type"])
+        if abs(challenge_type) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "challenge_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         delivery_count = int(data["delivery_count"])
-        if delivery_count > 2147483647:
+        if abs(delivery_count) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
         required_roles = data["required_roles"]
         required_distance = int(data["required_distance"])
+        if abs(required_distance) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "required_distance", "limit": "2,147,483,647"}, force_lang = au["language"])}
         reward_points = int(data["reward_points"])
-        if reward_points > 2147483647:
+        if abs(reward_points) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
         public_details = int(bool(data["public_details"]))
@@ -334,7 +346,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
         if "is_pinned" not in data.keys():
             data["is_pinned"] = False
         orderid = int(data["orderid"])
-        if orderid < -2147483647 or orderid > 2147483647:
+        if abs(orderid) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
         is_pinned = int(bool(data["is_pinned"]))
@@ -443,15 +455,21 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
         if "start_time" in data.keys():
             start_time = int(data["start_time"])
+            if abs(start_time) > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "start_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "end_time" in data.keys():
             end_time = int(data["end_time"])
+            if abs(end_time) > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if start_time >= end_time:
             response.status_code = 400
             return {"error": ml.tr(request, "start_time_must_be_earlier_than_end_time", force_lang = au["language"])}
 
         if "delivery_count" in data.keys():
             delivery_count = int(data["delivery_count"])
-            if delivery_count > 2147483647:
+            if abs(delivery_count) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "delivery_count", "limit": "2,147,483,647"}, force_lang = au["language"])}
             if delivery_count <= 0:
@@ -483,10 +501,13 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
             required_distance = int(data["required_distance"])
             if required_distance < 0:
                 required_distance = 0
+            if abs(required_distance) > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "required_distance", "limit": "2,147,483,647"}, force_lang = au["language"])}
 
         if "reward_points" in data.keys():
             reward_points = int(data["reward_points"])
-            if reward_points > 2147483647:
+            if abs(reward_points) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "reward_points", "limit": "2,147,483,647"}, force_lang = au["language"])}
             if reward_points < 0:
@@ -511,7 +532,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
         if "orderid" in data.keys():
             orderid = int(data["orderid"])
-            if orderid < -2147483647 or orderid > 2147483647:
+            if abs(orderid) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
 

@@ -132,11 +132,20 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         if "email" in data.keys():
             new_connections[0] = data["email"]
         elif "discordid" in data.keys():
-            new_connections[1] = int(data["discordid"])
+            new_connections[1] = abs(int(data["discordid"]))
+            if new_connections[1] > 18446744073709551615:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "discordid", "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
         elif "steamid" in data.keys():
-            new_connections[2] = int(data["steamid"])
+            new_connections[2] = abs(int(data["steamid"]))
+            if new_connections[2] > 18446744073709551615:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "steamid", "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
         elif "truckersmpid" in data.keys():
-            new_connections[3] = int(data["truckersmpid"])
+            new_connections[3] = abs(int(data["truckersmpid"]))
+            if new_connections[3] > 18446744073709551615:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "truckersmpid", "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
@@ -377,7 +386,10 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
                 if field == "email":
                     data[field] = f"'{convertQuotation(data[field])}'"
                 else:
-                    data[field] = int(data[field])
+                    data[field] = abs(int(data[field]))
+                    if data[field] > 18446744073709551615:
+                        response.status_code = 400
+                        return {"error": ml.tr(request, "value_too_large", var = {"item": field, "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
             connections.append(data[field])
 
         expire = 0
@@ -385,6 +397,10 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
             expire = nint(data["expire"])
         if expire <= 0:
             expire = "NULL"
+        else:
+            if expire > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "expire", "limit": "2,147,483,647"}, force_lang = au["language"])}
         reason = ""
         if "reason" in data.keys():
             reason = convertQuotation(data["reason"])
@@ -466,7 +482,10 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
                 if field == "email":
                     data[field] = f"'{convertQuotation(data[field])}'"
                 else:
-                    data[field] = int(data[field])
+                    data[field] = abs(int(data[field]))
+                    if data[field] > 18446744073709551615:
+                        response.status_code = 400
+                        return {"error": ml.tr(request, "value_too_large", var = {"item": field, "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
             connections.append(data[field])
     except:
         response.status_code = 400

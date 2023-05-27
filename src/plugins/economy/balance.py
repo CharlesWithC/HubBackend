@@ -141,7 +141,7 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         to_userid = int(data["to_userid"])
         amount = int(data["amount"])
 
-        if amount > 4294967296:
+        if abs(amount) > 4294967296:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "amount", "limit": "4,294,967,296"}, force_lang = au["language"])}
 

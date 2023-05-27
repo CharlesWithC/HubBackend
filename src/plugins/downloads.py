@@ -185,7 +185,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
         if "is_pinned" not in data.keys():
             data["is_pinned"] = False
         orderid = int(data["orderid"])
-        if orderid < -2147483647 or orderid > 2147483647:
+        if abs(orderid) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
         is_pinned = int(bool(data["is_pinned"]))
@@ -251,7 +251,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
         if "orderid" in data.keys():
             orderid = int(data["orderid"])
-            if orderid < -2147483647 or orderid > 2147483647:
+            if abs(orderid) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "is_pinned" in data.keys():

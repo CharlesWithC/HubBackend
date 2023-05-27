@@ -142,13 +142,16 @@ async def post_announcement(request: Request, response: Response, authorization:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         announcement_type = int(data["announcement_type"])
+        if abs(announcement_type) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "announcement_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         is_private = int(bool(data["is_private"]))
         if "orderid" not in data.keys():
             data["orderid"] = 0
         if "is_pinned" not in data.keys():
             data["is_pinned"] = False
         orderid = int(data["orderid"])
-        if orderid < -2147483647 or orderid > 2147483647:
+        if abs(orderid) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
         is_pinned = int(bool(data["is_pinned"]))
@@ -208,11 +211,14 @@ async def patch_announcement(request: Request, response: Response, announcementi
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
         if "announcement_type" in data.keys():
             announcement_type = int(data["announcement_type"])
+            if abs(announcement_type) > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "announcement_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "is_private" in data.keys():
             is_private = int(bool(data["is_private"]))
         if "orderid" in data.keys():
             orderid = int(data["orderid"])
-            if orderid < -2147483647 or orderid > 2147483647:
+            if abs(orderid) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "is_pinned" in data.keys():

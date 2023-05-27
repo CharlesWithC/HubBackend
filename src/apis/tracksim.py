@@ -11,7 +11,6 @@ import traceback
 from datetime import datetime
 from random import randint
 
-from dateutil import parser
 from fastapi import Header, Request, Response
 
 import multilang as ml
@@ -258,8 +257,6 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     if driven_distance < 0:
         driven_distance = 0
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
-    parser.parse(d["data"]["object"]["start_time"]).timestamp()
-    parser.parse(d["data"]["object"]["stop_time"]).timestamp()
 
     delivery_rule_ok = True
 

@@ -223,7 +223,7 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
                 offset = bonus["algo_offset"]
             bonuspnt = bonuspnt * (1 + math.log(streak + offset, math.e ** (1 / bonus["streak_value"]))) - bonuspnt * math.log(offset, math.e ** (1 / bonus["streak_value"]))
     bonuspnt = round(bonuspnt)
-    if bonuspnt < -2147483647 or bonuspnt > 2147483647:
+    if abs(bonuspnt) > 2147483647:
         response.status_code = 400
         return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
 

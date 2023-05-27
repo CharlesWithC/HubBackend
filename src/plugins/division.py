@@ -249,10 +249,13 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     data = await request.json()
     try:
         message = str(data["message"])
-        status = int(data["status"])
         if len(data["message"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"}, force_lang = au["language"])}
+        status = int(data["status"])
+        if abs(status) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "status", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}

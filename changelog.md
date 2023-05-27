@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.7.2**  
+Improved value size limit handling  
+
 **v2.7.1**  
 1.Minor bug fixes and improvements  
 2.Added `algo` to `config.ranks[].daily_bonus.streak_type` - A generic algorithm making the growth rate of the reward decreases as streak increases, solving the issue of `percentage` that leads to ultra high reward when streak is high.  

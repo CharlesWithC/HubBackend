@@ -252,6 +252,9 @@ async def post_application(request: Request, response: Response, authorization: 
     data = await request.json()
     try:
         application_type = int(data["application_type"])
+        if abs(application_type) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "application_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         application = data["application"]
         if type(data["application"]) != dict:
             response.status_code = 400
@@ -497,6 +500,9 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     data = await request.json()
     try:
         status = int(data["status"])
+        if abs(status) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "status", "limit": "2,147,483,647"}, force_lang = au["language"])}
         message = str(data["message"])
         if len(data["message"]) > 2000:
             response.status_code = 400

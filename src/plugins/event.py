@@ -345,11 +345,11 @@ async def post_event(request: Request, response: Response, authorization: str = 
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         meetup_timestamp = int(data["meetup_timestamp"])
-        if meetup_timestamp < -2147483647 or meetup_timestamp > 2147483647:
+        if abs(meetup_timestamp) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
         departure_timestamp = int(data["departure_timestamp"])
-        if departure_timestamp < -2147483647 or departure_timestamp > 2147483647:
+        if abs(departure_timestamp) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
         description = compress(data["description"])
@@ -424,12 +424,12 @@ async def patch_event(request: Request, response: Response, eventid: int, author
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if "meetup_timestamp" in data.keys():
             meetup_timestamp = int(data["meetup_timestamp"])
-            if meetup_timestamp < -2147483647 or meetup_timestamp > 2147483647:
+            if abs(meetup_timestamp) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "departure_timestamp" in data.keys():
             departure_timestamp = int(data["departure_timestamp"])
-            if departure_timestamp < -2147483647 or departure_timestamp > 2147483647:
+            if abs(departure_timestamp) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "description" in data.keys():
@@ -503,7 +503,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
         attendees = intify(attendees)
         points = int(data["points"])
-        if points > 2147483647:
+        if abs(points) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "points", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:

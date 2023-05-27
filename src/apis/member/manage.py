@@ -263,11 +263,11 @@ async def patch_points(request: Request, response: Response, userid: int, author
     data = await request.json()
     try:
         distance = int(data["distance"])
-        if distance < 2147483647 or distance > 2147483647:
+        if abs(distance) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "distance", "limit": "2,147,483,647"}, force_lang = au["language"])}
         bonus_points = int(data["bonus"])
-        if bonus_points < 2147483647 or bonus_points > 2147483647:
+        if abs(bonus_points) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "bonus", "limit": "2,147,483,647"}, force_lang = au["language"])}
     except:
