@@ -6949,6 +6949,381 @@
                 },
                 "responses": {}
             }
+        },
+        "/polls/list": {
+            "get": {
+                "summary": "Get Poll List",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "get_polls_list",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page",
+                            "type": "integer"
+                        },
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Page Size",
+                            "type": "integer"
+                        },
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order by (pollsid, orderid, timestamp, end_time, title)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Query with title",
+                            "type": "string"
+                        },
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Poll ID)",
+                            "type": "integer"
+                        },
+                        "name": "after_pollsid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "creator_userid",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/polls": {
+            "post": {
+                "summary": "Create Poll",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "post_polls",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "choices": {
+                                        "description": "Choices",
+                                        "type": "object"
+                                    },
+                                    "config": {
+                                        "description": "Config",
+                                        "type": "object"
+                                    },
+                                    "end_time": {
+                                        "description": "End Time",
+                                        "type": "boolean"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "description",
+                                "choices"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/polls/{pollsid}/vote": {
+            "put": {
+                "summary": "Put Poll Vote",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "put_polls_vote",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "choiceids": {
+                                        "description": "Choice IDs",
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "choiceids"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "patch": {
+                "summary": "Patch Poll Vote",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "patch_polls_vote",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "choiceids": {
+                                        "description": "Choice IDs",
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "choiceids"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Delete Poll Vote",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "delete_polls_vote",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/polls/{pollsid}": {
+            "get": {
+                "summary": "Get Poll",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "get_polls",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            },
+            "patch": {
+                "summary": "Update Poll",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "patch_polls",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "description": "Title",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
+                                    "choices": {
+                                        "description": "Choices",
+                                        "type": "object"
+                                    },
+                                    "config": {
+                                        "description": "Config",
+                                        "type": "object"
+                                    },
+                                    "end_time": {
+                                        "description": "End Time",
+                                        "type": "integer"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Delete Poll",
+                "tags": [
+                    "poll"
+                ],
+                "operationId": "delete_polls",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Poll ID",
+                            "type": "integer"
+                        },
+                        "name": "pollsid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "tags": [
@@ -7023,6 +7398,10 @@
         {
             "name": "event",
             "description": "Event Plugin"
+        },
+        {
+            "name": "poll",
+            "description": "Poll Plugin"
         }
     ],
     "components": {

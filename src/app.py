@@ -236,6 +236,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         routes += plugins.routes_economy
     if "event" in app.config.plugins:
         routes += plugins.routes_event
+    if "poll" in app.config.plugins:
+        routes += plugins.routes_poll
     for route in routes:
         if route.path not in external_routes:
             if multi_mode and route.path == "/restart":

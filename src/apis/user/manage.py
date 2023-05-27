@@ -393,7 +393,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
     if expire <= 0:
-        expire = 253402272000
+        expire = "NULL"
 
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400
@@ -428,7 +428,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         await app.db.commit(dhrid)
         if uid != "NULL":
             duration = ml.ctr(request, "forever")
-            if expire != 253402272000:
+            if expire != "NULL":
                 duration = ml.ctr(request, "until", var = {"datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(expire))})
             await AuditLog(request, au["uid"], ml.ctr(request, "banned_user", var = {"username": username, "uid": uid, "expire": duration}))
         return Response(status_code=204)

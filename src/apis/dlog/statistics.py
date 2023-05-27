@@ -492,7 +492,7 @@ async def get_details(request: Request, response: Response, authorization: Optio
     elif userid is not None:
         quser = f"userid = {userid}"
     else:
-        quser = f"userid = -1"
+        quser = "userid = -1"
 
     ret = {}
     K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}

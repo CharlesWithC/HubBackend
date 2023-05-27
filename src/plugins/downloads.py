@@ -32,10 +32,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffau = await auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
-    isstaff = False
-    if not staffau["error"]:
-        isstaff = True
+    isstaff = checkPerm(app, au["roles"], ["admin", "downloads"])
     await ActivityUpdate(request, au["uid"], "downloads")
 
     limit = ""
@@ -97,15 +94,8 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffau = await auth(authorization, request, allow_application_token = True, required_permission=["admin", "downloads"])
-    isstaff = False
-    if not staffau["error"]:
-        isstaff = True
+    isstaff = checkPerm(app, au["roles"], ["admin", "downloads"])
     await ActivityUpdate(request, au["uid"], "downloads")
-
-    if downloadsid <= 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)
@@ -212,6 +202,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     downloadsid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_downloads", var = {"id": downloadsid}))
+    await app.db.commit(dhrid)
 
     await notification_to_everyone(request, "new_downloads", ml.spl("new_downloadable_item_with_title", var = {"title": title}), discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": "‎ ", "value": ml.spl("download_link", var = {"link": link}), "inline": True}], "footer": {"text": ml.spl("new_downloadable_item"), "icon_url": app.config.logo_url}})
 
@@ -233,10 +224,6 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = au["code"]
         del au["code"]
         return au
-
-    if downloadsid <= 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT title, description, link, orderid, is_pinned FROM downloads WHERE downloadsid = {downloadsid}")
     t = await app.db.fetchall(dhrid)

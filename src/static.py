@@ -76,7 +76,7 @@ if os.path.exists(os.path.join(abspath, "openapi.json")):
 else:
     OPENAPI = None
 
-NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "bonus": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False}
+NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, "dlog": False, "member": False, "bonus": False, "new_announcement": False, "application": False, "new_challenge": False, "challenge": False, "division": False, "new_downloads": False, "economy": False, "new_event": False, "upcoming_event": False, "new_poll": False, "poll_ended": False}
 
 pytz.country_names.get("UTC") # ensure pytz loads all country_names first
 ISO_COUNTRIES = pytz.country_names.__dict__["data"]
@@ -108,7 +108,7 @@ EN_STRINGTABLE = {
     "application_token_not_allowed": "Access denied: Application token is not allowed.",
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
     "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
-
+    
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",
     "user_pending_deletion": "Account is pending deletion. Login again to recover account.",
@@ -247,7 +247,7 @@ EN_STRINGTABLE = {
     "division_already_requested": "A division validation request has already been submitted.",
     "division_already_validated": "The delivery has already been validated.",
     "division_already_denied": "The delivery has been denied and you are not allowed to request validation again.",
-    "not_division_driver": "You are not a driver for the division.",
+    "not_division_driver": "You are not a driver for the division.", 
     "division_validation_not_found": "Delivery division validation request not found.",
     "division_not_validated": "This delivery is not validated by a division supervisor.",
 
@@ -270,6 +270,17 @@ EN_STRINGTABLE = {
     "departure_time": "Departure Time",
     "new_event_with_title": "New Event: `{title}`",
     "new_event": "New Event",
+
+    "poll_not_found": "Poll not found.",
+    "poll_already_ended": "The poll has already ended.",
+    "selected_too_many_choices": "You have selected too many choices, up to {count} is allowed.",
+    "selected_invalid_choice": "You have selected at least one invalid choice.",
+    "modify_vote_not_allowed": "You are not allowed to modify your votes.",
+    "user_already_voted": "You have already voted.",
+    "user_not_voted": "You have not voted yet.",
+    "new_poll_with_title": "New Poll: `{title}`",
+    "new_poll": "New Poll",
+    "choices": "Choices",
 
     "garage": "garage",
     "garage_slot": "garage slot",
@@ -444,6 +455,8 @@ EN_STRINGTABLE = {
     "added_event_points": "Updated points - Added `{points}` points to",
     "removed_event_points": "Updated points - Removed `{points}` points from",
     "no_changes_made": "No changes made.",
+    "updated_poll": "Updated poll `#{id}`",
+    "deleted_poll": "Deleted poll `#{id}`",
     "purchased_truck": "Purchased truck `{name}` (ID: `{id}`) for `{username}` (User ID: `{userid}`).",
     "transferred_truck": "Transferred truck `#{id}` to `{username}` (User ID: `{userid}`).",
     "reassigned_truck": "Reassigned truck `#{id}` to `{username}` (User ID: `{userid}`).",

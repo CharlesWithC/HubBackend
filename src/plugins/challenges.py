@@ -194,10 +194,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         return au
     if userid is None:
         userid = au["userid"]
-    isstaff = False
-    staffau = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
-    if not staffau["error"]:
-        isstaff = True
+    isstaff = checkPerm(app, au["roles"], ["admin", "challenge"])
 
     await ActivityUpdate(request, au["uid"], "challenges")
 

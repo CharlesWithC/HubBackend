@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.7.0**  
+Added poll plugin  
+
 **v2.6.3**  
 1.Added user role history  
 2.Added user ban history  

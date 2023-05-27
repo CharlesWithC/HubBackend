@@ -11,6 +11,7 @@ import plugins.divisions as divisions
 import plugins.downloads as downloads
 import plugins.economy as economy
 import plugins.events as events
+import plugins.poll as poll
 
 routes_announcement = [
     APIRoute("/announcements/list", announcements.get_list, methods=["GET"], response_class=JSONResponse),
@@ -112,4 +113,15 @@ routes_event = [
     APIRoute("/events/{eventid}", events.patch_event, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/events/{eventid}", events.delete_event, methods=["DELETE"], response_class=JSONResponse),
     APIRoute("/events/{eventid}/attendees", events.patch_attendees, methods=["PATCH"], response_class=JSONResponse)
+]
+
+routes_poll = [
+    APIRoute("/polls/list", poll.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}", poll.get_poll, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}/vote", poll.put_poll_vote, methods=["PUT"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}/vote", poll.patch_poll_vote, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}/vote", poll.delete_poll_vote, methods=["DELETE"], response_class=JSONResponse),
+    APIRoute("/polls", poll.post_poll, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}", poll.patch_poll, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/polls/{pollid}", poll.delete_poll, methods=["DELETE"], response_class=JSONResponse)
 ]
