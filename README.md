@@ -15,12 +15,14 @@
 2.Generic authentication and rate limiting algorithm  
 3.Discord / Steam / Password Login & MFA Support  
 4.Advanced statistics including summary, chart and details (e.g. the most-driven truck)  
-5.Role-based permission management  
-6.Notification system (Drivers Hub & Discord)  
-7.Multiple languages  
+5.Advanced pointing and rewarding system including automatic bonus points / daily bonus points  
+6.Role-based permission management  
+7.Notification system (Drivers Hub & Discord)  
+8.Multiple languages  
+9.Multiple plugins and external plugin support  
 
 **Official Plugins**  
-Announcement, Application, Banner, Challenge, Division, Downloads, Economy, Event, Tracker  
+Announcement, Application, Banner, Challenge, Division, Downloads, Economy, Event, Poll, Route  
 
 **External Plugins**  
 External plugins can add new routes and background tasks to the existing app. It may also modify existing routes by using the same route path.  
@@ -48,7 +50,6 @@ When rate limited, returns `(True, JSONResponse)`
 When not rate limited, returns `(False, resp_headers: dict)`  
 
 **More Info?**  
-Please refer to the [wiki](https://wiki.charlws.com)  
 For API documentation, please use [openapi.json](./openapi.json)  
 
 &copy; 2023 [CharlesWithC](https://charlws.com)  

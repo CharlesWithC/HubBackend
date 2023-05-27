@@ -383,6 +383,8 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         expire = 0
         if "expire" in data.keys():
             expire = nint(data["expire"])
+        if expire <= 0:
+            expire = "NULL"
         reason = ""
         if "reason" in data.keys():
             reason = convertQuotation(data["reason"])
@@ -392,8 +394,6 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-    if expire <= 0:
-        expire = "NULL"
 
     if connections[1] != "NULL" and '@' not in connections[1]:
         response.status_code = 400

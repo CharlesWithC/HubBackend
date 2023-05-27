@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.7.1**  
+1.Minor bug fixes and improvements  
+
 **v2.7.0**  
 1.Added poll plugin  
 2.Improved multiprocess handling  

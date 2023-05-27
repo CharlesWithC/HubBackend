@@ -463,6 +463,9 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
         if "required_roles" in data.keys():
             required_roles = data["required_roles"]
+            if type(required_roles) != list:
+                response.status_code = 400
+                return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
             roles = required_roles
             rolereq = []
             for role in roles:
@@ -495,7 +498,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
 
         if "job_requirements" in data.keys():
             job_requirements = data["job_requirements"]
-            if type(required_roles) != list or type(job_requirements) != dict:
+            if type(job_requirements) != dict:
                 response.status_code = 400
                 return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
             jobreq = []

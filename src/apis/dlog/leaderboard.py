@@ -129,8 +129,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
 
     # set limits
     limituser = str2list(limituser)
-    if len(limituser) > 10:
-        limituser = limituser[:10]
+    if len(limituser) > 100:
+        limituser = limituser[:100]
     limit = ""
     if speed_limit is not None:
         limit = f" AND topspeed <= {speed_limit}"
