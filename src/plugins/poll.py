@@ -122,7 +122,7 @@ async def PollResultNotification(app):
                             if total_vote != 0:
                                 stats = f"{round((choice_vote[choiceid] / total_vote)*100, 2)}% ({choice_vote[choiceid]}/{total_vote})"
                             else:
-                                stats = f"0% (0/0)"
+                                stats = "0% (0/0)"
                             if choiceid in votes[userid]:
                                 ctxt += f":ballot_box_with_check:  {content} - {stats}\n"
                             else:

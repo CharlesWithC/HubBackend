@@ -95,7 +95,7 @@ def initApp(app, first_init = False, args = {}):
     if first_init:
         conn = db.genconn(app)
         cur = conn.cursor()
-        cur.execute(f"DELETE FROM settings WHERE skey = 'multiprocess-pid' OR skey = 'multiprocess-last-update'")
+        cur.execute("DELETE FROM settings WHERE skey = 'multiprocess-pid' OR skey = 'multiprocess-last-update'")
         if not version.endswith(".dev"):
             cur.execute(f"UPDATE settings SET sval = '{version}' WHERE skey = 'version'")
         conn.commit()

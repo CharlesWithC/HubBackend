@@ -4,21 +4,21 @@
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-import plugins.announcements as announcements
-import plugins.applications as application
-import plugins.challenges as challenges
-import plugins.divisions as divisions
+import plugins.announcement as announcement
+import plugins.application as application
+import plugins.challenge as challenge
+import plugins.division as division
 import plugins.downloads as downloads
 import plugins.economy as economy
-import plugins.events as events
+import plugins.event as event
 import plugins.poll as poll
 
 routes_announcement = [
-    APIRoute("/announcements/list", announcements.get_list, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/announcements/{announcementid}", announcements.get_announcement, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/announcements", announcements.post_announcement, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/announcements/{announcementid}", announcements.patch_announcement, methods=["PATCH"], response_class=JSONResponse),
-    APIRoute("/announcements/{announcementid}", announcements.delete_announcement, methods=["DELETE"], response_class=JSONResponse)
+    APIRoute("/announcements/list", announcement.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/announcements/{announcementid}", announcement.get_announcement, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/announcements", announcement.post_announcement, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/announcements/{announcementid}", announcement.patch_announcement, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/announcements/{announcementid}", announcement.delete_announcement, methods=["DELETE"], response_class=JSONResponse)
 ]
 
 routes_application = [
@@ -34,22 +34,22 @@ routes_application = [
 ]
 
 routes_challenge = [
-    APIRoute("/challenges/list", challenges.get_list, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/challenges/{challengeid}", challenges.get_challenge, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/challenges", challenges.post_challenge, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/challenges/{challengeid}", challenges.patch_challenge, methods=["PATCH"], response_class=JSONResponse),
-    APIRoute("/challenges/{challengeid}", challenges.delete_challenge, methods=["DELETE"], response_class=JSONResponse),
-    APIRoute("/challenges/{challengeid}/delivery/{logid}", challenges.put_delivery, methods=["PUT"], response_class=JSONResponse),
-    APIRoute("/challenges/{challengeid}/delivery/{logid}", challenges.delete_delivery, methods=["DELETE"], response_class=JSONResponse),
+    APIRoute("/challenges/list", challenge.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/challenges/{challengeid}", challenge.get_challenge, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/challenges", challenge.post_challenge, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/challenges/{challengeid}", challenge.patch_challenge, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/challenges/{challengeid}", challenge.delete_challenge, methods=["DELETE"], response_class=JSONResponse),
+    APIRoute("/challenges/{challengeid}/delivery/{logid}", challenge.put_delivery, methods=["PUT"], response_class=JSONResponse),
+    APIRoute("/challenges/{challengeid}/delivery/{logid}", challenge.delete_delivery, methods=["DELETE"], response_class=JSONResponse),
 ]
 
 routes_division = [
-    APIRoute("/divisions/list", divisions.get_all_divisions, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/divisions", divisions.get_division, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/dlog/{logid}/division", divisions.get_dlog_division, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/dlog/{logid}/division/{divisionid}", divisions.post_dlog_division, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/dlog/{logid}/division/{divisionid}", divisions.patch_dlog_division, methods=["PATCH"], response_class=JSONResponse),
-    APIRoute("/divisions/list/pending", divisions.get_list_pending, methods=["GET"], response_class=JSONResponse)
+    APIRoute("/divisions/list", division.get_all_divisions, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/divisions", division.get_division, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/dlog/{logid}/division", division.get_dlog_division, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/dlog/{logid}/division/{divisionid}", division.post_dlog_division, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/dlog/{logid}/division/{divisionid}", division.patch_dlog_division, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/divisions/list/pending", division.get_list_pending, methods=["GET"], response_class=JSONResponse)
 ]
 
 routes_downloads = [
@@ -105,14 +105,14 @@ routes_economy = [
 ]
 
 routes_event = [
-    APIRoute("/events/list", events.get_list, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}", events.get_event, methods=["GET"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}/vote", events.put_vote, methods=["PUT"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}/vote", events.delete_vote, methods=["DELETE"], response_class=JSONResponse),
-    APIRoute("/events", events.post_event, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}", events.patch_event, methods=["PATCH"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}", events.delete_event, methods=["DELETE"], response_class=JSONResponse),
-    APIRoute("/events/{eventid}/attendees", events.patch_attendees, methods=["PATCH"], response_class=JSONResponse)
+    APIRoute("/events/list", event.get_list, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}", event.get_event, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}/vote", event.put_vote, methods=["PUT"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}/vote", event.delete_vote, methods=["DELETE"], response_class=JSONResponse),
+    APIRoute("/events", event.post_event, methods=["POST"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}", event.patch_event, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}", event.delete_event, methods=["DELETE"], response_class=JSONResponse),
+    APIRoute("/events/{eventid}/attendees", event.patch_attendees, methods=["PATCH"], response_class=JSONResponse)
 ]
 
 routes_poll = [

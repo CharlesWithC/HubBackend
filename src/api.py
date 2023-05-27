@@ -35,7 +35,7 @@ async def startup_event(app):
     loop.create_task(opqueue.run(app))
     loop.create_task(UpdateDlogStats(app))
     if "event" in app.config.plugins:
-        from plugins.events import EventNotification
+        from plugins.event import EventNotification
         loop.create_task(EventNotification(app))
     if "poll" in app.config.plugins:
         from plugins.poll import PollResultNotification
