@@ -214,9 +214,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for i in range(len(t)):
         tt = t[i]
         configl = str2list(tt[4])
-        config = {}
+        config = POLL_DEFAULT_CONFIG
         for j in range(len(POLL_CONFIG_KEYS)):
-            config[POLL_CONFIG_KEYS[j]] = configl[j]
+            if j < len(configl):
+                config[POLL_CONFIG_KEYS[j]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[j]](configl[j])
         qstr += f"OR pollid = {tt[0]} "
         idx[tt[0]] = i
         ret.append({"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]})
