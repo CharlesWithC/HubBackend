@@ -66,7 +66,7 @@ async def post_enable(request: Request, response: Response, authorization: str =
 
     return Response(status_code=204)
 
-async def post_disable(request: Request, response: Response, authorization: str = Header(None), uid: Optional[str] = -1):
+async def post_disable(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None):
     """Disables MFA for a specific user, returns 204
 
     If `uid` in request param is not provided, then disables MFA for the authorized user."""
@@ -80,7 +80,7 @@ async def post_disable(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    if uid == -1:
+    if uid is None:
         # self-disable mfa
         au = await auth(authorization, request, check_member = False)
         if au["error"]:

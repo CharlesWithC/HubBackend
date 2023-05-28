@@ -16,8 +16,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by: Optional[str] = "logid", order: Optional[str] = "desc", \
         speed_limit: Optional[int] = None, userid: Optional[int] = None, \
         after_logid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
-        game: Optional[int] = None, status: Optional[int] = 1,\
+        game: Optional[int] = None, status: Optional[int] = None,\
         challenge: Optional[str] = "any", division: Optional[str] = "any"):
+    '''`challenge` and `division` can only be include/only/none/any/{id}'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
@@ -64,24 +65,26 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += "AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record) "
     elif challenge == "none":
         limit += "AND dlog.logid NOT IN (SELECT challenge_record.logid FROM challenge_record) "
-    else:
+    elif challengeid != "any":
         try:
             challengeid = int(challenge)
             limit += f"AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record WHERE challenge_record.challengeid = {challengeid}) "
         except:
-            pass
+            response.status_code = 422
+            return {"error": "Unprocessable Entity"}
     if division == "include":
         limit = limit
     elif division == "only":
         limit += "AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1) "
     elif division == "none":
         limit += "AND dlog.logid NOT IN (SELECT division.logid FROM division WHERE division.status = 1) "
-    else:
+    elif division != "any":
         try:
             divisionid = int(division)
             limit += f"AND dlog.logid IN (SELECT division.logid FROM division WHERE division.status = 1 AND division.divisionid = {divisionid}) "
         except:
-            pass
+            response.status_code = 422
+            return {"error": "Unprocessable Entity"}
 
     timelimit = ""
     if after is not None:

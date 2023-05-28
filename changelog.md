@@ -1,7 +1,8 @@
 # Changelog
 
 **v2.7.2**  
-Improved value size limit handling  
+1.Improved value size limit handling  
+2.Fixed inappropriate default query value  
 
 **v2.7.1**  
 1.Minor bug fixes and improvements  

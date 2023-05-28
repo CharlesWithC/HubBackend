@@ -11,7 +11,7 @@ import multilang as ml
 from functions import *
 
 
-async def get_ticket(request: Request, response: Response, token: Optional[str] = ""):
+async def get_ticket(request: Request, response: Response, token: Optional[str] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -21,8 +21,12 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
+        
+    if token is None:
+        response.status_code = 401
+        return {"error": ml.tr(request, "invalid_authorization_token")}
 
-    token = token.replace("'","")
+    token = convertQuotation(token)
 
     await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE expire <= {int(time.time())}")
     await app.db.execute(dhrid, f"SELECT uid FROM auth_ticket WHERE token = '{token}'")
