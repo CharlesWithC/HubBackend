@@ -65,7 +65,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += "AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record) "
     elif challenge == "none":
         limit += "AND dlog.logid NOT IN (SELECT challenge_record.logid FROM challenge_record) "
-    elif challengeid != "any":
+    elif challenge != "any":
         try:
             challengeid = int(challenge)
             limit += f"AND dlog.logid IN (SELECT challenge_record.logid FROM challenge_record WHERE challenge_record.challengeid = {challengeid}) "

@@ -153,6 +153,7 @@ async def PollResultNotification(app):
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_pollid: Optional[int] = None, \
+        after: Optional[int] = None, before: Optional[int] = None, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
         query: Optional[str] = "", creator_userid: Optional[int] = None):
     app = request.app
@@ -180,6 +181,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
     if creator_userid is not None:
         limit += f"AND userid = {creator_userid} "
+    if after is not None:
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
 
     if page_size <= 1:
         page_size = 1
@@ -674,6 +679,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     (title, description, config, orderid, is_pinned, end_time) = t[0]
     if end_time is None:
         end_time = "NULL"
+    title = convertQuotation(title)
 
     old_configl = str2list(config)
     old_config = POLL_DEFAULT_CONFIG

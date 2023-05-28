@@ -438,6 +438,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     (title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, jobreq) = t[0]
     org_delivery_count = delivery_count
+    title = convertQuotation(title)
 
     data = await request.json()
     try:

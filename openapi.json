@@ -3312,6 +3312,24 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Query with title",
                             "type": "string"
                         },
@@ -3380,8 +3398,7 @@
                             "required": [
                                 "title",
                                 "content",
-                                "announcement_type",
-                                "is_private"
+                                "announcement_type"
                             ]
                         }
                     }
@@ -6627,6 +6644,24 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Order by (eventid, orderid, title, meetup_timestamp, departure_timestamp)",
+                            "type": "string"
+                        },
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Order (asc, desc)",
+                            "type": "string"
+                        },
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Query with title",
                             "type": "string"
                         },
@@ -6636,10 +6671,28 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "After (Event ID)",
+                            "type": "integer"
+                        },
+                        "name": "after_eventid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Timestamp)",
                             "type": "integer"
                         },
                         "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
                         "in": "query"
                     }
                 ],
@@ -6670,6 +6723,10 @@
                                         "description": "Title",
                                         "type": "string"
                                     },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
                                     "link": {
                                         "description": "Link",
                                         "type": "string"
@@ -6694,26 +6751,29 @@
                                         "description": "Departure Timestamp",
                                         "type": "integer"
                                     },
-                                    "description": {
-                                        "description": "Description",
-                                        "type": "string"
-                                    },
                                     "is_private": {
                                         "description": "Whether the event is visible only to members",
+                                        "type": "boolean"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
                                         "type": "boolean"
                                     }
                                 }
                             },
                             "required": [
                                 "title",
+                                "description",
                                 "link",
                                 "departure",
                                 "destination",
                                 "distance",
                                 "meetup_timestamp",
-                                "departure_timestamp",
-                                "description",
-                                "is_private"
+                                "departure_timestamp"
                             ]
                         }
                     }
@@ -6781,6 +6841,10 @@
                                         "description": "Title",
                                         "type": "string"
                                     },
+                                    "description": {
+                                        "description": "Description",
+                                        "type": "string"
+                                    },
                                     "link": {
                                         "description": "Link",
                                         "type": "string"
@@ -6805,12 +6869,16 @@
                                         "description": "Departure Timestamp",
                                         "type": "integer"
                                     },
-                                    "description": {
-                                        "description": "Description",
-                                        "type": "string"
-                                    },
                                     "is_private": {
                                         "description": "Whether the event is visible only to members",
+                                        "type": "boolean"
+                                    },
+                                    "orderid": {
+                                        "description": "Order ID",
+                                        "type": "integer"
+                                    },
+                                    "is_pinned": {
+                                        "description": "Is Pinned?",
                                         "type": "boolean"
                                     }
                                 }
@@ -6985,7 +7053,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (pollsid, orderid, timestamp, end_time, title)",
+                            "title": "Order by (pollid, orderid, timestamp, end_time, title)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -7015,7 +7083,25 @@
                             "title": "After (Poll ID)",
                             "type": "integer"
                         },
-                        "name": "after_pollsid",
+                        "name": "after_pollid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
                         "in": "query"
                     },
                     {
@@ -7092,7 +7178,7 @@
                 "responses": {}
             }
         },
-        "/polls/{pollsid}/vote": {
+        "/polls/{pollid}/vote": {
             "put": {
                 "summary": "Put Poll Vote",
                 "tags": [
@@ -7112,7 +7198,7 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],
@@ -7156,7 +7242,7 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],
@@ -7200,14 +7286,14 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],
                 "responses": {}
             }
         },
-        "/polls/{pollsid}": {
+        "/polls/{pollid}": {
             "get": {
                 "summary": "Get Poll",
                 "tags": [
@@ -7227,7 +7313,7 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],
@@ -7252,7 +7338,7 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],
@@ -7318,7 +7404,7 @@
                             "title": "Poll ID",
                             "type": "integer"
                         },
-                        "name": "pollsid",
+                        "name": "pollid",
                         "in": "path"
                     }
                 ],

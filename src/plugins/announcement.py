@@ -14,6 +14,7 @@ from functions import *
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
+        after: Optional[int] = None, before: Optional[int] = None, \
         after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
@@ -55,6 +56,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND title LIKE '%{query[:200]}%' "
     if announcement_type is not None:
         limit += f"AND announcement_type = {announcement_type} "
+    if after is not None:
+        limit += f"AND timestamp >= {after} "
+    if before is not None:
+        limit += f"AND timestamp <= {before} "
 
     base_rows = 0
     tot = 0
@@ -145,6 +150,8 @@ async def post_announcement(request: Request, response: Response, authorization:
         if abs(announcement_type) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "announcement_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "is_private" not in data.keys():
+            data["is_private"] = False
         is_private = int(bool(data["is_private"]))
         if "orderid" not in data.keys():
             data["orderid"] = 0
@@ -196,6 +203,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     (authorid, title, content, announcement_type, is_private, orderid, is_pinned) = t[0]
+    title = convertQuotation(title)
 
     data = await request.json()
     try:

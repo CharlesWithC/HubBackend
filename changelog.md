@@ -3,6 +3,10 @@
 **v2.7.2**  
 1.Improved value size limit handling  
 2.Fixed inappropriate default query value  
+3.Added `?after` and `?before` to announcement and poll listing  
+4.Added `order_id` and `is_pinned` to event  
+5.Improved flexibility of event listing - Added `?order_by`, `?order`, `?before`, `?after_eventid`  
+**Note** Expired events will no longer be attached to end of list, alter `?after` to get both active and expired events.  
 
 **v2.7.1**  
 1.Minor bug fixes and improvements  
@@ -20,7 +24,7 @@ When `streak_type` is `algo`, there's a `algo_offset` property. It must be a pos
 3.Added `config.ranks[].daily_bonus` and `bonus` notification type  
 
 **v2.6.2**  
-1.Added `order_id` and `is_pinned` to announcement, challenges  
+1.Added `order_id` and `is_pinned` to announcement, challenge  
 2.Removed "forward to Discord" function in announcement  
 3.Added `is_pinned` and `timestamp` to downloads  
 4.Improved announcement, challenge, downloads, event PATCHing to autofill unprovided fields  

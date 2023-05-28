@@ -21,7 +21,7 @@ async def get_ticket(request: Request, response: Response, token: Optional[str] 
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-        
+
     if token is None:
         response.status_code = 401
         return {"error": ml.tr(request, "invalid_authorization_token")}

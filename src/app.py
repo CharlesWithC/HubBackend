@@ -74,6 +74,11 @@ def initApp(app, first_init = False, args = {}):
         conn.close()
         if len(t) != 0:
             pre_version = t[0][0].replace(".dev", "").replace(".", "_").lstrip("v")
+        if "force_upgrade_from" in args.keys() and args["force_upgrade_from"] is not None:
+            pre_version = args["force_upgrade_from"]
+            if pre_version not in upgrades.manager.VERSION_CHAIN:
+                logger.warning(f"[{app.config.abbr}] Force upgrade version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")
+                return None
         if pre_version != cur_version:
             if pre_version not in upgrades.manager.VERSION_CHAIN:
                 logger.warning(f"[{app.config.abbr}] Previous version ({t[0][0]}) is not recognized. Aborted launch to prevent incompatability.")

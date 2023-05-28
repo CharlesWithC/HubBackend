@@ -115,8 +115,10 @@ async def EventNotification(app):
             return
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, query: Optional[str] = "", \
-        after: Optional[int] = None):
+        page: Optional[int] = 1, page_size: Optional[int] = 10, \
+        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
+        after_eventid: Optional[int] = None, query: Optional[str] = "", \
+        after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -138,22 +140,43 @@ async def get_list(request: Request, response: Response, authorization: str = He
             userid = au["userid"]
             await ActivityUpdate(request, au["uid"], "events")
 
-    if after is None:
-        after = int(time.time()) - 86400
-
     limit = ""
     if userid == -1:
         limit = "AND is_private = 0 "
     if query != "":
         query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
+    if after is not None:
+        limit += f"AND meetup_timestamp >= {after} "
+    if before is not None:
+        limit += f"AND meetup_timestamp <= {before} "
 
     if page_size <= 1:
         page_size = 1
     elif page_size >= 250:
         page_size = 250
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp >= {after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp"]:
+        order_by = "orderid"
+        order = "asc"
+    if order not in ["asc", "desc"]:
+        order = "asc"
+
+    base_rows = 0
+    tot = 0
+    await app.db.execute(dhrid, f"SELECT eventid FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        return {"list": [], "total_items": 0, "total_pages": 0}
+    tot = len(t)
+    if after_eventid is not None:
+        for tt in t:
+            if tt[0] == after_eventid:
+                break
+            base_rows += 1
+        tot -= base_rows
+
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -164,33 +187,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
             vote_cnt = len(str2list(tt[10]))
         ret.append({"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], \
-                "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
+                "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], \
                     "attendees": attendee_cnt, "votes": vote_cnt})
-
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 AND meetup_timestamp >= {after} {limit}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
-
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid >= 0 AND meetup_timestamp < {after} {limit} ORDER BY meetup_timestamp ASC LIMIT {max(max(page-1, 0) * page_size - tot,0)}, {page_size}")
-    t = await app.db.fetchall(dhrid)
-    for tt in t:
-        attendee_cnt = 0
-        vote_cnt = 0
-        if userid != -1:
-            attendee_cnt = len(str2list(tt[9]))
-            vote_cnt = len(str2list(tt[10]))
-        ret.append({"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), \
-            "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3],\
-            "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], \
-                "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_cnt, "votes": vote_cnt})
-
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM event WHERE eventid >= 0 {limit}")
-    t = await app.db.fetchall(dhrid)
-    tot = 0
-    if len(t) > 0:
-        tot = t[0][0]
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -217,7 +215,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "events")
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -235,7 +233,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     for vt in vote:
         vote_ret.append(await GetUserInfo(request, userid = vt))
 
-    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "attendees": attendee_ret, "votes": vote_ret}
+    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "attendees": attendee_ret, "votes": vote_ret}
 
 async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     app = request.app
@@ -328,6 +326,10 @@ async def post_event(request: Request, response: Response, authorization: str = 
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        description = compress(data["description"])
+        if len(data["description"]) > 2000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         link = compress(data["link"])
         if len(data["link"]) > 1000:
             response.status_code = 400
@@ -352,16 +354,23 @@ async def post_event(request: Request, response: Response, authorization: str = 
         if abs(departure_timestamp) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        description = compress(data["description"])
-        if len(data["description"]) > 2000:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
+        if "is_private" not in data.keys():
+            data["is_private"] = False
         is_private = int(bool(data["is_private"]))
+        if "orderid" not in data.keys():
+            data["orderid"] = 0
+        if "is_pinned" not in data.keys():
+            data["is_pinned"] = False
+        orderid = int(data["orderid"])
+        if abs(orderid) > 2147483647:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO event(userid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private, title, attendee, points, vote) VALUES ({au['userid']}, '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, '{description}', {is_private}, '{title}', '', 0, '')")
+    await app.db.execute(dhrid, f"INSERT INTO event(userid, title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned, vote, attendee, points) VALUES ({au['userid']}, '{title}', '{description}', '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, {is_private}, {orderid}, {is_pinned}, '', '', 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
@@ -389,11 +398,16 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, is_private FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
+    (title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned) = t[0]
+    title = convertQuotation(title)
+    departure = convertQuotation(departure)
+    destination = convertQuotation(destination)
+    distance = convertQuotation(distance)
 
     data = await request.json()
     try:
@@ -402,6 +416,11 @@ async def patch_event(request: Request, response: Response, eventid: int, author
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
+        if "description" in data.keys():
+            description = compress(data["description"])
+            if len(data["description"]) > 2000:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         if "link" in data.keys():
             link = compress(data["link"])
             if len(data["link"]) > 1000:
@@ -432,18 +451,20 @@ async def patch_event(request: Request, response: Response, eventid: int, author
             if abs(departure_timestamp) > 2147483647:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        if "description" in data.keys():
-            description = compress(data["description"])
-            if len(data["description"]) > 2000:
-                response.status_code = 400
-                return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         if "is_private" in data.keys():
             is_private = int(bool(data["is_private"]))
+        if "orderid" in data.keys():
+            orderid = int(data["orderid"])
+            if abs(orderid) > 2147483647:
+                response.status_code = 400
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "orderid", "limit": "2,147,483,647"}, force_lang = au["language"])}
+        if "is_pinned" in data.keys():
+            is_pinned = int(bool(data["is_pinned"]))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE event SET title = '{title}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, description = '{description}', is_private = {is_private} WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"UPDATE event SET title = '{title}', description = '{description}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 

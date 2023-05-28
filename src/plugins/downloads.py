@@ -231,6 +231,8 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     (title, description, link, orderid, is_pinned) = t[0]
+    title = convertQuotation(title)
+    link = convertQuotation(link)
 
     data = await request.json()
     try:
