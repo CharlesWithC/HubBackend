@@ -10,7 +10,6 @@ import time
 import traceback
 from datetime import datetime
 
-import pymysql
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -54,7 +53,6 @@ async def errorHandler(request: Request, exc: StarletteHTTPException):
 async def error422Handler(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": "Unprocessable Entity"}, status_code = 422)
 
-pymysql_errs = [err for name, err in vars(pymysql.err).items() if name.endswith("Error") and err not in [pymysql.err.ProgrammingError]]
 # app.state.dberr = []
 # app.state.session_errs = []
 async def tracebackHandler(request: Request, exc: Exception, err: str):
@@ -66,8 +64,6 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
         ismysqlerr = False
-        if type(exc) in pymysql_errs:
-            ismysqlerr = True
 
         lines = err.split("\n")
         idx = 0
@@ -113,11 +109,8 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             # as they are mixed up
             # hence we'll just check and filter connection/timeout errors
             err = err.replace("[aiosql] ", "")
-            if err_hash in app.state.session_errs:
-                # recognized error, do not print log or send webhook
-                logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
-                return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-            app.state.session_errs.append(err_hash)
+            if err_hash not in app.state.session_errs:
+                app.state.session_errs.append(err_hash)
 
             logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
@@ -128,24 +121,22 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
                     # try restarting database connection first
                     logger.info("Restarting database connection pool")
                     await app.db.restart_pool()
-                elif len(app.state.dberr) > 10:
+                elif len(app.state.dberr) > 10 and not app.multi_mode:
                     logger.info("Restarting service due to database errors")
                     threading.Thread(target=restart, args=(app,)).start()
                     app.state.dberr.append(-1)
+                # TODO Handle multi_mode restarts
 
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
         else:
-            if err_hash in app.state.session_errs:
-                # recognized error, do not print log or send webhook
-                logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\nTraceback not logged as it has already been logged in the current worker.")
-                return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
-            app.state.session_errs.append(err_hash)
-
             logger.error(f"[{app.config.abbr}] {err_hash} [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-            if app.config.webhook_error != "":
-                opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+            if err_hash not in app.state.session_errs:
+                app.state.session_errs.append(err_hash)
+                if app.config.webhook_error != "":
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
     except:
         return JSONResponse({"error": "Internal Server Error"}, status_code = 500)

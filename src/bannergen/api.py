@@ -146,7 +146,8 @@ async def get_banner(request: Request, response: Response):
                 banner.paste(logo_bg, (1475, 25, 1675, 225))
 
         except:
-            pass
+            logo = Image.new("RGBA", (200,200),(255,255,255))
+            banner = Image.new("RGB", (1700,300),(255,255,255))
 
         # draw company name
         draw = ImageDraw.Draw(banner)
@@ -209,7 +210,7 @@ async def get_banner(request: Request, response: Response):
                 avatar.putdata(newData)
                 avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True)
             except:
-                pass
+                avatar = logo.resize((250, 250)).convert("RGBA")
     avatar = avatar.getdata()
 
     # render avatar

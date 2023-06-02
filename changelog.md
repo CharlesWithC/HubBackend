@@ -1,5 +1,14 @@
 # Changelog
 
+**v2.7.3**  
+1.Fixed invalid table creation scheme of `announcement` and `downloads`  
+2.Removed exception type validation from database error judgement  
+-> Only `config.mysql_err_keywords` will be considered  
+3.Fixed `Internal Server Error` being returned for recorded database errors  
+4.Added traceback logging for all recorded errors  
+-> It won't forward the error to Discord webhook when the error is recorded  
+-> This would enable connection pool restarting  
+
 **v2.7.2**  
 1.Improved value size limit handling  
 2.Fixed inappropriate default query value  
