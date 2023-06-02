@@ -370,7 +370,7 @@ def validateConfig(cfg):
         hex_color = "2fc1f7"
         cfg["hex_color"] = "2fc1f7"
 
-    if 'perms' not in cfg.keys():
+    if 'perms' not in cfg.keys() or type(cfg["perms"]) != dict:
         cfg["perms"] = default_config["perms"]
     perms = cfg["perms"]
     for perm in perms.keys():
@@ -390,7 +390,7 @@ def validateConfig(cfg):
             perms[perm] = []
     cfg["perms"] = perms
 
-    if 'roles' not in cfg.keys():
+    if 'roles' not in cfg.keys() or type(cfg["roles"]) != list:
         cfg["roles"] = default_config["roles"]
     roles = cfg["roles"]
     newroles = []
@@ -418,7 +418,7 @@ def validateConfig(cfg):
             newroles.append(role)
     cfg["roles"] = newroles
 
-    if 'ranks' not in cfg.keys():
+    if 'ranks' not in cfg.keys() or type(cfg["ranks"]) != list:
         cfg["ranks"] = default_config["ranks"]
     ranks = cfg["ranks"]
     newranks = []
@@ -438,7 +438,7 @@ def validateConfig(cfg):
             rank["discord_role_id"] = None
 
         # v2.6.0
-        if 'bonus' not in rank.keys() or rank["bonus"] is None:
+        if 'bonus' not in rank.keys() or rank["bonus"] is None or type(rank["bonus"]) != dict:
             rank["bonus"] = None
         else:
             if 'min_distance' not in rank['bonus'].keys():
@@ -514,7 +514,7 @@ def validateConfig(cfg):
 
         ########
         # v2.6.3
-        if 'daily_bonus' not in rank.keys() or rank["daily_bonus"] is None:
+        if 'daily_bonus' not in rank.keys() or rank["daily_bonus"] is None or type(rank["daily_bonus"]) != dict:
             rank["daily_bonus"] = None
         else:
             cbonus = rank['daily_bonus']
@@ -564,7 +564,7 @@ def validateConfig(cfg):
             newranks.append(rank)
     cfg["ranks"] = newranks
 
-    if 'divisions' not in cfg.keys():
+    if 'divisions' not in cfg.keys() or type(cfg["divisions"]) != list:
         cfg["divisions"] = default_config["divisions"]
     divisions = cfg["divisions"]
     newdivisions = []
@@ -583,10 +583,10 @@ def validateConfig(cfg):
                 pass
     cfg["divisions"] = newdivisions
 
-    if 'economy' not in cfg.keys():
+    if 'economy' not in cfg.keys() or type(cfg["economy"]) != dict:
         cfg["economy"] = default_config["economy"]
 
-    if 'trucks' not in cfg['economy'].keys():
+    if 'trucks' not in cfg['economy'].keys() or type(cfg["economy"]["trucks"]) != list:
         cfg["economy"]["trucks"] = default_config["economy"]["trucks"]
     economy_trucks = cfg["economy"]["trucks"]
     new_economy_trucks = []
@@ -601,7 +601,7 @@ def validateConfig(cfg):
             new_economy_trucks.append(truck)
     cfg["economy"]["trucks"] = new_economy_trucks
 
-    if 'garages' not in cfg['economy'].keys():
+    if 'garages' not in cfg['economy'].keys() or type(cfg["economy"]["garages"]) != list:
         cfg["economy"]["garages"] = default_config["economy"]["garages"]
     economy_garages = cfg["economy"]["garages"]
     new_economy_garages = []
@@ -619,7 +619,7 @@ def validateConfig(cfg):
             new_economy_garages.append(garage)
     cfg["economy"]["garages"] = new_economy_garages
 
-    if 'merch' not in cfg['economy'].keys():
+    if 'merch' not in cfg['economy'].keys() or type(cfg["economy"]["merch"]) != list:
         cfg["economy"]["merch"] = default_config["economy"]["merch"]
     economy_merch = cfg["economy"]["merch"]
     new_economy_merch = []
@@ -649,7 +649,7 @@ def validateConfig(cfg):
     if 'currency_name' not in cfg['economy'].keys():
         cfg["economy"]["currency_name"] = "coin"
 
-    if 'application_types' not in cfg.keys():
+    if 'application_types' not in cfg.keys() or type(cfg["application_types"]) != list:
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
@@ -689,7 +689,7 @@ def validateConfig(cfg):
             new_application_types.append(application_type)
     cfg["application_types"] = new_application_types
 
-    if 'external_plugins' not in cfg.keys():
+    if 'external_plugins' not in cfg.keys() or type(cfg["external_plugins"]) != list:
         cfg["external_plugins"] = default_config["external_plugins"]
     external_plugins = cfg["external_plugins"]
     new_external_plugins = []

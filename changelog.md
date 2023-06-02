@@ -8,6 +8,9 @@
 4.Added traceback logging for all recorded errors  
 -> It won't forward the error to Discord webhook when the error is recorded  
 -> This would enable connection pool restarting  
+5.Fixed `500` error on **POST** `/member/bonus/claim` when `config.ranks[].daily_bonus = null`  
+-> It will now return `404` in such cases  
+6.Improved config validator to handle data of wrong types  
 
 **v2.7.2**  
 1.Improved value size limit handling  

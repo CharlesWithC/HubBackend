@@ -210,6 +210,10 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     totalpnt = await GetPoints(request, userid)
     bonus = point2dbonus(app, totalpnt)
 
+    if bonus is None:
+        response.status_code = 404
+        return {"error": "Not Found"}
+
     bonuspnt = bonus["base"]
 
     if bonus["type"] == "streak":
