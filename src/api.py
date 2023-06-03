@@ -5,7 +5,6 @@ import asyncio
 import hashlib
 import inspect
 import json
-import threading
 import time
 import traceback
 from datetime import datetime
@@ -114,18 +113,19 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 
             logger.error(f"[{app.config.abbr}] {err_hash} [DATABASE] [{str(datetime.now())}]\nRequest IP: {request.client.host}\nRequest URL: {str(request.url)}\n{err}")
 
-            if -1 not in app.state.dberr and int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
+            if int(time.time()) - app.db.POOL_START_TIME >= 60 and app.db.POOL_START_TIME != 0:
                 app.state.dberr.append(time.time())
                 app.state.dberr[:] = [i for i in app.state.dberr if i > time.time() - 1800]
-                if len(app.state.dberr) > 5:
-                    # try restarting database connection first
-                    logger.info("Restarting database connection pool")
+
+                if len(app.state.dberr) % 50 == 0:
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Database Error", "description": "Detected too many database errors, it's recommended to restart service.", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}], "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+
+                if len(app.state.dberr) % 100 == 0:
+                    app.state.dberr = []
+
+                if len(app.state.dberr) % 10 == 0:
+                    logger.info(f"[{app.config.abbr}] Restarting database connection pool")
                     await app.db.restart_pool()
-                elif len(app.state.dberr) > 10 and not app.multi_mode:
-                    logger.info("Restarting service due to database errors")
-                    threading.Thread(target=restart, args=(app,)).start()
-                    app.state.dberr.append(-1)
-                # TODO Handle multi_mode restarts
 
             return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 

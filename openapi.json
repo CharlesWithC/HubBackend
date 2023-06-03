@@ -3259,6 +3259,16 @@
                 "responses": {}
             }
         },
+        "/announcements/types": {
+            "get": {
+                "summary": "Get Announcement Types",
+                "tags": [
+                    "announcement"
+                ],
+                "operationId": "get_announcement_types",
+                "responses": {}
+            }
+        },
         "/announcements/list": {
             "get": {
                 "summary": "Get Announcement List",

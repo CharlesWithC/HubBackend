@@ -375,6 +375,7 @@ def validateConfig(cfg):
         # validate color
         tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
         int(hex_color, 16) # try initify
+        cfg["hex_color"] = hex_color
     except:
         hex_color = "2fc1f7"
         cfg["hex_color"] = "2fc1f7"
