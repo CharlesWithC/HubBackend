@@ -176,7 +176,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -187,7 +187,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
             vote_cnt = len(str2list(tt[10]))
         ret.append({"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], \
-                "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], \
+                "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
+                    "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], \
                     "attendees": attendee_cnt, "votes": vote_cnt})
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
@@ -215,7 +216,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "events")
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -233,7 +234,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     for vt in vote:
         vote_ret.append(await GetUserInfo(request, userid = vt))
 
-    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "attendees": attendee_ret, "votes": vote_ret}
+    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], "attendees": attendee_ret, "votes": vote_ret}
 
 async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     app = request.app
@@ -370,7 +371,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO event(userid, title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned, vote, attendee, points) VALUES ({au['userid']}, '{title}', '{description}', '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, {is_private}, {orderid}, {is_pinned}, '', '', 0)")
+    await app.db.execute(dhrid, f"INSERT INTO event(userid, title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned, timestamp, vote, attendee, points) VALUES ({au['userid']}, '{title}', '{description}', '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, {is_private}, {orderid}, {is_pinned}, {int(time.time())}, '', '', 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]

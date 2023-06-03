@@ -125,7 +125,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -166,7 +166,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         ret.append({"challengeid": tt[0], "title": tt[1], "description": decompress(tt[9]), \
                 "start_time": tt[2], "end_time": tt[3],\
                 "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
-                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "completed": completed})
+                "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "timestamp": tt[13], "completed": completed})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -198,8 +198,9 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 
     await ActivityUpdate(request, au["uid"], "challenges")
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, \
-            required_distance, reward_points, public_details, job_requirements, description, orderid, is_pinned FROM challenge WHERE challengeid = {challengeid} \
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, \
+            delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, \
+            description, orderid, is_pinned, timestamp FROM challenge WHERE challengeid = {challengeid} \
                 AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -238,7 +239,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     for pp in p:
         completed.append({"user": await GetUserInfo(request, userid = pp[0]), "points": pp[1], "timestamp": pp[2]})
 
-    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "job_requirements": jobreq, "completed": completed}
+    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "timestamp": tt[14], "job_requirements": jobreq, "completed": completed}
 
 # POST /challenge
 # Note: Check if there're at most 15 active challenges
@@ -397,7 +398,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
             jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
     jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
-    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}')")
+    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, timestamp) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}', {int(time.time())})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     challengeid = (await app.db.fetchone(dhrid))[0]

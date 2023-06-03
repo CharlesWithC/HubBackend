@@ -12,6 +12,7 @@
 -> It will now return `404` in such cases  
 6.Improved config validator to handle data of wrong types  
 7.Added `?sync_to_truckersmp` to **PATCH** `/user/profile`  
+8.Added (creation) `timestamp` to `challenge` and `event`  
 
 **v2.7.2**  
 1.Improved value size limit handling  

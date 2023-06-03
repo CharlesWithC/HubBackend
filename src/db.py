@@ -49,7 +49,7 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # status = 0: pending | 1: accepted | 2: declined
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, orderid INT, is_pinned INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS challenge (challengeid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, start_time BIGINT, end_time BIGINT, challenge_type INT, orderid INT, is_pinned INT, delivery_count INT, required_roles TEXT, required_distance BIGINT, reward_points INT, public_details INT, job_requirements TEXT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_record (userid INT, challengeid INT, logid INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     cur.execute(f"CREATE TABLE IF NOT EXISTS challenge_completed (userid INT, challengeid INT, points INT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
@@ -73,7 +73,7 @@ def init(app):
     # userid = -1005 => scrap station
     # userid = -1006 => blackhole
 
-    cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, is_private INT, orderid INT, is_pinned INT, vote TEXT, attendee TEXT, points INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE IF NOT EXISTS event (eventid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, link TEXT, departure TEXT, destination TEXT, distance TEXT, meetup_timestamp BIGINT, departure_timestamp BIGINT, is_private INT, orderid INT, is_pinned INT, timestamp BIGINT, vote TEXT, attendee TEXT, points INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS poll (pollid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, description TEXT, config TEXT, orderid INT, is_pinned INT, end_time BIGINT, timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # config: max_choice / allow_modify_vote / show_vote_count / show_voter / show_data_before_vote
