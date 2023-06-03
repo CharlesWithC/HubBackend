@@ -10,6 +10,19 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from functions import *
 
+async def get_types(request: Request):
+    app = request.app
+
+    return app.config.announcement_types
+
+def get_type(request, type_id: int, force_lang: Optional[str] = ""):
+    app = request.app
+    ret = {"id": type_id, "name": ml.tr(request, "unknown", force_lang = force_lang)}
+    for announcement_type in app.config.announcement_types:
+        if announcement_type["id"] == type_id:
+            ret["name"] = announcement_type["name"]
+            break
+    return ret
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
@@ -27,6 +40,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.headers[k] = rl[1][k]
 
     userid = -1
+    aulanguage = ""
     if authorization is not None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
@@ -35,6 +49,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             return au
         else:
             userid = au["userid"]
+            aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "announcements")
 
     if page_size <= 1:
@@ -79,7 +94,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]})
+        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]})
 
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = await app.db.fetchall(dhrid)
@@ -100,6 +115,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
+    aulanguage = ""
     if authorization is not None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
@@ -117,7 +133,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
         return {"error": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
 
-    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": tt[2], "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]}
+    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]}
 
 async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
@@ -166,6 +182,22 @@ async def post_announcement(request: Request, response: Response, authorization:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
+    tatype = None
+    for atype in app.config.announcement_types:
+        if atype["id"] == announcement_type:
+            tatype = atype
+            break
+    if tatype is None:
+        response.status_code = 400
+        return {"error": ml.tr(request, "unknown_announcement_type", force_lang = au["language"])}
+    ok = False
+    for role in au["roles"]:
+        if role in tatype["staff_role_ids"]:
+            ok = True
+    if not ok and not checkPerm(app, au["roles"], "admin"):
+        response.status_code = 403
+        return {"error": "Forbidden"}
+
     timestamp = int(time.time())
 
     await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid, is_pinned) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
@@ -195,15 +227,30 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffroles = au["roles"]
+    au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT userid, title, content, announcement_type, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, is_private, orderid, is_pinned FROM announcement WHERE announcementid = {announcementid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
-    (authorid, title, content, announcement_type, is_private, orderid, is_pinned) = t[0]
+    (title, content, announcement_type, is_private, orderid, is_pinned) = t[0]
     title = convertQuotation(title)
+
+    # check if announcement original type can be modified by current staff
+    tatype = None
+    for atype in app.config.announcement_types:
+        if atype["id"] == announcement_type:
+            tatype = atype
+            break
+    if tatype is not None:
+        ok = False
+        for role in au["roles"]:
+            if role in tatype["staff_role_ids"]:
+                ok = True
+        if not ok and not checkPerm(app, au["roles"], "admin"):
+            response.status_code = 403
+            return {"error": "Forbidden"}
 
     data = await request.json()
     try:
@@ -235,9 +282,22 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"):
+    # check if announcement new type can be modified by current staff
+    tatype = None
+    for atype in app.config.announcement_types:
+        if atype["id"] == announcement_type:
+            tatype = atype
+            break
+    if tatype is None:
+        response.status_code = 400
+        return {"error": ml.tr(request, "unknown_announcement_type", force_lang = au["language"])}
+    ok = False
+    for role in au["roles"]:
+        if role in tatype["staff_role_ids"]:
+            ok = True
+    if not ok and not checkPerm(app, au["roles"], "admin"):
         response.status_code = 403
-        return {"error": ml.tr(request, "announcement_only_creator_can_edit", force_lang = au["language"])}
+        return {"error": "Forbidden"}
 
     await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
@@ -255,22 +315,33 @@ async def delete_announcement(request: Request, response: Response, announcement
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin","announcement"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "announcement"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffroles = au["roles"]
 
-    await app.db.execute(dhrid, f"SELECT userid FROM announcement WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"SELECT announcement_type FROM announcement WHERE announcementid = {announcementid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
-    authorid = t[0][0]
-    if authorid != au["userid"] and not checkPerm(app, staffroles, "admin"): # creator or leadership
-        response.status_code = 403
-        return {"error": ml.tr(request, "announcement_only_creator_can_delete", force_lang = au["language"])}
+    announcement_type = t[0][0]
+
+    # check if announcement type can be deleted by current staff
+    tatype = None
+    for atype in app.config.announcement_types:
+        if atype["id"] == announcement_type:
+            tatype = atype
+            break
+    if tatype is not None:
+        ok = False
+        for role in au["roles"]:
+            if role in tatype["staff_role_ids"]:
+                ok = True
+        if not ok and not checkPerm(app, au["roles"], "admin"):
+            response.status_code = 403
+            return {"error": "Forbidden"}
 
     await app.db.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))

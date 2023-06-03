@@ -110,8 +110,7 @@
     "discord_api_inaccessible": "Discord API'sine erişilemiyor.",
 
     "announcement_not_found": "Duyuru bulunamadı.",
-    "announcement_only_creator_can_edit": "Duyuruyu yalnızca yazarı veya bir yönetici düzenleyebilir.",
-    "announcement_only_creator_can_delete": "Duyuruyu yalnızca yazarı veya bir yönetici silebilir.",
+    "unknown_announcement_type": "Bilinmeyen Duyuru Türü",
     "new_announcement_with_title": "Yeni Duyuru: `{title}`",
     "new_announcement": "Yeni Duyuru",
     "author": "Yazar",

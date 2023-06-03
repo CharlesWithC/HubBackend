@@ -110,8 +110,7 @@
     "discord_api_inaccessible": "A API do Discord está inacessível.",
 
     "announcement_not_found": "Anúncio não encontrado.",
-    "announcement_only_creator_can_edit": "Somente o autor do anúncio ou um administrador pode editá-lo.",
-    "announcement_only_creator_can_delete": "Somente o autor do anúncio ou um administrador pode excluí-lo.",
+    "unknown_announcement_type": "Tipo de anúncio desconhecido",
     "new_announcement_with_title": "Novo anúncio: `{title}`",
     "new_announcement": "Novo anúncio",
     "author": "Autor",

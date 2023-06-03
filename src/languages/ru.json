@@ -110,8 +110,7 @@
     "discord_api_inaccessible": "API Discord недоступен.",
 
     "announcement_not_found": "Объявление не найдено.",
-    "announcement_only_creator_can_edit": "Редактировать его может только автор объявления или администратор.",
-    "announcement_only_creator_can_delete": "Удалить объявление может только автор или администратор.",
+    "unknown_announcement_type": "Неизвестный тип объявления",
     "new_announcement_with_title": "Новое объявление: `{title}`",
     "new_announcement": "Новое объявление",
     "author": "Автор",

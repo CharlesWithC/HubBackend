@@ -14,6 +14,7 @@ import plugins.event as event
 import plugins.poll as poll
 
 routes_announcement = [
+    APIRoute("/announcements/types", announcement.get_types, methods=["GET"], response_class=JSONResponse),
     APIRoute("/announcements/list", announcement.get_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/announcements/{announcementid}", announcement.get_announcement, methods=["GET"], response_class=JSONResponse),
     APIRoute("/announcements", announcement.post_announcement, methods=["POST"], response_class=JSONResponse),

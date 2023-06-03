@@ -199,7 +199,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
         else:
             tt = app.state.cache_statistics[ll]
             for t in tt:
-                if abs(t["start_time"] - after) <= 15 and abs(t["end_time"] - before) <= 15 and t["userid"] == userid:
+                if abs(t["after"] - after) <= 15 and abs(t["end_time"] - before) <= 15 and t["userid"] == userid:
                     ret = t["result"]
                     ret["cache"] = ll
                     return ret
@@ -358,7 +358,7 @@ async def get_summary(request: Request, response: Response, authorization: str =
     ts = int(time.time())
     if ts not in app.state.cache_statistics.keys():
         app.state.cache_statistics[ts] = []
-    app.state.cache_statistics[ts].append({"start_time": after, "end_time": before, "userid": userid, "result": ret})
+    app.state.cache_statistics[ts].append({"after": after, "end_time": before, "userid": userid, "result": ret})
 
     ret["cache"] = None
 

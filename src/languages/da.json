@@ -110,8 +110,7 @@
     "discord_api_inaccessible": "Discord API er utilgængelig.",
 
     "announcement_not_found": "Bekendtgørelse ikke funder.",
-    "announcement_only_creator_can_edit": "Kun forfatteren af ​​meddelelsen eller en administrator kan redigere den.",
-    "announcement_only_creator_can_delete": "Kun forfatteren af ​​meddelelsen eller en administrator kan slette den.",
+    "unknown_announcement_type": "Ukendt meddelelsestype",
     "new_announcement_with_title": "Ny meddelelse: `{title}`",
     "new_announcement": "Ny meddelelse",
     "author": "Forfatter",

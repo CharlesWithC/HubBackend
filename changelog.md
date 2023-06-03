@@ -13,6 +13,10 @@
 6.Improved config validator to handle data of wrong types  
 7.Added `?sync_to_truckersmp` to **PATCH** `/user/profile`  
 8.Added (creation) `timestamp` to `challenge` and `event`  
+9.Renamed `config.application_types[].staff_role_id` to `staff_role_ids`  
+10.Added `config.announcement_types[]`  
+```{"id": int, "name": str, "staff_role_ids": list}```  
+**Note** `announcement_type` in response has been converted from `int` to `dict` like `{"id": int, "name": str}`  
 
 **v2.7.2**  
 1.Improved value size limit handling  

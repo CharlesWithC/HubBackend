@@ -73,7 +73,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         else:
             tt = app.state.cache_leaderboard[ll]
             for t in tt:
-                if abs(t["start_time"] - after) <= 120 and abs(t["end_time"] - before) <= 120 and \
+                if abs(t["after"] - after) <= 120 and abs(t["before"] - before) <= 120 and \
                         t["speed_limit"] == speed_limit and t["game"] == game:
                     usecache = True
                     cachetime = ll
@@ -423,7 +423,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         ts = int(time.time())
         if ts not in app.state.cache_leaderboard.keys():
             app.state.cache_leaderboard[ts] = []
-        app.state.cache_leaderboard[ts].append({"start_time": after, "end_time": before, "speed_limit": speed_limit, "game": game,\
+        app.state.cache_leaderboard[ts].append({"after": after, "before": before, "speed_limit": speed_limit, "game": game,\
             "userdistance": userdistance, "userchallenge": userchallenge, "userevent": userevent, \
             "userdivision": userdivision, "userbonus": userbonus})
 

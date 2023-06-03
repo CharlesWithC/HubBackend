@@ -205,6 +205,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
         response.headers[k] = rl[1][k]
 
     userid = -1
+    aulanguage = ""
     if authorization is not None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:

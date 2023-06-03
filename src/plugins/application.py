@@ -141,7 +141,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if not checkPerm(app, roles, "admin"):
             allowed_application_types = []
             for tt in app.config.application_types:
-                allowed_roles = tt["staff_role_id"]
+                allowed_roles = tt["staff_role_ids"]
                 for role in allowed_roles:
                     if role in roles:
                         allowed_application_types.append(tt["id"])
@@ -217,7 +217,7 @@ async def get_application(request: Request, response: Response, applicationid: i
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
-                allowed_roles = tt["staff_role_id"]
+                allowed_roles = tt["staff_role_ids"]
                 for role in allowed_roles:
                     if role in roles:
                         ok = True
@@ -533,7 +533,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
-                allowed_roles = tt["staff_role_id"]
+                allowed_roles = tt["staff_role_ids"]
                 for role in allowed_roles:
                     if role in roles:
                         ok = True
@@ -596,7 +596,7 @@ async def delete_application(request: Request, response: Response, applicationid
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
-                allowed_roles = tt["staff_role_id"]
+                allowed_roles = tt["staff_role_ids"]
                 for role in allowed_roles:
                     if role in roles:
                         ok = True

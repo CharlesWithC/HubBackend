@@ -24,13 +24,14 @@ config.ranks[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'application_types', 'divisions', 'hook_division', 'economy']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'application_types', 'divisions', 'hook_division', 'economy', 'perms', 'roles', 'hook_audit_log']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'application_types', 'divisions', 'hook_division', 'economy']
 
 public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id']
 
-config_plugins = {"application": ["application_types"],
+config_plugins = {"announcement": ["announcement_types"],
+    "application": ["application_types"],
     "division": ["divisions", "hook_division"],
     "economy": ["economy"]}
 
@@ -141,6 +142,59 @@ default_config = {
         }
     },
 
+    "perms": {
+        "admin": [0],
+        "config": [],
+        "reload_config": [],
+        "restart": [],
+
+        "hrm": [],
+        "disable_user_mfa": [],
+        "update_user_connections": [],
+        "delete_user": [],
+        "update_application_positions": [],
+        "delete_dlog": [],
+
+        "hr": [],
+        "manage_profile": [],
+        "get_sensitive_profile": [],
+        "add_member": [],
+        "update_member_roles": [],
+        "update_member_points": [],
+        "dismiss_member": [],
+        "get_pending_user_list": [],
+        "delete_application": [],
+        "ban_user": [],
+
+        "economy_manager": [],
+        "balance_manager": [],
+        "accountant": [],
+        "truck_manager": [],
+        "garage_manager": [],
+        "merch_manager": [],
+
+        "audit": [],
+        "announcement": [],
+        "challenge": [],
+        "division": [],
+        "downloads": [],
+        "event": [],
+        "poll": [],
+
+        "driver": [100]
+    },
+
+    "roles": [
+        {"id": 0, "order_id": 0, "name": "root"},
+        {"id": 1, "order_id": 100, "name": "Driver"},
+        {"id": 2, "order_id": 200, "name": "Construction Division"}
+    ],
+
+    "hook_audit_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    },
+
     "member_accept": [{
         "channel_id": "",
         "webhook_url": "",
@@ -246,11 +300,19 @@ default_config = {
         {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "algo", "streak_value": 1.5, "algo_offset": 15}}
     ],
 
+    "announcement_types": [
+        {"id": 0, "name": "Information", "staff_role_ids": [20]},
+        {"id": 1, "name": "Event", "staff_role_ids": [40]},
+        {"id": 2, "name": "Warning", "staff_role_ids": [20]},
+        {"id": 3, "name": "Critical", "staff_role_ids": [20]},
+        {"id": 4, "name": "Resolved", "staff_role_ids": [20]}
+    ],
+
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
     ],
 
     "divisions": [],
@@ -284,59 +346,6 @@ default_config = {
         "allow_purchase_garage": True,
         "allow_purchase_slot": True,
         "enable_balance_leaderboard": True
-    },
-
-    "perms": {
-        "admin": [0],
-        "config": [],
-        "reload_config": [],
-        "restart": [],
-
-        "hrm": [],
-        "disable_user_mfa": [],
-        "update_user_connections": [],
-        "delete_user": [],
-        "update_application_positions": [],
-        "delete_dlog": [],
-
-        "hr": [],
-        "manage_profile": [],
-        "get_sensitive_profile": [],
-        "add_member": [],
-        "update_member_roles": [],
-        "update_member_points": [],
-        "dismiss_member": [],
-        "get_pending_user_list": [],
-        "delete_application": [],
-        "ban_user": [],
-
-        "economy_manager": [],
-        "balance_manager": [],
-        "accountant": [],
-        "truck_manager": [],
-        "garage_manager": [],
-        "merch_manager": [],
-
-        "audit": [],
-        "announcement": [],
-        "challenge": [],
-        "division": [],
-        "downloads": [],
-        "event": [],
-        "poll": [],
-
-        "driver": [100]
-    },
-
-    "roles": [
-        {"id": 0, "order_id": 0, "name": "root"},
-        {"id": 1, "order_id": 100, "name": "Driver"},
-        {"id": 2, "order_id": 200, "name": "Construction Division"}
-    ],
-
-    "hook_audit_log": {
-        "channel_id": "",
-        "webhook_url": ""
     }
 }
 
@@ -653,13 +662,18 @@ def validateConfig(cfg):
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
-    reqs = ["id", "name", "discord_role_id", "staff_role_id", "message", "channel_id", "webhook_url", "note"]
+    reqs = ["id", "name", "discord_role_id", "staff_role_ids", "message", "channel_id", "webhook_url", "note"]
     for i in range(len(application_types)):
         application_type = application_types[i]
         try:
             application_type["id"] = int(application_type["id"])
-            for i in range(len(application_type["staff_role_id"])):
-                application_type["staff_role_id"][i] = int(application_type["staff_role_id"][i])
+            # v2.7.3
+            if "staff_role_id" in application_type.keys():
+                application_type["staff_role_ids"] = application_type["staff_role_id"]
+                del application_type["staff_role_id"]
+            ########
+            for i in range(len(application_type["staff_role_ids"])):
+                application_type["staff_role_ids"][i] = int(application_type["staff_role_ids"][i])
         except:
             continue
         try:
@@ -836,6 +850,30 @@ def validateConfig(cfg):
     if "tracker" in cfg["plugins"]:
         cfg["plugins"].append("route")
         cfg["plugins"].remove("tracker")
+
+    # v2.7.2
+    if 'announcement_types' not in cfg.keys() or type(cfg["announcement_types"]) != list:
+        cfg["announcement_types"] = default_config["announcement_types"]
+    announcement_types = cfg["announcement_types"]
+    new_announcement_types = []
+    reqs = ["id", "name", "staff_role_ids"]
+    for i in range(len(announcement_types)):
+        announcement_type = announcement_types[i]
+        try:
+            announcement_type["id"] = int(announcement_type["id"])
+            for i in range(len(announcement_type["staff_role_ids"])):
+                announcement_type["staff_role_ids"][i] = int(announcement_type["staff_role_ids"][i])
+        except:
+            continue
+
+        ok = True
+        for req in reqs:
+            if req not in announcement_type.keys():
+                ok = False
+        if ok:
+            new_announcement_types.append(announcement_type)
+    cfg["announcement_types"] = new_announcement_types
+    ########
 
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}
     extra_perms = {key: cfg["perms"][key] for key in cfg["perms"].keys() if key not in default_config["perms"].keys()}

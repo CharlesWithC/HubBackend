@@ -103,6 +103,60 @@
         }
     },
 
+    "perms": {
+        "admin": [0],
+        "config": [],
+        "reload_config": [],
+        "restart": [],
+
+        "hrm": [],
+        "disable_user_mfa": [],
+        "update_user_connections": [],
+        "delete_user": [],
+        "update_application_positions": [],
+        "delete_application": [],
+        "delete_dlog": [],
+        "delete_notifications": [],
+
+        "hr": [],
+        "manage_profile": [],
+        "get_sensitive_profile": [],
+        "get_privacy_protected_data": [],
+        "add_member": [],
+        "update_member_roles": [],
+        "update_member_points": [],
+        "dismiss_member": [],
+        "get_pending_user_list": [],
+        "ban_user": [],
+
+        "economy_manager": [],
+        "balance_manager": [],
+        "truck_manager": [],
+        "garage_manager": [],
+        "merch_manager": [],
+
+        "audit": [],
+        "announcement": [],
+        "challenge": [],
+        "division": [],
+        "downloads": [],
+        "event": [],
+        "poll": [],
+        
+        "driver": [100]
+    },
+
+    "roles": [
+        {"id": 0, "order_id": 0, "name": "root"},
+        {"id": 1, "order_id": 100, "name": "Driver"},
+        {"id": 2, "order_id": 200, "name": "Construction Division"}
+    ],
+
+    "hook_audit_log": {
+        "channel_id": "",
+        "webhook_url": ""
+    },
+
     "member_accept": [{
         "channel_id": "",
         "webhook_url": "",
@@ -208,11 +262,19 @@
         {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}}
     ],
 
+    "announcement_types": [
+        {"id": 0, "name": "Information", "staff_role_ids": [20]},
+        {"id": 1, "name": "Event", "staff_role_ids": [40]},
+        {"id": 2, "name": "Warning", "staff_role_ids": [20]},
+        {"id": 3, "name": "Critical", "staff_role_ids": [20]},
+        {"id": 4, "name": "Resolved", "staff_role_ids": [20]}
+    ],
+
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_id": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_id": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
     ],
 
     "divisions": [
@@ -248,59 +310,5 @@
         "allow_purchase_garage": true,
         "allow_purchase_slot": true,
         "enable_balance_leaderboard": true
-    },
-
-    "perms": {
-        "admin": [0],
-        "config": [],
-        "reload_config": [],
-        "restart": [],
-
-        "hrm": [],
-        "disable_user_mfa": [],
-        "update_user_connections": [],
-        "delete_user": [],
-        "update_application_positions": [],
-        "delete_application": [],
-        "delete_dlog": [],
-        "delete_notifications": [],
-
-        "hr": [],
-        "manage_profile": [],
-        "get_sensitive_profile": [],
-        "get_privacy_protected_data": [],
-        "add_member": [],
-        "update_member_roles": [],
-        "update_member_points": [],
-        "dismiss_member": [],
-        "get_pending_user_list": [],
-        "ban_user": [],
-
-        "economy_manager": [],
-        "balance_manager": [],
-        "truck_manager": [],
-        "garage_manager": [],
-        "merch_manager": [],
-
-        "audit": [],
-        "announcement": [],
-        "challenge": [],
-        "division": [],
-        "downloads": [],
-        "event": [],
-        "poll": [],
-        
-        "driver": [100]
-    },
-
-    "roles": [
-        {"id": 0, "order_id": 0, "name": "root"},
-        {"id": 1, "order_id": 100, "name": "Driver"},
-        {"id": 2, "order_id": 200, "name": "Construction Division"}
-    ],
-
-    "hook_audit_log": {
-        "channel_id": "",
-        "webhook_url": ""
     }
 }

@@ -111,8 +111,7 @@
     "discord_api_inaccessible": "Discord API is inaccessible.",
 
     "announcement_not_found": "Announcement not found.",
-    "announcement_only_creator_can_edit": "Only the author of the announcement or an administrator can edit it.",
-    "announcement_only_creator_can_delete": "Only the author of the announcement or an administrator can delete it.",
+    "unknown_announcement_type": "Unknown Announcement Type",
     "new_announcement_with_title": "New Announcement: `{title}`",
     "new_announcement": "New Announcement",
     "author": "Author",
