@@ -551,6 +551,15 @@
                         },
                         "name": "sync_to_steam",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Sync to TruckersMP",
+                            "type": "boolean"
+                        },
+                        "name": "sync_to_truckersmp",
+                        "in": "query"
                     }
                 ],
                 "requestBody": {

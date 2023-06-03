@@ -188,7 +188,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
 
     return userinfo
 
-async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False):
+async def patch_profile(request: Request, response: Response, authorization: str = Header(None), uid: Optional[int] = None, sync_to_discord: Optional[bool] = False, sync_to_steam: Optional[bool] = False, sync_to_truckersmp: Optional[bool] = False):
     """Updates the profile of a specific user
 
     If `sync_to_discord` is `true`, then syncs to their Discord profile.
@@ -300,6 +300,35 @@ async def patch_profile(request: Request, response: Response, authorization: str
         except:
             response.status_code = 503
             return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
+
+        await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
+        await app.db.commit(dhrid)
+
+        await UpdateRoleConnection(request, discordid)
+
+    elif sync_to_truckersmp:
+        await app.db.execute(dhrid, f"SELECT truckersmpid FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
+        truckersmpid = t[0][0]
+        if truckersmpid is None:
+            response.status_code = 428
+            if not staffmode:
+                return {"error": ml.tr(request, "connection_not_found", var = {"app": "TruckersMP"}, force_lang = au["language"])}
+            else:
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "TruckersMP"}, force_lang = au["language"])}
+
+        try:
+            r = await arequests.get(app, f"https://api.truckersmp.com/v2/player/{truckersmpid}", dhrid = dhrid)
+        except:
+            response.status_code = 503
+            return {"error": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
+        try:
+            d = json.loads(r.text)
+            name = convertQuotation(d["response"]["name"])
+            avatar = convertQuotation(d["response"]["avatar"])
+        except:
+            response.status_code = 503
+            return {"error": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)

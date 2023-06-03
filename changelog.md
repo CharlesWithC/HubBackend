@@ -11,6 +11,7 @@
 5.Fixed `500` error on **POST** `/member/bonus/claim` when `config.ranks[].daily_bonus = null`  
 -> It will now return `404` in such cases  
 6.Improved config validator to handle data of wrong types  
+7.Added `?sync_to_truckersmp` to **PATCH** `/user/profile`  
 
 **v2.7.2**  
 1.Improved value size limit handling  
