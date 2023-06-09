@@ -36,7 +36,7 @@ async def post_resend_confirmation(request: Request, response: Response, authori
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": "Not Found"}
+        return {"error": ml.tr(request, "no_pending_email_confirmation", force_lang = au["language"])}
     email = convertQuotation("/".join(t[0][0].split("/")[1:]))
     expire = t[0][1]
 
@@ -157,7 +157,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
             await app.db.extend_conn(dhrid, 2)
             if 'id' not in user_data:
                 response.status_code = 400
-                return {"error": "Discord Error: " + user_data['message']}
+                return {"error": user_data['message']}
             discordid = user_data['id']
             tokens = {**tokens, **user_data}
 

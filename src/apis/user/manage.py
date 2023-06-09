@@ -533,7 +533,7 @@ async def delete_ban_history(request: Request, response: Response, historyid: in
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": "Not Found"}
+        return {"error":  ml.tr(request, "ban_history_not_found", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"DELETE FROM ban_history WHERE historyid = {historyid}")
     await app.db.commit(dhrid)

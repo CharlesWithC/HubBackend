@@ -2,6 +2,7 @@
 
 **v2.7.4**  
 1.Fixed update member points audit log  
+2.Added detailed description to specific errors  
 
 **v2.7.3**  
 1.Fixed invalid table creation scheme of `announcement` and `downloads`  

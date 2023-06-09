@@ -193,15 +193,15 @@ async def ratelimit(request, endpoint, limittime, limitcnt, cGlobalOnly = False)
 async def auth(authorization, request, allow_application_token = False, check_member = True, required_permission = [], only_validate_token = False, only_use_cache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     # authorization header basic check
-    if authorization is None:
-        return {"error": "Unauthorized", "code": 401}
+    if authorization is None or authorization == "" or len(authorization.split(" ")) < 2:
+        return {"error": ml.tr(request, "invalid_authorization_token"), "code": 401}
     if not authorization.startswith("Bearer ") and not authorization.startswith("Application "):
-        return {"error": "Unauthorized", "code": 401}
+        return {"error": ml.tr(request, "unknown_authorization_token_type"), "code": 401}
 
     tokentype = authorization.split(" ")[0]
     stoken = authorization.split(" ")[1]
     if not stoken.replace("-","").isalnum():
-        return {"error": "Unauthorized", "code": 401}
+        return {"error": ml.tr(request, "invalid_authorization_token"), "code": 401}
     authorization = f"{tokentype} {stoken}"
 
     k = list(app.state.cache_session.keys())
@@ -231,7 +231,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             return {"error": False}
 
     if only_use_cache:
-        return {"error": "Unauthorized", "code": 401}
+        return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
     # application token
     if tokentype.lower() == "application":
@@ -243,7 +243,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         await app.db.execute(dhrid, f"SELECT uid, last_used_timestamp FROM application_token WHERE token = '{stoken}'")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": ml.tr(request, "unauthorized"), "code": 401}
         uid = t[0][0]
         last_used_timestamp = t[0][1]
 
@@ -253,13 +253,13 @@ async def auth(authorization, request, allow_application_token = False, check_me
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": ml.tr(request, "unauthorized"), "code": 401}
         userid = t[0][0]
         discordid = t[0][1]
         roles = str2list(t[0][2])
         name = t[0][3]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": "Forbidden", "code": 403}
+            return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
@@ -270,7 +270,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         ok = True
 
             if not ok:
-                return {"error": "Forbidden", "code": 403}
+                return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
@@ -292,7 +292,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         await app.db.execute(dhrid, f"SELECT uid, ip, country, last_used_timestamp, user_agent FROM session WHERE token = '{stoken}'")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": ml.tr(request, "unauthorized"), "code": 401}
         uid = t[0][0]
         ip = t[0][1]
         country = t[0][2]
@@ -305,7 +305,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             if curCountry != country and country != "":
                 await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                 await app.db.commit(dhrid)
-                return {"error": "Unauthorized", "code": 401}
+                return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
         if app.config.security_level >= 2 and request.client.host not in app.config.whitelist_ips:
             orgiptype = iptype(ip)
@@ -318,12 +318,12 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         if curip.split(":")[:4] != orgip.split(":")[:4]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
-                            return {"error": "Unauthorized", "code": 401}
+                            return {"error": ml.tr(request, "unauthorized"), "code": 401}
                     elif curiptype == 4:
                         if ip.split(".")[:3] != request.client.host.split(".")[:3]:
                             await app.db.execute(dhrid, f"DELETE FROM session WHERE token = '{stoken}'")
                             await app.db.commit(dhrid)
-                            return {"error": "Unauthorized", "code": 401}
+                            return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
         if request.client.host not in app.config.whitelist_ips:
             if ip != request.client.host:
@@ -338,13 +338,13 @@ async def auth(authorization, request, allow_application_token = False, check_me
         await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
-            return {"error": "Unauthorized", "code": 401}
+            return {"error": ml.tr(request, "unauthorized"), "code": 401}
         userid = t[0][0]
         discordid = t[0][1]
         roles = str2list(t[0][2])
         name = t[0][3]
         if userid == -1 and (check_member or len(required_permission) != 0):
-            return {"error": "Forbidden", "code": 403}
+            return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
         if check_member and len(required_permission) != 0:
             # permission check will only take place if member check is enforced
@@ -356,7 +356,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
                         ok = True
 
             if not ok:
-                return {"error": "Forbidden", "code": 403}
+                return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
@@ -373,7 +373,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
         return app.state.cache_session[authorization]["result"]
 
-    return {"error": "Unauthorized", "code": 401}
+    return {"error": ml.tr(request, "unauthorized"), "code": 401}
 
 async def isSecureAuth(authorization, request):
     (app, dhrid) = (request.app, request.state.dhrid)

@@ -99,12 +99,16 @@ EN_STRINGTABLE = {
     "invalid_discord_token": "Failed to validate Discord Bot Token. All Discord Integrations have been temporarily disabled. Setting a valid token in config and reloading config will restore the functionality.",
 
     "invalid_captcha": "Invalid captcha.",
+    "captcha_api_inaccessible": "Captcha API is inaccessible.",
     "invalid_email_or_password": "Invalid email or password.",
     "invalid_authorization_token": "Invalid authorization token.",
+    "unknown_authorization_token_type": "Unknown authorization token type.",
     "invalid_hash": "Invalid hash.",
     "invalid_userid": "Invalid User ID.",
     "invalid_timezone": "Invalid timezone.",
 
+    "unauthorized": "You are not authorized.",
+    "no_access_to_resource": "You do not have sufficient permission to access the resource.",
     "application_token_not_allowed": "Access denied: Application token is not allowed.",
     "access_sensitive_data": "Access denied: You are accessing sensitive data and you must login with Discord, Steam, or enable MFA to protect your account.",
     "mfa_required": "Access denied: You have to enable MFA and provide OTP to access this endpoint.",
@@ -128,11 +132,14 @@ EN_STRINGTABLE = {
     "avatar_domain_not_whitelisted": "The domain of the avatar is not whitelisted.",
     "smtp_configuration_invalid": "SMTP configuration is invalid. Unable to send email.",
     "auth_secret_invalid_or_expired": "Authorization secret is invalid or has expired.",
+    "role_history_not_found": "Role history not found.",
+    "ban_history_not_found": "Ban history not found.",
 
     "connection_not_found": "{app} account is not connected.",
     "connection_conflict": "{app} account already connected to another user.",
     "connection_invalid": "{app} account connection is invalid.",
 
+    "no_pending_email_confirmation": "No pending email confirmation.",
     "connections_belong_to_multiple_users": "The connections belong multiple users. Only connections for a single user are accepted.",
     "dismiss_before_ban": "Member has to be dismissed before banning.",
     "dismiss_before_delete_connections": "Member has to be dismissed before deleting account connections.",
@@ -146,6 +153,7 @@ EN_STRINGTABLE = {
     "claimed_daily_bonus": "You claimed `{points}` daily bonus points.",
     "claimed_daily_bonus_with_streak": "You kept `{streak}` day of streak and claimed `{points}` daily bonus points.",
     "claimed_daily_bonus_with_streak_s": "You kept `{streak}` days of streak and claimed `{points}` daily bonus points.",
+    "daily_bonus_not_available": "Daily bonus for your current rank is not available.",
 
     "steam_api_error": "Steam API is inaccessible.",
     "steam_api_key_not_configured": "Steam API Key is not configured.",
@@ -157,6 +165,7 @@ EN_STRINGTABLE = {
 
     "user_not_found": "User not found.",
     "member_not_found": "Member not found.",
+    "banner_service_unavailable": "Banner service unavailable.",
     "role_not_found": "One or more role to add or remove is not found.",
     "banned_user_cannot_be_accepted": "Banned users cannot be accepted as members.",
     "user_is_already_member": "User is already a member.",

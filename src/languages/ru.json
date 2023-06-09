@@ -12,12 +12,16 @@
 
     "invalid_discord_token": "Не удалось проверить токен бота Discord. Все интеграции Discord были временно отключены. Установка действительного токена в конфигурации и перезагрузка конфигурации восстановят функциональность.",
     "invalid_captcha": "Неверная капча.",
+    "captcha_api_inaccessible": "API Captcha недоступен.",
     "invalid_email_or_password": "Неверный email или пароль.",
     "invalid_authorization_token": "Недействительный токен авторизации.",
+    "unknown_authorization_token_type": "Неизвестный тип токена авторизации.",
     "invalid_hash": "Неверный хэш.",
     "invalid_userid": "Неверный идентификатор пользователя.",
 
     "invalid_timezone": "Неверный часовой пояс.",
+    "unauthorized": "Вы не авторизованы.",
+    "no_access_to_resource": "У вас недостаточно прав для доступа к ресурсу.",
     "application_token_not_allowed": "Доступ запрещен: токен приложения не разрешен.",
     "access_sensitive_data": "Доступ запрещен: вы получаете доступ к конфиденциальным данным, и вы должны войти в систему с помощью Discord, Steam или включить MFA, чтобы защитить свою учетную запись.",
     "mfa_required": "Доступ запрещен: вам необходимо включить MFA и предоставить одноразовый пароль для доступа к этой конечной точке.",
@@ -40,11 +44,14 @@
     "avatar_domain_not_whitelisted": "Домен аватара не внесен в белый список.",
     "smtp_configuration_invalid": "Конфигурация SMTP недействительна, невозможно отправить электронное письмо.",
     "auth_secret_invalid_or_expired": "Секрет авторизации недействителен или срок его действия истек.",
+    "role_history_not_found": "История ролей не найдена.",
+    "ban_history_not_found": "История банов не найдена.",
 
     "connection_not_found": "Учетная запись {app} не подключена.",
     "connection_conflict": "Учетная запись {app} уже подключена к другому пользователю.",
     "connection_invalid": "Подключение аккаунта {app} недействительно.",
 
+    "no_pending_email_confirmation": "Нет ожидающих подтверждения по электронной почте.",
     "connections_belong_to_multiple_users": "Подключения принадлежат нескольким пользователям. Принимаются только подключения для одного пользователя.",
     "dismiss_before_ban": "Участник должен быть уволен перед баном.",
     "dismiss_before_delete_connections": "Участник должен быть уволен перед удалением подключений аккаунта.",
@@ -58,6 +65,7 @@
     "claimed_daily_bonus": "Вы получили `{points}` ежедневных бонусных баллов.",
     "claimed_daily_bonus_with_streak": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
     "claimed_daily_bonus_with_streak_s": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
+    "daily_bonus_not_available": "Ежедневный бонус для вашего текущего ранга недоступен.",
 
     "steam_api_error": "API Steam недоступен.",
     "steam_api_key_not_configured": "Ключ Steam API не настроен.",
@@ -69,6 +77,7 @@
 
     "user_not_found": "Пользователь не найден.",
     "member_not_found": "Участник не найден.",
+    "banner_service_unavailable": "Служба баннеров недоступна.",
     "role_not_found": "Одна или несколько ролей для добавления или удаления не найдены.",
     "banned_user_cannot_be_accepted": "Заблокированные пользователи не могут быть приняты в члены.",
     "user_is_already_member": "Пользователь уже зарегистрирован",

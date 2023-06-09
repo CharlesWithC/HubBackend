@@ -12,12 +12,16 @@
 
     "invalid_discord_token": "Discord Bot Simgesi doğrulanamadı. Tüm Discord Entegrasyonları geçici olarak devre dışı bırakıldı. Yapılandırmada geçerli bir belirteç ayarlamak ve yapılandırmayı yeniden yüklemek işlevselliği geri yükleyecektir.",
     "invalid_captcha": "Geçersiz doğrulama işlemi. (captcha)",
+    "captcha_api_inaccessible": "Captcha API'ye erişilemiyor.",
     "invalid_email_or_password": "Geçersiz e-posta veya şifre.",
     "invalid_authorization_token": "Geçersiz yetkilendirme belirteci.",
+    "unknown_authorization_token_type": "Bilinmeyen yetkilendirme belirteci türü.",
     "invalid_hash": "Geçersiz karma.",
     "invalid_userid": "Geçersiz Kullanıcı Kimliği.",
 
     "invalid_timezone": "Geçersiz saat dilimi.",
+    "unauthorized": "Yetkili değilsiniz.",
+    "no_access_to_resource": "Kaynağa erişmek için yeterli izniniz yok.",
     "application_token_not_allowed": "Erişim engellendi: Uygulama belirtecine izin verilmiyor.",
     "access_sensitive_data": "Hassas verilere erişmek için Discord veya Steam ile giriş yapmanız veya MFA'yı (çok faktörlü doğrulama) etkinleştirmeniz gerekir.",
     "mfa_required": "Erişim reddedildi: Bu uç noktaya erişim için MFA'yı etkinleştirmeniz ve OTP sağlamanız gerekir.",
@@ -40,11 +44,14 @@
     "avatar_domain_not_whitelisted": "Avatarın alanı beyaz listede değil.",
     "smtp_configuration_invalid": "SMTP yapılandırması geçersiz, e-posta gönderilemiyor.",
     "auth_secret_invalid_or_expired": "Yetkilendirme sırrı geçersiz veya süresi dolmuş.",
+    "role_history_not_found": "Rol geçmişi bulunamadı.",
+    "ban_history_not_found": "Yasaklama geçmişi bulunamadı.",
 
     "connection_not_found": "{app} hesabı bağlı değil.",
     "connection_conflict": "{app} hesabı zaten başka bir kullanıcıya bağlı.",
     "connection_invalid": "{app} hesap bağlantısı geçersiz.",
 
+    "no_pending_email_confirmation": "Bekleyen e-posta onayı yok.",
     "connections_belong_to_multiple_users": "Bağlantılar birden çok kullanıcıya aittir. Yalnızca tek bir kullanıcı için bağlantılar kabul edilir.",
     "dismiss_before_ban": "Üyenin yasaklanmadan önce görevden alınması gerekir.",
     "dismiss_before_delete_connections": "Hesap bağlantılarını silmeden önce üyenin görevden alınması gerekir.",
@@ -58,6 +65,7 @@
     "claimed_daily_bonus": "`{points}` günlük bonus puan talep ettiniz.",
     "claimed_daily_bonus_with_streak": "Sakladınız `{streak}` günlük galibiyet serisi ve `{points}` günlük bonus puan talep ettiniz.",
     "claimed_daily_bonus_with_streak_s": "`{streak}` günlük galibiyet serisini sürdürdünüz ve `{points}` günlük bonus puan aldınız.",
+    "daily_bonus_not_available": "Mevcut rütbeniz için günlük bonus mevcut değil.",
 
     "steam_api_error": "Steam API'ye erişilemiyor.",
     "steam_api_key_not_configured": "Steam API Anahtarı yapılandırılmadı.",
@@ -69,6 +77,7 @@
 
     "user_not_found": "Kullanıcı bulunamadı.",
     "member_not_found": "Üye bulunamadı.",
+    "banner_service_unavailable": "Banner hizmeti kullanılamıyor.",
     "role_not_found": "Eklenecek veya kaldırılacak bir veya daha fazla rol bulunamadı.",
     "banned_user_cannot_be_accepted": "Yasaklı kullanıcılar üye kabul edilemez.",
     "user_is_already_member": "Kullanıcı zaten üye.",

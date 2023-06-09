@@ -196,7 +196,7 @@ async def post_announcement(request: Request, response: Response, authorization:
             ok = True
     if not ok and not checkPerm(app, au["roles"], "admin"):
         response.status_code = 403
-        return {"error": "Forbidden"}
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     timestamp = int(time.time())
 
@@ -250,7 +250,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
                 ok = True
         if not ok and not checkPerm(app, au["roles"], "admin"):
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     data = await request.json()
     try:
@@ -297,7 +297,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
             ok = True
     if not ok and not checkPerm(app, au["roles"], "admin"):
         response.status_code = 403
-        return {"error": "Forbidden"}
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
@@ -341,7 +341,7 @@ async def delete_announcement(request: Request, response: Response, announcement
                 ok = True
         if not ok and not checkPerm(app, au["roles"], "admin"):
             response.status_code = 403
-            return {"error": "Forbidden"}
+            return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"DELETE FROM announcement WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "deleted_announcement", var = {"id": announcementid}))

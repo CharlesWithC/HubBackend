@@ -254,4 +254,4 @@ async def get_banner(request: Request, response: Response,
 
     except:
         response.status_code = 503
-        return {"error": "Service Unavailable"}
+        return {"error": ml.tr(request, "banner_service_unavailable")}

@@ -43,7 +43,7 @@ async def post_password(request: Request, response: Response):
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
         response.status_code = 503
-        return {"error": "Service Unavailable"}
+        return {"error": ml.tr(request, "captcha_api_inaccessible")}
 
     await app.db.execute(dhrid, f"SELECT uid, password FROM user_password WHERE email = '{email}'")
     t = await app.db.fetchall(dhrid)
@@ -152,7 +152,7 @@ async def post_register(request: Request, response: Response):
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
         response.status_code = 503
-        return {"error": "Service Unavailable"}
+        return {"error": ml.tr(request, "captcha_api_inaccessible")}
 
     if len(password) >= 8:
         if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
@@ -280,7 +280,7 @@ async def post_reset(request: Request, response: Response):
             return {"error": ml.tr(request, "invalid_captcha")}
     except:
         response.status_code = 503
-        return {"error": "Service Unavailable"}
+        return {"error": ml.tr(request, "captcha_api_inaccessible")}
 
     if not emailConfigured(app):
         response.status_code = 428

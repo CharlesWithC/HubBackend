@@ -12,12 +12,16 @@
 
     "invalid_discord_token": "Kunne ikke validere Discord Bot Token. Alle Discord-integrationer er blevet midlertidigt deaktiveret. Indstilling af et gyldigt token i config og genindlæsning af config vil genoprette funktionaliteten.",
     "invalid_captcha": "Ugyldig captcha.",
+    "captcha_api_inaccessible": "Captcha API er utilgængelig.",
     "invalid_email_or_password": "Ugyldig email eller kodeord.",
     "invalid_authorization_token": "Ugyldig godkendelsestoken.",
+    "unknown_authorization_token_type": "Ukendt godkendelsestokentype.",
     "invalid_hash": "Ugyldig hash.",
     "invalid_userid": "Ugyldigt bruger-id.",
 
     "invalid_timezone": "Ugyldig tidszone.",
+    "unauthorized": "Du er ikke autoriseret.",
+    "no_access_to_resource": "Du har ikke tilstrækkelig tilladelse til at få adgang til ressourcen.",
     "application_token_not_allowed": "Adgang nægtet: Applikationstoken er ikke tilladt.",
     "access_sensitive_data": "Adgang nægtet: Du har adgang til følsomme data, og du skal logge ind med Discord, Steam eller aktivere MFA for at beskytte din konto.",
     "mfa_required": "Adgang nægtet: Du skal aktivere MFA og angive OTP for at få adgang til dette slutpunkt.",
@@ -40,11 +44,14 @@
     "avatar_domain_not_whitelisted": "Avatarens domæne er ikke hvidlistet.",
     "smtp_configuration_invalid": "SMTP-konfigurationen er ugyldig, kan ikke sende e-mail.",
     "auth_secret_invalid_or_expired": "Autorisationshemmeligheden er ugyldig eller er udløbet.",
+    "role_history_not_found": "Rollehistorik blev ikke fundet.",
+    "ban_history_not_found": "Forbudshistorik blev ikke fundet.",
 
     "connection_not_found": "{app}-kontoen er ikke forbundet.",
     "connection_conflict": "{app}-konto er allerede forbundet til en anden bruger.",
     "connection_invalid": "Kontoforbindelsen til {app} er ugyldig.",
 
+    "no_pending_email_confirmation": "Ingen afventende e-mailbekræftelse.",
     "connections_belong_to_multiple_users": "Forbindelserne tilhører flere brugere. Kun forbindelser for en enkelt bruger accepteres.",
     "dismiss_before_ban": "Medlem skal afskediges før udelukkelse.",
     "dismiss_before_delete_connections": "Medlem skal afskediges, før kontoforbindelser slettes.",
@@ -58,6 +65,7 @@
     "claimed_daily_bonus": "Du hævdede `{points}` daglige bonuspoint.",
     "claimed_daily_bonus_with_streak": "Du beholdt `{streak}` dag med streak og hævdede `{points}` daglige bonuspoint.",
     "claimed_daily_bonus_with_streak_s": "Du beholdt `{streak}` dage med streak og gjorde krav på `{points}` daglige bonuspoint.",
+    "daily_bonus_not_available": "Daglig bonus for din nuværende rang er ikke tilgængelig.",
 
     "steam_api_error": "Steam API er utilgængelig.",
     "steam_api_key_not_configured": "Steam API-nøgle er ikke konfigureret.",
@@ -69,6 +77,7 @@
 
     "user_not_found": "Brugeren blev ikke fundet.",
     "member_not_found": "Medlemet blev ikke fundet.",
+    "banner_service_unavailable": "Bannertjeneste er ikke tilgængelig.",
     "role_not_found": "En eller flere roller, der skal tilføjes eller fjernes, blev ikke fundet.",
     "banned_user_cannot_be_accepted": "Forbudte brugere kan ikke accepteres som medlemmer.",
     "user_is_already_member": "Brugeren er allerede medlem.",

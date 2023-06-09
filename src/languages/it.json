@@ -12,12 +12,16 @@
 
     "invalid_discord_token": "Impossibile convalidare Discord Bot Token. Tutte le integrazioni Discord sono state temporaneamente disabilitate. L'impostazione di un token valido nella configurazione e il ricaricamento della configurazione ripristineranno la funzionalità.",
     "invalid_captcha": "Captcha non valido.",
+    "captcha_api_inaccessible": "L'API Captcha è inaccessibile.",
     "invalid_email_or_password": "E-mail o password non validi.",
     "invalid_authorization_token": "Token di autorizzazione non valido.",
+    "unknown_authorization_token_type": "Tipo di token di autorizzazione sconosciuto.",
     "invalid_hash": "Hash non valido.",
     "invalid_userid": "ID utente non valido.",
 
     "invalid_timezone": "Fuso orario non valido.",
+    "unauthorized": "Non sei autorizzato.",
+    "no_access_to_resource": "Non disponi di autorizzazioni sufficienti per accedere alla risorsa.",
     "application_token_not_allowed": "Accesso negato: il token dell'applicazione non è consentito.",
     "access_sensitive_data": "Accesso negato: stai accedendo a dati sensibili e devi accedere con Discord, Steam o abilitare MFA per proteggere il tuo account.",
     "mfa_required": "Accesso negato: devi abilitare MFA e fornire OTP per accedere a questo endpoint.",
@@ -40,11 +44,14 @@
     "avatar_domain_not_whitelisted": "Il dominio dell'avatar non è nella whitelist.",
     "smtp_configuration_invalid": "La configurazione SMTP non è valida, impossibile inviare email.",
     "auth_secret_invalid_or_expired": "Segreto di autorizzazione non valido o scaduto.",
+    "role_history_not_found": "Cronologia ruolo non trovata.",
+    "ban_history_not_found": "Cronologia ban non trovata.",
 
     "connection_not_found": "L'account {app} non è connesso.",
     "connection_conflict": "Account {app} già connesso a un altro utente.",
     "connection_invalid": "La connessione dell'account {app} non è valida.",
 
+    "no_pending_email_confirmation": "Nessuna email di conferma in attesa.",
     "connections_belong_to_multiple_users": "Le connessioni appartengono a più utenti. Sono accettate solo connessioni per un singolo utente.",
     "dismiss_before_ban": "Il membro deve essere licenziato prima di essere bannato.",
     "dismiss_before_delete_connections": "Il membro deve essere licenziato prima di eliminare le connessioni dell'account.",
@@ -58,6 +65,7 @@
     "claimed_daily_bonus": "Hai richiesto `{points}` punti bonus giornalieri.",
     "claimed_daily_bonus_with_streak": "Hai mantenuto `{streak}` giorno di serie e hai richiesto `{points}` punti bonus giornalieri.",
     "claimed_daily_bonus_with_streak_s": "Hai mantenuto `{streak}` giorni di serie e hai richiesto `{points}` punti bonus giornalieri.",
+    "daily_bonus_not_available": "Il bonus giornaliero per il tuo livello attuale non è disponibile.",
 
     "steam_api_error": "L'API di Steam è inaccessibile.",
     "steam_api_key_not_configured": "La chiave API di Steam non è configurata.",
@@ -69,6 +77,7 @@
 
     "user_not_found": "Utente non trovato.",
     "member_not_found": "Membro non trovato",
+    "banner_service_unavailable": "Servizio banner non disponibile.",
     "role_not_found": "Uno o più ruoli da aggiungere o rimuovere non sono stati trovati.",
     "banned_user_cannot_be_accepted": "Gli utenti esclusi non possono essere accettati come membri.",
     "user_is_already_member": "L'utente è già un membro.",

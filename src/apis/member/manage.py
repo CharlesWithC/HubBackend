@@ -38,7 +38,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                 staff_highest_order_id = app.roles[role]["order_id"]
     if staff_highest_order_id is None:
         response.status_code = 403
-        return {"error": "Forbidden"}
+        return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
     data = await request.json()
     try:
