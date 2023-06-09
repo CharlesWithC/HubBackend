@@ -290,7 +290,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
     if int(distance) > 0:
         distance = "+" + str(distance)
     if int(bonus_points) > 0:
-        bonus_points = "+" + str("bonus_points")
+        bonus_points = "+" + str(bonus_points)
 
     username = (await GetUserInfo(request, userid = userid))["name"]
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_user_points", var = {"username": username, "userid": userid, "distance": distance, "bonus_points": bonus_points}))
