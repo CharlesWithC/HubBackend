@@ -103,6 +103,9 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
                 break
 
         if ismysqlerr:
+            if app.db.shutdown_lock:
+                return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+
             # this will filter mysql error + connection/timeout error (including custom errors flagged by "[aiosql]")
             # it's literally impossible to identify programming (query) error from database-side errors from error code
             # as they are mixed up
