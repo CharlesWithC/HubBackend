@@ -117,7 +117,7 @@ async def EventNotification(app):
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
-        after_eventid: Optional[int] = None, query: Optional[str] = "", \
+        after_eventid: Optional[int] = None, query: Optional[str] = "", attended_by: Optional[int] = None, \
         after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
@@ -150,6 +150,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND meetup_timestamp >= {after} "
     if before is not None:
         limit += f"AND meetup_timestamp <= {before} "
+    if attended_by is not None:
+        limit += f"AND attendee LIKE '%,{attended_by},%' "
 
     if page_size <= 1:
         page_size = 1

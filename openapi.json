@@ -6708,6 +6708,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Attendee User ID",
+                            "type": "integer"
+                        },
+                        "name": "attended_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Event ID)",
                             "type": "integer"
                         },

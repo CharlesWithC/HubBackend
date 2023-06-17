@@ -8,6 +8,7 @@
 5.Disabled TrackSim webhook signature validation when webhook secret is not configured  
 6.Added `?after|before` to **GET** `/dlog/statistics/details`  
 -> Rate limit: 3req/10sec (only applies to requests with time-range query)  
+7.Added `?attended_by` to **GET** `/events/list`  
 
 **v2.7.4**  
 1.Fixed update member points audit log  
