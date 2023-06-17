@@ -3,6 +3,9 @@
 **v2.7.5**  
 1.Allowed external plugin to return response  
 2.Fixed `v2_7_2` upgrader error when there is no data in `event` table (not tested)  
+3.Removed `percentage` from `config.ranks[].daily_bonus.streak_type` to prevent excessive bonus  
+4.Renamed `config.ranks[].bonus` to `distance_bonus`  
+5.Disabled TrackSim webhook signature validation when webhook secret is not configured  
 
 **v2.7.4**  
 1.Fixed update member points audit log  

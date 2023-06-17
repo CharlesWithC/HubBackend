@@ -134,11 +134,12 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     else:
         response.status_code = 400
         return {"error": "Unsupported content type"}
-    sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
-    if sig != TrackSim_Signature:
-        response.status_code = 403
-        await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_signature", var = {"ip": request.client.host}))
-        return {"error": "Validation failed"}
+    if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
+        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
+        if sig != TrackSim_Signature:
+            response.status_code = 403
+            await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_signature", var = {"ip": request.client.host}))
+            return {"error": "Validation failed"}
 
     if d["object"] != "event":
         response.status_code = 400

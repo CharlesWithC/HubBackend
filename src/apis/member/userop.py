@@ -193,8 +193,8 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     utcnow = pytz.utc.localize(datetime.utcnow())
     user_date = utcnow.astimezone(pytz.timezone(usertz)).date()
 
-    lcdt = pytz.utc.localize(datetime.utcfromtimestamp(lcts))
-    lc_date = lcdt.astimezone(pytz.timezone(usertz)).date()
+    lcutc = pytz.utc.localize(datetime.utcfromtimestamp(lcts))
+    lc_date = lcutc.astimezone(pytz.timezone(usertz)).date()
 
     timediff = user_date - lc_date
 
@@ -219,8 +219,6 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     if bonus["type"] == "streak":
         if bonus["streak_type"] == "fixed":
             bonuspnt += bonus["streak_value"] * streak
-        elif bonus["streak_type"] == "percentage":
-            bonuspnt *= (1+bonus["streak_value"]) ** streak
         elif bonus["streak_type"] == "algo":
             offset = ALGO_OFFSET
             if "algo_offset" in bonus.keys():

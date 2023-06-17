@@ -33,7 +33,7 @@ def load(app):
             else:
                 app.rankrole[t["points"]] = 0
             app.rankname[t["points"]] = t["name"]
-            app.rankbonus[t["points"]] = t["bonus"]
+            app.rankbonus[t["points"]] = t["distance_bonus"]
             app.rankdbonus[t["points"]] = t["daily_bonus"]
         except:
             pass

@@ -294,10 +294,10 @@ default_config = {
         }
     }],
     "ranks": [
-        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
-        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "fixed", "streak_value": 100}},
-        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "algo", "streak_value": 1.2, "algo_offset": 10}},
-        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "algo", "streak_value": 1.5, "algo_offset": 15}}
+        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
+        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "fixed", "streak_value": 100}},
+        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "algo", "streak_value": 1.2, "algo_offset": 10}},
+        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "algo", "streak_value": 1.5, "algo_offset": 15}}
     ],
 
     "announcement_types": [
@@ -447,80 +447,83 @@ def validateConfig(cfg):
         except:
             rank["discord_role_id"] = None
 
+        # v2.7.5
+        if "bonus" in rank.keys() and not "distance_bonus" in rank.keys():
+            rank["distance_bonus"] = rank["bonus"]
         # v2.6.0
-        if 'bonus' not in rank.keys() or rank["bonus"] is None or type(rank["bonus"]) != dict:
-            rank["bonus"] = None
+        if "distance_bonus" not in rank.keys() or rank["distance_bonus"] is None or type(rank["distance_bonus"]) != dict:
+            rank["distance_bonus"] = None
         else:
-            if 'min_distance' not in rank['bonus'].keys():
-                rank['bonus']['min_distance'] = -1
+            if "min_distance" not in rank["distance_bonus"].keys():
+                rank["distance_bonus"]["min_distance"] = -1
             else:
                 try:
-                    rank['bonus']['min_distance'] = int(rank['bonus']['min_distance'])
+                    rank["distance_bonus"]["min_distance"] = int(rank["distance_bonus"]["min_distance"])
                 except:
-                    rank['bonus']['min_distance'] = -1
+                    rank["distance_bonus"]["min_distance"] = -1
 
-            if 'max_distance' not in rank['bonus'].keys():
-                rank['bonus']['max_distance'] = -1
+            if "max_distance" not in rank["distance_bonus"].keys():
+                rank["distance_bonus"]["max_distance"] = -1
             else:
                 try:
-                    rank['bonus']['max_distance'] = int(rank['bonus']['max_distance'])
+                    rank["distance_bonus"]["max_distance"] = int(rank["distance_bonus"]["max_distance"])
                 except:
-                    rank['bonus']['max_distance'] = -1
+                    rank["distance_bonus"]["max_distance"] = -1
 
-            if 'probability' not in rank['bonus'].keys():
-                rank["bonus"] = None
+            if 'probability' not in rank["distance_bonus"].keys():
+                rank["distance_bonus"] = None
             else:
                 try:
-                    rank["bonus"]["probability"] = float(rank["bonus"]["probability"])
-                    if rank["bonus"]["probability"] > 1 or rank["bonus"]["probability"] < 0:
-                        rank["bonus"]["probability"] = 1
+                    rank["distance_bonus"]["probability"] = float(rank["distance_bonus"]["probability"])
+                    if rank["distance_bonus"]["probability"] > 1 or rank["distance_bonus"]["probability"] < 0:
+                        rank["distance_bonus"]["probability"] = 1
                 except:
-                    rank["bonus"]["probability"] = 1
+                    rank["distance_bonus"]["probability"] = 1
 
-            if 'type' not in rank['bonus'].keys() or \
-                    rank["bonus"]["type"] not in ["fixed_value", "fixed_percentage", "random_value", "random_percentage"]:
-                rank["bonus"] = None
+            if 'type' not in rank["distance_bonus"].keys() or \
+                    rank["distance_bonus"]["type"] not in ["fixed_value", "fixed_percentage", "random_value", "random_percentage"]:
+                rank["distance_bonus"] = None
             else:
-                if rank["bonus"]["type"] == "fixed_value":
-                    if 'value' not in rank['bonus'].keys():
-                        rank["bonus"] = None
+                if rank["distance_bonus"]["type"] == "fixed_value":
+                    if 'value' not in rank["distance_bonus"].keys():
+                        rank["distance_bonus"] = None
                     else:
                         try:
-                            rank["bonus"]["value"] = int(rank["bonus"]["value"])
+                            rank["distance_bonus"]["value"] = int(rank["distance_bonus"]["value"])
                         except:
-                            rank["bonus"]["value"] = 0
-                elif rank["bonus"]["type"] == "fixed_percentage":
-                    if 'value' not in rank['bonus'].keys():
-                        rank["bonus"] = None
+                            rank["distance_bonus"]["value"] = 0
+                elif rank["distance_bonus"]["type"] == "fixed_percentage":
+                    if 'value' not in rank["distance_bonus"].keys():
+                        rank["distance_bonus"] = None
                     else:
                         try:
-                            rank["bonus"]["value"] = float(rank["bonus"]["value"])
+                            rank["distance_bonus"]["value"] = float(rank["distance_bonus"]["value"])
                         except:
-                            rank["bonus"]["value"] = 0
-                elif rank["bonus"]["type"] == "random_value":
-                    if 'min' not in rank['bonus'].keys() or 'max' not in rank['bonus'].keys():
-                        rank["bonus"] = None
+                            rank["distance_bonus"]["value"] = 0
+                elif rank["distance_bonus"]["type"] == "random_value":
+                    if 'min' not in rank["distance_bonus"].keys() or 'max' not in rank["distance_bonus"].keys():
+                        rank["distance_bonus"] = None
                     else:
                         try:
-                            rank["bonus"]["min"] = int(rank["bonus"]["min"])
-                            rank["bonus"]["max"] = int(rank["bonus"]["max"])
-                            if rank["bonus"]["min"] > rank["bonus"]["max"]:
-                                (rank["bonus"]["min"], rank["bonus"]["max"]) = (rank["bonus"]["max"], rank["bonus"]["min"])
+                            rank["distance_bonus"]["min"] = int(rank["distance_bonus"]["min"])
+                            rank["distance_bonus"]["max"] = int(rank["distance_bonus"]["max"])
+                            if rank["distance_bonus"]["min"] > rank["distance_bonus"]["max"]:
+                                (rank["distance_bonus"]["min"], rank["distance_bonus"]["max"]) = (rank["distance_bonus"]["max"], rank["distance_bonus"]["min"])
                         except:
-                            rank["bonus"]["min"] = 0
-                            rank["bonus"]["max"] = 0
-                elif rank["bonus"]["type"] == "random_percentage":
-                    if 'min' not in rank['bonus'].keys() or 'max' not in rank['bonus'].keys():
-                        rank["bonus"] = None
+                            rank["distance_bonus"]["min"] = 0
+                            rank["distance_bonus"]["max"] = 0
+                elif rank["distance_bonus"]["type"] == "random_percentage":
+                    if 'min' not in rank["distance_bonus"].keys() or 'max' not in rank["distance_bonus"].keys():
+                        rank["distance_bonus"] = None
                     else:
                         try:
-                            rank["bonus"]["min"] = float(rank["bonus"]["min"])
-                            rank["bonus"]["max"] = float(rank["bonus"]["max"])
-                            if rank["bonus"]["min"] > rank["bonus"]["max"]:
-                                (rank["bonus"]["min"], rank["bonus"]["max"]) = (rank["bonus"]["max"], rank["bonus"]["min"])
+                            rank["distance_bonus"]["min"] = float(rank["distance_bonus"]["min"])
+                            rank["distance_bonus"]["max"] = float(rank["distance_bonus"]["max"])
+                            if rank["distance_bonus"]["min"] > rank["distance_bonus"]["max"]:
+                                (rank["distance_bonus"]["min"], rank["distance_bonus"]["max"]) = (rank["distance_bonus"]["max"], rank["distance_bonus"]["min"])
                         except:
-                            rank["bonus"]["min"] = 0
-                            rank["bonus"]["max"] = 0
+                            rank["distance_bonus"]["min"] = 0
+                            rank["distance_bonus"]["max"] = 0
 
         ########
         # v2.6.3
@@ -541,7 +544,7 @@ def validateConfig(cfg):
                         cbonus["base"] = 0
 
             if cbonus is not None and cbonus["type"] == "streak":
-                if "streak_type" not in cbonus.keys() or cbonus["streak_type"] not in ["fixed", "percentage", "algo"] or 'streak_value' not in cbonus.keys():
+                if "streak_type" not in cbonus.keys() or cbonus["streak_type"] not in ["fixed", "algo"] or 'streak_value' not in cbonus.keys():
                     cbonus = None
                 else:
                     if cbonus["streak_type"] == "fixed":
@@ -549,12 +552,7 @@ def validateConfig(cfg):
                             cbonus['streak_value'] = int(cbonus['streak_value'])
                         except:
                             cbonus['streak_value'] = 0
-                    elif cbonus["streak_type"] == "percentage":
-                        try:
-                            cbonus['streak_value'] = float(cbonus['streak_value'])
-                        except:
-                            cbonus['streak_value'] = 0
-                    if cbonus["streak_type"] == "algo":
+                    elif cbonus["streak_type"] == "algo":
                         try:
                             cbonus['streak_value'] = abs(float(cbonus['streak_value']))
                             if cbonus['streak_value'] == 0:
