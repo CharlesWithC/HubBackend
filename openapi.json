@@ -814,13 +814,26 @@
                                     "ban_history": {
                                         "description": "Protect Ban History?",
                                         "type": "boolean"
+                                    },
+                                    "email": {
+                                        "description": "Protect Email?",
+                                        "type": "boolean"
+                                    },
+                                    "account_connections": {
+                                        "description": "Protect Account Connections?",
+                                        "type": "boolean"
+                                    },
+                                    "activity": {
+                                        "description": "Protect Activity?",
+                                        "type": "boolean"
+                                    },
+                                    "public_profile": {
+                                        "description": "Protect Profile from non-member's access?",
+                                        "type": "boolean"
                                     }
                                 }
                             },
-                            "required": [
-                                "role_history",
-                                "ban_history"
-                            ]
+                            "required": []
                         }
                     }
                 },

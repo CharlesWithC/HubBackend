@@ -154,10 +154,6 @@ async def get_profile(request: Request, response: Response, authorization: str =
     else:
         userinfo["ban"] = None
 
-    if au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_sensitive_profile"]):
-        userinfo["mfa"] = None
-        userinfo["email"] = None
-
     if (await GetUserPrivacy(request, userinfo['uid']))["role_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_privacy_protected_data"])):
         userinfo["role_history"] = None
     else:
@@ -178,8 +174,11 @@ async def get_profile(request: Request, response: Response, authorization: str =
                     field = "NULL"
                 else:
                     field = f"'{convertQuotation(userinfo[field])}'"
+            else:
+                field = userinfo[field]
+            if field is None:
+                field = "NULL"
             connections.append(field)
-
         await app.db.execute(dhrid, f"SELECT historyid, reason, expire_timestamp FROM ban_history WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]} ORDER BY historyid DESC LIMIT {ban_history_limit}")
         p = await app.db.fetchall(dhrid)
         userinfo["ban_history"] = []

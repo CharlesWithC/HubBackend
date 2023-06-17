@@ -13,6 +13,8 @@
 9.Renamed `?userid` to `?completed_by` for **GET** `/challenges/list`, `/challenges/{challengeid}`  
 10.Added `?created_by` to **GET** `/announcements/list`, `/applications/list`, `/challenges/list`, `/events/list`  
 11.Added `?requested_by` to **GET** `/divisions/list/pending`  
+12.Added `email`, `account_connections`, `activity`, `public_profile` privacy options  
+-> Certain staff could always surpass privacy options and get user info  
 
 **v2.7.4**  
 1.Fixed update member points audit log  

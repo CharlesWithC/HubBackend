@@ -32,7 +32,7 @@ async def get_privacy(request: Request, response: Response, authorization: str =
 async def patch_privacy(request: Request, response: Response, authorization: str = Header(None)):
     """Updates the privacy settings of the authorized user, returns 204
 
-    JSON: `{"role_history": bool, "ban_history": bool}`"""
+    JSON: `{"role_history": bool, "ban_history": bool, "email": bool, "account_connections": bool, "activity": bool, "public_profile": True}`"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -51,15 +51,20 @@ async def patch_privacy(request: Request, response: Response, authorization: str
     uid = au["uid"]
 
     data = await request.json()
+    privacy = (await GetUserPrivacy(request, uid, nocache = True))
     try:
-        role_history = int(bool(data["role_history"]))
-        ban_history = int(bool(data["ban_history"]))
+        role_history = int(bool(data["role_history"])) if "role_history" in data.keys() else int(privacy["role_history"])
+        ban_history = int(bool(data["ban_history"])) if "ban_history" in data.keys() else int(privacy["ban_history"])
+        email = int(bool(data["email"])) if "email" in data.keys() else int(privacy["email"])
+        account_connections = int(bool(data["account_connections"])) if "account_connections" in data.keys() else int(privacy["account_connections"])
+        activity = int(bool(data["activity"])) if "activity" in data.keys() else int(privacy["activity"])
+        public_profile = int(bool(data["public_profile"])) if "public_profile" in data.keys() else int(privacy["public_profile"])
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["privacy"])}
 
     await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {uid} AND skey = 'privacy'")
-    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'privacy', '{role_history},{ban_history}')")
+    await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'privacy', '{role_history},{ban_history},{email},{account_connections},{activity},{public_profile}')")
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
