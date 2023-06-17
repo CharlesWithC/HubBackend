@@ -275,6 +275,14 @@ async def auth(authorization, request, allow_application_token = False, check_me
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.execute(dhrid, f"UPDATE application_token SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
             await app.db.commit(dhrid)
+            await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                t[0][0]
+                await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
+            else:
+                await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
+            await app.db.commit(dhrid)
 
         await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
         t = await app.db.fetchall(dhrid)
@@ -360,6 +368,14 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
         if int(time.time()) - last_used_timestamp >= 5:
             await app.db.execute(dhrid, f"UPDATE session SET last_used_timestamp = {int(time.time())} WHERE token = '{stoken}'")
+            await app.db.commit(dhrid)
+            await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) != 0:
+                t[0][0]
+                await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
+            else:
+                await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
             await app.db.commit(dhrid)
 
         await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")

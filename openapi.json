@@ -1125,6 +1125,41 @@
                 "responses": {}
             }
         },
+        "/user/activity": {
+            "patch": {
+                "summary": "Update Activity",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "patch_user_activity",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "activity": {
+                                        "description": "Activity (Maximum number of characters: 256)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "activity"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/user/password": {
             "patch": {
                 "summary": "Update Password",

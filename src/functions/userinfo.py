@@ -31,21 +31,33 @@ def getAvatarSrc(discordid, avatar):
     src = convertQuotation(src)
     return src
 
-async def ActivityUpdate(request, uid, activity):
+async def ActivityUpdate(request, uid, activity, force = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if uid is None or int(uid) < 0:
         return
-    activity = convertQuotation(activity)
-    await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) != 0:
-        last_timestamp = t[0][0]
-        if int(time.time()) - last_timestamp <= 3:
-            return
-        await app.db.execute(dhrid, f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE uid = {uid}")
+    if not app.config.use_custom_activity or force:
+        activity = convertQuotation(activity)
+        await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
+        if len(t) != 0:
+            last_timestamp = t[0][0]
+            if int(time.time()) - last_timestamp <= 3:
+                return
+            await app.db.execute(dhrid, f"UPDATE user_activity SET activity = '{activity}', timestamp = {int(time.time())} WHERE uid = {uid}")
+        else:
+            await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, '{activity}', {int(time.time())})")
+        await app.db.commit(dhrid)
     else:
-        await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, '{activity}', {int(time.time())})")
-    await app.db.commit(dhrid)
+        await app.db.execute(dhrid, f"SELECT timestamp FROM user_activity WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
+        if len(t) != 0:
+            last_timestamp = t[0][0]
+            if int(time.time()) - last_timestamp <= 3:
+                return
+            await app.db.execute(dhrid, f"UPDATE user_activity SET timestamp = {int(time.time())} WHERE uid = {uid}")
+        else:
+            await app.db.execute(dhrid, f"INSERT INTO user_activity VALUES ({uid}, 'online', {int(time.time())})")
+        await app.db.commit(dhrid)
 
 # app.state.cache_language = {} # language cache (3 seconds)
 # app.state.cache_timezone = {} # timezone cache (3 seconds)
@@ -127,7 +139,7 @@ async def GetUserPrivacy(request, uid, nocache = False):
     if len(t) == 0:
         app.state.cache_language[uid] = {"result": {"role_history": False, "ban_history": False, "email": True, "account_connections": False, "activity": False, "public_profile": False}, "expire": int(time.time()) + 3}
         return {"role_history": False, "ban_history": False, "email": True, "account_connections": False, "activity": False, "public_profile": False}
-    
+
     d_default = [False, False, True, False, False, False]
     d = intify(t[0][0].split(","))
     if len(d) < len(d_default):
@@ -268,7 +280,7 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     if mfa_secret != "":
         mfa_enabled = True
     email = p[0][3]
-    
+
     activity = None
     await app.db.execute(dhrid, f"SELECT activity, timestamp FROM user_activity WHERE uid = {uid}")
     ac = await app.db.fetchall(dhrid)

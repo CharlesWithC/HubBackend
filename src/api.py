@@ -204,11 +204,12 @@ class HubMiddleware(BaseHTTPMiddleware):
                 return rl[1]
             response = await call_next(request)
 
-            # validate token after all (only to formalize responses in case auth is not necessarily needed)
-            if request.headers.get("Authorization") is not None and request.headers.get("Authorization").split(" ")[0] in ["Bearer", "Application"]:
-                au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)
-                if au["error"]:
-                    response = JSONResponse({"error": au["error"]}, status_code=au["code"])
+            if response.status_code not in [404, 500, 503]:
+                # validate token after all (only to formalize responses in case auth is not necessarily needed)
+                if request.headers.get("Authorization") is not None and request.headers.get("Authorization").split(" ")[0] in ["Bearer", "Application"]:
+                    au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)
+                    if au["error"]:
+                        response = JSONResponse({"error": au["error"]}, status_code=au["code"])
 
             request_end_time = time.time()
 

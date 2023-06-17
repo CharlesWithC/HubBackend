@@ -44,6 +44,7 @@
     "use_server_nickname": true,
     "sync_discord_email": true,
     "allow_custom_profile": true,
+    "use_custom_activity": false,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
     "required_connections": ["discord", "email", "truckersmp"],
     "register_methods": ["discord", "steam", "email"],

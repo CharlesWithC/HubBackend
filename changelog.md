@@ -2,7 +2,7 @@
 
 **v2.7.5**  
 1.Allowed external plugin to return response  
-2.Fixed `v2_7_2` upgrader error when there is no data in `event` table (not tested)  
+2.Fixed `v2_7_2` upgrader error when there is no data in `event` table  
 3.Removed `percentage` from `config.ranks[].daily_bonus.streak_type` to prevent excessive bonus  
 4.Renamed `config.ranks[].bonus` to `distance_bonus`  
 5.Disabled TrackSim webhook signature validation when webhook secret is not configured  
@@ -15,6 +15,8 @@
 11.Added `?requested_by` to **GET** `/divisions/list/pending`  
 12.Added `email`, `account_connections`, `activity`, `public_profile` privacy options  
 -> Certain staff could always surpass privacy options and get user info  
+13.Added **PATCH** `/user/activity` and `config.use_custom_activity`  
+-> When `use_custom_activity` is `false`, then **PATCH** `/user/activity` will be disabled and activity will be automatically updated when the user does certain API operations. When `use_custom_activity` is `true`, activity will not be automatically updated and user must use **PATCH** `/user/activity` to update the activity, but `last_seen` is always automatically updated  
 
 **v2.7.4**  
 1.Fixed update member points audit log  

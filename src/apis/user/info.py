@@ -408,3 +408,44 @@ async def patch_bio(request: Request, response: Response, authorization: str = H
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
+
+async def patch_activity(request: Request, response: Response, authorization: str = Header(None)):
+    """Updates the activity of the authorized user, returns 204
+
+    JSON: `{"activity": str}`
+
+    [NOTE] `last_seen` is always automatically set"""
+    app = request.app
+    if app.config.use_custom_activity is False:
+        response.status_code = 404
+        return {"error": "Not Found"}
+
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PATCH /user/activity', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+
+    data = await request.json()
+    try:
+        activity = str(data["activity"])
+        if len(activity) > 256:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "activity", "limit": "256"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await ActivityUpdate(request, uid, activity, force = True)
+
+    return Response(status_code=204)
