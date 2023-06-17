@@ -448,7 +448,7 @@ def validateConfig(cfg):
             rank["discord_role_id"] = None
 
         # v2.7.5
-        if "bonus" in rank.keys() and not "distance_bonus" in rank.keys():
+        if "bonus" in rank.keys() and 'distance_bonus' not in rank.keys():
             rank["distance_bonus"] = rank["bonus"]
         # v2.6.0
         if "distance_bonus" not in rank.keys() or rank["distance_bonus"] is None or type(rank["distance_bonus"]) != dict:

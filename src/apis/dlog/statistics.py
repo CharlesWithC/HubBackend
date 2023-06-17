@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import time
+import threading, asyncio
 from typing import Optional
 
 from fastapi import Header, Request, Response
@@ -9,6 +10,8 @@ from fastapi import Header, Request, Response
 from db import genconn
 from functions import *
 
+# app.state.statistics_details_last_work = -1
+# <=0 is finished, >0 is unfinished, it uses timestamp
 
 def rebuild(app):
     '''Delete all dlog_stats and rebuild stats from dlog detail.
@@ -472,39 +475,255 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     return ret
 
-async def get_details(request: Request, response: Response, authorization: Optional[str] = Header(None), userid: Optional[int] = None):
+async def get_details(request: Request, response: Response, authorization: Optional[str] = Header(None), userid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(request, 'GET /dlog/statistics/details', 60, 30)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
+    if after is None and before is None:
+        rl = await ratelimit(request, 'GET /dlog/statistics/details', 60, 30)
+        if rl[0]:
+            return rl[1]
+        for k in rl[1].keys():
+            response.headers[k] = rl[1][k]
 
-    quser = ""
-    au = await auth(authorization, request, allow_application_token = True)
-    if app.config.privacy and userid is not None and au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    elif userid is not None:
-        quser = f"userid = {userid}"
-    else:
-        quser = "userid = -1"
-
-    ret = {}
-    K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
-
-    await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE {quser} ORDER BY item_type ASC, count DESC, sum DESC")
-    t = await app.db.fetchall(dhrid)
-    for tt in t:
-        if K[tt[0]] not in ret.keys():
-            ret[K[tt[0]]] = []
-        if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
-            ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
+        quser = ""
+        au = await auth(authorization, request, allow_application_token = True)
+        if app.config.privacy and userid is not None and au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+        elif userid is not None:
+            quser = f"userid = {userid}"
         else:
-            ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
+            quser = "userid = -1"
 
-    return ret
+        ret = {}
+        K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
+
+        await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE {quser} ORDER BY item_type ASC, count DESC, sum DESC")
+        t = await app.db.fetchall(dhrid)
+        for tt in t:
+            if K[tt[0]] not in ret.keys():
+                ret[K[tt[0]]] = []
+            if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
+                ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
+            else:
+                ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
+
+        return ret
+
+    else:
+        if app.state.statistics_details_last_work > 0 or time.time() - abs(app.state.statistics_details_last_work) < 0.2:
+            # must not be working
+            # last work must be 0.2 second ago
+            return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+
+        rl = await ratelimit(request, 'GET /dlog/statistics/details/time-range', 10, 3)
+        if rl[0]:
+            return rl[1]
+        for k in rl[1].keys():
+            response.headers[k] = rl[1][k]
+
+        # require authorization to prevent DDoS
+        au = await auth(authorization, request, allow_application_token = True)
+        if au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+
+        limit = "logid >= 0 "
+        if userid is not None:
+            limit += f"AND userid = {userid} "
+        if after is not None:
+            limit += f"AND timestamp >= {after} "
+        if before is not None:
+            limit += f"AND timestamp <= {before} "
+
+        await app.db.execute(dhrid, f"SELECT logid, userid, data FROM dlog WHERE {limit}")
+        t = await app.db.fetchall(dhrid)
+        await app.db.close_conn(dhrid)
+
+        loop = asyncio.get_running_loop()
+        thread_completed = threading.Event()
+        def calc(app, t, query_userid):
+            app.state.statistics_details_last_work = time.time()
+
+            try:
+                max_log_id = 0
+                memtable = {}
+
+                for tt in t:
+                    max_log_id = max(max_log_id, tt[0])
+                    userid = tt[1]
+                    try:
+                        d = json.loads(decompress(tt[2]))
+                    except:
+                        continue
+
+                    dlog_stats = {}
+
+                    obj = d["data"]["object"]
+
+                    dlog_stats[3] = []
+
+                    truck = obj["truck"]
+                    if truck is not None:
+                        if "unique_id" in truck.keys() and "name" in truck.keys() and \
+                                truck["brand"] is not None and "name" in truck["brand"].keys():
+                            dlog_stats[1] = [[convertQuotation(truck["unique_id"]), convertQuotation(truck["brand"]["name"]) + " " + convertQuotation(truck["name"]), 1, 0]]
+                        if "license_plate_country" in truck.keys() and truck["license_plate_country"] is not None and \
+                                "unique_id" in truck["license_plate_country"].keys() and "name" in truck["license_plate_country"].keys():
+                            dlog_stats[3] = [[convertQuotation(truck["license_plate_country"]["unique_id"]), convertQuotation(truck["license_plate_country"]["name"]), 1, 0]]
+
+                    for trailer in obj["trailers"]:
+                        if "body_type" in trailer.keys():
+                            body_type = trailer["body_type"]
+                            dlog_stats[2]  = [[convertQuotation(body_type), convertQuotation(body_type), 1, 0]]
+                        if "license_plate_country" in trailer.keys() and trailer["license_plate_country"] is not None and \
+                                "unique_id" in trailer["license_plate_country"].keys() and "name" in trailer["license_plate_country"].keys():
+                            item = [convertQuotation(trailer["license_plate_country"]["unique_id"]), convertQuotation(trailer["license_plate_country"]["name"]), 1, 0]
+                            duplicate = False
+                            for i in range(len(dlog_stats[3])):
+                                if dlog_stats[3][i][0] == item[0] and dlog_stats[3][i][1] == item[1]:
+                                    dlog_stats[3][i][2] += 1
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[3].append(item)
+
+                    cargo = obj["cargo"]
+                    if cargo is not None and "unique_id" in cargo.keys() and "name" in cargo.keys():
+                        dlog_stats[4] = [[convertQuotation(cargo["unique_id"]), convertQuotation(cargo["name"]), 1, 0]]
+
+                    if "market" in obj.keys():
+                        dlog_stats[5] = [[convertQuotation(obj["market"]), convertQuotation(obj["market"]), 1, 0]]
+
+                    source_city = obj["source_city"]
+                    if source_city is not None and "unique_id" in source_city.keys() and "name" in source_city.keys():
+                        dlog_stats[6] = [[convertQuotation(source_city["unique_id"]), convertQuotation(source_city["name"]), 1, 0]]
+                    source_company = obj["source_company"]
+                    if source_company is not None and "unique_id" in source_company.keys() and "name" in source_company.keys():
+                        dlog_stats[7] = [[convertQuotation(source_company["unique_id"]), convertQuotation(source_company["name"]), 1, 0]]
+                    destination_city = obj["destination_city"]
+                    if destination_city is not None and "unique_id" in destination_city.keys() and "name" in destination_city.keys():
+                        dlog_stats[8] = [[convertQuotation(destination_city["unique_id"]), convertQuotation(destination_city["name"]), 1, 0]]
+                    destination_company = obj["destination_company"]
+                    if destination_company is not None and "unique_id" in destination_company.keys() and "name" in destination_company.keys():
+                        dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
+
+                    for i in range(10, 17):
+                        dlog_stats[i] = []
+
+                    for event in d["data"]["object"]["events"]:
+                        etype = event["type"]
+                        if etype == "fine":
+                            item = [event["meta"]["offence"], event["meta"]["offence"], 1, int(event["meta"]["amount"])]
+                            item[3] = item[3] if item[3] <= 51200 else 0
+                            duplicate = False
+                            for i in range(len(dlog_stats[10])):
+                                if dlog_stats[10][i][0] == item[0] and dlog_stats[10][i][1] == item[1]:
+                                    dlog_stats[10][i][2] += 1
+                                    dlog_stats[10][i][3] += item[3]
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[10].append(item)
+
+                        elif etype in ["collision", "speeding", "teleport"]:
+                            K = {"collision": 15, "speeding": 11, "teleport": 16}
+                            item = [etype, etype, 1, 0]
+                            duplicate = False
+                            for i in range(len(dlog_stats[K[etype]])):
+                                if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                                    dlog_stats[K[etype]][i][2] += 1
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[K[etype]].append(item)
+
+                        elif etype in ["tollgate"]:
+                            K = {"tollgate": 12}
+                            item = [etype, etype, 1, int(event["meta"]["cost"])]
+                            item[3] = item[3] if item[3] <= 51200 else 0
+                            duplicate = False
+                            for i in range(len(dlog_stats[K[etype]])):
+                                if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                                    dlog_stats[K[etype]][i][2] += 1
+                                    dlog_stats[K[etype]][i][3] += item[3]
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[K[etype]].append(item)
+
+                        elif etype in ["ferry", "train"]:
+                            K = {"ferry": 13, "train": 14}
+                            item = [f'{convertQuotation(event["meta"]["source_id"])}/{convertQuotation(event["meta"]["target_id"])}', f'{convertQuotation(event["meta"]["source_name"])}/{convertQuotation(event["meta"]["target_name"])}', 1, int(event["meta"]["cost"])]
+                            item[3] = item[3] if item[3] <= 51200 else 0
+                            duplicate = False
+                            for i in range(len(dlog_stats[K[etype]])):
+                                if dlog_stats[K[etype]][i][0] == item[0] and dlog_stats[K[etype]][i][1] == item[1]:
+                                    dlog_stats[K[etype]][i][2] += 1
+                                    dlog_stats[K[etype]][i][3] += item[3]
+                                    duplicate = True
+                                    break
+                            if not duplicate:
+                                dlog_stats[K[etype]].append(item)
+
+                    if query_userid is not None:
+                        for itype in dlog_stats.keys():
+                            for dd in dlog_stats[itype]:
+                                if (itype, userid, dd[0]) not in memtable.keys():
+                                    memtable[(itype, userid, dd[0])] = [dd[1], dd[2], dd[3]]
+                                else:
+                                    memtable[(itype, userid, dd[0])][0] = dd[1]
+                                    memtable[(itype, userid, dd[0])][1] += dd[2]
+                                    memtable[(itype, userid, dd[0])][2] += dd[3]
+                    else:
+                        for itype in dlog_stats.keys():
+                            for dd in dlog_stats[itype]:
+                                if (itype, -1, dd[0]) not in memtable.keys():
+                                    memtable[(itype, -1, dd[0])] = [dd[1], dd[2], dd[3]]
+                                else:
+                                    memtable[(itype, -1, dd[0])][0] = dd[1]
+                                    memtable[(itype, -1, dd[0])][1] += dd[2]
+                                    memtable[(itype, -1, dd[0])][2] += dd[3]
+
+                t = []
+                for (item_type, stat_userid, item_key) in memtable.keys():
+                    if item_key == "None":
+                        continue
+                    [item_name, count, sum] = memtable[(item_type, stat_userid, item_key)]
+                    t.append((item_type, item_key, item_name, count, sum))
+                t.sort(key=lambda x: (x[0], -x[3], -x[4]))
+
+                ret = {}
+                K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
+
+                for tt in t:
+                    if K[tt[0]] not in ret.keys():
+                        ret[K[tt[0]]] = []
+                    if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
+                        ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
+                    else:
+                        ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
+
+                app.state.statistics_details_last_result = ret
+
+            except:
+                app.state.statistics_details_last_result = "failed"
+
+            app.state.statistics_details_last_work = -time.time()
+            thread_completed.set()
+
+        thread = threading.Thread(target=calc, args=(app, t, userid, ))
+        thread.start()
+        await loop.run_in_executor(None, thread_completed.wait)
+
+        if app.state.statistics_details_last_result == "failed":
+            return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
+
+        ret = app.state.statistics_details_last_result
+        app.state.statistics_details_last_result = None
+
+        return ret

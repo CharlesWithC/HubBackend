@@ -2987,6 +2987,24 @@
                         },
                         "name": "userid",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "before",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

@@ -6,6 +6,8 @@
 3.Removed `percentage` from `config.ranks[].daily_bonus.streak_type` to prevent excessive bonus  
 4.Renamed `config.ranks[].bonus` to `distance_bonus`  
 5.Disabled TrackSim webhook signature validation when webhook secret is not configured  
+6.Added `?after|before` to **GET** `/dlog/statistics/details`  
+-> Rate limit: 3req/10sec (only applies to requests with time-range query)  
 
 **v2.7.4**  
 1.Fixed update member points audit log  

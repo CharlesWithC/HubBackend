@@ -61,6 +61,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
         WHERE dlog.timestamp >= {after} AND dlog.timestamp <= {before} {limit} AND dlog.logid >= 0")
     d = await app.db.fetchall(dhrid)
+
     for di in range(len(d)):
         dd = d[di]
         logid = dd[0]
