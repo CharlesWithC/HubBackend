@@ -3181,22 +3181,6 @@
                 "responses": {}
             }
         },
-        "/tracksim/setup": {
-            "post": {
-                "summary": "TrackSim Setup",
-                "tags": [
-                    "tracker"
-                ],
-                "operationId": "post_tracksim_setup",
-                "security": [
-                    {
-                        "bearerAuth": [],
-                        "applicationAuth": []
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/tracksim/update": {
             "post": {
                 "summary": "TrackSim Webhook",
@@ -3335,6 +3319,15 @@
                             "type": "string"
                         },
                         "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
                         "in": "query"
                     },
                     {
@@ -3654,6 +3647,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Creator UID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Application ID)",
                             "type": "integer"
                         },
@@ -3931,6 +3933,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Challenge ID)",
                             "type": "integer"
                         },
@@ -4003,10 +4014,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "User ID",
+                            "title": "Completed By User ID",
                             "type": "integer"
                         },
-                        "name": "userid",
+                        "name": "completed_by",
                         "in": "query"
                     },
                     {
@@ -4140,8 +4151,8 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "User ID",
-                            "type": "integer"
+                            "title": "Completed By User ID",
+                            "type": "completed_by"
                         },
                         "name": "userid",
                         "in": "query"
@@ -4560,6 +4571,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Requester User ID",
+                            "type": "integer"
+                        },
+                        "name": "requested_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Log ID)",
                             "type": "integer"
                         },
@@ -4632,19 +4652,19 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "After (Downloads ID)",
+                            "title": "Creator User ID",
                             "type": "integer"
                         },
-                        "name": "after_downloadsid",
+                        "name": "created_by",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Creator User ID",
+                            "title": "After (Downloads ID)",
                             "type": "integer"
                         },
-                        "name": "creator_userid",
+                        "name": "after_downloadsid",
                         "in": "query"
                     }
                 ],
@@ -6708,6 +6728,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Attendee User ID",
                             "type": "integer"
                         },
@@ -7126,6 +7155,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Creator User ID",
+                            "type": "integer"
+                        },
+                        "name": "created_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "After (Poll ID)",
                             "type": "integer"
                         },
@@ -7148,15 +7186,6 @@
                             "type": "integer"
                         },
                         "name": "before",
-                        "in": "query"
-                    },
-                    {
-                        "required": false,
-                        "schema": {
-                            "title": "Creator User ID",
-                            "type": "integer"
-                        },
-                        "name": "creator_userid",
                         "in": "query"
                     }
                 ],

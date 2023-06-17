@@ -45,11 +45,11 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_challengeid: Optional[int] = None, \
-        query: Optional[str] = "", \
+        query: Optional[str] = "", created_by: Optional[int] = None, \
         after: Optional[int] = None, before: Optional[int] = None, challenge_type: Optional[int] = None,
         required_role: Optional[int] = None, \
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
-        userid: Optional[int] = None, must_have_completed: Optional[bool] = False, \
+        completed_by: Optional[int] = None, must_have_completed: Optional[bool] = False, \
         order: Optional[str] = "desc", order_by: Optional[str] = "reward_points"):
     app = request.app
     dhrid = request.state.dhrid
@@ -94,10 +94,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if maximum_required_distance is not None:
         query_limit += f"AND required_distance <= {maximum_required_distance} "
 
-    if userid is not None:
-        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {userid}) "
-    if userid is None:
-        userid = au["userid"]
+    if created_by is not None:
+        query_limit += f"AND userid = {created_by} "
+
+    if completed_by is not None:
+        query_limit += f"AND challengeid IN (SELECT challengeid FROM challenge_record WHERE userid = {completed_by}) "
+    if completed_by is None:
+        completed_by = au["userid"]
 
     # start_time / end_time / title / required_distance / reward_points / delivery_count
     if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count", "orderid"]:
@@ -130,13 +133,13 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for tt in t:
         current_delivery_count = 0
         if tt[4] in [1,3]:
-            await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]} AND userid = {userid}")
+            await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]} AND userid = {completed_by}")
         elif tt[4] == 2:
             await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {tt[0]}")
         elif tt[4] == 4:
             await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                 INNER JOIN dlog ON dlog.logid = challenge_record.logid \
-                WHERE challenge_record.challengeid = {tt[0]} AND challenge_record.userid = {userid}")
+                WHERE challenge_record.challengeid = {tt[0]} AND challenge_record.userid = {completed_by}")
         elif tt[4] == 5:
             await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
                 INNER JOIN dlog ON dlog.logid = challenge_record.logid \
@@ -153,7 +156,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if must_have_completed:
             if tt[4] in [1,3,4]:
-                await app.db.execute(dhrid, f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]} AND userid = {userid}")
+                await app.db.execute(dhrid, f"SELECT challengeid FROM challenge_completed WHERE challengeid = {tt[0]} AND userid = {completed_by}")
                 p = await app.db.fetchall(dhrid)
                 if len(p) == 0:
                     continue
@@ -176,7 +179,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 # returns requirement if public_details = true and user is not staff
 #                     or if public_details = false
 
-async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), userid: Optional[int] = None):
+async def get_challenge(request: Request, response: Response, challengeid: int, authorization: str = Header(None), completed_by: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -192,8 +195,8 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    if userid is None:
-        userid = au["userid"]
+    if completed_by is None:
+        completed_by = au["userid"]
     isstaff = checkPerm(app, au["roles"], ["admin", "challenge"])
 
     await ActivityUpdate(request, au["uid"], "challenges")
@@ -217,13 +220,13 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 
     current_delivery_count = 0
     if tt[4] in [1,3]:
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {userid}")
+        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid} AND userid = {completed_by}")
     elif tt[4] == 2:
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge_record WHERE challengeid = {challengeid}")
     elif tt[4] == 4:
         await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
             INNER JOIN dlog ON dlog.logid = challenge_record.logid \
-            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {userid}")
+            WHERE challenge_record.challengeid = {challengeid} AND challenge_record.userid = {completed_by}")
     elif tt[4] == 5:
         await app.db.execute(dhrid, f"SELECT SUM(dlog.distance) FROM challenge_record \
             INNER JOIN dlog ON dlog.logid = challenge_record.logid \

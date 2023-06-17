@@ -153,7 +153,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_pollid: Optional[int] = None, \
         after: Optional[int] = None, before: Optional[int] = None, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
-        query: Optional[str] = "", creator_userid: Optional[int] = None):
+        query: Optional[str] = "", created_by: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -177,8 +177,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if query != "":
         query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
-    if creator_userid is not None:
-        limit += f"AND userid = {creator_userid} "
+    if created_by is not None:
+        limit += f"AND userid = {created_by} "
     if after is not None:
         limit += f"AND timestamp >= {after} "
     if before is not None:

@@ -84,7 +84,7 @@ async def patch_positions(request: Request, response: Response, authorization: s
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_applicationid: Optional[int] = None, \
-        application_type: Optional[int] = None, \
+        created_by: Optional[int] = None, application_type: Optional[int] = None, \
         all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
     app = request.app
     dhrid = request.state.dhrid
@@ -113,21 +113,24 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 100:
         page_size = 100
 
+    if created_by is not None:
+        all_user = True
+
     t = None
     tot = 0
     if all_user is False:
         limit = ""
         if application_type is not None:
-            limit = f" AND application_type = {application_type} "
+            limit += f" AND application_type = {application_type} "
 
         if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
 
         if after_applicationid is not None:
             if order == "asc":
-                limit += f"AND applicationid >= {after_applicationid} "
+                limit += f" AND applicationid >= {after_applicationid} "
             elif order == "desc":
-                limit += f"AND applicationid <= {after_applicationid} "
+                limit += f" AND applicationid <= {after_applicationid} "
 
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
@@ -167,10 +170,22 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 limit += f" AND status = {status} "
 
         if after_applicationid is not None:
-            if order == "asc":
-                limit += f"AND applicationid >= {after_applicationid} "
-            elif order == "desc":
-                limit += f"AND applicationid <= {after_applicationid} "
+            if "WHERE" not in limit:
+                if order == "asc":
+                    limit = f" WHERE applicationid >= {after_applicationid} "
+                elif order == "desc":
+                    limit = f" WHERE applicationid <= {after_applicationid} "
+            else:
+                if order == "asc":
+                    limit += f" AND applicationid >= {after_applicationid} "
+                elif order == "desc":
+                    limit += f" AND applicationid <= {after_applicationid} "
+
+        if created_by is not None:
+            if "WHERE" not in limit:
+                limit = f" WHERE uid = {created_by} "
+            else:
+                limit += f" AND uid = {created_by} "
 
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)

@@ -292,7 +292,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
 
 async def get_list_pending(request: Request, response: Response, authorization: str = Header(None), \
         divisionid: Optional[int] = None, \
-        page: Optional[int] = 1, page_size: Optional[int] = 10, after_logid: Optional[int] = None,
+        page: Optional[int] = 1, page_size: Optional[int] = 10, requested_by: Optional[int] = None, after_logid: Optional[int] = None,
         order_by: Optional[str] = "request_timestamp", order: Optional[str] = "asc"):
     app = request.app
     dhrid = request.state.dhrid
@@ -324,7 +324,9 @@ async def get_list_pending(request: Request, response: Response, authorization: 
 
     limit = ""
     if divisionid is not None:
-        limit = f"AND divisionid = {divisionid}"
+        limit = f"AND divisionid = {divisionid} "
+    if requested_by is not None:
+        limit += f"AND userid = {requested_by} "
 
     base_rows = 0
     tot = 0
