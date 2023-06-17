@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.7.5**  
+1.Allowed external plugin to return response  
+2.Fixed `v2_7_2` upgrader error when there is no data in `event` table (not tested)  
+
 **v2.7.4**  
 1.Fixed update member points audit log  
 2.Added detailed description to specific errors  

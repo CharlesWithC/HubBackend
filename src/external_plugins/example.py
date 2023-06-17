@@ -34,16 +34,16 @@ async def get_external(request: Request):
 async def startup(app):
     print("STARTUP")
 
-async def request(request):
+async def request(request: Request):
     print(f"NEW REQUEST from {request.client.host}")
 
-async def response_ok(request, response):
+async def response_ok(request: Request, response):
     print(f"RESPONSE OK: {response}")
 
-async def response_fail(request, exception, traceback):
+async def response_fail(request: Request, exception, traceback):
     print(f"RESPONSE FAIL: {exception}")
 
-async def error_handler(request, exception, traceback):
+async def error_handler(request: Request, exception, traceback):
     return JSONResponse({"error": str(exception)}, status_code=400)
 
 def init(config: dict, print_log: bool = False):

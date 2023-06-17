@@ -28,43 +28,49 @@ def run(app):
                         attendee TEXT,
                         points INT
                     )""")
-        cur.execute("""INSERT INTO new_event (
-                        eventid,
-                        userid,
-                        title,
-                        description,
-                        link,
-                        departure,
-                        destination,
-                        distance,
-                        meetup_timestamp,
-                        departure_timestamp,
-                        is_private,
-                        vote,
-                        attendee,
-                        points
-                    )
-                    SELECT eventid,
-                        userid,
-                        title,
-                        description,
-                        link,
-                        departure,
-                        destination,
-                        distance,
-                        meetup_timestamp,
-                        departure_timestamp,
-                        is_private,
-                        vote,
-                        attendee,
-                        points FROM event""")
-        cur.execute("""SELECT MAX(eventid) INTO @max_eventid FROM event""")
-        cur.execute("""SET @sql = CONCAT('ALTER TABLE new_event AUTO_INCREMENT = ', @max_eventid + 1)""")
-        cur.execute("""PREPARE stmt FROM @sql""")
-        cur.execute("""EXECUTE stmt""")
-        cur.execute("""DEALLOCATE PREPARE stmt""")
-        cur.execute("""DROP TABLE event""")
-        cur.execute("""ALTER TABLE new_event RENAME TO event""")
+        cur.execute("SELECT COUNT(*) FROM event")
+        t = cur.fetchall()
+        if len(t) == 0 or t[0][0] == 0:
+            cur.execute("DROP TABLE event")
+            cur.execute("""ALTER TABLE new_event RENAME TO event""")
+        else:
+            cur.execute("""INSERT INTO new_event (
+                            eventid,
+                            userid,
+                            title,
+                            description,
+                            link,
+                            departure,
+                            destination,
+                            distance,
+                            meetup_timestamp,
+                            departure_timestamp,
+                            is_private,
+                            vote,
+                            attendee,
+                            points
+                        )
+                        SELECT eventid,
+                            userid,
+                            title,
+                            description,
+                            link,
+                            departure,
+                            destination,
+                            distance,
+                            meetup_timestamp,
+                            departure_timestamp,
+                            is_private,
+                            vote,
+                            attendee,
+                            points FROM event""")
+            cur.execute("""SELECT MAX(eventid) INTO @max_eventid FROM event""")
+            cur.execute("""SET @sql = CONCAT('ALTER TABLE new_event AUTO_INCREMENT = ', @max_eventid + 1)""")
+            cur.execute("""PREPARE stmt FROM @sql""")
+            cur.execute("""EXECUTE stmt""")
+            cur.execute("""DEALLOCATE PREPARE stmt""")
+            cur.execute("""DROP TABLE event""")
+            cur.execute("""ALTER TABLE new_event RENAME TO event""")
 
         print("Updating event TABLE")
         cur.execute("ALTER TABLE event ADD orderid INT AFTER is_private")

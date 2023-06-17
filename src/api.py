@@ -152,17 +152,21 @@ class HubMiddleware(BaseHTTPMiddleware):
         try:
             for middleware in app.external_middleware["request"]:
                 if inspect.iscoroutinefunction(middleware):
-                    await middleware(request = request)
+                    resp = await middleware(request = request)
                 else:
-                    middleware(request = request)
+                    resp = middleware(request = request)
+                if resp is not None:
+                    return resp
         except Exception as exc:
             err = traceback.format_exc()
 
             for middleware in app.external_middleware["response_fail"]:
                 if inspect.iscoroutinefunction(middleware):
-                    await middleware(request = request, exception = exc, traceback = err)
+                    resp = await middleware(request = request, exception = exc, traceback = err)
                 else:
-                    middleware(request = request, exception = exc, traceback = err)
+                    resp = middleware(request = request, exception = exc, traceback = err)
+                if resp is not None:
+                    return resp
 
             if len(app.external_middleware["error_handler"]) != 0:
                 middleware = app.external_middleware["error_handler"][0]
@@ -213,9 +217,11 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             for middleware in app.external_middleware["response_ok"]:
                 if inspect.iscoroutinefunction(middleware):
-                    await middleware(request = request, response = response)
+                    resp = await middleware(request = request, response = response)
                 else:
-                    middleware(request = request, response = response)
+                    resp = middleware(request = request, response = response)
+                if resp is not None:
+                    return resp
 
             await app.db.close_conn(dhrid)
 
@@ -226,9 +232,11 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             for middleware in app.external_middleware["response_fail"]:
                 if inspect.iscoroutinefunction(middleware):
-                    await middleware(request = request, exception = exc, traceback = err)
+                    resp = await middleware(request = request, exception = exc, traceback = err)
                 else:
-                    middleware(request = request, exception = exc, traceback = err)
+                    resp = middleware(request = request, exception = exc, traceback = err)
+                if resp is not None:
+                    return resp
 
             if len(app.external_middleware["error_handler"]) != 0:
                 middleware = app.external_middleware["error_handler"][0]
