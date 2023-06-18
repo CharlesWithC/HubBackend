@@ -35,7 +35,7 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /discord/role-connection/enable', 60, 5)
+    rl = await ratelimit(request, 'POST /discord/role-connection/enable', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -64,7 +64,7 @@ async def post_discord_role_connection_disable(request: Request, response: Respo
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /discord/role-connection/disable', 60, 5)
+    rl = await ratelimit(request, 'POST /discord/role-connection/disable', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

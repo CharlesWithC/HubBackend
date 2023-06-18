@@ -17,7 +17,7 @@ async def post_enable(request: Request, response: Response, authorization: str =
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'POST /user/mfa', 60, 10)
+    rl = await ratelimit(request, 'POST /user/mfa/enable', 60, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

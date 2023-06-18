@@ -248,7 +248,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /member/point', 60, 30)
+    rl = await ratelimit(request, 'PATCH /member/points', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

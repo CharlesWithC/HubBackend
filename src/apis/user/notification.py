@@ -255,7 +255,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
             response.status_code = 503
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
-        rl = await ratelimit(request, 'PATCH /user/notification/discord/enable', 60, 5)
+        rl = await ratelimit(request, 'POST /user/notification/discord/enable', 60, 5)
         if rl[0]:
             return rl[1]
         for k in rl[1].keys():

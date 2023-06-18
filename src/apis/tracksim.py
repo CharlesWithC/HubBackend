@@ -292,7 +292,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         logid = (await app.db.fetchone(dhrid))[0]
 
-        if "tracker" in app.config.plugins:
+        if "route" in app.config.plugins:
             asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid, request))
 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
