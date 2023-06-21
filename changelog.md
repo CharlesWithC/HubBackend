@@ -5,6 +5,11 @@
 -> Support any fields, so no update is needed to catch up with the changing discord  
 -> Support more variables, including `{avatar}` and `{staff_*}`  
 -> Support multiple embeds in one message  
+2.Improved application restrictions with the following config fields  
+```{"required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}```  
+-> `require_member_state` = -1: either | 0: not member | 1: is member  
+-> \*_either_user_role_ids: include either of the roles  
+-> \*_all_user_role_ids: include all of the roles  
 
 **v2.7.5**  
 1.Allowed external plugin to return response  

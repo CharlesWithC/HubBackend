@@ -262,7 +262,7 @@ async def post_application(request: Request, response: Response, authorization: 
     uid = au["uid"]
     discordid = au["discordid"]
     userid = au["userid"]
-    roles = au["roles"]
+    au["roles"]
 
     data = await request.json()
     try:
@@ -283,7 +283,7 @@ async def post_application(request: Request, response: Response, authorization: 
     discord_message_content = ""
     hook_url = ""
     hook_key = ""
-    note = ""
+    meta = ""
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
@@ -295,53 +295,71 @@ async def post_application(request: Request, response: Response, authorization: 
             elif o["webhook_url"] != "":
                 hook_url = o["webhook_url"]
                 hook_key = o["webhook_url"]
-            note = o["note"]
+            meta = o
     if application_type_text == "":
         response.status_code = 400
         return {"error": ml.tr(request, "unknown_application_type", force_lang = au["language"])}
 
-    if note == "driver":
-        for r in app.config.perms.driver:
-            if r in roles:
-                response.status_code = 409
-                return {"error": ml.tr(request, "drivers_not_allowed_to_create_driver_application", force_lang = au["language"])}
-        await app.db.execute(dhrid, f"SELECT * FROM application WHERE application_type = 1 AND uid = {uid} AND status = 0")
+    ok = True
+    if meta["required_member_state"] == 0 and au["userid"] >= 0:
+        ok = False
+    if meta["required_member_state"] == 1 and au["userid"] < 0:
+        ok = False
+
+    role_not_ok = (len(meta["required_either_user_role_ids"]) != 0)
+    for role_id in meta["required_either_user_role_ids"]:
+        if role_id in au["roles"]:
+            role_not_ok = False
+    ok = ok and not role_not_ok
+
+    role_not_ok = False
+    for role_id in meta["required_all_user_role_ids"]:
+        if role_id not in au["roles"]:
+            role_not_ok = True
+    ok = ok and not role_not_ok
+
+    role_not_ok = False
+    for role_id in meta["prohibited_either_user_role_ids"]:
+        if role_id in au["roles"]:
+            role_not_ok = True
+    ok = ok and not role_not_ok
+
+    role_not_ok = (len(meta["prohibited_all_user_role_ids"]) != 0)
+    for role_id in meta["prohibited_all_user_role_ids"]:
+        if role_id not in au["roles"]:
+            role_not_ok = False
+    ok = ok and not role_not_ok
+
+    if not ok:
+        response.status_code = 403
+        return {"error": ml.tr(request, "applicant_not_eligible", force_lang = au["language"])}
+
+    if meta["cooldown_hours"] > 0:
+        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND submit_timestamp >= {int(time.time()) - int(nint(meta['cooldown_hours']) * 3600)}")
         p = await app.db.fetchall(dhrid)
         if len(p) > 0:
-            response.status_code = 409
-            return {"error": ml.tr(request, "already_driver_application", force_lang = au["language"])}
+            response.status_code = 429
+            return {"error": ml.tr(request, "no_multiple_application", var = {"count": str(meta['cooldown_hours'])}, force_lang = au["language"])}
 
-    if note == "division" and not checkPerm(app, roles, "admin"):
-        ok = False
-        for r in app.config.perms.driver:
-            if r in roles:
-                ok = True
-        if not ok:
-            response.status_code = 403
-            return {"error": ml.tr(request, "must_be_driver_to_submit_division_application", force_lang = au["language"])}
-
-    await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND submit_timestamp >= {int(time.time()) - 7200}")
-    p = await app.db.fetchall(dhrid)
-    if len(p) > 0:
-        response.status_code = 429
-        return {"error": ml.tr(request, "no_multiple_application_2h", force_lang = au["language"])}
-
-    if userid == -1 and application_type == 3:
-        response.status_code = 403
-        return {"error": ml.tr(request, "must_be_member_to_submit_loa_application", force_lang = au["language"])}
+    if not meta["allow_multiple"]:
+        await app.db.execute(dhrid, f"SELECT * FROM application WHERE uid = {uid} AND application_type = {application_type} AND status = 0")
+        p = await app.db.fetchall(dhrid)
+        if len(p) > 0:
+            response.status_code = 429
+            return {"error": ml.tr(request, "same_type_application_exists", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT name, avatar, email, truckersmpid, steamid, userid, discordid FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    if "@" not in t[0][2] and "email" in app.config.required_connections:
+    if "@" not in t[0][2] and "email" in meta["required_connections"]:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Email"}, force_lang = au["language"])}
-    if t[0][6] is None and ("discord" in app.config.required_connections or app.config.must_join_guild):
+    if t[0][6] is None and ("discord" in meta["required_connections"] or app.config.must_join_guild):
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Discord"}, force_lang = au["language"])}
-    if t[0][4] is None and "steam" in app.config.required_connections:
+    if t[0][4] is None and "steam" in meta["required_connections"]:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "Steam"}, force_lang = au["language"])}
-    if t[0][3] is None and "truckersmp" in app.config.required_connections:
+    if t[0][3] is None and "truckersmp" in meta["required_connections"]:
         response.status_code = 428
         return {"error": ml.tr(request, "must_have_connection", var = {"app": "TruckersMP"}, force_lang = au["language"])}
     userid = t[0][5]

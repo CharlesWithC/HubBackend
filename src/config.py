@@ -85,8 +85,8 @@ default_config = {
     "allow_custom_profile": True,
     "use_custom_activity": False,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
-    "required_connections": ["discord", "email", "truckersmp"],
-    "register_methods": ["email", "discord", "steam"],
+    "required_connections": ["discord", "steam"],
+    "register_methods": ["discord", "steam"],
 
     "tracker": "tracksim",
     "tracker_company_id": "",
@@ -313,11 +313,14 @@ default_config = {
         {"id": 4, "name": "Resolved", "staff_role_ids": [20]}
     ],
 
+    # require_member_state = -1: either | 0: not member | 1: is member
+    # *_either_user_role_ids: include either of the roles
+    # *_all_user_role_ids: include all of the roles
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": "driver"},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "note": ""},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "note": ""}
+        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": ["discord", "steam"], "required_member_state": 0, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
     ],
 
     "divisions": [],
@@ -667,7 +670,7 @@ def validateConfig(cfg):
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
-    reqs = ["id", "name", "discord_role_id", "staff_role_ids", "message", "channel_id", "webhook_url", "note"]
+    reqs = ["id", "name", "discord_role_id", "staff_role_ids", "message", "channel_id", "webhook_url"]
     for i in range(len(application_types)):
         application_type = application_types[i]
         try:
@@ -699,6 +702,22 @@ def validateConfig(cfg):
         if 'channel_id' not in application_type.keys():
             application_type["channel_id"] = ""
         #########
+
+        # v2.7.6
+        meta = {"required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
+        for key in meta.keys():
+            if key not in application_type.keys() or not isinstance(application_type[key], type(meta[key])):
+                application_type[key] = meta[key]
+        if application_type["required_member_state"] not in [-1, 0, 1]:
+            application_type["required_member_state"] = -1
+        application_type["cooldown_hours"] = max(0, min(application_type["cooldown_hours"], 1000000))
+        if "note" in application_type.keys():
+            if application_type["note"] == "driver":
+                application_type["required_connections"] = ["discord", "steam"]
+                application_type["required_member_state"] = 0
+            elif application_type["note"] == "division":
+                application_type["required_member_state"] = 1
+            del application_type["note"]
 
         ok = True
         for req in reqs:
@@ -772,7 +791,7 @@ def validateConfig(cfg):
     for embed_type in embed_auto_validate:
         for i in range(len(cfg[embed_type])):
             # v2.7.6
-            if "embed" in cfg[embed_type][i].keys() and not "embeds" in cfg[embed_type][i].keys():
+            if "embed" in cfg[embed_type][i].keys() and 'embeds' not in cfg[embed_type][i].keys():
                 cfg[embed_type][i]["embeds"] = [cfg[embed_type][i]["embed"]]
                 del cfg[embed_type][i]["embed"]
             ########
