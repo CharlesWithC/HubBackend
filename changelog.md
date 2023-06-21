@@ -1,5 +1,11 @@
 # Changelog
 
+**v2.7.6**  
+1.Improved discord embed handler  
+-> Support any fields, so no update is needed to catch up with the changing discord  
+-> Support more variables, including `{avatar}` and `{staff_*}`  
+-> Support multiple embeds in one message  
+
 **v2.7.5**  
 1.Allowed external plugin to return response  
 2.Fixed `v2_7_2` upgrader error when there is no data in `event` table  

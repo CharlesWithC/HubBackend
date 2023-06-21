@@ -250,7 +250,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         # application token will skip ip / country check
 
         # this should not happen but just in case
-        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": ml.tr(request, "unauthorized"), "code": 401}
@@ -258,6 +258,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         discordid = t[0][1]
         roles = str2list(t[0][2])
         name = t[0][3]
+        avatar = t[0][4]
         if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
@@ -290,7 +291,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         if len(t) != 0:
             language = t[0][0]
 
-        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
+        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": True}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
         app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
         return app.state.cache_session[authorization]["result"]
@@ -343,7 +344,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             await app.db.commit(dhrid)
 
         # this should not happen but just in case
-        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"SELECT userid, discordid, roles, name, avatar FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             return {"error": ml.tr(request, "unauthorized"), "code": 401}
@@ -351,6 +352,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         discordid = t[0][1]
         roles = str2list(t[0][2])
         name = t[0][3]
+        avatar = t[0][4]
         if userid == -1 and (check_member or len(required_permission) != 0):
             return {"error": ml.tr(request, "no_access_to_resource"), "code": 403}
 
@@ -384,7 +386,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
         if len(t) != 0:
             language = t[0][0]
 
-        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
+        app.state.cache_session[authorization] = {"result": {"error": False, "uid": uid, "userid": userid, "discordid": discordid, "name": name, "avatar": avatar, "roles": roles, "language": language, "application_token": False}, "settings": (allow_application_token, check_member, required_permission), "expire": time.time() + 1}
         app.state.cache_session_extended[authorization] = {"uid": uid, "expire": time.time() + 300}
 
         return app.state.cache_session[authorization]["result"]

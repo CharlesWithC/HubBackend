@@ -325,24 +325,36 @@ async def AuditLog(request, uid, text, discord_message_only = False):
 
 async def AutoMessage(app, meta, setvar):
     try:
-        timestamp = ""
-        if meta.embed.timestamp:
-            timestamp = str(datetime.now())
-        data = json.dumps({
-            "content": setvar(meta.content),
-            "embeds": [{
-                "title": setvar(meta.embed.title),
-                "description": setvar(meta.embed.description),
-                "footer": {
-                    "text": setvar(meta.embed.footer.text),
-                    "icon_url": setvar(meta.embed.footer.icon_url)
-                },
-                "image": {
-                    "url": setvar(meta.embed.image_url)
-                },
-                "timestamp": timestamp,
-                "color": int(app.config.hex_color, 16)
-            }]})
+        def setvar4all(d, setvar):
+            for key, value in d.items():
+                if isinstance(value, dict):
+                    d[key] = setvar4all(value, setvar)
+                else:
+                    if type(value) == str:
+                        d[key] = setvar(value)
+            return d
+
+        embeds = []
+        for embed in meta.embeds:
+            if "timestamp" in embed.keys():
+                if type(embed["timestamp"]) == bool:
+                    embed["timestamp"] = str(datetime.now())
+                elif isint(embed["timestamp"]):
+                    embed["timestamp"] = str(datetime.fromtimestamp(int(embed["timestamp"])))
+                else:
+                    del embed["timestamp"]
+
+            if "color" not in embed.keys() or not isint(embed["color"]):
+                embed["color"] = int(app.config.hex_color, 16)
+
+            embed = setvar4all(embed, setvar)
+            embeds.append(embed)
+
+        if len(embeds) != 0:
+            data = json.dumps({"content": setvar(meta.content),
+                            "embeds": embeds})
+        else:
+            data = json.dumps({"content": setvar(meta.content)})
 
         if meta.channel_id != "":
             if app.config.discord_bot_token == "":
@@ -360,4 +372,6 @@ async def AutoMessage(app, meta, setvar):
                 DisableDiscordIntegration(app)
 
     except:
+        import traceback
+        traceback.print_exc()
         pass

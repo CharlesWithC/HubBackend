@@ -162,7 +162,7 @@
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} has joined **VTC**.",
             "image_url": "",
@@ -171,13 +171,13 @@
                 "icon_url": ""
             },
             "timestamp": true
-        },
+        }],
         "role_change": []
     },{
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "Welcome {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -186,7 +186,7 @@
                 "icon_url": ""
             },
             "timestamp": true
-        },
+        }],
         "role_change": []
     }],
     
@@ -194,7 +194,7 @@
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "Bye {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -203,7 +203,7 @@
                 "icon_url": ""
             },
             "timestamp": true
-        },
+        }],
         "role_change": []
     }],
     
@@ -211,7 +211,7 @@
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} became a driver!",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -220,7 +220,7 @@
                 "icon_url": ""
             },
             "timestamp": true
-        },
+        }],
         "role_change": []
     }],
     
@@ -228,7 +228,7 @@
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} left as a driver!",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -237,7 +237,7 @@
                 "icon_url": ""
             },
             "timestamp": true
-        },
+        }],
         "role_change": []
     }],
 
@@ -245,7 +245,7 @@
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "GG {mention}! You have ranked up to {rank}!",
             "image_url": "",
@@ -254,7 +254,7 @@
                 "icon_url": ""
             },
             "timestamp": true
-        }
+        }]
     }],
     "ranks": [
         {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},

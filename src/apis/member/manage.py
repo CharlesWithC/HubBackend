@@ -53,7 +53,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     if userid < 0:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_userid", force_lang = au["language"])}
-    await app.db.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid, uid FROM user WHERE userid = {userid}")
+    await app.db.execute(dhrid, f"SELECT name, roles, steamid, discordid, truckersmpid, uid, avatar FROM user WHERE userid = {userid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -63,6 +63,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     steamid = t[0][2]
     discordid = t[0][3]
     uid = t[0][5]
+    avatar = t[0][6]
     addedroles = []
     removedroles = []
     for role in new_roles:
@@ -122,7 +123,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await app.db.commit(dhrid)
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
+        msg = msg.replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
     tracker_app_error = ""
     if checkPerm(app, addedroles, "driver"):
@@ -327,7 +329,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT userid, steamid, name, roles, discordid, uid FROM user WHERE userid = {userid}")
+    await app.db.execute(dhrid, f"SELECT userid, steamid, name, roles, discordid, uid, avatar FROM user WHERE userid = {userid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -338,6 +340,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     roles = str2list(t[0][3])
     discordid = t[0][4]
     uid = t[0][5]
+    avatar = t[0][6]
     user_highest_role = 99999
     for role in roles:
         if role < user_highest_role:
@@ -384,7 +387,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
+        msg = msg.replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
     for meta in app.config.member_leave:
         meta = Dict2Obj(meta)

@@ -38,6 +38,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
     discordid = au["discordid"]
     userid = au["userid"]
     username = au["name"]
+    avatar = au["avatar"]
 
     if discordid is None:
         response.status_code = 409
@@ -93,7 +94,7 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                 usermention = f"<@{discordid}>"
                 rankmention = f"<@&{rankroleid}>"
                 def setvar(msg):
-                    return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention)
+                    return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
                 for meta in app.config.rank_up:
                     meta = Dict2Obj(meta)
@@ -301,10 +302,11 @@ async def post_resign(request: Request, response: Response, authorization: str =
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT mfa_secret, steamid FROM user WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"SELECT mfa_secret, steamid, avatar FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     mfa_secret = t[0][0]
     steamid = t[0][1]
+    avatar = t[0][2]
     if mfa_secret != "":
         data = await request.json()
         try:
@@ -353,7 +355,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await UpdateRoleConnection(request, discordid)
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
+        return msg.replace("{mention}", f"<@!{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
     for meta in app.config.member_leave:
         meta = Dict2Obj(meta)

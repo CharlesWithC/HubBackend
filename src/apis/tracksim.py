@@ -147,7 +147,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     e = d["type"]
     if e == "company_driver.detached":
         steamid = int(d["data"]["object"]["steam_id"])
-        await app.db.execute(dhrid, f"SELECT uid, userid, name, discordid FROM user WHERE steamid = {steamid}")
+        await app.db.execute(dhrid, f"SELECT uid, userid, name, discordid, avatar FROM user WHERE steamid = {steamid}")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
             response.status_code = 404
@@ -156,13 +156,14 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         userid = t[0][1]
         name = t[0][2]
         discordid = t[0][3]
+        avatar = t[0][4]
         await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit", var = {"username": name, "uid": uid}))
 
         await app.db.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
         await app.db.commit(dhrid)
 
         def setvar(msg):
-            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace(f"{uid}", str(uid))
+            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
         for meta in app.config.member_leave:
             meta = Dict2Obj(meta)

@@ -34,7 +34,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         response.status_code = 409
         return {"error": ml.tr(request, "banned_user_cannot_be_accepted", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email FROM user WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email, avatar FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -48,6 +48,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     steamid = t[0][4]
     truckersmpid = t[0][5]
     email = t[0][6]
+    avatar = t[0][7]
     if '@' not in email and "email" in app.config.required_connections:
         response.status_code = 428
         return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
@@ -73,7 +74,8 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
     def setvar(msg):
-        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid))
+        msg = msg.replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
+        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
 
     for meta in app.config.member_accept:
         meta = Dict2Obj(meta)

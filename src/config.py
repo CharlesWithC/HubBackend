@@ -196,11 +196,14 @@ default_config = {
         "webhook_url": ""
     },
 
+    # supported {variables}: mention, name, avatar, userid, uid
+    # staff_mention, staff_name, staff_avatar, staff_userid, staff_uid
+    # [NOTE] staff_* might not be available to all cases
     "member_accept": [{
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} has joined **VTC**.",
             "image_url": "",
@@ -209,13 +212,13 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        },
+        }],
         "role_change": []
     },{
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "Welcome {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -224,7 +227,7 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        },
+        }],
         "role_change": []
     }],
 
@@ -232,7 +235,7 @@ default_config = {
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "Bye {name}.",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -241,7 +244,7 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        },
+        }],
         "role_change": []
     }],
 
@@ -249,7 +252,7 @@ default_config = {
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} became a driver!",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -258,7 +261,7 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        },
+        }],
         "role_change": []
     }],
 
@@ -266,7 +269,7 @@ default_config = {
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "{name} left as a driver!",
             "image_url": "https://{domain}/images/bg.jpg",
@@ -275,15 +278,16 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        },
+        }],
         "role_change": []
     }],
 
+    # supported {variables}: mention, name, avatar, userid, uid, rank
     "rank_up": [{
         "channel_id": "",
         "webhook_url": "",
         "content": "{mention}",
-        "embed": {
+        "embeds": [{
             "title": "",
             "description": "GG {mention}! You have ranked up to {rank}!",
             "image_url": "",
@@ -292,7 +296,7 @@ default_config = {
                 "icon_url": ""
             },
             "timestamp": True
-        }
+        }]
     }],
     "ranks": [
         {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
@@ -767,10 +771,16 @@ def validateConfig(cfg):
         del cfg["member_welcome"]
     for embed_type in embed_auto_validate:
         for i in range(len(cfg[embed_type])):
-            if "embed" in cfg[embed_type][i].keys():
-                cfg[embed_type][i]["embed"] = validateEmbed(cfg[embed_type][i]["embed"])
+            # v2.7.6
+            if "embed" in cfg[embed_type][i].keys() and not "embeds" in cfg[embed_type][i].keys():
+                cfg[embed_type][i]["embeds"] = [cfg[embed_type][i]["embed"]]
+                del cfg[embed_type][i]["embed"]
+            ########
+            if "embeds" in cfg[embed_type][i].keys() and type(cfg[embed_type][i]["embeds"]) == list:
+                for j in range(len(cfg[embed_type][i]["embeds"])):
+                    cfg[embed_type][i]["embeds"][j] = validateEmbed(cfg[embed_type][i]["embeds"][j])
             else:
-                cfg[embed_type][i]["embed"] = DEFAULT_EMBED
+                cfg[embed_type][i]["embeds"] = []
             for to_ensure in discord_msg_ensure:
                 if to_ensure not in cfg[embed_type][i].keys():
                     cfg[embed_type][i][to_ensure] = ""

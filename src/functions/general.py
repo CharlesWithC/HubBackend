@@ -50,6 +50,12 @@ def isurl(s):
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(r, s) is not None
 
+def validateUrl(s):
+    if not isurl(s):
+        return ""
+    else:
+        return s
+
 def getDomainFromUrl(s):
     if not isurl(s):
         return False
