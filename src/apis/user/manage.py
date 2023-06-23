@@ -74,8 +74,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
     def setvar(msg):
-        msg = msg.replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
-        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
+        return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"<@!{au['discordid']}>").replace("{staff_name}", au["name"]).replace("{staff_userid}", str(au["userid"])).replace("{staff_uid}", str(au["uid"])).replace("{staff_avatar}", validateUrl(au["avatar"]))
 
     for meta in app.config.member_accept:
         meta = Dict2Obj(meta)

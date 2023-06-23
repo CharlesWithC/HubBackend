@@ -206,7 +206,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "{name} has joined **VTC**.",
-            "image_url": "",
+            "image": {
+                "url": ""
+            },
             "footer": {
                 "text": "",
                 "icon_url": ""
@@ -221,7 +223,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "Welcome {name}.",
-            "image_url": "https://{domain}/images/bg.jpg",
+            "image": {
+                "url": "https://{domain}/images/bg.jpg"
+            },
             "footer": {
                 "text": "You are our #{userid} member",
                 "icon_url": ""
@@ -238,7 +242,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "Bye {name}.",
-            "image_url": "https://{domain}/images/bg.jpg",
+            "image": {
+                "url": "https://{domain}/images/bg.jpg"
+            },
             "footer": {
                 "text": "Goodbye!",
                 "icon_url": ""
@@ -255,7 +261,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "{name} became a driver!",
-            "image_url": "https://{domain}/images/bg.jpg",
+            "image": {
+                "url": "https://{domain}/images/bg.jpg"
+            },
             "footer": {
                 "text": "Hooray!",
                 "icon_url": ""
@@ -272,7 +280,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "{name} left as a driver!",
-            "image_url": "https://{domain}/images/bg.jpg",
+            "image": {
+                "url": "https://{domain}/images/bg.jpg"
+            },
             "footer": {
                 "text": "Oops!",
                 "icon_url": ""
@@ -290,7 +300,9 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "GG {mention}! You have ranked up to {rank}!",
-            "image_url": "",
+            "image": {
+                "url": ""
+            },
             "footer": {
                 "text": "",
                 "icon_url": ""
@@ -361,7 +373,9 @@ default_config = {
 DEFAULT_EMBED = {
         "title": "",
         "description": "",
-        "image_url": "",
+        "image": {
+                "url": ""
+            },
         "footer": {
             "text": "",
             "icon_url": ""
@@ -797,6 +811,11 @@ def validateConfig(cfg):
             ########
             if "embeds" in cfg[embed_type][i].keys() and type(cfg[embed_type][i]["embeds"]) == list:
                 for j in range(len(cfg[embed_type][i]["embeds"])):
+                    # v2.7.6
+                    if "image_url" in cfg[embed_type][i]["embeds"][j].keys() and "image" not in cfg[embed_type][i]["embeds"][j].keys():
+                        cfg[embed_type][i]["embeds"][j]["image"] = {"url": cfg[embed_type][i]["embeds"][j]["image_url"]}
+                        del cfg[embed_type][i]["embeds"][j]["image_url"]
+                    ########
                     cfg[embed_type][i]["embeds"][j] = validateEmbed(cfg[embed_type][i]["embeds"][j])
             else:
                 cfg[embed_type][i]["embeds"] = []

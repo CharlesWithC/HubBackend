@@ -10,7 +10,6 @@ from fastapi import Request
 import multilang as ml
 from functions.arequests import arequests
 from functions.general import DisableDiscordIntegration
-from functions.notification import AuditLog
 
 
 class DiscordAuth:
@@ -134,6 +133,7 @@ class opqueue:
                             error_msg = ml.ctr(request, "error_removing_discord_role", var = {"code": d["code"], "discord_role": t[1], "user_discordid": t[2], "message": d["message"]})
 
                         if error_msg not in [None, "disable"]:
+                            from functions.notification import AuditLog
                             await AuditLog(request, -998, error_msg)
 
                 except:

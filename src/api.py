@@ -138,7 +138,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             if err_hash not in app.state.session_errs:
                 app.state.session_errs.append(err_hash)
                 if app.config.webhook_error != "":
-                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": request.client.host, "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
+                    opqueue.queue(app, "post", app.config.webhook_error, app.config.webhook_error, json.dumps({"embeds": [{"title": "Error", "description": f"```{err}```", "fields": [{"name": "Host", "value": app.config.domain, "inline": True}, {"name": "Abbreviation", "value": app.config.abbr, "inline": True}, {"name": "Version", "value": app.version, "inline": True}, {"name": "Request IP", "value": f"`{request.client.host}`", "inline": False}, {"name": "Request URL", "value": str(request.url), "inline": False}], "footer": {"text": err_hash}, "color": int(app.config.hex_color, 16), "timestamp": str(datetime.now())}]}), {"Content-Type": "application/json"}, None)
 
             return JSONResponse({"error": "Internal Server Error"}, status_code = 500)
     except:

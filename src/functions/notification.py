@@ -13,6 +13,7 @@ from functions.arequests import *
 from functions.dataop import *
 from functions.general import *
 from functions.userinfo import *
+from functions.discord import opqueue
 from static import *
 
 # app.state.discord_message_queue = []
@@ -308,16 +309,17 @@ async def AuditLog(request, uid, text, discord_message_only = False):
                 if uid not in [-999, -998]:
                     footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
 
-                headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
+                data = json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})
 
                 if app.config.hook_audit_log.channel_id != "":
-                    durl = f"https://discord.com/api/v10/channels/{app.config.hook_audit_log.channel_id}/messages"
-                elif app.config.hook_audit_log.webhook_url != "":
-                    durl = app.config.hook_audit_log.webhook_url
+                    if app.config.discord_bot_token == "":
+                        return
 
-                r = await arequests.post(app, durl, data=json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]}), headers =  headers)
-                if r.status_code == 401:
-                    DisableDiscordIntegration(app)
+                    opqueue.queue(app, "post", app.config.hook_audit_log.channel_id, f"https://discord.com/api/v10/channels/{app.config.hook_audit_log.channel_id}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable")
+
+                elif app.config.hook_audit_log.webhook_url != "":
+                    opqueue.queue(app, "post", app.config.hook_audit_log.webhook_url, app.config.hook_audit_log.webhook_url, data, {"Content-Type": "application/json"}, None)
+
             except:
                 pass
     except:
@@ -325,30 +327,34 @@ async def AuditLog(request, uid, text, discord_message_only = False):
 
 async def AutoMessage(app, meta, setvar):
     try:
-        def setvar4all(d, setvar):
-            for key, value in d.items():
-                if isinstance(value, dict):
-                    d[key] = setvar4all(value, setvar)
-                else:
-                    if type(value) == str:
-                        d[key] = setvar(value)
-            return d
-
         embeds = []
         for embed in meta.embeds:
-            if "timestamp" in embed.keys():
-                if type(embed["timestamp"]) == bool:
-                    embed["timestamp"] = str(datetime.now())
-                elif isint(embed["timestamp"]):
-                    embed["timestamp"] = str(datetime.fromtimestamp(int(embed["timestamp"])))
+            data = copy.deepcopy(embed)
+            if "timestamp" in data.keys():
+                if type(data["timestamp"]) == bool:
+                    data["timestamp"] = str(datetime.now())
+                elif isint(data["timestamp"]):
+                    data["timestamp"] = str(datetime.fromtimestamp(int(data["timestamp"])))
                 else:
-                    del embed["timestamp"]
+                    del data["timestamp"]
 
-            if "color" not in embed.keys() or not isint(embed["color"]):
-                embed["color"] = int(app.config.hex_color, 16)
+            if "color" not in data.keys() or not isint(data["color"]):
+                data["color"] = int(app.config.hex_color, 16)
 
-            embed = setvar4all(embed, setvar)
-            embeds.append(embed)
+            res = {}
+            stack = [(data, res)]
+            while stack:
+                cur_dict, cur_res = stack.pop()
+                for key, value in cur_dict.items():
+                    if isinstance(value, dict):
+                        new_dict = {}
+                        cur_res[key] = new_dict
+                        stack.append((value, new_dict))
+                    elif isinstance(value, str):
+                        cur_res[key] = setvar(value)
+                    else:
+                        cur_res[key] = value
+            embeds.append(res)
 
         if len(embeds) != 0:
             data = json.dumps({"content": setvar(meta.content),
@@ -360,16 +366,10 @@ async def AutoMessage(app, meta, setvar):
             if app.config.discord_bot_token == "":
                 return
 
-            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
-            ddurl = f"https://discord.com/api/v10/channels/{meta.channel_id}/messages"
-            r = await arequests.post(app, ddurl, headers = headers, data=data)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
+            opqueue.queue(app, "post", meta.channel_id, f"https://discord.com/api/v10/channels/{meta.channel_id}/messages", data, {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}, "disable")
 
         elif meta.webhook_url != "":
-            r = await arequests.post(app, meta.webhook_url, headers={"Content-Type": "application/json"}, data=data)
-            if r.status_code == 401:
-                DisableDiscordIntegration(app)
+            opqueue.queue(app, "post", meta.webhook_url, meta.webhook_url, data, {"Content-Type": "application/json"}, None)
 
     except:
         import traceback
