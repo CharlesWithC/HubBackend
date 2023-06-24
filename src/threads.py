@@ -260,6 +260,18 @@ async def UpdateDlogStats(app):
                     if destination_company is not None and "unique_id" in destination_company.keys() and "name" in destination_company.keys():
                         dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
 
+                    mode = ("single_player", "Single Player")
+                    if obj["multiplayer"] is not None:
+                        if obj["multiplayer"]["type"] == "truckersmp":
+                            mode = ("truckersmp", "TruckersMP")
+                        elif obj["multiplayer"]["type"] == "scs_convoy":
+                            mode = ("scs_convoy", "SCS Convoy")
+                        elif obj["multiplayer"]["type"] == "multiplayer":
+                            mode = ("multiplayer", "Multi Player")
+                        else:
+                            mode = (obj["multiplayer"]["type"], obj["multiplayer"]["type"])
+                    dlog_stats[17] = [[mode[0], mode[1], 1, 0]]
+
                     for i in range(10, 17):
                         dlog_stats[i] = []
 

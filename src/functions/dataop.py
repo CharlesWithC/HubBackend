@@ -9,7 +9,8 @@ from base64 import b64decode, b64encode
 
 def convertQuotation(s):
     s = str(s)
-    return s.replace("\\'","'").replace("'", "\\'").replace("\\\\", "\\").replace("\\", "\\\\")
+    s = s.replace("\\", "\\\\").replace("'", "\\'")
+    return s
 
 def nstr(t):
     if t is None:

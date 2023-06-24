@@ -89,6 +89,18 @@ def rebuild(app):
         if destination_company is not None and "unique_id" in destination_company.keys() and "name" in destination_company.keys():
             dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
 
+        mode = ("single_player", "Single Player")
+        if obj["multiplayer"] is not None:
+            if obj["multiplayer"]["type"] == "truckersmp":
+                mode = ("truckersmp", "TruckersMP")
+            elif obj["multiplayer"]["type"] == "scs_convoy":
+                mode = ("scs_convoy", "SCS Convoy")
+            elif obj["multiplayer"]["type"] == "multiplayer":
+                mode = ("multiplayer", "Multi Player")
+            else:
+                mode = (obj["multiplayer"]["type"], obj["multiplayer"]["type"])
+        dlog_stats[17] = [[mode[0], mode[1], 1, 0]]
+
         for i in range(10, 17):
             dlog_stats[i] = []
 
@@ -500,14 +512,14 @@ async def get_details(request: Request, response: Response, authorization: Optio
             quser = "userid = -1"
 
         ret = {}
-        K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
+        K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport", 17: "game_mode"}
 
         await app.db.execute(dhrid, f"SELECT item_type, item_key, item_name, count, sum FROM dlog_stats WHERE {quser} ORDER BY item_type ASC, count DESC, sum DESC")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if K[tt[0]] not in ret.keys():
                 ret[K[tt[0]]] = []
-            if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
+            if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16, 17]:
                 ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
             else:
                 ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
@@ -613,6 +625,18 @@ async def get_details(request: Request, response: Response, authorization: Optio
                     if destination_company is not None and "unique_id" in destination_company.keys() and "name" in destination_company.keys():
                         dlog_stats[9] = [[convertQuotation(destination_company["unique_id"]), convertQuotation(destination_company["name"]), 1, 0]]
 
+                    mode = ("single_player", "Single Player")
+                    if obj["multiplayer"] is not None:
+                        if obj["multiplayer"]["type"] == "truckersmp":
+                            mode = ("truckersmp", "TruckersMP")
+                        elif obj["multiplayer"]["type"] == "scs_convoy":
+                            mode = ("scs_convoy", "SCS Convoy")
+                        elif obj["multiplayer"]["type"] == "multiplayer":
+                            mode = ("multiplayer", "Multi Player")
+                        else:
+                            mode = (obj["multiplayer"]["type"], obj["multiplayer"]["type"])
+                    dlog_stats[17] = [[mode[0], mode[1], 1, 0]]
+
                     for i in range(10, 17):
                         dlog_stats[i] = []
 
@@ -699,12 +723,12 @@ async def get_details(request: Request, response: Response, authorization: Optio
                 t.sort(key=lambda x: (x[0], -x[3], -x[4]))
 
                 ret = {}
-                K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport"}
+                K = {1: "truck", 2: "trailer", 3: "plate_country", 4: "cargo", 5: "cargo_market", 6: "source_city", 7: "source_company", 8: "destination_city", 9: "destination_company", 10: "fine", 11: "speeding", 12: "tollgate", 13: "ferry", 14: "train", 15: "collision", 16: "teleport", 17: "game_mode"}
 
                 for tt in t:
                     if K[tt[0]] not in ret.keys():
                         ret[K[tt[0]]] = []
-                    if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16]:
+                    if tt[0] in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 16, 17]:
                         ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3]})
                     else:
                         ret[K[tt[0]]].append({"unique_id": tt[1], "name": tt[2], "count": tt[3], "sum": tt[4]})
