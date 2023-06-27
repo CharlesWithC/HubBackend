@@ -22,6 +22,8 @@ def init(app):
     # uid is unique identifier, userid is actually member id
     cur.execute("CREATE TABLE IF NOT EXISTS user_password (uid INT, email TEXT, password TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS user_activity (uid INT, activity TEXT, timestamp BIGINT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_note (from_uid INT, to_uid INT, note TEXT, update_timestamp BIGINT)")
+    # if `from_uid` is -1000, then it is global note
     cur.execute("CREATE TABLE IF NOT EXISTS user_notification (notificationid INT AUTO_INCREMENT PRIMARY KEY, uid INT, content TEXT, timestamp BIGINT, status INT)")
     cur.execute("CREATE TABLE IF NOT EXISTS user_role_history (historyid INT AUTO_INCREMENT PRIMARY KEY, uid INT, added_roles TEXT, removed_roles TEXT, timestamp BIGINT)")
     cur.execute("CREATE TABLE IF NOT EXISTS banned (uid INT, email TEXT, discordid BIGINT UNSIGNED, steamid BIGINT UNSIGNED, truckersmpid BIGINT UNSIGNED, expire_timestamp BIGINT, reason TEXT)")

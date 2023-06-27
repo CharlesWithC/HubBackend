@@ -618,3 +618,42 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await AuditLog(request, uid, ml.ctr(request, "deleted_user_pending", var = {"username": username, "uid": uid}))
 
         return Response(status_code=204)
+
+async def patch_note_global(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+    """Updates the global note of a user, returns 204
+
+    JSON: `{"note": str}`"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PATCH /user/{uid}/note/global', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    to_uid = uid
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_user_global_note"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    data = await request.json()
+    try:
+        note = str(data["note"])
+        if len(note) > 1000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"DELETE FROM user_note WHERE from_uid = -1000 AND to_uid = {to_uid}")
+    if note != "":
+        await app.db.execute(dhrid, f"INSERT INTO user_note VALUES (-1000, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)

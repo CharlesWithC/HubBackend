@@ -1,5 +1,9 @@
 # Changelog
 
+**v2.7.7**  
+Added user note (private / global)  
+-> To remove the note, provide an empty string on `note` field when updating it  
+
 **v2.7.6**  
 1.Improved discord embed handler  
 -> Support any fields, so no update is needed to catch up with the changing discord  

@@ -158,6 +158,8 @@ default_config = {
 
         "hr": [],
         "manage_profile": [],
+        "get_user_global_note": [],
+        "update_user_global_note": [],
         "get_sensitive_profile": [],
         "add_member": [],
         "update_member_roles": [],

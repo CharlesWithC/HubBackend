@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.7.6"
+        "version": "2.7.7"
     },
     "servers": [],
     "paths": {
@@ -1153,6 +1153,98 @@
                             },
                             "required": [
                                 "activity"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/user/{uid}/note": {
+            "patch": {
+                "summary": "Update Note",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "patch_user_note",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "UID",
+                            "type": "integer"
+                        },
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "note": {
+                                        "description": "Note (Maximum number of characters: 1000)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "note"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/user/{uid}/note/global": {
+            "patch": {
+                "summary": "Update Global Note",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "patch_user_note_global",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "UID",
+                            "type": "integer"
+                        },
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "note": {
+                                        "description": "Note (Maximum number of characters: 1000)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "note"
                             ]
                         }
                     }

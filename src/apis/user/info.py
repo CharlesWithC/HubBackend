@@ -449,3 +449,43 @@ async def patch_activity(request: Request, response: Response, authorization: st
     await ActivityUpdate(request, uid, activity, force = True)
 
     return Response(status_code=204)
+
+async def patch_note(request: Request, response: Response, uid: int, authorization: str = Header(None)):
+    """Updates the note of a user, returns 204
+
+    JSON: `{"note": str}`"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PATCH /user/{uid}/note', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    to_uid = uid
+
+    au = await auth(authorization, request, allow_application_token = True, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    from_uid = au["uid"]
+
+    data = await request.json()
+    try:
+        note = str(data["note"])
+        if len(note) > 1000:
+            response.status_code = 400
+            return {"error": ml.tr(request, "content_too_long", var = {"item": "bio", "limit": "1,000"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"DELETE FROM user_note WHERE from_uid = {from_uid} AND to_uid = {to_uid}")
+    if note != "":
+        await app.db.execute(dhrid, f"INSERT INTO user_note VALUES ({from_uid}, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)

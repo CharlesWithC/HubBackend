@@ -248,10 +248,12 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
 
     data = await request.json()
     try:
-        message = str(data["message"])
-        if len(data["message"]) > 200:
-            response.status_code = 400
-            return {"error": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"}, force_lang = au["language"])}
+        message = ""
+        if "message" in data.keys():
+            message = str(data["message"])
+            if len(data["message"]) > 200:
+                response.status_code = 400
+                return {"error": ml.tr(request, "content_too_long", var = {"item": "message", "limit": "200"}, force_lang = au["language"])}
         status = int(data["status"])
         if abs(status) > 2147483647:
             response.status_code = 400
@@ -283,7 +285,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     statustxtTR = STATUSTR[status]
 
     await notification(request, "division", uid, ml.tr(request, "division_validation_request_status_updated", var = {"logid": logid, "status": statustxtTR.lower()}, force_lang = await GetUserLanguage(request, uid)), \
-        discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": "", \
+        discord_embed = {"title": ml.tr(request, "division_validation_request_status_updated_title", force_lang = language), "description": message, \
             "fields": [{"name": ml.tr(request, "division", force_lang = language), "value": app.division_name[divisionid], "inline": True},
                        {"name": ml.tr(request, "log_id", force_lang = language), "value": f"{logid}", "inline": True}, \
                        {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})

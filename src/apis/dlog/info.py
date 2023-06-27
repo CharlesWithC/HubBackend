@@ -290,9 +290,9 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
         if "is_deleted" in userinfo:
             userinfo = await GetUserInfo(request, -1)
 
-    return {"logid": logid, "user": userinfo, \
+    return {"logid": logid, "user": userinfo, "tracker": tracker, "trackerid": trackerid, \
         "distance": distance, "division": division, "challenge_record": challenge_record, \
-            "timestamp": t[0][2], "views": view_count, "tracker": tracker, "trackerid": trackerid, \
+            "timestamp": t[0][2], "views": view_count, \
             "detail": data, "telemetry": telemetry}
 
 async def delete_dlog(request: Request, response: Response, logid: int, authorization: str = Header(None)):

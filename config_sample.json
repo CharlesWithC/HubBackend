@@ -121,6 +121,8 @@
 
         "hr": [],
         "manage_profile": [],
+        "get_user_global_note": [],
+        "update_user_global_note": [],
         "get_sensitive_profile": [],
         "get_privacy_protected_data": [],
         "add_member": [],

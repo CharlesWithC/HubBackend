@@ -20,6 +20,8 @@ routes = [
     APIRoute("/user/profile", info.patch_profile, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/bio", info.patch_bio, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/user/activity", info.patch_activity, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/user/{uid}/note", info.patch_note, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/user/{uid}/note/global", manage.patch_note_global, methods=["PATCH"], response_class=JSONResponse),
 
     APIRoute("/user/language", language.get_language, methods=["GET"], response_class=JSONResponse),
     APIRoute("/user/language", language.patch_language, methods=["PATCH"], response_class=JSONResponse),
