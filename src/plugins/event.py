@@ -116,8 +116,8 @@ async def EventNotification(app):
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
-        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
-        query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, \
+        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
+        query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
         after_eventid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
@@ -152,8 +152,16 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND meetup_timestamp <= {before} "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
-    if attended_by is not None:
-        limit += f"AND attendee LIKE '%,{attended_by},%' "
+    if userid != -1:
+        if attended_by is not None:
+            limit += f"AND attendee LIKE '%,{attended_by},%' "
+        if voted_by is not None:
+            limit += f"AND vote LIKE '%,{voted_by},%' "
+    if is_private is not None:
+        if is_private:
+            limit += "AND is_private = 1 "
+        else:
+            limit += "AND is_private = 0 "
 
     if page_size <= 1:
         page_size = 1
@@ -189,11 +197,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if userid != -1:
             attendee_cnt = len(str2list(tt[9]))
             vote_cnt = len(str2list(tt[10]))
+        voted = None
+        if userid != -1:
+            if userid in str2list(tt[10]):
+                voted = True
+            else:
+                voted = False
         ret.append({"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], \
                 "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
                     "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], \
-                    "attendees": attendee_cnt, "votes": vote_cnt})
+                    "attendees": attendee_cnt, "votes": vote_cnt, "voted": voted})
 
     return {"list": ret[:page_size], "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -238,8 +252,14 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     vote_ret = []
     for vt in vote:
         vote_ret.append(await GetUserInfo(request, userid = vt))
+    voted = None
+    if userid != -1:
+        if userid in vote:
+            voted = True
+        else:
+            voted = False
 
-    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], "attendees": attendee_ret, "votes": vote_ret}
+    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], "attendees": attendee_ret, "votes": vote_ret, "voted": voted}
 
 async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     app = request.app

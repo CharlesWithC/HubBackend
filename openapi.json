@@ -3464,6 +3464,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Is Private?",
+                            "type": "boolean"
+                        },
+                        "name": "is_private",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Creator User ID",
                             "type": "integer"
                         },
@@ -6868,6 +6877,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Is Private?",
+                            "type": "boolean"
+                        },
+                        "name": "is_private",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Creator User ID",
                             "type": "integer"
                         },
@@ -6881,6 +6899,15 @@
                             "type": "integer"
                         },
                         "name": "attended_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Voter User ID",
+                            "type": "integer"
+                        },
+                        "name": "voted_by",
                         "in": "query"
                     },
                     {

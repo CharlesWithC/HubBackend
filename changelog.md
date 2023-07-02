@@ -4,6 +4,10 @@
 1.Added handling of `autoPark` field on dlog export  
 -> This should be a TrackSim issue  
 2.Added retries on `arequests`  
+3.Added `?voted_by`, `?is_private` to **GET** `/events/list`  
+-> Also made `?attended_by` and `?voted_by` only usable by members  
+4.Added `voted` field to event objects in the response of **GET** `/events/list`, `/event/{eventid}`  
+5.Added `?is_private` to **GET** `/announcements/list`  
 
 **v2.7.7**  
 Added user note (private / global)  

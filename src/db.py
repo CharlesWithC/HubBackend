@@ -46,7 +46,6 @@ def init(app):
     cur.execute(f"CREATE TABLE IF NOT EXISTS telemetry (logid BIGINT, uuid TEXT, userid INT, data MEDIUMTEXT) DATA DIRECTORY = '{app.config.mysql_ext}'")
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS announcement (announcementid INT AUTO_INCREMENT PRIMARY KEY, userid INT, title TEXT, content TEXT, announcement_type INT, timestamp BIGINT, is_private INT, orderid INT, is_pinned INT) DATA DIRECTORY = '{app.config.mysql_ext}'")
-    # atype = 0: info | 1: event | 2: warning | 3: critical
 
     cur.execute(f"CREATE TABLE IF NOT EXISTS application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
     # status = 0: pending | 1: accepted | 2: declined

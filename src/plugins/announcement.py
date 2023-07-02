@@ -26,7 +26,7 @@ def get_type(request, type_id: int, force_lang: Optional[str] = ""):
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
-        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
+        order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
         created_by: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
         after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = None):
     app = request.app
@@ -77,6 +77,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND timestamp <= {before} "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
+    if is_private is not None:
+        if is_private:
+            limit += "AND is_private = 1 "
+        else:
+            limit += "AND is_private = 0 "
 
     base_rows = 0
     tot = 0
