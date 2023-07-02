@@ -226,7 +226,12 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     elif tracker_type == 2:
                         xp = float(last_event["meta"]["earnedXP"])
                         auto_load = first_event["meta"]["autoLoaded"]
-                        auto_park = last_event["meta"]["autoParked"]
+                        if "autoParked" in last_event["meta"].keys():
+                            auto_park = last_event["meta"]["autoParked"]
+                        elif "autoPark" in last_event["meta"].keys():
+                            auto_park = last_event["meta"]["autoPark"]
+                        else:
+                            auto_park = False
                 else:
                     revenue = -float(last_event["meta"]["penalty"])
 
@@ -253,7 +258,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
                     multiplayer = data["multiplayer"]["type"]
 
             except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
+                await tracebackHandler(request, exc, f"Regarding dlog #{logid}\n" + traceback.format_exc())
 
         if not include_ids:
             data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]

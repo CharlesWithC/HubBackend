@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.7.8**  
+1.Added handling of `autoPark` field on dlog export  
+-> This should be a TrackSim issue  
+2.Added retries on `arequests`  
+
 **v2.7.7**  
 Added user note (private / global)  
 -> To remove the note, provide an empty string on `note` field when updating it  
