@@ -196,6 +196,8 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             except:
                 pass
 
+        await UpdateRoleConnection(request, discordid)
+
         return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])

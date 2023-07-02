@@ -272,6 +272,8 @@ async def patch_profile(request: Request, response: Response, authorization: str
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
+        await UpdateRoleConnection(request, discordid)
+
     elif sync_to_steam:
         await app.db.execute(dhrid, f"SELECT steamid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
