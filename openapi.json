@@ -7397,7 +7397,7 @@
                                     },
                                     "end_time": {
                                         "description": "End Time",
-                                        "type": "boolean"
+                                        "type": "integer"
                                     },
                                     "orderid": {
                                         "description": "Order ID",

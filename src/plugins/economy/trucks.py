@@ -489,7 +489,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
                 assigneeid = int(assigneeid)
 
         if "message" in data.keys():
-            message = convertQuotation(data["message"])
+            message = data["message"]
         else:
             message = ""
     except:
@@ -566,7 +566,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
     await app.db.commit(dhrid)
 
     if current_owner != foruser:
-        await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 't{vehicleid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
+        await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 't{vehicleid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
 
         username = (await GetUserInfo(request, userid = foruser))["name"]
         await AuditLog(request, au["uid"], ml.ctr(request, "transferred_truck", var = {"id": vehicleid, "username": username, "userid": foruser}))

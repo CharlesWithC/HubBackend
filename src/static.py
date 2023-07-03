@@ -106,6 +106,7 @@ EN_STRINGTABLE = {
     "invalid_hash": "Invalid hash.",
     "invalid_userid": "Invalid User ID.",
     "invalid_timezone": "Invalid timezone.",
+    "invalid_link": "Invalid link.",
 
     "unauthorized": "You are not authorized.",
     "no_access_to_resource": "You do not have sufficient permission to access the resource.",
@@ -258,7 +259,6 @@ EN_STRINGTABLE = {
     "division_not_validated": "This delivery is not validated by a division supervisor.",
 
     "downloads_not_found": "Downloadable item not found.",
-    "downloads_invalid_link": "Invalid link.",
     "new_downloadable_item_with_title": "New Downloadable Item: `{title}`",
     "new_downloadable_item": "New Downloadable Item",
     "download_link": "[Download]({link})",

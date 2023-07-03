@@ -233,7 +233,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
             owner = "self"
 
         if "message" in data.keys():
-            message = convertQuotation(data["message"])
+            message = data["message"]
         else:
             message = ""
     except:
@@ -279,7 +279,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "merch", force_lang = au["language"])}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE economy_merch SET userid = {foruser} WHERE itemid = {itemid}")
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'm{itemid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'm{itemid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     return Response(status_code=204)

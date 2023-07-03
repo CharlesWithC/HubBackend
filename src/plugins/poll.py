@@ -559,11 +559,11 @@ async def post_poll(request: Request, response: Response, authorization: str = H
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
+        title = data["title"]
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(data["description"])
+        description = data["description"]
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
@@ -633,7 +633,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO poll(userid, title, description, config, orderid, is_pinned, end_time, timestamp) VALUES ({au['userid']}, '{title}', '{description}', '{config}', {orderid}, {is_pinned}, {end_time}, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO poll(userid, title, description, config, orderid, is_pinned, end_time, timestamp) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', '{config}', {orderid}, {is_pinned}, {end_time}, {int(time.time())})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     pollid = (await app.db.fetchone(dhrid))[0]
@@ -642,7 +642,15 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     await app.db.commit(dhrid)
     await AuditLog(request, au["uid"], ml.ctr(request, "created_poll", var = {"id": pollid}))
 
-    await notification_to_everyone(request, "new_poll", ml.spl("new_poll_with_title", var = {"title": title}), discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": ml.spl("choices"), "value": " - " + "\n - ".join(choices)}], "footer": {"text": ml.spl("new_poll"), "icon_url": app.config.logo_url}})
+    await notification_to_everyone(request, "new_poll", ml.spl("new_poll_with_title", var = {"title": title}), discord_embed = {"title": title, "description": description, "fields": [{"name": ml.spl("choices"), "value": " - " + "\n - ".join(choices)}], "footer": {"text": ml.spl("new_poll"), "icon_url": app.config.logo_url}}, only_to_members=True)
+
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(pollid)).replace("{title}", title).replace("{description}", description)
+
+    for meta in app.config.poll_forwarding:
+        meta = Dict2Obj(meta)
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
 
     return {"pollid": pollid}
 
@@ -677,7 +685,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     (title, description, config, orderid, is_pinned, end_time) = t[0]
     if end_time is None:
         end_time = "NULL"
-    title = convertQuotation(title)
+    description = decompress(description)
 
     old_configl = str2list(config)
     old_config = POLL_DEFAULT_CONFIG
@@ -694,12 +702,12 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     data = await request.json()
     try:
         if "title" in data.keys():
-            title = convertQuotation(data["title"])
+            title = data["title"]
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if "description" in data.keys():
-            description = compress(data["description"])
+            description = data["description"]
             if len(data["description"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
@@ -761,7 +769,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE poll SET title = '{title}', description = '{description}', config = '{config}', orderid = {orderid}, is_pinned = {is_pinned}, end_time = {end_time} WHERE pollid = {pollid}")
+    await app.db.execute(dhrid, f"UPDATE poll SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', config = '{config}', orderid = {orderid}, is_pinned = {is_pinned}, end_time = {end_time} WHERE pollid = {pollid}")
     for choiceid in choices_orderid.keys():
         orderid = choices_orderid[choiceid]
         if orderid is not None:

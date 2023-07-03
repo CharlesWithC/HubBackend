@@ -24,16 +24,20 @@ config.ranks[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'application_types', 'divisions', 'hook_division', 'economy']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'application_types', 'divisions', 'hook_division', 'economy']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'poll_forwarding']
 
 public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id']
 
-config_plugins = {"announcement": ["announcement_types"],
+config_plugins = {"announcement": ["announcement_types", "announcement_forwarding"],
     "application": ["application_types"],
+    "challenge": ["challenge_forwarding"],
     "division": ["divisions", "hook_division"],
-    "economy": ["economy"]}
+    "downloads": ["downloads_forwarding"],
+    "economy": ["economy"],
+    "event": ["event_forwarding"],
+    "poll": ["poll_forwarding"]}
 
 config_protected = ["tracker_api_token", "tracker_webhook_secret", "discord_client_secret", "discord_bot_token", "steam_api_key", "smtp_passwd"]
 
@@ -225,9 +229,6 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "Welcome {name}.",
-            "image": {
-                "url": "https://{domain}/images/bg.jpg"
-            },
             "footer": {
                 "text": "You are our #{userid} member",
                 "icon_url": ""
@@ -244,9 +245,6 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "Bye {name}.",
-            "image": {
-                "url": "https://{domain}/images/bg.jpg"
-            },
             "footer": {
                 "text": "Goodbye!",
                 "icon_url": ""
@@ -263,9 +261,6 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "{name} became a driver!",
-            "image": {
-                "url": "https://{domain}/images/bg.jpg"
-            },
             "footer": {
                 "text": "Hooray!",
                 "icon_url": ""
@@ -282,9 +277,6 @@ default_config = {
         "embeds": [{
             "title": "",
             "description": "{name} left as a driver!",
-            "image": {
-                "url": "https://{domain}/images/bg.jpg"
-            },
             "footer": {
                 "text": "Oops!",
                 "icon_url": ""
@@ -326,6 +318,28 @@ default_config = {
         {"id": 3, "name": "Critical", "staff_role_ids": [20]},
         {"id": 4, "name": "Resolved", "staff_role_ids": [20]}
     ],
+    # supported {variables}: mention, name, avatar, userid, uid
+    #                        id, title, content, type
+    # is_private: True/False/None (None = Both true and false)
+    "announcement_forwarding": [{
+        "is_private": None,
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "{type} announcement",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{content}",
+            "footer": {
+                "text": "By {name} | Announcement #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": True
+        }]
+    }],
 
     # require_member_state = -1: either | 0: not member | 1: is member
     # *_either_user_role_ids: include either of the roles
@@ -337,12 +351,63 @@ default_config = {
         {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
     ],
 
+    # supported {variables}: mention, name, avatar, userid, uid
+    #                        id, title, description, start_timestamp, end_timestamp,
+    #                        delivery_count, required_roles, required_distance, reward_points
+    "challenge_forwarding": [{
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{description}\n\nEither of the following roles is required to join the challenge: {required_roles}",
+            "fields": [
+                {"name": "Reward Points", "value": "{reward_points}", "inline": True},
+                {"name": "Delivery Count", "value": "{delivery_count}", "inline": True},
+                {"name": "Required Distance", "value": "{required_distance}", "inline": True},
+                {"name": "Start Time", "value": "<t:{start_timestamp}>", "inline": True},
+                {"name": "End Time", "value": "<t:{end_timestamp}>", "inline": True}
+            ],
+            "footer": {
+                "text": "By {name} | Challenge #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": True
+        }]
+    }],
+
     "divisions": [],
     "hook_division": {
         "channel_id": "",
         "webhook_url": "",
         "message_content": ""
     },
+
+    # supported {variables}: mention, name, avatar, userid, uid
+    #                        id, title, description, link
+    "downloads_forwarding": [{
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{description}",
+            "url": "{link}",
+            "footer": {
+                "text": "By {name} | Downloadable Item #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": True
+        }]
+    }],
 
     "economy": {
         "trucks": [{"id": "daf.xf", "brand": "DAF", "model": "XF 105", "price": 160000}, {"id": "iveco.as2", "brand": "Iveco", "model": "Stralis", "price": 160000}, {"id": "iveco.h_u01", "brand": "Iveco", "model": "Stralis Hi-Way", "price": 180000}, {"id": "man.tgx", "brand": "MAN", "model": "TGX", "price": 150000}, {"id": "man.tgx_euro6", "brand": "MAN", "model": "TGX Euro 6", "price": 180000}, {"id": "actros.towing", "brand": "Mercedes", "model": "New Actros", "price": 205000}, {"id": "renault.magnum", "brand": "Renault", "model": "Magnum", "price": 165000}, {"id": "renault.premium", "brand": "Renault", "model": "Premium", "price": 160000}, {"id": "renault.t", "brand": "Renault", "model": "T", "price": 190000}, {"id": "scania.r_2016", "brand": "Scania", "model": "R", "price": 230000}, {"id": "scania_r", "brand": "Scania", "model": "R2009", "price": 200000}, {"id": "scania.s_2016", "brand": "Scania", "model": "S", "price": 225000}, {"id": "scania.streamline", "brand": "Scania", "model": "Streamline", "price": 220000}, {"id": "volvo.fh3", "brand": "Volvo", "model": "FH16 2009", "price": 195000}, {"id": "volvo.fh16_2012", "brand": "Volvo", "model": "FH16 2012", "price": 210000}, {"id": "freightliner.cascadia2019", "brand": "Freightliner", "model": "Cascadia", "price": 158000}, {"id": "intnational.9900i", "brand": "International", "model": "9900i", "price": 230000}, {"id": "intnational.lonestar", "brand": "International", "model": "Lonestar", "price": 206000}, {"id": "intnational.lt", "brand": "International", "model": "LT", "price": 170000}, {"id": "kenworth.t680", "brand": "Kenworth", "model": "T680", "price": 160000}, {"id": "kenworth.wp", "brand": "Kenworth", "model": "W900", "price": 154000}, {"id": "mack.anthem", "brand": "Mack", "model": "Anthem", "price": 180000}, {"id": "peterbilt.389", "brand": "Peterbilt", "model": "389", "price": 170000}, {"id": "peterbilt.579", "brand": "Peterbilt", "model": "579", "price": 164000}, {"id": "volvo.vnl", "brand": "Volvo", "model": "VNL", "price": 170000}, {"id": "ws", "brand": "Western Star", "model": "5700XE", "price": 210000}, {"id": "westernstar.57x", "brand": "Western Star", "model": "57X", "price": 180000}],
@@ -368,7 +433,58 @@ default_config = {
         "allow_purchase_garage": True,
         "allow_purchase_slot": True,
         "enable_balance_leaderboard": True
-    }
+    },
+
+    # supported {variables}: mention, name, avatar, userid, uid
+    #                        id, title, description, link, departure,
+    #                        destination, distance, meetup_timestamp, departure_timestamp
+    # is_private: True/False/None (None = Both true and false)
+    "event_forwarding": [{
+        "is_private": None,
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{description}",
+            "url": "{link}",
+            "fields": [
+                {"name": "Departure", "value": "{departure}", "inline": True},
+                {"name": "Destination", "value": "{destination}", "inline": True},
+                {"name": "Distance", "value": "{distance}", "inline": True},
+                {"name": "Meetup Time", "value": "<t:{meetup_timestamp}:R>", "inline": True},
+                {"name": "Departure Time", "value": "<t:{departure_timestamp}:R>", "inline": True}
+            ],
+            "footer": {
+                "text": "By {name} | Event #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": True
+        }]
+    }],
+
+    "poll_forwarding": [{
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{description}",
+            "footer": {
+                "text": "By {name} | Poll #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": True
+        }]
+    }]
 }
 
 
@@ -793,8 +909,8 @@ def validateConfig(cfg):
     if not cfg["prefix"].startswith("/"):
         cfg["prefix"] = "/" + cfg["prefix"]
 
-    # v2.5.6
-    embed_auto_validate = ["member_accept", "member_leave", "rank_up", "driver_role_add", "driver_role_remove"]
+    # v2.5.6 / v2.7.8
+    embed_auto_validate = ["member_accept", "member_leave", "rank_up", "driver_role_add", "driver_role_remove", "announcement_forwarding", "challenge_forwarding", "downloads_forwarding", "event_forwarding", "poll_forwarding"]
     discord_msg_ensure = ["channel_id", "webhook_url", "content"]
     for embed_type in embed_auto_validate:
         if embed_type not in cfg.keys():
@@ -824,9 +940,12 @@ def validateConfig(cfg):
             for to_ensure in discord_msg_ensure:
                 if to_ensure not in cfg[embed_type][i].keys():
                     cfg[embed_type][i][to_ensure] = ""
-            if embed_type not in ["rank_up"]:
+            if embed_type in ["member_accept", "member_leave", "driver_role_add", "driver_role_remove"]:
                 if 'role_change' not in cfg[embed_type][i].keys():
                     cfg[embed_type][i]["role_change"] = []
+            if embed_type in ["announcement_forwarding", "event_forwarding"]:
+                if 'is_private' not in cfg[embed_type][i].keys():
+                    cfg[embed_type][i]["is_private"] = None
 
     # v2.5.8
     if "apidomain" in cfg.keys():

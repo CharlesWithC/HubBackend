@@ -170,7 +170,7 @@
     "division_not_validated": "Esta entrega no está validada por un supervisor de división.",
 
     "downloads_not_found": "Elemento descargable no encontrado.",
-    "downloads_invalid_link": "Enlace no válido.",
+    "invalid_link": "Enlace no válido.",
     "new_downloadable_item_with_title": "Nuevo elemento descargable: `{title}`",
     "new_downloadable_item": "Nuevo elemento descargable",
     "download_link": "[Descargar]({link})",

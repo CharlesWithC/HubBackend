@@ -348,27 +348,35 @@ async def post_event(request: Request, response: Response, authorization: str = 
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
+        title = data["title"]
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(data["description"])
+        description = data["description"]
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = compress(data["link"])
+
+        if data["link"] is None:
+            data["link"] = ""
+        data["link"] = data["link"].strip(" ")
+        if data["link"] != "" and not isurl(data["link"]):
+            response.status_code = 400
+            return {"error": ml.tr(request, "invalid_link", force_lang = au["language"])}
+        link = data["link"]
         if len(data["link"]) > 1000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "1,000"}, force_lang = au["language"])}
-        departure = convertQuotation(data["departure"])
+
+        departure = data["departure"]
         if len(data["departure"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
-        destination = convertQuotation(data["destination"])
+        destination = data["destination"]
         if len(data["destination"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
-        distance = convertQuotation(data["distance"])
+        distance = data["distance"]
         if len(data["distance"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
@@ -396,14 +404,24 @@ async def post_event(request: Request, response: Response, authorization: str = 
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO event(userid, title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned, timestamp, vote, attendee, points) VALUES ({au['userid']}, '{title}', '{description}', '{link}', '{departure}', '{destination}', '{distance}', {meetup_timestamp}, {departure_timestamp}, {is_private}, {orderid}, {is_pinned}, {int(time.time())}, '', '', 0)")
+    await app.db.execute(dhrid, f"INSERT INTO event(userid, title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned, timestamp, vote, attendee, points) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', '{convertQuotation(compress(link))}', '{convertQuotation(departure)}', '{convertQuotation(destination)}', '{convertQuotation(distance)}', {meetup_timestamp}, {departure_timestamp}, {is_private}, {orderid}, {is_pinned}, {int(time.time())}, '', '', 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     eventid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 
-    await notification_to_everyone(request, "new_event", ml.spl("new_event_with_title", var = {"title": title}), discord_embed = {"title": title, "url": decompress(link), "description": decompress(description), "fields": [{"name": ml.spl("departure"), "value": departure, "inline": True}, {"name": ml.spl("destination"), "value": destination, "inline": True}, {"name": ml.spl("distance"), "value": distance, "inline": True}, {"name": ml.spl("meetup_time"), "value": f"<t:{meetup_timestamp}:R>", "inline": True}, {"name": ml.spl("departure_time"), "value": f"<t:{departure_timestamp}:R>", "inline": True}], "footer": {"text": ml.spl("new_event"), "icon_url": app.config.logo_url}}, only_to_members=is_private)
+    await notification_to_everyone(request, "new_event", ml.spl("new_event_with_title", var = {"title": title}), discord_embed = {"title": title, "url": link, "description": description, "fields": [{"name": ml.spl("departure"), "value": departure, "inline": True}, {"name": ml.spl("destination"), "value": destination, "inline": True}, {"name": ml.spl("distance"), "value": distance, "inline": True}, {"name": ml.spl("meetup_time"), "value": f"<t:{meetup_timestamp}:R>", "inline": True}, {"name": ml.spl("departure_time"), "value": f"<t:{departure_timestamp}:R>", "inline": True}], "footer": {"text": ml.spl("new_event"), "icon_url": app.config.logo_url}}, only_to_members=is_private)
+
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(eventid)).replace("{title}", title).replace("{description}", description).replace("{link}", validateUrl(link)).replace("{departure}", departure).replace("{destination}", destination).replace("{distance}", distance).replace("{meetup_timestamp}", str(meetup_timestamp)).replace("{departure_timestamp}", str(departure_timestamp))
+
+    for meta in app.config.event_forwarding:
+        meta = Dict2Obj(meta)
+        if meta.is_private is not None and int(meta.is_private) != is_private:
+            continue
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
 
     return {"eventid": eventid}
 
@@ -430,40 +448,38 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         response.status_code = 404
         return {"error": ml.tr(request, "event_not_found", force_lang = au["language"])}
     (title, description, link, departure, destination, distance, meetup_timestamp, departure_timestamp, is_private, orderid, is_pinned) = t[0]
-    title = convertQuotation(title)
-    departure = convertQuotation(departure)
-    destination = convertQuotation(destination)
-    distance = convertQuotation(distance)
+    description = decompress(description)
+    link = decompress(link)
 
     data = await request.json()
     try:
         if "title" in data.keys():
-            title = convertQuotation(data["title"])
+            title = data["title"]
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if "description" in data.keys():
-            description = compress(data["description"])
+            description = data["description"]
             if len(data["description"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         if "link" in data.keys():
-            link = compress(data["link"])
+            link = data["link"]
             if len(data["link"]) > 1000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "1,000"}, force_lang = au["language"])}
         if "departure" in data.keys():
-            departure = convertQuotation(data["departure"])
+            departure = data["departure"]
             if len(data["departure"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "departure", "limit": "200"}, force_lang = au["language"])}
         if "destination" in data.keys():
-            destination = convertQuotation(data["destination"])
+            destination = data["destination"]
             if len(data["destination"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "destination", "limit": "200"}, force_lang = au["language"])}
         if "distance" in data.keys():
-            distance = convertQuotation(data["distance"])
+            distance = data["distance"]
             if len(data["distance"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
@@ -490,7 +506,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE event SET title = '{title}', description = '{description}', link = '{link}', departure = '{departure}', destination = '{destination}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"UPDATE event SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', link = '{convertQuotation(compress(link))}', departure = '{convertQuotation(departure)}', destination = '{convertQuotation(destination)}', distance = '{distance}', meetup_timestamp = {meetup_timestamp}, departure_timestamp = {departure_timestamp}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE eventid = {eventid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_event", var = {"id": eventid}))
     await app.db.commit(dhrid)
 

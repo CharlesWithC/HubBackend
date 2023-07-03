@@ -8,6 +8,7 @@
 -> Also made `?attended_by` and `?voted_by` only usable by members  
 4.Added `voted` field to event objects in the response of **GET** `/events/list`, `/event/{eventid}`  
 5.Added `?is_private` to **GET** `/announcements/list`  
+6.Added advanced forward-to-discord function to announcement, challenge, downloads, event and poll plugin  
 
 **v2.7.7**  
 Added user note (private / global)  

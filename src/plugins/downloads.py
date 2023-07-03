@@ -168,15 +168,15 @@ async def post_downloads(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
+        title = data["title"]
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
-        description = compress(data["description"])
+        description = data["description"]
         if len(data["description"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
-        link = convertQuotation(data["link"])
+        link = data["link"]
         if len(data["link"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
@@ -195,16 +195,24 @@ async def post_downloads(request: Request, response: Response, authorization: st
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_link", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, is_pinned, timestamp, click_count) VALUES ({au['userid']}, '{title}', '{description}', '{link}', {orderid}, {is_pinned}, {int(time.time())}, 0)")
+    await app.db.execute(dhrid, f"INSERT INTO downloads(userid, title, description, link, orderid, is_pinned, timestamp, click_count) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', '{link}', {orderid}, {is_pinned}, {int(time.time())}, 0)")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     downloadsid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)
 
-    await notification_to_everyone(request, "new_downloads", ml.spl("new_downloadable_item_with_title", var = {"title": title}), discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": "‎ ", "value": ml.spl("download_link", var = {"link": link}), "inline": True}], "footer": {"text": ml.spl("new_downloadable_item"), "icon_url": app.config.logo_url}})
+    await notification_to_everyone(request, "new_downloads", ml.spl("new_downloadable_item_with_title", var = {"title": title}), discord_embed = {"title": title, "description": description, "fields": [{"name": "‎ ", "value": ml.spl("download_link", var = {"link": link}), "inline": True}], "footer": {"text": ml.spl("new_downloadable_item"), "icon_url": app.config.logo_url}}, only_to_members=True)
+
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(downloadsid)).replace("{title}", title).replace("{description}", description).replace("{link}", validateUrl(link))
+
+    for meta in app.config.downloads_forwarding:
+        meta = Dict2Obj(meta)
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
 
     return {"downloadsid": downloadsid}
 
@@ -231,23 +239,22 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
         response.status_code = 404
         return {"error": ml.tr(request, "downloads_not_found", force_lang = au["language"])}
     (title, description, link, orderid, is_pinned) = t[0]
-    title = convertQuotation(title)
-    link = convertQuotation(link)
+    description = decompress(description)
 
     data = await request.json()
     try:
         if "title" in data.keys():
-            title = convertQuotation(data["title"])
+            title = data["title"]
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if "description" in data.keys():
-            description = compress(data["description"])
+            description = data["description"]
             if len(data["description"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
         if "link" in data.keys():
-            link = convertQuotation(data["link"])
+            link = data["link"]
             if len(data["link"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "link", "limit": "200"}, force_lang = au["language"])}
@@ -264,9 +271,9 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
 
     if not isurl(link):
         response.status_code = 400
-        return {"error": ml.tr(request, "downloads_invalid_link", force_lang = au["language"])}
+        return {"error": ml.tr(request, "invalid_link", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE downloads SET title = '{title}', description = '{description}', link = '{link}', orderid = {orderid}, is_pinned = {is_pinned} WHERE downloadsid = {downloadsid}")
+    await app.db.execute(dhrid, f"UPDATE downloads SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', link = '{convertQuotation(link)}', orderid = {orderid}, is_pinned = {is_pinned} WHERE downloadsid = {downloadsid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_downloads", var = {"id": downloadsid}))
     await app.db.commit(dhrid)
 

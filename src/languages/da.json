@@ -170,7 +170,7 @@
     "division_not_validated": "Denne levering er ikke valideret af en divisionssupervisor.",
 
     "downloads_not_found": "Downloadbar element blev ikke fundet.",
-    "downloads_invalid_link": "Ugyldigt link.",
+    "invalid_link": "Ugyldigt link.",
     "new_downloadable_item_with_title": "Nyt element, der kan downloades: `{title}`",
     "new_downloadable_item": "Nyt element, der kan downloades",
     "download_link": "[Download]({link})",

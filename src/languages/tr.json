@@ -170,7 +170,7 @@
     "division_not_validated": "Bu teslimat, bir bölüm amiri tarafından doğrulanmadı.",
 
     "downloads_not_found": "İndirilebilir öğe bulunamadı.",
-    "downloads_invalid_link": "Geçersiz indirme bağlantısı linki.",
+    "invalid_link": "Geçersiz indirme bağlantısı linki.",
     "new_downloadable_item_with_title": "Yeni İndirilebilir Öğe: `{title}`",
     "new_downloadable_item": "Yeni İndirilebilir Öğe",
     "download_link": "[İndirmek]({link})",

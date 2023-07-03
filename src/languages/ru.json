@@ -170,7 +170,7 @@
     "division_not_validated": "Эта доставка не подтверждена руководителем отдела.",
 
     "downloads_not_found": "Загружаемый элемент не найден.",
-    "downloads_invalid_link": "Неверная ссылка.",
+    "invalid_link": "Неверная ссылка.",
     "new_downloadable_item_with_title": "Новый загружаемый предмет: `{title}`",
     "new_downloadable_item": "Новый загружаемый элемент",
     "download_link": "[Скачать]({link})",

@@ -161,8 +161,8 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
-        content = compress(data["content"])
+        title = data["title"]
+        content = data["content"]
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
@@ -207,14 +207,24 @@ async def post_announcement(request: Request, response: Response, authorization:
 
     timestamp = int(time.time())
 
-    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid, is_pinned) VALUES ({au['userid']}, '{title}', '{content}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
+    await app.db.execute(dhrid, f"INSERT INTO announcement(userid, title, content, announcement_type, timestamp, is_private, orderid, is_pinned) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(content))}', {announcement_type}, {timestamp}, {is_private}, {orderid}, {is_pinned})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     announcementid = (await app.db.fetchone(dhrid))[0]
     await AuditLog(request, au["uid"], ml.ctr(request, "created_announcement", var = {"id": announcementid}))
 
     author = await GetUserInfo(request, userid = au["userid"])
-    await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": decompress(content), "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
+    await notification_to_everyone(request, "new_announcement", ml.spl("new_announcement_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": content, "footer": {"text": author["name"], "icon_url": author["avatar"]}}, only_to_members=is_private)
+
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(announcementid)).replace("{title}", title).replace("{content}", content).replace("{type}", tatype["name"])
+
+    for meta in app.config.announcement_forwarding:
+        meta = Dict2Obj(meta)
+        if meta.is_private is not None and int(meta.is_private) != is_private:
+            continue
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
 
     return {"announcementid": announcementid}
 
@@ -242,7 +252,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = 404
         return {"error": ml.tr(request, "announcement_not_found", force_lang = au["language"])}
     (title, content, announcement_type, is_private, orderid, is_pinned) = t[0]
-    title = convertQuotation(title)
+    content = decompress(content)
 
     # check if announcement original type can be modified by current staff
     tatype = None
@@ -262,12 +272,12 @@ async def patch_announcement(request: Request, response: Response, announcementi
     data = await request.json()
     try:
         if "title" in data.keys():
-            title = convertQuotation(data["title"])
+            title = data["title"]
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
         if "content" in data.keys():
-            content = compress(data["content"])
+            content = data["content"]
             if len(data["content"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
@@ -306,7 +316,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         response.status_code = 403
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE announcement SET title = '{title}', content = '{content}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
+    await app.db.execute(dhrid, f"UPDATE announcement SET title = '{convertQuotation(title)}', content = '{convertQuotation(compress(content))}', announcement_type = {announcement_type}, is_private = {is_private}, orderid = {orderid}, is_pinned = {is_pinned} WHERE announcementid = {announcementid}")
     await AuditLog(request, au["uid"], ml.ctr(request, "updated_announcement", var = {"id": announcementid}))
     await app.db.commit(dhrid)
 

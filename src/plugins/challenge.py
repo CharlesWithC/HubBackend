@@ -307,8 +307,8 @@ async def post_challenge(request: Request, response: Response, authorization: st
 
     data = await request.json()
     try:
-        title = convertQuotation(data["title"])
-        description = compress(data["description"])
+        title = data["title"]
+        description = data["description"]
         if len(data["title"]) > 200:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
@@ -401,14 +401,29 @@ async def post_challenge(request: Request, response: Response, authorization: st
             jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
     jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
 
-    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, timestamp) VALUES ({au['userid']}, '{title}', '{description}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}', {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, timestamp) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}', {int(time.time())})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     challengeid = (await app.db.fetchone(dhrid))[0]
 
     await AuditLog(request, au["uid"], ml.ctr(request, "created_challenge", var = {"id": challengeid}))
 
-    await notification_to_everyone(request, "new_challenge", ml.spl("new_challenge_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": decompress(description), "fields": [{"name": ml.spl("start"), "value": f"<t:{start_time}:R>", "inline": True}, {"name": ml.spl("end"), "value": f"<t:{end_time}:R>", "inline": True}, {"name": ml.spl("reward_points"), "value": f"{reward_points}", "inline": True}], "footer": {"text": ml.spl("new_challenge"), "icon_url": app.config.logo_url}})
+    await notification_to_everyone(request, "new_challenge", ml.spl("new_challenge_with_title", var = {"title": title}),     discord_embed = {"title": title, "description": description, "fields": [{"name": ml.spl("start"), "value": f"<t:{start_time}:R>", "inline": True}, {"name": ml.spl("end"), "value": f"<t:{end_time}:R>", "inline": True}, {"name": ml.spl("reward_points"), "value": f"{reward_points}", "inline": True}], "footer": {"text": ml.spl("new_challenge"), "icon_url": app.config.logo_url}}, only_to_members=True)
+
+    required_roles_list = []
+    for roleid in str2list(required_roles):
+        if roleid in app.roles.keys():
+            required_roles_list.append(app.roles[roleid]["name"])
+        else:
+            required_roles_list.append(f"#{roleid}")
+    required_roles_txt = ", ".join(required_roles_list)
+    def setvar(msg):
+        return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(challengeid)).replace("{title}", title).replace("{description}", description).replace("{start_timestamp}", str(start_time)).replace("{end_timestamp}", str(end_time)).replace("{delivery_count}", str(delivery_count)).replace("{required_roles}", required_roles_txt).replace("{required_distance}", str(required_distance)).replace("{reward_points}", str(reward_points))
+
+    for meta in app.config.challenge_forwarding:
+        meta = Dict2Obj(meta)
+        if meta.webhook_url != "" or meta.channel_id != "":
+            await AutoMessage(app, meta, setvar)
 
     return {"challengeid": challengeid}
 
@@ -442,18 +457,18 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     (title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, jobreq) = t[0]
     org_delivery_count = delivery_count
-    title = convertQuotation(title)
+    description = decompress(description)
 
     data = await request.json()
     try:
         if "title" in data.keys():
-            title = convertQuotation(data["title"])
+            title = data["title"]
             if len(data["title"]) > 200:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "title", "limit": "200"}, force_lang = au["language"])}
 
         if "description" in data.keys():
-            description = compress(data["description"])
+            description = data["description"]
             if len(data["description"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "description", "limit": "2,000"}, force_lang = au["language"])}
@@ -547,7 +562,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE challenge SET title = '{title}', description = '{description}', \
+    await app.db.execute(dhrid, f"UPDATE challenge SET title = '{convertQuotation(title)}', description = '{convertQuotation(compress(description))}', \
             start_time = '{start_time}', end_time = '{end_time}', \
             orderid = {orderid}, is_pinned = {is_pinned}, \
             delivery_count = {delivery_count}, required_roles = '{required_roles}', \

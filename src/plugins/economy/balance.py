@@ -146,7 +146,7 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
             return {"error": ml.tr(request, "value_too_large", var = {"item": "amount", "limit": "4,294,967,296"}, force_lang = au["language"])}
 
         if "message" in data.keys():
-            message = convertQuotation(data["message"])
+            message = data["message"]
         else:
             message = ""
     except:
@@ -197,7 +197,7 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         response.status_code = 402
         return {"error": ml.tr(request, "insufficient_balance", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({from_userid}, {to_userid}, {amount}, 'regular-tx/by-{opuserid}', '{message}', {from_balance - amount}, {to_balance - amount}, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({from_userid}, {to_userid}, {amount}, 'regular-tx/by-{opuserid}', '{convertQuotation(message)}', {from_balance - amount}, {to_balance - amount}, {int(time.time())})")
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {amount} WHERE userid = {from_userid}")
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {amount} WHERE userid = {to_userid}")
     await app.db.commit(dhrid)

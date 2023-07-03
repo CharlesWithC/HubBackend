@@ -492,7 +492,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
             owner = "self"
 
         if "message" in data.keys():
-            message = convertQuotation(data["message"])
+            message = data["message"]
         else:
             message = ""
     except:
@@ -540,7 +540,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage", force_lang = au["language"])}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE garageid = '{garageid}' AND note = 'garage-owner'")
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'g-{garageid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'g-{garageid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     garage = ml.ctr(request, "unknown_garage")
@@ -586,7 +586,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
             owner = "self"
 
         if "message" in data.keys():
-            message = convertQuotation(data["message"])
+            message = data["message"]
         else:
             message = ""
     except:
@@ -634,7 +634,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
             return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "garage_slot", force_lang = au["language"])}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = {foruser} WHERE slotid = {slotid} AND garageid = '{garageid}'")
-    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'gs{slotid}-transfer', '{message}', NULL, NULL, {int(time.time())})")
+    await app.db.execute(dhrid, f"INSERT INTO economy_transaction(from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp) VALUES ({current_owner}, {foruser}, NULL, 'gs{slotid}-transfer', '{convertQuotation(message)}', NULL, NULL, {int(time.time())})")
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, userid = foruser))["name"]

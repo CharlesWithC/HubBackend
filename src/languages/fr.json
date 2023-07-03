@@ -170,7 +170,7 @@
     "division_not_validated": "Cette livraison n'est pas validée par un superviseur de division.",
 
     "downloads_not_found": "Élément téléchargeable introuvable.",
-    "downloads_invalid_link": "Lien invalide.",
+    "invalid_link": "Lien invalide.",
     "new_downloadable_item_with_title": "Nouvel élément téléchargeable: `{title}`",
     "new_downloadable_item": "Nouvel élément téléchargeable",
     "download_link": "[Télécharger]({link})",

@@ -352,6 +352,18 @@ async def AutoMessage(app, meta, setvar):
                         stack.append((value, new_dict))
                     elif isinstance(value, str):
                         cur_res[key] = setvar(value)
+                    elif isinstance(value, list):
+                        new_list = []
+                        cur_res[key] = new_list
+                        for item in value:
+                            if isinstance(item, dict):
+                                new_dict = {}
+                                new_list.append(new_dict)
+                                stack.append((item, new_dict))
+                            elif isinstance(item, str):
+                                new_list.append(setvar(item))
+                            else:
+                                new_list.append(item)
                     else:
                         cur_res[key] = value
             embeds.append(res)
