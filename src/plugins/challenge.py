@@ -5,7 +5,7 @@ import json
 import time
 from typing import Optional
 
-from fastapi import Header, Request, Response
+from fastapi import Header, Request, Query, Response
 
 import multilang as ml
 from functions import *
@@ -46,7 +46,9 @@ JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "desti
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
     page: Optional[int] = 1, page_size: Optional[int] = 10, after_challengeid: Optional[int] = None, \
         query: Optional[str] = "", created_by: Optional[int] = None, \
-        after: Optional[int] = None, before: Optional[int] = None, challenge_type: Optional[int] = None,
+        start_after: Optional[int] = None, start_before: Optional[int] = None, \
+        end_after: Optional[int] = None, end_before: Optional[int] = None, \
+        challenge_type: Optional[int] = Query(None, alias='type'), \
         required_role: Optional[int] = None, \
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
         completed_by: Optional[int] = None, must_have_completed: Optional[bool] = False, \
@@ -78,12 +80,16 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query = convertQuotation(query).lower()
         query_limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
 
-    if after is not None:
-        query_limit += f"AND start_time >= {after} "
-    if before is not None:
-        query_limit += f"AND end_time <= {before} "
+    if start_after is not None:
+        query_limit += f"AND start_time >= {start_after} "
+    if start_before is not None:
+        query_limit += f"AND start_time <= {start_before} "
+    if end_after is not None:
+        query_limit += f"AND end_time >= {end_after} "
+    if end_before is not None:
+        query_limit += f"AND end_time <= {end_before} "
 
-    if challenge_type in [1,2,3]:
+    if challenge_type in [1,2,3,4,5]:
         query_limit += f"AND challenge_type = {challenge_type} "
 
     if required_role is not None:
@@ -103,7 +109,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         completed_by = au["userid"]
 
     # start_time / end_time / title / required_distance / reward_points / delivery_count
-    if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count", "orderid"]:
+    if order_by not in ["challengeid", "title", "start_time", "end_time", "required_distance", "reward_points", "delivery_count", "orderid", "timestamp"]:
         order_by = "reward_points"
         order = "desc"
 
@@ -128,7 +134,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, delivery_count, required_roles, required_distance, reward_points, description, public_details, orderid, is_pinned, timestamp, userid FROM challenge {query_limit} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         current_delivery_count = 0
@@ -167,8 +173,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
                     continue
 
         ret.append({"challengeid": tt[0], "title": tt[1], "description": decompress(tt[9]), \
-                "start_time": tt[2], "end_time": tt[3],\
-                "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
+                "creator": await GetUserInfo(request, userid = tt[14]), "start_time": tt[2], "end_time": tt[3],\
+                "type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, \
                 "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[tt[10]], "orderid": tt[11], "is_pinned": TF[tt[12]], "timestamp": tt[13], "completed": completed})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
@@ -203,7 +209,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
 
     await app.db.execute(dhrid, f"SELECT challengeid, title, start_time, end_time, challenge_type, \
             delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, \
-            description, orderid, is_pinned, timestamp FROM challenge WHERE challengeid = {challengeid} \
+            description, orderid, is_pinned, timestamp, userid FROM challenge WHERE challengeid = {challengeid} \
                 AND challengeid >= 0")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
@@ -242,7 +248,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
     for pp in p:
         completed.append({"user": await GetUserInfo(request, userid = pp[0]), "points": pp[1], "timestamp": pp[2]})
 
-    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "start_time": tt[2], "end_time": tt[3], "challenge_type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "timestamp": tt[14], "job_requirements": jobreq, "completed": completed}
+    return {"challengeid": tt[0], "title": tt[1], "description": decompress(tt[11]), "creator": await GetUserInfo(request, tt[15]), "start_time": tt[2], "end_time": tt[3], "type": tt[4], "delivery_count": tt[5], "current_delivery_count": current_delivery_count, "required_roles": required_roles, "required_distance": tt[7], "reward_points": tt[8], "public_details": TF[public_details], "orderid": tt[12], "is_pinned": TF[tt[13]], "timestamp": tt[14], "job_requirements": jobreq, "completed": completed}
 
 # POST /challenge
 # Note: Check if there're at most 15 active challenges
@@ -297,14 +303,6 @@ async def post_challenge(request: Request, response: Response, authorization: st
         del au["code"]
         return au
 
-    await app.db.execute(dhrid, f"SELECT COUNT(*) FROM challenge WHERE start_time <= {int(time.time())} AND end_time >= {int(time.time())}")
-    tot = await app.db.fetchone(dhrid)
-    tot = tot[0]
-    tot = 0 if tot is None else int(tot)
-    if tot >= 15:
-        response.status_code = 503
-        return {"error": ml.tr(request, "maximum_15_active_challenge", force_lang = au["language"])}
-
     data = await request.json()
     try:
         title = data["title"]
@@ -323,10 +321,10 @@ async def post_challenge(request: Request, response: Response, authorization: st
         if abs(end_time) > 2147483647:
             response.status_code = 400
             return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
-        challenge_type = int(data["challenge_type"])
+        challenge_type = int(data["type"])
         if abs(challenge_type) > 2147483647:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "challenge_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         delivery_count = int(data["delivery_count"])
         if abs(delivery_count) > 2147483647:
             response.status_code = 400

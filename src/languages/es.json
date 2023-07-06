@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Tipo de token de autorización desconocido.",
     "invalid_hash": "Hash no válido.",
     "invalid_userid": "Identificación de usuario no válida.",
-
     "invalid_timezone": "Zona horaria no válida.",
+
+    "invalid_link": "Enlace no válido.",
     "unauthorized": "No estás autorizado.",
     "no_access_to_resource": "No tienes suficientes permisos para acceder al recurso.",
     "application_token_not_allowed": "Acceso denegado: el token de la aplicación no está permitido.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Desafío no encontrado.",
     "challenge_delivery_not_found": "La entrega no se acepta para el desafío.",
     "challenge_delivery_already_accepted": "La entrega ya se aceptó para el desafío.",
-    "maximum_15_active_challenge": "Puede haber un máximo de 15 desafíos activos al mismo tiempo.",
     "new_challenge_with_title": "Nuevo desafío: `{title}`",
     "new_challenge": "Nuevo desafío",
     "start": "Iniciar",
@@ -170,7 +170,6 @@
     "division_not_validated": "Esta entrega no está validada por un supervisor de división.",
 
     "downloads_not_found": "Elemento descargable no encontrado.",
-    "invalid_link": "Enlace no válido.",
     "new_downloadable_item_with_title": "Nuevo elemento descargable: `{title}`",
     "new_downloadable_item": "Nuevo elemento descargable",
     "download_link": "[Descargar]({link})",

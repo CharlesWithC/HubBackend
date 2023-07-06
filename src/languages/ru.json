@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Неизвестный тип токена авторизации.",
     "invalid_hash": "Неверный хэш.",
     "invalid_userid": "Неверный идентификатор пользователя.",
-
     "invalid_timezone": "Неверный часовой пояс.",
+
+    "invalid_link": "Неверная ссылка.",
     "unauthorized": "Вы не авторизованы.",
     "no_access_to_resource": "У вас недостаточно прав для доступа к ресурсу.",
     "application_token_not_allowed": "Доступ запрещен: токен приложения не разрешен.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Вызов не найден.",
     "challenge_delivery_not_found": "Доставка не принимается для вызова.",
     "challenge_delivery_already_accepted": "Доставка уже принята для вызова.",
-    "maximum_15_active_challenge": "Одновременно может быть не более 15 активных испытаний.",
     "new_challenge_with_title": "Новое задание: `{title}`",
     "new_challenge": "Новое испытание",
     "start": "Начало",
@@ -170,7 +170,6 @@
     "division_not_validated": "Эта доставка не подтверждена руководителем отдела.",
 
     "downloads_not_found": "Загружаемый элемент не найден.",
-    "invalid_link": "Неверная ссылка.",
     "new_downloadable_item_with_title": "Новый загружаемый предмет: `{title}`",
     "new_downloadable_item": "Новый загружаемый элемент",
     "download_link": "[Скачать]({link})",

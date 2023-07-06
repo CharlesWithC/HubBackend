@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.7.8"
+        "version": "2.7.9"
     },
     "servers": [],
     "paths": {
@@ -2251,10 +2251,19 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Required roles (Use Role ID, Separate with ',', Up to 100)",
+                            "title": "Include roles (Use Role ID, Separate with ',', Up to 100)",
                             "type": "string"
                         },
-                        "name": "roles",
+                        "name": "include_roles",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Exclude roles (Use Role ID, Separate with ',', Up to 100)",
+                            "type": "string"
+                        },
+                        "name": "exclude_roles",
                         "in": "query"
                     },
                     {
@@ -3407,7 +3416,7 @@
                 "tags": [
                     "announcement"
                 ],
-                "operationId": "get_announcement_types",
+                "operationId": "get_types",
                 "responses": {}
             }
         },
@@ -3518,10 +3527,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Announcement Type",
+                            "title": "Type",
                             "type": "integer"
                         },
-                        "name": "announcement_type",
+                        "name": "type",
                         "in": "query"
                     }
                 ],
@@ -3556,7 +3565,7 @@
                                         "description": "Content",
                                         "type": "string"
                                     },
-                                    "announcement_type": {
+                                    "type": {
                                         "description": "Type",
                                         "type": "integer"
                                     },
@@ -3577,7 +3586,7 @@
                             "required": [
                                 "title",
                                 "content",
-                                "announcement_type"
+                                "type"
                             ]
                         }
                     }
@@ -3649,7 +3658,7 @@
                                         "description": "Content",
                                         "type": "string"
                                     },
-                                    "announcement_type": {
+                                    "type": {
                                         "description": "Type",
                                         "type": "integer"
                                     },
@@ -4100,19 +4109,37 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "After (Timestamp)",
+                            "title": "Start After (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "after",
+                        "name": "start_after",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Before (Timestamp)",
+                            "title": "Start Before (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "before",
+                        "name": "start_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "End After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "end_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "End Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "end_before",
                         "in": "query"
                     },
                     {
@@ -4127,10 +4154,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
+                            "title": "Type (1: Personal (One-time) | 2: Company (One-time) | 3: Personal (Recurring) | 4: Personal (Distance-based) | 5: Company: (Distance-based))",
                             "type": "integer"
                         },
-                        "name": "challenge_type",
+                        "name": "type",
                         "in": "query"
                     },
                     {
@@ -4218,8 +4245,8 @@
                                         "description": "End Time (Timestamp)",
                                         "type": "integer"
                                     },
-                                    "challenge_type": {
-                                        "description": "Challenge Type (1: Personal (One-time) | 2: Company | 3: Personal (Recurring)",
+                                    "type": {
+                                        "description": "Type (1: Personal (One-time) | 2: Company (One-time) | 3: Personal (Recurring) | 4: Personal (Distance-based) | 5: Company: (Distance-based))",
                                         "type": "integer"
                                     },
                                     "orderid": {
@@ -4260,7 +4287,7 @@
                                 "title",
                                 "start_time",
                                 "end_time",
-                                "challenge_type",
+                                "type",
                                 "delivery_count",
                                 "required_roles",
                                 "required_distance",

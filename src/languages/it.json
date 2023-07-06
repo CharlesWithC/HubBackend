@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Tipo di token di autorizzazione sconosciuto.",
     "invalid_hash": "Hash non valido.",
     "invalid_userid": "ID utente non valido.",
-
     "invalid_timezone": "Fuso orario non valido.",
+
+    "invalid_link": "Link non valido!",
     "unauthorized": "Non sei autorizzato.",
     "no_access_to_resource": "Non disponi di autorizzazioni sufficienti per accedere alla risorsa.",
     "application_token_not_allowed": "Accesso negato: il token dell'applicazione non è consentito.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Sfida non trovata.",
     "challenge_delivery_not_found": "La consegna non è accettata per la sfida.",
     "challenge_delivery_already_accepted": "La consegna è già accettata per la sfida.",
-    "maximum_15_active_challenge": "Possono esserci al massimo 15 sfide attive contemporaneamente.",
     "new_challenge_with_title": "Nouveau défi: `{title}`",
     "new_challenge": "Nouveau défi",
     "start": "Début",
@@ -170,7 +170,6 @@
     "division_not_validated": "Questa consegna non è convalidata da un supervisore di divisione.",
 
     "downloads_not_found": "Articolo scaricabile non trovato.",
-    "invalid_link": "Link non valido!",
     "new_downloadable_item_with_title": "Nouvel élément téléchargeable: `{title}`",
     "new_downloadable_item": "Nouvel élément téléchargeable",
     "download_link": "[Télécharger]({link})",

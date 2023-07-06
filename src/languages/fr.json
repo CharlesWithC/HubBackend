@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Type de jeton d'autorisation inconnu.",
     "invalid_hash": "Hachage invalide.",
     "invalid_userid": "ID utilisateur invalide.",
-
     "invalid_timezone": "Fuseau horaire invalide.",
+
+    "invalid_link": "Lien invalide.",
     "unauthorized": "Vous n'êtes pas autorisé.",
     "no_access_to_resource": "Vous n'avez pas les permissions suffisantes pour accéder à la ressource.",
     "application_token_not_allowed": "Accès refusé: le jeton d'application n'est pas autorisé.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Défi introuvable.",
     "challenge_delivery_not_found": "La livraison n'est pas acceptée pour le défi.",
     "challenge_delivery_already_accepted": "La livraison est déjà acceptée pour le défi.",
-    "maximum_15_active_challenge": "Il peut y avoir au maximum 15 défis actifs en même temps.",
     "new_challenge_with_title": "Nouveau défi: `{title}`",
     "new_challenge": "Nouveau défi",
     "start": "Début",
@@ -170,7 +170,6 @@
     "division_not_validated": "Cette livraison n'est pas validée par un superviseur de division.",
 
     "downloads_not_found": "Élément téléchargeable introuvable.",
-    "invalid_link": "Lien invalide.",
     "new_downloadable_item_with_title": "Nouvel élément téléchargeable: `{title}`",
     "new_downloadable_item": "Nouvel élément téléchargeable",
     "download_link": "[Télécharger]({link})",

@@ -31,7 +31,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         after_userid: Optional[int] = None, \
         joined_after: Optional[int] = None, joined_before: Optional[int] = None, \
-        query: Optional[str] = '', roles: Optional[str] = '', last_seen_after: Optional[int] = None, \
+        query: Optional[str] = '', include_roles: Optional[str] = '', exclude_roles: Optional[str] = '', \
+        last_seen_after: Optional[int] = None, \
         order_by: Optional[str] = "highest_role", order: Optional[str] = "desc"):
     """Returns a list of members"""
     app = request.app
@@ -57,9 +58,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    limit_roles = str2list(roles)
-    if len(limit_roles) > 100:
-        limit_roles = limit_roles[:100]
+    include_roles = str2list(include_roles)
+    if len(include_roles) > 100:
+        include_roles = include_roles[:100]
+    exclude_roles = str2list(exclude_roles)
+    if len(exclude_roles) > 100:
+        exclude_roles = exclude_roles[:100]
 
     query = convertQuotation(query).lower()
 
@@ -108,18 +112,22 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if tt[0] in hrole.keys(): # prevent duplicate result from SQL query
             continue
         roles = str2list(tt[1])
-        highest_role = 99999
-        ok = False
-        if len(limit_roles) == 0:
-            ok = True
+        highest_role_order_id = float('inf')
+        include_ok = (len(include_roles) == 0)
+        exclude_ok = True
         for role in roles:
-            if role < highest_role:
-                highest_role = role
-            if role in limit_roles:
-                ok = True
-        if not ok:
+            if role in app.roles.keys():
+                if app.roles[role]["order_id"] < highest_role_order_id:
+                    highest_role_order_id = app.roles[role]["order_id"]
+            if role in include_roles:
+                include_ok = True
+            if role in exclude_roles:
+                exclude_ok = False
+                break
+        if not include_ok or not exclude_ok:
             continue
-        hrole[tt[0]] = highest_role
+
+        hrole[tt[0]] = highest_role_order_id
         rret[tt[0]] = await GetUserInfo(request, userid = tt[0])
 
     ret = []

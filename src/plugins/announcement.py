@@ -5,7 +5,7 @@ import math
 import time
 from typing import Optional
 
-from fastapi import Header, Request, Response
+from fastapi import Header, Request, Query, Response
 
 import multilang as ml
 from functions import *
@@ -28,7 +28,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
         created_by: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
-        after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = None):
+        after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = Query(None, alias='type')):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -101,7 +101,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
-        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]})
+        ret.append({"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]})
 
     await app.db.execute(dhrid, f"SELECT COUNT(*) FROM announcement WHERE announcementid >= 0 {limit}")
     t = await app.db.fetchall(dhrid)
@@ -140,7 +140,7 @@ async def get_announcement(request: Request, response: Response, announcementid:
         return {"error": ml.tr(request, "announcement_not_found", force_lang = aulanguage)}
     tt = t[0]
 
-    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "announcement_type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]}
+    return {"announcementid": tt[5], "title": tt[0], "content": decompress(tt[1]), "author": await GetUserInfo(request, userid = tt[4]), "type": get_type(request, tt[2], aulanguage), "is_private": TF[tt[6]], "orderid": tt[7], "is_pinned": TF[tt[8]], "timestamp": tt[3]}
 
 async def post_announcement(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
@@ -169,10 +169,10 @@ async def post_announcement(request: Request, response: Response, authorization:
         if len(data["content"]) > 2000:
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
-        announcement_type = int(data["announcement_type"])
+        announcement_type = int(data["type"])
         if abs(announcement_type) > 2147483647:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "announcement_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "is_private" not in data.keys():
             data["is_private"] = False
         is_private = int(bool(data["is_private"]))
@@ -281,11 +281,11 @@ async def patch_announcement(request: Request, response: Response, announcementi
             if len(data["content"]) > 2000:
                 response.status_code = 400
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "content", "limit": "2,000"}, force_lang = au["language"])}
-        if "announcement_type" in data.keys():
-            announcement_type = int(data["announcement_type"])
+        if "type" in data.keys():
+            announcement_type = int(data["type"])
             if abs(announcement_type) > 2147483647:
                 response.status_code = 400
-                return {"error": ml.tr(request, "value_too_large", var = {"item": "announcement_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         if "is_private" in data.keys():
             is_private = int(bool(data["is_private"]))
         if "orderid" in data.keys():

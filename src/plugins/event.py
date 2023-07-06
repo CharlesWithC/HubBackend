@@ -168,7 +168,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp"]:
+    if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp", "timestamp"]:
         order_by = "orderid"
         order = "asc"
     if order not in ["asc", "desc"]:
@@ -188,7 +188,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp, userid FROM event WHERE eventid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, meetup_timestamp ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
@@ -203,7 +203,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 voted = True
             else:
                 voted = False
-        ret.append({"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), \
+        ret.append({"eventid": tt[0], "title": tt[8], "link": decompress(tt[1]), "description": decompress(tt[7]),
+            "creator": await GetUserInfo(request, userid = tt[16]), \
             "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], \
                 "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], \
                     "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], \
@@ -235,7 +236,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
             aulanguage = au["language"]
             await ActivityUpdate(request, au["uid"], "events")
 
-    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp FROM event WHERE eventid = {eventid}")
+    await app.db.execute(dhrid, f"SELECT eventid, link, departure, destination, distance, meetup_timestamp, departure_timestamp, description, title, attendee, vote, is_private, points, orderid, is_pinned, timestamp, userid FROM event WHERE eventid = {eventid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -259,7 +260,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
         else:
             voted = False
 
-    return {"eventid": tt[0], "title": tt[8], "description": decompress(tt[7]), "link": decompress(tt[1]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], "attendees": attendee_ret, "votes": vote_ret, "voted": voted}
+    return {"eventid": tt[0], "title": tt[8], "link": decompress(tt[1]), "description": decompress(tt[7]), "creator": await GetUserInfo(request, userid = tt[16]), "departure": tt[2], "destination": tt[3], "distance": tt[4], "meetup_timestamp": tt[5], "departure_timestamp": tt[6], "points": tt[12], "is_private": TF[tt[11]], "orderid": tt[13], "is_pinned": TF[tt[14]], "timestamp": tt[15], "attendees": attendee_ret, "votes": vote_ret, "voted": voted}
 
 async def put_vote(request: Request, response: Response, eventid: int, authorization: str = Header(None)):
     app = request.app

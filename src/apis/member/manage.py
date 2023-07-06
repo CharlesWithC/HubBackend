@@ -317,12 +317,12 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
         response.status_code = au["code"]
         del au["code"]
         return au
-    staffroles = au["roles"]
 
-    staff_highest_role = 99999
-    for role in staffroles:
-        if role < staff_highest_role:
-            staff_highest_role = role
+    staff_highest_order_id = None
+    for role in au["roles"]:
+        if role in app.roles.keys():
+            if staff_highest_order_id is None or app.roles[role]["order_id"] < staff_highest_order_id:
+                staff_highest_order_id = app.roles[role]["order_id"]
 
     if not (await isSecureAuth(authorization, request)):
         response.status_code = 403
@@ -340,12 +340,15 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     discordid = t[0][4]
     uid = t[0][5]
     avatar = t[0][6]
-    user_highest_role = 99999
+
+    user_highest_order_id = None
     for role in roles:
-        if role < user_highest_role:
-            user_highest_role = role
-    # note that the larger the id is, the lower the role is
-    if staff_highest_role >= user_highest_role:
+        if role in app.roles.keys():
+            if user_highest_order_id is None or app.roles[role]["order_id"] < user_highest_order_id:
+                user_highest_order_id = app.roles[role]["order_id"]
+
+    # note that the larger the order id is, the lower the role is
+    if staff_highest_order_id >= user_highest_order_id:
         response.status_code = 403
         return {"error": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 

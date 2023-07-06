@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Ukendt godkendelsestokentype.",
     "invalid_hash": "Ugyldig hash.",
     "invalid_userid": "Ugyldigt bruger-id.",
-
     "invalid_timezone": "Ugyldig tidszone.",
+
+    "invalid_link": "Ugyldigt link.",
     "unauthorized": "Du er ikke autoriseret.",
     "no_access_to_resource": "Du har ikke tilstrækkelig tilladelse til at få adgang til ressourcen.",
     "application_token_not_allowed": "Adgang nægtet: Applikationstoken er ikke tilladt.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Udfordring ikke fundet.",
     "challenge_delivery_not_found": "Leveringen accepteres ikke til udfordringen.",
     "challenge_delivery_already_accepted": "Leveringen er allerede accepteret til udfordringen.",
-    "maximum_15_active_challenge": "Der kan højst være 15 aktive udfordringer på samme tid.",
     "new_challenge_with_title": "Ny udfordring: `{title}`",
     "new_challenge": "Ny udfordring",
     "start": "Start",
@@ -170,7 +170,6 @@
     "division_not_validated": "Denne levering er ikke valideret af en divisionssupervisor.",
 
     "downloads_not_found": "Downloadbar element blev ikke fundet.",
-    "invalid_link": "Ugyldigt link.",
     "new_downloadable_item_with_title": "Nyt element, der kan downloades: `{title}`",
     "new_downloadable_item": "Nyt element, der kan downloades",
     "download_link": "[Download]({link})",

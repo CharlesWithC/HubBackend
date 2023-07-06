@@ -156,7 +156,6 @@
     "challenge_not_found": "Challenge not found.",
     "challenge_delivery_not_found": "The delivery is not accepted for the challenge.",
     "challenge_delivery_already_accepted": "The delivery is already accepted for the challenge.",
-    "maximum_15_active_challenge": "There can be at most 15 active challenges at the same time.",
     "new_challenge_with_title": "New Challenge: `{title}`",
     "new_challenge": "New Challenge",
     "start": "Start",

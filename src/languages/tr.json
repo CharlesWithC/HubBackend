@@ -18,8 +18,9 @@
     "unknown_authorization_token_type": "Bilinmeyen yetkilendirme belirteci türü.",
     "invalid_hash": "Geçersiz karma.",
     "invalid_userid": "Geçersiz Kullanıcı Kimliği.",
-
     "invalid_timezone": "Geçersiz saat dilimi.",
+
+    "invalid_link": "Geçersiz indirme bağlantısı linki.",
     "unauthorized": "Yetkili değilsiniz.",
     "no_access_to_resource": "Kaynağa erişmek için yeterli izniniz yok.",
     "application_token_not_allowed": "Erişim engellendi: Uygulama belirtecine izin verilmiyor.",
@@ -154,7 +155,6 @@
     "challenge_not_found": "Mücadele bulunamadı.",
     "challenge_delivery_not_found": "Teslimat mücadele için kabul edilmedi.",
     "challenge_delivery_already_accepted": "Teslimat mücadele için zaten kabul edildi.",
-    "maximum_15_active_challenge": "Aynı anda en fazla 15 aktif meydan okuma olabilir.",
     "new_challenge_with_title": "Yeni Mücadele: `{title}`",
     "new_challenge": "Yeni Mücadele",
     "start": "Başlangıç",
@@ -170,7 +170,6 @@
     "division_not_validated": "Bu teslimat, bir bölüm amiri tarafından doğrulanmadı.",
 
     "downloads_not_found": "İndirilebilir öğe bulunamadı.",
-    "invalid_link": "Geçersiz indirme bağlantısı linki.",
     "new_downloadable_item_with_title": "Yeni İndirilebilir Öğe: `{title}`",
     "new_downloadable_item": "Yeni İndirilebilir Öğe",
     "download_link": "[İndirmek]({link})",

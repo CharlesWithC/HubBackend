@@ -1,5 +1,15 @@
 # Changelog
 
+**v2.7.9**  
+1.Renamed `announcement_type` to `type`  
+2.Renamed `challenge_type` to `type`  
+3.Removed `?after|before` query from **GET** `/challenges/list`  
+4.Added `?start_after|before` and `?end_after|before` to **GET** `/challenges/list`  
+5.Removed `?roles` query from **GET** `/members/list`  
+6.Added `?include_roles|exclude_roles` to **GET** `/members/list`  
+7.Added `creator` field to event and challenge objects  
+8.Fixed legacy functions using `role id` to order roles  
+
 **v2.7.8**  
 1.Added handling of `autoPark` field on dlog export  
 -> This should be a TrackSim issue  
