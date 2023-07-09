@@ -318,7 +318,7 @@
     "restarted_service": "Genstartet tjeneste",
     "rejected_tracksim_webhook_post_ip": "Afvist TrackSim webhook-opdatering fra {ip} (IP ikke hvidlistet)",
     "rejected_tracksim_webhook_post_signature": "Afvist TrackSim webhook-opdatering fra {ip} (ugyldig signatur)",
-    "delivery_blocked_due_to_rules": "Levering ({tracker} ID: `{trackerid}`) blokeret på grund af regler.",
+    "delivery_blocked_due_to_rules": "Levering ({tracker} ID: `{trackerid}`) blokeret på grund af regler.\nOvertrædelse: `{rule_key}` er `{rule_value}`.",
     "route_already_fetched": "Ruten er allerede hentet.",
     "tracker_must_be": "Tracker skal være {tracker}.",
     "member_resigned_audit": "Medlem har sagt op.",

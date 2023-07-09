@@ -318,7 +318,7 @@
     "restarted_service": "Service redémarré",
     "rejected_tracksim_webhook_post_ip": "Mise à jour du webhook TrackSim rejetée depuis {ip} (IP non sur liste blanche)",
     "rejected_tracksim_webhook_post_signature": "Mise à jour du webhook TrackSim rejetée par {ip} (signature invalide)",
-    "delivery_blocked_due_to_rules": "Diffusion ({tracker} ID: `{trackerid}`) bloquée en raison de règles.",
+    "delivery_blocked_due_to_rules": "Livraison ({tracker} ID : `{trackerid}`) bloquée en raison de règles.\nViolation : `{rule_key}` est `{rule_value}`.",
     "route_already_fetched": "La route est déjà récupérée.",
     "tracker_must_be": "Le tracker doit être {tracker}.",
     "member_resigned_audit": "Le membre a démissionné.",

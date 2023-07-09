@@ -263,6 +263,8 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     top_speed = d["data"]["object"]["truck"]["top_speed"] * 3.6 # m/s => km/h
 
     delivery_rule_ok = True
+    delivery_rule_key = ""
+    delivery_rule_value = ""
 
     mod_revenue = revenue # modified revenue
     if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
@@ -272,20 +274,24 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         try:
             if top_speed > int(delivery_rules["max_speed"]) and action == "block":
                 delivery_rule_ok = False
+                delivery_rule_key = "max_speed"
+                delivery_rule_value = str(top_speed)
         except:
             pass
         try:
             if revenue > int(delivery_rules["max_profit"]):
                 if action == "block":
                     delivery_rule_ok = False
+                    delivery_rule_key = "max_profit"
+                    delivery_rule_value = str(revenue)
                 elif action == "drop":
                     mod_revenue = 0
         except:
             pass
 
     if not delivery_rule_ok:
-        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}))
-        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid}, force_lang = await GetUserLanguage(request, uid)))
+        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
+        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 

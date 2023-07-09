@@ -318,7 +318,7 @@
     "restarted_service": "Servizio riavviato",
     "rejected_tracksim_webhook_post_ip": "Aggiornamento webhook TrackSim rifiutato da {ip} (IP non autorizzato)",
     "rejected_tracksim_webhook_post_signature": "Aggiornamento webhook TrackSim rifiutato da {ip} (firma non valida)",
-    "delivery_blocked_due_to_rules": "Consegna ({tracker} ID: `{trackerid}`) bloccata a causa di regole.",
+    "delivery_blocked_due_to_rules": "Consegna ({tracker} ID: `{trackerid}`) bloccata a causa di regole.\nViolazione: `{rule_key}` è `{rule_value}`.",
     "route_already_fetched": "La rotta è già stata recuperata.",
     "tracker_must_be": "Il tracker deve essere {tracker}.",
     "member_resigned_audit": "Membro dimesso.",
