@@ -416,7 +416,7 @@
                 "name": "{name}",
                 "icon_url": "{avatar}"
             },
-            "timestamp": True
+            "timestamp": true
         }]
     }]
 }

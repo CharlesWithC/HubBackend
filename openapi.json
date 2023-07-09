@@ -3455,7 +3455,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (announcementid, orderid, title, timestamp)",
+                            "title": "Order by (orderid, announcementid, title, timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -4073,7 +4073,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (challengeid, title, after, before, required_distance, reward_points, delivery_count)",
+                            "title": "Order by (orderid, challengeid, title, start_time, end_time, required_distance, reward_points, delivery_count, timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -6877,7 +6877,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (eventid, orderid, title, meetup_timestamp, departure_timestamp)",
+                            "title": "Order by (orderid, eventid, title, meetup_timestamp, departure_timestamp, timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -7322,7 +7322,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (pollid, orderid, timestamp, end_time, title)",
+                            "title": "Order by (orderid, pollid, title, timestamp, end_time)",
                             "type": "string"
                         },
                         "name": "order_by",
