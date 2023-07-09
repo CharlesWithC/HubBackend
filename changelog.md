@@ -1,5 +1,10 @@
 # Changelog
 
+**v2.7.10**  
+1.Fixed incorrect info in [openapi.json](./openapi.json)  
+2.Fixed 500 error in challenge plugin when invalid `job_requirements` is provided  
+3.Added `config.event_upcoming_forwarding` for forwarding upcoming events  
+
 **v2.7.9**  
 1.Renamed `announcement_type` to `type`  
 2.Renamed `challenge_type` to `type`  

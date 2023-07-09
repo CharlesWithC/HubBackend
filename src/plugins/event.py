@@ -65,7 +65,7 @@ async def EventNotification(app):
                 if dd[0] in notification_enabled:
                     tonotify[dd[0]] = dd[1]
 
-            await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
+            await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 if tt[0] in notified_event:
@@ -73,24 +73,37 @@ async def EventNotification(app):
                 notified_event.append(tt[0])
                 await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
                 await app.db.commit(dhrid)
-
+                
+                eventid = tt[0]
                 title = tt[1] if tt[1] != "" else "N/A"
                 link = decompress(tt[2])
-                if not isurl(link):
-                    link = None
                 departure = tt[3] if tt[3] != "" else "N/A"
                 destination = tt[4] if tt[4] != "" else "N/A"
                 distance = tt[5] if tt[5] != "" else "N/A"
                 meetup_timestamp = tt[6]
                 departure_timestamp = tt[7]
                 vote = str2list(tt[8])
+                description = decompress(tt[9])
+                is_private = tt[10]
+                creator_userid = tt[11]
+                creator = await GetUserInfo(request, userid = creator_userid)
+                
+                def setvar(msg):
+                    return msg.replace("{mention}", f"<@{creator['discordid']}>").replace("{name}", creator['name']).replace("{userid}", str(creator['userid'])).replace("{uid}", str(creator['uid'])).replace("{avatar}", validateUrl(creator['avatar'])).replace("{id}", str(eventid)).replace("{title}", title).replace("{description}", description).replace("{link}", validateUrl(link)).replace("{departure}", departure).replace("{destination}", destination).replace("{distance}", distance).replace("{meetup_timestamp}", str(meetup_timestamp)).replace("{departure_timestamp}", str(departure_timestamp))
+
+                for meta in app.config.event_upcoming_forwarding:
+                    meta = Dict2Obj(meta)
+                    if meta.is_private is not None and int(meta.is_private) != is_private:
+                        continue
+                    if meta.webhook_url != "" or meta.channel_id != "":
+                        await AutoMessage(app, meta, setvar)
 
                 for vt in vote:
                     uid = (await GetUserInfo(request, userid = vt, ignore_activity = True))["uid"]
                     if uid in tonotify.keys():
                         channelid = tonotify[uid]
                         language = GetUserLanguage(request, uid)
-                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": ml.tr(request, "event_notification_description", force_lang = language), "url": link,
+                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": ml.tr(request, "event_notification_description", force_lang = language), "url": validateUrl(link),
                             "fields": [{"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
                                 {"name": ml.tr(request, "destination", force_lang = language), "value": destination, "inline": True},
                                 {"name": ml.tr(request, "distance", force_lang = language), "value": distance, "inline": True},
@@ -107,6 +120,8 @@ async def EventNotification(app):
 
             await app.db.close_conn(dhrid)
         except:
+            import traceback
+            traceback.print_exc()
             pass
 
         try:

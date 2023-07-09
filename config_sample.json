@@ -400,6 +400,33 @@
             "timestamp": true
         }]
     }],
+    "event_upcoming_forwarding": [{
+        "is_private": null,
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "The event is starting soon!",
+        "embeds": [{
+            "title": "{title}",
+            "description": "{description}",
+            "url": "{link}",
+            "fields": [
+                {"name": "Departure", "value": "{departure}", "inline": true},
+                {"name": "Destination", "value": "{destination}", "inline": true},
+                {"name": "Distance", "value": "{distance}", "inline": true},
+                {"name": "Meetup Time", "value": "<t:{meetup_timestamp}:R>", "inline": true},
+                {"name": "Departure Time", "value": "<t:{departure_timestamp}:R>", "inline": true}
+            ],
+            "footer": {
+                "text": "By {name} | Event #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": true
+        }]
+    }],
 
     "poll_forwarding": [{
         "channel_id": "",
