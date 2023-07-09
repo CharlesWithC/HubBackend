@@ -374,7 +374,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
         except:
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
-    rolereq = rolereq[:20]
+    rolereq = rolereq[:100]
     required_roles = "," + list2str(rolereq) + ","
 
     if delivery_count <= 0:
@@ -391,13 +391,17 @@ async def post_challenge(request: Request, response: Response, authorization: st
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_reward_points", force_lang = au["language"])}
 
-    jobreq = []
-    for req in JOB_REQUIREMENTS:
-        if req in job_requirements:
-            jobreq.append(JOB_REQUIREMENT_TYPE[req](job_requirements[req]))
-        else:
-            jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
-    jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
+    try:
+        jobreq = []
+        for req in JOB_REQUIREMENTS:
+            if req in job_requirements:
+                jobreq.append(JOB_REQUIREMENT_TYPE[req](job_requirements[req]))
+            else:
+                jobreq.append(JOB_REQUIREMENT_DEFAULT[req])
+        jobreq = compress(json.dumps(jobreq, separators=(',', ':')))
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"INSERT INTO challenge(userid, title, description, start_time, end_time, challenge_type, orderid, is_pinned, delivery_count, required_roles, required_distance, reward_points, public_details, job_requirements, timestamp) VALUES ({au['userid']}, '{convertQuotation(title)}', '{convertQuotation(compress(description))}', {start_time}, {end_time}, {challenge_type}, {orderid}, {is_pinned}, {delivery_count}, '{required_roles}', {required_distance}, {reward_points}, {public_details}, '{jobreq}', {int(time.time())})")
     await app.db.commit(dhrid)
@@ -512,7 +516,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
                 except:
                     response.status_code = 400
                     return {"error": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
-            rolereq = rolereq[:20]
+            rolereq = rolereq[:100]
             required_roles = "," + list2str(rolereq) + ","
 
         if "required_distance" in data.keys():

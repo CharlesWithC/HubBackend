@@ -501,7 +501,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     challengeid = tt[0]
                     challenge_type = tt[1]
                     delivery_count = tt[2]
-                    required_roles = str2list(tt[3])[:20]
+                    required_roles = str2list(tt[3])[:100]
                     reward_points = tt[4]
                     job_requirements = tt[5]
                     title = tt[6]
