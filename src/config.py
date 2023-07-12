@@ -468,6 +468,7 @@ default_config = {
     }],
     "event_upcoming_forwarding": [{
         "is_private": None,
+        "seconds_ahead": 3600,
         "channel_id": "",
         "webhook_url": "",
         "content": "The event is starting soon!",
@@ -973,6 +974,11 @@ def validateConfig(cfg):
             if embed_type in ["announcement_forwarding", "event_forwarding", "event_upcoming_forwarding"]:
                 if 'is_private' not in cfg[embed_type][i].keys():
                     cfg[embed_type][i]["is_private"] = None
+            if embed_type in ["event_upcoming_forwarding"]:
+                if 'seconds_ahead' not in cfg[embed_type][i].keys():
+                    cfg[embed_type][i]["seconds_ahead"] = 3600
+                else:
+                    cfg[embed_type][i]["seconds_ahead"] = min(max(int(cfg[embed_type][i]["seconds_ahead"]), 0), 86400 * 7)
 
     # v2.5.8
     if "apidomain" in cfg.keys():

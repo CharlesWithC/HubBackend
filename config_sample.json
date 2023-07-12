@@ -402,6 +402,7 @@
     }],
     "event_upcoming_forwarding": [{
         "is_private": null,
+        "seconds_ahead": 3600,
         "channel_id": "",
         "webhook_url": "",
         "content": "The event is starting soon!",

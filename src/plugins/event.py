@@ -42,15 +42,26 @@ async def EventNotification(app):
                     return
                 continue
 
-            notified_event = []
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event'")
+            notified_event_company = []
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event-company'")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                sval = tt[0].split("-")
+                if int(time.time()) - int(sval[2]) > int(sval[1]):
+                    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'notified-event-company' AND sval = '{tt[0]}'")
+                else:
+                    notified_event_company.append((int(sval[0]), int(sval[1])))
+            await app.db.commit(dhrid)
+
+            notified_event_user = []
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'notified-event-user'")
             t = await app.db.fetchall(dhrid)
             for tt in t:
                 sval = tt[0].split("-")
                 if int(time.time()) - int(sval[1]) > 3600:
-                    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'notified-event' AND sval = '{tt[0]}'")
+                    await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'notified-event-user' AND sval = '{tt[0]}'")
                 else:
-                    notified_event.append(int(sval[0]))
+                    notified_event_user.append(int(sval[0]))
             await app.db.commit(dhrid)
 
             notification_enabled = []
@@ -65,58 +76,91 @@ async def EventNotification(app):
                 if dd[0] in notification_enabled:
                     tonotify[dd[0]] = dd[1]
 
-            await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
-            t = await app.db.fetchall(dhrid)
-            for tt in t:
-                if tt[0] in notified_event:
-                    continue
-                notified_event.append(tt[0])
-                await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-event', '{tt[0]}-{int(time.time())}')")
-                await app.db.commit(dhrid)
-                
-                eventid = tt[0]
-                title = tt[1] if tt[1] != "" else "N/A"
-                link = decompress(tt[2])
-                departure = tt[3] if tt[3] != "" else "N/A"
-                destination = tt[4] if tt[4] != "" else "N/A"
-                distance = tt[5] if tt[5] != "" else "N/A"
-                meetup_timestamp = tt[6]
-                departure_timestamp = tt[7]
-                vote = str2list(tt[8])
-                description = decompress(tt[9])
-                is_private = tt[10]
-                creator_userid = tt[11]
-                creator = await GetUserInfo(request, userid = creator_userid)
-                
-                def setvar(msg):
-                    return msg.replace("{mention}", f"<@{creator['discordid']}>").replace("{name}", creator['name']).replace("{userid}", str(creator['userid'])).replace("{uid}", str(creator['uid'])).replace("{avatar}", validateUrl(creator['avatar'])).replace("{id}", str(eventid)).replace("{title}", title).replace("{description}", description).replace("{link}", validateUrl(link)).replace("{departure}", departure).replace("{destination}", destination).replace("{distance}", distance).replace("{meetup_timestamp}", str(meetup_timestamp)).replace("{departure_timestamp}", str(departure_timestamp))
-
+            try:
                 for meta in app.config.event_upcoming_forwarding:
                     meta = Dict2Obj(meta)
-                    if meta.is_private is not None and int(meta.is_private) != is_private:
+
+                    if meta.webhook_url == "" and meta.channel_id == "":
                         continue
-                    if meta.webhook_url != "" or meta.channel_id != "":
+
+                    await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + meta.seconds_ahead)}")
+                    t = await app.db.fetchall(dhrid)
+                    for tt in t:
+                        if (tt[0], meta.seconds_ahead) in notified_event_company:
+                            continue
+                        notified_event_company.append((tt[0], meta.seconds_ahead))
+                        await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-event-company', '{tt[0]}-{meta.seconds_ahead}-{int(time.time())}')")
+                        await app.db.commit(dhrid)
+
+                        eventid = tt[0]
+                        title = tt[1] if tt[1] != "" else "N/A"
+                        link = decompress(tt[2])
+                        departure = tt[3] if tt[3] != "" else "N/A"
+                        destination = tt[4] if tt[4] != "" else "N/A"
+                        distance = tt[5] if tt[5] != "" else "N/A"
+                        meetup_timestamp = tt[6]
+                        departure_timestamp = tt[7]
+                        description = decompress(tt[9])
+                        is_private = tt[10]
+                        creator_userid = tt[11]
+                        creator = await GetUserInfo(request, userid = creator_userid)
+
+                        if meta.is_private is not None and int(meta.is_private) != is_private:
+                            continue
+
+                        def setvar(msg):
+                            return msg.replace("{mention}", f"<@{creator['discordid']}>").replace("{name}", creator['name']).replace("{userid}", str(creator['userid'])).replace("{uid}", str(creator['uid'])).replace("{avatar}", validateUrl(creator['avatar'])).replace("{id}", str(eventid)).replace("{title}", title).replace("{description}", description).replace("{link}", validateUrl(link)).replace("{departure}", departure).replace("{destination}", destination).replace("{distance}", distance).replace("{meetup_timestamp}", str(meetup_timestamp)).replace("{departure_timestamp}", str(departure_timestamp))
+
                         await AutoMessage(app, meta, setvar)
 
-                for vt in vote:
-                    uid = (await GetUserInfo(request, userid = vt, ignore_activity = True))["uid"]
-                    if uid in tonotify.keys():
-                        channelid = tonotify[uid]
-                        language = GetUserLanguage(request, uid)
-                        QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": ml.tr(request, "event_notification_description", force_lang = language), "url": validateUrl(link),
-                            "fields": [{"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
-                                {"name": ml.tr(request, "destination", force_lang = language), "value": destination, "inline": True},
-                                {"name": ml.tr(request, "distance", force_lang = language), "value": distance, "inline": True},
-                                {"name": ml.tr(request, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
-                                {"name": ml.tr(request, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
-                            "footer": {"text": ml.tr(request, "event_notification", force_lang = language), "icon_url": app.config.logo_url},
-                            "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
-                        await notification(request, "upcoming_event", uid, ml.tr(request, "event_starting", var = {"eventid": tt[0], "title": title}, force_lang = language), force = True, no_discord_notification = True)
-                await app.db.extend_conn(dhrid, 2)
-                try:
-                    await asyncio.sleep(1)
-                except:
-                    return
+                        await app.db.extend_conn(dhrid, 2)
+                        try:
+                            await asyncio.sleep(1)
+                        except:
+                            return
+            except:
+                pass
+
+            try:
+                await app.db.execute(dhrid, f"SELECT eventid, title, link, departure, destination, distance, meetup_timestamp, departure_timestamp, vote, description, is_private, userid FROM event WHERE meetup_timestamp >= {int(time.time())} AND meetup_timestamp <= {int(time.time() + 3600)}")
+                t = await app.db.fetchall(dhrid)
+                for tt in t:
+                    if tt[0] in notified_event_user:
+                        continue
+                    notified_event_user.append(tt[0])
+                    await app.db.execute(dhrid, f"INSERT INTO settings VALUES (0, 'notified-event-user', '{tt[0]}-{int(time.time())}')")
+                    await app.db.commit(dhrid)
+
+                    title = tt[1] if tt[1] != "" else "N/A"
+                    link = decompress(tt[2])
+                    departure = tt[3] if tt[3] != "" else "N/A"
+                    destination = tt[4] if tt[4] != "" else "N/A"
+                    distance = tt[5] if tt[5] != "" else "N/A"
+                    meetup_timestamp = tt[6]
+                    departure_timestamp = tt[7]
+                    vote = str2list(tt[8])
+
+                    for vt in vote:
+                        uid = (await GetUserInfo(request, userid = vt, ignore_activity = True))["uid"]
+                        if uid in tonotify.keys():
+                            channelid = tonotify[uid]
+                            language = GetUserLanguage(request, uid)
+                            QueueDiscordMessage(app, channelid, {"embeds": [{"title": title, "description": ml.tr(request, "event_notification_description", force_lang = language), "url": validateUrl(link),
+                                "fields": [{"name": ml.tr(request, "departure", force_lang = language), "value": departure, "inline": True},
+                                    {"name": ml.tr(request, "destination", force_lang = language), "value": destination, "inline": True},
+                                    {"name": ml.tr(request, "distance", force_lang = language), "value": distance, "inline": True},
+                                    {"name": ml.tr(request, "meetup_time", force_lang = language), "value": f"<t:{meetup_timestamp}:R>", "inline": True},
+                                    {"name": ml.tr(request, "departure_time", force_lang = language), "value": f"<t:{departure_timestamp}:R>", "inline": True}],
+                                "footer": {"text": ml.tr(request, "event_notification", force_lang = language), "icon_url": app.config.logo_url},
+                                "timestamp": str(datetime.fromtimestamp(meetup_timestamp)), "color": int(app.config.hex_color, 16)}]})
+                            await notification(request, "upcoming_event", uid, ml.tr(request, "event_starting", var = {"eventid": tt[0], "title": title}, force_lang = language), force = True, no_discord_notification = True)
+                    await app.db.extend_conn(dhrid, 2)
+                    try:
+                        await asyncio.sleep(1)
+                    except:
+                        return
+            except:
+                pass
 
             await app.db.close_conn(dhrid)
         except:
