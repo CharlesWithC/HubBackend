@@ -406,7 +406,7 @@ async def post_application(request: Request, response: Response, authorization: 
             author = {"name": t[0][0], "icon_url": t[0][1]}
 
             if len(msg) > 4000:
-                msg = f"*{ml.ctr(request, 'application_message_too_long')}*"
+                msg = f"**UID**: {uid}\n**User ID**: {userid}\n**Email**: {t[0][2]}\n**Discord**: <@{discordid}> (`{discordid}`)\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n\n*{ml.ctr(request, 'application_message_too_long')}*"
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 
@@ -502,7 +502,7 @@ async def patch_application(request: Request, response: Response, applicationid:
             author = {"name": t[0][0], "icon_url": t[0][1]}
 
             if len(msg) > 4000:
-                msg = f"*{ml.ctr(request, 'application_message_too_long')}*"
+                msg = f"**UID**: {uid}\n**User ID**: {userid}\n**Email**: {t[0][2]}\n**Discord**: <@{discordid}> (`{discordid}`)\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n\n*{ml.ctr(request, 'application_message_too_long')}*"
 
             headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json"}
 

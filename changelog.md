@@ -5,6 +5,7 @@
 2.Fixed 500 error in challenge plugin when invalid `job_requirements` is provided  
 3.Added `config.event_upcoming_forwarding` for forwarding upcoming events  
 4.Added detailed reason of blocking dlog  
+5.Included basic user info in application discord embed when the full message is too long  
 
 **v2.7.9**  
 1.Renamed `announcement_type` to `type`  
