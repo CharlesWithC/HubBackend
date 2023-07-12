@@ -305,9 +305,34 @@
         "content": "",
         "embeds": [{
             "title": "{title}",
-            "description": "{description}",
+            "description": "{description}\n\nEither of the following roles is required to join the challenge: {required_roles}",
+            "fields": [
+                {"name": "Reward Points", "value": "{reward_points}", "inline": true},
+                {"name": "Delivery Count", "value": "{delivery_count}", "inline": true},
+                {"name": "Required Distance", "value": "{required_distance}", "inline": true},
+                {"name": "Start Time", "value": "<t:{start_timestamp}>", "inline": true},
+                {"name": "End Time", "value": "<t:{end_timestamp}>", "inline": true}
+            ],
             "footer": {
                 "text": "By {name} | Challenge #{id}",
+                "icon_url": ""
+            },
+            "author": {
+                "name": "{name}",
+                "icon_url": "{avatar}"
+            },
+            "timestamp": true
+        }]
+    }],
+    "challenge_completed_forwarding": [{
+        "channel_id": "",
+        "webhook_url": "",
+        "content": "",
+        "embeds": [{
+            "title": "Challenge Completed",
+            "description": "{mention} earned **{earned_points} points** for completing **{title}**",
+            "footer": {
+                "text": "Challenge #{id}",
                 "icon_url": ""
             },
             "author": {

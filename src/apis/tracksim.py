@@ -646,16 +646,40 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             if len(t) == 0:
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
-                                uid = (await GetUserInfo(request, userid = userid))["uid"]
+
+                                userinfo = await GetUserInfo(request, userid = userid)
+                                uid = userinfo["uid"]
+
                                 await notification(request, "challenge", uid, ml.tr(request, "one_time_personal_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points)}, force_lang = await GetUserLanguage(request, uid)))
+
+                                def setvar(msg):
+                                    return msg.replace("{mention}", f"<@{userinfo['discordid']}>").replace("{name}", userinfo['name']).replace("{userid}", str(userinfo['userid'])).replace("{uid}", str(userinfo['uid'])).replace("{avatar}", validateUrl(userinfo['avatar'])).replace("{id}", str(challengeid)).replace("{title}", title).replace("{earned_points}", str(reward_points))
+
+                                for meta in app.config.challenge_completed_forwarding:
+                                    meta = Dict2Obj(meta)
+                                    if meta.webhook_url != "" or meta.channel_id != "":
+                                        await AutoMessage(app, meta, setvar)
+
                         elif challenge_type == 3:
                             await app.db.execute(dhrid, f"SELECT points FROM challenge_completed WHERE challengeid = {challengeid} AND userid = {userid}")
                             t = await app.db.fetchall(dhrid)
                             if current_delivery_count >= (len(t) + 1) * delivery_count:
                                 await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({userid}, {challengeid}, {reward_points}, {int(time.time())})")
                                 await app.db.commit(dhrid)
-                                uid = (await GetUserInfo(request, userid = userid))["uid"]
+
+                                userinfo = await GetUserInfo(request, userid = userid)
+                                uid = userinfo["uid"]
+
                                 await notification(request, "challenge", uid, ml.tr(request, "recurring_challenge_completed_status_added", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward_points), "total_points": tseparator((len(t)+1) * reward_points)}, force_lang = await GetUserLanguage(request, uid)))
+
+                                def setvar(msg):
+                                    return msg.replace("{mention}", f"<@{userinfo['discordid']}>").replace("{name}", userinfo['name']).replace("{userid}", str(userinfo['userid'])).replace("{uid}", str(userinfo['uid'])).replace("{avatar}", validateUrl(userinfo['avatar'])).replace("{id}", str(challengeid)).replace("{title}", title).replace("{earned_points}", str(reward_points))
+
+                                for meta in app.config.challenge_completed_forwarding:
+                                    meta = Dict2Obj(meta)
+                                    if meta.webhook_url != "" or meta.channel_id != "":
+                                        await AutoMessage(app, meta, setvar)
+
                         elif challenge_type == 2:
                             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                             t = await app.db.fetchall(dhrid)
@@ -674,9 +698,22 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+
+                                    userinfo = await GetUserInfo(request, userid = userid)
+                                    uid = userinfo["uid"]
+
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
+
+                                    def setvar(msg):
+                                        return msg.replace("{mention}", f"<@{userinfo['discordid']}>").replace("{name}", userinfo['name']).replace("{userid}", str(userinfo['userid'])).replace("{uid}", str(userinfo['uid'])).replace("{avatar}", validateUrl(userinfo['avatar'])).replace("{id}", str(challengeid)).replace("{title}", title).replace("{earned_points}", str(reward_points))
+
+                                    for meta in app.config.challenge_completed_forwarding:
+                                        meta = Dict2Obj(meta)
+                                        if meta.webhook_url != "" or meta.channel_id != "":
+                                            await AutoMessage(app, meta, setvar)
+
                                 await app.db.commit(dhrid)
+
                         elif challenge_type == 5:
                             await app.db.execute(dhrid, f"SELECT * FROM challenge_completed WHERE challengeid = {challengeid}")
                             t = await app.db.fetchall(dhrid)
@@ -702,9 +739,22 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                     s = usercnt[tuserid]
                                     reward = round(reward_points * s / delivery_count)
                                     await app.db.execute(dhrid, f"INSERT INTO challenge_completed VALUES ({tuserid}, {challengeid}, {reward}, {curtime})")
-                                    uid = (await GetUserInfo(request, userid = tuserid))["uid"]
+
+                                    userinfo = await GetUserInfo(request, userid = userid)
+                                    uid = userinfo["uid"]
+
                                     await notification(request, "challenge", uid, ml.tr(request, "company_challenge_completed", var = {"title": title, "challengeid": challengeid, "points": tseparator(reward)}, force_lang = await GetUserLanguage(request, uid)))
+
+                                    def setvar(msg):
+                                        return msg.replace("{mention}", f"<@{userinfo['discordid']}>").replace("{name}", userinfo['name']).replace("{userid}", str(userinfo['userid'])).replace("{uid}", str(userinfo['uid'])).replace("{avatar}", validateUrl(userinfo['avatar'])).replace("{id}", str(challengeid)).replace("{title}", title).replace("{earned_points}", str(reward_points))
+
+                                    for meta in app.config.challenge_completed_forwarding:
+                                        meta = Dict2Obj(meta)
+                                        if meta.webhook_url != "" or meta.channel_id != "":
+                                            await AutoMessage(app, meta, setvar)
+
                                 await app.db.commit(dhrid)
+
                 except Exception as exc:
                     await tracebackHandler(request, exc, traceback.format_exc())
 
