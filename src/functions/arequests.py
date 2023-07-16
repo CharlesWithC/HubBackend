@@ -7,6 +7,7 @@ import requests
 
 class arequests:
     async def get(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        exc = ConnectionResetError(f"Failed to GET {url}")
         for _ in range(3):
             try:
                 if app is not None:
@@ -19,10 +20,13 @@ class arequests:
                         if app is not None:
                             await app.db.extend_conn(dhrid, 2)
                         return r
-            except:
+            except Exception as e:
+                exc = e
                 continue
+        raise exc
 
     async def post(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        exc = ConnectionResetError(f"Failed to POST {url}")
         for _ in range(3):
             try:
                 if app is not None:
@@ -35,10 +39,13 @@ class arequests:
                         if app is not None:
                             await app.db.extend_conn(dhrid, 2)
                         return r
-            except:
+            except Exception as e:
+                exc = e
                 continue
+        raise exc
 
     async def patch(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        exc = ConnectionResetError(f"Failed to PATCH {url}")
         for _ in range(3):
             try:
                 if app is not None:
@@ -51,10 +58,13 @@ class arequests:
                         if app is not None:
                             await app.db.extend_conn(dhrid, 2)
                         return r
-            except:
+            except Exception as e:
+                exc = e
                 continue
+        raise exc
 
     async def put(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        exc = ConnectionResetError(f"Failed to PUT {url}")
         for _ in range(3):
             try:
                 if app is not None:
@@ -67,10 +77,13 @@ class arequests:
                         if app is not None:
                             await app.db.extend_conn(dhrid, 2)
                         return r
-            except:
+            except Exception as e:
+                exc = e
                 continue
+        raise exc
 
     async def delete(app, url, data = None, headers = None, timeout = 10, dhrid = -1):
+        exc = ConnectionResetError(f"Failed to DELETE {url}")
         for _ in range(3):
             try:
                 if app is not None:
@@ -83,5 +96,7 @@ class arequests:
                         if app is not None:
                             await app.db.extend_conn(dhrid, 2)
                         return r
-            except:
+            except Exception as e:
+                exc = e
                 continue
+        raise exc

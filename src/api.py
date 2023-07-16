@@ -204,7 +204,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 return rl[1]
             response = await call_next(request)
 
-            if response.status_code not in [404, 500, 503]:
+            if response.status_code not in [404, 500, 503] and request.url.path in ["/", "/config", "/dlog/list", "/dlog", "/announcements/list", "/announcements", "/events/list", "/events"]:
                 # validate token after all (only to formalize responses in case auth is not necessarily needed)
                 if request.headers.get("Authorization") is not None and request.headers.get("Authorization").split(" ")[0] in ["Bearer", "Application"]:
                     au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)

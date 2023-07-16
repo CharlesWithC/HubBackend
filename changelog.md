@@ -4,6 +4,8 @@
 1.Removed secret data from **GET** `/application/types`  
 2.Removed `config.application_types[].discord_role_id` that only supports adding roles  
 3.Added `config.application_types[].role_change` to support addition/removal of multiple roles  
+4.Limited additional authorization check to specific routes that allows non-authorized users  
+5.Improved `arequests` to raise error after 3 retries (otherwise it will return `None`)  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  

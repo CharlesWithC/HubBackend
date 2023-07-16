@@ -393,7 +393,7 @@ async def post_application(request: Request, response: Response, authorization: 
         for role in role_change:
             try:
                 if int(role) < 0:
-                    opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": f"Automatic role changes when user submits application."}, f"remove_role,{-int(role)},{discordid}")
+                    opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"remove_role,{-int(role)},{discordid}")
                 elif int(role) > 0:
                     opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"add_role,{int(role)},{discordid}")
             except:
