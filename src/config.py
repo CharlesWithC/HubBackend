@@ -345,10 +345,10 @@ default_config = {
     # *_either_user_role_ids: include either of the roles
     # *_all_user_role_ids: include all of the roles
     "application_types": [
-        {"id": 1, "name": "Driver", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": ["discord", "steam"], "required_member_state": 0, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 2, "name": "Staff", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 3, "name": "LOA", "discord_role_id": "", "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
-        {"id": 4, "name": "Division", "discord_role_id": "", "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
+        {"id": 1, "name": "Driver", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": ["discord", "steam"], "required_member_state": 0, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 2, "name": "Staff", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": -1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 3, "name": "LOA", "role_change": [], "staff_role_ids": [20], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False},
+        {"id": 4, "name": "Division", "role_change": [], "staff_role_ids": [40], "message": "", "channel_id": "", "webhook_url": "", "required_connections": [], "required_member_state": 1, "required_either_user_role_ids": [], "required_all_user_role_ids": [], "prohibited_either_user_role_ids": [], "prohibited_all_user_role_ids": [], "cooldown_hours": 2, "allow_multiple": False}
     ],
 
     # supported {variables}: mention, name, avatar, userid, uid
@@ -631,7 +631,7 @@ def validateConfig(cfg):
             continue
         try:
             int(rank["discord_role_id"])
-            # just validation, no need t oconvert, as discord_role_id is not mandatory
+            # just validation, no need to convert, as discord_role_id is not mandatory
         except:
             rank["discord_role_id"] = None
 
@@ -850,7 +850,7 @@ def validateConfig(cfg):
         cfg["application_types"] = default_config["application_types"]
     application_types = cfg["application_types"]
     new_application_types = []
-    reqs = ["id", "name", "discord_role_id", "staff_role_ids", "message", "channel_id", "webhook_url"]
+    reqs = ["id", "name", "role_change", "staff_role_ids", "message", "channel_id", "webhook_url"]
     for i in range(len(application_types)):
         application_type = application_types[i]
         try:
@@ -864,14 +864,15 @@ def validateConfig(cfg):
                 application_type["staff_role_ids"][i] = int(application_type["staff_role_ids"][i])
         except:
             continue
-        try:
-            int(application_type["discord_role_id"])
-            # just validation, no need t oconvert, as discord_role_id is not mandatory
-        except:
-            application_type["discord_role_id"] = None
+        # v2.7.11
+        if "discord_role_id" in application_type.keys():
+            application_type["role_change"] = [f"+{application_type['discord_role_id']}"]
+            del application_type["discord_role_id"]
+        if "role_change" not in application_type.keys():
+            application_type["role_change"] = []
         try:
             int(application_type["channel_id"])
-            # just validation, no need t oconvert, as discord_role_id is not mandatory
+            # just validation, no need to convert, as discord_role_id is not mandatory
         except:
             application_type["channel_id"] = ""
 

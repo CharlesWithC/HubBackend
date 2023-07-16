@@ -18,7 +18,7 @@ from functions import *
 async def get_types(request: Request):
     app = request.app
     ret = copy.deepcopy(app.config.application_types)
-    to_remove = ["webhook_url", "channel_id", "discord_role_id", "role_change", "message"]
+    to_remove = ["webhook_url", "channel_id", "role_change", "message"]
     for i in range(len(ret)):
         for k in to_remove:
             if k in ret[i].keys():
@@ -286,7 +286,7 @@ async def post_application(request: Request, response: Response, authorization: 
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     application_type_text = ""
-    applicantrole = 0
+    role_change = []
     discord_message_content = ""
     hook_url = ""
     hook_key = ""
@@ -294,7 +294,7 @@ async def post_application(request: Request, response: Response, authorization: 
     for o in app.config.application_types:
         if application_type == o["id"]:
             application_type_text = o["name"]
-            applicantrole = o["discord_role_id"]
+            role_change = o["role_change"]
             discord_message_content = o["message"]
             if o["channel_id"] != "":
                 hook_url = f"https://discord.com/api/v10/channels/{o['channel_id']}/messages"
@@ -389,11 +389,15 @@ async def post_application(request: Request, response: Response, authorization: 
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     applicationid = (await app.db.fetchone(dhrid))[0]
 
-    if discordid is not None and applicantrole != 0 and app.config.discord_bot_token != "":
-        try:
-            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{applicantrole}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"add_role,{applicantrole},{discordid}")
-        except:
-            pass
+    if discordid is not None and len(role_change) != 0 and app.config.discord_bot_token != "":
+        for role in role_change:
+            try:
+                if int(role) < 0:
+                    opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": f"Automatic role changes when user submits application."}, f"remove_role,{-int(role)},{discordid}")
+                elif int(role) > 0:
+                    opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when user submits application."}, f"add_role,{int(role)},{discordid}")
+            except:
+                pass
 
     language = await GetUserLanguage(request, uid)
     await notification(request, "application", uid, ml.tr(request, "application_submitted",

@@ -2,6 +2,8 @@
 
 **v2.7.11**  
 1.Removed secret data from **GET** `/application/types`  
+2.Removed `config.application_types[].discord_role_id` that only supports adding roles  
+3.Added `config.application_types[].role_change` to support addition/removal of multiple roles  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  
@@ -10,7 +12,7 @@
 4.Added detailed reason of blocking dlog  
 5.Included basic user info in application discord embed when the full message is too long  
 6.Added `seconds_ahead` to `config.event_upcoming_forwarding` (3600 by default, maximum 86400 * 7)  
-7.Added `config.challenge_completed_forwarding`   
+7.Added `config.challenge_completed_forwarding`  
 
 **v2.7.9**  
 1.Renamed `announcement_type` to `type`  
