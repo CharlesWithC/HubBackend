@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
 import json
 import math
 import time
@@ -12,11 +13,17 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from functions import *
 
+
 # Basic Info
 async def get_types(request: Request):
     app = request.app
-
-    return app.config.application_types
+    ret = copy.deepcopy(app.config.application_types)
+    to_remove = ["webhook_url", "channel_id", "discord_role_id", "role_change", "message"]
+    for i in range(len(ret)):
+        for k in to_remove:
+            if k in ret[i].keys():
+                del ret[i][k]
+    return ret
 
 async def get_positions(request: Request):
     app = request.app
