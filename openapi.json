@@ -3823,10 +3823,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Application Type",
+                            "title": "Type",
                             "type": "integer"
                         },
-                        "name": "application_type",
+                        "name": "type",
                         "in": "query"
                     },
                     {
@@ -3871,8 +3871,8 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "application_type": {
-                                        "description": "Application Type",
+                                    "type": {
+                                        "description": "Type",
                                         "type": "integer"
                                     },
                                     "application": {
@@ -3882,7 +3882,7 @@
                                 }
                             },
                             "required": [
-                                "application_type",
+                                "type",
                                 "application"
                             ]
                         }

@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Header, Request, Response
+from fastapi import Header, Request, Response, Query
 
 import multilang as ml
 from functions import *
@@ -91,7 +91,7 @@ async def patch_positions(request: Request, response: Response, authorization: s
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_applicationid: Optional[int] = None, \
-        created_by: Optional[int] = None, application_type: Optional[int] = None, \
+        created_by: Optional[int] = None, application_type: Optional[int] = Query(None, alias='type'), \
         all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
     app = request.app
     dhrid = request.state.dhrid
@@ -204,7 +204,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(request, uid = tt[2]), "application_type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(request, userid = tt[6])})
+        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(request, uid = tt[2]), "type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(request, userid = tt[6])})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -248,7 +248,7 @@ async def get_application(request: Request, response: Response, applicationid: i
             response.status_code = 403
             return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
-    return {"applicationid": t[0][0], "creator": await GetUserInfo(request, uid = t[0][2]), "application_type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(request, userid = t[0][6])}
+    return {"applicationid": t[0][0], "creator": await GetUserInfo(request, uid = t[0][2]), "type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(request, userid = t[0][6])}
 
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app
@@ -273,10 +273,10 @@ async def post_application(request: Request, response: Response, authorization: 
 
     data = await request.json()
     try:
-        application_type = int(data["application_type"])
+        application_type = int(data["type"])
         if abs(application_type) > 2147483647:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "application_type", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "type", "limit": "2,147,483,647"}, force_lang = au["language"])}
         application = data["application"]
         if type(data["application"]) != dict:
             response.status_code = 400

@@ -7,6 +7,7 @@
 4.Limited additional authorization check to specific routes that allows non-authorized users  
 5.Improved `arequests` to raise error after 3 retries (otherwise it will return `None`)  
 6.Updated maximum value of timestamp-related data to `9223372036854775807`  
+7.Renamed `application_type` in request and response to `type`  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  
