@@ -441,13 +441,13 @@ async def post_event(request: Request, response: Response, authorization: str = 
             response.status_code = 400
             return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         meetup_timestamp = int(data["meetup_timestamp"])
-        if abs(meetup_timestamp) > 2147483647:
+        if abs(meetup_timestamp) > 9223372036854775807:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
         departure_timestamp = int(data["departure_timestamp"])
-        if abs(departure_timestamp) > 2147483647:
+        if abs(departure_timestamp) > 9223372036854775807:
             response.status_code = 400
-            return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
         if "is_private" not in data.keys():
             data["is_private"] = False
         is_private = int(bool(data["is_private"]))
@@ -545,14 +545,14 @@ async def patch_event(request: Request, response: Response, eventid: int, author
                 return {"error": ml.tr(request, "content_too_long", var = {"item": "distance", "limit": "200"}, force_lang = au["language"])}
         if "meetup_timestamp" in data.keys():
             meetup_timestamp = int(data["meetup_timestamp"])
-            if abs(meetup_timestamp) > 2147483647:
+            if abs(meetup_timestamp) > 9223372036854775807:
                 response.status_code = 400
-                return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "meetup_timestamp", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
         if "departure_timestamp" in data.keys():
             departure_timestamp = int(data["departure_timestamp"])
-            if abs(departure_timestamp) > 2147483647:
+            if abs(departure_timestamp) > 9223372036854775807:
                 response.status_code = 400
-                return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "2,147,483,647"}, force_lang = au["language"])}
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "departure_timestamp", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
         if "is_private" in data.keys():
             is_private = int(bool(data["is_private"]))
         if "orderid" in data.keys():

@@ -616,9 +616,9 @@ async def post_poll(request: Request, response: Response, authorization: str = H
         if end_time <= 0:
             end_time = "NULL"
         else:
-            if abs(end_time) > 2147483647:
+            if abs(end_time) > 9223372036854775807:
                 response.status_code = 400
-                return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
+                return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
 
         if "orderid" not in data.keys():
             data["orderid"] = 0
@@ -754,9 +754,9 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
             if end_time <= 0:
                 end_time = "NULL"
             else:
-                if abs(end_time) > 2147483647:
+                if abs(end_time) > 9223372036854775807:
                     response.status_code = 400
-                    return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "2,147,483,647"}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "value_too_large", var = {"item": "end_time", "limit": "9,223,372,036,854,775,807"}, force_lang = au["language"])}
 
         if "orderid" in data.keys():
             orderid = int(data["orderid"])
