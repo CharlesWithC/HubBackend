@@ -177,7 +177,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
         query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
-        after_eventid: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None):
+        after_eventid: Optional[int] = None, meetup_after: Optional[int] = None, meetup_before: Optional[int] = None, \
+        departure_after: Optional[int] = None, departure_before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -205,10 +206,14 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if query != "":
         query = convertQuotation(query).lower()
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
-    if after is not None:
-        limit += f"AND meetup_timestamp >= {after} "
-    if before is not None:
-        limit += f"AND meetup_timestamp <= {before} "
+    if meetup_after is not None:
+        limit += f"AND meetup_timestamp >= {meetup_after} "
+    if meetup_before is not None:
+        limit += f"AND meetup_timestamp <= {meetup_before} "
+    if departure_after is not None:
+        limit += f"AND departure_timestamp >= {departure_after} "
+    if departure_before is not None:
+        limit += f"AND departure_timestamp <= {departure_before} "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
     if userid != -1:

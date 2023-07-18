@@ -11,6 +11,7 @@
 8.Renamed `?created_by` in **GET** `/applications/list` to `?submitted_by`  
 9.Added `?submitted_after|before`, `?responded_after|before` and `?responded_by` to **GET** `/applications/list`  
 10.Added `?order_by` to **GET** `/applications/list` (supported values: `applicationid`, `type`, `status`, `submit_timestamp`, `respond_timestamp`, `applicant_uid`, `respond_staff_userid`)  
+11.Renamed `?after|before` to `?meetup_after|before`, added `?departure_after|before` to **GET** `/events/list`  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  

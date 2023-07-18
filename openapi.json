@@ -7003,19 +7003,37 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "After (Timestamp)",
+                            "title": "Meetup After (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "after",
+                        "name": "meetup_after",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Before (Timestamp)",
+                            "title": "Meetup Before (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "before",
+                        "name": "meetup_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Departure After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "departure_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Departure Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "departure_before",
                         "in": "query"
                     }
                 ],

@@ -222,7 +222,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit = limit.strip()
         if limit.startswith("AND"):
             limit = "WHERE " + limit[3:]
-        print( f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+            
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
