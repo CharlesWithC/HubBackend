@@ -281,6 +281,7 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
         order_by = "uid"
         order = "asc"
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

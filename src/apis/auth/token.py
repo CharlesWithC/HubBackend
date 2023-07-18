@@ -116,6 +116,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order = "desc"
     if order_by == "country_code":
         order_by = "country"
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 
@@ -241,6 +242,7 @@ async def get_application_list(request: Request, response: Response, authorizati
     if order_by not in ['timestamp', 'last_used_timestamp']:
         order_by = "last_used_timestamp"
         order = "desc"
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

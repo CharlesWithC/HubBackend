@@ -44,6 +44,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "notificationid"
         order = "desc"
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         if order_by == "notificationid":
             order = "desc"

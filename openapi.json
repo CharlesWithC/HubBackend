@@ -3805,19 +3805,10 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Creator UID",
-                            "type": "integer"
+                            "title": "Order By (applicationid, type, status, submit_timestamp, respond_timestamp, applicant_uid, respond_staff_userid)",
+                            "type": "string"
                         },
-                        "name": "created_by",
-                        "in": "query"
-                    },
-                    {
-                        "required": false,
-                        "schema": {
-                            "title": "After (Application ID)",
-                            "type": "integer"
-                        },
-                        "name": "after_applicationid",
+                        "name": "order_by",
                         "in": "query"
                     },
                     {
@@ -3836,6 +3827,69 @@
                             "type": "integer"
                         },
                         "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Applicant UID",
+                            "type": "integer"
+                        },
+                        "name": "submitted_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Staff User ID",
+                            "type": "integer"
+                        },
+                        "name": "responded_by",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "After (Application ID)",
+                            "type": "integer"
+                        },
+                        "name": "after_applicationid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Submitted After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "submitted_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Submitted Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "submitted_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Responded After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "responded_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Responded Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "responded_before",
                         "in": "query"
                     },
                     {

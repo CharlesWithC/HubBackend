@@ -82,6 +82,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         sort_by_highest_role = True
         order_by = "userid"
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

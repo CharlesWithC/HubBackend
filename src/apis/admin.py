@@ -470,6 +470,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     elif page_size >= 500:
         page_size = 500
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "desc"
 

@@ -91,8 +91,12 @@ async def patch_positions(request: Request, response: Response, authorization: s
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_applicationid: Optional[int] = None, \
-        created_by: Optional[int] = None, application_type: Optional[int] = Query(None, alias='type'), \
-        all_user: Optional[bool] = False, status: Optional[int] = None, order: Optional[str] = "desc"):
+        submitted_after: Optional[int] = None, submitted_before: Optional[int] = None,
+        responded_after: Optional[int] = None, responded_before: Optional[int] = None, \
+        order: Optional[str] = "desc", order_by: Optional[str] = "applicationid", \
+        submitted_by: Optional[int] = None, responded_by: Optional[int] = None, \
+        application_type: Optional[int] = Query(None, alias='type'), \
+        all_user: Optional[bool] = False, status: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -103,8 +107,15 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
+    if order_by not in ["applicationid", "type", "status", "submit_timestamp", "respond_timestamp", "applicant_uid", "respond_staff_userid"]:
+        order_by = "applicationid"
+        order = "desc"
+    cvt = {"type": "application_type", "respond_timestamp": "update_staff_timestamp", "applicant_uid": "uid", "respond_staff_userid": "update_staff_userid"}
+    if order_by in cvt.keys():
+        order_by = cvt[order_by]
 
     au = await auth(authorization, request, allow_application_token = True, check_member = False)
     if au["error"]:
@@ -120,7 +131,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 100:
         page_size = 100
 
-    if created_by is not None:
+    if submitted_by is not None:
         all_user = True
 
     t = None
@@ -132,6 +143,19 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
+        
+        if submitted_after is not None:
+            limit += f" AND submit_timestamp >= {submitted_after} "
+        if submitted_before is not None:
+            limit += f" AND submit_timestamp <= {submitted_before} "
+        
+        if responded_after is not None:
+            limit += f" AND update_staff_timestamp >= {responded_after} "
+        if responded_before is not None:
+            limit += f" AND update_staff_timestamp <= {responded_before} "
+        
+        if responded_by is not None:
+            limit += f" AND update_staff_userid = {responded_by} "
 
         if after_applicationid is not None:
             if order == "asc":
@@ -162,39 +186,44 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
             if application_type is None: # show all type
-                limit = " WHERE ("
+                limit += " AND ("
                 for tt in allowed_application_types:
                     limit += f"application_type = {tt} OR "
                 limit = limit[:-3]
                 limit += ")"
             else:
-                limit = f" WHERE application_type = {application_type} "
+                limit += f" AND application_type = {application_type} "
 
         if status is not None and status in [0,1,2]:
-            if "WHERE" not in limit:
-                limit = f" WHERE status = {status} "
-            else:
-                limit += f" AND status = {status} "
+            limit += f" AND status = {status} "
+        
+        if submitted_after is not None:
+            limit += f" AND submit_timestamp >= {submitted_after} "
+        if submitted_before is not None:
+            limit += f" AND submit_timestamp <= {submitted_before} "
+        
+        if responded_after is not None:
+            limit += f" AND update_staff_timestamp >= {responded_after} "
+        if responded_before is not None:
+            limit += f" AND update_staff_timestamp <= {responded_before} "
+
+        if responded_by is not None:
+            limit += f" AND update_staff_userid = {responded_by} "
 
         if after_applicationid is not None:
-            if "WHERE" not in limit:
-                if order == "asc":
-                    limit = f" WHERE applicationid >= {after_applicationid} "
-                elif order == "desc":
-                    limit = f" WHERE applicationid <= {after_applicationid} "
-            else:
-                if order == "asc":
-                    limit += f" AND applicationid >= {after_applicationid} "
-                elif order == "desc":
-                    limit += f" AND applicationid <= {after_applicationid} "
+            if order == "asc":
+                limit += f" AND applicationid >= {after_applicationid} "
+            elif order == "desc":
+                limit += f" AND applicationid <= {after_applicationid} "
 
-        if created_by is not None:
-            if "WHERE" not in limit:
-                limit = f" WHERE uid = {created_by} "
-            else:
-                limit += f" AND uid = {created_by} "
-
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        if submitted_by is not None:
+            limit += f" AND uid = {submitted_by} "
+        
+        limit = limit.strip()
+        if limit.startswith("AND"):
+            limit = "WHERE " + limit[3:]
+        print( f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")
@@ -204,7 +233,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     ret = []
     for tt in t:
-        ret.append({"applicationid": tt[0], "creator": await GetUserInfo(request, uid = tt[2]), "type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "update_timestamp": tt[5], "last_update_staff": await GetUserInfo(request, userid = tt[6])})
+        ret.append({"applicationid": tt[0], "type": tt[1], "status": tt[4], "submit_timestamp": tt[3], "respond_timestamp": tt[5], "creator": await GetUserInfo(request, uid = tt[2]), "last_respond_staff": await GetUserInfo(request, userid = tt[6])})
 
     return {"list": ret, "total_items": tot, "total_pages": int(math.ceil(tot / page_size))}
 
@@ -248,7 +277,7 @@ async def get_application(request: Request, response: Response, applicationid: i
             response.status_code = 403
             return {"error": ml.tr(request, "no_permission_to_application_type", force_lang = au["language"])}
 
-    return {"applicationid": t[0][0], "creator": await GetUserInfo(request, uid = t[0][2]), "type": t[0][1], "application": json.loads(decompress(t[0][3])), "status": t[0][4], "submit_timestamp": t[0][5], "update_timestamp": t[0][7], "last_update_staff": await GetUserInfo(request, userid = t[0][6])}
+    return {"applicationid": t[0][0], "type": t[0][1], "status": t[0][4], "submit_timestamp": t[0][5], "respond_timestamp": t[0][7], "creator": await GetUserInfo(request, uid = t[0][2]), "last_respond_staff": await GetUserInfo(request, userid = t[0][6]), "application": json.loads(decompress(t[0][3]))}
 
 async def post_application(request: Request, response: Response, authorization: str = Header(None)):
     app = request.app

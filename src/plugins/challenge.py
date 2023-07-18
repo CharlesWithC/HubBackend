@@ -113,6 +113,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order_by = "reward_points"
         order = "desc"
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 

@@ -47,6 +47,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     cvt = {"name": "user.name", "email": "user.email", "uid": "user.uid", "discordid": "user.discordid", "steamid": "user.steamid", "truckersmpid": "user.truckersmpid", "join_timestamp": "user.join_timestamp"}
     order_by = cvt[order_by]
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

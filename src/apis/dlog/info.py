@@ -49,6 +49,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if order_by not in ["logid", "max_speed", "profit", "fuel", "distance", "views"]:
         order_by = "logid"
         order = "desc"
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "desc"
     if order_by == "max_speed":

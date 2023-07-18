@@ -118,6 +118,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         order_by = "odometer"
         order = "desc"
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 
@@ -221,6 +222,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
     elif page_size >= 250:
         page_size = 250
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 

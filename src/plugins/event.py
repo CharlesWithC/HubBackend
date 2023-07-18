@@ -230,6 +230,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp", "timestamp"]:
         order_by = "orderid"
         order = "asc"
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 

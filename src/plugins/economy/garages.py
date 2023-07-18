@@ -80,6 +80,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         order_by = "tot_income"
         order = "desc"
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 
@@ -178,6 +179,7 @@ async def get_garage_slots_list(request: Request, response: Response, garageid: 
     elif page_size >= 250:
         page_size = 250
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

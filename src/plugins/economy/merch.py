@@ -86,6 +86,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
 
     order_by = "buy_price" if order_by == "price" else order_by
 
+    order = order.lower()
     if order not in ['asc', 'desc']:
         order = "asc"
 

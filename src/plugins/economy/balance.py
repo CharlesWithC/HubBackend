@@ -46,6 +46,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     if exclude_company:
         limit += "AND userid >= 0 "
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 
@@ -83,9 +84,9 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     to_add = []
     for tuserid in public_userids:
         to_add.append((tuserid, 0))
-    if order.lower() == "asc":
+    if order == "asc":
         d = to_add + d
-    elif order.lower() == "desc":
+    elif order == "desc":
         d = d + to_add
 
     # filter balance
@@ -334,6 +335,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
         order_by = "timestamp"
         order = "desc"
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 

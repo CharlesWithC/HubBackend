@@ -321,6 +321,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         order_by = "request_timestamp"
         order = "asc"
 
+    order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
 
