@@ -179,7 +179,9 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
         after_eventid: Optional[int] = None, created_after: Optional[int] = None, created_before: Optional[int] = None, \
         meetup_after: Optional[int] = None, meetup_before: Optional[int] = None, \
-        departure_after: Optional[int] = None, departure_before: Optional[int] = None):
+        departure_after: Optional[int] = None, departure_before: Optional[int] = None, \
+        min_vote: Optional[int] = None, max_vote: Optional[int] = None, \
+        min_attendee: Optional[int] = None, max_attendee: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -219,6 +221,31 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND timestamp >= {created_after} "
     if created_before is not None:
         limit += f"AND timestamp <= {created_before} "
+    if userid != -1:
+        if min_vote is not None:
+            if min_vote == 1:
+                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= 2 AND vote != '' AND vote != ',,') "
+            elif min_vote > 1:
+                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= {min_vote + 1}) "
+        if max_vote is not None:
+            if max_vote == 0:
+                limit += f"AND (vote = '' OR vote = ',,') "
+            elif max_vote == 1:
+                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) <= 2 OR vote = '' OR vote = ',,') "
+            elif max_vote > 1:
+                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) <= {max_vote + 1} OR vote = '' OR vote = ',,') "
+        if min_attendee is not None:
+            if min_attendee == 1:
+                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) >= 2 AND attendee != '' AND attendee != ',,') "
+            elif min_attendee > 1:
+                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) >= {min_attendee + 1}) "
+        if max_attendee is not None:
+            if max_attendee == 0:
+                limit += f"AND (attendee = '' OR attendee = ',,') "
+            elif max_attendee == 1:
+                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= 2 OR attendee = '' OR attendee = ',,') "
+            elif max_attendee > 1:
+                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= {max_attendee + 1} OR attendee = '' OR attendee = ',,') "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
     if userid != -1:

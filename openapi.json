@@ -4932,6 +4932,24 @@
                         },
                         "name": "created_before",
                         "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Click",
+                            "type": "integer"
+                        },
+                        "name": "min_click",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Click",
+                            "type": "integer"
+                        },
+                        "name": "max_click",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -7088,6 +7106,42 @@
                             "type": "integer"
                         },
                         "name": "departure_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Attendee",
+                            "type": "integer"
+                        },
+                        "name": "min_attendee",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Attendee",
+                            "type": "integer"
+                        },
+                        "name": "max_attendee",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Minimum Vote",
+                            "type": "integer"
+                        },
+                        "name": "min_vote",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Maximum Vote",
+                            "type": "integer"
+                        },
+                        "name": "max_vote",
                         "in": "query"
                     }
                 ],

@@ -17,7 +17,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_downloadsid: Optional[int] = None, \
         created_after: Optional[int] = None, created_before: Optional[int] = None, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
-        query: Optional[str] = "", created_by: Optional[int] = None):
+        query: Optional[str] = "", created_by: Optional[int] = None,
+        min_click: Optional[int] = None, max_click: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -46,6 +47,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND timestamp >= {created_after} "
     if created_before is not None:
         limit += f"AND timestamp <= {created_before} "
+    if min_click is not None:
+        limit += f"AND click_count >= {min_click} "
+    if max_click is not None:
+        limit += f"AND click_count <= {max_click} "
 
     if page_size <= 1:
         page_size = 1
