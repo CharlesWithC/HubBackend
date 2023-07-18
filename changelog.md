@@ -16,6 +16,8 @@
 13.Added `?created_after|before` to **GET** `/challenges/list`, `/downloads/list`, `/events/list`  
 14.Added `?end_after|before` to **GET** `/polls/list`  
 15.Added `?min|max_click` to **GET** `/downloads/list`  
+16.Updated application plugin logic: Setting `status` to `pending` will not reset `respond_timestamp`  
+17.Moved route **PATCH** `/applications/{applicationid}` to **POST** `/applications/{applicationid}/message`  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  

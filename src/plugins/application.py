@@ -456,12 +456,12 @@ async def post_application(request: Request, response: Response, authorization: 
 
     return {"applicationid": applicationid}
 
-async def patch_application(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
+async def post_message(request: Request, response: Response, applicationid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /applications', 180, 10)
+    rl = await ratelimit(request, 'POST /applications/message', 180, 10)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -621,21 +621,16 @@ async def patch_status(request: Request, response: Response, applicationid: int,
         if f"[Message] {au['name']} ({au['userid']}) #{i}" not in data.keys():
             break
         i += 1
-    if message != "":
-        data[f"[Message] {au['name']} ({au['userid']}) #{i}"] = message
 
-    update_timestamp = 0
-    if status != 0:
-        update_timestamp = int(time.time())
+    if message.strip() == "":
+        message = f"{ml.tr(request, 'no_message')}"
+    data[f"[Message] {au['name']} ({au['userid']}) #{i}"] = message
 
-    await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {update_timestamp}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
+    await app.db.execute(dhrid, f"UPDATE application SET status = {status}, update_staff_userid = {au['userid']}, update_staff_timestamp = {int(time.time())}, data = '{compress(json.dumps(data,separators=(',', ':')))}' WHERE applicationid = {applicationid}")
     await AuditLog(request, au["uid"], ml.tr(request, "updated_application_status", var = {"id": applicationid, "status": statustxt}))
     await notification(request, "application", applicant_uid, ml.tr(request, "application_status_updated", var = {"applicationid": applicationid, "status": statustxtTR.lower()}, force_lang = language),
     discord_embed = {"title": ml.tr(request, "application_status_updated_title", force_lang = language), "description": "", "fields": [{"name": ml.tr(request, "application_id", force_lang = language), "value": f"{applicationid}", "inline": True}, {"name": ml.tr(request, "status", force_lang = language), "value": statustxtTR, "inline": True}]})
     await app.db.commit(dhrid)
-
-    if message == "":
-        message = f"*{ml.tr(request, 'no_message')}*"
 
     return Response(status_code=204)
 

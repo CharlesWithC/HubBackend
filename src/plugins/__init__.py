@@ -29,7 +29,7 @@ routes_application = [
     APIRoute("/applications/list", application.get_list, methods=["GET"], response_class=JSONResponse),
     APIRoute("/applications/{applicationid}", application.get_application, methods=["GET"], response_class=JSONResponse),
     APIRoute("/applications", application.post_application, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/applications/{applicationid}", application.patch_application, methods=["PATCH"], response_class=JSONResponse),
+    APIRoute("/applications/{applicationid}/message", application.post_message, methods=["POST"], response_class=JSONResponse),
     APIRoute("/applications/{applicationid}/status", application.patch_status, methods=["PATCH"], response_class=JSONResponse),
     APIRoute("/applications/{applicationid}", application.delete_application, methods=["DELETE"], response_class=JSONResponse)
 ]

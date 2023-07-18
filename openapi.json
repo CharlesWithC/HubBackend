@@ -3971,12 +3971,39 @@
                 ],
                 "responses": {}
             },
+            "delete": {
+                "summary": "Delete Application",
+                "tags": [
+                    "application"
+                ],
+                "operationId": "delete_application",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Application ID",
+                            "type": "integer"
+                        },
+                        "name": "applicationid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/applications/{applicationid}/message": {
             "patch": {
                 "summary": "Add Message to Application",
                 "tags": [
                     "application"
                 ],
-                "operationId": "patch_application",
+                "operationId": "post_application_message",
                 "security": [
                     {
                         "bearerAuth": [],
@@ -4013,31 +4040,6 @@
                         }
                     }
                 },
-                "responses": {}
-            },
-            "delete": {
-                "summary": "Delete Application",
-                "tags": [
-                    "application"
-                ],
-                "operationId": "delete_application",
-                "security": [
-                    {
-                        "bearerAuth": [],
-                        "applicationAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "required": true,
-                        "schema": {
-                            "title": "Application ID",
-                            "type": "integer"
-                        },
-                        "name": "applicationid",
-                        "in": "path"
-                    }
-                ],
                 "responses": {}
             }
         },
