@@ -27,7 +27,7 @@ def get_type(request, type_id: int, force_lang: Optional[str] = ""):
 async def get_list(request: Request, response: Response, authorization: str = Header(None), \
         page: Optional[int]= -1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
-        created_by: Optional[int] = None, after: Optional[int] = None, before: Optional[int] = None, \
+        created_by: Optional[int] = None, created_after: Optional[int] = None, created_before: Optional[int] = None, \
         after_announcementid: Optional[int] = None, query: Optional[str] = "", announcement_type: Optional[int] = Query(None, alias='type')):
     app = request.app
     dhrid = request.state.dhrid
@@ -72,10 +72,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND title LIKE '%{query[:200]}%' "
     if announcement_type is not None:
         limit += f"AND announcement_type = {announcement_type} "
-    if after is not None:
-        limit += f"AND timestamp >= {after} "
-    if before is not None:
-        limit += f"AND timestamp <= {before} "
+    if created_after is not None:
+        limit += f"AND timestamp >= {created_after} "
+    if created_before is not None:
+        limit += f"AND timestamp <= {created_before} "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
     if is_private is not None:

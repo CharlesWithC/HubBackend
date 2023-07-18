@@ -15,6 +15,7 @@ from functions import *
 
 async def get_list(request: Request, response: Response, authorization: str = Header(None),
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_downloadsid: Optional[int] = None, \
+        created_after: Optional[int] = None, created_before: Optional[int] = None, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", \
         query: Optional[str] = "", created_by: Optional[int] = None):
     app = request.app
@@ -41,6 +42,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND LOWER(title) LIKE '%{query[:200]}%' "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
+    if created_after is not None:
+        limit += f"AND timestamp >= {created_after} "
+    if created_before is not None:
+        limit += f"AND timestamp <= {created_before} "
 
     if page_size <= 1:
         page_size = 1

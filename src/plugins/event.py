@@ -177,7 +177,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
         page: Optional[int] = 1, page_size: Optional[int] = 10, \
         order_by: Optional[str] = "orderid", order: Optional[str] = "asc", is_private: Optional[bool] = None, \
         query: Optional[str] = "", created_by: Optional[int] = None, attended_by: Optional[int] = None, voted_by: Optional[int] = None, \
-        after_eventid: Optional[int] = None, meetup_after: Optional[int] = None, meetup_before: Optional[int] = None, \
+        after_eventid: Optional[int] = None, created_after: Optional[int] = None, created_before: Optional[int] = None, \
+        meetup_after: Optional[int] = None, meetup_before: Optional[int] = None, \
         departure_after: Optional[int] = None, departure_before: Optional[int] = None):
     app = request.app
     dhrid = request.state.dhrid
@@ -214,6 +215,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND departure_timestamp >= {departure_after} "
     if departure_before is not None:
         limit += f"AND departure_timestamp <= {departure_before} "
+    if created_after is not None:
+        limit += f"AND timestamp >= {created_after} "
+    if created_before is not None:
+        limit += f"AND timestamp <= {created_before} "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
     if userid != -1:

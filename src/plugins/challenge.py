@@ -48,6 +48,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query: Optional[str] = "", created_by: Optional[int] = None, \
         start_after: Optional[int] = None, start_before: Optional[int] = None, \
         end_after: Optional[int] = None, end_before: Optional[int] = None, \
+        created_after: Optional[int] = None, created_before: Optional[int] = None, \
         challenge_type: Optional[int] = Query(None, alias='type'), \
         required_role: Optional[int] = None, \
         minimum_required_distance: Optional[int] = None, maximum_required_distance: Optional[int] = None,\
@@ -88,6 +89,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
         query_limit += f"AND end_time >= {end_after} "
     if end_before is not None:
         query_limit += f"AND end_time <= {end_before} "
+    if created_after is not None:
+        query_limit += f"AND timestamp >= {created_after} "
+    if created_before is not None:
+        query_limit += f"AND timestamp <= {created_before} "
 
     if challenge_type in [1,2,3,4,5]:
         query_limit += f"AND challenge_type = {challenge_type} "

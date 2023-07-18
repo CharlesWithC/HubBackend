@@ -3500,19 +3500,19 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "After (Timestamp)",
+                            "title": "Created After (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "after",
+                        "name": "created_after",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Before (Timestamp)",
+                            "title": "Created Before (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "before",
+                        "name": "created_before",
                         "in": "query"
                     },
                     {
@@ -4158,6 +4158,24 @@
                             "type": "integer"
                         },
                         "name": "after_challengeid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_before",
                         "in": "query"
                     },
                     {
@@ -4895,6 +4913,24 @@
                             "type": "integer"
                         },
                         "name": "after_downloadsid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_before",
                         "in": "query"
                     }
                 ],
@@ -7003,6 +7039,24 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Created After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Created Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "created_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Meetup After (Timestamp)",
                             "type": "integer"
                         },
@@ -7439,19 +7493,37 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "After (Timestamp)",
+                            "title": "Created After (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "after",
+                        "name": "created_after",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Before (Timestamp)",
+                            "title": "Created Before (Timestamp)",
                             "type": "integer"
                         },
-                        "name": "before",
+                        "name": "created_before",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "End After (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "end_after",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "End Before (Timestamp)",
+                            "type": "integer"
+                        },
+                        "name": "end_before",
                         "in": "query"
                     }
                 ],
