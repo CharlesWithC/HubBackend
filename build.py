@@ -37,7 +37,9 @@ def build_main():
     global done
     done += 1
 
-def build_bannergen():
+def build_bannergen(does_build_main):
+    if does_build_main:
+        time.sleep(480)
     os.chdir("bannergen/")
     os.system("nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
     os.chdir("../")
@@ -55,12 +57,21 @@ if "--rebuild" in sys.argv:
     sys.argv.append("--rebuild-bannergen")
     sys.argv.append("--rebuild-launcher")
 
+does_build_main = False
 if "--rebuild-main" in sys.argv and os.path.exists("main.dist") or not os.path.exists("main.dist"):
+    does_build_main = True
     threading.Thread(target = build_main, daemon = True).start()
     time.sleep(1)
 else:
     req -= 1
     print("skipped main")
+
+if "--rebuild-bannergen" in sys.argv and os.path.exists("bannergen/main.dist") or not os.path.exists("bannergen/main.dist"):
+    threading.Thread(target = build_bannergen, args=(does_build_main,), daemon = True).start()
+    time.sleep(1)
+else:
+    req -= 1
+    print("skipped bannergen")
 
 if "--rebuild-launcher" in sys.argv and os.path.exists("launcher.dist") or not os.path.exists("launcher.dist"):
     threading.Thread(target = build_launcher, daemon = True).start()
@@ -68,13 +79,6 @@ if "--rebuild-launcher" in sys.argv and os.path.exists("launcher.dist") or not o
 else:
     req -= 1
     print("skipped launcher")
-
-if "--rebuild-bannergen" in sys.argv and os.path.exists("bannergen/main.dist") or not os.path.exists("bannergen/main.dist"):
-    threading.Thread(target = build_bannergen, daemon = True).start()
-    time.sleep(1)
-else:
-    req -= 1
-    print("skipped bannergen")
 
 while 1:
     if done == req:

@@ -58,7 +58,7 @@ def has_glyph(glyph):
 # We can preload its wsize to prevent using .getsize() which is slow
 # NOTE that non-printable characters from Sans Serif will still need .getsize()
 ubuntu_mono_bold_font_wsize = []
-for i in range(81):
+for i in range(1, 81):
     font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", i)
     wsize = font.getlength("a")
     ubuntu_mono_bold_font_wsize.append(wsize)
@@ -120,12 +120,12 @@ async def get_banner(request: Request, response: Response):
                         logo_large_datas.append((int(0.85*255+0.15*item[3]/255*item[0]), \
                             int(0.85*255+0.15*item[3]/255*item[1]), int(0.85*255+0.15*item[3]/255*item[2])))
                     # use 85% transparent logo for background (with white background)
-                logo = logo.resize((200, 200), resample=Image.ANTIALIAS).convert("RGBA")
+                logo = logo.resize((200, 200), resample=Image.Resampling.LANCZOS).convert("RGBA")
                 logo.save(f"/tmp/hub/logo/{company_abbr}.png", optimize = True)
                 logo_datas = logo.getdata()
 
                 logo_large.putdata(logo_large_datas)
-                logo_large = logo_large.resize((1700, 1700), resample=Image.ANTIALIAS).convert("RGB")
+                logo_large = logo_large.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGB")
 
                 # render logo
                 banner = logo_large.crop((0, 700, 1700, 1000))
@@ -247,7 +247,7 @@ async def get_banner(request: Request, response: Response):
             all_printable = False
     name = tname
 
-    left = 0
+    left = 1
     right = 80
     fontsize = 80
     while right - left > 1:
