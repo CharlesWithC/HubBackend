@@ -39,7 +39,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /member/list', 60, 60)
+    rl = await ratelimit(request, 'GET /member/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

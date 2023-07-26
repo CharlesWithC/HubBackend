@@ -20,7 +20,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /user/notification/list', 60, 60)
+    rl = await ratelimit(request, 'GET /user/notification/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -82,7 +82,7 @@ async def get_notification(request: Request, response: Response, notificationid:
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /user/notification', 60, 30)
+    rl = await ratelimit(request, 'GET /user/notification', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -139,7 +139,7 @@ async def patch_status(request: Request, response: Response, notificationid: str
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /user/notification/status', 60, 30)
+    rl = await ratelimit(request, 'PATCH /user/notification/status', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -180,7 +180,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /user/notification/settings', 60, 60)
+    rl = await ratelimit(request, 'GET /user/notification/settings', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

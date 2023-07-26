@@ -93,7 +93,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /config', 60, 60)
+    rl = await ratelimit(request, 'GET /config', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -451,7 +451,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /audit/list', 60, 60)
+    rl = await ratelimit(request, 'GET /audit/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

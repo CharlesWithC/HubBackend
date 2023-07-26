@@ -23,7 +23,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid, extra_time = 3)
 
-    rl = await ratelimit(request, 'GET /dlog/list', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -204,7 +204,7 @@ async def get_dlog(request: Request, response: Response, logid: int, authorizati
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /dlog', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

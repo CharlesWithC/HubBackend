@@ -21,7 +21,7 @@ async def get_division(request: Request, response: Response, authorization: str 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /divisions', 60, 60)
+    rl = await ratelimit(request, 'GET /divisions', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -84,7 +84,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /dlog/division', 60, 60)
+    rl = await ratelimit(request, 'GET /dlog/division', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -300,7 +300,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /divisions/list/pending', 60, 60)
+    rl = await ratelimit(request, 'GET /divisions/list/pending', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

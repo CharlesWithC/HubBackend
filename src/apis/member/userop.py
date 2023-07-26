@@ -119,7 +119,7 @@ async def get_bonus_history(request: Request, response: Response, authorization:
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /member/bonus/history', 60, 60)
+    rl = await ratelimit(request, 'GET /member/bonus/history', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

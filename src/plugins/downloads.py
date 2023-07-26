@@ -23,7 +23,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /downloads/list', 60, 60)
+    rl = await ratelimit(request, 'GET /downloads/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -130,7 +130,7 @@ async def get_redirect(request: Request, response: Response, secret: str):
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /downloads/redirect', 60, 60)
+    rl = await ratelimit(request, 'GET /downloads/redirect', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

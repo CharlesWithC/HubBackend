@@ -47,7 +47,7 @@ async def patch_positions(request: Request, response: Response, authorization: s
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /applications/positions', 60, 30)
+    rl = await ratelimit(request, 'PATCH /applications/positions', 60, 60)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -101,7 +101,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /applications/list', 60, 60)
+    rl = await ratelimit(request, 'GET /applications/list', 60, 120)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -439,7 +439,7 @@ async def post_application(request: Request, response: Response, authorization: 
     t = await app.db.fetchall(dhrid)
     msg = f"**UID**: {uid}\n**User ID**: {userid}\n**Email**: {t[0][2]}\n**Discord**: <@{discordid}> (`{discordid}`)\n**Steam ID**: [{t[0][4]}](https://steamcommunity.com/profiles/{t[0][4]})\n**TruckersMP ID**: [{t[0][3]}](https://truckersmp.com/user/{t[0][3]})\n\n"
     for d in application.keys():
-        msg += f"**{d}**:\n{application[d]}\n\n"
+        msg += f"**{d}**\n{application[d]}\n\n"
 
     if hook_url != "":
         try:

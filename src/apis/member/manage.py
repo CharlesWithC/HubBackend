@@ -348,7 +348,8 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                 user_highest_order_id = app.roles[role]["order_id"]
 
     # note that the larger the order id is, the lower the role is
-    if staff_highest_order_id >= user_highest_order_id:
+    if user_highest_order_id is not None and staff_highest_order_id >= user_highest_order_id or \
+            staff_highest_order_id is None and user_highest_order_id is not None:
         response.status_code = 403
         return {"error": ml.tr(request, "user_position_higher_or_equal", force_lang = au["language"])}
 
