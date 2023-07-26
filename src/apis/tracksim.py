@@ -874,3 +874,123 @@ async def post_update_route(response: Response, request: Request, authorization:
         return Response(status_code=204)
     else:
         return r
+
+async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr","update_member_roles"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    userinfo = await GetUserInfo(request, userid = userid)
+    if userinfo["uid"] is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+
+    status_code = 0
+    tracker_app_error = ""
+    try:
+        r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(userinfo["steamid"])}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+        status_code = r.status_code
+        if r.status_code == 401:
+            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
+        elif r.status_code // 100 != 2:
+            try:
+                resp = json.loads(r.text)
+                if "error" in resp.keys() and resp["error"] is not None:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
+                elif "message" in resp.keys() and resp["message"] is not None:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
+                elif len(r.text) <= 64:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
+                else:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+            except Exception as exc:
+                await tracebackHandler(request, exc, traceback.format_exc())
+                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+    except:
+        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+
+    if tracker_app_error != "":
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+    else:
+        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+
+    if tracker_app_error == "":
+        return Response(status_code=204)
+    elif status_code == 0:
+        response.status_code = 503
+        return {"error": tracker_app_error.replace("`", "")}
+    else:
+        response.status_code = status_code
+        return {"error": tracker_app_error.replace("`", "")}
+
+async def delete_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr","update_member_roles"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    userinfo = await GetUserInfo(request, userid = userid)
+    if userinfo["uid"] is None:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+
+    status_code = 0
+    tracker_app_error = ""
+    try:
+        r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(userinfo["steamid"])}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+        status_code = r.status_code
+        if r.status_code == 401:
+            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
+        elif r.status_code // 100 != 2:
+            try:
+                resp = json.loads(r.text)
+                if "error" in resp.keys() and resp["error"] is not None:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
+                elif "message" in resp.keys() and resp["message"] is not None:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
+                elif len(r.text) <= 64:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
+                else:
+                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+            except Exception as exc:
+                await tracebackHandler(request, exc, traceback.format_exc())
+                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+    except:
+        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+
+    if tracker_app_error != "":
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+    else:
+        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+
+    if tracker_app_error == "":
+        return Response(status_code=204)
+    elif status_code == 0:
+        response.status_code = 503
+        return {"error": tracker_app_error.replace("`", "")}
+    else:
+        response.status_code = status_code
+        return {"error": tracker_app_error.replace("`", "")}

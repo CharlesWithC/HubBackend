@@ -3334,7 +3334,7 @@
             "post": {
                 "summary": "TrackSim Webhook",
                 "tags": [
-                    "tracker"
+                    "tracksim"
                 ],
                 "operationId": "post_tracksim_update",
                 "security": [
@@ -3379,7 +3379,7 @@
             "post": {
                 "summary": "Update TrackSim Route",
                 "tags": [
-                    "tracker"
+                    "tracksim"
                 ],
                 "operationId": "post_tracksim_update_route",
                 "security": [
@@ -3407,6 +3407,58 @@
                         }
                     }
                 },
+                "responses": {}
+            }
+        },
+        "/tracksim/driver/{userid}": {
+            "put": {
+                "summary": "Add Driver to TrackSim Company",
+                "tags": [
+                    "tracksim"
+                ],
+                "operationId": "put_tracksim_driver",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Delete Driver from TrackSim Company",
+                "tags": [
+                    "tracksim"
+                ],
+                "operationId": "delete_tracksim_driver",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "path"
+                    }
+                ],
                 "responses": {}
             }
         },
@@ -7907,8 +7959,8 @@
             "description": "Delivery Log"
         },
         {
-            "name": "tracker",
-            "description": "Tracker Integration"
+            "name": "tracksim",
+            "description": "TrackSim Integration"
         },
         {
             "name": "announcement",

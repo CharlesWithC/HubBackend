@@ -143,17 +143,17 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
-        
+
         if submitted_after is not None:
             limit += f" AND submit_timestamp >= {submitted_after} "
         if submitted_before is not None:
             limit += f" AND submit_timestamp <= {submitted_before} "
-        
+
         if responded_after is not None:
             limit += f" AND update_staff_timestamp >= {responded_after} "
         if responded_before is not None:
             limit += f" AND update_staff_timestamp <= {responded_before} "
-        
+
         if responded_by is not None:
             limit += f" AND update_staff_userid = {responded_by} "
 
@@ -196,12 +196,12 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if status is not None and status in [0,1,2]:
             limit += f" AND status = {status} "
-        
+
         if submitted_after is not None:
             limit += f" AND submit_timestamp >= {submitted_after} "
         if submitted_before is not None:
             limit += f" AND submit_timestamp <= {submitted_before} "
-        
+
         if responded_after is not None:
             limit += f" AND update_staff_timestamp >= {responded_after} "
         if responded_before is not None:
@@ -218,11 +218,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
         if submitted_by is not None:
             limit += f" AND uid = {submitted_by} "
-        
+
         limit = limit.strip()
         if limit.startswith("AND"):
             limit = "WHERE " + limit[3:]
-            
+
         await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 

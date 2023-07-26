@@ -224,26 +224,26 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if userid != -1:
         if min_vote is not None:
             if min_vote == 1:
-                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= 2 AND vote != '' AND vote != ',,') "
+                limit += "AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= 2 AND vote != '' AND vote != ',,') "
             elif min_vote > 1:
                 limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= {min_vote + 1}) "
         if max_vote is not None:
             if max_vote == 0:
-                limit += f"AND (vote = '' OR vote = ',,') "
+                limit += "AND (vote = '' OR vote = ',,') "
             elif max_vote == 1:
-                limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) <= 2 OR vote = '' OR vote = ',,') "
+                limit += "AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) <= 2 OR vote = '' OR vote = ',,') "
             elif max_vote > 1:
                 limit += f"AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) <= {max_vote + 1} OR vote = '' OR vote = ',,') "
         if min_attendee is not None:
             if min_attendee == 1:
-                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) >= 2 AND attendee != '' AND attendee != ',,') "
+                limit += "AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) >= 2 AND attendee != '' AND attendee != ',,') "
             elif min_attendee > 1:
                 limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) >= {min_attendee + 1}) "
         if max_attendee is not None:
             if max_attendee == 0:
-                limit += f"AND (attendee = '' OR attendee = ',,') "
+                limit += "AND (attendee = '' OR attendee = ',,') "
             elif max_attendee == 1:
-                limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= 2 OR attendee = '' OR attendee = ',,') "
+                limit += "AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= 2 OR attendee = '' OR attendee = ',,') "
             elif max_attendee > 1:
                 limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= {max_attendee + 1} OR attendee = '' OR attendee = ',,') "
     if created_by is not None:

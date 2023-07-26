@@ -18,6 +18,7 @@
 15.Added `?min|max_click` to **GET** `/downloads/list`  
 16.Updated application plugin logic: Setting `status` to `pending` will not reset `respond_timestamp`  
 17.Moved route **PATCH** `/applications/{applicationid}` to **POST** `/applications/{applicationid}/message`  
+18.Added **PUT/DELETE** `/tracksim/driver/{userid}` route to add/remove driver from TrackSim company  
 
 **v2.7.10**  
 1.Fixed incorrect info in [openapi.json](./openapi.json)  
