@@ -204,7 +204,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             await ActivityUpdate(request, au["uid"], "events")
 
     limit = ""
-    if userid == -1:
+    if userid in [-1, None]:
         limit = "AND is_private = 0 "
     if query != "":
         query = convertQuotation(query).lower()
@@ -221,7 +221,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         limit += f"AND timestamp >= {created_after} "
     if created_before is not None:
         limit += f"AND timestamp <= {created_before} "
-    if userid != -1:
+    if userid not in [-1, None]:
         if min_vote is not None:
             if min_vote == 1:
                 limit += "AND (LENGTH(vote) - LENGTH(REPLACE(vote, ',', '')) >= 2 AND vote != '' AND vote != ',,') "
@@ -248,7 +248,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 limit += f"AND (LENGTH(attendee) - LENGTH(REPLACE(attendee, ',', '')) <= {max_attendee + 1} OR attendee = '' OR attendee = ',,') "
     if created_by is not None:
         limit += f"AND userid = {created_by} "
-    if userid != -1:
+    if userid not in [-1, None]:
         if attended_by is not None:
             limit += f"AND attendee LIKE '%,{attended_by},%' "
         if voted_by is not None:
@@ -291,11 +291,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for tt in t:
         attendee_cnt = 0
         vote_cnt = 0
-        if userid != -1:
+        if userid not in [-1, None]:
             attendee_cnt = len(str2list(tt[9]))
             vote_cnt = len(str2list(tt[10]))
         voted = None
-        if userid != -1:
+        if userid not in [-1, None]:
             if userid in str2list(tt[10]):
                 voted = True
             else:
@@ -341,7 +341,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     tt = t[0]
     attendee = str2list(tt[9])
     vote = str2list(tt[10])
-    if userid == -1:
+    if userid in [-1, None]:
         attendee = []
         vote = []
     attendee_ret = []
@@ -351,7 +351,7 @@ async def get_event(request: Request, response: Response, eventid: int, authoriz
     for vt in vote:
         vote_ret.append(await GetUserInfo(request, userid = vt))
     voted = None
-    if userid != -1:
+    if userid not in [-1, None]:
         if userid in vote:
             voted = True
         else:

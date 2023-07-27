@@ -169,11 +169,11 @@ async def get_banner(request: Request, response: Response,
 
     await app.db.execute(dhrid, f"SELECT name, discordid, avatar, join_timestamp, roles, userid FROM user WHERE {qu} AND userid >= 0")
     t = await app.db.fetchall(dhrid)
-    if len(t) == 0 or t[0][5] == -1:
+    if len(t) == 0 or t[0][5] in [-1, None]:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found")}
 
-    if userid == -1:
+    if userid in [-1, None]:
         return RedirectResponse(url=f"{app.config.prefix}/member/banner?userid={t[0][5]}", status_code=302)
 
     for param in request.query_params:

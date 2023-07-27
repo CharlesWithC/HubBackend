@@ -335,9 +335,9 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     else:
         app.state_cache_activity[f"uid={uid}"] = {"data": None, "expire": int(time.time()) + 2}
 
-    if p[0][1] != -1:
+    if p[0][1] not in [-1, None]:
         app.state.cache_userinfo[f"userid={p[0][1]}"] = {"uid": uid, "expire": int(time.time()) + 2}
-    if p[0][7] != -1:
+    if p[0][7] not in [-1, None]:
         app.state.cache_userinfo[f"discordid={p[0][7]}"] = {"uid": uid, "expire": int(time.time()) + 2}
 
     userid = p[0][1]

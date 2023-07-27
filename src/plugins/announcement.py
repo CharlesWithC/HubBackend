@@ -65,7 +65,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         order = "asc"
 
     limit = ""
-    if userid == -1:
+    if userid in [-1, None]:
         limit = "AND is_private = 0 "
     if query != "":
         query = convertQuotation(query)

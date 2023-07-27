@@ -39,7 +39,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-    if t[0][0] != -1:
+    if t[0][0] not in [-1, None]:
         response.status_code = 409
         return {"error": ml.tr(request, "user_is_already_member", force_lang = au["language"])}
     name = t[0][1]
@@ -159,7 +159,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
         t = await app.db.fetchall(dhrid)
         if len(t) > 0:
-            if t[0][1] != -1:
+            if t[0][1] not in [-1, None]:
                 response.status_code = 409
                 return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
 
@@ -171,7 +171,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
         t = await app.db.fetchall(dhrid)
         if len(t) > 0:
-            if t[0][1] != -1:
+            if t[0][1] not in [-1, None]:
                 response.status_code = 409
                 return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
 
@@ -238,7 +238,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
     userid = t[0][0]
-    if userid != -1:
+    if userid not in [-1, None]:
         response.status_code = 428
         return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
 
@@ -431,7 +431,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
         steamid = t[0][5] if t[0][5] is not None else "NULL"
         truckersmpid = t[0][6] if t[0][6] is not  None else "NULL"
         connections = [uid, email, discordid, steamid, truckersmpid]
-        if userid != -1:
+        if userid not in [-1, None]:
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_ban", force_lang = au["language"])}
     elif len(t) > 1:
@@ -580,7 +580,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
         (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
-        if userid != -1:
+        if userid not in [-1, None]:
             response.status_code = 428
             return {"error": ml.tr(request, "dismiss_before_delete", force_lang = au["language"])}
 
@@ -607,7 +607,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         await app.db.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
         (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
-        if userid != -1:
+        if userid not in [-1, None]:
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
 
