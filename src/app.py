@@ -29,7 +29,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.7.11"
+version = "2.7.12"
 
 for argv in sys.argv:
     if argv.endswith(".py"):
@@ -278,6 +278,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.state.cache_userinfo = {} # user info cache (15 seconds)
     app.state_cache_activity = {} # activity cache (2 seconds)
     app.state.statistics_details_last_work = -1
+    app.state.running_export = 0
 
     try:
         if os.path.exists(f"/tmp/hub/logo/{app.config.abbr}.png"):

@@ -1,5 +1,12 @@
 # Changelog
 
+**v2.7.12**  
+1.Added customizable host, port, workers for banner generator  
+2.Improved banner generator to delete unused variables timely  
+3.Limited export function to export a maximum range of 90 days of data  
+-> As a solution to prevent database outage  
+-> Rate limit is reduced to 3req/150sec
+
 **v2.7.11**  
 1.Removed secret data from **GET** `/application/types`  
 2.Removed `config.application_types[].discord_role_id` that only supports adding roles  

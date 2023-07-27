@@ -22,7 +22,7 @@ drivershub = """    ____       _                         __  __      __
 /_____/_/  /_/ |___/\\___/_/  /____/  /_/ /_/\\__,_/_.___/
                                                          """
 
-description = '''Create and start Drivers Hub API Server.
+description = '''Start Drivers Hub API Server.
 
 Single or multiple Drivers Hub(s) may be started.
 To start single Drivers Hub, use --config.

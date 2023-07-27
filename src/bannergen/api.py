@@ -58,10 +58,12 @@ def has_glyph(glyph):
 # We can preload its wsize to prevent using .getsize() which is slow
 # NOTE that non-printable characters from Sans Serif will still need .getsize()
 ubuntu_mono_bold_font_wsize = []
+font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
 for i in range(1, 81):
-    font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", i)
+    font.size = i
     wsize = font.getlength("a")
     ubuntu_mono_bold_font_wsize.append(wsize)
+del font
 
 class arequests():
     async def get(url, data = None, headers = None, timeout = 10):
@@ -73,6 +75,8 @@ class arequests():
                 return r
 
 async def get_banner(request: Request, response: Response):
+    request_start_time = time.time()
+
     data = await request.json()
     company_abbr = data["company_abbr"]
     company_name = data["company_name"]
@@ -109,6 +113,7 @@ async def get_banner(request: Request, response: Response):
 
             if right.status_code == 200:
                 logo = right.content
+                del right
                 logo = Image.open(BytesIO(logo)).convert("RGBA")
                 logo_large = logo # to copy properties
                 logo_datas = logo.getdata()
@@ -125,10 +130,12 @@ async def get_banner(request: Request, response: Response):
                 logo_datas = logo.getdata()
 
                 logo_large.putdata(logo_large_datas)
+                del logo_large_datas
                 logo_large = logo_large.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGB")
 
                 # render logo
                 banner = logo_large.crop((0, 700, 1700, 1000))
+                del logo_large
                 logo_bg = banner.crop((1475, 25, 1675, 225))
                 datas = list(logo_bg.getdata())
                 for i in range(0,200):
@@ -144,6 +151,7 @@ async def get_banner(request: Request, response: Response):
                             datas[i*200+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
                 logo_bg.putdata(datas)
                 banner.paste(logo_bg, (1475, 25, 1675, 225))
+                del logo_bg, logo_datas, datas
 
         except:
             logo = Image.new("RGBA", (200,200),(255,255,255))
@@ -155,6 +163,7 @@ async def get_banner(request: Request, response: Response):
         theme_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
         company_name_len = usH45.getlength(f"{company_name}")
         draw.text((1700 - 20 - company_name_len, 235), f"{company_name}", fill=theme_color, font=usH45)
+        del draw, usH45
 
         banner.save(f"/tmp/hub/template/{company_abbr}.png", optimize = True)
 
@@ -197,6 +206,7 @@ async def get_banner(request: Request, response: Response):
                         avatar = logo.resize((250, 250)).convert("RGBA")
                 else:
                     avatar = logo.resize((250, 250)).convert("RGBA")
+                del right
                 def dist(a,b,c,d):
                     return (c-a)*(c-a)+(b-d)*(b-d)
                 datas = avatar.getdata()
@@ -208,6 +218,7 @@ async def get_banner(request: Request, response: Response):
                         else:
                             newData.append(datas[i*250+j])
                 avatar.putdata(newData)
+                del datas, newData
                 avatar.save(f"/tmp/hub/avatar/{company_abbr}_{userid}_{avatarh}.png", optimize = True)
             except:
                 avatar = logo.resize((250, 250)).convert("RGBA")
@@ -229,6 +240,7 @@ async def get_banner(request: Request, response: Response):
                 datas[i*250+j] = (int(bg[0]*bg_a+fg[0]*fg_a), int(bg[1]*bg_a+fg[1]*fg_a), int(bg[2]*bg_a+fg[2]*fg_a))
     avatar_bg.putdata(datas)
     banner.paste(avatar_bg, (35, 25, 285, 275))
+    del datas, avatar_bg
 
     # draw text
     draw = ImageDraw.Draw(banner)
@@ -250,22 +262,24 @@ async def get_banner(request: Request, response: Response):
     left = 1
     right = 80
     fontsize = 80
+    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
     while right - left > 1:
         fontsize = (left + right) // 2
         if all_printable:
             namew = ubuntu_mono_bold_font_wsize[fontsize] * len(name)
         else:
-            namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
+            namefont.size = fontsize
             namew = namefont.getlength(f"{name}")
         if namew > 450:
             right = fontsize - 1
         else:
             left = fontsize + 1
-    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
+    namefont.size = fontsize
     namebb = namefont.getbbox(f"{name}")
     nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
     draw.text((325, 50 + offset - namebb[1]), name, fill=(0,0,0), font=namefont)
+    del namefont
     # y = 50 ~ 70
 
     fontsize -= 20
@@ -276,7 +290,7 @@ async def get_banner(request: Request, response: Response):
     for _ in range(100):
         if hrolew > 450:
             fontsize -= 1
-            hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
+            hrolefont.size = fontsize
             hrolew = hrolefont.getlength(f"{highest_role}")
     hrolebb = hrolefont.getbbox(f"{highest_role}")
     hroleh = hrolebb[3] - hrolebb[1]
@@ -284,6 +298,7 @@ async def get_banner(request: Request, response: Response):
     nameb = 55 + offset + nameh
     joinedt = 210
     draw.text((325, (joinedt + nameb - hroleh) / 2 - hrolebb[1]), f"{highest_role}", fill=theme_color, font=hrolefont)
+    del hrolefont
     # y = 115 ~ 155
 
     joined = data["joined"]
@@ -293,6 +308,7 @@ async def get_banner(request: Request, response: Response):
     profit = data["profit"]
     joinedfont = ImageFont.truetype("./fonts/UbuntuMono.ttf", 40)
     draw.text((325, 220), f"Joined: {joined}", fill=(0,0,0), font=joinedfont)
+    del joinedfont
 
     # separate line
     coH40 = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
@@ -306,11 +322,19 @@ async def get_banner(request: Request, response: Response):
     draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
     draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
     draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)
+    del coH40
 
     # output
     output = BytesIO()
     banner.save(output, "jpeg", optimize = True)
+    del banner, logo, avatar, draw
     open(f"/tmp/hub/banner/{company_abbr}_{userid}.png","wb").write(output.getvalue())
 
     response = StreamingResponse(iter([output.getvalue()]), media_type="image/jpeg")
+    del output
+
+    request_end_time = time.time()
+    if request.app.enable_performance_header:
+        response.headers["X-Response-Time"] = str(round(request_end_time - request_start_time, 4))
+
     return response

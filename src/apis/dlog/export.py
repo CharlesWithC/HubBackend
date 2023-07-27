@@ -18,6 +18,9 @@ async def get_export(request: Request, response: Response, authorization: str = 
         after: Optional[int] = None, before: Optional[int] = None, \
         include_ids: Optional[bool] = False, userid: Optional[int] = None):
     app = request.app
+    if time.time() - app.state.running_export <= 600:
+        return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -28,7 +31,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found")}
 
-    rl = await ratelimit(request, 'GET /dlog/export', 300, 3)
+    rl = await ratelimit(request, 'GET /dlog/export', 150, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -43,24 +46,34 @@ async def get_export(request: Request, response: Response, authorization: str = 
     if after is None:
         after = 0
     if before is None:
-        before = max(int(time.time()), 32503651200)
+        before = int(time.time())
+    
+    if before - after > 86400 * 90:
+        after = before - 86400 * 90
 
     limit = ""
     if userid is not None:
         limit += f"AND dlog.userid = {userid}"
 
-    time.time()
-    f = BytesIO()
-    if not include_ids:
-        f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
-    else:
-        f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
-    await app.db.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
-        LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
-        LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
-        WHERE dlog.timestamp >= {after} AND dlog.timestamp <= {before} {limit} AND dlog.logid >= 0")
-    d = await app.db.fetchall(dhrid)
+    app.state.running_export = time.time()
+
+    try:
+        f = BytesIO()
+        if not include_ids:
+            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+        else:
+            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+        await app.db.extend_conn(dhrid, 60)
+        await app.db.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
+            LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+            LEFT JOIN (SELECT challengeid, logid FROM challenge_record) challenge_info ON challenge_info.logid = dlog.logid \
+            LEFT JOIN challenge ON challenge.challengeid = challenge_info.challengeid \
+            WHERE dlog.timestamp >= {after} AND dlog.timestamp <= {before} {limit} AND dlog.logid >= 0")
+        d = await app.db.fetchall(dhrid)
+        await app.db.extend_conn(dhrid, 2)
+    except:
+        app.state.running_export = 0
+        return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
     for di in range(len(d)):
         dd = d[di]
@@ -280,5 +293,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
     response.headers["Content-Disposition"] = "attachment; filename=dlog.csv"
+
+    app.state.running_export = 0
 
     return response

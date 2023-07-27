@@ -201,6 +201,7 @@ class HubMiddleware(BaseHTTPMiddleware):
             request_start_time = time.time()
             rl = await ratelimit(request, 'MIDDLEWARE', 60, 150, cGlobalOnly=True)
             if rl[0]:
+                await app.db.close_conn(dhrid)
                 return rl[1]
             response = await call_next(request)
 
@@ -222,6 +223,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 else:
                     resp = middleware(request = request, response = response)
                 if resp is not None:
+                    await app.db.close_conn(dhrid)
                     return resp
 
             await app.db.close_conn(dhrid)
@@ -237,6 +239,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 else:
                     resp = middleware(request = request, exception = exc, traceback = err)
                 if resp is not None:
+                    await app.db.close_conn(dhrid)
                     return resp
 
             if len(app.external_middleware["error_handler"]) != 0:
@@ -246,6 +249,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                         response = await middleware(request = request, exception = exc, traceback = err)
                     else:
                         response = middleware(request = request, exception = exc, traceback = err)
+                    await app.db.close_conn(dhrid)
                     return response
                 except:
                     pass

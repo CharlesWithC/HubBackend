@@ -39,7 +39,7 @@ def build_main():
 
 def build_bannergen(does_build_main):
     if does_build_main:
-        time.sleep(480)
+        time.sleep(300)
     os.chdir("bannergen/")
     os.system("nuitka3 main.py --standalone --include-package=websockets --show-progress --prefer-source-code")
     os.chdir("../")

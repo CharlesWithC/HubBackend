@@ -237,7 +237,7 @@ class aiosql:
                                         maxsize = min(20, self.app.config.mysql_pool_size))
         self.POOL_START_TIME = time.time()
 
-    def release(self):
+    async def release(self):
         conns = self.conns
         to_delete = []
         for tdhrid in conns.keys():
@@ -262,7 +262,7 @@ class aiosql:
                                         maxsize = min(20, self.app.config.mysql_pool_size))
             self.POOL_START_TIME = time.time()
 
-        self.release()
+        await self.release()
 
         try:
             try:
