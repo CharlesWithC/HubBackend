@@ -1,5 +1,8 @@
 # Changelog
 
+**v2.7.13**  
+Added `minimum_seconds_spent`, `maximum_seconds_spent`, `maximum_distance`, `minimum_detour_percentage`, `maximum_detour_percentage`, `minimum_adblue`, `maximum_adblue`, `minimum_fuel`, `market`, `game`, `truck_id`, `truck_plate_country_id`, `minimum_truck_wheel`, `maximum_truck_wheel`, `maximum_cargo_mass`, `minimum_cargo_damage`, `minimum_offence`, `minimum_xp`, `maximum_xp`, `minimum_train`, `maximum_train`, `minimum_ferry`, `maximum_ferry`, `minimum_teleport`, `maximum_teleport`, `minimum_tollgate`, `maximum_tollgate`, `minimum_toll_paid`, `maximum_toll_paid`, `minimum_collision`, `maximum_collision` to challenge job requirements  
+
 **v2.7.12**  
 1.Added customizable host, port, workers for banner generator  
 2.Improved banner generator to delete unused variables timely  

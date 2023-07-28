@@ -16,9 +16,7 @@ from fastapi import Header, Request, Response
 import multilang as ml
 from api import tracebackHandler
 from functions import *
-
-JOB_REQUIREMENTS = ["source_city_id", "source_company_id", "destination_city_id", "destination_company_id", "minimum_distance", "cargo_id", "minimum_cargo_mass",  "maximum_cargo_damage", "maximum_speed", "maximum_fuel", "minimum_profit", "maximum_profit", "maximum_offence", "allow_overspeed", "allow_auto_park", "allow_auto_load", "must_not_be_late", "must_be_special", "minimum_average_speed", "maximum_average_speed", "minimum_average_fuel", "maximum_average_fuel"]
-JOB_REQUIREMENT_DEFAULT = {"source_city_id": "", "source_company_id": "", "destination_city_id": "", "destination_company_id": "", "minimum_distance": -1, "cargo_id": "", "minimum_cargo_mass": -1, "maximum_cargo_damage": -1, "maximum_speed": -1, "maximum_fuel": -1, "minimum_profit": -1, "maximum_profit": -1, "maximum_offence": -1, "allow_overspeed": 1, "allow_auto_park": 1, "allow_auto_load": 1, "must_not_be_late": 0, "must_be_special": 0, "minimum_average_speed": -1, "maximum_average_speed": -1, "minimum_average_fuel": -1, "maximum_average_fuel": -1}
+from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
 
 async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
     try:
@@ -528,6 +526,22 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
 
                     if jobreq["minimum_distance"] != -1 and driven_distance < jobreq["minimum_distance"]:
                         continue
+                    if jobreq["maximum_distance"] != -1 and driven_distance > jobreq["maximum_distance"]:
+                        continue
+
+                    if int(jobreq["minimum_seconds_spent"]) != -1 and d["data"]["object"]["time_spent"] < int(jobreq["minimum_seconds_spent"]):
+                        continue
+                    if int(jobreq["maximum_seconds_spent"]) != -1 and d["data"]["object"]["time_spent"] > int(jobreq["maximum_seconds_spent"]):
+                        continue
+
+                    planned_distance = d["data"]["object"]["planned_distance"]
+                    if jobreq["minimum_detour_percentage"] != -1 and (driven_distance / planned_distance) < float(jobreq["minimum_detour_percentage"]):
+                        continue
+                    if jobreq["maximum_detour_percentage"] != -1 and (driven_distance / planned_distance) > float(jobreq["maximum_detour_percentage"]):
+                        continue
+
+                    if jobreq["game"] != "" and d["data"]["object"]["game"]["short_name"] not in jobreq["game"].split(","):
+                        continue
 
                     source_city = d["data"]["object"]["source_city"]
                     source_company = d["data"]["object"]["source_company"]
@@ -557,6 +571,8 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         continue
                     if jobreq["destination_company_id"] != "" and destination_company not in jobreq["destination_company_id"].split(","):
                         continue
+                    if jobreq["market"] != "" and d["data"]["object"]["market"] not in jobreq["market"].split(","):
+                        continue
 
                     cargo = "[unknown]"
                     cargo_mass = 0
@@ -572,18 +588,46 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         continue
                     if jobreq["minimum_cargo_mass"] != -1 and cargo_mass < jobreq["minimum_cargo_mass"]:
                         continue
+                    if jobreq["maximum_cargo_mass"] != -1 and cargo_mass > jobreq["maximum_cargo_mass"]:
+                        continue
+                    if jobreq["minimum_cargo_damage"] != -1 and cargo_damage < jobreq["minimum_cargo_damage"]:
+                        continue
                     if jobreq["maximum_cargo_damage"] != -1 and cargo_damage > jobreq["maximum_cargo_damage"]:
                         continue
 
+                    if d["data"]["object"]["truck"] is not None:
+                        truck_id = d["data"]["object"]["truck"]["unique_id"]
+                        if jobreq["truck_id"] != "" and truck_id not in jobreq["truck_id"].split(","):
+                            continue
+                        if d["data"]["object"]["truck"]["license_plate_country"] is not None:
+                            country_id = d["data"]["object"]["truck"]["license_plate_country"]["unique_id"]
+                            if jobreq["truck_plate_country_id"] != "" and country_id not in jobreq["truck_plate_country_id"].split(","):
+                                continue
+                        truck_wheel = d["data"]["object"]["truck"]["wheel_count"]
+                        if jobreq["minimum_truck_wheel"] != -1 and truck_wheel < jobreq["minimum_truck_wheel"]:
+                            continue
+                        if jobreq["maximum_truck_wheel"] != -1 and truck_wheel > jobreq["maximum_truck_wheel"]:
+                            continue
+
                     if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
                         continue
+                    if jobreq["minimum_fuel"] != -1 and fuel_used < jobreq["minimum_fuel"]:
+                        continue
                     if jobreq["maximum_fuel"] != -1 and fuel_used > jobreq["maximum_fuel"]:
+                        continue
+
+                    adblue_used = d["data"]["object"]["adblue_used"]
+                    if jobreq["minimum_adblue"] != -1 and adblue_used < jobreq["minimum_adblue"]:
+                        continue
+                    if jobreq["maximum_adblue"] != -1 and adblue_used > jobreq["maximum_adblue"]:
                         continue
 
                     profit = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
                     if jobreq["minimum_profit"] != -1 and profit < jobreq["minimum_profit"]:
                         continue
                     if jobreq["maximum_profit"] != -1 and profit > jobreq["maximum_profit"]:
+                        continue
+                    if jobreq["minimum_offence"] != -1 and abs(offence) < jobreq["minimum_offence"]:
                         continue
                     if jobreq["maximum_offence"] != -1 and abs(offence) > jobreq["maximum_offence"]:
                         continue
@@ -596,6 +640,29 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     if not jobreq["allow_auto_park"] and auto_park:
                         continue
                     if not jobreq["allow_auto_load"] and auto_load:
+                        continue
+                    earned_xp = d["data"]["object"]["events"][-1]["meta"]["earnedXP"]
+                    if jobreq["minimum_xp"] != -1 and earned_xp < jobreq["minimum_xp"]:
+                        continue
+                    if jobreq["maximum_xp"] != -1 and earned_xp > jobreq["maximum_xp"]:
+                        continue
+
+                    count = {"ferry": 0, "train": 0, "collision": 0, "teleport": 0, "tollgate": 0}
+                    toll_paid = 0
+                    for i in range(len(d["data"]["object"]["events"])):
+                        e = d["data"]["object"]["events"][i]
+                        if e["type"] == "tollgate":
+                            toll_paid += e["meta"]["cost"]
+                        if e["type"] in ["ferry", "train", "collision", "teleport", "tollgate"]:
+                            count[e["type"]] += 1
+                    for k in ["ferry", "train", "collision", "teleport", "tollgate"]:
+                        if jobreq[f"minimum_{k}"] != -1 and count[k] < jobreq[f"minimum_{k}"]:
+                            continue
+                        if jobreq[f"maximum_{k}"] != -1 and count[k] > jobreq[f"maximum_{k}"]:
+                            continue
+                    if jobreq["minimum_toll_paid"] != -1 and toll_paid < jobreq["minimum_toll_paid"]:
+                        continue
+                    if jobreq["maximum_toll_paid"] != -1 and toll_paid > jobreq["maximum_toll_paid"]:
                         continue
 
                     is_late = d["data"]["object"]["is_late"]

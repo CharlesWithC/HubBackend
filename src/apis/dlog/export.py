@@ -47,7 +47,7 @@ async def get_export(request: Request, response: Response, authorization: str = 
         after = 0
     if before is None:
         before = int(time.time())
-    
+
     if before - after > 86400 * 90:
         after = before - 86400 * 90
 
