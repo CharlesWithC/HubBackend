@@ -437,6 +437,9 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     elif len(t) > 1:
         response.status_code = 409
         return {"error": ml.tr(request, "connections_belong_to_multiple_users", force_lang = au["language"])}
+    
+    if connections[1] != "NULL" and '@' not in connections[1]:
+        connections[1] = "NULL"
 
     await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {connections[0]} OR email = {connections[1]} OR discordid = {connections[2]} OR steamid = {connections[3]} OR truckersmpid = {connections[4]}")
     t = await app.db.fetchall(dhrid)

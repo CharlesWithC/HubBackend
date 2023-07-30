@@ -49,7 +49,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
         before = int(time.time())
 
     if before - after > 86400 * 90:
-        after = before - 86400 * 90
+        response.status_code = 400
+        return {"error": ml.tr(request, "value_too_large", var = {"item": "date-range", "limit": "90"}, force_lang = au["language"])}
 
     limit = ""
     if userid is not None:

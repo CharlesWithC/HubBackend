@@ -100,6 +100,7 @@ default_config = {
     "delivery_rules": {
         "max_speed": 180,
         "max_profit": 1000000,
+        "max_xp": 100000,
         "action": "block"
     },
     "hook_delivery_log": {
