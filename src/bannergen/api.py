@@ -86,7 +86,7 @@ async def get_banner(request: Request, response: Response):
                 return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
     except:
         return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
-            
+
     request_start_time = time.time()
 
     data = await request.json()
@@ -127,7 +127,16 @@ async def get_banner(request: Request, response: Response):
             if right.status_code == 200:
                 logo = right.content
                 del right
-                logo = Image.open(BytesIO(logo)).convert("RGBA")
+                if len(logo) / (1024 * 1024) > 10:
+                    raise MemoryError("Logo too large. Aborted.")
+                logo = Image.open(BytesIO(logo))
+                logobbox = logo.getbbox()
+                if logobbox[3] - logobbox[1] > 3400 or logobbox[2] - logobbox[0] > 3400:
+                    raise MemoryError("Logo too large. Aborted.")
+                if logobbox[3] - logobbox[1] > 1700 or logobbox[2] - logobbox[0] > 1700:
+                    logo = logo.resize((1700, 1700), resample=Image.Resampling.LANCZOS).convert("RGBA")
+                else:
+                    logo = logo.convert("RGBA")
                 logo_large = logo # to copy properties
                 logo_datas = logo.getdata()
                 logo_large_datas = []
@@ -214,7 +223,13 @@ async def get_banner(request: Request, response: Response):
                 right = await arequests.get(avatar, timeout = 5)
                 if right.status_code == 200:
                     try:
-                        avatar = Image.open(BytesIO(right.content)).resize((250, 250)).convert("RGBA")
+                        if len(right.content) / (1024 * 1024) > 10:
+                            raise MemoryError("Avatar too large. Aborted.")
+                        avatar = Image.open(BytesIO(right.content))
+                        avatarbbox = avatar.getbbox()
+                        if avatarbbox[3] - avatarbbox[1] > 3400 or avatarbbox[2] - avatarbbox[0] > 3400:
+                            raise MemoryError("Avatar too large. Aborted.")
+                        avatar = avatar.resize((250, 250)).convert("RGBA")
                     except:
                         avatar = logo.resize((250, 250)).convert("RGBA")
                 else:
@@ -327,10 +342,19 @@ async def get_banner(request: Request, response: Response):
     draw.line((850, 25, 850, 275), fill=theme_color, width = 10)
     divisionw = coH40.getlength(f"Division: {division}")
     if divisionw > 550:
-        division += "..."
-    while divisionw > 550:
-        division = division[:-4] + "..."
-        divisionw = coH40.getlength(f"Division: {division}")
+        left = 1
+        right = len(division)
+        length = 0
+        org_division = str(division)
+        while right - left > 1:
+            length = (left + right) // 2
+            division = org_division[:length] + "..."
+            divisionw = coH40.getlength(f"Division: {division}")
+            if divisionw > 550:
+                right = length
+            else:
+                left = length
+        division = org_division[:length] + "..."
     draw.text((900, 50), f"Division: {division}", fill=(0,0,0), font=coH40)
     draw.text((900, 110), f"Distance: {distance}", fill=(0,0,0), font=coH40)
     draw.text((900, 170), f"Income: {profit}", fill=(0,0,0), font=coH40)

@@ -437,7 +437,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     elif len(t) > 1:
         response.status_code = 409
         return {"error": ml.tr(request, "connections_belong_to_multiple_users", force_lang = au["language"])}
-    
+
     if connections[1] != "NULL" and '@' not in connections[1]:
         connections[1] = "NULL"
 
