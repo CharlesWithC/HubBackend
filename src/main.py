@@ -37,6 +37,7 @@ parser.add_argument("--config-directory", help = "path to a directory containing
 parser.add_argument("--parent-host", help = "parent server host")
 parser.add_argument("--parent-port", help = "parent server port", type=int)
 parser.add_argument("--parent-workers", help = "parent server workers", type=int)
+parser.add_argument("--banner-service-url", help = "url to banner service (default http://127.0.0.1:8700/banner)", default="http://127.0.0.1:8700/banner")
 parser.add_argument("--enable-parent-openapi", help = "enable parent openapi", action='store_true')
 parser.add_argument("--parent-openapi-path", help = "set parent openapi path (default /)")
 parser.add_argument("--rebuild-dlog-stats", help = "rebuild dlog stats table", action='store_true')

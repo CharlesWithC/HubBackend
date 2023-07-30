@@ -5,6 +5,7 @@
 2.Fixed the bug that user with empty ("") email cannot be correctly banned  
 3.Added `config.delivery_rules.max_xp` to limit the maximum xp earned  
 4.Added `--memory-threshold` (in MB) to reject new requests when memory is insufficient  
+5.Added `--banner-service-url` to customize banner service URL  
 
 **v2.7.12**  
 1.Added customizable host, port, workers for banner generator  

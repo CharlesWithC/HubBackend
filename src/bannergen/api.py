@@ -60,9 +60,8 @@ def has_glyph(glyph):
 # We can preload its wsize to prevent using .getsize() which is slow
 # NOTE that non-printable characters from Sans Serif will still need .getsize()
 ubuntu_mono_bold_font_wsize = []
-font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", 40)
 for i in range(1, 81):
-    font.size = i
+    font = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", i)
     wsize = font.getlength("a")
     ubuntu_mono_bold_font_wsize.append(wsize)
 del font
@@ -275,19 +274,18 @@ async def get_banner(request: Request, response: Response):
     left = 1
     right = 80
     fontsize = 80
-    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
     while right - left > 1:
         fontsize = (left + right) // 2
         if all_printable:
             namew = ubuntu_mono_bold_font_wsize[fontsize] * len(name)
         else:
-            namefont.size = fontsize
+            namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
             namew = namefont.getlength(f"{name}")
         if namew > 450:
             right = fontsize - 1
         else:
             left = fontsize + 1
-    namefont.size = fontsize
+    namefont = ImageFont.truetype("./fonts/UbuntuMonoBold.ttf", fontsize)
     namebb = namefont.getbbox(f"{name}")
     nameh = namebb[3] - namebb[1]
     offset = min(fontsize * 0.05, 20)
@@ -303,7 +301,7 @@ async def get_banner(request: Request, response: Response):
     for _ in range(100):
         if hrolew > 450:
             fontsize -= 1
-            hrolefont.size = fontsize
+            hrolefont = ImageFont.truetype("./fonts/Anton.ttf", fontsize)
             hrolew = hrolefont.getlength(f"{highest_role}")
     hrolebb = hrolefont.getbbox(f"{highest_role}")
     hroleh = hrolebb[3] - hrolebb[1]

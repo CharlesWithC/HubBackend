@@ -247,7 +247,7 @@ async def get_banner(request: Request, response: Response,
     profit = f"€{sigfig(europrofit)} + ${sigfig(dollarprofit)}"
 
     try:
-        r = await arequests.post(app, "http://127.0.0.1:8700/banner", data=json.dumps({"company_abbr": app.config.abbr, \
+        r = await arequests.post(app, app.banner_service_url, data=json.dumps({"company_abbr": app.config.abbr, \
             "company_name": app.config.name, "logo_url": app.config.logo_url, "hex_color": app.config.hex_color,
             "userid": userid, "joined": joined, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division_name, "distance": distance, "profit": profit}), headers = {"Content-Type": "application/json"}, timeout = 5)
