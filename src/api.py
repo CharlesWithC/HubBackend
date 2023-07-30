@@ -9,6 +9,7 @@ import time
 import traceback
 from datetime import datetime
 
+import psutil
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -148,6 +149,17 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 class HubMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         app = request.app
+
+        try:
+            process = psutil.Process()
+            sleep_cnt = 0
+            while process.memory_info().rss / 1024 / 1024 > app.memory_threshold and app.memory_threshold != 0:
+                sleep_cnt += 0.1
+                await asyncio.sleep(0.1)
+                if sleep_cnt >= 30:
+                    return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+        except:
+            return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
 
         try:
             for middleware in app.external_middleware["request"]:

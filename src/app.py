@@ -61,6 +61,8 @@ def initApp(app, first_init = False, args = {}):
 
     if app.enable_performance_header:
         logger.warning(f"[{app.config.abbr}] Performance header enabled")
+    if app.memory_threshold != 0:
+        logger.warning(f"[{app.config.abbr}] Memory threshold: {app.memory_threshold}MB (New requests will be put on hold when the threshold is reached)")
 
     if "disable_upgrader" not in args.keys() or not args["disable_upgrader"]:
         import upgrades.manager
@@ -145,6 +147,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.multi_mode = multi_mode
     app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
     app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
+    app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
 
     # External routes must be loaded before internal routes so that they can replace internal routes (if needed)
     external_routes = []

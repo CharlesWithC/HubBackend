@@ -252,8 +252,8 @@ async def get_banner(request: Request, response: Response,
             "userid": userid, "joined": joined, "highest_role": highest_role, \
                 "avatar": avatar, "name": name, "division": division_name, "distance": distance, "profit": profit}), headers = {"Content-Type": "application/json"}, timeout = 5)
         if r.status_code // 100 != 2:
-            response.status_code = r.status_code
-            return {"error": r.text}
+            response.status_code = 503
+            return {"error": ml.tr(request, "banner_service_unavailable")}
 
         response = StreamingResponse(iter([r.content]), media_type="image/jpeg")
         for k in rl[1].keys():

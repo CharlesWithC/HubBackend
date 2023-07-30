@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import asyncio
 import hashlib
 import os
 import string
@@ -9,9 +10,10 @@ import unicodedata
 from io import BytesIO
 
 import aiohttp
+import psutil
 import requests
 from fastapi import Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
 
 # to get supported_glyph_ord_range, run the following code
@@ -75,6 +77,17 @@ class arequests():
                 return r
 
 async def get_banner(request: Request, response: Response):
+    try:
+        process = psutil.Process()
+        sleep_cnt = 0
+        while process.memory_info().rss / 1024 / 1024 > request.app.memory_threshold and request.app.memory_threshold != 0:
+            sleep_cnt += 0.1
+            await asyncio.sleep(0.1)
+            if sleep_cnt >= 30:
+                return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+    except:
+        return JSONResponse({"error": "Service Unavailable"}, status_code = 503)
+            
     request_start_time = time.time()
 
     data = await request.json()
