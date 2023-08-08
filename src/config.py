@@ -1,6 +1,9 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
+from functions.general import isurl
+
 def isfloat(t):
     try:
         float(t)
@@ -24,11 +27,11 @@ config.ranks[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_post_gifs', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'tracker_api_token', 'tracker_webhook_secret', 'allowed_tracker_ips', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'ranks', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'delivery_rules', 'delivery_log_channel_id', 'delivery_post_gifs', 'discord_client_id']
+public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'tracker_company_id', 'delivery_rules', 'delivery_log_channel_id', 'delivery_webhook_image_urls', 'discord_client_id']
 
 config_plugins = {"announcement": ["announcement_types", "announcement_forwarding"],
     "application": ["application_types"],
@@ -107,7 +110,7 @@ default_config = {
         "channel_id": "",
         "webhook_url": ""
     },
-    "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+    "delivery_webhook_image_urls": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
         "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",
@@ -553,7 +556,7 @@ DEFAULT_EMBED = {
 def validateEmbed(embed):
     for k in DEFAULT_EMBED.keys():
         if k not in embed.keys():
-            embed[k] = DEFAULT_EMBED[k]
+            embed[k] = copy.deepcopy(DEFAULT_EMBED[k])
     return embed
 
 def validateConfig(cfg):
@@ -1099,6 +1102,16 @@ def validateConfig(cfg):
             new_announcement_types.append(announcement_type)
     cfg["announcement_types"] = new_announcement_types
     ########
+
+    # v2.7.15
+    if "delivery_post_gifs" in cfg.keys() and 'delivery_webhook_image_urls' not in cfg.keys():
+        cfg["delivery_webhook_image_urls"] = cfg["delivery_post_gifs"]
+        del cfg["delivery_post_gifs"]
+    new_dwiu = []
+    for url in cfg["delivery_webhook_image_urls"]:
+        if isurl(url):
+            new_dwiu.append(url)
+    cfg["delivery_webhook_image_urls"] = new_dwiu
 
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}
     extra_perms = {key: cfg["perms"][key] for key in cfg["perms"].keys() if key not in default_config["perms"].keys()}

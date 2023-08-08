@@ -409,13 +409,13 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     munit = "$"
                 offence = -offence
                 if e == "job.delivered":
-                    GIFS = app.config.delivery_post_gifs
-                    if len(GIFS) == 0:
-                        GIFS = [""]
-                    k = randint(0, len(GIFS)-1)
-                    gifurl = GIFS[k]
-                    if not isurl(gifurl):
-                        gifurl = ""
+                    IMGS = app.config.delivery_webhook_image_urls
+                    if len(IMGS) == 0:
+                        IMGS = [""]
+                    k = randint(0, len(IMGS)-1)
+                    imgurl = IMGS[k]
+                    if not isurl(imgurl):
+                        imgurl = ""
                     dhulink = app.config.frontend_urls.member.replace("{userid}", str(userid))
                     dlglink = app.config.frontend_urls.delivery.replace("{logid}", str(logid))
                     data = "{}"
@@ -432,7 +432,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.ctr(request, 'delivery')} #{logid}",
                                 "url": dlglink,
@@ -446,7 +446,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     try:
                         if app.config.hook_delivery_log.channel_id != "":
                             durl = f"https://discord.com/api/v10/channels/{app.config.hook_delivery_log.channel_id}/messages"
@@ -474,7 +474,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
                         data = {"embeds": [{"title": f"{ml.tr(request, 'delivery', force_lang = language)} #{logid}",
                                 "url": dlglink,
@@ -488,7 +488,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
                                         {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
-                                    "timestamp": str(datetime.now()), "image": {"url": gifurl}}]}
+                                    "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
                         await SendDiscordNotification(request, uid, data)
                     await UpdateRoleConnection(request, discordid)
@@ -530,7 +530,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         continue
 
                     p = json.loads(decompress(job_requirements))
-                    jobreq = JOB_REQUIREMENT_DEFAULT
+                    jobreq = copy.deepcopy(JOB_REQUIREMENT_DEFAULT)
                     for i in range(0,len(p)):
                         jobreq[JOB_REQUIREMENTS[i]] = p[i]
 

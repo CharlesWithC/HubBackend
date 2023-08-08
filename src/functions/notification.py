@@ -2,6 +2,7 @@
 # Author: @CharlesWithC
 
 import asyncio
+import copy
 import json
 import time
 from datetime import datetime
@@ -11,9 +12,9 @@ import requests
 import multilang as ml
 from functions.arequests import *
 from functions.dataop import *
+from functions.discord import opqueue
 from functions.general import *
 from functions.userinfo import *
-from functions.discord import opqueue
 from static import *
 
 # app.state.discord_message_queue = []
@@ -95,7 +96,7 @@ async def ProcessDiscordMessage(app): # thread
                     uid = t[0][0]
                     await app.db.execute(dhrid, f"DELETE FROM settings WHERE skey = 'discord-notification' AND sval = '{channelid}'")
 
-                    settings = NOTIFICATION_SETTINGS
+                    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
                     settingsok = False
 
                     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -163,7 +164,7 @@ async def CheckNotificationEnabled(request, notification_type, uid):
         return False
 
     (app, dhrid) = (request.app, request.state.dhrid)
-    settings = NOTIFICATION_SETTINGS
+    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await app.db.fetchall(dhrid)
@@ -179,12 +180,12 @@ async def CheckNotificationEnabled(request, notification_type, uid):
 
 async def notification(request, notification_type, uid, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}, force = False):
-    if uid is None or int(uid) < 0 or notification_type not in NOTIFICATION_SETTINGS.keys():
+    if uid is None or int(uid) < 0 or notification_type not in copy.deepcopy(NOTIFICATION_SETTINGS).keys():
         return
 
     dhrid = request.state.dhrid
     app = request.app
-    settings = NOTIFICATION_SETTINGS
+    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
 
     if not force:
         await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -212,7 +213,7 @@ async def notification(request, notification_type, uid, content, no_drivershub_n
 
 async def notification_to_everyone(request, notification_type, content, no_drivershub_notification = False, \
         no_discord_notification = False, discord_embed = {}, only_to_members = False):
-    if notification_type not in NOTIFICATION_SETTINGS.keys():
+    if notification_type not in copy.deepcopy(NOTIFICATION_SETTINGS).keys():
         return
 
     dhrid = request.state.dhrid

@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
 import json
 import math
 from typing import Optional
@@ -193,7 +194,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
         return au
     uid = au["uid"]
 
-    settings = NOTIFICATION_SETTINGS
+    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
     t = await app.db.fetchall(dhrid)
@@ -208,7 +209,7 @@ async def get_settings(request: Request, response: Response, authorization: str 
 async def post_settings_enable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Enables a specific type of notification of the authorized user"""
     app = request.app
-    if notification_type not in NOTIFICATION_SETTINGS.keys():
+    if notification_type not in copy.deepcopy(NOTIFICATION_SETTINGS).keys():
         response.status_code = 404
         return {"error": "Not Found"}
 
@@ -229,7 +230,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
     uid = au["uid"]
     discordid = au["discordid"]
 
-    settings = NOTIFICATION_SETTINGS
+    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
     settingsok = False
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")
@@ -322,7 +323,7 @@ async def post_settings_enable(request: Request, response: Response, notificatio
 async def post_settings_disable(request: Request, response: Response, notification_type: str, authorization: str = Header(None)):
     """Disables a specific type of notification of the authorized user"""
     app = request.app
-    if notification_type not in NOTIFICATION_SETTINGS.keys():
+    if notification_type not in copy.deepcopy(NOTIFICATION_SETTINGS).keys():
         response.status_code = 404
         return {"error": "Not Found"}
 
@@ -342,7 +343,7 @@ async def post_settings_disable(request: Request, response: Response, notificati
         return au
     uid = au["uid"]
 
-    settings = NOTIFICATION_SETTINGS
+    settings = copy.deepcopy(NOTIFICATION_SETTINGS)
     settingsok = False
 
     await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'notification'")

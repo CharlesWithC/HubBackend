@@ -275,7 +275,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_hex_color", force_lang = au["language"])}
 
-            if tt == "delivery_post_gifs":
+            if tt == "delivery_webhook_image_urls":
                 p = []
                 for o in new_config[tt]:
                     if isurl(o):

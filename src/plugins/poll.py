@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
 import time
 from typing import Optional
 
@@ -84,7 +85,7 @@ async def PollResultNotification(app):
                 description = decompress(tt[2]) if tt[2] != "" else "N/A"
                 end_time = tt[3]
                 configl = str2list(tt[4])
-                config = POLL_DEFAULT_CONFIG
+                config = copy.deepcopy(POLL_DEFAULT_CONFIG)
                 for i in range(len(POLL_CONFIG_KEYS)):
                     if i < len(configl):
                         config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
@@ -223,7 +224,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for i in range(len(t)):
         tt = t[i]
         configl = str2list(tt[4])
-        config = POLL_DEFAULT_CONFIG
+        config = copy.deepcopy(POLL_DEFAULT_CONFIG)
         for j in range(len(POLL_CONFIG_KEYS)):
             if j < len(configl):
                 config[POLL_CONFIG_KEYS[j]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[j]](configl[j])
@@ -286,7 +287,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
     tt = t[0]
 
     configl = str2list(tt[4])
-    config = POLL_DEFAULT_CONFIG
+    config = copy.deepcopy(POLL_DEFAULT_CONFIG)
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(configl):
             config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
@@ -370,7 +371,7 @@ async def put_poll_vote(request: Request, response: Response, pollid: int, autho
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = POLL_DEFAULT_CONFIG
+    config = copy.deepcopy(POLL_DEFAULT_CONFIG)
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(configl):
             config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
@@ -447,7 +448,7 @@ async def patch_poll_vote(request: Request, response: Response, pollid: int, aut
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = POLL_DEFAULT_CONFIG
+    config = copy.deepcopy(POLL_DEFAULT_CONFIG)
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(config):
             config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
@@ -516,7 +517,7 @@ async def delete_poll_vote(request: Request, response: Response, pollid: int, au
         return {"error": ml.tr(request, "poll_not_found", force_lang = au["language"])}
     (configl, end_time) = t[0]
     configl = str2list(configl)
-    config = POLL_DEFAULT_CONFIG
+    config = copy.deepcopy(POLL_DEFAULT_CONFIG)
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(configl):
             config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
@@ -598,7 +599,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
             new_config = {}
             for key in POLL_CONFIG_KEYS:
                 if key not in config.keys():
-                    new_config[key] = POLL_DEFAULT_CONFIG[key]
+                    new_config[key] = copy.deepcopy(POLL_DEFAULT_CONFIG)[key]
                 else:
                     new_config[key] = config[key]
             config = new_config
@@ -610,7 +611,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
                 response.status_code = 400
                 return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
         else:
-            config = POLL_DEFAULT_CONFIG
+            config = copy.deepcopy(POLL_DEFAULT_CONFIG)
         new_config = []
         for key in config.keys():
             new_config.append(int(config[key]))
@@ -694,7 +695,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     description = decompress(description)
 
     old_configl = str2list(config)
-    old_config = POLL_DEFAULT_CONFIG
+    old_config = copy.deepcopy(POLL_DEFAULT_CONFIG)
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(old_config):
             old_config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](old_configl[i])

@@ -64,7 +64,7 @@
         "channel_id": "",
         "webhook_url": ""
     },
-    "delivery_post_gifs": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
+    "delivery_webhook_image_urls": ["https://c.tenor.com/fjTTED8MZxIAAAAC/truck.gif",
         "https://c.tenor.com/QhMgCV8uMvIAAAAC/airtime-weeee.gif",
         "https://c.tenor.com/VYt4iLQJWhcAAAAd/kid-spin.gif",
         "https://c.tenor.com/_aICF_XLbR4AAAAC/ck8car-driving.gif",

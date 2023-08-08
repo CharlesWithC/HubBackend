@@ -1,11 +1,12 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
 import json
 import time
 from typing import Optional
 
-from fastapi import Header, Request, Query, Response
+from fastapi import Header, Query, Request, Response
 
 import multilang as ml
 from functions import *
@@ -225,7 +226,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         return {"error": ml.tr(request, "challenge_not_found", force_lang = au["language"])}
     tt = t[0]
     public_details = tt[9]
-    jobreq = JOB_REQUIREMENT_DEFAULT
+    jobreq = copy.deepcopy(JOB_REQUIREMENT_DEFAULT)
     if public_details or isstaff:
         p = json.loads(decompress(tt[10]))
         jobreq = {}
