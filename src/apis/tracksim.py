@@ -143,60 +143,6 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         response.status_code = 400
         return {"error": "Only events are accepted."}
     e = d["type"]
-    if e == "company_driver.detached":
-        steamid = int(d["data"]["object"]["steam_id"])
-        await app.db.execute(dhrid, f"SELECT uid, userid, name, discordid, avatar FROM user WHERE steamid = {steamid}")
-        t = await app.db.fetchall(dhrid)
-        if len(t) == 0:
-            response.status_code = 404
-            return {"error": "User not found."}
-        uid = t[0][0]
-        userid = t[0][1]
-        name = t[0][2]
-        discordid = t[0][3]
-        avatar = t[0][4]
-        await AuditLog(request, uid, ml.ctr(request, "member_resigned_audit", var = {"username": name, "uid": uid}))
-
-        await app.db.execute(dhrid, f"UPDATE user SET userid = -1, roles = '' WHERE userid = {userid}")
-        await app.db.commit(dhrid)
-
-        def setvar(msg):
-            return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", name).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
-
-        for meta in app.config.member_leave:
-            meta = Dict2Obj(meta)
-            if meta.webhook_url != "" or meta.channel_id != "":
-                await AutoMessage(app, meta, setvar)
-
-            if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
-                for role in meta.role_change:
-                    try:
-                        if int(role) < 0:
-                            opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, f"remove_role,{-int(role)},{discordid}")
-                        elif int(role) > 0:
-                            opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}, f"add_role,{int(role)},{discordid}")
-                    except:
-                        pass
-
-        if discordid is not None:
-            headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when member resigns."}
-            try:
-                r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers = headers, timeout = 3, dhrid = dhrid)
-                d = json.loads(r.text)
-                if "roles" in d:
-                    roles = d["roles"]
-                    curroles = []
-                    for role in roles:
-                        if role in list(app.rankrole.values()):
-                            curroles.append(role)
-                    for role in curroles:
-                        opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
-            except:
-                pass
-
-        await UpdateRoleConnection(request, discordid)
-
-        return {"error": "User resigned."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
     await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid FROM user WHERE steamid = {steamid}")

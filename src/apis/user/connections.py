@@ -159,6 +159,9 @@ async def patch_discord(request: Request, response: Response, authorization: str
                 response.status_code = 400
                 return {"error": user_data['message']}
             discordid = user_data['id']
+            email = ""
+            if "email" in user_data.keys():
+                email = convertQuotation(user_data['email'])
             tokens = {**tokens, **user_data}
 
             (access_token, refresh_token, expire_timestamp) = (convertQuotation(tokens["access_token"]), convertQuotation(tokens["refresh_token"]), tokens["expires_in"] + int(time.time()) - 60)
@@ -173,6 +176,12 @@ async def patch_discord(request: Request, response: Response, authorization: str
 
             await app.db.execute(dhrid, f"UPDATE user SET discordid = {discordid} WHERE uid = {uid}")
             await app.db.commit(dhrid)
+
+            await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if t[0][0] is not None and "@" in t[0][0]:
+                await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
+                await app.db.commit(dhrid)
 
             await DeleteRoleConnection(request, au["discordid"])
             await UpdateRoleConnection(request, discordid)

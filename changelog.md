@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.8.1
+
+1. Removed `company_driver.detached` tracksim event listening  
+2. Added "update discord email" when user reconnects discord account and email is not connected  
+
 ## v2.7.15
   
 1. Enforced `deepcopy` for most large dicts to prevent constants being changed  
