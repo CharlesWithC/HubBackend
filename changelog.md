@@ -4,6 +4,7 @@
 
 1. Removed `company_driver.detached` tracksim event listening  
 2. Added "update discord email" when user reconnects discord account and email is not connected  
+3. Added `config.discord_message_replace_rules` for manipulating discord message content before sending  
 
 ## v2.7.15
   

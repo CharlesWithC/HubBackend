@@ -327,6 +327,10 @@ async def AuditLog(request, uid, text, discord_message_only = False):
         pass
 
 async def AutoMessage(app, meta, setvar):
+    def newsetvar(val):
+        t = setvar(val)
+        t = regex_replace(val, app.config.discord_message_replace_rules)
+        return t
     try:
         embeds = []
         for embed in meta.embeds:
@@ -352,7 +356,7 @@ async def AutoMessage(app, meta, setvar):
                         cur_res[key] = new_dict
                         stack.append((value, new_dict))
                     elif isinstance(value, str):
-                        cur_res[key] = setvar(value)
+                        cur_res[key] = newsetvar(value)
                     elif isinstance(value, list):
                         new_list = []
                         cur_res[key] = new_list
@@ -362,7 +366,7 @@ async def AutoMessage(app, meta, setvar):
                                 new_list.append(new_dict)
                                 stack.append((item, new_dict))
                             elif isinstance(item, str):
-                                new_list.append(setvar(item))
+                                new_list.append(newsetvar(item))
                             else:
                                 new_list.append(item)
                     else:
@@ -370,10 +374,10 @@ async def AutoMessage(app, meta, setvar):
             embeds.append(res)
 
         if len(embeds) != 0:
-            data = json.dumps({"content": setvar(meta.content),
+            data = json.dumps({"content": newsetvar(meta.content),
                             "embeds": embeds})
         else:
-            data = json.dumps({"content": setvar(meta.content)})
+            data = json.dumps({"content": newsetvar(meta.content)})
 
         if meta.channel_id != "":
             if app.config.discord_bot_token == "":

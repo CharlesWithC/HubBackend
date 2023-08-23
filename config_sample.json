@@ -79,6 +79,7 @@
     "discord_client_secret": "",
     "discord_bot_token": "",
     "steam_api_key": "",
+    "discord_message_replace_rules": {"matching_regex": "replacing_regex"},
 
     "smtp_host": "",
     "smtp_port": "",

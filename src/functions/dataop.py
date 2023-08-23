@@ -168,3 +168,16 @@ def sigfig(num, sigfigs_opt = 3):
     if baseRound.endswith("."):
         baseRound = baseRound[:-1]
     return flag + baseRound + suffix
+
+def validate_regex(pattern):
+    try:
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
+    
+def regex_replace(text, rules):
+    for match_rule, replace_rule in rules.items():
+        if validate_regex(match_rule):
+            text = re.sub(match_rule, replace_rule, text)
+    return text
