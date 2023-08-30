@@ -409,6 +409,8 @@ default_config = {
     }],
 
     "divisions": [],
+    # {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}}, # static points for each dlog
+    # {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}} # distance-based ratio
     "hook_division": {
         "channel_id": "",
         "webhook_url": "",
@@ -782,7 +784,23 @@ def validateConfig(cfg):
             try:
                 division["id"] = int(division["id"])
                 division["role_id"] = int(division["role_id"])
-                division["points"] = min(int(division["points"]), 2147483647)
+                # v2.5.8
+                if type(division["points"]) in [int, float]:
+                    division["points"] = min(max(int(division["points"]), -2147483647), 2147483647)
+                    division["points"] = {"mode": "static", "value": int(division["points"])}
+                elif type(division["points"]) == dict:
+                    if not "mode" in division["points"].keys() or not "value" in division["points"].keys():
+                        continue
+                    if division["points"]["mode"] not in ["static", "ratio"]:
+                        continue
+                    if type(division["points"]["value"]) not in [int, float]:
+                        continue
+                    if division["points"]["mode"] == "static":
+                        division["points"]["value"] = min(max(int(division["points"]["value"]), -2147483647), 2147483647)
+                    elif division["points"]["mode"] == "ratio":
+                        division["points"]["value"] = min(max(float(division["points"]["value"]), -10000), 10000)
+                else:
+                    continue
                 newdivisions.append(division)
             except:
                 pass

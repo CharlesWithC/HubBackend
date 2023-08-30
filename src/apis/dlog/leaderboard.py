@@ -188,15 +188,21 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
         if len(t) > 0:
             lastlogid = t[0][0]
 
-        await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 AND logid >= {firstlogid} AND logid <= {lastlogid} GROUP BY divisionid, userid")
-        o = await app.db.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+            FROM dlog \
+            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+            WHERE dlog.logid >= {firstlogid} AND dlog.logid <= {lastlogid} AND dlog.logid >= 0 AND dlog.userid >= 0 \
+            GROUP BY dlog.userid, division.divisionid")
         for oo in o:
             if oo[0] not in allusers:
                 continue
             if oo[0] not in userdivision.keys():
                 userdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
-                userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
+                if app.division_points[oo[1]]["mode"] == "static":
+                    userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+                elif app.division_points[oo[1]]["mode"] == "ratio":
+                    userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
 
         # calculate bonus
         await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
@@ -291,15 +297,21 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     nluserevent[attendee] += tt[1]
 
         # calculate division
-        await app.db.execute(dhrid, "SELECT userid, divisionid, COUNT(*) FROM division WHERE userid >= 0 AND status = 1 GROUP BY divisionid, userid")
-        o = await app.db.fetchall(dhrid)
+        await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+            FROM dlog \
+            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+            WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
+            GROUP BY dlog.userid, division.divisionid")
         for oo in o:
             if oo[0] not in allusers:
                 continue
             if oo[0] not in nluserdivision.keys():
                 nluserdivision[oo[0]] = 0
             if oo[1] in app.division_points.keys():
-                nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
+                if app.division_points[oo[1]]["mode"] == "static":
+                    nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+                elif app.division_points[oo[1]]["mode"] == "ratio":
+                    nluserdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
 
         # calculate bonus
         await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 GROUP BY userid")

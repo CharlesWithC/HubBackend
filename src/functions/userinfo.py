@@ -479,13 +479,19 @@ async def GetPoints(request, userid):
 
     # calculate division
     userdivision = {}
-    await app.db.execute(dhrid, f"SELECT userid, divisionid, COUNT(*) FROM division WHERE status = 1 AND userid = {userid} GROUP BY divisionid, userid")
-    o = await app.db.fetchall(dhrid)
+    await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+        FROM dlog \
+        INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
+        WHERE dlog.logid >= 0 AND dlog.userid = {userid} \
+        GROUP BY dlog.userid, division.divisionid")
     for oo in o:
         if oo[0] not in userdivision.keys():
             userdivision[oo[0]] = 0
         if oo[1] in app.division_points.keys():
-            userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]
+            if app.division_points[oo[1]]["mode"] == "static":
+                userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
+            elif app.division_points[oo[1]]["mode"] == "ratio":
+                userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
 
     # calculate bonus
     userbonus = {}

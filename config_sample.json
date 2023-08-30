@@ -346,7 +346,8 @@
     }],
 
     "divisions": [
-        {"id": 1, "name": "Construction", "role_id": 251, "points": 500}
+        {"id": 1, "name": "Construction", "role_id": 251, "points": {"mode": "static", "value": 500}},
+        {"id": 2, "name": "Agriculture", "role_id": 252, "points": {"mode": "ratio", "value": 0.5}}
     ],
     "hook_division": {
         "channel_id": "",

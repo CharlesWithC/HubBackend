@@ -5,6 +5,11 @@
 1. Removed `company_driver.detached` tracksim event listening  
 2. Added "update discord email" when user reconnects discord account and email is not connected  
 3. Added `config.discord_message_replace_rules` for manipulating discord message content before sending  
+4. Added distance-based division points  
+    Config format: `{"id": int, "name": str, "role_id": int, "points": {"mode": str("static"|"ratio"), "value": int|float}}`  
+    When `mode` is `static`, each validated division delivery gets static points.  
+    When `mode` is `ratio`, each validated division delivery gets `distance * value` points.  
+    **Note**: Points of previously validated division deliveries will be updated when config is updated.  
 
 ## v2.7.15
   
