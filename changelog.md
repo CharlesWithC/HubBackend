@@ -10,6 +10,12 @@
     When `mode` is `static`, each validated division delivery gets static points.  
     When `mode` is `ratio`, each validated division delivery gets `distance * value` points.  
     **Note**: Points of previously validated division deliveries will be updated when config is updated.  
+5. Added support to multiple rankings  
+    **Hint**: This function mainly focuses on providing multiple rank roles.  
+    Config format: `[{"id": int, "name": str, "default": bool, "point_types": list: ["distance", "challenge", "division", "event", "bonus"], "details": ...original_ranks}]`  
+    At least one item must have `default = true`, otherwise the first one will be considered `default`. The `default` ranking will be used for `daily_bonus` and `distance_bonus`. Specific `rank_type_id` will only be considered when user is requesting discord role for a specific rank type.  
+    `point_types` must be a list with `str` items selected from `["distance", "challenge", "division", "event", "bonus"]`.  
+    `details` have the same format has the original `config.ranks`.  
 
 ## v2.7.15
   

@@ -262,9 +262,9 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
 
         try:
-            totalpnt = await GetPoints(request, userid)
-            bonus = point2bonus(app, totalpnt)
-            rankname = point2rankname(app, totalpnt)
+            totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
+            bonus = point2rank(app, "default", totalpnt)["distance_bonus"]
+            rankname = point2rank(app, "default", totalpnt)["name"]
 
             if bonus is not None and type(bonus) is dict:
                 ok = True

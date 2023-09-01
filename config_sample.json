@@ -260,12 +260,18 @@
             "timestamp": true
         }]
     }],
-    "ranks": [
-        {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
-        {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "fixed", "streak_value": 100}},
-        {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}},
-        {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}}
-    ],
+    "rank_types": [{
+        "id": 1,
+        "name": "Default",
+        "default": true,
+        "point_types": ["distance", "challenge", "division", "event", "bonus"],
+        "details": [
+            {"points": 0, "name": "Trial Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 0, "max_distance": 1000, "probability": 0.5, "type": "fixed_value", "value": 100}, "daily_bonus": {"type": "fixed", "base": 100}},
+            {"points": 5000, "name": "New Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": 500, "max_distance": 2000, "probability": 0.5, "type": "random_value", "min": 100, "max": 500}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "fixed", "streak_value": 100}},
+            {"points": 10000, "name": "Regular Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 0.8, "type": "fixed_percentage", "value": 0.01}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}},
+            {"points": 50000, "name": "Professional Driver", "color": "#CCCCCC", "discord_role_id": "", "distance_bonus": {"min_distance": -1, "max_distance": -1, "probability": 1, "type": "random_percentage", "min": 0.01, "max": 0.05}, "daily_bonus": {"type": "streak", "base": 100, "streak_type": "percentage", "streak_value": 0.01}}
+        ]
+    }],
 
     "announcement_types": [
         {"id": 0, "name": "Information", "staff_role_ids": [20]},

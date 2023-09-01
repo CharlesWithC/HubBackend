@@ -2344,7 +2344,7 @@
         },
         "/member/roles/rank": {
             "patch": {
-                "summary": "Update Rank Role",
+                "summary": "Update Default Rank Role",
                 "tags": [
                     "member"
                 ],
@@ -2353,6 +2353,33 @@
                     {
                         "bearerAuth": [],
                         "applicationAuth": []
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/member/roles/rank/{rank_type_id}": {
+            "patch": {
+                "summary": "Update Rank Role",
+                "tags": [
+                    "member"
+                ],
+                "operationId": "patch_member_roles_rank_rank_type_id",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Rank Type ID",
+                            "type": "integer"
+                        },
+                        "name": "rank_type_id",
+                        "in": "path"
                     }
                 ],
                 "responses": {}

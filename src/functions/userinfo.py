@@ -437,7 +437,7 @@ async def DeleteRoleConnection(request, discordid):
             await app.db.execute(dhrid, f"DELETE FROM discord_access_token WHERE access_token = '{access_token}'")
             await app.db.commit(dhrid)
 
-async def GetPoints(request, userid):
+async def GetPoints(request, userid, point_types = ["distance", "challenge", "division", "event", "bonus"]):
     (app, dhrid) = (request.app, request.state.dhrid)
 
     # handle bonus point on different rank
@@ -507,15 +507,15 @@ async def GetPoints(request, userid):
     eventpnt = 0
     divisionpnt = 0
     bonuspnt = 0
-    if userid in userdistance.keys():
+    if userid in userdistance.keys() and "distance" in point_types:
         distancepnt = userdistance[userid]
-    if userid in userchallenge.keys():
+    if userid in userchallenge.keys() and "challenge" in point_types:
         challengepnt = userchallenge[userid]
-    if userid in userevent.keys():
+    if userid in userevent.keys() and "event" in point_types:
         eventpnt = userevent[userid]
-    if userid in userdivision.keys():
+    if userid in userdivision.keys() and "division" in point_types:
         divisionpnt = userdivision[userid]
-    if userid in userbonus.keys():
+    if userid in userbonus.keys() and "bonus" in point_types:
         bonuspnt = userbonus[userid]
 
     totalpnt = round(distancepnt * ratio) + round(challengepnt) + round(eventpnt) + round(divisionpnt) + round(bonuspnt)

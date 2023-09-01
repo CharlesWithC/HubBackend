@@ -22,25 +22,22 @@ def load(app):
             pass
     app.roles = dict(sorted(app.roles.items(), key=lambda x: x[1]["order_id"]))
 
-    app.rankrole = {}
-    app.rankname = {}
-    app.rankbonus = {}
-    app.rankdbonus = {}
-    for t in app.config.ranks:
+    app.default_rank_type_point_types = []
+    app.rank_type_point_types = {}
+    app.ranktypes = {}
+    for rt in app.config.rank_types:
         try:
-            if t["discord_role_id"] is not None:
-                app.rankrole[t["points"]] = t["discord_role_id"]
-            else:
-                app.rankrole[t["points"]] = 0
-            app.rankname[t["points"]] = t["name"]
-            app.rankbonus[t["points"]] = t["distance_bonus"]
-            app.rankdbonus[t["points"]] = t["daily_bonus"]
+            if rt["default"]:
+                app.default_rank_type_point_types = rt["point_types"]
+            app.rank_type_point_types[rt["id"]] = rt["point_types"]
+            app.ranktypes[rt["id"]] = []
+            for t in rt["details"]:
+                if t["discord_role_id"] is None:
+                    t["discord_role_id"] = 0
+                app.ranktypes[rt["id"]][t["points"]] = {"name": t["name"], "discord_role_id": t["discord_role_id"], "distance_bonus": t["distance_bonus"], "daily_bonus": t["daily_bonus"]}
+            app.ranktypes[rt["id"]] = dict(sorted(app.ranktypes[rt["id"]].items(), key=lambda x: x[0]))
         except:
             pass
-    app.rankrole = dict(sorted(app.rankrole.items(), key=lambda x: x[0]))
-    app.rankname = dict(sorted(app.rankname.items(), key=lambda x: x[0]))
-    app.rankbonus = dict(sorted(app.rankbonus.items(), key=lambda x: x[0]))
-    app.rankdbonus = dict(sorted(app.rankdbonus.items(), key=lambda x: x[0]))
 
     app.division_roles = []
     for division in app.config.divisions:

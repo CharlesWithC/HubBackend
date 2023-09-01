@@ -1,58 +1,19 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-def point2bonus(app, point):
-    """Returns bonus of the rank of the point"""
+def point2rank(app, rank_type_id, point):
+    if rank_type_id == "default":
+        for rank_type in app.config.rank_types:
+            if rank_type["default"]:
+                rank_type_id = rank_type["id"]
 
-    keys = list(app.rankbonus.keys())
+    keys = list(app.ranktypes["rank_type_id"].keys())
     if point < keys[0]:
         return None
     if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return app.rankbonus[keys[0]]
+        return app.ranktypes["rank_type_id"][keys[0]]
     for i in range(1, len(keys)):
         if point >= keys[i-1] and point < keys[i]:
-            return app.rankbonus[keys[i-1]]
+            return app.ranktypes["rank_type_id"][keys[i-1]]
     if point >= keys[-1]:
-        return app.rankbonus[keys[-1]]
-
-def point2dbonus(app, point):
-    """Returns daily bonus of the rank of the point"""
-
-    keys = list(app.rankdbonus.keys())
-    if point < keys[0]:
-        return None
-    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return app.rankdbonus[keys[0]]
-    for i in range(1, len(keys)):
-        if point >= keys[i-1] and point < keys[i]:
-            return app.rankdbonus[keys[i-1]]
-    if point >= keys[-1]:
-        return app.rankdbonus[keys[-1]]
-
-def point2rankroleid(app, point):
-    """Returns Discord Snowflake of the rank of the point"""
-
-    keys = list(app.rankrole.keys())
-    if point < keys[0]:
-        return -1
-    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return app.rankrole[keys[0]]
-    for i in range(1, len(keys)):
-        if point >= keys[i-1] and point < keys[i]:
-            return app.rankrole[keys[i-1]]
-    if point >= keys[-1]:
-        return app.rankrole[keys[-1]]
-
-def point2rankname(app, point):
-    """Returns name of the rank of the point"""
-
-    keys = list(app.rankname.keys())
-    if point < keys[0]:
-        return -1
-    if point >= keys[0] and (len(keys) == 1 or point < keys[1]):
-        return app.rankname[keys[0]]
-    for i in range(1, len(keys)):
-        if point >= keys[i-1] and point < keys[i]:
-            return app.rankname[keys[i-1]]
-    if point >= keys[-1]:
-        return app.rankname[keys[-1]]
+        return app.ranktypes["rank_type_id"][keys[-1]]

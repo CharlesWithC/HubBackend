@@ -175,7 +175,7 @@ def validate_regex(pattern):
         return True
     except re.error:
         return False
-    
+
 def regex_replace(text, rules):
     for match_rule, replace_rule in rules.items():
         if validate_regex(match_rule):

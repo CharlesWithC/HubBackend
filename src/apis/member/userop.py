@@ -17,13 +17,13 @@ ALGO_OFFSET = 15
 # NOTE This offset controls the initial increase rate of the algo
 
 
-async def patch_roles_rank(request: Request, response: Response, authorization: str = Header(None)):
+async def patch_roles_rank_default(request: Request, response: Response, authorization: str = Header(None)):
     """Updates rank role of the authorized user in Discord, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 3)
+    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -44,8 +44,8 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
         response.status_code = 409
         return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
 
-    totalpnt = await GetPoints(request, userid)
-    rankroleid = point2rankroleid(app, totalpnt)
+    totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
+    rankroleid = point2rank(app, "default", totalpnt)["discord_role_id"]
 
     if rankroleid == -1 or rankroleid is None:
         response.status_code = 409
@@ -101,7 +101,104 @@ async def patch_roles_rank(request: Request, response: Response, authorization: 
                     if meta.webhook_url != "" or meta.channel_id != "":
                         await AutoMessage(app, meta, setvar)
 
-                rankname = point2rankname(app, totalpnt)
+                rankname = point2rank(app, "default", totalpnt)["name"]
+                await notification(request, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(request, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(request, uid)), "description": f"**{rankname}**", "fields": []})
+                return Response(status_code=204)
+        else:
+            response.status_code = 428
+            return {"error": ml.tr(request, "current_user_didnt_join_discord", force_lang = au["language"])}
+
+    except Exception as exc:
+        return await tracebackHandler(request, exc, traceback.format_exc())
+
+async def patch_roles_rank(request: Request, response: Response, rank_type_id: int, authorization: str = Header(None)):
+    """Updates rank role of the authorized user in Discord, returns 204"""
+    app = request.app
+    if rank_type_id not in app.ranktypes.keys():
+        response.status_code = 404
+        return {"error": "Not Found"}
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PATCH /member/roles/rank', 60, 5)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    uid = au["uid"]
+    discordid = au["discordid"]
+    userid = au["userid"]
+    username = au["name"]
+    avatar = au["avatar"]
+
+    if discordid is None:
+        response.status_code = 409
+        return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
+
+    totalpnt = await GetPoints(request, userid, app.rank_type_point_types[rank_type_id])
+    rankroleid = point2rank(app, rank_type_id, totalpnt)["discord_role_id"]
+
+    if rankroleid == -1 or rankroleid is None:
+        response.status_code = 409
+        return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
+
+    await UpdateRoleConnection(request, discordid)
+
+    try:
+        if app.config.discord_bot_token == "":
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
+
+        headers = {"Authorization": f"Bot {app.config.discord_bot_token}", "Content-Type": "application/json", "X-Audit-Log-Reason": "Automatic role changes when driver ranks up in Drivers Hub."}
+        try:
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers = headers, dhrid = dhrid)
+        except:
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+
+        if r.status_code == 401:
+            DisableDiscordIntegration(app)
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
+        elif r.status_code // 100 != 2:
+            response.status_code = 503
+            return {"error": ml.tr(request, "discord_api_inaccessible", force_lang = au["language"])}
+
+        d = json.loads(r.text)
+        if "roles" in d:
+            discord_roles = d["roles"]
+            current_discord_roles = []
+            for role in discord_roles:
+                if role in list(app.rankrole.values()):
+                    current_discord_roles.append(role)
+            if rankroleid in current_discord_roles:
+                response.status_code = 409
+                return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
+            else:
+                try:
+                    opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{rankroleid}', None, headers, f"add_role,{rankroleid},{discordid}")
+                    for role in current_discord_roles:
+                        opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
+                except:
+                    pass
+
+                usermention = f"<@{discordid}>"
+                rankmention = f"<@&{rankroleid}>"
+                def setvar(msg):
+                    return msg.replace("{mention}", usermention).replace("{name}", username).replace("{userid}", str(userid)).replace("{rank}", rankmention).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar))
+
+                for meta in app.config.rank_up:
+                    meta = Dict2Obj(meta)
+                    if meta.webhook_url != "" or meta.channel_id != "":
+                        await AutoMessage(app, meta, setvar)
+
+                rankname = point2rank(app, rank_type_id, totalpnt)["name"]
                 await notification(request, "member", uid, ml.tr(request, "new_rank", var = {"rankname": rankname}, force_lang = await GetUserLanguage(request, uid)), discord_embed = {"title": ml.tr(request, "new_rank_title", force_lang = await GetUserLanguage(request, uid)), "description": f"**{rankname}**", "fields": []})
                 return Response(status_code=204)
         else:
@@ -208,8 +305,8 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
     else:
         streak = 0
 
-    totalpnt = await GetPoints(request, userid)
-    bonus = point2dbonus(app, totalpnt)
+    totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
+    bonus = point2rank(app, "default", totalpnt)["daily_bonus"]
 
     if bonus is None:
         response.status_code = 404

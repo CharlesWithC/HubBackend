@@ -297,7 +297,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     nluserevent[attendee] += tt[1]
 
         # calculate division
-        await app.db.execute(dhrid, f"SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+        await app.db.execute(dhrid, "SELECT dlog.userid, division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
             FROM dlog \
             INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
             WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
