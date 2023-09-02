@@ -353,8 +353,10 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
                 roles = d["roles"]
                 curroles = []
                 for role in roles:
-                    if role in list(app.rankrole.values()):
-                        curroles.append(role)
+                    for rank_type in app.config.rank_types:
+                        for rank in rank_type["details"]:
+                            if str(role) == str(rank["discord_role_id"]):
+                                curroles.append(role)
                 for role in curroles:
                     opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
         except:

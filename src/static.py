@@ -32,7 +32,7 @@ def load(app):
             if rt["default"]:
                 app.default_rank_type_point_types = rt["point_types"]
             app.rank_type_point_types[rt["id"]] = rt["point_types"]
-            app.ranktypes[rt["id"]] = []
+            app.ranktypes[rt["id"]] = {}
             for t in rt["details"]:
                 if t["discord_role_id"] is None:
                     t["discord_role_id"] = 0

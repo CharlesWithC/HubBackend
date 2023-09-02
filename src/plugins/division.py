@@ -49,9 +49,21 @@ async def get_division(request: Request, response: Response, authorization: str 
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM user WHERE roles LIKE '%,{division_role_id},%'")
         usertot = nint(await app.db.fetchone(dhrid))
 
-        await app.db.execute(dhrid, f"SELECT COUNT(*) FROM division WHERE status = 1 AND logid >= 0 AND divisionid = {division_id} AND request_timestamp >= {after} AND request_timestamp <= {before}")
-        jobstot = nint(await app.db.fetchone(dhrid))
-        pointtot = jobstot * division_point
+        await app.db.execute(dhrid, f"SELECT division.divisionid, COUNT(dlog.distance), SUM(dlog.distance) \
+            FROM dlog \
+            INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 AND division.divisionid = {division_id} \
+            WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
+            GROUP BY division.divisionid")
+        t = await app.db.fetchall(dhrid)
+        if len(t) == 0:
+            pointtot = 0
+        else:
+            jobstot = nint(t[0][1])
+            distance = nint(t[0][2])
+            if division_point["mode"] == "static":
+                pointtot = jobstot * division_point["value"]
+            elif division_point["mode"] == "ratio":
+                pointtot = distance * division_point["value"]
 
         await app.db.execute(dhrid, f"SELECT SUM(dlog.distance), SUM(dlog.fuel) FROM division \
                              LEFT JOIN dlog ON division.logid = dlog.logid \

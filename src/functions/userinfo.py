@@ -484,6 +484,7 @@ async def GetPoints(request, userid, point_types = ["distance", "challenge", "di
         INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
         WHERE dlog.logid >= 0 AND dlog.userid = {userid} \
         GROUP BY dlog.userid, division.divisionid")
+    o = await app.db.fetchall(dhrid)
     for oo in o:
         if oo[0] not in userdivision.keys():
             userdivision[oo[0]] = 0
@@ -492,6 +493,8 @@ async def GetPoints(request, userid, point_types = ["distance", "challenge", "di
                 userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
             elif app.division_points[oo[1]]["mode"] == "ratio":
                 userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+    for (key, item) in userdivision.items():
+        userdivision[key] = int(item)
 
     # calculate bonus
     userbonus = {}

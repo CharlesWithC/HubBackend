@@ -3489,6 +3489,103 @@
                 "responses": {}
             }
         },
+        "/trucky/update": {
+            "post": {
+                "summary": "Trucky Webhook",
+                "tags": [
+                    "trucky"
+                ],
+                "operationId": "post_trucky_update",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "object": {
+                                        "description": "Object",
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "description": "Type",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Data",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "object",
+                                "type",
+                                "data"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
+        "/trucky/driver/{userid}": {
+            "put": {
+                "summary": "Add Driver to Trucky Company",
+                "tags": [
+                    "trucky"
+                ],
+                "operationId": "put_trucky_driver",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "summary": "Delete Driver from Trucky Company",
+                "tags": [
+                    "trucky"
+                ],
+                "operationId": "delete_trucky_driver",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/announcements/types": {
             "get": {
                 "summary": "Get Announcement Types",
@@ -7988,6 +8085,10 @@
         {
             "name": "tracksim",
             "description": "TrackSim Integration"
+        },
+        {
+            "name": "trucky",
+            "description": "Trucky Integration"
         },
         {
             "name": "announcement",

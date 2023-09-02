@@ -329,7 +329,7 @@ async def AuditLog(request, uid, text, discord_message_only = False):
 async def AutoMessage(app, meta, setvar):
     def newsetvar(val):
         t = setvar(val)
-        t = regex_replace(val, app.config.discord_message_replace_rules)
+        t = regex_replace(t, app.config.discord_guild_message_replace_rules.__dict__)
         return t
     try:
         embeds = []

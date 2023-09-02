@@ -193,6 +193,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
             WHERE dlog.logid >= {firstlogid} AND dlog.logid <= {lastlogid} AND dlog.logid >= 0 AND dlog.userid >= 0 \
             GROUP BY dlog.userid, division.divisionid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
                 continue
@@ -203,6 +204,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     userdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
                 elif app.division_points[oo[1]]["mode"] == "ratio":
                     userdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+        for (key, item) in userdivision.items():
+            userdivision[key] = int(item)
 
         # calculate bonus
         await app.db.execute(dhrid, f"SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 AND timestamp >= {after} AND timestamp <= {before} GROUP BY userid")
@@ -302,6 +305,7 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
             INNER JOIN division ON dlog.logid = division.logid AND division.status = 1 \
             WHERE dlog.logid >= 0 AND dlog.userid >= 0 \
             GROUP BY dlog.userid, division.divisionid")
+        o = await app.db.fetchall(dhrid)
         for oo in o:
             if oo[0] not in allusers:
                 continue
@@ -312,6 +316,8 @@ async def get_leaderboard(request: Request, response: Response, authorization: s
                     nluserdivision[oo[0]] += oo[2] * app.division_points[oo[1]]["value"]
                 elif app.division_points[oo[1]]["mode"] == "ratio":
                     nluserdivision[oo[0]] += oo[3] * app.division_points[oo[1]]["value"]
+        for (key, item) in nluserdivision.items():
+            nluserdivision[key] = int(item)
 
         # calculate bonus
         await app.db.execute(dhrid, "SELECT userid, SUM(point) FROM bonus_point WHERE userid >= 0 GROUP BY userid")

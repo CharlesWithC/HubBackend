@@ -21,7 +21,7 @@ async def get_roles(request: Request):
 
 async def get_ranks(request: Request):
     app = request.app
-    return app.config.ranks
+    return app.config.rank_types
 
 async def get_perms(request: Request):
     app = request.app

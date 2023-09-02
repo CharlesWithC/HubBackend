@@ -179,7 +179,7 @@ async def patch_discord(request: Request, response: Response, authorization: str
 
             await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
-            if t[0][0] is not None and "@" in t[0][0]:
+            if t[0][0] is None or "@" not in t[0][0] or app.config.sync_discord_email:
                 await app.db.execute(dhrid, f"UPDATE user SET email = '{email}' WHERE uid = {uid}")
                 await app.db.commit(dhrid)
 

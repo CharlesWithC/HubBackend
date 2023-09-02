@@ -2,10 +2,8 @@
 # Author: @CharlesWithC
 
 import json
-import traceback
 
 import multilang as ml
-from api import tracebackHandler
 from functions import arequests
 
 
@@ -33,7 +31,6 @@ async def add_driver(request, steamid):
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
             except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
@@ -63,7 +60,6 @@ async def remove_driver(request, steamid):
                 else:
                     tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
             except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
                 tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
         tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"

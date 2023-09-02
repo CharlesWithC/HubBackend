@@ -78,8 +78,12 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
             discord_roles = d["roles"]
             current_discord_roles = []
             for role in discord_roles:
-                if role in list(app.rankrole.values()):
-                    current_discord_roles.append(role)
+                for rank_type in app.config.rank_types:
+                    if not rank_type["default"]:
+                        continue
+                    for rank in rank_type["details"]:
+                        if str(role) == str(rank["discord_role_id"]):
+                            current_discord_roles.append(role)
             if rankroleid in current_discord_roles:
                 response.status_code = 409
                 return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
@@ -175,8 +179,12 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
             discord_roles = d["roles"]
             current_discord_roles = []
             for role in discord_roles:
-                if role in list(app.rankrole.values()):
-                    current_discord_roles.append(role)
+                for rank_type in app.config.rank_types:
+                    if rank_type["id"] != rank_type_id:
+                        continue
+                    for rank in rank_type["details"]:
+                        if str(role) == str(rank["discord_role_id"]):
+                            current_discord_roles.append(role)
             if rankroleid in current_discord_roles:
                 response.status_code = 409
                 return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
@@ -457,8 +465,10 @@ async def post_resign(request: Request, response: Response, authorization: str =
                 discord_roles = d["roles"]
                 current_discord_roles = []
                 for role in discord_roles:
-                    if role in list(app.rankrole.values()):
-                        current_discord_roles.append(role)
+                    for rank_type in app.config.rank_types:
+                        for rank in rank_type["details"]:
+                            if str(role) == str(rank["discord_role_id"]):
+                                current_discord_roles.append(role)
                 for role in current_discord_roles:
                     opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{role}', None, headers, f"remove_role,{role},{discordid}")
         except:
