@@ -125,7 +125,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     tracker_app_error = ""
     if checkPerm(app, addedroles, "driver"):
-        tracker_app_error = add_driver(app.config.tracker, steamid)
+        tracker_app_error = await add_driver(request, steamid)
 
         if tracker_app_error != "":
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -150,7 +150,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                         pass
 
     if checkPerm(app, removedroles, "driver"):
-        tracker_app_error = remove_driver(app.config.tracker, steamid)
+        tracker_app_error = await remove_driver(request, steamid)
 
         if tracker_app_error != "":
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -317,7 +317,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
-    tracker_app_error = remove_driver(app.config.tracker, steamid)
+    tracker_app_error = await remove_driver(request, steamid)
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

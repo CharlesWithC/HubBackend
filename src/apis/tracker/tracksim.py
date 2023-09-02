@@ -122,7 +122,7 @@ async def post_update(response: Response, request: Request):
 
     webhook_signature = request.headers.get('tracksim-signature')
 
-    if request.client.host not in app.config.allowed_tracker_ips:
+    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed"}
@@ -923,7 +923,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = add_driver(app.config.tracker, userinfo["steamid"])
+    tracker_app_error = await add_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -962,7 +962,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = remove_driver(app.config.tracker, userinfo["steamid"])
+    tracker_app_error = await remove_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

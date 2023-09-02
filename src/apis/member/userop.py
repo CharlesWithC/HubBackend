@@ -45,11 +45,11 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
         return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
 
     totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
-    rankroleid = point2rank(app, "default", totalpnt)["discord_role_id"]
-
-    if rankroleid == -1 or rankroleid is None:
+    rankroleid = point2rank(app, "default", totalpnt)
+    if rankroleid is None:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
+    rankroleid = rankroleid["discord_role_id"]
 
     await UpdateRoleConnection(request, discordid)
 
@@ -146,11 +146,11 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
         return {"error": ml.tr(request, "connection_not_found", var = {"app": "Discord"}, force_lang = au["language"])}
 
     totalpnt = await GetPoints(request, userid, app.rank_type_point_types[rank_type_id])
-    rankroleid = point2rank(app, rank_type_id, totalpnt)["discord_role_id"]
-
-    if rankroleid == -1 or rankroleid is None:
+    rankroleid = point2rank(app, rank_type_id, totalpnt)
+    if rankroleid is None:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
+    rankroleid = rankroleid["discord_role_id"]
 
     await UpdateRoleConnection(request, discordid)
 
@@ -314,11 +314,11 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
         streak = 0
 
     totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
-    bonus = point2rank(app, "default", totalpnt)["daily_bonus"]
-
-    if bonus is None:
+    bonus = point2rank(app, "default", totalpnt)
+    if point2rank(app, "default", totalpnt) is None:
         response.status_code = 404
         return {"error": ml.tr(request, "daily_bonus_not_available", force_lang = au["language"])}
+    bonus = bonus["daily_bonus"]
 
     bonuspnt = bonus["base"]
 
@@ -429,7 +429,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
-    tracker_app_error = remove_driver(app.config.tracker, steamid)
+    tracker_app_error = await remove_driver(request, steamid)
 
     if tracker_app_error != "":
         await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

@@ -187,6 +187,7 @@ EN_STRINGTABLE = {
     "fuel": "Fuel",
     "net_profit": "Net Profit",
     "xp_earned": "XP Earned",
+    "time_spent": "Time Spent",
     "single_player": "Single Player",
     "scs_convoy": "SCS Convoy",
     "delivery_log_not_found": "Delivery log not found.",

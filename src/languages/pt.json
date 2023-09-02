@@ -100,6 +100,7 @@
     "fuel": "Combustível",
     "net_profit": "Lucro líquido",
     "xp_earned": "XP ganho",
+    "time_spent": "Tempo gasto",
     "single_player": "Único jogador",
     "scs_convoy": "Comboio SCS",
     "delivery_log_not_found": "Registro de entrega não encontrado.",
@@ -197,7 +198,7 @@
     "user_not_voted": "Você ainda não votou.",
     "new_poll_with_title": "Nova enquete: `{title}`",
     "new_poll": "Nova enquete",
-    "choices": "Choices",
+    "choices": "Escolhas",
     "poll_result": "Resultado da enquete",
     "poll_ended_with_title": "Enquete encerrada: `{title}`",
 

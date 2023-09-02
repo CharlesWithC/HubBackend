@@ -1,7 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
-import asyncio
+import copy
 import hashlib
 import hmac
 import json
@@ -10,7 +10,7 @@ import time
 import traceback
 from datetime import datetime
 from random import randint
-import copy
+from urllib.parse import parse_qs
 
 from fastapi import Header, Request, Response
 
@@ -19,8 +19,11 @@ from api import tracebackHandler
 from functions import *
 from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
 
+
 def convert_format(data):
     job_event_type_mapping = {"job_completed": "job.delivered", "job_canceled": "job.cancelled"}
+    if data["event"] not in job_event_type_mapping.keys():
+        return None
     job_event_type = job_event_type_mapping[data["event"]]
 
     d = copy.deepcopy(data["data"])
@@ -33,20 +36,22 @@ def convert_format(data):
     elif d["distance_unit"] == "km":
         d["planned_distance_km"] = d["planned_distance"]
         d["max_speed_kmh"] = d["max_speed"]
+    d["average_speed_kmh"] = round((d["real_driven_distance_km"] / (d["real_driving_time_seconds"] / 3600)) / d["max_map_scale"])
     if d["volume_unit"] == "gal":
         if d["fuel_used_l"] is None:
             d["fuel_used_l"] = d["fuel_used"] * 3.785412
     elif d["volume_unit"] == "l":
-        d["fuel_used_l"] = d["fuel_used"] * 3.785412
+        d["fuel_used_l"] = d["fuel_used"]
     multiplayer = None
     if d["game_mode"] != "sp":
         multiplayer = {"type": d["game_mode"], "meta": {"server": d["server"]}}
     cargo_details = d["cargo_definition"]
-    del cargo_details["id"], cargo_details["name"], cargo_details["in_game_id"], cargo_details["game_id"], cargo_details["localized_names"]
+    if cargo_details is not None:
+        del cargo_details["id"], cargo_details["name"], cargo_details["in_game_id"], cargo_details["game_id"], cargo_details["localized_names"]
     events = []
     event_type_mapping = {"teleport": "teleport", "truck_fixed": "repair", "job_resumed": "job.resumed", "fined": "fine", " tollgate_paid": "tollgate", "collision": "collision", "transport_used": "transport", "refuel": "refuel"}
     # transport needs to be handled manually
-    events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.started", "meta": {"autoLoaded": d["auto_load"]}})
+    events.append({"location": None, "real_time": d["started_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["started_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.started", "meta": {"autoLoaded": d["auto_load"]}})
     for event in d["events"]:
         et = event_type_mapping[event["event_type"]]
         meta = {}
@@ -76,6 +81,11 @@ def convert_format(data):
                 "id": d["id"],
                 "uuid": None, # not for trucky
                 "object": "job",
+                "driver": {
+                    "steam_id": d["driver"]["steam_profile"]["steam_id"],
+                    "username": d["driver"]["name"],
+                    "profile_photo_url": d["driver"]["avatar_url"]
+                },
                 "start_time": d["started_at"].split(".")[0]+"Z",
                 "stop_time": d["completed_at"].split(".")[0]+"Z" if d["completed_at"] is not None else d["cancelled_at"].split(".")[0]+"Z",
                 "time_spent": d["real_driving_time_seconds"],
@@ -97,6 +107,7 @@ def convert_format(data):
                     "short_name": "eut2" if d["game"]["code"] == "ETS2" else "ats",
                     "language": None, # not for trucky
                     "timezone": d["timezone"], # trucky exclusive
+                    "max_map_scale": d["max_map_scale"], # trucky exclusive
                     "had_police_enabled": None # not for trucky
                 },
                 "multiplayer": multiplayer,
@@ -164,31 +175,35 @@ async def post_update(response: Response, request: Request):
 
     webhook_signature = request.headers.get('X-Signature-SHA256')
 
-    if request.client.host not in app.config.allowed_tracker_ips:
+    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "Trucky", "ip": request.client.host}))
         return {"error": "Validation failed"}
 
+    raw_body = await request.body()
+    raw_body_str = raw_body.decode("utf-8")
+
     if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
-        d = await request.form()
+        d = parse_qs(raw_body_str)
     elif request.headers["Content-Type"] == "application/json":
-        d = await request.json()
+        d = json.loads(raw_body_str)
     else:
         response.status_code = 400
         return {"error": "Unsupported content type"}
     if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
-        sig = hmac.new(app.config.tracker_webhook_secret.encode(), request.data, hashlib.sha256).hexdigest()
+        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
         if sig != webhook_signature:
             response.status_code = 403
             await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
             return {"error": "Validation failed"}
 
+    original_data = copy.deepcopy(d)
     d = convert_format(d)
-
-    e = d["type"]
-    if e not in ["job.delivered", "job.cancelled"]:
+    if d is None:
         response.status_code = 400
         return {"error": "Only job_completed and job_canceled events are accepted."}
+
+    e = d["type"]
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
     await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid FROM user WHERE steamid = {steamid}")
@@ -204,7 +219,7 @@ async def post_update(response: Response, request: Request):
 
     duplicate = False # NOTE only for debugging purpose
     logid = -1
-    await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 2")
+    await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 3")
     o = await app.db.fetchall(dhrid)
     if len(o) > 0:
         duplicate = True
@@ -301,8 +316,8 @@ async def post_update(response: Response, request: Request):
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         logid = (await app.db.fetchone(dhrid))[0]
 
-        if "route" in app.config.plugins:
-            asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid, request))
+        # if "route" in app.config.plugins: # not for trucky
+        #     asyncio.create_task(FetchRoute(app, munitint, userid, logid, trackerid, request))
 
         uid = (await GetUserInfo(request, userid = userid))["uid"]
         await notification(request, "dlog", uid, ml.tr(request, "job_submitted", var = {"logid": logid}, force_lang = await GetUserLanguage(request, uid)), no_discord_notification = True)
@@ -422,7 +437,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.ctr(request, "distance"), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
                                         {"name": ml.ctr(request, "fuel"), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.ctr(request, "xp_earned"), "value": "/", "inline": True}],
+                                        {"name": ml.ctr(request, "time_spent"), "value": original_data["data"]["duration"], "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
@@ -436,7 +451,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.ctr(request, "distance"), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
                                         {"name": ml.ctr(request, "fuel"), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.ctr(request, "xp_earned"), "value": "/", "inline": True}],
+                                        {"name": ml.ctr(request, "time_spent"), "value": original_data["data"]["duration"], "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     try:
@@ -464,7 +479,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
                                         {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": "/", "inline": True}],
+                                        {"name": ml.tr(request, "time_spent", force_lang = language), "value": original_data["data"]["duration"], "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
@@ -478,7 +493,7 @@ async def post_update(response: Response, request: Request):
                                         {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
                                         {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": "/", "inline": True}],
+                                        {"name": ml.tr(request, "time_spent", force_lang = language), "value": original_data["data"]["duration"], "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
@@ -910,7 +925,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = add_driver(app.config.tracker, userinfo["steamid"])
+    tracker_app_error = await add_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -949,7 +964,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = remove_driver(app.config.tracker, userinfo["steamid"])
+    tracker_app_error = await remove_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

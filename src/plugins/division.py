@@ -56,6 +56,7 @@ async def get_division(request: Request, response: Response, authorization: str 
             GROUP BY division.divisionid")
         t = await app.db.fetchall(dhrid)
         if len(t) == 0:
+            jobstot = 0
             pointtot = 0
         else:
             jobstot = nint(t[0][1])
