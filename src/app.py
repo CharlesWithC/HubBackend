@@ -231,6 +231,8 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         routes += apis.routes_tracksim
         if "route" in app.config.plugins:
             routes += apis.routes_tracksim_route
+    elif app.config.tracker == "trucky":
+        routes += apis.routes_trucky
     if "banner" in app.config.plugins:
         routes += apis.member.routes_banner
     if "announcement" in app.config.plugins:

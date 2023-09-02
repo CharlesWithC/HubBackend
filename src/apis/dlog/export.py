@@ -61,9 +61,9 @@ async def get_export(request: Request, response: Response, authorization: str = 
     try:
         f = BytesIO()
         if not include_ids:
-            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp\n")
         else:
-            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park\n")
+            f.write(b"logid, tracker, trackerid, game, time_submitted, start_time, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp\n")
         await app.db.extend_conn(dhrid, 60)
         await app.db.execute(dhrid, f"SELECT dlog.logid, dlog.userid, dlog.topspeed, dlog.unit, dlog.profit, dlog.unit, dlog.fuel, dlog.distance, dlog.data, dlog.isdelivered, dlog.timestamp, division.divisionid, challenge_info.challengeid, challenge.title, dlog.tracker_type FROM dlog \
             LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
@@ -113,6 +113,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
             tracker = "navio"
         elif tracker_type == 2:
             tracker = "tracksim"
+        elif tracker_type == 3:
+            tracker = "trucky"
         trackerid = 0
         game = ""
         if dd[3] == 1:
@@ -158,6 +160,8 @@ async def get_export(request: Request, response: Response, authorization: str = 
         license_plate = ""
         license_plate_country = ""
         license_plate_country_id = ""
+
+        warp = 0
 
         fuel = dd[6]
         avg_fuel = 0
@@ -263,21 +267,27 @@ async def get_export(request: Request, response: Response, authorization: str = 
 
                 is_special = int(bool(data["is_special"]))
                 is_late = int(bool(data["is_late"]))
-                if "had_police_enabled" in data["game"].keys():
-                    has_police_enabled = int(bool(data["game"]["had_police_enabled"]))
-                elif "has_police_enabled" in data["game"].keys():
-                    has_police_enabled = int(bool(data["game"]["has_police_enabled"]))
+                try:
+                    if "had_police_enabled" in data["game"].keys():
+                        has_police_enabled = int(bool(data["game"]["had_police_enabled"]))
+                    elif "has_police_enabled" in data["game"].keys():
+                        has_police_enabled = int(bool(data["game"]["has_police_enabled"]))
+                except: # trucky does not have this data
+                    has_police_enabled = -1
                 market = data["market"]
                 if data["multiplayer"] is not None:
                     multiplayer = data["multiplayer"]["type"]
+
+                if "warp" in data.keys():
+                    warp = data["warp"]
 
             except Exception as exc:
                 await tracebackHandler(request, exc, f"Regarding dlog #{logid}\n" + traceback.format_exc())
 
         if not include_ids:
-            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_city, destination_company, destination_city, logged_distance, planned_distance, reported_distance, cargo, cargo_mass, cargo_damage, truck_brand, truck_name, license_plate, license_plate_country, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, challenge, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
         else:
-            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park]
+            data = [logid, tracker, trackerid, game, time_submitted, after, stop_time, is_delivered, user_id, username, source_company, source_company_id, source_city, source_city_id, destination_company, destination_company_id, destination_city, destination_city_id, logged_distance, planned_distance, reported_distance, cargo, cargo_id, cargo_mass, cargo_damage, truck_brand, truck_brand_id, truck_name, truck_id, license_plate, license_plate_country, license_plate_country_id, fuel, avg_fuel, adblue, max_speed, avg_speed, revenue, expense, offence, net_profit, xp, division, division_id, challenge, challenge_id, is_special, is_late, has_police_enabled, market, multiplayer, auto_load, auto_park, warp]
 
         for i in range(len(data)):
             if data[i] is None:

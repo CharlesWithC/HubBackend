@@ -12,6 +12,8 @@ def load(app):
     app.tracker = ""
     if app.config.tracker == "tracksim":
         app.tracker = "TrackSim"
+    elif app.config.tracker == "trucky":
+        app.tracker = "Trucky"
 
     app.roles = {} # sorted based on order_id
     sroles = app.config.roles
@@ -401,8 +403,8 @@ EN_STRINGTABLE = {
     "updated_config": "Updated config",
     "reloaded_config": "Reloaded config",
     "restarted_service": "Restarted service",
-    "rejected_tracksim_webhook_post_ip": "Rejected TrackSim webhook update from {ip} (IP not whitelisted)",
-    "rejected_tracksim_webhook_post_signature": "Rejected TrackSim webhook update from {ip} (Invalid signature)",
+    "rejected_tracker_webhook_post_ip": "Rejected {tracker} webhook update from {ip} (IP not whitelisted)",
+    "rejected_tracker_webhook_post_signature": "Rejected {tracker} webhook update from {ip} (Invalid signature)",
     "delivery_blocked_due_to_rules": "Delivery ({tracker} ID: `{trackerid}`) blocked due to rules.\nViolation: `{rule_key}` is `{rule_value}`.",
     "route_already_fetched": "Route is already fetched.",
     "tracker_must_be": "Tracker must be {tracker}.",

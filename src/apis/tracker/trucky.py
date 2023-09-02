@@ -10,6 +10,7 @@ import time
 import traceback
 from datetime import datetime
 from random import randint
+import copy
 
 from fastapi import Header, Request, Response
 
@@ -18,111 +19,154 @@ from api import tracebackHandler
 from functions import *
 from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
 
-async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
-    try:
-        r = await arequests.get(app, f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {app.config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
-    except:
-        return {"error": f"{app.tracker} {ml.ctr(request, 'api_timeout')}"}
-    if r.status_code != 200:
-        try:
-            resp = json.loads(r.text)
-            if "error" in resp.keys() and resp["error"] is not None:
-                return {"error": app.tracker + " " + resp["error"]}
-            elif "message" in resp.keys() and resp["message"] is not None:
-                return {"error": app.tracker + " " + resp["message"]}
-            elif len(r.text) <= 64:
-                return {"error": app.tracker + " " + r.text}
-            else:
-                return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
-        except Exception as exc:
-            await tracebackHandler(request, exc, traceback.format_exc())
-            return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
-    d = json.loads(r.text)
-    t = []
-    for i in range(len(d)-1):
-        # auto complete route
-        dup = 1
-        if int(d[i+1]["time"]-d[i]["time"]) >= 1:
-            dup = min((d[i+1]["time"]-d[i]["time"]) * 2, 6)
-        if dup == 1:
-            t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
-        else:
-            sx = float(d[i]["x"])
-            sz = float(d[i]["z"])
-            tx = float(d[i+1]["x"])
-            tz = float(d[i+1]["z"])
-            if abs(tx - sx) <= 50 and abs(tz - sz) <= 50:
-                dx = (tx - sx) / dup
-                dz = (tz - sz) / dup
-                if dx <= 10 and dz <= 10:
-                    t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
-                else:
-                    for _ in range(dup):
-                        t.append((sx, 0, sz))
-                        sx += dx
-                        sz += dz
-            else:
-                t.append((float(d[i]["x"]), 0, float(d[i]["z"])))
+def convert_format(data):
+    job_event_type_mapping = {"job_completed": "job.delivered", "job_canceled": "job.cancelled"}
+    job_event_type = job_event_type_mapping[data["event"]]
 
-    if len(d) > 0:
-        t.append((float(d[-1]["x"]), 0, float(d[-1]["z"])))
+    d = copy.deepcopy(data["data"])
+    # first convert data
+    if d["distance_unit"] == "mi":
+        if d["planned_distance_km"] is None:
+            d["planned_distance_km"] = d["planned_distance"] * 1.609344
+        if d["max_speed_kmh"] is None:
+            d["max_speed_kmh"] = d["max_speed"] * 1.609344
+    elif d["distance_unit"] == "km":
+        d["planned_distance_km"] = d["planned_distance"]
+        d["max_speed_kmh"] = d["max_speed"]
+    if d["volume_unit"] == "gal":
+        if d["fuel_used_l"] is None:
+            d["fuel_used_l"] = d["fuel_used"] * 3.785412
+    elif d["volume_unit"] == "l":
+        d["fuel_used_l"] = d["fuel_used"] * 3.785412
+    multiplayer = None
+    if d["game_mode"] != "sp":
+        multiplayer = {"type": d["game_mode"], "meta": {"server": d["server"]}}
+    cargo_details = d["cargo_definition"]
+    del cargo_details["id"], cargo_details["name"], cargo_details["in_game_id"], cargo_details["game_id"], cargo_details["localized_names"]
+    events = []
+    event_type_mapping = {"teleport": "teleport", "truck_fixed": "repair", "job_resumed": "job.resumed", "fined": "fine", " tollgate_paid": "tollgate", "collision": "collision", "transport_used": "transport", "refuel": "refuel"}
+    # transport needs to be handled manually
+    events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.started", "meta": {"autoLoaded": d["auto_load"]}})
+    for event in d["events"]:
+        et = event_type_mapping[event["event_type"]]
+        meta = {}
+        if et == "fine":
+            meta = event["attributes"]
+        elif et == "tollgate":
+            meta = {"cost": event["attributes"]["amount"]}
+        elif et == "collision":
+            meta = {"cargo_damage": event["attributes"]["damage"]["cargoDamage"], "chassis_damage": event["attributes"]["damage"]["chassisDamage"], "trailers_damage": event["attributes"]["damage"]["trailersDamage"], "total_damage_difference": event["attributes"]["damage"]["totalDamageDifference"]}
+        elif et == "transport":
+            et = event["attributes"]["transport_type"]
+            meta = {"cost": event["attributes"]["amount"], "source_id": event["attributes"]["source_id"], "source_name": event["attributes"]["source"], "target_id": event["attributes"]["target_id"], "target_name": event["attributes"]["target"]}
+        elif et == "refuel":
+            meta = {"amount": event["attributes"]["amount"]}
+        events.append({"location": {"x": event["x"], "y": event["y"], "z": event["z"]}, "real_time": event["created_at"].split(".")[0]+"Z", "time": int(datetime.strptime(event["created_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": et, "meta": meta})
+    if job_event_type == "job.delivered":
+        events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.delivered", "meta": {"revenue": d["income"], "revenue_details": d["income_details"], "earnedXP": None, "cargoDamage": d["cargo_damage"], "distance": d["real_driven_distance_km"], "timeTaken": d["real_driving_time_seconds"], "autoParked": d["auto_park"]}}) # revenue_details is trucky exclusive
+    elif job_event_type == "job.cancelled":
+        events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.cancelled", "meta": {"penalty": d["income"]}})
+    if d["warp"] is None:
+        d["warp"] = 0
+    return {
+        "object": "event",
+        "type": job_event_type,
+        "data": {
+            "object": {
+                "id": d["id"],
+                "uuid": None, # not for trucky
+                "object": "job",
+                "start_time": d["started_at"].split(".")[0]+"Z",
+                "stop_time": d["completed_at"].split(".")[0]+"Z" if d["completed_at"] is not None else d["cancelled_at"].split(".")[0]+"Z",
+                "time_spent": d["real_driving_time_seconds"],
+                "planned_distance": d["planned_distance_km"],
+                "driven_distance": d["real_driven_distance_km"],
+                "adblue_used": None, # not for trucky
+                "fuel_used": d["fuel_used_l"],
+                "is_special": d["special_job"],
+                "is_late": d["late_delivery"],
+                "market": d["market"],
+                "cargo": {
+                    "unique_id": d["cargo_id"],
+                    "name": d["cargo_name"],
+                    "mass": d["cargo_unit_count"] * d["cargo_unit_mass"],
+                    "damage": d["cargo_damage"],
+                    "details": cargo_details
+                },
+                "game": {
+                    "short_name": "eut2" if d["game"]["code"] == "ETS2" else "ats",
+                    "language": None, # not for trucky
+                    "timezone": d["timezone"], # trucky exclusive
+                    "had_police_enabled": None # not for trucky
+                },
+                "multiplayer": multiplayer,
+                "source_city": {
+                    "unique_id": d["source_city_id"],
+                    "name": d["source_city_name"]
+                },
+                "source_company": {
+                    "unique_id": d["source_company_id"],
+                    "name": d["source_company_name"]
+                },
+                "destination_city": {
+                    "unique_id": d["destination_city_id"],
+                    "name": d["destination_city_name"]
+                },
+                "destination_company": {
+                    "unique_id": d["destination_company_id"],
+                    "name": d["destination_company_name"]
+                },
+                "truck": {
+                    "unique_id": d["vehicle_in_game_id"],
+                    "name": d["vehicle_model_name"],
+                    "brand": {
+                        "unique_id": d["vehicle_in_game_brand_id"],
+                        "name": d["vehicle_brand_name"]
+                    },
+                    "odometer": d["vehicle_odometer_end"],
+                    "initial_odometer": d["vehicle_odometer_start"],
+                    "wheel_count": None, # not for trucky
+                    "license_plate": None, # not for trucky
+                    "license_plate_country": None, # not for trucky
+                    "current_damage": {
+                        "all": d["vehicle_damage"]
+                    },
+                    "total_damage": None, # not for trucky
+                    "top_speed": round(d["max_speed_kmh"] / 3.6, 2),
+                    "average_speed": round(d["average_speed_kmh"] / 3.6, 2)
+                },
+                "trailers": [
+                    {
+                        "name": d["trailer_name"],
+                        "body_type": d["trailer_body_type"],
+                        "chain_type": d["trailer_chain_type"],
+                        "wheel_count": None, # not for trucky
+                        "brand": None, # not for trucky
+                        "license_plate": None, # not for trucky
+                        "license_plate_country": None, # not for trucky
+                        "current_damage": {
+                            "all": d["trailers_damage"]
+                        },
+                        "total_damage": None # not for trucky
+                    }
+                ],
+                "events": events,
+                "mods": [],
+                "warp": d["warp"] # trucky exclusive
+            }
+        }
+    }
 
-    data = f"{gameid},,v5;"
-    cnt = 0
-    lastx = 0
-    lastz = 0
-    idle = 0
-    for tt in t:
-        if round(tt[0]) - lastx == 0 and round(tt[2]) - lastz == 0:
-            if cnt != 0:
-                idle += 1
-            continue
-        else:
-            if idle > 0:
-                data += f"^{idle}^"
-                idle = 0
-        st = "ZYXWVUTSRQPONMLKJIHGFEDCBA0abcdefghijklmnopqrstuvwxyz"
-        rx = (round(tt[0]) - lastx) + 26
-        rz = (round(tt[2]) - lastz) + 26
-        if rx >= 0 and rz >= 0 and rx <= 52 and rz <= 52:
-            # using this method to compress data can save 60+% storage comparing with v4
-            data += f"{st[rx]}{st[rz]}"
-        else:
-            data += f";{b62encode(round(tt[0]) - lastx)},{b62encode(round(tt[2]) - lastz)};"
-        lastx = round(tt[0])
-        lastz = round(tt[2])
-        cnt += 1
-
-    if dhrid is None:
-        dhrid = genrid()
-        await app.db.new_conn(dhrid, extra_time = 5)
-
-    for _ in range(3):
-        try:
-            await app.db.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-            p = await app.db.fetchall(dhrid)
-            if len(p) > 0:
-                break
-
-            await app.db.execute(dhrid, f"INSERT INTO telemetry VALUES ({logid}, '', {userid}, '{compress(data)}')")
-            await app.db.commit(dhrid)
-            await app.db.close_conn(dhrid)
-            break
-        except:
-            dhrid = genrid()
-            await app.db.new_conn(dhrid, extra_time = 5)
-            continue
-
-    return True
-
-async def post_update(response: Response, request: Request, TrackSim_Signature: str = Header(None)):
+async def post_update(response: Response, request: Request):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
+    webhook_signature = request.headers.get('X-Signature-SHA256')
+
     if request.client.host not in app.config.allowed_tracker_ips:
         response.status_code = 403
-        await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_ip", var = {"ip": request.client.host}))
+        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "Trucky", "ip": request.client.host}))
         return {"error": "Validation failed"}
 
     if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
@@ -133,16 +177,18 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         response.status_code = 400
         return {"error": "Unsupported content type"}
     if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
-        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=json.dumps(d).encode(), digestmod=hashlib.sha256).hexdigest()
-        if sig != TrackSim_Signature:
+        sig = hmac.new(app.config.tracker_webhook_secret.encode(), request.data, hashlib.sha256).hexdigest()
+        if sig != webhook_signature:
             response.status_code = 403
-            await AuditLog(request, -999, ml.ctr(request, "rejected_tracksim_webhook_post_signature", var = {"ip": request.client.host}))
+            await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
             return {"error": "Validation failed"}
 
-    if d["object"] != "event":
-        response.status_code = 400
-        return {"error": "Only events are accepted."}
+    d = convert_format(d)
+
     e = d["type"]
+    if e not in ["job.delivered", "job.cancelled"]:
+        response.status_code = 400
+        return {"error": "Only job_completed and job_canceled events are accepted."}
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
     await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid FROM user WHERE steamid = {steamid}")
@@ -173,13 +219,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
     if not game.startswith("e"):
         munitint = 2 # dollar
     revenue = 0
-    xp = 0
     isdelivered = 0
     offence = 0
     if e == "job.delivered":
         revenue = float(d["data"]["object"]["events"][-1]["meta"]["revenue"])
         isdelivered = 1
-        xp = d["data"]["object"]["events"][-1]["meta"]["earnedXP"]
         meta_distance = float(d["data"]["object"]["events"][-1]["meta"]["distance"])
         if driven_distance < 0 or driven_distance > meta_distance * 1.5:
             driven_distance = 0
@@ -201,6 +245,8 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
             if eve["meta"]["max_speed"] > eve["meta"]["speed_limit"]:
                 has_overspeed = True
     revenue = revenue - offence - totalexpense
+
+    warp = d["data"]["object"]["warp"]
 
     if driven_distance < 0:
         driven_distance = 0
@@ -233,13 +279,13 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         except:
             pass
         try:
-            if "max_xp" in delivery_rules.keys() and xp > int(delivery_rules["max_xp"]):
+            if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]):
                 if action == "block":
                     delivery_rule_ok = False
-                    delivery_rule_key = "max_xp"
-                    delivery_rule_value = str(xp)
+                    delivery_rule_key = "max_warp"
+                    delivery_rule_value = str(warp)
                 elif action == "drop":
-                    d["data"]["object"]["events"][-1]["meta"]["earnedXP"] = 0
+                    mod_revenue = 0
         except:
             pass
 
@@ -250,7 +296,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
         return {"error": "Blocked due to delivery rules."}
 
     if not duplicate:
-        await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")
+        await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 3, 0)")
         await app.db.commit(dhrid)
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
         logid = (await app.db.fetchone(dhrid))[0]
@@ -376,7 +422,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.ctr(request, "distance"), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
                                         {"name": ml.ctr(request, "fuel"), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
+                                        {"name": ml.ctr(request, "xp_earned"), "value": "/", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
@@ -390,7 +436,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.ctr(request, "distance"), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
                                         {"name": ml.ctr(request, "fuel"), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.ctr(request, "net_profit"), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.ctr(request, "xp_earned"), "value": f"{tseparator(xp)}", "inline": True}],
+                                        {"name": ml.ctr(request, "xp_earned"), "value": "/", "inline": True}],
                                     "footer": {"text": multiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     try:
@@ -418,7 +464,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance * 0.621371))}mi", "inline": True},
                                         {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used * 0.26417205))} gal", "inline": True},
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": "/", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     elif app.config.distance_unit == "metric":
@@ -432,7 +478,7 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                                         {"name": ml.tr(request, "distance", force_lang = language), "value": f"{tseparator(int(driven_distance))}km", "inline": True},
                                         {"name": ml.tr(request, "fuel", force_lang = language), "value": f"{tseparator(int(fuel_used))} l", "inline": True},
                                         {"name": ml.tr(request, "net_profit", force_lang = language), "value": f"{munit}{tseparator(int(revenue))}", "inline": True},
-                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": f"{tseparator(xp)}", "inline": True}],
+                                        {"name": ml.tr(request, "xp_earned", force_lang = language), "value": "/", "inline": True}],
                                     "footer": {"text": umultiplayer}, "color": int(app.config.hex_color, 16),\
                                     "timestamp": str(datetime.now()), "image": {"url": imgurl}}]}
                     if await CheckNotificationEnabled(request, "dlog", uid):
@@ -555,15 +601,6 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                         truck_id = d["data"]["object"]["truck"]["unique_id"]
                         if jobreq["truck_id"] != "" and truck_id not in jobreq["truck_id"].split(","):
                             continue
-                        if d["data"]["object"]["truck"]["license_plate_country"] is not None:
-                            country_id = d["data"]["object"]["truck"]["license_plate_country"]["unique_id"]
-                            if jobreq["truck_plate_country_id"] != "" and country_id not in jobreq["truck_plate_country_id"].split(","):
-                                continue
-                        truck_wheel = d["data"]["object"]["truck"]["wheel_count"]
-                        if jobreq["minimum_truck_wheel"] != -1 and truck_wheel < jobreq["minimum_truck_wheel"]:
-                            continue
-                        if jobreq["maximum_truck_wheel"] != -1 and truck_wheel > jobreq["maximum_truck_wheel"]:
-                            continue
 
                     if jobreq["maximum_speed"] != -1 and top_speed > jobreq["maximum_speed"]:
                         continue
@@ -596,11 +633,6 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                     if not jobreq["allow_auto_park"] and auto_park:
                         continue
                     if not jobreq["allow_auto_load"] and auto_load:
-                        continue
-                    earned_xp = d["data"]["object"]["events"][-1]["meta"]["earnedXP"]
-                    if jobreq["minimum_xp"] != -1 and earned_xp < jobreq["minimum_xp"]:
-                        continue
-                    if jobreq["maximum_xp"] != -1 and earned_xp > jobreq["maximum_xp"]:
                         continue
 
                     count = {"ferry": 0, "train": 0, "collision": 0, "teleport": 0, "tollgate": 0}
@@ -640,6 +672,11 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
                             continue
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
+
+                    if jobreq["minimum_warp"] != -1 and jobreq["minimum_warp"] > warp:
+                        continue
+                    if jobreq["maximum_warp"] != -1 and jobreq["maximum_warp"] < warp:
+                        continue
 
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
@@ -850,54 +887,6 @@ async def post_update(response: Response, request: Request, TrackSim_Signature: 
 
     return Response(status_code=204)
 
-async def post_update_route(response: Response, request: Request, authorization: str = Header(None)):
-    app = request.app
-    dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
-
-    rl = await ratelimit(request, 'POST /tracksim/update/route', 60, 30)
-    if rl[0]:
-        return rl[1]
-    for k in rl[1].keys():
-        response.headers[k] = rl[1][k]
-
-    au = await auth(authorization, request, allow_application_token = True)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-
-    data = await request.json()
-    try:
-        logid = data["logid"]
-    except:
-        response.status_code = 400
-        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-
-    await app.db.execute(dhrid, f"SELECT unit, tracker_type, trackerid, userid FROM dlog WHERE logid = {logid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "delivery_log_not_found", force_lang = au["language"])}
-    (gameid, tracker_type, trackerid, userid) = t[0]
-
-    if tracker_type != 2:
-        response.status_code = 404
-        return {"error": ml.tr(request, "tracker_must_be", var = {"tracker": "TrackSim"}, force_lang = au["language"])}
-
-    await app.db.execute(dhrid, f"SELECT logid FROM telemetry WHERE logid = {logid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) != 0:
-        response.status_code = 409
-        return {"error": ml.tr(request, "route_already_fetched", force_lang = au["language"])}
-
-    r = await FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid)
-
-    if r is True:
-        return Response(status_code=204)
-    else:
-        return r
-
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
     dhrid = request.state.dhrid
@@ -921,28 +910,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = ""
-    try:
-        r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(userinfo["steamid"])}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        status_code = r.status_code
-        if r.status_code == 401:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-        elif r.status_code // 100 != 2:
-            try:
-                resp = json.loads(r.text)
-                if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                elif len(r.text) <= 64:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                else:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+    tracker_app_error = add_driver(app.config.tracker, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -981,28 +949,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
     status_code = 0
-    tracker_app_error = ""
-    try:
-        r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(userinfo["steamid"])}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        status_code = r.status_code
-        if r.status_code == 401:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-        elif r.status_code // 100 != 2:
-            try:
-                resp = json.loads(r.text)
-                if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                elif len(r.text) <= 64:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                else:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+    tracker_app_error = remove_driver(app.config.tracker, userinfo["steamid"])
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

@@ -421,28 +421,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
-    tracker_app_error = ""
-    try:
-        if app.config.tracker == "tracksim":
-            r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        if r.status_code == 401:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-        elif r.status_code // 100 != 2:
-            try:
-                resp = json.loads(r.text)
-                if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                elif len(r.text) <= 64:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                else:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+    tracker_app_error = remove_driver(app.config.tracker, steamid)
 
     if tracker_app_error != "":
         await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

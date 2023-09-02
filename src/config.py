@@ -107,6 +107,7 @@ default_config = {
         "max_speed": 180,
         "max_profit": 1000000,
         "max_xp": 100000,
+        "max_warp": 0,
         "action": "block"
     },
     "hook_delivery_log": {

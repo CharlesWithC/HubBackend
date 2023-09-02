@@ -221,11 +221,11 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     for tt in new_config.keys():
         if tt in config_whitelist:
-            if tt == "tracker" and new_config[tt] not in ['tracksim']:
+            if tt == "tracker" and new_config[tt] not in ["tracksim", "trucky"]:
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
 
-            if not unsafe and tracker == "tracksim" and tt in ["tracker_webhook_secret", "tracker_api_token"]:
+            if not unsafe and tracker in ["tracksim", "trucky"] and tt in ["tracker_webhook_secret", "tracker_api_token"]:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}

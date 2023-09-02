@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.8.1
+## v2.8.0
 
 1. Removed `company_driver.detached` tracksim event listening  
 2. Added "update discord email" when user reconnects discord account and email is not connected  
@@ -16,6 +16,10 @@
     At least one item must have `default = true`, otherwise the first one will be considered `default`. The `default` ranking will be used for `daily_bonus` and `distance_bonus`. Specific `rank_type_id` will only be considered when user is requesting discord role for a specific rank type.  
     `point_types` must be a list with `str` items selected from `["distance", "challenge", "division", "event", "bonus"]`.  
     `details` have the same format has the original `config.ranks`.  
+6. Added Trucky Integration  
+    **Hint**: Data will be converted to TrackSim style. Data provided by TrackSim but not Trucky will become `None/null`. Patial data (`timezone`, `warp`) provided by Trucky but not TrackSim will be added.  
+    Removed features: xp-related attributes for delivery_rules (`max_xp`) and challenges (`minimum|maximum_xp`)  
+    Added features: warp-related attributes for delivery_rules (`max_warp`) and challenges (`minimum|maximum_warp`)  
 
 ## v2.7.15
   

@@ -3,13 +3,11 @@
 
 import json
 import time
-import traceback
 
 from fastapi import Header, Request, Response
 
 import multilang as ml
 from functions import *
-from api import tracebackHandler
 
 # note that the larger the id is, the lower the role is
 
@@ -127,27 +125,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
 
     tracker_app_error = ""
     if checkPerm(app, addedroles, "driver"):
-        try:
-            if app.config.tracker == "tracksim":
-                r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-            if r.status_code == 401:
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-            elif r.status_code // 100 != 2:
-                try:
-                    resp = json.loads(r.text)
-                    if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                    elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                    elif len(r.text) <= 64:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                    else:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-                except Exception as exc:
-                    await tracebackHandler(request, exc, traceback.format_exc())
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-        except:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+        tracker_app_error = add_driver(app.config.tracker, steamid)
 
         if tracker_app_error != "":
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -172,27 +150,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                         pass
 
     if checkPerm(app, removedroles, "driver"):
-        try:
-            if app.config.tracker == "tracksim":
-                r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-            if r.status_code == 401:
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-            elif r.status_code // 100 != 2:
-                try:
-                    resp = json.loads(r.text)
-                    if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                    elif "message" in resp.keys() and resp["message"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                    elif len(r.text) <= 64:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                    else:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-                except Exception as exc:
-                    await tracebackHandler(request, exc, traceback.format_exc())
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-        except:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+        tracker_app_error = remove_driver(app.config.tracker, steamid)
 
         if tracker_app_error != "":
             await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
@@ -359,28 +317,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
-    tracker_app_error = ""
-    try:
-        if app.config.tracker == "tracksim":
-            r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        if r.status_code == 401:
-            tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: {ml.ctr(request, 'invalid_api_token')}"
-        elif r.status_code // 100 != 2:
-            try:
-                resp = json.loads(r.text)
-                if "error" in resp.keys() and resp["error"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
-                elif "message" in resp.keys() and resp["message"] is not None:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
-                elif len(r.text) <= 64:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + r.text + "`"
-                else:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-            except Exception as exc:
-                await tracebackHandler(request, exc, traceback.format_exc())
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+    tracker_app_error = remove_driver(app.config.tracker, steamid)
 
     if tracker_app_error != "":
         await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))

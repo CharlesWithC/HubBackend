@@ -274,9 +274,8 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     if orgsteamid is not None and userid >= 0:
         if not (await auth(authorization, request, required_permission = ["driver"]))["error"]:
             try:
-                if app.config.tracker == "tracksim":
-                    await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(orgsteamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-                    await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
+                remove_driver(app.config.tracker, steamid)
+                add_driver(app.config.tracker, steamid)
             except:
                 pass
 
