@@ -22,21 +22,21 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
     try:
         r = await arequests.get(app, f"https://api.tracksim.app/v1/jobs/{trackerid}/route", headers = {"Authorization": f"Api-Key {app.config.tracker_api_token}"}, timeout = 15, dhrid = dhrid)
     except:
-        return {"error": f"{app.tracker} {ml.ctr(request, 'api_timeout')}"}
+        return {"error": f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_timeout')}"}
     if r.status_code != 200:
         try:
             resp = json.loads(r.text)
             if "error" in resp.keys() and resp["error"] is not None:
-                return {"error": app.tracker + " " + resp["error"]}
+                return {"error": TRACKER[app.config.tracker] + " " + resp["error"]}
             elif "message" in resp.keys() and resp["message"] is not None:
-                return {"error": app.tracker + " " + resp["message"]}
+                return {"error": TRACKER[app.config.tracker] + " " + resp["message"]}
             elif len(r.text) <= 64:
-                return {"error": app.tracker + " " + r.text}
+                return {"error": TRACKER[app.config.tracker] + " " + r.text}
             else:
-                return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
+                return {"error": TRACKER[app.config.tracker] + " " + ml.tr(request, "unknown_error")}
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
-            return {"error": app.tracker + " " + ml.tr(request, "unknown_error")}
+            return {"error": TRACKER[app.config.tracker] + " " + ml.tr(request, "unknown_error")}
     d = json.loads(r.text)
     t = []
     for i in range(len(d)-1):
@@ -117,6 +117,9 @@ async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = Non
 
 async def post_update(response: Response, request: Request):
     app = request.app
+    if app.config.tracker != "tracksim":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -127,9 +130,9 @@ async def post_update(response: Response, request: Request):
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed"}
 
-    if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
+    if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
         d = await request.form()
-    elif request.headers["Content-Type"] == "application/json":
+    elif request.headers.get("Content-Type") == "application/json":
         d = await request.json()
     else:
         response.status_code = 400
@@ -246,8 +249,8 @@ async def post_update(response: Response, request: Request):
             pass
 
     if not delivery_rule_ok:
-        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
-        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
+        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
+        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 
@@ -265,29 +268,30 @@ async def post_update(response: Response, request: Request):
 
         try:
             totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
-            bonus = point2rank(app, "default", totalpnt)["distance_bonus"]
-            rankname = point2rank(app, "default", totalpnt)["name"]
+            if point2rank(app, "default", totalpnt) is not None:
+                bonus = point2rank(app, "default", totalpnt)["distance_bonus"]
+                rankname = point2rank(app, "default", totalpnt)["name"]
 
-            if bonus is not None and type(bonus) is dict:
-                ok = True
-                if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
-                    ok = False
-                if bonus["max_distance"] != -1 and driven_distance > bonus["max_distance"]:
-                    ok = False
-                if ok and random.uniform(0, 1) <= bonus["probability"]:
-                    bonuspoint = 0
-                    if bonus["type"] == "fixed_value":
-                        bonuspoint = bonus["value"]
-                    elif bonus["type"] == "fixed_percentage":
-                        bonuspoint = round(bonus["value"] * driven_distance)
-                    elif bonus["type"] == "random_value":
-                        bonuspoint = random.randint(bonus["min"], bonus["max"])
-                    elif bonus["type"] == "random_percentage":
-                        bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
-                    if bonuspoint != 0:
-                        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
-                        await app.db.commit(dhrid)
-                        await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
+                if bonus is not None and type(bonus) is dict:
+                    ok = True
+                    if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
+                        ok = False
+                    if bonus["max_distance"] != -1 and driven_distance > bonus["max_distance"]:
+                        ok = False
+                    if ok and random.uniform(0, 1) <= bonus["probability"]:
+                        bonuspoint = 0
+                        if bonus["type"] == "fixed_value":
+                            bonuspoint = bonus["value"]
+                        elif bonus["type"] == "fixed_percentage":
+                            bonuspoint = round(bonus["value"] * driven_distance)
+                        elif bonus["type"] == "random_value":
+                            bonuspoint = random.randint(bonus["min"], bonus["max"])
+                        elif bonus["type"] == "random_percentage":
+                            bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
+                        if bonuspoint != 0:
+                            await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
+                            await app.db.commit(dhrid)
+                            await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
 
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
@@ -854,6 +858,9 @@ async def post_update(response: Response, request: Request):
 
 async def post_update_route(response: Response, request: Request, authorization: str = Header(None)):
     app = request.app
+    if app.config.tracker != "tracksim":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -902,6 +909,9 @@ async def post_update_route(response: Response, request: Request, authorization:
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
+    if app.config.tracker != "tracksim":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -926,9 +936,9 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     tracker_app_error = await add_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     if tracker_app_error == "":
         return Response(status_code=204)
@@ -941,6 +951,9 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
 
 async def delete_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
+    if app.config.tracker != "tracksim":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -965,9 +978,9 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     tracker_app_error = await remove_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     if tracker_app_error == "":
         return Response(status_code=204)

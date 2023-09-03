@@ -149,6 +149,10 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
 class HubMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         app = request.app
+        try:
+            real_path = "/" + "/".join(request.url.path.split("/")[2:])
+        except:
+            real_path = "/"
 
         try:
             process = psutil.Process()
@@ -195,7 +199,7 @@ class HubMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        if request.method != "GET" and request.url.path.split("/")[2] not in ["tracksim"]:
+        if request.method != "GET" and real_path.split("/")[1] not in ["tracksim", "trucky"]:
             if "content-type" in request.headers.keys():
                 if request.headers["content-type"] != "application/json":
                     return JSONResponse({"error": "Content-Type must be application/json."}, status_code=400)
@@ -206,7 +210,13 @@ class HubMiddleware(BaseHTTPMiddleware):
             client_host = request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
             request.client = client_host
             if client_host is None:
-                return JSONResponse({"error": "Invalid request."}, status_code=400)
+                return JSONResponse({"error": "Invalid Request"}, status_code=400)
+
+        if real_path.startswith("/tracksim") and app.config.tracker != "tracksim":
+            return JSONResponse({"error": "Not Found"}, status_code=404)
+        if real_path.startswith("/trucky") and app.config.tracker != "trucky":
+            return JSONResponse({"error": "Not Found"}, status_code=404)
+
         dhrid = genrid()
         request.state.dhrid = dhrid
         try:
@@ -217,7 +227,7 @@ class HubMiddleware(BaseHTTPMiddleware):
                 return rl[1]
             response = await call_next(request)
 
-            if response.status_code not in [404, 500, 503] and request.url.path in ["/", "/config", "/dlog/list", "/dlog", "/announcements/list", "/announcements", "/events/list", "/events"]:
+            if response.status_code not in [404, 500, 503] and real_path in ["/", "/config", "/dlog/list", "/dlog", "/announcements/list", "/announcements", "/events/list", "/events"]:
                 # validate token after all (only to formalize responses in case auth is not necessarily needed)
                 if request.headers.get("Authorization") is not None and request.headers.get("Authorization").split(" ")[0] in ["Bearer", "Application"]:
                     au = await auth(request.headers.get("Authorization"), request, check_member = False, allow_application_token = True, only_validate_token = True, only_use_cache = True)

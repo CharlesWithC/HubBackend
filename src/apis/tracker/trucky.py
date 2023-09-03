@@ -28,20 +28,22 @@ def convert_format(data):
 
     d = copy.deepcopy(data["data"])
     # first convert data
+    convert_distance = ["planned_distance_km", "max_speed_kmh", "vehicle_odometer_end_km", "vehicle_odometer_start_km"]
     if d["distance_unit"] == "mi":
-        if d["planned_distance_km"] is None:
-            d["planned_distance_km"] = d["planned_distance"] * 1.609344
-        if d["max_speed_kmh"] is None:
-            d["max_speed_kmh"] = d["max_speed"] * 1.609344
+        for key in convert_distance:
+            if d[key] is None:
+                d[key] = d["_".join(key.split("_")[:-1])] * 1.609344
     elif d["distance_unit"] == "km":
-        d["planned_distance_km"] = d["planned_distance"]
-        d["max_speed_kmh"] = d["max_speed"]
+        for key in convert_distance:
+            if d[key] is None:
+                d[key] = d["_".join(key.split("_")[:-1])]
     d["average_speed_kmh"] = round((d["real_driven_distance_km"] / (d["real_driving_time_seconds"] / 3600)) / d["max_map_scale"])
     if d["volume_unit"] == "gal":
         if d["fuel_used_l"] is None:
             d["fuel_used_l"] = d["fuel_used"] * 3.785412
     elif d["volume_unit"] == "l":
-        d["fuel_used_l"] = d["fuel_used"]
+        if d["fuel_used_l"] is None:
+            d["fuel_used_l"] = d["fuel_used"]
     multiplayer = None
     if d["game_mode"] != "sp":
         multiplayer = {"type": d["game_mode"], "meta": {"server": d["server"]}}
@@ -134,8 +136,8 @@ def convert_format(data):
                         "unique_id": d["vehicle_in_game_brand_id"],
                         "name": d["vehicle_brand_name"]
                     },
-                    "odometer": d["vehicle_odometer_end"],
-                    "initial_odometer": d["vehicle_odometer_start"],
+                    "odometer": d["vehicle_odometer_end_km"],
+                    "initial_odometer": d["vehicle_odometer_start_km"],
                     "wheel_count": None, # not for trucky
                     "license_plate": None, # not for trucky
                     "license_plate_country": None, # not for trucky
@@ -170,6 +172,9 @@ def convert_format(data):
 
 async def post_update(response: Response, request: Request):
     app = request.app
+    if app.config.tracker != "trucky":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -183,9 +188,9 @@ async def post_update(response: Response, request: Request):
     raw_body = await request.body()
     raw_body_str = raw_body.decode("utf-8")
 
-    if request.headers["Content-Type"] == "application/x-www-form-urlencoded":
+    if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
         d = parse_qs(raw_body_str)
-    elif request.headers["Content-Type"] == "application/json":
+    elif request.headers.get("Content-Type") == "application/json":
         d = json.loads(raw_body_str)
     else:
         response.status_code = 400
@@ -305,8 +310,8 @@ async def post_update(response: Response, request: Request):
             pass
 
     if not delivery_rule_ok:
-        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
-        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": app.tracker, "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
+        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
+        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules."}
 
@@ -324,29 +329,30 @@ async def post_update(response: Response, request: Request):
 
         try:
             totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
-            bonus = point2rank(app, "default", totalpnt)["distance_bonus"]
-            rankname = point2rank(app, "default", totalpnt)["name"]
+            if point2rank(app, "default", totalpnt) is not None:
+                bonus = point2rank(app, "default", totalpnt)["distance_bonus"]
+                rankname = point2rank(app, "default", totalpnt)["name"]
 
-            if bonus is not None and type(bonus) is dict:
-                ok = True
-                if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
-                    ok = False
-                if bonus["max_distance"] != -1 and driven_distance > bonus["max_distance"]:
-                    ok = False
-                if ok and random.uniform(0, 1) <= bonus["probability"]:
-                    bonuspoint = 0
-                    if bonus["type"] == "fixed_value":
-                        bonuspoint = bonus["value"]
-                    elif bonus["type"] == "fixed_percentage":
-                        bonuspoint = round(bonus["value"] * driven_distance)
-                    elif bonus["type"] == "random_value":
-                        bonuspoint = random.randint(bonus["min"], bonus["max"])
-                    elif bonus["type"] == "random_percentage":
-                        bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
-                    if bonuspoint != 0:
-                        await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
-                        await app.db.commit(dhrid)
-                        await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
+                if bonus is not None and type(bonus) is dict:
+                    ok = True
+                    if bonus["min_distance"] != -1 and driven_distance < bonus["min_distance"]:
+                        ok = False
+                    if bonus["max_distance"] != -1 and driven_distance > bonus["max_distance"]:
+                        ok = False
+                    if ok and random.uniform(0, 1) <= bonus["probability"]:
+                        bonuspoint = 0
+                        if bonus["type"] == "fixed_value":
+                            bonuspoint = bonus["value"]
+                        elif bonus["type"] == "fixed_percentage":
+                            bonuspoint = round(bonus["value"] * driven_distance)
+                        elif bonus["type"] == "random_value":
+                            bonuspoint = random.randint(bonus["min"], bonus["max"])
+                        elif bonus["type"] == "random_percentage":
+                            bonuspoint = round(random.uniform(bonus["min"], bonus["max"]) * driven_distance)
+                        if bonuspoint != 0:
+                            await app.db.execute(dhrid, f"INSERT INTO bonus_point VALUES ({userid}, {bonuspoint}, {int(time.time())})")
+                            await app.db.commit(dhrid)
+                            await notification(request, "bonus", uid, ml.tr(request, "earned_bonus_point", var = {"bonus_points": str(bonuspoint), "logid": logid, "rankname": rankname}, force_lang = await GetUserLanguage(request, uid)))
 
         except Exception as exc:
             await tracebackHandler(request, exc, traceback.format_exc())
@@ -904,6 +910,9 @@ async def post_update(response: Response, request: Request):
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
+    if app.config.tracker != "trucky":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -928,9 +937,9 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     tracker_app_error = await add_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     if tracker_app_error == "":
         return Response(status_code=204)
@@ -943,6 +952,9 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
 
 async def delete_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
+    if app.config.tracker != "trucky":
+        response.status_code = 404
+        return {"error": "Not Found"}
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
@@ -967,9 +979,9 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     tracker_app_error = await remove_driver(request, userinfo["steamid"])
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     if tracker_app_error == "":
         return Response(status_code=204)

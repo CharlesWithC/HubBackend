@@ -5,6 +5,7 @@ import json
 
 import multilang as ml
 from functions import arequests, gensecret
+from static import TRACKER
 
 
 async def add_driver(request, steamid):
@@ -25,20 +26,20 @@ async def add_driver(request, steamid):
                 try:
                     resp = json.loads(r.text)
                     if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
+                        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                     else:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
                 except:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                    tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         elif app.config.tracker == "trucky":
             try:
                 resp = json.loads(r.text)
                 if not resp["success"]:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
+                    tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
             except:
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_timeout')}"
     return tracker_app_error
 
 async def remove_driver(request, steamid):
@@ -54,18 +55,18 @@ async def remove_driver(request, steamid):
                 try:
                     resp = json.loads(r.text)
                     if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
+                        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{resp['error']}`"
                     else:
-                        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
                 except:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                    tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
         elif app.config.tracker == "trucky":
             try:
                 resp = json.loads(r.text)
                 if not resp["success"]:
-                    tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
+                    tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `" + resp["message"] + "`"
             except:
-                tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
+                tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: `{ml.ctr(request, 'unknown_error')}`"
     except:
-        tracker_app_error = f"{app.tracker} {ml.ctr(request, 'api_timeout')}"
+        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_timeout')}"
     return tracker_app_error

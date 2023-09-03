@@ -128,9 +128,9 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         tracker_app_error = await add_driver(request, steamid)
 
         if tracker_app_error != "":
-            await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
         else:
-            await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
         await UpdateRoleConnection(request, discordid)
 
@@ -153,9 +153,9 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         tracker_app_error = await remove_driver(request, steamid)
 
         if tracker_app_error != "":
-            await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
         else:
-            await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": app.tracker}))
+            await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
         await UpdateRoleConnection(request, discordid)
 
@@ -197,7 +197,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await notification(request, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(request, uid)))
 
     if tracker_app_error != "":
-        return {"tracker_api_error": tracker_app_error.replace(f"{app.tracker} {ml.ctr(request, 'api_error')}: ", "")}
+        return {"tracker_api_error": tracker_app_error.replace(f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_error')}: ", "")}
     else:
         return Response(status_code=204)
 
@@ -320,9 +320,9 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     tracker_app_error = await remove_driver(request, steamid)
 
     if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     await UpdateRoleConnection(request, discordid)
 

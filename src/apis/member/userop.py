@@ -46,7 +46,7 @@ async def patch_roles_rank_default(request: Request, response: Response, authori
 
     totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
     rankroleid = point2rank(app, "default", totalpnt)
-    if rankroleid is None:
+    if rankroleid is None or rankroleid["discord_role_id"] in [None, 0, 1, -1]:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
     rankroleid = rankroleid["discord_role_id"]
@@ -147,7 +147,7 @@ async def patch_roles_rank(request: Request, response: Response, rank_type_id: i
 
     totalpnt = await GetPoints(request, userid, app.rank_type_point_types[rank_type_id])
     rankroleid = point2rank(app, rank_type_id, totalpnt)
-    if rankroleid is None:
+    if rankroleid is None or rankroleid["discord_role_id"] in [None, 0, 1, -1]:
         response.status_code = 409
         return {"error": ml.tr(request, "already_have_rank_role", force_lang = au["language"])}
     rankroleid = rankroleid["discord_role_id"]
@@ -315,11 +315,10 @@ async def post_bonus_claim(request: Request, response: Response, authorization: 
 
     totalpnt = await GetPoints(request, userid, app.default_rank_type_point_types)
     bonus = point2rank(app, "default", totalpnt)
-    if point2rank(app, "default", totalpnt) is None:
+    if bonus is None or bonus["daily_bonus"] is None:
         response.status_code = 404
         return {"error": ml.tr(request, "daily_bonus_not_available", force_lang = au["language"])}
     bonus = bonus["daily_bonus"]
-
     bonuspnt = bonus["base"]
 
     if bonus["type"] == "streak":
@@ -432,9 +431,9 @@ async def post_resign(request: Request, response: Response, authorization: str =
     tracker_app_error = await remove_driver(request, steamid)
 
     if tracker_app_error != "":
-        await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker, "error": tracker_app_error}))
+        await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
     else:
-        await AuditLog(request, uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": app.tracker}))
+        await AuditLog(request, uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
 
     await UpdateRoleConnection(request, discordid)
 

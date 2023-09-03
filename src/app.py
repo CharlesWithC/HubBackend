@@ -227,12 +227,14 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
         app.loaded_external_plugins.append(plugin_name)
 
     routes = apis.routes + apis.auth.routes + apis.dlog.routes + apis.member.routes + apis.user.routes
-    if app.config.tracker == "tracksim":
-        routes += apis.routes_tracksim
-        if "route" in app.config.plugins:
-            routes += apis.routes_tracksim_route
-    elif app.config.tracker == "trucky":
-        routes += apis.routes_trucky
+
+    # both trackers will be added and 404 will be handled within the route
+    # so we can realize switching tracker without needing to restart program
+    routes += apis.routes_tracksim
+    routes += apis.routes_trucky
+    if app.config.tracker == "tracksim" and "route" in app.config.plugins:
+        routes += apis.routes_tracksim_route
+
     if "banner" in app.config.plugins:
         routes += apis.member.routes_banner
     if "announcement" in app.config.plugins:
