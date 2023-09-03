@@ -51,7 +51,7 @@ def convert_format(data):
     if cargo_details is not None:
         del cargo_details["id"], cargo_details["name"], cargo_details["in_game_id"], cargo_details["game_id"], cargo_details["localized_names"]
     events = []
-    event_type_mapping = {"teleport": "teleport", "truck_fixed": "repair", "job_resumed": "job.resumed", "fined": "fine", " tollgate_paid": "tollgate", "collision": "collision", "transport_used": "transport", "refuel": "refuel"}
+    event_type_mapping = {"teleport": "teleport", "truck_fixed": "repair", "job_resumed": "job.resumed", "fined": "fine", "tollgate_paid": "tollgate", "collision": "collision", "transport_used": "transport", "refuel": "refuel"}
     # transport needs to be handled manually
     events.append({"location": None, "real_time": d["started_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["started_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.started", "meta": {"autoLoaded": d["auto_load"]}})
     for event in d["events"]:
