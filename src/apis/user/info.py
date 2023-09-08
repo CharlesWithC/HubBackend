@@ -294,14 +294,14 @@ async def patch_profile(request: Request, response: Response, authorization: str
             r = await arequests.get(app, f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={app.config.steam_api_key}&steamids={steamid}", dhrid = dhrid)
         except:
             response.status_code = 503
-            return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
+            return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"}, force_lang = au["language"])}
         try:
             d = json.loads(r.text)
             name = convertQuotation(d["response"]["players"][0]["personaname"])
             avatar = convertQuotation(d["response"]["players"][0]["avatarfull"])
         except:
             response.status_code = 503
-            return {"error": ml.tr(request, "steam_api_error", force_lang = au["language"])}
+            return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"}, force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)
@@ -323,14 +323,14 @@ async def patch_profile(request: Request, response: Response, authorization: str
             r = await arequests.get(app, f"https://api.truckersmp.com/v2/player/{truckersmpid}", dhrid = dhrid)
         except:
             response.status_code = 503
-            return {"error": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
+            return {"error": ml.tr(request, 'service_api_error', vars = {'service': "TruckersMP"}, force_lang = au["language"])}
         try:
             d = json.loads(r.text)
             name = convertQuotation(d["response"]["name"])
             avatar = convertQuotation(d["response"]["avatar"])
         except:
             response.status_code = 503
-            return {"error": ml.tr(request, "truckersmp_api_error", force_lang = au["language"])}
+            return {"error": ml.tr(request, 'service_api_error', vars = {'service': "TruckersMP"}, force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"UPDATE user SET name = '{name}', avatar = '{avatar}' WHERE uid = {uid}")
         await app.db.commit(dhrid)

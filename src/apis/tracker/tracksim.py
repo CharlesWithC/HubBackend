@@ -146,7 +146,7 @@ async def post_update(response: Response, request: Request):
 
     if d["object"] != "event":
         response.status_code = 400
-        return {"error": "Only events are accepted."}
+        return {"error": "Only events are accepted"}
     e = d["type"]
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
@@ -154,7 +154,7 @@ async def post_update(response: Response, request: Request):
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": "User not found."}
+        return {"error": "User not found"}
     userid = t[0][0]
     username = t[0][1]
     uid = t[0][2]
@@ -252,7 +252,7 @@ async def post_update(response: Response, request: Request):
         await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
         await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
-        return {"error": "Blocked due to delivery rules."}
+        return {"error": "Blocked due to delivery rules"}
 
     if not duplicate:
         await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 2, 0)")

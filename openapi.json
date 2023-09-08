@@ -3534,6 +3534,33 @@
                 "responses": {}
             }
         },
+        "/trucky/import/{jobid}": {
+            "post": {
+                "summary": "Import job from Trucky",
+                "tags": [
+                    "trucky"
+                ],
+                "operationId": "post_trucky_import",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Job ID",
+                            "type": "integer"
+                        },
+                        "name": "jobid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/trucky/driver/{userid}": {
             "put": {
                 "summary": "Add Driver to Trucky Company",

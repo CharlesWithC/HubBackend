@@ -1,6 +1,6 @@
 {
     "unknown_error": "Bilinmeyen Hata",
-    "api_error": "API Hatası",
+    "service_api_error": "{service} API Hatası",
     "api_timeout": "API Zaman Aşımı",
     "invalid_api_token": "Geçersiz API Simgesi",
     "rate_limit": "Oturumunuza hız sınırlandırması uygulandı. Lütfen daha yavaş işlem yapınız..",
@@ -68,11 +68,9 @@
     "claimed_daily_bonus_with_streak_s": "`{streak}` günlük galibiyet serisini sürdürdünüz ve `{points}` günlük bonus puan aldınız.",
     "daily_bonus_not_available": "Mevcut rütbeniz için günlük bonus mevcut değil.",
 
-    "steam_api_error": "Steam API'ye erişilemiyor.",
     "steam_api_key_not_configured": "Steam API Anahtarı yapılandırılmadı.",
     "invalid_steam_auth": "Geçersiz Steam Kimlik Doğrulaması.",
     "invalid_truckersmp_id": "Geçersiz TruckersMP kimliği. (TMPID)",
-    "truckersmp_api_error": "TruckersMP API'ye erişilemiyor.",
     "must_connect_steam_before_truckersmp": "TruckersMP hesabı bağlanmadan önce Steam hesabı bağlanmalıdır.",
     "truckersmp_steam_mismatch": "TruckersMP kullanıcısına {truckersmp_name} ({truckersmpid}) bağlı Steam hesabı, Steam hesabınızla eşleşmiyor.",
 

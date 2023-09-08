@@ -1,6 +1,6 @@
 {
     "unknown_error": "Errore sconosciuto",
-    "api_error": "Errore API",
+    "service_api_error": "Errore {service} API",
     "api_timeout": "Timeout API",
     "invalid_api_token": "Token API non valido",
     "rate_limit": "Ti è stata applicata una tariffa limitata.",
@@ -68,11 +68,9 @@
     "claimed_daily_bonus_with_streak_s": "Hai mantenuto `{streak}` giorni di serie e hai richiesto `{points}` punti bonus giornalieri.",
     "daily_bonus_not_available": "Il bonus giornaliero per il tuo livello attuale non è disponibile.",
 
-    "steam_api_error": "L'API di Steam è inaccessibile.",
     "steam_api_key_not_configured": "La chiave API di Steam non è configurata.",
     "invalid_steam_auth": "L'autenticazione di Steam non è valida.",
     "invalid_truckersmp_id": "ID di TruckersMP non valido.",
-    "truckersmp_api_error": "L'API di TruckersMP è inaccessibile.",
     "must_connect_steam_before_truckersmp": "L'account Steam deve essere connesso prima di connettere l'account TruckersMP.",
     "truckersmp_steam_mismatch": "L'account Steam connesso all'utente TruckersMP {truckersmp_name} ({truckersmpid}) non corrisponde al tuo account Steam.",
 

@@ -119,6 +119,7 @@
         "delete_user": [],
         "update_application_positions": [],
         "delete_application": [],
+        "import_dlog": [],
         "delete_dlog": [],
         "delete_notifications": [],
 

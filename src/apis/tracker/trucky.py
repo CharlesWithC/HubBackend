@@ -170,44 +170,12 @@ def convert_format(data):
         }
     }
 
-async def post_update(response: Response, request: Request):
-    app = request.app
-    if app.config.tracker != "trucky":
-        response.status_code = 404
-        return {"error": "Not Found"}
-    dhrid = request.state.dhrid
-    await app.db.new_conn(dhrid)
+async def handle_new_job(request, response, original_data, data):
+    '''Handle new jobs from Trucky.
 
-    webhook_signature = request.headers.get('X-Signature-SHA256')
-
-    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
-        response.status_code = 403
-        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "Trucky", "ip": request.client.host}))
-        return {"error": "Validation failed"}
-
-    raw_body = await request.body()
-    raw_body_str = raw_body.decode("utf-8")
-
-    if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
-        d = parse_qs(raw_body_str)
-    elif request.headers.get("Content-Type") == "application/json":
-        d = json.loads(raw_body_str)
-    else:
-        response.status_code = 400
-        return {"error": "Unsupported content type"}
-    if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
-        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
-        if sig != webhook_signature:
-            response.status_code = 403
-            await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
-            return {"error": "Validation failed"}
-
-    original_data = copy.deepcopy(d)
-    d = convert_format(d)
-    if d is None:
-        response.status_code = 400
-        return {"error": "Only job_completed and job_canceled events are accepted."}
-
+    NOTE: The data must be processed and converted into TrackSim-like style.'''
+    (app, dhrid) = (request.app, request.state.dhrid)
+    d = data
     e = d["type"]
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
@@ -215,7 +183,7 @@ async def post_update(response: Response, request: Request):
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
-        return {"error": "User not found."}
+        return {"error": "User not found"}
     userid = t[0][0]
     username = t[0][1]
     uid = t[0][2]
@@ -313,7 +281,7 @@ async def post_update(response: Response, request: Request):
         await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
         await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
-        return {"error": "Blocked due to delivery rules."}
+        return {"error": "Blocked due to delivery rules"}
 
     if not duplicate:
         await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 3, 0)")
@@ -908,6 +876,101 @@ async def post_update(response: Response, request: Request):
 
     return Response(status_code=204)
 
+async def post_update(response: Response, request: Request):
+    app = request.app
+    if app.config.tracker != "trucky":
+        response.status_code = 404
+        return {"error": "Not Found"}
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    webhook_signature = request.headers.get('X-Signature-SHA256')
+
+    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
+        response.status_code = 403
+        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "Trucky", "ip": request.client.host}))
+        return {"error": "Validation failed"}
+
+    raw_body = await request.body()
+    raw_body_str = raw_body.decode("utf-8")
+
+    if request.headers.get("Content-Type") == "application/x-www-form-urlencoded":
+        d = parse_qs(raw_body_str)
+    elif request.headers.get("Content-Type") == "application/json":
+        d = json.loads(raw_body_str)
+    else:
+        response.status_code = 400
+        return {"error": "Unsupported content type"}
+    if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
+        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
+        if sig != webhook_signature:
+            response.status_code = 403
+            await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
+            return {"error": "Validation failed"}
+
+    original_data = copy.deepcopy(d)
+    d = convert_format(d)
+    if d is None:
+        response.status_code = 400
+        return {"error": "Only job_completed and job_canceled events are accepted"}
+
+    return await handle_new_job(request, response, original_data, d)
+
+async def post_import(response: Response, request: Request, jobid: int, authorization: str = Header(None)):
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'POST /trucky/import', 60, 30)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr","import_dlog"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    try:
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}", headers = {"User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+        if r.status_code != 200:
+            d = json.loads(r.text)
+            response.status_code = r.status_code
+            if "message" in d.keys():
+                return {"error": d["message"]}
+            else:
+                return {"error": ml.tr(request, "unknown_error")}
+        job_data = json.loads(r.text)
+    except:
+        response.status_code = 503
+        return {"error": ml.tr(request, 'service_api_error', vars = {'service': 'Trucky'})}
+
+    try:
+        r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+        if r.status_code != 200:
+            d = json.loads(r.text)
+            response.status_code = r.status_code
+            if "message" in d.keys():
+                return {"error": d["message"]}
+            else:
+                return {"error": ml.tr(request, "unknown_error")}
+        events_data = json.loads(r.text)
+        job_data["events"] = events_data
+    except:
+        response.status_code = 503
+        return {"error": ml.tr(request, 'service_api_error', vars = {'service': 'Trucky'})}
+
+    d = {"event": "job_completed", "data": job_data}
+    original_data = copy.deepcopy(d)
+    d = convert_format(d)
+    if d is None:
+        response.status_code = 400
+        return {"error": "Only job_completed and job_canceled events are accepted"}
+
+    return await handle_new_job(request, response, original_data, d)
+
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
     if app.config.tracker != "trucky":
@@ -916,7 +979,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    rl = await ratelimit(request, 'PUT /trucky/driver', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -958,7 +1021,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PUT /tracksim/driver', 60, 30)
+    rl = await ratelimit(request, 'PUT /trucky/driver', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():

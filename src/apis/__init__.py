@@ -6,8 +6,6 @@ from fastapi.routing import APIRoute
 
 import apis.admin as admin
 import apis.info as info
-import apis.tracker.tracksim as tracksim
-import apis.tracker.trucky as trucky
 
 routes = [
     APIRoute("/", info.get_index, methods=["GET"], response_class=JSONResponse),
@@ -22,20 +20,4 @@ routes = [
     APIRoute("/config/reload", admin.post_config_reload, methods=["POST"], response_class=JSONResponse),
     APIRoute("/restart", admin.post_restart, methods=["POST"], response_class=JSONResponse),
     APIRoute("/audit/list", admin.get_audit_list, methods=["GET"], response_class=JSONResponse)
-]
-
-routes_tracksim = [
-    APIRoute("/tracksim/update", tracksim.post_update, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/tracksim/driver/{userid}", tracksim.put_driver, methods=["PUT"], response_class=JSONResponse),
-    APIRoute("/tracksim/driver/{userid}", tracksim.delete_driver, methods=["DELETE"], response_class=JSONResponse)
-]
-
-routes_tracksim_route = [
-    APIRoute("/tracksim/update/route", tracksim.post_update_route, methods=["POST"], response_class=JSONResponse)
-]
-
-routes_trucky = [
-    APIRoute("/trucky/update", trucky.post_update, methods=["POST"], response_class=JSONResponse),
-    APIRoute("/trucky/driver/{userid}", trucky.put_driver, methods=["PUT"], response_class=JSONResponse),
-    APIRoute("/trucky/driver/{userid}", trucky.delete_driver, methods=["DELETE"], response_class=JSONResponse)
 ]

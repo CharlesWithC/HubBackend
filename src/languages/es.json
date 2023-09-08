@@ -1,6 +1,6 @@
 {
     "unknown_error": "Error desconocido",
-    "api_error": "Error de API",
+    "service_api_error": "Error de {service} API",
     "api_timeout": "Tiempo de espera de API",
     "invalid_api_token": "Token de API no válido",
     "rate_limit": "Estás siendo limitado por la tasa.",
@@ -68,11 +68,9 @@
     "claimed_daily_bonus_with_streak_s": "Mantuvo `{streak}` días de racha y reclamó `{points}` puntos de bonificación diarios.",
     "daily_bonus_not_available": "La bonificación diaria para su rango actual no está disponible.",
 
-    "steam_api_error": "No se puede acceder a la API de Steam.",
     "steam_api_key_not_configured": "La clave API de Steam no está configurada.",
     "invalid_steam_auth": "Autenticación de Steam no válida.",
     "invalid_truckersmp_id": "ID de TruckersMP no válido.",
-    "truckersmp_api_error": "No se puede acceder a la API de TruckersMP.",
     "must_connect_steam_before_truckersmp": "La cuenta de Steam debe estar conectada antes de conectar la cuenta de TruckersMP.",
     "truckersmp_steam_mismatch": "La cuenta de Steam conectada al usuario de TruckersMP {truckersmp_name} ({truckersmpid}) no coincide con su cuenta de Steam.",
 

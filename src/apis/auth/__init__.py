@@ -1,14 +1,14 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
+
 import apis.auth.discord as discord
 import apis.auth.generic as generic
 import apis.auth.steam as steam
 import apis.auth.ticket as ticket
 import apis.auth.token as token
-
-from fastapi.routing import APIRoute
-from fastapi.responses import JSONResponse
 
 routes = [
     APIRoute("/auth/password", generic.post_password, methods=["POST"], response_class=JSONResponse),

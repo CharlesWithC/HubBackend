@@ -19,6 +19,7 @@ import apis
 import apis.auth
 import apis.dlog
 import apis.member
+import apis.tracker
 import apis.user
 import db
 import plugins
@@ -230,10 +231,10 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
 
     # both trackers will be added and 404 will be handled within the route
     # so we can realize switching tracker without needing to restart program
-    routes += apis.routes_tracksim
-    routes += apis.routes_trucky
+    routes += apis.tracker.routes_tracksim
+    routes += apis.tracker.routes_trucky
     if app.config.tracker == "tracksim" and "route" in app.config.plugins:
-        routes += apis.routes_tracksim_route
+        routes += apis.tracker.routes_tracksim_route
 
     if "banner" in app.config.plugins:
         routes += apis.member.routes_banner

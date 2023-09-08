@@ -1,6 +1,6 @@
 {
     "unknown_error": "Ukendt fejl",
-    "api_error": "API-fejl",
+    "service_api_error": "{service} API-fejl",
     "api_timeout": "API-timeout",
     "invalid_api_token": "Ugyldig API-token",
     "rate_limit": "Du bliver prisbegrænset.",
@@ -68,11 +68,9 @@
     "claimed_daily_bonus_with_streak_s": "Du beholdt `{streak}` dage med streak og gjorde krav på `{points}` daglige bonuspoint.",
     "daily_bonus_not_available": "Daglig bonus for din nuværende rang er ikke tilgængelig.",
 
-    "steam_api_error": "Steam API er utilgængelig.",
     "steam_api_key_not_configured": "Steam API-nøgle er ikke konfigureret.",
     "invalid_steam_auth": "Ugyldig Steam-godkendelse.",
     "invalid_truckersmp_id": "Ugyldigt TruckersMP ID.",
-    "truckersmp_api_error": "TruckersMP API er utilgængelig.",
     "must_connect_steam_before_truckersmp": "Steam-kontoen skal være forbundet, før TruckersMP-kontoen tilsluttes.",
     "truckersmp_steam_mismatch": "Steam-konto forbundet til TruckersMP-bruger {truckersmp_name} ({truckersmpid}) matcher ikke din Steam-konto.",
 

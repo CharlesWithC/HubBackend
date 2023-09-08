@@ -1,6 +1,6 @@
 {
     "unknown_error": "Неизвестная ошибка",
-    "api_error": "Ошибка API",
+    "service_api_error": "Ошибка {service} API",
     "api_timeout": "Время ожидания API",
     "invalid_api_token": "Недопустимый токен API",
     "rate_limit": "Вы ограничены в скорости.",
@@ -68,11 +68,9 @@
     "claimed_daily_bonus_with_streak_s": "Вы сохранили `{streak}` дней подряд и получили `{points}` ежедневных бонусных баллов.",
     "daily_bonus_not_available": "Ежедневный бонус для вашего текущего ранга недоступен.",
 
-    "steam_api_error": "API Steam недоступен.",
     "steam_api_key_not_configured": "Ключ Steam API не настроен.",
     "invalid_steam_auth": "Неверная аутентификация Steam.",
     "invalid_truckersmp_id": "Недействительный TruckersMP ID.",
-    "truckersmp_api_error": "API TruckersMP недоступен.",
     "must_connect_steam_before_truckersmp": "Учетная запись Steam должна быть подключена перед подключением учетной записи TruckersMP.",
     "truckersmp_steam_mismatch": "Учетная запись Steam, подключенная к пользователю TruckersMP {truckersmp_name} ({truckersmpid}), не соответствует вашей учетной записи Steam.",
 

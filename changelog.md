@@ -2,6 +2,8 @@
 
 ## v2.8.1
 
+1. Added **POST** `/trucky/import/{jobid}` to import jobs from Trucky  
+
 ## v2.8.0
 
 1. Removed `company_driver.detached` tracksim event listening  
