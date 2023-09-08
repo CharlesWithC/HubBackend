@@ -4,6 +4,7 @@
 
 1. Added **POST** `/trucky/import/{jobid}` to import jobs from Trucky  
 2. Added `user_joined_company` Trucky webhook event listening  
+3. Fixed the issue that empty email may lead to wrong ban check  
 
 ## v2.8.0
 

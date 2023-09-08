@@ -70,7 +70,7 @@ async def post_password(request: Request, response: Response):
         await app.db.commit(dhrid)
         return {"token": stoken, "mfa": True}
 
-    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR email = '{email}'")
+    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR email = '{email if email is not None and '@' in email else 'NULL'}'")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]
@@ -176,7 +176,7 @@ async def post_register(request: Request, response: Response):
     await app.db.execute(dhrid, f"DELETE FROM session WHERE timestamp < {int(time.time()) - 86400 * 30}")
     await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
 
-    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE email = '{email}'")
+    await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE email = '{email if email is not None and '@' in email else 'NULL'}'")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
         reason = t[0][0]

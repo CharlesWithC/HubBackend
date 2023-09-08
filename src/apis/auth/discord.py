@@ -104,7 +104,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 await app.db.commit(dhrid)
                 return {"token": stoken, "mfa": True}
 
-            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR email = '{email}'")
+            await app.db.execute(dhrid, f"SELECT reason, expire_timestamp FROM banned WHERE uid = {uid} OR discordid = {discordid} OR email = '{email if email is not None and '@' in email else 'NULL'}'")
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
                 reason = t[0][0]
