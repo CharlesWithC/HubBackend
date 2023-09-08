@@ -296,6 +296,8 @@ async def AuditLog(request, uid, text, discord_message_only = False):
             name = ml.ctr(request, "system")
         elif uid == -998:
             name = ml.ctr(request, "discord_api")
+        elif uid == -997:
+            name = "Trucky"
         else:
             uinfo = await GetUserInfo(request, uid = uid)
             name = uinfo["name"]
@@ -307,7 +309,7 @@ async def AuditLog(request, uid, text, discord_message_only = False):
         if app.config.hook_audit_log.channel_id != "" or app.config.hook_audit_log.webhook_url != "":
             try:
                 footer = {"text": name}
-                if uid not in [-999, -998]:
+                if uid not in [-999, -998, -997]:
                     footer = {"text": f"{name} (UID: {uid} | User ID: {userid})", "icon_url": avatar}
 
                 data = json.dumps({"embeds": [{"description": text, "footer": footer, "timestamp": str(datetime.now()), "color": int(app.config.hex_color, 16)}]})

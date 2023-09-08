@@ -907,6 +907,101 @@ async def post_update(response: Response, request: Request):
             response.status_code = 403
             await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
             return {"error": "Validation failed"}
+    
+    if d["event"] == "user_joined_company":
+        steamid = int(d["data"]["steam_profile"]["steam_id"])
+        await app.db.execute(dhrid, f"SELECT uid, userid, roles, discordid FROM user WHERE steamid = {steamid}")
+        t = await app.db.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": "User not found"}
+        (uid, userid, roles, discordid) = t[0]
+        roles = str2list(roles)
+        if userid == -1:
+            await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) > 0:
+                response.status_code = 409
+                return {"error": ml.tr(request, "banned_user_cannot_be_accepted")}
+
+            await app.db.execute(dhrid, f"SELECT userid, name, discordid, name, steamid, truckersmpid, email, avatar FROM user WHERE uid = {uid}")
+            t = await app.db.fetchall(dhrid)
+            if len(t) == 0:
+                response.status_code = 404
+                return {"error": ml.tr(request, "user_not_found")}
+            if t[0][0] not in [-1, None]:
+                response.status_code = 409
+                return {"error": ml.tr(request, "user_is_already_member")}
+            name = t[0][1]
+            discordid = t[0][2]
+            username = t[0][3]
+            steamid = t[0][4]
+            truckersmpid = t[0][5]
+            email = t[0][6]
+            avatar = t[0][7]
+            if '@' not in email and "email" in app.config.required_connections:
+                response.status_code = 428
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"})}
+            if discordid is None and "discord" in app.config.required_connections:
+                response.status_code = 428
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Discord"})}
+            if steamid is None and "steam" in app.config.required_connections:
+                response.status_code = 428
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "Steam"})}
+            if truckersmpid is None and "truckersmp" in app.config.required_connections:
+                response.status_code = 428
+                return {"error": ml.tr(request, "connection_invalid", var = {"app": "TruckersMP"})}
+
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'nxtuserid' FOR UPDATE")
+            t = await app.db.fetchall(dhrid)
+            userid = int(t[0][0])
+
+            await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
+            await app.db.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
+            await AuditLog(request, -997, ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
+            await app.db.commit(dhrid)
+
+            await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
+
+            def setvar(msg):
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"").replace("{staff_name}", "Trucky").replace("{staff_userid}", -997).replace("{staff_uid}", -997).replace("{staff_avatar}", validateUrl(app.config.logo_url))
+
+            for meta in app.config.member_accept:
+                meta = Dict2Obj(meta)
+                if meta.webhook_url != "" or meta.channel_id != "":
+                    await AutoMessage(app, meta, setvar)
+
+                if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+                    for role in meta.role_change:
+                        try:
+                            if int(role) < 0:
+                                opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
+                            elif int(role) > 0:
+                                opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
+                        except:
+                            pass
+
+        if not checkPerm(app, roles, "driver"):
+            roles += app.config.perms.driver[0]
+            await app.db.execute(dhrid, f"UPDATE user SET roles = '{list2str(roles)}' WHERE uid = {uid}")
+            await app.db.commit(dhrid)
+
+            await UpdateRoleConnection(request, discordid)
+
+            for meta in app.config.driver_role_add:
+                meta = Dict2Obj(meta)
+                if meta.webhook_url != "" or meta.channel_id != "":
+                    await AutoMessage(app, meta, setvar)
+
+                if discordid is not None and meta.role_change != [] and app.config.discord_bot_token != "":
+                    for role in meta.role_change:
+                        try:
+                            if int(role) < 0:
+                                opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
+                            elif int(role) > 0:
+                                opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
+                        except:
+                            pass
 
     original_data = copy.deepcopy(d)
     d = convert_format(d)

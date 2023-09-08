@@ -3,6 +3,7 @@
 ## v2.8.1
 
 1. Added **POST** `/trucky/import/{jobid}` to import jobs from Trucky  
+2. Added `user_joined_company` Trucky webhook event listening  
 
 ## v2.8.0
 
