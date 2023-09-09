@@ -917,7 +917,7 @@ async def post_update(response: Response, request: Request):
             return {"error": "User not found"}
         (uid, userid, roles, discordid) = t[0]
         roles = str2list(roles)
-        if userid == -1:
+        if userid in [-1, None]:
             await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
             t = await app.db.fetchall(dhrid)
             if len(t) > 0:
@@ -964,7 +964,7 @@ async def post_update(response: Response, request: Request):
             await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
             def setvar(msg):
-                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"").replace("{staff_name}", "Trucky").replace("{staff_userid}", -997).replace("{staff_uid}", -997).replace("{staff_avatar}", validateUrl(app.config.logo_url))
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
 
             for meta in app.config.member_accept:
                 meta = Dict2Obj(meta)
@@ -982,7 +982,7 @@ async def post_update(response: Response, request: Request):
                             pass
 
         if not checkPerm(app, roles, "driver"):
-            roles += app.config.perms.driver[0]
+            roles.append(app.config.perms.driver[0])
             await app.db.execute(dhrid, f"UPDATE user SET roles = '{list2str(roles)}' WHERE uid = {uid}")
             await app.db.commit(dhrid)
 
@@ -1007,7 +1007,7 @@ async def post_update(response: Response, request: Request):
     d = convert_format(d)
     if d is None:
         response.status_code = 400
-        return {"error": "Only job_completed and job_canceled events are accepted"}
+        return {"error": "Only job_completed, job_canceled and user_joined_company events are accepted"}
 
     return await handle_new_job(request, response, original_data, d)
 
