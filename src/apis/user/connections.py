@@ -251,10 +251,10 @@ async def patch_steam(request: Request, response: Response, authorization: str =
         r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"}, force_lang = au["language"])}
     if r.status_code // 100 != 2:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"}, force_lang = au["language"])}
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_steam_auth", force_lang = au["language"])}
@@ -371,7 +371,7 @@ async def patch_truckersmp(request: Request, response: Response, authorization: 
     r = await arequests.get(app, "https://api.truckersmp.com/v2/player/" + str(truckersmpid), dhrid = dhrid)
     if r.status_code // 100 != 2:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': "TruckersMP"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': "TruckersMP"}, force_lang = au["language"])}
     d = json.loads(r.text)
     if d["error"]:
         response.status_code = 400

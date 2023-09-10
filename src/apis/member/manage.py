@@ -197,7 +197,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     await notification(request, "member", uid, ml.tr(request, "role_updated", var = {"detail": upd}, force_lang = await GetUserLanguage(request, uid)))
 
     if tracker_app_error != "":
-        return {"service_api_error": tracker_app_error.replace(f"{ml.ctr(request, 'service_api_error', vars = {'service': TRACKER[app.config.tracker]})}: ", "")}
+        return {"service_api_error": tracker_app_error.replace(f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: ", "")}
     else:
         return Response(status_code=204)
 

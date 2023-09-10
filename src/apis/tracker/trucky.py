@@ -907,7 +907,7 @@ async def post_update(response: Response, request: Request):
             response.status_code = 403
             await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
             return {"error": "Validation failed"}
-    
+
     if d["event"] == "user_joined_company":
         steamid = int(d["data"]["steam_profile"]["steam_id"])
         await app.db.execute(dhrid, f"SELECT uid, userid, roles, discordid FROM user WHERE steamid = {steamid}")
@@ -964,7 +964,7 @@ async def post_update(response: Response, request: Request):
             await notification(request, "member", uid, ml.tr(request, "member_accepted", var = {"userid": userid}, force_lang = await GetUserLanguage(request, uid)))
 
             def setvar(msg):
-                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", f"").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
+                return msg.replace("{mention}", f"<@{discordid}>").replace("{name}", username).replace("{userid}", str(userid)).replace("{uid}", str(uid)).replace("{avatar}", validateUrl(avatar)).replace("{staff_mention}", "").replace("{staff_name}", "Trucky").replace("{staff_userid}", "-997").replace("{staff_uid}", "-997").replace("{staff_avatar}", validateUrl(app.config.logo_url))
 
             for meta in app.config.member_accept:
                 meta = Dict2Obj(meta)
@@ -1040,7 +1040,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         job_data = json.loads(r.text)
     except:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': 'Trucky'})}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
 
     try:
         r = await arequests.get(app, f"https://e.truckyapp.com/api/v1/job/{jobid}/events", headers = {"User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
@@ -1055,7 +1055,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         job_data["events"] = events_data
     except:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': 'Trucky'})}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
 
     d = {"event": "job_completed", "data": job_data}
     original_data = copy.deepcopy(d)

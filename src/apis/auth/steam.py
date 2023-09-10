@@ -32,10 +32,10 @@ async def get_callback(request: Request, response: Response):
         r = await arequests.get(app, "https://steamcommunity.com/openid/login?" + data, dhrid = dhrid)
     except:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"})}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"})}
     if r.status_code // 100 != 2:
         response.status_code = 503
-        return {"error": ml.tr(request, 'service_api_error', vars = {'service': "Steam"})}
+        return {"error": ml.tr(request, 'service_api_error', var = {'service': "Steam"})}
     if r.text.find("is_valid:true") == -1:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_steam_auth")}
