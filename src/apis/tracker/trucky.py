@@ -37,7 +37,10 @@ def convert_format(data):
         for key in convert_distance:
             if d[key] is None:
                 d[key] = d["_".join(key.split("_")[:-1])]
-    d["average_speed_kmh"] = round((d["real_driven_distance_km"] / (d["real_driving_time_seconds"] / 3600)) / d["max_map_scale"])
+    try:
+        d["average_speed_kmh"] = round((d["real_driven_distance_km"] / (d["real_driving_time_seconds"] / 3600)) / d["max_map_scale"])
+    except: # in case of division by zero
+        d["average_speed_kmh"] = 0
     if d["volume_unit"] == "gal":
         if d["fuel_used_l"] is None:
             d["fuel_used_l"] = d["fuel_used"] * 3.785412
@@ -72,7 +75,7 @@ def convert_format(data):
     if job_event_type == "job.delivered":
         events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.delivered", "meta": {"revenue": d["income"], "revenue_details": d["income_details"], "earnedXP": None, "cargoDamage": d["cargo_damage"], "distance": d["real_driven_distance_km"], "timeTaken": d["real_driving_time_seconds"], "autoParked": d["auto_park"]}}) # revenue_details is trucky exclusive
     elif job_event_type == "job.cancelled":
-        events.append({"location": None, "real_time": d["cancelled_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["cancelled_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.cancelled", "meta": {"penalty": d["income"]}})
+        events.append({"location": None, "real_time": d["canceled_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["canceled_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.cancelled", "meta": {"penalty": d["income"]}})
     if d["warp"] is None:
         d["warp"] = 0
     return {
