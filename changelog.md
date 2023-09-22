@@ -2,16 +2,17 @@
 
 ## v2.8.2
 
-1. Fixed issues related to Trucky webhook handling  
-2. Fixed issues that updating connections fails when the provided connections are unchanged  
-3. Updated update-connection logic
+1. Fixed Trucky webhook handling issues  
+2. Fixed update-connection failure when the provided connections are unchanged  
+3. Fixed incorrect `role_history` data being returned  
+4. Updated update-connection logic
    - Non-member users with conflicting connections will no longer be deleted automatically.
    - It is required to delete connection-conflicting users manually to proceed.  
-4. Added `?email` query param to **GET** `/user/profile`  
 5. Updated delete-connection logic
    - Steam & TruckersMP connection will no longer be deleted by default.
    - It is allowed to delete a specific connection by providing it in `path`.  
    - The endpoint has been re-routed from **DELETE** `/user/{uid}/connections` to **DELETE** `/user/{uid}/connections/{connection}`. `{connection}` is a string whose value is among `email`, `discordid`, `steamid`, `truckersmpid`.
+6. Added `?email` query param to **GET** `/user/profile`  
 
 ## v2.8.1
 

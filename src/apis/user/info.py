@@ -164,7 +164,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
         p = await app.db.fetchall(dhrid)
         userinfo["role_history"] = []
         for pp in p:
-            userinfo["role_history"].append({"historyid": pp[0], "added_roles": intify(pp[1]), "removed_roles": intify(pp[2]), "timestamp": pp[3]})
+            userinfo["role_history"].append({"historyid": pp[0], "added_roles": str2list(pp[1]), "removed_roles": str2list(pp[2]), "timestamp": pp[3]})
 
     if (await GetUserPrivacy(request, userinfo['uid']))["ban_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_privacy_protected_data"])):
         userinfo["ban_history"] = None
