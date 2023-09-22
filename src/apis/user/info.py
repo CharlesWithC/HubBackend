@@ -77,7 +77,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     return {"list": ret[max(page-1, 0) * page_size : page * page_size], "total_items": len(ret), "total_pages": int(math.ceil(len(ret) / page_size))}
 
 async def get_profile(request: Request, response: Response, authorization: str = Header(None), \
-    userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None, role_history_limit: Optional[int] = 50, ban_history_limit: Optional[int] = 50):
+    userid: Optional[int] = None, uid: Optional[int] = None, discordid: Optional[int] = None, steamid: Optional[int] = None, truckersmpid: Optional[int] = None, email: Optional[str] = None, role_history_limit: Optional[int] = 50, ban_history_limit: Optional[int] = 50):
     """Returns the profile of a specific user
 
     If no request param is provided, then returns the profile of the authorized user."""
@@ -94,7 +94,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     request_uid = -1
     aulanguage = ""
     au = None
-    if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None:
+    if userid is None and uid is None and discordid is None and steamid is None and truckersmpid is None and email is None:
         au = await auth(authorization, request, check_member = False, allow_application_token = True)
         if au["error"]:
             response.status_code = au["code"]
@@ -125,6 +125,8 @@ async def get_profile(request: Request, response: Response, authorization: str =
         qu = f"steamid = {steamid}"
     elif truckersmpid is not None:
         qu = f"truckersmpid = {truckersmpid}"
+    elif email is not None:
+        qu = f"email = '{convertQuotation(email)}'"
     else:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = aulanguage)}

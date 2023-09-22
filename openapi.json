@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.8.1"
+        "version": "2.8.2"
     },
     "servers": [],
     "paths": {
@@ -489,6 +489,15 @@
                             "type": "integer"
                         },
                         "name": "truckersmpid",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Email",
+                            "type": "string"
+                        },
+                        "name": "email",
                         "in": "query"
                     },
                     {

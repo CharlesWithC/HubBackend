@@ -162,7 +162,7 @@ EN_STRINGTABLE = {
     "role_not_found": "One or more role to add or remove is not found.",
     "banned_user_cannot_be_accepted": "Banned users cannot be accepted as members.",
     "user_is_already_member": "User is already a member.",
-    "member_exists_with_new_connections": "There is a member with the new connections. Dismiss the member to proceed.",
+    "user_exists_with_new_connections": "The connections are already linked to other users. Delete them to proceed.",
     "user_position_higher_or_equal": "The highest role of the user is higher than or equal to you.",
     "add_role_higher_or_equal": "One or more roles of the user to add is higher / equal than your highest role.",
     "remove_role_higher_or_equal": "One or more roles of the user to remove is higher / equal than your highest role.",

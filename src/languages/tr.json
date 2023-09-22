@@ -80,7 +80,7 @@
     "role_not_found": "Eklenecek veya kaldırılacak bir veya daha fazla rol bulunamadı.",
     "banned_user_cannot_be_accepted": "Yasaklı kullanıcılar üye kabul edilemez.",
     "user_is_already_member": "Kullanıcı zaten üye.",
-    "member_exists_with_new_connections": "Yeni bağlantıları olan bir üye var. Devam etmek için üyeyi kapat.",
+    "user_exists_with_new_connections": "Bağlantılar zaten diğer kullanıcılara bağlı. Devam etmek için bunları silin.",
     "user_position_higher_or_equal": "Kullanıcının en yüksek rolü sizden daha yüksek veya size eşittir.",
     "add_role_higher_or_equal": "Kullanıcının eklenecek bir veya daha fazla rolü, en yüksek rolünüzden daha yüksek / eşittir.",
     "remove_role_higher_or_equal": "Kaldırılacak kullanıcının bir veya daha fazla rolü, en yüksek rolünüzden daha yüksek / eşittir.",

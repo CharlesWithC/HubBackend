@@ -151,43 +151,16 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
-    # check first
     for i in range(0,4):
         if new_connections[i] is None:
             continue
 
-        await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
+        await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}' AND uid != {uid}")
         t = await app.db.fetchall(dhrid)
         if len(t) > 0:
             if t[0][1] not in [-1, None]:
                 response.status_code = 409
-                return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
-
-    # then delete
-    for i in range(0,4):
-        if new_connections[i] is None:
-            continue
-
-        await app.db.execute(dhrid, f"SELECT uid, userid, discordid FROM user WHERE {connections_key[i]} = '{convertQuotation(new_connections[i])}'")
-        t = await app.db.fetchall(dhrid)
-        if len(t) > 0:
-            if t[0][1] not in [-1, None]:
-                response.status_code = 409
-                return {"error": ml.tr(request, "member_exists_with_new_connections", force_lang = au["language"])}
-
-            await app.db.execute(dhrid, f"DELETE FROM user WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM pending_user_deletion WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM application_token WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM auth_ticket WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM user_activity WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {t[0][0]}")
-            await app.db.execute(dhrid, f"DELETE FROM settings WHERE uid = {t[0][0]}")
-
-            if t[0][2] is not None:
-                await DeleteRoleConnection(request, t[0][2])
+                return {"error": ml.tr(request, "user_exists_with_new_connections", force_lang = au["language"])}
 
     connections = [new_connections[i] if new_connections[i] is not None else connections[i] for i in range(0,4)]
     connections = [x if x is not None else "NULL" for x in connections]

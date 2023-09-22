@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.8.2
+
+1. Fixed issues related to Trucky webhook handling  
+2. Fixed issues that updating connections fail when the provided connections are unchanged  
+3. Updated logic when updating connections  
+   - Non-member users with conflicting connections will no longer be deleted automatically. It is required to delete connection-conflicting users manually to proceed.  
+4. Added `?email` query param to **GET** `/user/profile`  
+
 ## v2.8.1
 
 1. Added **POST** `/trucky/import/{jobid}` to import jobs from Trucky  

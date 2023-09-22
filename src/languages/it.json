@@ -80,7 +80,7 @@
     "role_not_found": "Uno o più ruoli da aggiungere o rimuovere non sono stati trovati.",
     "banned_user_cannot_be_accepted": "Gli utenti esclusi non possono essere accettati come membri.",
     "user_is_already_member": "L'utente è già un membro.",
-    "member_exists_with_new_connections": "C'è un membro con le nuove connessioni. Ignora il membro per procedere.",
+    "user_exists_with_new_connections": "Le connessioni sono già collegate ad altri utenti. Eliminale per procedere.",
     "user_position_higher_or_equal": "Il ruolo più alto dell'utente è superiore o uguale a te.",
     "add_role_higher_or_equal": "Uno o più ruoli dell'utente da aggiungere è superiore/uguale al tuo ruolo più alto.",
     "remove_role_higher_or_equal": "Uno o più ruoli dell'utente da rimuovere è superiore/uguale al tuo ruolo più alto.",
