@@ -101,7 +101,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'PATCH /user/connections', 60, 10)
+    rl = await ratelimit(request, 'PATCH /user/connections', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -177,15 +177,17 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
 
     return Response(status_code=204)
 
-async def delete_connections(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
-    """[Permission Control] Deletes Steam & TruckersMP connections for a specific user.
-
-    [Note] This function will be updated when the user system no longer relies on Discord."""
+async def delete_connections(request: Request, response: Response, uid: int, connection: str, authorization: str = Header(None)):
+    """[Permission Control] Deletes connections for a specific user."""
+    connections_key = ["email", "discordid", "steamid", "truckersmpid"]
+    if connection not in connections_key:
+        response.status_code = 404
+        return {"error": "Not Found"}
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'DELETE /user/connections', 60, 10)
+    rl = await ratelimit(request, 'DELETE /user/connections', 60, 30)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -215,7 +217,7 @@ async def delete_connections(request: Request, response: Response, uid: Optional
         response.status_code = 428
         return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"UPDATE user SET steamid = NULL, truckersmpid = NULL WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"UPDATE user SET {connection} = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)
 
     username = (await GetUserInfo(request, uid = uid))["name"]

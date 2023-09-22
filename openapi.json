@@ -1937,9 +1937,11 @@
                     }
                 },
                 "responses": {}
-            },
+            }
+        },
+        "/user/{uid}/connections/{connection}": {
             "delete": {
-                "summary": "Delete User Account Connections (Steam & TruckersMP)",
+                "summary": "Delete User Account Connections",
                 "tags": [
                     "user"
                 ],
@@ -1956,6 +1958,15 @@
                         "schema": {
                             "title": "UID",
                             "type": "integer"
+                        },
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Connection (email, discordid, steamid, truckersmpid)",
+                            "type": "string"
                         },
                         "name": "uid",
                         "in": "path"
