@@ -44,7 +44,6 @@
     "invalid_avatar_url": "URL avatar non valido.",
     "avatar_domain_not_whitelisted": "Il dominio dell'avatar non è nella whitelist.",
     "smtp_configuration_invalid": "La configurazione SMTP non è valida, impossibile inviare email.",
-    "auth_secret_invalid_or_expired": "Segreto di autorizzazione non valido o scaduto.",
     "role_history_not_found": "Cronologia ruolo non trovata.",
     "ban_history_not_found": "Cronologia ban non trovata.",
 
