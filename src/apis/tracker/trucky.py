@@ -182,7 +182,7 @@ async def handle_new_job(request, response, original_data, data):
     e = d["type"]
 
     steamid = int(d["data"]["object"]["driver"]["steam_id"])
-    await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid FROM user WHERE steamid = {steamid}")
+    await app.db.execute(dhrid, f"SELECT userid, name, uid, discordid, tracker_in_use FROM user WHERE steamid = {steamid}")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 404
@@ -191,7 +191,11 @@ async def handle_new_job(request, response, original_data, data):
     username = t[0][1]
     uid = t[0][2]
     discordid = t[0][3]
+    tracker_in_use = t[0][4]
     trackerid = d["data"]["object"]["id"]
+    if tracker_in_use != 3:
+        response.status_code = 403
+        return {"error": "User has chosen to use another tracker."}
 
     duplicate = False # NOTE only for debugging purpose
     logid = -1
@@ -281,12 +285,20 @@ async def handle_new_job(request, response, original_data, data):
             pass
 
     if not delivery_rule_ok:
-        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
-        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER[app.config.tracker], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
+        await AuditLog(request, uid, ml.ctr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER['trucky'], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}))
+        await notification(request, "dlog", uid, ml.tr(request, "delivery_blocked_due_to_rules", var = {"tracker": TRACKER['trucky'], "trackerid": trackerid, "rule_key": delivery_rule_key, "rule_value": delivery_rule_value}, force_lang = await GetUserLanguage(request, uid)))
         response.status_code = 403
         return {"error": "Blocked due to delivery rules"}
 
     if not duplicate:
+        # check once again
+        await app.db.execute(dhrid, f"SELECT logid FROM dlog WHERE trackerid = {trackerid} AND tracker_type = 3 FOR UPDATE")
+        o = await app.db.fetchall(dhrid)
+        if len(o) > 0:
+            await app.db.commit(dhrid) # unlock table
+            response.status_code = 409
+            return {"error": "Already logged"}
+
         await app.db.execute(dhrid, f"INSERT INTO dlog(userid, data, topspeed, timestamp, isdelivered, profit, unit, fuel, distance, trackerid, tracker_type, view_count) VALUES ({userid}, '{compress(json.dumps(d,separators=(',', ':')))}', {top_speed}, {int(time.time())}, {isdelivered}, {mod_revenue}, {munitint}, {fuel_used}, {driven_distance}, {trackerid}, 3, 0)")
         await app.db.commit(dhrid)
         await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
@@ -881,7 +893,7 @@ async def handle_new_job(request, response, original_data, data):
 
 async def post_update(response: Response, request: Request):
     app = request.app
-    if app.config.tracker != "trucky":
+    if "trucky" not in configured_trackers(app):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
@@ -904,12 +916,20 @@ async def post_update(response: Response, request: Request):
     else:
         response.status_code = 400
         return {"error": "Unsupported content type"}
-    if app.config.tracker_webhook_secret is not None and app.config.tracker_webhook_secret != "":
-        sig = hmac.new(app.config.tracker_webhook_secret.encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
-        if sig != webhook_signature:
-            response.status_code = 403
-            await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
-            return {"error": "Validation failed"}
+    sig_ok = False
+    needs_validate = False # if at least one tracker has webhook secret, then true (only false when all doesn't have webhook secret)
+    for tracker in app.config.tracker:
+        if tracker["type"] != "trucky":
+            continue
+        if tracker["webhook_secret"] is not None and tracker["webhook_secret"] != "":
+            needs_validate = True
+            sig = hmac.new(tracker["webhook_secret"].encode(), msg=raw_body, digestmod=hashlib.sha256).hexdigest()
+            if sig == webhook_signature:
+                sig_ok = True
+    if needs_validate and not sig_ok:
+        response.status_code = 403
+        await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_signature", var = {"tracker": "Trucky", "ip": request.client.host}))
+        return {"error": "Validation failed"}
 
     if d["event"] == "user_joined_company":
         steamid = int(d["data"]["steam_profile"]["steam_id"])
@@ -1071,7 +1091,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
-    if app.config.tracker != "trucky":
+    if "tracksim" not in configured_trackers(app):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
@@ -1094,26 +1114,17 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    status_code = 0
-    tracker_app_error = await add_driver(request, userinfo["steamid"])
-
-    if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
-    else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "added_user_to_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
+    tracker_app_error = await add_driver(request, userinfo["steamid"], au["uid"], userid, userinfo["name"], trackers = ["trucky"])
 
     if tracker_app_error == "":
         return Response(status_code=204)
-    elif status_code == 0:
-        response.status_code = 503
-        return {"error": tracker_app_error.replace("`", "")}
     else:
-        response.status_code = status_code
-        return {"error": tracker_app_error.replace("`", "")}
+        response.status_code = 503
+        return {"error": tracker_app_error}
 
 async def delete_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
-    if app.config.tracker != "trucky":
+    if "tracksim" not in configured_trackers(app):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
@@ -1136,19 +1147,10 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    status_code = 0
-    tracker_app_error = await remove_driver(request, userinfo["steamid"])
-
-    if tracker_app_error != "":
-        await AuditLog(request, au["uid"], ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
-    else:
-        await AuditLog(request, au["uid"], ml.ctr(request, "removed_user_from_tracker_company", var = {"username": userinfo["name"], "userid": userid, "tracker": TRACKER[app.config.tracker]}))
+    tracker_app_error = await remove_driver(request, userinfo["steamid"], au["uid"], userid, userinfo["name"], trackers = ["trucky"])
 
     if tracker_app_error == "":
         return Response(status_code=204)
-    elif status_code == 0:
-        response.status_code = 503
-        return {"error": tracker_app_error.replace("`", "")}
     else:
-        response.status_code = status_code
-        return {"error": tracker_app_error.replace("`", "")}
+        response.status_code = 503
+        return {"error": tracker_app_error}

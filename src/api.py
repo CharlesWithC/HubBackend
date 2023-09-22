@@ -212,9 +212,9 @@ class HubMiddleware(BaseHTTPMiddleware):
             if client_host is None:
                 return JSONResponse({"error": "Invalid Request"}, status_code=400)
 
-        if real_path.startswith("/tracksim") and app.config.tracker != "tracksim":
+        if real_path.startswith("/tracksim") and "tracksim" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
-        if real_path.startswith("/trucky") and not real_path.startswith("/trucky/import") and app.config.tracker != "trucky":
+        if real_path.startswith("/trucky") and not real_path.startswith("/trucky/import") and "trucky" not in configured_trackers(app):
             return JSONResponse({"error": "Not Found"}, status_code=404)
 
         dhrid = genrid()

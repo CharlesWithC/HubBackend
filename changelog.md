@@ -13,6 +13,16 @@
    - It is allowed to delete a specific connection by providing it in `path`.  
    - The endpoint has been re-routed from **DELETE** `/user/{uid}/connections` to **DELETE** `/user/{uid}/connections/{connection}`. `{connection}` is a string whose value is among `email`, `discordid`, `steamid`, `truckersmpid`.
 6. Added `?email` query param to **GET** `/user/profile`  
+7. Added support to TrackSim-Trucky Hybrid Tracker  
+   - Definition of "default tracker": `config.tracker` if config has not been updated to the new format, or `config.tracker[0].type` if config has been updated to the new format.
+   - The upgrader will set all user's tracker to the default tracker. The format of `config.tracker` will also be updated, which is a list containing multiple dictionaries, whose format looks like `{"type": str, "company_id": int, "api_token": str, "webhook_secret": str, "ip_whitelist": list}`.
+   - On **POST** `/user/{uid}/accept`, `tracker` should be provided to set the tracker the user will be using. Otherwise, the default tracker will be used.
+   - A new endpoint **POST** `/user/tracker/switch` has been created to allow user or staff to change the user's tracker. `update_member_roles` permission is required to update the tracker for another user.
+   - `tracker` attribute has been added to `user` object.
+   - When a driver is to be added to the tracker company, the driver will be added to all tracker companies no matter which tracker they choose to use. This is to prevent additional work to be done when the driver changes the tracker in the future.
+   - When a driver submits a job, `tracker_in_use` will be checked to ensure that the data is coming from the correct tracker to prevent duplicate jobs.
+   - Theoretically, there is no hard limit on the number of trackers, even if they are of the same `type`. But adding too many trackers may lead to downgraded performance on relevant functions, including adding/removing drivers to/from the tracker company. Though measures have been taken to prevent duplicate jobs from the same tracker being logged when multiple webhooks are sent at the same time (there is lag on database and multiple webhooks coming in at the same time may cause inability to detect duplicate jobs), we cannot promise that no duplicate jobs from the same tracker will be logged.
+   - Hence, considering that we currently support TrackSim and Trucky as tracker, it's recommended to configure up to `2` trackers, one of TrackSim and one of Trucky.
 
 ## v2.8.1
 

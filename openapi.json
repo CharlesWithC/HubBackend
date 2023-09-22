@@ -1564,6 +1564,41 @@
                 "responses": {}
             }
         },
+        "/user/tracker/switch": {
+            "post": {
+                "summary": "Switch Tracker",
+                "tags": [
+                    "user"
+                ],
+                "operationId": "post_user_tracker_switch",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tracker": {
+                                        "description": "Tracker (tracksim or trucky)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "tracker"
+                            ]
+                        }
+                    }
+                },
+                "responses": {}
+            }
+        },
         "/user/{uid}/accept": {
             "post": {
                 "summary": "Accept user as member",
@@ -1588,6 +1623,23 @@
                         "in": "path"
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tracker": {
+                                        "description": "Tracker (tracksim or trucky)",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                },
                 "responses": {}
             }
         },

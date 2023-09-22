@@ -428,12 +428,7 @@ async def post_resign(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"UPDATE economy_garage SET userid = -1000 WHERE userid = {userid}")
     await app.db.commit(dhrid)
 
-    tracker_app_error = await remove_driver(request, steamid)
-
-    if tracker_app_error != "":
-        await AuditLog(request, uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": tracker_app_error}))
-    else:
-        await AuditLog(request, uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": name, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
+    await remove_driver(request, steamid, uid, userid, name)
 
     await UpdateRoleConnection(request, discordid)
 

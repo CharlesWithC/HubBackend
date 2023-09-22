@@ -28,6 +28,34 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         del au["code"]
         return au
 
+    data = await request.json()
+    try:
+        if "tracker" in data.keys():
+            tracker_in_use = data["tracker"].lower()
+            if tracker_in_use == "tracksim":
+                tracker_in_use = 2
+            elif tracker_in_use == "trucky":
+                tracker_in_use = 3
+            else:
+                response.status_code = 400
+                return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
+        else:
+            if len(app.config.tracker) == 1:
+                # in case tracker_in_use is not provided in json
+                # and only one tracker has been configured
+                # we'll consider the only tracker as tracker_in_use
+                if app.config.tracker[0]["type"] == "tracksim":
+                    tracker_in_use = 2
+                elif app.config.tracker[0]["type"] == "trucky":
+                    tracker_in_use = 3
+            else:
+                # but if there's multiple trackers, throw an error
+                response.status_code = 400
+                return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
     await app.db.execute(dhrid, f"SELECT * FROM banned WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
     if len(t) > 0:
@@ -66,7 +94,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     t = await app.db.fetchall(dhrid)
     userid = int(t[0][0])
 
-    await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())} WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"UPDATE user SET userid = {userid}, join_timestamp = {int(time.time())}, tracker_in_use = {tracker_in_use} WHERE uid = {uid}")
     await app.db.execute(dhrid, f"UPDATE settings SET sval = {userid+1} WHERE skey = 'nxtuserid'")
     await AuditLog(request, au["uid"], ml.ctr(request, "accepted_user_as_member", var = {"username": name, "userid": userid, "uid": uid}))
     await app.db.commit(dhrid)

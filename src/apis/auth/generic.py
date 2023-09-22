@@ -207,7 +207,7 @@ async def post_register(request: Request, response: Response):
     username = convertQuotation(email.split("@")[0])
 
     # register user
-    await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret) VALUES (-1, '{username}', 'pending', '', '', '', NULL, NULL, NULL, {int(time.time())}, '')")
+    await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret, tracker_in_use) VALUES (-1, '{username}', 'pending', '', '', '', NULL, NULL, NULL, {int(time.time())}, '', 0)")
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")
     uid = (await app.db.fetchone(dhrid))[0]
     await app.db.execute(dhrid, f"INSERT INTO settings VALUES ('{uid}', 'notification', ',drivershub,login,dlog,member,application,challenge,division,economy,event,')")

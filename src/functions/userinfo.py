@@ -191,24 +191,24 @@ def ClearUserCache(app):
 async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = False, tell_deleted = False, include_sensitive = False, include_global_note = False, ignore_activity = False, nocache = False):
     (app, dhrid) = (request.app, request.state.dhrid)
     if None in [userid, discordid, uid]:
-        return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": None, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
 
     miscuserid = {-997: "Trucky", -998: ml.ctr(request, "discord_api"), -999: "system", -1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
     if userid == -1000 or uid == -1000:
-        return {"uid": None, "userid": None, "name": app.config.name, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": app.config.logo_url, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": app.config.name, "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": app.config.logo_url, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
     if userid in miscuserid.keys():
-        return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[userid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
     if uid in miscuserid.keys():
-        return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[uid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": ml.tr(request, miscuserid[uid]), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
 
     if privacy:
-        return {"uid": None, "userid": None, "name": f'[{ml.tr(request, "protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+        return {"uid": None, "userid": None, "name": f'[{ml.tr(request, "protected")}]', "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
 
     if userid == -1 and discordid == -1 and uid == -1:
         if not tell_deleted:
-            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
         else:
-            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None, "is_deleted": True}
+            return {"uid": None, "userid": None, "name": ml.tr(request, "unknown"), "email": None, "discordid": None, "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None, "is_deleted": True}
 
     ClearUserCache(app)
 
@@ -297,16 +297,16 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     elif uid != -1:
         query = f"uid = {uid}"
 
-    await app.db.execute(dhrid, f"SELECT uid, userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, mfa_secret, join_timestamp FROM user WHERE {query}")
+    await app.db.execute(dhrid, f"SELECT uid, userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, mfa_secret, join_timestamp, tracker_in_use FROM user WHERE {query}")
     p = await app.db.fetchall(dhrid)
     if len(p) == 0:
         uid = None if uid == -1 else uid
         userid = None if userid == -1 else userid
         discordid = None if discordid == -1 else discordid
         if not tell_deleted:
-            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
+            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None}
         else:
-            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None, "is_deleted": True}
+            return {"uid": uid, "userid": userid, "name": ml.tr(request, "unknown"), "email": None, "discordid": nstr(discordid), "steamid": None, "truckersmpid": None, "tracker": None, "avatar": None, "bio": None, "note": "", "global_note": None, "roles": [], "activity": None, "mfa": None, "join_timestamp": None, "is_deleted": True}
 
     uid = p[0][0]
 
@@ -346,7 +346,13 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
     if userid == -1:
         userid = None
 
-    ret = {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
+    tracker = "unknown"
+    if p[0][12] == 2:
+        tracker = "tracksim"
+    elif p[0][13] == 3:
+        tracker = "trucky"
+
+    ret = {"uid": uid, "userid": userid, "name": p[0][2], "email": email, "discordid": nstr(p[0][7]), "steamid": nstr(p[0][8]), "truckersmpid": p[0][9], "tracker": tracker, "avatar": p[0][4], "bio": b64d(p[0][5]), "note": "", "global_note": global_note, "roles": roles, "activity": activity, "mfa": mfa_enabled, "join_timestamp": p[0][11]}
 
     app.state.cache_userinfo[f"uid={uid}"] = {"data": copy.deepcopy(ret), "expire": int(time.time()) + 15}
 

@@ -156,7 +156,10 @@ async def get_config(request: Request, response: Response, authorization: str = 
     # process whitelist
     for tt in t.keys():
         if tt in config_whitelist:
-            ttconfig[tt] = t[tt]
+            if tt == "tracker":
+                ttconfig[tt] = [{"type": tracker["type"], "company_id": tracker["company_id"]} for tracker in t[tt]]
+            else:
+                ttconfig[tt] = t[tt]
 
     # remove sensitive data
     for tt in config_protected:
@@ -211,26 +214,18 @@ async def patch_config(request: Request, response: Response, authorization: str 
     else:
         ttconfig = validateConfig(json.loads(open(app.config_path, "r", encoding="utf-8").read()))
 
-    tracker = ""
-    if "tracker" in new_config.keys():
-        tracker = new_config["tracker"]
-    elif "tracker" in ttconfig.keys():
-        tracker = ttconfig["tracker"]
-    else:
-        tracker = "tracksim"
-
     for tt in new_config.keys():
         if tt in config_whitelist:
-            if tt == "tracker" and new_config[tt] not in ["tracksim", "trucky"]:
-                response.status_code = 400
-                return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
-
-            if not unsafe and tracker in ["tracksim", "trucky"] and tt in ["tracker_webhook_secret", "tracker_api_token"]:
-                if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
+            if tt == "tracker":
+                if new_config[tt]["type"] not in ["tracksim", "trucky"]:
                     response.status_code = 400
-                    return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                    return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
+                for k in ["tracker_webhook_secret", "tracker_api_token"]:
+                    if not unsafe and new_config[tt][k].replace(" ", "").replace("\n","").replace("\t","") == "":
+                        response.status_code = 400
+                        return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
 
-            if not unsafe and tt in config_protected and tt not in ["tracker_webhook_secret", "tracker_api_token"]:
+            if not unsafe and tt in config_protected:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
@@ -254,7 +249,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
-            if tt in ["guild_id", "tracker_company_id", "delivery_log_channel_id", "discord_client_id", "smtp_port", "security_level"]:
+            if tt in ["guild_id", "delivery_log_channel_id", "discord_client_id", "smtp_port", "security_level"]:
                 try:
                     new_config[tt] = int(new_config[tt])
                 except:

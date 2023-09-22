@@ -494,3 +494,56 @@ async def patch_note(request: Request, response: Response, uid: int, authorizati
     await app.db.commit(dhrid)
 
     return Response(status_code=204)
+
+async def post_tracker_switch(request: Request, response: Response, uid: Optional[int] = None, authorization: str = Header(None)):
+    """Updates tracker_in_use column of user table in database, returns 204"""
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'POST /user/tracker/switch', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, allow_application_token = True)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    aulanguage = au["language"]
+
+    if uid is not None and uid != au["uid"]:
+        # updating tracker for another user
+        au = await auth(authorization, request, allow_application_token = True, required_permission=["admin", "hrm", "hr", "update_member_roles"])
+        if au["error"]:
+            response.status_code = au["code"]
+            del au["code"]
+            return au
+        await app.db.execute(dhrid, f"SELECT userid, uid FROM user WHERE uid = {uid}")
+        t = await app.db.fetchall(dhrid)
+        if len(t) == 0:
+            response.status_code = 404
+            return {"error": ml.tr(request, "user_not_found", force_lang = aulanguage)}
+    else:
+        uid = au["uid"]
+
+    data = await request.json()
+    try:
+        tracker_in_use = data["tracker"].lower()
+        if tracker_in_use == "tracksim":
+            tracker_in_use = 2
+        elif tracker_in_use == "trucky":
+            tracker_in_use = 3
+        else:
+            response.status_code = 400
+            return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"UPDATE user SET tracker_in_use = {tracker_in_use} WHERE uid = {uid}")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)

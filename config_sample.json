@@ -49,11 +49,13 @@
     "required_connections": ["discord", "steam"],
     "register_methods": ["discord", "steam"],
 
-    "tracker": "tracksim",
-    "tracker_company_id": "",
-    "tracker_api_token": "",
-    "tracker_webhook_secret": "",
-    "allowed_tracker_ips": ["109.106.1.243"],
+    "tracker": [{
+        "type": "tracksim",
+        "company_id": "",
+        "api_token": "",
+        "webhook_secret": "",
+        "ip_whitelist": ["109.106.1.243"]
+    }],
     "delivery_rules": {
         "max_speed": 180,
         "max_profit": 1000000,

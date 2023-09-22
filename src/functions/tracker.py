@@ -4,69 +4,109 @@
 import json
 
 import multilang as ml
-from functions import arequests, gensecret
+from functions import arequests, gensecret, AuditLog
 from static import TRACKER
 
 
-async def add_driver(request, steamid):
+async def add_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
     (app, dhrid) = (request.app, request.state.dhrid)
-    tracker_app_error = ""
-    try:
-        if app.config.tracker == "tracksim":
-            r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        elif app.config.tracker == "trucky":
-            await app.db.execute(dhrid, f"SELECT name, email FROM user WHERE steamid = {steamid}")
-            t = await app.db.fetchall(dhrid)
-            email = t[0][1]
-            if email is None or "@" not in email:
-                email = gensecret(8) + "@example.com"
-            r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": app.config.tracker_api_token, "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
-        if app.config.tracker == "tracksim":
-            if r.status_code != 200:
+    all_errors = ""
+    for tracker in app.config.tracker:
+        resp_error = ""
+        plain_error = ""
+        try:
+            if tracker["type"] not in trackers:
+                continue
+            if tracker["type"] == "tracksim":
+                r = await arequests.post(app, "https://api.tracksim.app/v1/drivers/add", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + tracker["api_token"]}, dhrid = dhrid)
+            elif tracker["type"] == "trucky":
+                await app.db.execute(dhrid, f"SELECT name, email FROM user WHERE steamid = {steamid}")
+                t = await app.db.fetchall(dhrid)
+                email = t[0][1]
+                if email is None or "@" not in email:
+                    email = gensecret(8) + "@example.com"
+                r = await arequests.post(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid), "name": t[0][0], "email": email}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+            if tracker["type"] == "tracksim":
+                if r.status_code != 200:
+                    try:
+                        resp = json.loads(r.text)
+                        if "error" in resp.keys() and resp["error"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
+                            plain_error = resp['error']
+                        else:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                            plain_error = ml.ctr(request, 'unknown_error')
+                    except:
+                        resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                        plain_error = ml.ctr(request, 'unknown_error')
+            elif tracker["type"] == "trucky":
                 try:
                     resp = json.loads(r.text)
-                    if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{resp['error']}`"
-                    else:
-                        tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
+                    if not resp["success"]:
+                        resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `" + resp["message"] + "`"
+                        plain_error = resp["message"]
                 except:
-                    tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
-        elif app.config.tracker == "trucky":
-            try:
-                resp = json.loads(r.text)
-                if not resp["success"]:
-                    tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `" + resp["message"] + "`"
-            except:
-                tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_timeout')}"
-    return tracker_app_error
+                    resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                    plain_error = ml.ctr(request, 'unknown_error')
+        except:
+            resp_error = f"{TRACKER[tracker['type']]} {ml.ctr(request, 'api_timeout')}"
+            plain_error = ml.ctr(request, 'api_timeout')
 
-async def remove_driver(request, steamid):
+        if resp_error != "":
+            await AuditLog(request, staff_uid, ml.ctr(request, "failed_to_add_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": resp_error}))
+        else:
+            await AuditLog(request, staff_uid, ml.ctr(request, "added_user_to_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
+
+        if plain_error != "":
+            plain_error += "\n"
+        all_errors += plain_error
+    return all_errors
+
+async def remove_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
     (app, dhrid) = (request.app, request.state.dhrid)
-    tracker_app_error = ""
-    try:
-        if app.config.tracker == "tracksim":
-            r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + app.config.tracker_api_token}, dhrid = dhrid)
-        elif app.config.tracker == "trucky":
-            r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": app.config.tracker_api_token, "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
-        if app.config.tracker == "tracksim":
-            if r.status_code != 200:
+    all_errors = ""
+    for tracker in app.config.tracker:
+        resp_error = ""
+        plain_error = ""
+        try:
+            if tracker["type"] not in trackers:
+                continue
+            if tracker["type"] == "tracksim":
+                r = await arequests.delete(app, "https://api.tracksim.app/v1/drivers/remove", data = {"steam_id": str(steamid)}, headers = {"Authorization": "Api-Key " + tracker["api_token"]}, dhrid = dhrid)
+            elif tracker["type"] == "trucky":
+                r = await arequests.delete(app, "https://e.truckyapp.com/api/v1/drivershub/members", data = {"steam_id": str(steamid)}, headers = {"X-ACCESS-TOKEN": tracker["api_token"], "User-Agent": f"CHub Drivers Hub Backend {app.version}"}, dhrid = dhrid)
+            if tracker["type"] == "tracksim":
+                if r.status_code != 200:
+                    try:
+                        resp = json.loads(r.text)
+                        if "error" in resp.keys() and resp["error"] is not None:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{resp['error']}`"
+                            plain_error = resp['error']
+                        else:
+                            resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                            plain_error = ml.ctr(request, 'unknown_error')
+                    except:
+                        resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                        plain_error = ml.ctr(request, 'unknown_error')
+            elif tracker["type"] == "trucky":
                 try:
                     resp = json.loads(r.text)
-                    if "error" in resp.keys() and resp["error"] is not None:
-                        tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{resp['error']}`"
-                    else:
-                        tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
+                    if not resp["success"]:
+                        resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `" + resp["message"] + "`"
+                        plain_error = resp["message"]
                 except:
-                    tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
-        elif app.config.tracker == "trucky":
-            try:
-                resp = json.loads(r.text)
-                if not resp["success"]:
-                    tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `" + resp["message"] + "`"
-            except:
-                tracker_app_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[app.config.tracker]})}: `{ml.ctr(request, 'unknown_error')}`"
-    except:
-        tracker_app_error = f"{TRACKER[app.config.tracker]} {ml.ctr(request, 'api_timeout')}"
-    return tracker_app_error
+                    resp_error = f"{ml.ctr(request, 'service_api_error', var = {'service': TRACKER[tracker['type']]})}: `{ml.ctr(request, 'unknown_error')}`"
+                    plain_error = ml.ctr(request, 'unknown_error')
+        except:
+            resp_error = f"{TRACKER[tracker['type']]} {ml.ctr(request, 'api_timeout')}"
+            plain_error = ml.ctr(request, 'api_timeout')
+
+        if resp_error != "":
+            await AuditLog(request, staff_uid, ml.ctr(request, "failed_remove_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker], "error": resp_error}))
+        else:
+            await AuditLog(request, staff_uid, ml.ctr(request, "removed_user_from_tracker_company", var = {"username": username, "userid": userid, "tracker": TRACKER[app.config.tracker]}))
+
+        if plain_error != "":
+            plain_error += "\n"
+        all_errors += plain_error
+    return all_errors

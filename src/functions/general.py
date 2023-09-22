@@ -105,3 +105,9 @@ async def EnsureEconomyBalance(request, userid):
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         await app.db.execute(dhrid, f"INSERT INTO economy_balance VALUES ({userid}, 0)")
+
+def configured_trackers(app):
+    ret = []
+    for tracker in app.config.tracker:
+        ret.append(tracker["type"])
+    return ret

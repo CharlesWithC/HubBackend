@@ -233,7 +233,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     # so we can realize switching tracker without needing to restart program
     routes += apis.tracker.routes_tracksim
     routes += apis.tracker.routes_trucky
-    if app.config.tracker == "tracksim" and "route" in app.config.plugins:
+    if "route" in app.config.plugins:
         routes += apis.tracker.routes_tracksim_route
 
     if "banner" in app.config.plugins:

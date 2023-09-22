@@ -274,8 +274,8 @@ async def patch_steam(request: Request, response: Response, authorization: str =
     if orgsteamid is not None and userid >= 0:
         if not (await auth(authorization, request, required_permission = ["driver"]))["error"]:
             try:
-                await remove_driver(request, steamid)
-                await add_driver(request, steamid)
+                await remove_driver(request, steamid, au["uid"], au["userid"], au["name"])
+                await add_driver(request, steamid, au["uid"], au["userid"], au["name"])
             except:
                 pass
 
