@@ -141,6 +141,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
         # remove sensitive data
         for tt in config_protected:
             ffconfig[tt] = ""
+        ffconfig["tracker"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ffconfig["tracker"]]
 
         # remove disabled plugins
         for t in config_plugins.keys():
@@ -164,6 +165,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     # remove sensitive data
     for tt in config_protected:
         ttconfig[tt] = ""
+    ttconfig["tracker"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ttconfig["tracker"]]
 
     # remove disabled plugins
     for t in config_plugins.keys():
@@ -217,13 +219,14 @@ async def patch_config(request: Request, response: Response, authorization: str 
     for tt in new_config.keys():
         if tt in config_whitelist:
             if tt == "tracker":
-                if new_config[tt]["type"] not in ["tracksim", "trucky"]:
-                    response.status_code = 400
-                    return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
-                for k in ["tracker_webhook_secret", "tracker_api_token"]:
-                    if not unsafe and new_config[tt][k].replace(" ", "").replace("\n","").replace("\t","") == "":
+                for tracker in new_config[tt]:
+                    if tracker["type"] not in ["tracksim", "trucky"]:
                         response.status_code = 400
-                        return {"error": ml.tr(request, "config_invalid_value", var = {"item": tt}, force_lang = au["language"])}
+                        return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
+                    for k in ["api_token", "webhook_secret"]:
+                        if k in tracker.keys() and not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
+                            response.status_code = 400
+                            return {"error": ml.tr(request, "config_invalid_value", var = {"item": f"tracker.{k}"}, force_lang = au["language"])}
 
             if not unsafe and tt in config_protected:
                 if new_config[tt].replace(" ", "").replace("\n","").replace("\t","") == "":

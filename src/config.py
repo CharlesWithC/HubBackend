@@ -1202,7 +1202,18 @@ def validateConfig(cfg):
         del cfg["tracker_company_id"], cfg["tracker_api_token"], cfg["tracker_webhook_secret"], cfg["allowed_tracker_ips"]
     if type(cfg["tracker"]) != list:
         cfg["tracker"] = []
-
+    new_trackers = []
+    for tracker in cfg["tracker"]:
+        if "type" not in tracker.keys() or "company_id" not in tracker.keys() or "api_token" not in tracker.keys() or "webhook_secret" not in tracker.keys():
+            continue
+        if "ip_whitelist" not in tracker.keys():
+            tracker["ip_whitelist"] = []
+        if tracker["type"] not in ["tracksim", "trucky"]:
+            continue
+        if tracker["ip_whitelist"] is not None and type(tracker["ip_whitelist"]) != list:
+            continue
+        new_trackers.append(tracker)
+    cfg["tracker"] = new_trackers
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}
     extra_perms = {key: cfg["perms"][key] for key in cfg["perms"].keys() if key not in default_config["perms"].keys()}
     ordered_perms.update(extra_perms)
