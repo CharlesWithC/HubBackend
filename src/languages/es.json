@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Nessuna Email di Conferma in Attesa",
     "connections_belong_to_multiple_users": "Le connessioni fornite appartengono a più utenti. Per evitare ban inaspettati, sono accettate solo connessioni per un singolo utente.",
     "dismiss_before_ban": "Congeda il Membro Prima del Ban",
-    "dismiss_before_delete_connections": "Congeda il Membro Prima di Eliminare le Connessioni",
     "dismiss_before_delete": "Congeda il Membro Prima di Eliminare l'Account",
     "resign_before_delete": "Dimettiti Prima di Eliminare l'Account",
     "user_already_banned": "Utente Già Bannato",

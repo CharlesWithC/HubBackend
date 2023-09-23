@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Ingen afventende email-bekræftelse",
     "connections_belong_to_multiple_users": "De tilslutninger tilhører flere brugere. Kun tilslutninger til en enkelt bruger accepteres for at undgå uventede bans.",
     "dismiss_before_ban": "Afskedig medlem før bannelse",
-    "dismiss_before_delete_connections": "Afskedig medlem før sletning af tilslutninger",
     "dismiss_before_delete": "Afskedig medlem før sletning af konto",
     "resign_before_delete": "Træd tilbage før sletning af konto",
     "user_already_banned": "Brugeren er allerede bannet",

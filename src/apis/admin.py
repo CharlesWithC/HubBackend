@@ -114,7 +114,10 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
         for tt in t.keys():
             if tt in public_config_whitelist:
-                ttconfig[tt] = t[tt]
+                if tt == "tracker":
+                    ttconfig[tt] = [{"type": tracker["type"], "company_id": tracker["company_id"]} for tracker in t[tt]]
+                else:
+                    ttconfig[tt] = t[tt]
 
         return {"config": ttconfig}
 
@@ -156,10 +159,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     # process whitelist
     for tt in t.keys():
         if tt in config_whitelist:
-            if tt == "tracker":
-                ttconfig[tt] = [{"type": tracker["type"], "company_id": tracker["company_id"]} for tracker in t[tt]]
-            else:
-                ttconfig[tt] = t[tt]
+            ttconfig[tt] = t[tt]
 
     # remove sensitive data
     for tt in config_protected:

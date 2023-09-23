@@ -1577,6 +1577,17 @@
                         "applicationAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "UID",
+                            "type": "integer"
+                        },
+                        "name": "uid",
+                        "in": "query"
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2020,7 +2031,7 @@
                             "title": "Connection (email, discordid, steamid, truckersmpid)",
                             "type": "string"
                         },
-                        "name": "uid",
+                        "name": "connection",
                         "in": "path"
                     }
                 ],

@@ -20,7 +20,7 @@ from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
 
 async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
     r = None
-    for tracker in app.config["tracker"]:
+    for tracker in app.config.tracker:
         if tracker["type"] != "tracksim":
             continue
         try: # try multiple tracker's api token
@@ -136,7 +136,16 @@ async def post_update(response: Response, request: Request):
 
     webhook_signature = request.headers.get('tracksim-signature')
 
-    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
+    ip_ok = False
+    needs_validate = False
+    for tracker in app.config.tracker:
+        if tracker["type"] != "tracksim":
+            continue
+        if type(tracker["ip_whitelist"]) == list and len(tracker["ip_whitelist"]) > 0:
+            needs_validate = True
+            if request.client.host in tracker["ip_whitelist"]:
+                ip_ok = True
+    if needs_validate and not ip_ok:
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "TrackSim", "ip": request.client.host}))
         return {"error": "Validation failed"}

@@ -92,7 +92,7 @@ def convert_format(data):
                     "profile_photo_url": d["driver"]["avatar_url"]
                 },
                 "start_time": d["started_at"].split(".")[0]+"Z",
-                "stop_time": d["completed_at"].split(".")[0]+"Z" if d["completed_at"] is not None else d["cancelled_at"].split(".")[0]+"Z",
+                "stop_time": d["completed_at"].split(".")[0]+"Z" if d["completed_at"] is not None else d["canceled_at"].split(".")[0]+"Z",
                 "time_spent": d["real_driving_time_seconds"],
                 "planned_distance": d["planned_distance_km"],
                 "driven_distance": d["real_driven_distance_km"],
@@ -901,7 +901,16 @@ async def post_update(response: Response, request: Request):
 
     webhook_signature = request.headers.get('X-Signature-SHA256')
 
-    if isinstance(app.config.allowed_tracker_ips, list) and len(app.config.allowed_tracker_ips) > 0 and request.client.host not in app.config.allowed_tracker_ips:
+    ip_ok = False
+    needs_validate = False
+    for tracker in app.config.tracker:
+        if tracker["type"] != "trucky":
+            continue
+        if type(tracker["ip_whitelist"]) == list and len(tracker["ip_whitelist"]) > 0:
+            needs_validate = True
+            if request.client.host in tracker["ip_whitelist"]:
+                ip_ok = True
+    if needs_validate and not ip_ok:
         response.status_code = 403
         await AuditLog(request, -999, ml.ctr(request, "rejected_tracker_webhook_post_ip", var = {"tracker": "Trucky", "ip": request.client.host}))
         return {"error": "Validation failed"}
@@ -1091,7 +1100,7 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
-    if "tracksim" not in configured_trackers(app):
+    if "trucky" not in configured_trackers(app):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid
@@ -1124,7 +1133,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
 
 async def delete_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
-    if "tracksim" not in configured_trackers(app):
+    if "trucky" not in configured_trackers(app):
         response.status_code = 404
         return {"error": "Not Found"}
     dhrid = request.state.dhrid

@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Aucune confirmation d'e-mail en attente",
     "connections_belong_to_multiple_users": "Les connexions appartiennent à plusieurs utilisateurs. Seules les connexions pour un seul utilisateur sont acceptées pour éviter des interdictions inattendues.",
     "dismiss_before_ban": "Révoquez le membre avant de l'interdire",
-    "dismiss_before_delete_connections": "Révoquez le membre avant de supprimer les connexions de compte",
     "dismiss_before_delete": "Révoquez le membre avant de supprimer le compte",
     "resign_before_delete": "Démissionnez avant de supprimer le compte",
     "user_already_banned": "L'utilisateur est déjà interdit",

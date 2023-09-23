@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Bekleyen E-posta Onayı Yok",
     "connections_belong_to_multiple_users": "Verilen bağlantılar birden fazla kullanıcıya ait. Beklenmedik banları önlemek için yalnızca tek bir kullanıcıya ait bağlantılar kabul edilir.",
     "dismiss_before_ban": "Üyeyi Yasaklamadan Önce İşten Çıkartın",
-    "dismiss_before_delete_connections": "Hesap Bağlantılarını Silmeden Önce Üyeyi İşten Çıkartın",
     "dismiss_before_delete": "Hesabı Silmeden Önce Üyeyi İşten Çıkartın",
     "resign_before_delete": "Hesabı Silmeden Önce İstifa Edin",
     "user_already_banned": "Kullanıcı Zaten Yasaklandı",

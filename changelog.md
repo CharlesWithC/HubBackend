@@ -10,6 +10,7 @@
    - It is required to delete connection-conflicting users manually to proceed.  
 5. Updated delete-connection logic
    - Steam & TruckersMP connection will no longer be deleted by default.
+   - It is no longer needed to dismiss a member before deleting connections.
    - It is allowed to delete a specific connection by providing it in `path`.  
    - The endpoint has been re-routed from **DELETE** `/user/{uid}/connections` to **DELETE** `/user/{uid}/connections/{connection}`. `{connection}` is a string whose value is among `email`, `discordid`, `steamid`, `truckersmpid`.
 6. Added `?email` query param to **GET** `/user/profile`  

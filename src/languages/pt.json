@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Sem Confirmação de Email Pendente",
     "connections_belong_to_multiple_users": "As ligações fornecidas pertencem a vários utilizadores. Apenas ligações para um único utilizador são aceites para evitar banimentos inesperados.",
     "dismiss_before_ban": "Dispense o Membro Antes de Banir",
-    "dismiss_before_delete_connections": "Dispense o Membro Antes de Eliminar Ligações",
     "dismiss_before_delete": "Dispense o Membro Antes de Eliminar a Conta",
     "resign_before_delete": "Demita-se Antes de Eliminar a Conta",
     "user_already_banned": "Utilizador Já Banido",

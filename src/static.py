@@ -136,7 +136,6 @@ EN_STRINGTABLE = {
     "no_pending_email_confirmation": "No Pending Email Confirmation",
     "connections_belong_to_multiple_users": "Connections provided belong multiple users. To avoid unexpected bans, only connections for a single user are accepted.",
     "dismiss_before_ban": "Dismiss Member Before Banning",
-    "dismiss_before_delete_connections": "Dismiss Member Before Deleting Connections",
     "dismiss_before_delete": "Dismiss Member Before Deleting Account",
     "resign_before_delete": "Resign Before Deleting Account",
     "user_already_banned": "User Already Banned",

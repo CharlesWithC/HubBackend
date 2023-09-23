@@ -28,8 +28,11 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
         del au["code"]
         return au
 
-    data = await request.json()
     try:
+        try:
+            data = await request.json()
+        except:
+            data = {}
         if "tracker" in data.keys():
             tracker_in_use = data["tracker"].lower()
             if tracker_in_use == "tracksim":
@@ -40,16 +43,14 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
         else:
-            if len(app.config.tracker) == 1:
+            if len(app.config.tracker) > 0:
                 # in case tracker_in_use is not provided in json
-                # and only one tracker has been configured
-                # we'll consider the only tracker as tracker_in_use
+                # we'll consider the first tracker as tracker_in_use
                 if app.config.tracker[0]["type"] == "tracksim":
                     tracker_in_use = 2
                 elif app.config.tracker[0]["type"] == "trucky":
                     tracker_in_use = 3
             else:
-                # but if there's multiple trackers, throw an error
                 response.status_code = 400
                 return {"error": ml.tr(request, "config_invalid_value", var = {"item": "tracker"}, force_lang = au["language"])}
     except:
@@ -240,10 +241,6 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
-    userid = t[0][0]
-    if userid not in [-1, None]:
-        response.status_code = 428
-        return {"error": ml.tr(request, "dismiss_before_delete_connections", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"UPDATE user SET {connection} = NULL WHERE uid = {uid}")
     await app.db.commit(dhrid)

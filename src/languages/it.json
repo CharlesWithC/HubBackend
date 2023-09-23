@@ -54,7 +54,6 @@
     "no_pending_email_confirmation": "Nessuna email di conferma in attesa.",
     "connections_belong_to_multiple_users": "Le connessioni appartengono a più utenti. Sono accettate solo connessioni per un singolo utente.",
     "dismiss_before_ban": "Il membro deve essere licenziato prima di essere bannato.",
-    "dismiss_before_delete_connections": "Il membro deve essere licenziato prima di eliminare le connessioni dell'account.",
     "dismiss_before_delete": "Il membro deve essere licenziato prima di eliminare l'account.",
     "resign_before_delete": "Devi dimetterti prima di eliminare l'account.",
     "user_already_banned": "L'utente è già bannato.",
