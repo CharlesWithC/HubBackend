@@ -157,8 +157,10 @@ async def post_register(request: Request, response: Response):
     if len(password) >= 8:
         if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
             (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
+            response.status_code = 400
             return {"error": ml.tr(request, "weak_password")}
     else:
+        response.status_code = 400
         return {"error": ml.tr(request, "weak_password")}
 
     await app.db.execute(dhrid, f"SELECT uid FROM user WHERE email = '{email}'")
@@ -433,7 +435,7 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 400
-        return {"error": ml.tr(request, "secret_invalid_or_expired")}
+        return {"error": ml.tr(request, "invalid_link")}
     operation = t[0][0]
     email = convertQuotation("/".join(operation.split("/")[1:]))
 
@@ -461,8 +463,10 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         if len(password) >= 8:
             if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
                 (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
+                response.status_code = 400
                 return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
         else:
+            response.status_code = 400
             return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
 
         password = password.encode('utf-8')

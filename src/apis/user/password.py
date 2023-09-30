@@ -69,8 +69,10 @@ async def patch_password(request: Request, response: Response, authorization: st
     if len(password) >= 8:
         if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
             (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
+            response.status_code = 400
             return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
     else:
+        response.status_code = 400
         return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
 
     password = password.encode('utf-8')
