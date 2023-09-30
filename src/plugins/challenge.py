@@ -383,7 +383,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
         except:
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_required_roles", force_lang = au["language"])}
-    rolereq = rolereq[:100]
+    rolereq = deduplicate(rolereq)[:100]
     required_roles = "," + list2str(rolereq) + ","
 
     if delivery_count <= 0:

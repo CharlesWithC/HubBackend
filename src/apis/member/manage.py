@@ -44,7 +44,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         if type(new_roles) != list:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        new_roles = intify(new_roles)
+        new_roles = deduplicate(intify(new_roles))
     except:
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}

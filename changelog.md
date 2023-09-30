@@ -4,6 +4,7 @@
 
 1. Minor improvements on string table and `apidoc.json`  
 2. Added MFA verification on user deletion (self-operation)  
+3. Deduplicated roles and event attendees on update  
 
 ## v2.8.2
 

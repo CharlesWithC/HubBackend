@@ -59,6 +59,9 @@ def dictF2I(data):
     else:
         return data
 
+def deduplicate(lst):
+    return list(set(lst))
+
 def str2list(lst):
     # converts comma-separated list str of int elements to list
     # e.g. "1,2,3" -> [1,2,3]

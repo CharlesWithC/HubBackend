@@ -662,7 +662,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
         if type(attendees) is not list:
             response.status_code = 400
             return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
-        attendees = intify(attendees)
+        attendees = deduplicate(intify(attendees))
         points = int(data["points"])
         if abs(points) > 2147483647:
             response.status_code = 400

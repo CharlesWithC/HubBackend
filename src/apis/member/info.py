@@ -58,10 +58,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    include_roles = str2list(include_roles)
+    include_roles = deduplicate(str2list(include_roles))
     if len(include_roles) > 100:
         include_roles = include_roles[:100]
-    exclude_roles = str2list(exclude_roles)
+    exclude_roles = deduplicate(str2list(exclude_roles))
     if len(exclude_roles) > 100:
         exclude_roles = exclude_roles[:100]
 
