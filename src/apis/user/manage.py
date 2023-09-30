@@ -607,12 +607,23 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
     else:
         uid = auth_uid
 
-        await app.db.execute(dhrid, f"SELECT userid, name, discordid FROM user WHERE uid = {uid}")
+        await app.db.execute(dhrid, f"SELECT userid, name, discordid, mfa_secret FROM user WHERE uid = {uid}")
         t = await app.db.fetchall(dhrid)
-        (userid, username, discordid) = (t[0][0], t[0][1], t[0][2])
+        (userid, username, discordid, mfa_secret) = (t[0][0], t[0][1], t[0][2], t[0][3])
         if userid not in [-1, None]:
             response.status_code = 428
             return {"error": ml.tr(request, "resign_before_delete", force_lang = au["language"])}
+
+        if mfa_secret != "":
+            data = await request.json()
+            try:
+                otp = data["otp"]
+            except:
+                response.status_code = 400
+                return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+            if not valid_totp(otp, mfa_secret):
+                response.status_code = 400
+                return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"INSERT INTO pending_user_deletion VALUES ({uid}, {int(time.time()+86400*14)}, 1)")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")

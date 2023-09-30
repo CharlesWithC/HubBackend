@@ -3,6 +3,7 @@
 ## v2.8.3
 
 1. Minor improvements on string table and `apidoc.json`  
+2. Added MFA verification on user deletion (self-operation)  
 
 ## v2.8.2
 
