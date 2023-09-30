@@ -33,7 +33,6 @@
     "current_user_in_guild_check_failed": "Не удалось проверить ваше членство в сервере Discord.",
     "user_didnt_join_discord": "Пользователь не присоединился к серверу Discord.",
     "current_user_didnt_join_discord": "Вы не присоединились к серверу Discord.",
-    "invalid_discord_email": "К учетной записи Discord не подключен неверный адрес электронной почты или нет электронной почты.",
     "email_not_unique": "Ваш адрес электронной почты привязан к нескольким пользователям, и вы не можете включить вход по паролю.",
     "weak_password": "Слишком слабый пароль",
     "invalid_mfa_secret": "Неверный секрет MFA",

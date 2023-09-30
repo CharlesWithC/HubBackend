@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.8.2"
+        "version": "2.8.3"
     },
     "servers": [],
     "paths": {
@@ -2038,7 +2038,7 @@
                 "responses": {}
             }
         },
-        "/token/applications/list": {
+        "/token/application/list": {
             "get": {
                 "summary": "Get Application Token List (Hash)",
                 "tags": [
@@ -2182,7 +2182,7 @@
         },
         "/auth/ticket": {
             "post": {
-                "summary": "Generate Temporary Identity Proof Token",
+                "summary": "Generate Auth Ticket",
                 "tags": [
                     "auth"
                 ],
@@ -2196,7 +2196,7 @@
                 "responses": {}
             },
             "get": {
-                "summary": "Validate Temporary Identity Proof Token",
+                "summary": "Validate Auth Ticket",
                 "tags": [
                     "auth"
                 ],

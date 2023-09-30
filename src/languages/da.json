@@ -33,7 +33,6 @@
     "current_user_in_guild_check_failed": "Fejl ved kontrol af, om du er i Discord-serveren.",
     "user_didnt_join_discord": "Brugeren er ikke blevet medlem af Discord-serveren.",
     "current_user_didnt_join_discord": "Du er ikke blevet medlem af Discord-serveren.",
-    "invalid_discord_email": "En ugyldig e-mail eller ingen e-mail er forbundet til Discord-kontoen.",
     "email_not_unique": "Din email er tilknyttet flere brugere, og du kan ikke aktivere adgang via adgangskode.",
     "weak_password": "Adgangskode For Svag",
     "invalid_mfa_secret": "Ugyldig MFA Hemmelighed",

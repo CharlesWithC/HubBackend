@@ -33,7 +33,6 @@
     "current_user_in_guild_check_failed": "Discord sunucusunda olup olmadığınızı kontrol etme başarısız oldu.",
     "user_didnt_join_discord": "Kullanıcı Discord sunucusuna katılmadı.",
     "current_user_didnt_join_discord": "Discord sunucusuna katılmadınız.",
-    "invalid_discord_email": "Discord hesabına geçersiz bir e-posta veya hiç e-posta bağlı değil.",
     "email_not_unique": "E-postanız birden fazla kullanıcıyla bağlantılı ve şifreli girişi etkinleştiremezsiniz.",
     "weak_password": "Şifre Çok Zayıf",
     "invalid_mfa_secret": "Geçersiz MFA Gizliliği",

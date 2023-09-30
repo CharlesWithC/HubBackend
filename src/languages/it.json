@@ -33,7 +33,6 @@
     "current_user_in_guild_check_failed": "Impossibile controllare se sei nel server Discord.",
     "user_didnt_join_discord": "L'utente non si è unito al server Discord.",
     "current_user_didnt_join_discord": "Non ti sei unito al server Discord.",
-    "invalid_discord_email": "Un'e-mail non valida o nessuna e-mail è collegata all'account Discord.",
     "email_not_unique": "La tua email è utilizzata da più utenti e non puoi abilitare l'accesso tramite password.",
     "weak_password": "La password è troppo debole.",
     "invalid_mfa_secret": "Segreto MFA non valido.",

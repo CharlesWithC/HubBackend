@@ -30,7 +30,7 @@ from logger import logger
 
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
-version = "2.8.2"
+version = "2.8.3"
 
 for argv in sys.argv:
     if argv.endswith(".py"):

@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.8.3
+
+1. Minor improvements on string table and `apidoc.json`  
+
 ## v2.8.2
 
 1. Fixed Trucky webhook handling issues  

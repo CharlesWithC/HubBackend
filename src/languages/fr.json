@@ -33,7 +33,6 @@
     "current_user_in_guild_check_failed": "Échec de la vérification de votre appartenance au serveur Discord.",
     "user_didnt_join_discord": "L'utilisateur n'a pas rejoint le serveur Discord.",
     "current_user_didnt_join_discord": "Vous n'avez pas rejoint le serveur Discord.",
-    "invalid_discord_email": "Un e-mail invalide ou aucun e-mail n'est connecté au compte Discord.",
     "email_not_unique": "Votre e-mail est lié à plusieurs utilisateurs, et vous ne pouvez pas activer la connexion par mot de passe.",
     "weak_password": "Mot de passe trop faible",
     "invalid_mfa_secret": "Secret MFA invalide",

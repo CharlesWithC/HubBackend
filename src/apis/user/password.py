@@ -58,7 +58,7 @@ async def patch_password(request: Request, response: Response, authorization: st
 
     if email == "" or "@" not in email: # make sure it's not empty
         response.status_code = 403
-        return {"error": ml.tr(request, "invalid_discord_email", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_invalid", var = {"app": "Email"}, force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"SELECT userid FROM user WHERE email = '{email}'")
     t = await app.db.fetchall(dhrid)
