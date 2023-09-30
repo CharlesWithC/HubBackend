@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Adgang Nægtet: Ansøgningstoken Ikke Tilladt",
     "access_sensitive_data": "Adgang Nægtet: Log ind med Discord, Steam eller aktiver MFA for at få adgang til følsomme data.",
     "mfa_required": "Adgang Nægtet: Aktiver MFA og angiv OTP for at fortsætte.",
+    "connect_more_to_disable_password": "Adgang nægtet: Tilslut Discord eller Steam-kontoen før deaktivering af adgang via adgangskode.",
     "ban_with_expire": "Du er udelukket {expire}",
     "ban_with_reason_expire": "Du er udelukket i {reason} {expire}",
     "user_pending_deletion": "Din konto afventer sletning. Log ind igen for at gendanne din konto.",

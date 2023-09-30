@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Accesso Negato: Token dell'Applicazione non Consentito",
     "access_sensitive_data": "Accesso Negato: Accedi con Discord, Steam, o abilita l'Autenticazione Multifattore (MFA) per accedere ai dati sensibili.",
     "mfa_required": "Accesso Negato: Abilita l'Autenticazione Multifattore (MFA) e fornisci un OTP per procedere.",
+    "connect_more_to_disable_password": "Acceso denegado: Conéctese a una cuenta de Discord o Steam antes de desactivar el inicio de sesión con contraseña.",
     "ban_with_expire": "Estás baneado {expire}",
     "ban_with_reason_expire": "Estás baneado por {reason} {expire}",
     "user_pending_deletion": "Il tuo account è in attesa di cancellazione. Effettua il login nuovamente per recuperare l'account.",

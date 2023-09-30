@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Erişim Engellendi: Uygulama Tokenına İzin Verilmiyor",
     "access_sensitive_data": "Erişim Engellendi: Hassas Verilere Erişmek İçin Discord, Steam veya MFA'yı etkinleştirin.",
     "mfa_required": "Erişim Engellendi: MFA'yı etkinleştirin ve devam etmek için OTP sağlayın.",
+    "connect_more_to_disable_password": "Erişim Reddedildi: Şifreli girişi devre dışı bırakmadan önce Discord veya Steam hesabınızı bağlayın.",
     "ban_with_expire": "Sen yasaklandın {expire}",
     "ban_with_reason_expire": "Sen yasaklandın {reason} {expire}",
     "user_pending_deletion": "Hesabınız silinmeyi bekliyor. Hesabınızı kurtarmak için lütfen yeniden giriş yapın.",

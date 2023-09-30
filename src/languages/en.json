@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Access Denied: Application Token Not Allowed",
     "access_sensitive_data": "Access Denied: Login with Discord, Steam, or enable MFA to access sensitive data.",
     "mfa_required": "Access Denied: Enable MFA and provide OTP to proceed.",
+    "connect_more_to_disable_password": "Access Denied: Connect Discord or Steam account before disabling password login.",
     
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",

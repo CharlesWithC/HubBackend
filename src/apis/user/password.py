@@ -107,9 +107,9 @@ async def post_password_disable(request: Request, response: Response, authorizat
         response.status_code = 403
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    await app.db.execute(dhrid, f"SELECT email, steamid, discordid, mfa_secret FROM user WHERE uid = {uid}")
     t = await app.db.fetchall(dhrid)
-    mfa_secret = t[0][0]
+    (email, steamid, discordid, mfa_secret) = (t[0][0], t[0][1], t[0][2], t[0][3])
     if mfa_secret != "":
         data = await request.json()
         try:
@@ -121,13 +121,9 @@ async def post_password_disable(request: Request, response: Response, authorizat
             response.status_code = 400
             return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    await app.db.execute(dhrid, f"SELECT email FROM user WHERE uid = {uid}")
-    t = await app.db.fetchall(dhrid)
-    email = t[0][0]
-
-    if not (await isSecureAuth(authorization, request)):
+    if abs(nint(steamid)) <= 1 and abs(nint(discordid)) <= 1:
         response.status_code = 403
-        return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
+        return {"error": ml.tr(request, "connect_more_to_disable_password", force_lang = au["language"])}
 
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE uid = {uid}")
     await app.db.execute(dhrid, f"DELETE FROM user_password WHERE email = '{email}'")

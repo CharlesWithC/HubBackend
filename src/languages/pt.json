@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Acesso Negado: Token de Aplicação Não Permitido",
     "access_sensitive_data": "Acesso Negado: Faça login com o Discord, Steam ou ative a MFA para aceder a dados sensíveis.",
     "mfa_required": "Acesso Negado: Ative a MFA e forneça o OTP para prosseguir.",
+    "connect_more_to_disable_password": "Acesso negado: Conecte-se a uma conta Discord ou Steam antes de desativar o login por senha.",
     "ban_with_expire": "Você foi banido por {expire}",
     "ban_with_reason_expire": "Você foi banido por {reason} {expire}",
     "user_pending_deletion": "A sua conta está pendente de eliminação. Faça login novamente para recuperar a sua conta.",

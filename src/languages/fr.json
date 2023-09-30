@@ -26,6 +26,7 @@
     "application_token_not_allowed": "Accès refusé : le jeton d'application n'est pas autorisé",
     "access_sensitive_data": "Accès refusé : Connectez-vous avec Discord, Steam, ou activez MFA pour accéder aux données sensibles.",
     "mfa_required": "Accès refusé : Activez MFA et fournissez OTP pour continuer.",
+    "connect_more_to_disable_password": "Accès refusé : Connectez-vous à un compte Discord ou Steam avant de désactiver la connexion par mot de passe.",
     "ban_with_expire": "Du er udelukket {expire}",
     "ban_with_reason_expire": "Du er udelukket i {reason} {expire}",
     "user_pending_deletion": "Votre compte est en attente de suppression. Veuillez vous connecter à nouveau pour récupérer votre compte.",
