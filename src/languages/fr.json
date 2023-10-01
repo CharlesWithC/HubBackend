@@ -333,6 +333,7 @@
     "added_user_to_tracker_company": "Ajout de `{username}` (ID utilisateur: `{userid}`) à la société {tracker}.",
     "failed_remove_user_from_tracker_company": "Échec de la suppression de `{username}` (ID utilisateur: `{userid}`) de la société {tracker}. \nErreur: {error}",
     "removed_user_from_tracker_company": "Suppression de `{username}` (utilisateur ID: `{userid}`) de la société {tracker}.",
+    "updated_global_note": "Mettre à jour la note globale de `{username}` (UID : `{uid}`) en `{note}`.",
     "updated_user_roles": "Rôles mis à jour de `{username}` (ID utilisateur: `{userid}`)",
     "role": "Rôle",
     "updated_user_points": "Points mis à jour de `{username}` (ID utilisateur: `{userid}`): \n Distance: `{distance}km`\n Points bonus: `{bonus_points}`",

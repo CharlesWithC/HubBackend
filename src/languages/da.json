@@ -333,6 +333,7 @@
     "added_user_to_tracker_company": "Tilføjede `{username}` (bruger-id: `{userid}`) til {tracker}-virksomheden.",
     "failed_remove_user_from_tracker_company": "Kunne ikke fjerne `{username}` (bruger-id: `{userid}`) fra virksomheden {tracker}. \nFejl: {error}",
     "removed_user_from_tracker_company": "Fjernet `{username}` (brugere). ID: `{userid}`) fra {tracker} virksomhed.",
+    "updated_global_note": "Opdater den globale note for `{username}` (UID: `{uid}`) til `{note}`.",
     "updated_user_roles": "Opdaterede roller for `{username}` (bruger-id: `{userid}`)",
     "role": "Rolle",
     "updated_user_points": "Opdaterede point af `{username}` (bruger-id: `{userid}`): \n Distance: `{distance}km`\n Bonuspoint: `{bonus_points}`",

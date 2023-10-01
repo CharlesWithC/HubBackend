@@ -333,6 +333,7 @@
     "added_user_to_tracker_company": "`{username}` (Kullanıcı Kimliği: `{userid}`) {tracker} şirketine eklendi.",
     "failed_remove_user_from_tracker_company": "`{username}` (Kullanıcı Kimliği: `{userid}`) {tracker} şirketinden kaldırılamadı. \nHata: {error}",
     "removed_user_from_tracker_company": "`{username}` (Kullanıcı) kaldırıldı Kimlik: `{userid}`) {tracker} şirketinden.",
+    "updated_global_note": "Kullanıcı `{uid}`'in (UID) `{username}` için global notunu `{note}` olarak güncelleyin.",
     "updated_user_roles": "`{username}` (Kullanıcı Kimliği: `{userid}`) rolleri güncellendi",
     "role": "Rol",
     "updated_user_points": "`{username}` puanları güncellendi (Kullanıcı Kimliği: `{userid}`): \n Mesafe: `{distance}km`\n Bonus Puanlar: `{bonus_points}`",

@@ -186,12 +186,6 @@
                     "auth"
                 ],
                 "operationId": "post_auth_email",
-                "security": [
-                    {
-                        "bearerAuth": [],
-                        "applicationAuth": []
-                    }
-                ],
                 "parameters": [
                     {
                         "required": false,

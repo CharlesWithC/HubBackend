@@ -333,6 +333,7 @@
     "added_user_to_tracker_company": "Добавлен `{username}` (идентификатор пользователя: `{userid}`) в компанию {tracker}.",
     "failed_remove_user_from_tracker_company": "Не удалось удалить `{username}` (идентификатор пользователя: `{userid}`) из компании {tracker}. \nError: {error}",
     "removed_user_from_tracker_company": "Удалено `{username}` (пользователь ID: `{userid}`) от компании {tracker}.",
+    "updated_global_note": "Обновите глобальное примечание для `{username}` (UID: `{uid}`) на `{note}`.",
     "updated_user_roles": "Обновлены роли `{username}` (идентификатор пользователя: `{userid}`)",
     "role": "Роль",
     "updated_user_points": "Обновленные баллы `{username}` (идентификатор пользователя: `{userid}`): \n Расстояние: `{distance}км`\n Бонусные баллы: `{bonus_points}`",

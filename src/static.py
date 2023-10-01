@@ -415,6 +415,7 @@ EN_STRINGTABLE = {
     "added_user_to_tracker_company": "Added `{username}` (User ID: `{userid}`) to {tracker} company.",
     "failed_remove_user_from_tracker_company": "Failed to remove `{username}` (User ID: `{userid}`) from {tracker} company.  \nError: {error}",
     "removed_user_from_tracker_company": "Removed `{username}` (User ID: `{userid}`) from {tracker} company.",
+    "updated_global_note": "Update global note of `{username}` (UID: `{uid}`) to `{note}`.",
     "updated_user_roles": "Updated roles of `{username}` (User ID: `{userid}`)",
     "role": "Role",
     "updated_user_points": "Updated points of `{username}` (User ID: `{userid}`):\n  Distance: `{distance}km`\n  Bonus Points: `{bonus_points}`",

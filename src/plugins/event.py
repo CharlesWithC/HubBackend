@@ -697,7 +697,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     if cnt > 0:
         ret = ret + ret1
 
-    ret2 = ml.ctr(request, "removed_attendees", var = {"points": points}).rstrip(" ") + " "
+    ret2 = ml.ctr(request, "removed_attendees", var = {"points": old_points}).rstrip(" ") + " "
     cnt = 0
     toremove = []
     for attendee in old_attendees:
@@ -705,7 +705,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
             toremove.append(attendee)
             name = (await GetUserInfo(request, userid = attendee))["name"]
             uid = (await GetUserInfo(request, userid = attendee))["uid"]
-            await notification(request, "event", uid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(points)}, force_lang = await GetUserLanguage(request, uid)))
+            await notification(request, "event", uid, ml.tr(request, "event_updated_lost_points", var = {"title": title, "eventid": eventid, "points": tseparator(old_points)}, force_lang = await GetUserLanguage(request, uid)))
             ret2 += f"`{name}` (`{attendee}`), "
             cnt += 1
     ret2 = ret2[:-2]

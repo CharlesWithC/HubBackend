@@ -206,7 +206,7 @@ async def post_register(request: Request, response: Response):
     password = password.encode('utf-8')
     salt = bcrypt.gensalt()
     pwdhash = bcrypt.hashpw(password, salt).decode()
-    username = convertQuotation(email.split("@")[0])
+    username = convertQuotation(email)
 
     # register user
     await app.db.execute(dhrid, f"INSERT INTO user(userid, name, email, avatar, bio, roles, discordid, steamid, truckersmpid, join_timestamp, mfa_secret, tracker_in_use) VALUES (-1, '{username}', 'pending', '', '', '', NULL, NULL, NULL, {int(time.time())}, '', 0)")
@@ -421,23 +421,23 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, check_member = False)
-    if au["error"]:
-        response.status_code = au["code"]
-        del au["code"]
-        return au
-    uid = au["uid"]
-
     secret = convertQuotation(secret)
 
     await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE expire < {int(time.time())}")
-    await app.db.execute(dhrid, f"SELECT operation FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
+    await app.db.execute(dhrid, f"SELECT uid, operation FROM email_confirmation WHERE secret = '{secret}'")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_link")}
-    operation = t[0][0]
+    (uid, operation) = (t[0][0], t[0][1])
     email = convertQuotation("/".join(operation.split("/")[1:]))
+
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE uid = {uid} AND skey = 'language'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        aulanguage = app.config.language
+    else:
+        aulanguage = t[0][0]
 
     await app.db.execute(dhrid, f"SELECT * FROM user WHERE uid != '{uid}' AND email = '{email}'")
     t = await app.db.fetchall(dhrid)
@@ -445,7 +445,7 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
         await app.db.execute(dhrid, f"DELETE FROM email_confirmation WHERE uid = {uid} AND secret = '{secret}'")
         await app.db.commit(dhrid)
         response.status_code = 409
-        return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = au["language"])}
+        return {"error": ml.tr(request, "connection_conflict", var = {"app": "Email"}, force_lang = aulanguage)}
 
     if operation.startswith("update-email/") or operation.startswith("register/"):
         # on email register, the email in user table is "pending"
@@ -464,10 +464,10 @@ async def post_email(request: Request, response: Response, secret: str, authoriz
             if bool(re.match('((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,30})', password)) is not True and \
                 (bool(re.match('((\\d*)([a-z]*)([A-Z]*)([!@#$%^&*]*).{8,30})', password)) is True):
                 response.status_code = 400
-                return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
+                return {"error": ml.tr(request, "weak_password", force_lang = aulanguage)}
         else:
             response.status_code = 400
-            return {"error": ml.tr(request, "weak_password", force_lang = au["language"])}
+            return {"error": ml.tr(request, "weak_password", force_lang = aulanguage)}
 
         password = password.encode('utf-8')
         salt = bcrypt.gensalt()

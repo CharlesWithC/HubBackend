@@ -666,9 +666,17 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
         response.status_code = 400
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
+    await app.db.execute(dhrid, f"SELECT name FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
+    name = t[0][0]
+
     await app.db.execute(dhrid, f"DELETE FROM user_note WHERE from_uid = -1000 AND to_uid = {to_uid}")
     if note != "":
         await app.db.execute(dhrid, f"INSERT INTO user_note VALUES (-1000, {to_uid}, '{convertQuotation(note)}', {int(time.time())})")
     await app.db.commit(dhrid)
+    await AuditLog(request, au["uid"], ml.ctr(request, "updated_global_note", var = {"username": name, "uid": uid, "note": note}))
 
     return Response(status_code=204)
