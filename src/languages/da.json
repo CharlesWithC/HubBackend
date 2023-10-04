@@ -105,7 +105,7 @@
     "invalid_value": "Ugyldig værdi for {key}",
     "config_invalid_value": "Ugyldig værdi for \"{item}\": Må ikke være tom.",
     "config_invalid_distance_unit": "Ugyldig værdi for \"distance_unit\": Skal være \"metric\" eller \"imperial\".",
-    "config_invalid_tracker": "Ugyldig værdi for \"tracker\": Skal være \"tracksim\".",
+    "config_invalid_tracker": "Ugyldig værdi for \"tracker\": Skal være \"trucky\" eller \"tracksim\".",
     "config_invalid_datatype_boolean": "Ugyldig datatype for \"{item}\": Skal være boolesk.",
     "config_invalid_datatype_integer": "Ugyldig datatype for \"{item}\": Skal være integer.",
     "config_invalid_hex_color": "Ugyldig værdi for \"hex_color\": Skal være en hex-streng på 6 tegn.",

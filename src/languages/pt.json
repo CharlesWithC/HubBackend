@@ -105,7 +105,7 @@
     "invalid_value": "Valor inválido para {key}",
     "config_invalid_value": "Valor inválido para \" {item} \": não deve estar vazio.",
     "config_invalid_distance_unit": "Valor inválido para \"distance_unit\": deve ser \"metric\" ou \"imperial\".",
-    "config_invalid_tracker": "Valor inválido para \"tracker\": Deve ser \"tracksim\".",
+    "config_invalid_tracker": "Valor inválido para \"tracker\": Deve ser \"trucky\" ou \"tracksim\".",
     "config_invalid_datatype_boolean": "Tipo de dado inválido para \" {item} \": Deve ser booleano.",
     "config_invalid_datatype_integer": "Tipo de dado inválido para \" {item} \": Deve ser inteiro.",
     "config_invalid_hex_color": "Valor inválido para \"hex_color\": deve ser uma string hexadecimal de 6 caracteres.",

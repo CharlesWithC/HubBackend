@@ -187,7 +187,7 @@ EN_STRINGTABLE = {
     "invalid_value": "Invalid value for {key}",
     "config_invalid_value": "Invalid value for \"{item}\": Must not be empty.",
     "config_invalid_distance_unit": "Invalid value for \"distance_unit\": Must be \"metric\" or \"imperial\".",
-    "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"tracksim\".",
+    "config_invalid_tracker": "Invalid value for \"tracker\": Must be \"trucky\" or \"tracksim\".",
     "config_invalid_datatype_boolean": "Invalid data type for \"{item}\": Must be boolean.",
     "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
     "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
