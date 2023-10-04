@@ -10,9 +10,9 @@
 
     "openapi": true,
     "frontend_urls": {
-        "member": "https://{domain}/member?userid={userid}",
-        "delivery": "https://{domain}/delivery?logid={logid}",
-        "email_confirm": "https://{domain}/emailConfirm?secret={secret}"
+        "member": "https://{domain}/member/{userid}",
+        "delivery": "https://{domain}/delivery/{logid}",
+        "email_confirm": "https://{domain}/auth/email?secret={secret}"
     },
 
     "domain": "",

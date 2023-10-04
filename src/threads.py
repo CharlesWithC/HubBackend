@@ -123,7 +123,7 @@ async def RefreshDiscordAccessToken(app):
             await app.db.new_conn(dhrid)
 
             npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
@@ -171,7 +171,7 @@ async def UpdateDlogStats(app):
             await app.db.new_conn(dhrid)
 
             npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
@@ -201,7 +201,7 @@ async def UpdateDlogStats(app):
                     await app.db.execute(dhrid, f"SELECT logid, userid, data FROM dlog WHERE logid = {logid}")
                     t = await app.db.fetchall(dhrid)
                     if len(t) == 0:
-                        return
+                        continue
                     tt = t[0]
                     userid = tt[1]
                     try:
@@ -366,10 +366,11 @@ async def UpdateDlogStats(app):
                                         if pname[(itype, dd[0])] != dd[1]:
                                             await app.db.execute(dhrid, f"UPDATE dlog_stats SET item_name = '{dd[1]}' WHERE item_type = {itype}  AND item_key = '{dd[0]}' AND userid = {stat_userid}")
                                             await app.db.commit(dhrid)
+
+                    await app.db.execute(dhrid, f"UPDATE settings SET sval = {logid} WHERE skey = 'dlog_stats_up_to'")
+                    await app.db.commit(dhrid)
                 except:
                     pass
-
-            await app.db.execute(dhrid, f"UPDATE settings SET sval = {max_log_id} WHERE skey = 'dlog_stats_up_to'")
 
             await app.db.commit(dhrid)
             await app.db.close_conn(dhrid)

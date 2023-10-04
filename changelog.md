@@ -3,12 +3,13 @@
 ## v2.8.3
 
 1. Minor improvements on string table and `apidoc.json`  
-2. Added MFA verification on user deletion (self-operation)  
-3. Deduplicated roles and event attendees on update  
-4. Prevented disabling password login when there is no other login method  
-5. Added audit log for updating global note  
-6. Removed authorization requirement when using email confirmation link  
-7. Added German translation  
+2. Deduplicated roles and event attendees on update  
+3. Prevented disabling password login when there is no other login method  
+4. Fixed detailed statistics unable to continue automatically when a dlog is deleted  
+5. Added MFA verification on user deletion (self-operation)  
+6. Added audit log for updating global note  
+7. Removed authorization requirement when using email confirmation link  
+8. Added German translation  
 
 ## v2.8.2
 

@@ -31,7 +31,7 @@ async def PollResultNotification(app):
             request.state.dhrid = dhrid
 
             npid = -1
-            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid'")
+            await app.db.execute(dhrid, "SELECT sval FROM settings WHERE skey = 'multiprocess-pid' FOR UPDATE")
             t = await app.db.fetchall(dhrid)
             if len(t) != 0:
                 npid = int(t[0][0])
