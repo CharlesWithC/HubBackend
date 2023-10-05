@@ -106,7 +106,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if order_by_last_seen:
         await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {limit} ORDER BY user_activity.timestamp {order}, user.userid ASC")
     else:
-        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {limit} ORDER BY {order_by} {order}, user.userid ASC")
+        await app.db.execute(dhrid, f"SELECT user.userid, user.roles FROM user LEFT JOIN user_activity ON user.uid = user_activity.uid WHERE LOWER(user.name) LIKE '%{query}%' AND user.userid >= 0 {limit} ORDER BY user.{order_by} {order}, user.userid ASC")
     t = await app.db.fetchall(dhrid)
     rret = {}
     for tt in t:
