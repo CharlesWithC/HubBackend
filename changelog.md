@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.8.4
+
+1. Fixed Trucky job format conversion issues  
+2. Added `?bypass_tracker_check=true|false` to `/trucky/import`  
+
 ## v2.8.3
 
 1. Minor improvements on string table and `apidoc.json`  

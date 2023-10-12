@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.8.3"
+        "version": "2.8.4"
     },
     "servers": [],
     "paths": {
@@ -3643,13 +3643,22 @@
                 ],
                 "parameters": [
                     {
-                        "required": false,
+                        "required": true,
                         "schema": {
                             "title": "Job ID",
                             "type": "integer"
                         },
                         "name": "jobid",
                         "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
+                            "title": "Bypass tracker check?",
+                            "type": "boolean"
+                        },
+                        "name": "bypass_tracker_check",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -6972,7 +6981,7 @@
         },
         "/economy/trucks/{vehicleid}/scrap": {
             "post": {
-                "summary": "Sell a Truck",
+                "summary": "Scrap a Truck",
                 "tags": [
                     "economy_trucks"
                 ],

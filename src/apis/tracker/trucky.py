@@ -10,6 +10,7 @@ import time
 import traceback
 from datetime import datetime
 from random import randint
+from typing import Optional
 from urllib.parse import parse_qs
 
 from fastapi import Header, Request, Response
@@ -32,7 +33,10 @@ def convert_format(data):
     if d["distance_unit"] == "mi":
         for key in convert_distance:
             if d[key] is None:
-                d[key] = d["_".join(key.split("_")[:-1])] * 1.609344
+                if d["_".join(key.split("_")[:-1])] is None:
+                    d[key] = 0
+                else:
+                    d[key] = d["_".join(key.split("_")[:-1])] * 1.609344
     elif d["distance_unit"] == "km":
         for key in convert_distance:
             if d[key] is None:
@@ -43,7 +47,10 @@ def convert_format(data):
         d["average_speed_kmh"] = 0
     if d["volume_unit"] == "gal":
         if d["fuel_used_l"] is None:
-            d["fuel_used_l"] = d["fuel_used"] * 3.785412
+            if d["fuel_used"] is None:
+                d["fuel_used_l"] = 0
+            else:
+                d["fuel_used_l"] = d["fuel_used"] * 3.785412
     elif d["volume_unit"] == "l":
         if d["fuel_used_l"] is None:
             d["fuel_used_l"] = d["fuel_used"]
@@ -173,7 +180,7 @@ def convert_format(data):
         }
     }
 
-async def handle_new_job(request, response, original_data, data):
+async def handle_new_job(request, response, original_data, data, bypass_tracker_check = False):
     '''Handle new jobs from Trucky.
 
     NOTE: The data must be processed and converted into TrackSim-like style.'''
@@ -193,7 +200,7 @@ async def handle_new_job(request, response, original_data, data):
     discordid = t[0][3]
     tracker_in_use = t[0][4]
     trackerid = d["data"]["object"]["id"]
-    if tracker_in_use != 3:
+    if tracker_in_use != 3 and not bypass_tracker_check:
         response.status_code = 403
         return {"error": "User has chosen to use another tracker."}
 
@@ -1043,7 +1050,7 @@ async def post_update(response: Response, request: Request):
 
     return await handle_new_job(request, response, original_data, d)
 
-async def post_import(response: Response, request: Request, jobid: int, authorization: str = Header(None)):
+async def post_import(response: Response, request: Request, jobid: int, authorization: str = Header(None), bypass_tracker_check: Optional[bool] = False):
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
@@ -1089,14 +1096,14 @@ async def post_import(response: Response, request: Request, jobid: int, authoriz
         response.status_code = 503
         return {"error": ml.tr(request, 'service_api_error', var = {'service': 'Trucky'})}
 
-    d = {"event": "job_completed", "data": job_data}
+    d = {"event": f"job_{job_data['status']}", "data": job_data}
     original_data = copy.deepcopy(d)
     d = convert_format(d)
     if d is None:
         response.status_code = 400
         return {"error": "Only job_completed and job_canceled events are accepted"}
 
-    return await handle_new_job(request, response, original_data, d)
+    return await handle_new_job(request, response, original_data, d, bypass_tracker_check = bypass_tracker_check)
 
 async def put_driver(response: Response, request: Request, userid: int, authorization: str = Header(None)):
     app = request.app
