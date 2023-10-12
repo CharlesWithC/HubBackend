@@ -48,7 +48,10 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
                 return {"error": user_data['message']}
 
             discordid = user_data['id']
-            username = str(user_data['username'])
+            if user_data['global_name'] is not None:
+                username = str(user_data['global_name'])
+            else:
+                username = str(user_data['username'])
             username = convertQuotation(username).replace(",","")
             email = ""
             if "email" in user_data.keys():

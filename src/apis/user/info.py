@@ -265,7 +265,11 @@ async def patch_profile(request: Request, response: Response, authorization: str
             else:
                 return {"error": ml.tr(request, "current_user_in_guild_check_faileded", force_lang = au["language"])}
         d = json.loads(r.text)
-        name = convertQuotation(d["user"]["username"])
+        if d["user"]['global_name'] is not None:
+            name = str(d["user"]['global_name'])
+        else:
+            name = str(d["user"]['username'])
+        name = convertQuotation(name)
         avatar = ""
         if app.config.use_server_nickname and d["nick"] is not None:
             name = convertQuotation(d["nick"])

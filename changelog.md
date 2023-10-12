@@ -6,6 +6,7 @@
 2. Added `?bypass_tracker_check=true|false` to `/trucky/import`  
 3. Fixed error loading poll list  
 4. Added `voted=true|false` to `poll` and `poll.choices` in `/poll/lists` and `/poll/{pollid}`  
+5. Improved Discord profile handling: try `global_name` before `username`  
 
 ## v2.8.3
 
