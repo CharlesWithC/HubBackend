@@ -120,7 +120,8 @@ def convert_format(data):
                     "language": None, # not for trucky
                     "timezone": d["timezone"], # trucky exclusive
                     "max_map_scale": d["max_map_scale"], # trucky exclusive
-                    "had_police_enabled": None # not for trucky
+                    "had_police_enabled": None, # not for trucky
+                    "realistic_settings": d["realistic_settings"] # trucky exclusive
                 },
                 "multiplayer": multiplayer,
                 "source_city": {
@@ -281,13 +282,24 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
         except:
             pass
         try:
-            if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]):
-                if action == "block":
-                    delivery_rule_ok = False
-                    delivery_rule_key = "max_warp"
-                    delivery_rule_value = str(warp)
-                elif action == "drop":
-                    mod_revenue = 0
+            if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]) and action == "block":
+                delivery_rule_ok = False
+                delivery_rule_key = "max_warp"
+                delivery_rule_value = str(warp)
+        except:
+            pass
+        try:
+            if d["data"]["object"]["game"]["realistic_settings"] is not None and "required_realistic_settings" in delivery_rules.keys() and isinstance(delivery_rules["required_realistic_settings"], list) and action == "block":
+                enabled_realistic_settings = []
+                for attr in d["data"]["object"]["game"]["realistic_settings"].keys():
+                    if d["data"]["object"]["game"]["realistic_settings"][attr] is True:
+                        enabled_realistic_settings.append(attr)
+                for attr in delivery_rules["required_realistic_settings"]:
+                    if attr not in enabled_realistic_settings:
+                        delivery_rule_ok = False
+                        delivery_rule_key = "required_realistic_settings"
+                        delivery_rule_value = ",".join(delivery_rules["required_realistic_settings"])
+                        break
         except:
             pass
 
@@ -688,6 +700,15 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
                         continue
                     if jobreq["maximum_warp"] != -1 and jobreq["maximum_warp"] < warp:
                         continue
+
+                    if jobreq["enabled_realistic_settings"] != "":
+                        required_realistic_settings = jobreq["enabled_realistic_settings"].split(",")
+                        for attr in d["data"]["object"]["game"]["realistic_settings"].keys():
+                            if d["data"]["object"]["game"]["realistic_settings"][attr] is True:
+                                enabled_realistic_settings.append(attr)
+                        for attr in required_realistic_settings:
+                            if attr not in enabled_realistic_settings:
+                                continue
 
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))

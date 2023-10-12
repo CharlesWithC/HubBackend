@@ -7,6 +7,7 @@
 3. Fixed error loading poll list  
 4. Added `voted=true|false` to `poll` and `poll.choices` in `/poll/lists` and `/poll/{pollid}`  
 5. Improved Discord profile handling: try `global_name` before `username`  
+6. Integrated Trucky `realistic_settings` with `delivery_rules` (`enabled_realistic_settings`) and `challenge` plugin (`required_realistic_settings` in job requirements)  
 
 ## v2.8.3
 
