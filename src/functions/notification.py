@@ -391,6 +391,4 @@ async def AutoMessage(app, meta, setvar):
             opqueue.queue(app, "post", meta.webhook_url, meta.webhook_url, data, {"Content-Type": "application/json"}, None)
 
     except:
-        import traceback
-        traceback.print_exc()
         pass

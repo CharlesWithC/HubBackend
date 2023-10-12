@@ -4,6 +4,8 @@
 
 1. Fixed Trucky job format conversion issues  
 2. Added `?bypass_tracker_check=true|false` to `/trucky/import`  
+3. Fixed error loading poll list  
+4. Added `voted=true|false` to `poll` and `poll.choices` in `/poll/lists` and `/poll/{pollid}`  
 
 ## v2.8.3
 

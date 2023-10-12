@@ -230,7 +230,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
                 config[POLL_CONFIG_KEYS[j]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[j]](configl[j])
         qstr += f"OR pollid = {tt[0]} "
         idx[tt[0]] = i
-        ret.append({"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]})
+        ret.append({"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "voted": False, "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]})
 
     await app.db.execute(dhrid, f"SELECT DISTINCT pollid FROM poll_vote WHERE userid = {userid} AND ({qstr[3:]})")
     t = await app.db.fetchall(dhrid)
@@ -241,13 +241,20 @@ async def get_list(request: Request, response: Response, authorization: str = He
     choiceidx = {}
     await app.db.execute(dhrid, f"SELECT pollid, choiceid, orderid, content FROM poll_choice WHERE {qstr[3:]} ORDER BY pollid ASC, orderid ASC")
     t = await app.db.fetchall(dhrid)
-    for i in range(len(t)):
-        (pollid, choiceid, orderid, content) = t[i]
-        choiceidx[choiceid] = i
+    for tt in t:
+        (pollid, choiceid, orderid, content) = tt
+        choiceidx[choiceid] = len(ret[idx[pollid]]["choices"])
         if isstaff or (config["show_stats_before_vote"] or pollid in voted and config["show_stats"] or config["show_stats_when_ended"] and ret[idx[pollid]]["end_time"] is not None and ret[idx[pollid]]["end_time"] < int(time.time())):
-            ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": 0})
+            ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": 0, "voted": False})
         else:
-            ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": None})
+            ret[idx[pollid]]["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": None, "voted": False})
+
+    await app.db.execute(dhrid, f"SELECT pollid, choiceid FROM poll_vote WHERE {qstr[3:]} AND userid = {userid} GROUP BY choiceid ORDER BY pollid ASC, choiceid ASC")
+    t = await app.db.fetchall(dhrid)
+    for tt in t:
+        (pollid, choiceid) = tt
+        ret[idx[pollid]]["choices"][choiceidx[choiceid]]["voted"] = True
+        ret[idx[pollid]]["voted"] = True
 
     await app.db.execute(dhrid, f"SELECT pollid, choiceid, COUNT(userid) FROM poll_vote WHERE {qstr[3:]} GROUP BY choiceid ORDER BY pollid ASC, choiceid ASC")
     t = await app.db.fetchall(dhrid)
@@ -291,7 +298,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
     for i in range(len(POLL_CONFIG_KEYS)):
         if i < len(configl):
             config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](configl[i])
-    ret = {"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]}
+    ret = {"pollid": tt[0], "title": tt[2], "description": decompress(tt[3]), "choices": [], "voted": False, "config": config, "end_time": tt[8], "creator": await GetUserInfo(request, userid = tt[1]), "orderid": tt[5], "is_pinned": TF[tt[6]], "timestamp": tt[7]}
 
     await app.db.execute(dhrid, f"SELECT DISTINCT pollid FROM poll_vote WHERE userid = {userid} AND pollid = {pollid}")
     t = await app.db.fetchall(dhrid)
@@ -311,7 +318,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
             votes = 0
             if isstaff or config["show_voter"]:
                 voters = []
-        ret["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": votes, "voters": voters})
+        ret["choices"].append({"choiceid": choiceid, "orderid": orderid, "content": content, "votes": votes, "voted": False, "voters": voters})
 
     if isstaff or (config["show_stats_before_vote"] or voted and config["show_stats"] or config["show_stats_when_ended"] and ret["end_time"] is not None and ret["end_time"] < int(time.time())):
         await app.db.execute(dhrid, f"SELECT pollid, choiceid, COUNT(userid) FROM poll_vote WHERE pollid = {pollid} GROUP BY choiceid ORDER BY pollid ASC, choiceid ASC")
@@ -319,6 +326,13 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
         for tt in t:
             (_, choiceid, count) = tt
             ret["choices"][choiceidx[choiceid]]["votes"] = count
+
+            await app.db.execute(dhrid, f"SELECT pollid, choiceid FROM poll_vote WHERE pollid = {pollid} AND userid = {userid} GROUP BY choiceid ORDER BY pollid ASC, choiceid ASC")
+            t = await app.db.fetchall(dhrid)
+            for tt in t:
+                (pollid, choiceid) = tt
+                ret["choices"][choiceidx[choiceid]]["voted"] = True
+                ret["voted"] = True
 
         if isstaff or config["show_voter"]:
             await app.db.execute(dhrid, f"SELECT choiceid, userid FROM poll_vote WHERE pollid = {pollid} ORDER BY choiceid ASC, timestamp ASC")

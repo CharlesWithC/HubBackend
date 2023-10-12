@@ -164,8 +164,6 @@ async def EventNotification(app):
 
             await app.db.close_conn(dhrid)
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
         try:
