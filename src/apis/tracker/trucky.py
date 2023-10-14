@@ -72,7 +72,7 @@ def convert_format(data):
         elif et == "tollgate":
             meta = {"cost": event["attributes"]["amount"]}
         elif et == "collision":
-            meta = {"cargo_damage": event["attributes"]["damage"]["cargoDamage"], "chassis_damage": event["attributes"]["damage"]["chassisDamage"], "trailers_damage": event["attributes"]["damage"]["trailersDamage"], "total_damage_difference": event["attributes"]["damage"]["totalDamageDifference"]}
+            meta = {"cargo_damage": round(event["attributes"]["damage"]["cargoDamage"] / 100, 2), "chassis_damage": round(event["attributes"]["damage"]["chassisDamage"] / 100, 2), "trailers_damage": round(event["attributes"]["damage"]["trailersDamage"] / 100, 2), "total_damage_difference": round(event["attributes"]["damage"]["totalDamageDifference"] / 100, 2)}
         elif et == "transport":
             et = event["attributes"]["transport_type"]
             meta = {"cost": event["attributes"]["amount"], "source_id": event["attributes"]["source_id"], "source_name": event["attributes"]["source"], "target_id": event["attributes"]["target_id"], "target_name": event["attributes"]["target"]}
@@ -80,7 +80,7 @@ def convert_format(data):
             meta = {"amount": event["attributes"]["amount"]}
         events.append({"location": {"x": event["x"], "y": event["y"], "z": event["z"]}, "real_time": event["created_at"].split(".")[0]+"Z", "time": int(datetime.strptime(event["created_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": et, "meta": meta})
     if job_event_type == "job.delivered":
-        events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.delivered", "meta": {"revenue": d["income"], "revenue_details": d["income_details"], "earnedXP": None, "cargoDamage": d["cargo_damage"], "distance": d["real_driven_distance_km"], "timeTaken": d["real_driving_time_seconds"], "autoParked": d["auto_park"]}}) # revenue_details is trucky exclusive
+        events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.delivered", "meta": {"revenue": d["income"], "revenue_details": d["income_details"], "earnedXP": None, "cargoDamage": round(d["cargo_damage"] / 100, 2), "distance": d["real_driven_distance_km"], "timeTaken": d["real_driving_time_seconds"], "autoParked": d["auto_park"]}}) # revenue_details is trucky exclusive
     elif job_event_type == "job.cancelled":
         events.append({"location": None, "real_time": d["canceled_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["canceled_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.cancelled", "meta": {"penalty": d["income"]}})
     if d["warp"] is None:
@@ -112,7 +112,7 @@ def convert_format(data):
                     "unique_id": d["cargo_id"],
                     "name": d["cargo_name"],
                     "mass": d["cargo_unit_count"] * d["cargo_unit_mass"],
-                    "damage": d["cargo_damage"],
+                    "damage": round(d["cargo_damage"] / 100, 2),
                     "details": cargo_details
                 },
                 "game": {
@@ -153,7 +153,7 @@ def convert_format(data):
                     "license_plate": None, # not for trucky
                     "license_plate_country": None, # not for trucky
                     "current_damage": {
-                        "all": d["vehicle_damage"]
+                        "all": round(d["vehicle_damage"] / 100, 2)
                     },
                     "total_damage": None, # not for trucky
                     "top_speed": round(d["max_speed_kmh"] / 3.6, 2),
@@ -169,7 +169,7 @@ def convert_format(data):
                         "license_plate": None, # not for trucky
                         "license_plate_country": None, # not for trucky
                         "current_damage": {
-                            "all": d["trailers_damage"]
+                            "all": round(d["trailers_damage"] / 100, 2)
                         },
                         "total_damage": None # not for trucky
                     }
