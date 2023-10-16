@@ -4,10 +4,11 @@
 import time
 from datetime import datetime, timedelta
 
+import aiomysql
 from fastapi import Header, Request
 
-from multilang import LANGUAGES
 from functions import *
+from multilang import LANGUAGES
 
 
 async def get_index(request: Request, authorization: str = Header(None)):
@@ -38,3 +39,28 @@ async def get_status(request: Request):
 async def get_languages(request: Request):
     app = request.app
     return {"company": app.config.language, "supported": LANGUAGES}
+
+async def restart_database(request: Request):
+    app = request.app
+    if time.time() - app.db.POOL_START_TIME < 60:
+        return {"error": "Database pool is too young to be restarted."}
+
+    dbstatus = "unavailable"
+    try:
+        dhrid = request.state.dhrid
+        await app.db.new_conn(dhrid)
+        dbstatus = "available"
+    except:
+        pass
+
+    if dbstatus == "available":
+        return {"error": "Database pool restart is not necessary."}
+
+    try:
+        app.db.pool.terminate()
+        app.db.pool = await aiomysql.create_pool(host = app.db.host, user = app.db.user, password = app.db.passwd, \
+                                            db = app.db.db, autocommit = False, pool_recycle = 5, \
+                                            maxsize = min(20, app.db.app.config.mysql_pool_size))
+        return {"success": True}
+    except:
+        return {"success": False}

@@ -231,7 +231,7 @@ class aiosql:
 
     async def restart_pool(self):
         self.POOL_START_TIME = 0
-        self.pool.terminate()
+        self.pool.terminate() # terminating the pool when the pool is already closed will not lead to errors
         self.pool = await aiomysql.create_pool(host = self.host, user = self.user, password = self.passwd, \
                                         db = self.db, autocommit = False, pool_recycle = 5, \
                                         maxsize = min(20, self.app.config.mysql_pool_size))

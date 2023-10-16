@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "Drivers Hub API",
-        "version": "2.8.4"
+        "version": "2.8.5"
     },
     "servers": [],
     "paths": {
@@ -23,6 +23,16 @@
                     "index"
                 ],
                 "operationId": "get_status",
+                "responses": {}
+            }
+        },
+        "/status/database/restart": {
+            "post": {
+                "summary": "Restart Database",
+                "tags": [
+                    "index"
+                ],
+                "operationId": "post_status_database_restart",
                 "responses": {}
             }
         },

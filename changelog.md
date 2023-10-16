@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.8.5
+
+1. Added **POST** `/status/database/restart` to manually restart database pool  
+   - There is no access control for this endpoint because access control will not work when database is down.
+   - Database must be unavailable when requesting database pool restart.  
+   - Automatic restart should usually work and this function is only a last solution.
+
 ## v2.8.4
 
 1. Fixed Trucky job format conversion issues  

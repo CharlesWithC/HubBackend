@@ -10,6 +10,7 @@ import apis.info as info
 routes = [
     APIRoute("/", info.get_index, methods=["GET"], response_class=JSONResponse),
     APIRoute("/status", info.get_status, methods=["GET"], response_class=JSONResponse),
+    APIRoute("/status/database/restart", info.restart_database, methods=["POST"], response_class=JSONResponse),
     APIRoute("/languages", info.get_languages, methods=["GET"], response_class=JSONResponse),
 
     APIRoute("/discord/role-connection/enable", admin.post_discord_role_connection_enable, methods=["POST"], response_class=JSONResponse),
