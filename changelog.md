@@ -2,10 +2,13 @@
 
 ## v2.8.5
 
-1. Added **POST** `/status/database/restart` to manually restart database pool  
+1. Added **POST** `/status/database/restart` to manually restart database pool
    - There is no access control for this endpoint because access control will not work when database is down.
-   - Database must be unavailable when requesting database pool restart.  
+   - Database must be unavailable when requesting database pool restart.
    - Automatic restart should usually work and this function is only a last solution.
+2. Fixed issues related to `member role` handling
+   - Updated **GET** `/member/banner` to use `order id` to order roles rather than using `role id`
+   - Fixed **PATCH** `/member/roles` error when adding/removing an unknown role  
 
 ## v2.8.4
 

@@ -78,15 +78,19 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     if staff_highest_order_id != app.roles[(await getHighestActiveRole(request))]["order_id"]:
         # if staff doesn't have the highest role,
         # then check if the role to add is lower than staff's highest role
+
+        # NOTE: Added/Removed role may be already gone in config, so we need to check if it still exists
         for add in addedroles:
-            if app.roles[add]["order_id"] <= staff_highest_order_id:
-                response.status_code = 403
-                return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
+            if add in app.roles.keys():
+                if app.roles[add]["order_id"] <= staff_highest_order_id:
+                    response.status_code = 403
+                    return {"error": ml.tr(request, "add_role_higher_or_equal", force_lang = au["language"])}
 
         for remove in removedroles:
-            if app.roles[remove]["order_id"] <= staff_highest_order_id:
-                response.status_code = 403
-                return {"error": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
+            if remove in app.roles.keys():
+                if app.roles[remove]["order_id"] <= staff_highest_order_id:
+                    response.status_code = 403
+                    return {"error": ml.tr(request, "remove_role_higher_or_equal", force_lang = au["language"])}
 
     if len(addedroles) + len(removedroles) == 0:
         return Response(status_code=204)
