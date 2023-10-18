@@ -710,9 +710,8 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
 
     old_configl = str2list(config)
     old_config = copy.deepcopy(POLL_DEFAULT_CONFIG)
-    for i in range(len(POLL_CONFIG_KEYS)):
-        if i < len(old_config):
-            old_config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](old_configl[i])
+    for i in range(min(len(old_configl), len(POLL_CONFIG_KEYS))):
+        old_config[POLL_CONFIG_KEYS[i]] = POLL_CONFIG_TYPE[POLL_CONFIG_KEYS[i]](old_configl[i])
 
     await app.db.execute(dhrid, f"SELECT choiceid, orderid FROM poll_choice WHERE pollid = {pollid}")
     t = await app.db.fetchall(dhrid)
