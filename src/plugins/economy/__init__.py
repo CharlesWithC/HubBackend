@@ -1,6 +1,8 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import copy
+
 from functions import *
 from plugins.economy.balance import *
 from plugins.economy.garages import *
@@ -28,7 +30,7 @@ async def get_economy(request: Request, response: Response, authorization: str =
         del au["code"]
         return au
 
-    ret = app.config.economy.__dict__
+    ret = copy.deepcopy(app.config.economy.__dict__)
     del ret["trucks"]
     del ret["garages"]
     del ret["merch"]
