@@ -8,7 +8,9 @@
    - Automatic restart should usually work and this function is only a last solution.
 2. Fixed issues related to `member role` handling
    - Updated **GET** `/member/banner` to use `order id` to order roles rather than using `role id`
-   - Fixed **PATCH** `/member/roles` error when adding/removing an unknown role  
+   - Fixed **PATCH** `/member/roles` error when adding/removing an unknown role
+3. Fixed Trucky job format conversion issues
+   - Error handling new jobs when `real_driven_distance_km = null`
 
 ## v2.8.4
 

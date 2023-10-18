@@ -29,7 +29,7 @@ def convert_format(data):
 
     d = copy.deepcopy(data["data"])
     # first convert data
-    convert_distance = ["planned_distance_km", "max_speed_kmh", "vehicle_odometer_end_km", "vehicle_odometer_start_km"]
+    convert_distance = ["driven_distance_km", "planned_distance_km", "max_speed_kmh", "vehicle_odometer_end_km", "vehicle_odometer_start_km"]
     if d["distance_unit"] == "mi":
         for key in convert_distance:
             if d[key] is None:
@@ -41,6 +41,8 @@ def convert_format(data):
         for key in convert_distance:
             if d[key] is None:
                 d[key] = d["_".join(key.split("_")[:-1])]
+    if d["real_driven_distance_km"] is None:
+        d["real_driven_distance_km"] = d["driven_distance_km"]
     try:
         d["average_speed_kmh"] = round((d["real_driven_distance_km"] / (d["real_driving_time_seconds"] / 3600)) / d["max_map_scale"])
     except: # in case of division by zero
