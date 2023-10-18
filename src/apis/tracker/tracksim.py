@@ -687,6 +687,10 @@ async def post_update(response: Response, request: Request):
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
 
+                    if jobreq["enabled_realistic_settings"] != "":
+                        # auto decline - tracksim does not have realistic settings attributes
+                        continue
+
                     uid = (await GetUserInfo(request, userid = userid))["uid"]
                     await notification(request, "challenge", uid, ml.tr(request, "delivery_accepted_by_challenge", var = {"logid": logid, "title": title, "challengeid": challengeid}, force_lang = await GetUserLanguage(request, uid)))
                     await app.db.execute(dhrid, f"INSERT INTO challenge_record VALUES ({userid}, {challengeid}, {logid}, {int(time.time())})")
