@@ -10,7 +10,10 @@
    - Updated **GET** `/member/banner` to use `order id` to order roles rather than using `role id`
    - Fixed **PATCH** `/member/roles` error when adding/removing an unknown role
 3. Fixed Trucky job format conversion issues
-   - Error handling new jobs when `real_driven_distance_km = null`
+   - Error handling new jobs when `real_driven_distance_km = None`
+4. Fixed economy plugin issues
+   - **GET** `/economy` leading to broken garages and trucks list
+   - `GetTruckInfo` error when `vehicleid = None`
 
 ## v2.8.4
 

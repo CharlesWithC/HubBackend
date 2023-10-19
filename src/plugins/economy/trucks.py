@@ -11,6 +11,8 @@ import multilang as ml
 from functions import *
 
 async def GetTruckInfo(request, vehicleid):
+    if vehicleid is None:
+        return None
     (app, dhrid) = (request.app, request.state.dhrid)
     await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 AND vehicleid = {vehicleid}")
     t = await app.db.fetchall(dhrid)
