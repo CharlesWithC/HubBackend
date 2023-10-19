@@ -14,6 +14,7 @@
 4. Fixed economy plugin issues
    - **GET** `/economy` leading to broken garages and trucks list
    - `GetTruckInfo` error when `vehicleid = None`
+   - 422 errors when calling a number of truck-related endpoints
 
 ## v2.8.4
 
