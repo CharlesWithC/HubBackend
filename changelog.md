@@ -11,12 +11,14 @@
    - Fixed **PATCH** `/member/roles` error when adding/removing an unknown role
 3. Fixed Trucky job format conversion issues
    - Fixed error handling new jobs when `real_driven_distance_km = None`
-4. Fixed economy plugin issues
+4. Improved economy plugin
    - Fixed **GET** `/economy` leading to broken garages and trucks list
    - Fixed `GetTruckInfo` error when `vehicleid = None`
    - Fixed 422 errors when calling truck-related endpoints
    - Fixed incorrect damage data being used (`total_damage`, should be `current_damage`)
    - Fixed `self` being used as default owner on **POST** `/truck/transfer`
+   - Limited transaction economy date range to 90 days
+   - Added `visibility` attribute to **GET** `/economy/balance`
 
 ## v2.8.4
 

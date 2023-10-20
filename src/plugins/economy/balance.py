@@ -267,7 +267,15 @@ async def get_balance(request: Request, response: Response, authorization: str =
     await app.db.execute(dhrid, f"SELECT balance FROM economy_balance WHERE userid = {userid}")
     balance = nint(await app.db.fetchone(dhrid))
 
-    return {"balance": balance}
+    visibility = ""
+    await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
+    t = await app.db.fetchall(dhrid)
+    if len(t) != 0:
+        visibility = "public"
+    else:
+        visibility = "private"
+
+    return {"balance": balance, "visibility": visibility}
 
 async def get_balance_transaction_list(request: Request, response: Response, userid: int, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_txid: Optional[int] = None, \
@@ -377,7 +385,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
 
-    rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/export', 300, 3)
+    rl = await ratelimit(request, 'GET /economy/balance/userid/transactions/export', 60, 3)
     if rl[0]:
         return rl[1]
     for k in rl[1].keys():
@@ -402,6 +410,15 @@ async def get_balance_transaction_export(request: Request, response: Response, u
     if not permok:
         response.status_code = 403
         return {"error": ml.tr(request, "view_transaction_history_forbidden", force_lang = au["language"])}
+
+    if after is None:
+        after = 0
+    if before is None:
+        before = int(time.time())
+
+    if before - after > 86400 * 90:
+        response.status_code = 400
+        return {"error": ml.tr(request, "value_too_large", var = {"item": "date-range", "limit": "90"}, force_lang = au["language"])}
 
     limit = ""
     if after is not None:
