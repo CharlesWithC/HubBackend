@@ -16,6 +16,7 @@
    - Fixed `GetTruckInfo` error when `vehicleid = None`
    - Fixed 422 errors when calling truck-related endpoints
    - Fixed incorrect damage data being used (`total_damage`, should be `current_damage`)
+   - Fixed `self` being used as default owner on **POST** `/truck/transfer`
 
 ## v2.8.4
 

@@ -474,6 +474,16 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         return au
     userid = au["userid"]
 
+    # get truck current owner & assignee
+    await app.db.execute(dhrid, f"SELECT truckid, userid, assigneeid FROM economy_truck WHERE vehicleid = {vehicleid}")
+    t = await app.db.fetchall(dhrid)
+    if len(t) == 0:
+        response.status_code = 404
+        return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
+    truckid = t[0][0]
+    current_owner = t[0][1]
+    current_assigneeid = t[0][2]
+
     data = await request.json()
     try:
         # to reassign a truck, set owner to company and update assigneeid
@@ -481,7 +491,10 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         if "owner" in data.keys():
             owner = data["owner"] # owner = self | company | user-{userid}
         else:
-            owner = "self"
+            if current_owner == -1000:
+                owner = "company"
+            else:
+                owner = f"user-{current_owner}"
 
         # assignee only work for company trucks
         assigneeid = "NULL"
@@ -526,14 +539,6 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         return {"error": ml.tr(request, "invalid_owner", force_lang = au["language"])}
 
     # check current owner
-    await app.db.execute(dhrid, f"SELECT truckid, userid, assigneeid FROM economy_truck WHERE vehicleid = {vehicleid}")
-    t = await app.db.fetchall(dhrid)
-    if len(t) == 0:
-        response.status_code = 404
-        return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
-    truckid = t[0][0]
-    current_owner = t[0][1]
-    current_assigneeid = t[0][2]
     if current_owner != -1000 and current_owner == foruser:
         response.status_code = 409
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
