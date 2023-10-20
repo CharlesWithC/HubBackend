@@ -904,7 +904,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             await app.db.commit(dhrid)
 
             if not isrented:
-                truck_damage = d["data"]["object"]["truck"]["total_damage"]
+                truck_damage = d["data"]["object"]["truck"]["current_damage"]
                 damage = 0
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])
