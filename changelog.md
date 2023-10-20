@@ -19,6 +19,7 @@
    - Fixed `self` being used as default owner on **POST** `/truck/transfer`
    - Limited transaction economy date range to 90 days
    - Added `visibility` attribute to **GET** `/economy/balance`
+   - Included all types in transaction list & export
 
 ## v2.8.4
 

@@ -154,10 +154,10 @@ def convert_format(data):
                     "wheel_count": None, # not for trucky
                     "license_plate": None, # not for trucky
                     "license_plate_country": None, # not for trucky
-                    "current_damage": {
+                    "current_damage": None, # not for trucky
+                    "total_damage": {
                         "all": round(d["vehicle_damage"] / 100, 2)
                     },
-                    "total_damage": None, # not for trucky
                     "top_speed": round(d["max_speed_kmh"] / 3.6, 2),
                     "average_speed": round(d["average_speed_kmh"] / 3.6, 2)
                 },
@@ -170,10 +170,10 @@ def convert_format(data):
                         "brand": None, # not for trucky
                         "license_plate": None, # not for trucky
                         "license_plate_country": None, # not for trucky
-                        "current_damage": {
+                        "current_damage": None, # not for trucky
+                        "total_damage": {
                             "all": round(d["trailers_damage"] / 100, 2)
-                        },
-                        "total_damage": None # not for trucky
+                        }
                     }
                 ],
                 "events": events,
@@ -904,7 +904,7 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             await app.db.commit(dhrid)
 
             if not isrented:
-                truck_damage = d["data"]["object"]["truck"]["current_damage"]
+                truck_damage = d["data"]["object"]["truck"]["total_damage"]
                 damage = 0
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])

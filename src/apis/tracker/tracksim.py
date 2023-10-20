@@ -883,7 +883,7 @@ async def post_update(response: Response, request: Request):
             await app.db.commit(dhrid)
 
             if not isrented:
-                truck_damage = d["data"]["object"]["truck"]["current_damage"]
+                truck_damage = d["data"]["object"]["truck"]["total_damage"]
                 damage = 0
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])

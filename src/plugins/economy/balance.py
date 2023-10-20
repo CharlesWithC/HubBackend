@@ -277,6 +277,61 @@ async def get_balance(request: Request, response: Response, authorization: str =
 
     return {"balance": balance, "visibility": visibility}
 
+def get_transaction_message(note, message):
+    # dlog income
+    # rented-truck | tID-income | "c"prefix refers to company share
+
+    # regular trasaction
+    # regular-tx
+
+    # garage-related (OP=purchase|transfer|sell)
+    # g-ID-OP / gsID-OP
+
+    # merch-related (OP=purchase|transfer|sell)
+    # mID-OP
+
+    # truck-related (OP=purchase|transfer|reassign|service|sell|scrap)
+    # tID-OP
+
+    if note == "rented-truck":
+        message = "rented-truck/" + message
+    elif note.startswith("t") and note.endswith("-income"):
+        vehicleid = note.split("-")[0][1:]
+        message = f"truck-{vehicleid}/" + message
+    elif note == "crented-truck":
+        message = "company-share/rented-truck/" + message
+    elif note.startswith("ct") and note.endswith("-income"):
+        vehicleid = note.split("-")[0][2:]
+        message = f"company-share/truck-{vehicleid}/" + message
+    elif note.startswith("regular-tx"):
+        message = "regular-tx/message-" + message
+    elif note.startswith("g-"):
+        garageid = note.split("-")[1][2:]
+        op = note.split("-")[-1]
+        if op == "transfer":
+            message = "message-" + message
+        message = f"{op}-garage-{garageid}/" + message
+    elif note.startswith("gs"):
+        slotid = note.split("-")[0][2:]
+        op = note.split("-")[-1]
+        if op == "transfer":
+            message = "message-" + message
+        message = f"{op}-garage-slot-{slotid}/" + message
+    elif note.startswith("m"):
+        itemid = note.split("-")[0][1:]
+        op = note.split("-")[-1]
+        if op == "transfer":
+            message = "message-" + message
+        message = f"{op}-merch-{itemid}/" + message
+    elif note.startswith("t"):
+        vehicleid = note.split("-")[0][1:]
+        op = note.split("-")[-1]
+        if op == "transfer":
+            message = "message-" + message
+        message = f"{op}-truck-{vehicleid}/" + message
+
+    return message
+
 async def get_balance_transaction_list(request: Request, response: Response, userid: int, authorization: str = Header(None), \
         page: Optional[int] = 1, page_size: Optional[int] = 10, after_txid: Optional[int] = None, \
         after: Optional[int] = None, before: Optional[int] = None, \
@@ -361,13 +416,17 @@ async def get_balance_transaction_list(request: Request, response: Response, use
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND (from_userid = {userid} OR to_userid = {userid}) ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
         note = tt[4].split("/")
-        executorid = int(note[1].split("-")[1])
-        d = {"txid": tt[0], "from_user": await GetUserInfo(request, userid = tt[1]), "to_user": await GetUserInfo(request, userid = tt[2]), "executor": await GetUserInfo(request, userid = executorid),"amount": tt[3], "from_new_balance": tt[6], "to_new_balance": tt[7], "message": tt[5]}
+        if tt[4].startswith("regular-tx"):
+            executorid = int(note[1].split("-")[1])
+        else:
+            executorid = tt[1]
+
+        d = {"txid": tt[0], "from_user": await GetUserInfo(request, userid = tt[1]), "to_user": await GetUserInfo(request, userid = tt[2]), "executor": await GetUserInfo(request, userid = executorid), "amount": tt[3], "from_new_balance": tt[6], "to_new_balance": tt[7], "message": get_transaction_message(tt[4], tt[5])}
         if not balance_manager_perm_ok:
             if tt[1] != au["userid"]:
                 d["from_new_balance"] = None
@@ -429,18 +488,30 @@ async def get_balance_transaction_export(request: Request, response: Response, u
     f = BytesIO()
     f.write(b"txid, from_userid, to_userid, executor_userid, amount, message, from_new_balance, to_new_balance, time\n")
 
-    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY timestamp DESC")
+    miscuserid = {-1000: "company", -1001: "dealership", -1002: "garage_agency", -1003: "client", -1004: "service_station", -1005: "scrap_station", -1005: "blackhole"}
+    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND (from_userid = {userid} OR to_userid = {userid}) {limit} ORDER BY timestamp DESC")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         note = tt[4].split("/")
-        executorid = int(note[1].split("-")[1])
+        if tt[4].startswith("regular-tx"):
+            executorid = int(note[1].split("-")[1])
+        else:
+            executorid = tt[1]
 
         from_userid = tt[1]
         to_userid = tt[2]
-        if from_userid == -1000:
-            from_userid = "company"
-        if to_userid == -1000:
-            to_userid = "company"
+        if from_userid is not None and from_userid <= -1000:
+            from_userid = miscuserid[from_userid]
+        elif from_userid is None:
+            from_userid = "null"
+        if to_userid is not None and to_userid <= -1000:
+            to_userid = miscuserid[to_userid]
+        elif to_userid is None:
+            to_userid = "null"
+        if executorid is not None and executorid <= -1000:
+            executorid = miscuserid[executorid]
+        elif executorid is None:
+            executorid = "null"
 
         from_new_balance = tt[7]
         to_new_balance = tt[8]
@@ -450,7 +521,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
             elif tt[2] != au["userid"] or to_new_balance is None:
                 to_new_balance = "/"
 
-        data = [tt[0], from_userid, to_userid, executorid, tt[3], tt[5], from_new_balance, to_new_balance, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(tt[8]))]
+        data = [tt[0], from_userid, to_userid, executorid, tt[3], get_transaction_message(tt[4], tt[5]), from_new_balance, to_new_balance, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(tt[8]))]
 
         for i in range(len(data)):
             if data[i] is None:
