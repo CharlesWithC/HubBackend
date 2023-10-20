@@ -837,6 +837,8 @@ async def post_update(response: Response, request: Request):
     try:
         if "economy" in app.config.plugins and isdelivered and not duplicate:
             economy_revenue = round(revenue)
+            if economy_revenue > 4294967296:
+                economy_revenue = 4294967296
             truckid = convertQuotation(d["data"]["object"]["truck"]["unique_id"])
             truckid = truckid[len("vehicle."):] if truckid.startswith("vehicle.") else truckid
 

@@ -5608,6 +5608,50 @@
                     }
                 ],
                 "responses": {}
+            },
+            "patch": {
+                "summary": "Patch User Balance",
+                "tags": [
+                    "economy_balance"
+                ],
+                "operationId": "patch_economy_balance_userid",
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "applicationAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "amount": {
+                                        "description": "Amount",
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "amount"
+                            ]
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "User ID",
+                            "type": "integer"
+                        },
+                        "name": "userid",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
             }
         },
         "/economy/balance/transfer": {

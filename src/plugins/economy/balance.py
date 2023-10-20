@@ -222,6 +222,42 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
     else:
         return {"from_balance": from_balance - amount}
 
+async def patch_balance(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+    '''Patch user balance. This should not be actively used.
+    This should only be used to fix ultra-high balance.
+    Patches here WILL NOT go into the transaction table.'''
+    app = request.app
+    dhrid = request.state.dhrid
+    await app.db.new_conn(dhrid)
+
+    rl = await ratelimit(request, 'PATCH /economy/balance/userid', 60, 60)
+    if rl[0]:
+        return rl[1]
+    for k in rl[1].keys():
+        response.headers[k] = rl[1][k]
+
+    au = await auth(authorization, request, required_permission=["admin", "economy_manager", "balance_manager"])
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+
+    data = await request.json()
+    try:
+        amount = int(data["amount"])
+
+        if abs(amount) > 4294967296:
+            response.status_code = 400
+            return {"error": ml.tr(request, "value_too_large", var = {"item": "amount", "limit": "4,294,967,296"}, force_lang = au["language"])}
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
+
+    await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = {amount} WHERE userid = {userid}")
+    await app.db.commit(dhrid)
+
+    return Response(status_code=204)
+
 async def get_balance(request: Request, response: Response, authorization: str = Header(None), userid: Optional[int] = None):
     '''Get user balance.
 
