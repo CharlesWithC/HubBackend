@@ -20,6 +20,7 @@
    - Limited transaction economy date range to 90 days
    - Added `visibility` attribute to **GET** `/economy/balance`
    - Included all types in transaction list & export
+   - Added the forgotten `wear_ratio` calculation
 
 ## v2.8.4
 

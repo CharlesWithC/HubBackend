@@ -909,6 +909,8 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
                 for item in truck_damage.keys():
                     damage += nfloat(truck_damage[item])
 
+                damage = damage * app.config.economy.wear_ratio
+
                 await app.db.execute(dhrid, f"UPDATE economy_truck SET odometer = odometer + {driven_distance}, damage = damage + {damage}, income = income + {economy_revenue} WHERE vehicleid = {vehicleid}")
                 if current_damage + damage > app.config.economy.max_wear_before_service:
                     await app.db.execute(dhrid, f"UPDATE economy_truck SET status = -1 WHERE vehicleid = {vehicleid}")
