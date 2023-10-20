@@ -64,7 +64,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
         public_userids.append(int(tt[0]))
     if public_userids.count(au["userid"]) == 2:
         public_userids.remove(au["userid"])
-    if exclude_company:
+    if exclude_company and -1000 in public_userids:
         public_userids.remove(-1000)
 
     await app.db.execute(dhrid, f"SELECT userid, balance FROM economy_balance WHERE (userid >= 0 OR userid = -1000) AND balance > 0 {limit} ORDER BY balance {order}")

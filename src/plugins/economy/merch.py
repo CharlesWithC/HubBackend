@@ -193,7 +193,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
 
     ts = int(time.time())
     await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance - {merch['buy_price']} WHERE userid = {opuserid}")
-    await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {merch['buy_price']} WHERE userid = {opuserid}")
+    await app.db.execute(dhrid, f"UPDATE economy_balance SET balance = balance + {merch['buy_price']} WHERE userid = {-1000}")
     await app.db.execute(dhrid, f"INSERT INTO economy_merch(merchid, userid, buy_price, sell_price, purchase_timestamp) VALUES ('{merchid}', {foruser}, {merch['buy_price']}, {merch['sell_price']}, {ts})")
     await app.db.commit(dhrid)
     await app.db.execute(dhrid, "SELECT LAST_INSERT_ID();")

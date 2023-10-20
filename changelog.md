@@ -17,12 +17,13 @@
    - Fixed 422 errors when calling truck-related endpoints
    - Fixed incorrect damage data being used (`total_damage`, should be `current_damage`)
    - Fixed `self` being used as default owner on **POST** `/truck/transfer`
-   - Limited transaction economy date range to 90 days
-   - Added `visibility` attribute to **GET** `/economy/balance`
-   - Included all types in transaction list & export
-   - Added the forgotten `wear_ratio` calculation
-   - Limited job income to `4294967296`
+   - Fixed purchasing merch does not correctly deduct balance
+   - Added `visibility` attribute to result of **GET** `/economy/balance`
+   - Added the `wear_ratio` calculation
    - Added **PATCH** `/balance/{userid}` to update balance without making transaction
+   - Limited transaction economy date range to 90 days
+   - Limited job income to `4294967296`
+   - Included all types in transaction list & export
 
 ## v2.8.4
 
