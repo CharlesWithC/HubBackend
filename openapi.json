@@ -5945,7 +5945,7 @@
         },
         "/economy/garages/list": {
             "get": {
-                "summary": "Get Garages List (Owned)",
+                "summary": "Get Garages List",
                 "tags": [
                     "economy_garages"
                 ],
@@ -6478,7 +6478,7 @@
         },
         "/economy/trucks/list": {
             "get": {
-                "summary": "Get Trucks List (Owned)",
+                "summary": "Get Trucks List",
                 "tags": [
                     "economy_trucks"
                 ],
@@ -7078,7 +7078,7 @@
         },
         "/economy/merch/list": {
             "get": {
-                "summary": "Get Merch List (Owned)",
+                "summary": "Get Merch List",
                 "tags": [
                     "economy_merch"
                 ],

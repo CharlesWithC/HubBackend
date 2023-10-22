@@ -39,7 +39,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
         min_price: Optional[int] = None, max_price: Optional[int] = None, \
         purchased_after: Optional[int] = None, purchased_before: Optional[int] = None, \
         order_by: Optional[str] = "price", order: Optional[int] = "desc"):
-    '''Get a list of owned merch.'''
+    '''Get a list of merch.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)

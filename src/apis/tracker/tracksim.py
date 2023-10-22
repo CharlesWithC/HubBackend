@@ -687,8 +687,12 @@ async def post_update(response: Response, request: Request):
                         if int(jobreq["maximum_average_fuel"]) != -1 and jobreq["maximum_average_fuel"] < average_fuel:
                             continue
 
+                    # auto decline - tracksim does not have the following attributes
+                    if jobreq["minimum_warp"] != -1:
+                        continue
+                    if jobreq["maximum_warp"] != -1:
+                        continue
                     if jobreq["enabled_realistic_settings"] != "":
-                        # auto decline - tracksim does not have realistic settings attributes
                         continue
 
                     uid = (await GetUserInfo(request, userid = userid))["uid"]

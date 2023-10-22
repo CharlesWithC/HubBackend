@@ -36,7 +36,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
         min_trucks: Optional[int] = None, max_trucks: Optional[int] = None,
         min_income: Optional[int] = None, max_income: Optional[int] = None,
         order_by: Optional[str] = "income", order: Optional[str] = "desc"):
-    '''Get a list of owned garages.
+    '''Get a list of garages.
 
     `order_by` can be `income`, `truck`, `slot`'''
     app = request.app

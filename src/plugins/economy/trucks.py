@@ -56,7 +56,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
         min_odometer: Optional[int] = None, max_odometer: Optional[int] = None,
         min_damage: Optional[float] = None, max_damage: Optional[float] = None,
         order_by: Optional[str] = "odometer", order: Optional[str] = "desc"):
-    '''Get a list of owned trucks.'''
+    '''Get a list of trucks.'''
     app = request.app
     dhrid = request.state.dhrid
     await app.db.new_conn(dhrid)
