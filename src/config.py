@@ -30,13 +30,13 @@ config.rank_types[].details[].daily_bonus format
 - `algo_offset`: positive float when `streak_type` is `algo`, controls the initial growth rate of the result
 '''
 
-config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'mysql_host', 'mysql_user', 'mysql_passwd', 'mysql_db', 'mysql_ext', 'mysql_pool_size', 'mysql_err_keywords', 'captcha', 'plugins', 'external_plugins', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_keys_order = ['abbr', 'name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'openapi', 'frontend_urls', 'domain', 'prefix', 'server_host', 'server_port', 'server_workers', 'whitelist_ips', 'webhook_error', 'database', 'db_host', 'db_user', 'db_password', 'db_name', 'db_data_directory', 'db_pool_size', 'db_error_keywords', 'captcha', 'plugins', 'external_plugins', 'discord_guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules', 'hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
-config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'tracker', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
+config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'security_level', 'hex_color', 'logo_url', 'discord_guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'required_connections', 'register_methods', 'trackers', 'delivery_rules','hook_delivery_log', 'delivery_webhook_image_urls', 'discord_client_id', 'discord_client_secret', 'discord_bot_token', 'steam_api_key', 'discord_guild_message_replace_rules', 'smtp_host', 'smtp_port', 'smtp_email', 'smtp_passwd', 'email_template', 'perms', 'roles', 'hook_audit_log', 'member_accept', 'driver_role_add', 'driver_role_remove', 'member_leave', 'rank_up', 'rank_types', 'announcement_types', 'announcement_forwarding', 'application_types', 'challenge_forwarding', 'challenge_completed_forwarding', 'divisions', 'hook_division', 'downloads_forwarding', 'economy', 'event_forwarding', 'event_upcoming_forwarding', 'poll_forwarding']
 
 # NOTE: Tracker-related whitelist & protect list must be handled separately
 
-public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'tracker', 'required_connections', 'register_methods', 'delivery_rules', 'delivery_log_channel_id', 'delivery_webhook_image_urls', 'discord_client_id']
+public_config_whitelist = ['name', 'language', 'distance_unit', 'privacy', 'hex_color', 'logo_url', 'discord_guild_id', 'must_join_guild', 'use_server_nickname', 'sync_discord_email', 'allow_custom_profile', 'use_custom_activity', 'avatar_domain_whitelist', 'trackers', 'required_connections', 'register_methods', 'delivery_rules', 'delivery_log_channel_id', 'delivery_webhook_image_urls', 'discord_client_id']
 
 config_plugins = {"announcement": ["announcement_types", "announcement_forwarding"],
     "application": ["application_types"],
@@ -75,13 +75,13 @@ default_config = {
     "webhook_error": "",
 
     "database": "mysql",
-    "mysql_host": "localhost",
-    "mysql_user": "",
-    "mysql_passwd": "",
-    "mysql_db": "_drivershub",
-    "mysql_ext": "/var/lib/mysqlext/",
-    "mysql_pool_size": 10,
-    "mysql_err_keywords": ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"],
+    "db_host": "localhost",
+    "db_user": "",
+    "db_password": "",
+    "db_name": "_drivershub",
+    "db_data_directory": "/var/lib/mysqlext/",
+    "db_pool_size": 10,
+    "db_error_keywords": ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"],
     "captcha": {
         "provider": "hcaptcha",
         "secret": ""
@@ -90,7 +90,7 @@ default_config = {
     "plugins": [],
     "external_plugins": [],
 
-    "guild_id": "",
+    "discord_guild_id": "",
     "must_join_guild": True,
     "use_server_nickname": True,
     "sync_discord_email": True,
@@ -100,7 +100,7 @@ default_config = {
     "required_connections": ["discord", "steam"],
     "register_methods": ["discord", "steam"],
 
-    "tracker": [{
+    "trackers": [{
         "type": "tracksim",
         "company_id": "",
         "api_token": "",
@@ -813,9 +813,9 @@ def validateConfig(cfg):
     cfg["external_plugins"] = new_external_plugins
 
     try:
-        cfg["mysql_pool_size"] = int(cfg["mysql_pool_size"])
+        cfg["db_pool_size"] = int(cfg["db_pool_size"])
     except:
-        cfg["mysql_pool_size"] = 10
+        cfg["db_pool_size"] = 10
 
     # renamed configs
     if "apidoc" in cfg.keys():
@@ -915,9 +915,31 @@ def validateConfig(cfg):
         cfg["economy"]["garages"] = []
         cfg["economy"]["merch"] = []
 
+    # v2.8.6
+    if 'mysql_host' in cfg.keys():
+        cfg["db_host"] = cfg["mysql_host"]
+        del cfg["mysql_host"]
+    if 'mysql_user' in cfg.keys():
+        cfg["db_user"] = cfg["mysql_user"]
+        del cfg["mysql_user"]
+    if 'mysql_passwd' in cfg.keys():
+        cfg["db_password"] = cfg["mysql_passwd"]
+        del cfg["mysql_passwd"]
+    if 'mysql_db' in cfg.keys():
+        cfg["db_name"] = cfg["mysql_db"]
+        del cfg["mysql_db"]
+    if 'mysql_ext' in cfg.keys():
+        cfg["db_data_directory"] = cfg["mysql_ext"]
+        del cfg["mysql_ext"]
+    if 'mysql_pool_size' in cfg.keys():
+        cfg["db_pool_size"] = cfg["mysql_pool_size"]
+        del cfg["mysql_pool_size"]
+    if 'mysql_err_keywords' in cfg.keys():
+        cfg["db_error_keywords"] = cfg["mysql_err_keywords"]
+        del cfg["mysql_err_keywords"]
     # v2.5.9
-    if 'mysql_err_keywords' not in cfg.keys():
-        cfg["mysql_err_keywords"] = ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"]
+    if 'db_error_keywords' not in cfg.keys():
+        cfg["db_error_keywords"] = ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"]
 
     # v2.5.10
     if 'sync_discord_email' not in cfg.keys():
@@ -1198,13 +1220,16 @@ def validateConfig(cfg):
 
     # v2.8.2
     # single-tracker => multi-tracker
-    if "tracker" in cfg.keys() and type(cfg["tracker"]) == str and "tracker_company_id" in cfg.keys() and "tracker_api_token" in cfg.keys() and "tracker_webhook_secret" in cfg.keys() and "allowed_tracker_ips" in cfg.keys():
-        cfg["tracker"] = [{"type": cfg["tracker"], "company_id": cfg["tracker_company_id"], "api_token": cfg["tracker_api_token"], "webhook_secret": cfg["tracker_webhook_secret"], "ip_whitelist": cfg["allowed_tracker_ips"]}]
+    if "tracker" in cfg.keys():
+        cfg["trackers"] = cfg["tracker"]
+        del cfg["tracker"]
+    if "trackers" in cfg.keys() and type(cfg["trackers"]) == str and "tracker_company_id" in cfg.keys() and "tracker_api_token" in cfg.keys() and "tracker_webhook_secret" in cfg.keys() and "allowed_tracker_ips" in cfg.keys():
+        cfg["trackers"] = [{"type": cfg["trackers"], "company_id": cfg["tracker_company_id"], "api_token": cfg["tracker_api_token"], "webhook_secret": cfg["tracker_webhook_secret"], "ip_whitelist": cfg["allowed_tracker_ips"]}]
         del cfg["tracker_company_id"], cfg["tracker_api_token"], cfg["tracker_webhook_secret"], cfg["allowed_tracker_ips"]
-    if type(cfg["tracker"]) != list:
-        cfg["tracker"] = []
+    if type(cfg["trackers"]) != list:
+        cfg["trackers"] = []
     new_trackers = []
-    for tracker in cfg["tracker"]:
+    for tracker in cfg["trackers"]:
         if "type" not in tracker.keys() or "company_id" not in tracker.keys() or "api_token" not in tracker.keys() or "webhook_secret" not in tracker.keys():
             continue
         if "ip_whitelist" not in tracker.keys():
@@ -1214,11 +1239,16 @@ def validateConfig(cfg):
         if tracker["ip_whitelist"] is not None and type(tracker["ip_whitelist"]) != list:
             continue
         new_trackers.append(tracker)
-    cfg["tracker"] = new_trackers
+    cfg["trackers"] = new_trackers
     ordered_perms = {key: cfg["perms"][key] for key in default_config["perms"].keys() if key in cfg["perms"].keys()}
     extra_perms = {key: cfg["perms"][key] for key in cfg["perms"].keys() if key not in default_config["perms"].keys()}
     ordered_perms.update(extra_perms)
     cfg["perms"] = ordered_perms
+
+    # v2.8.6
+    if "guild_id" in cfg.keys():
+        cfg["discord_guild_id"] = cfg["guild_id"]
+        del cfg["guild_id"]
 
     tcfg = {}
     for key in config_keys_order:

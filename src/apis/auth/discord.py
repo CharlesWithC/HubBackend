@@ -78,7 +78,7 @@ async def get_callback(request: Request, response: Response, code: Optional[str]
 
                 if app.config.use_server_nickname:
                     try:
-                        r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
+                        r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
                         if r.status_code == 200:
                             d = json.loads(r.text)
                             if d["nick"] is not None:

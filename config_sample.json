@@ -24,13 +24,13 @@
     "webhook_error": "",
 
     "database": "mysql",
-    "mysql_host": "localhost",
-    "mysql_user": "",
-    "mysql_passwd": "",
-    "mysql_db": "_drivershub",
-    "mysql_ext": "/var/lib/mysqlext/",
-    "mysql_pool_size": 10,
-    "mysql_err_keywords": ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"],
+    "db_host": "localhost",
+    "db_user": "",
+    "db_password": "",
+    "db_name": "_drivershub",
+    "db_data_directory": "/var/lib/mysqlext/",
+    "db_pool_size": 10,
+    "db_error_keywords": ["lost connection", "deadlock", "readexactly", "timeout", "[aiosql]"],
     "captcha": {
         "provider": "hcaptcha",
         "secret": ""
@@ -39,7 +39,7 @@
     "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
     "external_plugins": ["example"],
 
-    "guild_id": "",
+    "discord_guild_id": "",
     "must_join_guild": true,
     "use_server_nickname": true,
     "sync_discord_email": true,
@@ -49,7 +49,7 @@
     "required_connections": ["discord", "steam"],
     "register_methods": ["discord", "steam"],
 
-    "tracker": [{
+    "trackers": [{
         "type": "tracksim",
         "company_id": "",
         "api_token": "",

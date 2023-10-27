@@ -11,7 +11,7 @@ from static import TRACKER
 async def add_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
     (app, dhrid) = (request.app, request.state.dhrid)
     all_errors = ""
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         resp_error = ""
         plain_error = ""
         try:
@@ -65,7 +65,7 @@ async def add_driver(request, steamid, staff_uid, userid, username, trackers = [
 async def remove_driver(request, steamid, staff_uid, userid, username, trackers = ["tracksim", "trucky"]):
     (app, dhrid) = (request.app, request.state.dhrid)
     all_errors = ""
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         resp_error = ""
         plain_error = ""
         try:

@@ -152,7 +152,7 @@ def run(app):
             cur.execute("DROP TABLE application")
     cur.execute("SELECT * FROM application_old")
     rows = cur.fetchall()
-    cur.execute(f"CREATE TABLE application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"CREATE TABLE application (applicationid INT AUTO_INCREMENT PRIMARY KEY, application_type INT, uid INT, data TEXT, status INT, submit_timestamp BIGINT, update_staff_userid INT, update_staff_timestamp BIGINT) DATA DIRECTORY = '{app.config.db_data_directory}'")
     for row in rows:
         row = process_row(row)
         if row[2] not in discordid2uid.keys():

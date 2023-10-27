@@ -245,7 +245,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
             return {"error": ml.tr(request, "discord_integrations_disabled", force_lang = au["language"])}
 
         try:
-            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
+            r = await arequests.get(app, f"https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}", headers={"Authorization": f"Bot {app.config.discord_bot_token}"}, dhrid = dhrid)
         except:
             response.status_code = 503
             if not staffmode:

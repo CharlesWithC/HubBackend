@@ -937,7 +937,7 @@ async def post_update(response: Response, request: Request):
 
     ip_ok = False
     needs_validate = False
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         if tracker["type"] != "trucky":
             continue
         if type(tracker["ip_whitelist"]) == list and len(tracker["ip_whitelist"]) > 0:
@@ -961,7 +961,7 @@ async def post_update(response: Response, request: Request):
         return {"error": "Unsupported content type"}
     sig_ok = False
     needs_validate = False # if at least one tracker has webhook secret, then true (only false when all doesn't have webhook secret)
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         if tracker["type"] != "trucky":
             continue
         if tracker["webhook_secret"] is not None and tracker["webhook_secret"] != "":
@@ -1041,9 +1041,9 @@ async def post_update(response: Response, request: Request):
                     for role in meta.role_change:
                         try:
                             if int(role) < 0:
-                                opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
+                                opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
                             elif int(role) > 0:
-                                opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
+                                opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
                         except:
                             pass
 
@@ -1063,9 +1063,9 @@ async def post_update(response: Response, request: Request):
                     for role in meta.role_change:
                         try:
                             if int(role) < 0:
-                                opqueue.queue(app, "delete", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
+                                opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{str(-int(role))}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"remove_role,{-int(role)},{discordid}")
                             elif int(role) > 0:
-                                opqueue.queue(app, "put", app.config.guild_id, f'https://discord.com/api/v10/guilds/{app.config.guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
+                                opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is added."}, f"add_role,{int(role)},{discordid}")
                         except:
                             pass
 

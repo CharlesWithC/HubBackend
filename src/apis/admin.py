@@ -114,7 +114,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
 
         for tt in t.keys():
             if tt in public_config_whitelist:
-                if tt == "tracker":
+                if tt == "trackers":
                     ttconfig[tt] = [{"type": tracker["type"], "company_id": tracker["company_id"]} for tracker in t[tt]]
                 else:
                     ttconfig[tt] = t[tt]
@@ -141,7 +141,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
         # remove sensitive data
         for tt in config_protected:
             ffconfig[tt] = ""
-        ffconfig["tracker"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ffconfig["tracker"]]
+        ffconfig["trackers"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ffconfig["trackers"]]
 
         # remove disabled plugins
         for t in config_plugins.keys():
@@ -165,7 +165,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
     # remove sensitive data
     for tt in config_protected:
         ttconfig[tt] = ""
-    ttconfig["tracker"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ttconfig["tracker"]]
+    ttconfig["trackers"] = [{"type": tracker["type"], "company_id": tracker["company_id"], "api_token": "", "webhook_secret": "", "ip_whitelist": tracker["ip_whitelist"]} for tracker in ttconfig["trackers"]]
 
     # remove disabled plugins
     for t in config_plugins.keys():
@@ -218,7 +218,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
     for tt in new_config.keys():
         if tt in config_whitelist:
-            if tt == "tracker":
+            if tt == "trackers":
                 for tracker in new_config[tt]:
                     if tracker["type"] not in ["tracksim", "trucky"]:
                         response.status_code = 400
@@ -247,12 +247,12 @@ async def patch_config(request: Request, response: Response, authorization: str 
                                 response.status_code = 400
                                 return {"error": ml.tr(request, "value_too_large", var = {"item": "economy.garages.base_slots", "limit": "10"}, force_lang = au["language"])}
 
-            if tt in ["privacy", "must_join_guild", "use_server_nickname"]:
+            if tt in ["privacy", "must_join_guild", "use_server_nickname", "sync_discord_email", "allow_custom_profile", "use_custom_activity"]:
                 if type(new_config[tt]) != bool:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_datatype_boolean", var = {"item": tt}, force_lang = au["language"])}
 
-            if tt in ["guild_id", "delivery_log_channel_id", "discord_client_id", "smtp_port", "security_level"]:
+            if tt in ["smtp_port", "security_level"]:
                 try:
                     new_config[tt] = int(new_config[tt])
                 except:
@@ -280,7 +280,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
                         p.append(o)
                 new_config[tt] = p
 
-            if tt in ["logo_url", "webhook_division", "webhook_audit"]:
+            if tt == "logo_url":
                 if new_config[tt] != "" and not isurl(new_config[tt]):
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_data_url", var = {"item": tt}, force_lang = au["language"])}

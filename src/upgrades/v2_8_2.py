@@ -17,17 +17,17 @@ def run(app):
         print("Updating user TABLE")
         cur.execute("ALTER TABLE user ADD tracker_in_use INT AFTER mfa_secret")
         cur.execute("UPDATE user SET tracker_in_use = 0") # set a default value first
-        if type(app.config.tracker) == str:
+        if type(app.config.trackers) == str:
             # config not updated yet
-            if app.config.tracker == "tracksim":
+            if app.config.trackers == "tracksim":
                 cur.execute("UPDATE user SET tracker_in_use = 2 WHERE userid >= 0")
-            elif app.config.tracker == "trucky":
+            elif app.config.trackers == "trucky":
                 cur.execute("UPDATE user SET tracker_in_use = 3 WHERE userid >= 0")
-        elif type(app.config.tracker) == list and len(app.config.tracker) > 0:
+        elif type(app.config.trackers) == list and len(app.config.trackers) > 0:
             # config already updated, then we'll consider the first tracker
-            if app.config.tracker[0]["type"] == "tracksim":
+            if app.config.trackers[0]["type"] == "tracksim":
                 cur.execute("UPDATE user SET tracker_in_use = 2 WHERE userid >= 0")
-            elif app.config.tracker[0]["type"] == "trucky":
+            elif app.config.trackers[0]["type"] == "trucky":
                 cur.execute("UPDATE user SET tracker_in_use = 3 WHERE userid >= 0")
 
     cur.close()

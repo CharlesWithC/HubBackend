@@ -98,7 +98,7 @@ async def tracebackHandler(request: Request, exc: Exception, err: str):
             # unable to parse json
             return JSONResponse({"error": ml.tr(request, "bad_json")}, status_code=400)
 
-        for keyword in app.config.mysql_err_keywords:
+        for keyword in app.config.db_error_keywords:
             if keyword in err.lower():
                 ismysqlerr = True
                 break

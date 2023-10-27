@@ -108,6 +108,6 @@ async def EnsureEconomyBalance(request, userid):
 
 def configured_trackers(app):
     ret = []
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         ret.append(tracker["type"])
     return ret

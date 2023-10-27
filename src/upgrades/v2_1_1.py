@@ -9,7 +9,7 @@ def run(app):
     cur = conn.cursor()
 
     print("Moving application to DATA DIRECTORY...")
-    cur.execute(f"ALTER TABLE application DATA DIRECTORY = '{app.config.mysql_ext}'")
+    cur.execute(f"ALTER TABLE application DATA DIRECTORY = '{app.config.db_data_directory}'")
 
     print("Fixing nxtuserid in settings...")
     cur.execute("SELECT MAX(userid) FROM user")

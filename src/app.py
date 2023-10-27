@@ -146,7 +146,7 @@ def createApp(config_path, multi_mode = False, first_init = False, args = {}):
     app.config_last_modified = os.path.getmtime(app.config_path)
     app.start_time = int(time.time())
     app.multi_mode = multi_mode
-    app.db = db.aiosql(app = app, host = app.config.mysql_host, user = app.config.mysql_user, passwd = app.config.mysql_passwd, db = app.config.mysql_db)
+    app.db = db.aiosql(app = app, host = app.config.db_host, user = app.config.db_user, passwd = app.config.db_password, db = app.config.db_name)
     app.enable_performance_header = "enable_performance_header" in args.keys() and args["enable_performance_header"]
     app.memory_threshold = args["memory_threshold"] if "memory_threshold" in args.keys() else 0
     app.banner_service_url = args["banner_service_url"]

@@ -20,7 +20,7 @@ from plugins.challenge import JOB_REQUIREMENT_DEFAULT, JOB_REQUIREMENTS
 
 async def FetchRoute(app, gameid, userid, logid, trackerid, request, dhrid = None):
     r = None
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         if tracker["type"] != "tracksim":
             continue
         try: # try multiple tracker's api token
@@ -138,7 +138,7 @@ async def post_update(response: Response, request: Request):
 
     ip_ok = False
     needs_validate = False
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         if tracker["type"] != "tracksim":
             continue
         if type(tracker["ip_whitelist"]) == list and len(tracker["ip_whitelist"]) > 0:
@@ -159,7 +159,7 @@ async def post_update(response: Response, request: Request):
         return {"error": "Unsupported content type"}
     sig_ok = False
     needs_validate = False # if at least one tracker has webhook secret, then true (only false when all doesn't have webhook secret)
-    for tracker in app.config.tracker:
+    for tracker in app.config.trackers:
         if tracker["type"] != "tracksim":
             continue
         if tracker["webhook_secret"] is not None and tracker["webhook_secret"] != "":
