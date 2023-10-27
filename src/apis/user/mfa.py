@@ -80,6 +80,24 @@ async def post_disable(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    t = await app.db.fetchall(dhrid)
+    secret = t[0][0]
+    if secret == "":
+        response.status_code = 428
+        return {"error": ml.tr(request, "mfa_not_enabled", force_lang = au["language"])}
+
+    data = await request.json()
+    try:
+        otp = data["otp"]
+    except:
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+
+    if not valid_totp(otp, secret):
+        response.status_code = 400
+        return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
+
     if uid is None:
         # self-disable mfa
         au = await auth(authorization, request, check_member = False)
@@ -88,24 +106,6 @@ async def post_disable(request: Request, response: Response, authorization: str 
             del au["code"]
             return au
         uid = au["uid"]
-
-        await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
-        t = await app.db.fetchall(dhrid)
-        secret = t[0][0]
-        if secret == "":
-            response.status_code = 428
-            return {"error": ml.tr(request, "mfa_not_enabled", force_lang = au["language"])}
-
-        data = await request.json()
-        try:
-            otp = data["otp"]
-        except:
-            response.status_code = 400
-            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
-
-        if not valid_totp(otp, secret):
-            response.status_code = 400
-            return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)

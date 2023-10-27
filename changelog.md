@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.8.6
+
+1. Added global MFA requirement to **POST** `/user/mfa/disable`
+
 ## v2.8.5
 
 1. Added **POST** `/status/database/restart` to manually restart database pool
