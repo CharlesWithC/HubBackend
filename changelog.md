@@ -3,6 +3,7 @@
 ## v2.8.6
 
 1. Added global MFA requirement to **POST** `/user/mfa/disable`
+2. Improved string table
 
 ## v2.8.5
 

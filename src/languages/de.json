@@ -9,8 +9,8 @@
     "content_too_long": "Maximale Länge von \"{item}\" beträgt {limit} Zeichen.",
     "value_too_large": "Maximalwert von \"{item}\" beträgt {limit}.",
     "attention_required": "Aufmerksamkeit erforderlich",
-    "invalid_discord_token": "Ungültiges Discord-Bot-Token: Discord-Integration vorübergehend deaktiviert. Setze ein gültiges Token in der Konfiguration und lade die Konfiguration neu, um die Funktionalität wiederherzustellen.",
 
+    "invalid_discord_token": "Ungültiges Discord-Bot-Token: Discord-Integration vorübergehend deaktiviert. Setze ein gültiges Token in der Konfiguration und lade die Konfiguration neu, um die Funktionalität wiederherzustellen.",
     "invalid_captcha": "Ungültiges Captcha",
     "captcha_api_inaccessible": "Captcha-API nicht erreichbar",
     "invalid_email_or_password": "Ungültige E-Mail oder Passwort",
@@ -19,15 +19,14 @@
     "invalid_hash": "Ungültiger Hash",
     "invalid_userid": "Ungültige Benutzer-ID",
     "invalid_timezone": "Ungültige Zeitzone",
-    "invalid_link": "Ungültiger Link",
 
+    "invalid_link": "Ungültiger Link",
     "unauthorized": "Kein Zugriff",
     "no_access_to_resource": "Unzureichende Berechtigungen zum Zugriff",
     "application_token_not_allowed": "Zugriff verweigert: Anwendungstoken nicht erlaubt",
     "access_sensitive_data": "Zugriff verweigert: Melde dich mit Discord, Steam an oder aktiviere MFA, um auf sensible Daten zuzugreifen.",
     "mfa_required": "Zugriff verweigert: Aktivieren Sie MFA und geben Sie OTP ein, um fortzufahren.",
     "connect_more_to_disable_password": "Zugriff verweigert: Verbinde ein Discord- oder Steam-Konto, bevor du den Passwort-Login deaktivierst.",
-
     "ban_with_expire": "Du wurdest gebannt {expire}",
     "ban_with_reason_expire": "Du bist gebannt worden für {reason} {expire}",
     "user_pending_deletion": "Dein Konto wartet auf die Löschung. Bitte melde dich erneut an, um dein Konto wiederherzustellen.",
@@ -35,7 +34,7 @@
     "current_user_in_guild_check_failed": "Überprüfung, ob du im Discord-Server bist, fehlgeschlagen.",
     "user_didnt_join_discord": "Der Benutzer ist dem Discord-Server nicht beigetreten.",
     "current_user_didnt_join_discord": "Du bist dem Discord-Server nicht beigetreten.",
-    "email_not_unique": "Ihre E-Mail ist mit mehreren Benutzern verknüpft, und Sie können das Passwort-Login nicht aktivieren.",
+    "email_not_unique": "Deine E-Mail ist mit mehreren Benutzern verknüpft. Daher kannst du die Anmeldung per Passwort nicht aktivieren.",
     "weak_password": "Passwort zu schwach",
     "invalid_mfa_secret": "Ungültiges MFA-Geheimnis",
     "mfa_already_enabled": "MFA ist bereits aktiviert",
@@ -53,7 +52,7 @@
     "connection_invalid": "{app} Konto-Verbindung ist ungültig.",
 
     "no_pending_email_confirmation": "Keine ausstehende E-Mail-Bestätigung",
-    "connections_belong_to_multiple_users": "Die bereitgestellten Verbindungen gehören zu mehreren Benutzern. Um unerwartete Sperrungen zu vermeiden, werden nur Verbindungen für einen einzelnen Benutzer akzeptiert.",
+    "connections_linked_to_multiple_users": "Die angegebenen Verbindungen sind mit mehreren Benutzern verknüpft. Um unerwartete Sperrungen zu vermeiden, werden nur Verbindungen für einen Benutzer akzeptiert.",
     "dismiss_before_ban": "Mitglied entlassen, bevor es gesperrt wird",
     "dismiss_before_delete": "Mitglied entlassen, bevor das Konto gelöscht wird",
     "resign_before_delete": "Zurücktreten, bevor das Konto gelöscht wird",
@@ -65,12 +64,12 @@
     "claimed_daily_bonus": "Du hast `{points}` tägliche Bonuspunkte abgeholt.",
     "claimed_daily_bonus_with_streak": "Du hast `{streak}` Tage in Folge Punkte abgeholt und `{points}` tägliche Bonuspunkte beansprucht.",
     "claimed_daily_bonus_with_streak_s": "Du hast `{streak}` Tage in Folge abgeholt und `{points}` tägliche Bonuspunkte beansprucht.",
-    "daily_bonus_not_available": "Der tägliche Bonus ist für deinen Rang nicht verfügbar!",
+    "daily_bonus_not_available": "Der tägliche Bonus ist für deinen Rang nicht verfügbar.",
 
     "steam_api_key_not_configured": "Steam API-Schlüssel nicht konfiguriert",
     "invalid_steam_auth": "Ungültige Steam-Authentifizierung",
     "invalid_truckersmp_id": "Ungültige TruckersMP-ID",
-    "must_connect_steam_before_truckersmp": "Verbinde dein Steam-Konto vor TruckersMP.",
+    "must_connect_steam_before_truckersmp": "Das Steam-Konto muss verbunden sein, bevor das TruckersMP-Konto verbunden werden kann.",
     "truckersmp_steam_mismatch": "Das mit dem TruckersMP-Benutzer {truckersmp_name} ({truckersmpid}) verbundene Steam-Konto stimmt nicht mit deinem Steam-Konto überein.",
 
     "user_not_found": "Benutzer nicht gefunden",
@@ -81,9 +80,9 @@
     "user_is_already_member": "Der Benutzer ist bereits Mitglied.",
     "user_exists_with_new_connections": "Die Verbindungen sind bereits mit anderen Benutzern verknüpft. Lösche sie, um fortzufahren.",
     "user_position_higher_or_equal": "Die höchste Rolle des Benutzers ist höher oder gleich mit deiner.",
-    "add_role_higher_or_equal": "Eine oder mehrere Rollen des Benutzers zum hinzufügen sind höher oder gleich mit deiner höchsten Rolle.",
-    "remove_role_higher_or_equal": "Eine oder mehrere Rollen des Benutzers zum entfernen sind höher oder gleich mit deiner höchsten Rolle.",
-    "only_division_staff_allowed": "Nur Abteilungsleiter und Admins dürfen Abteilungsrollen verwalten.",
+    "add_role_higher_or_equal": "Du darfst keine Rolle hinzufügen, die höher oder gleich deiner höchsten Rolle ist.",
+    "remove_role_higher_or_equal": "Du darfst keine Rolle entfernen, die höher oder gleich deiner höchsten Rolle ist.",
+    "only_division_staff_allowed": "Nur Divisionspersonal und Administratoren dürfen Divisionsrollen verwalten.",
     "already_have_rank_role": "Die Rangrolle wurde bereits in Discord vergeben.",
     "losing_admin_permission": "Rollenupdate abgelehnt: Du verlierst Admin-Berechtigungen.",
 
@@ -166,12 +165,12 @@
     "not_division_driver": "Du bist kein Fahrer für die Aufteilung.",
     "division_validation_not_found": "Anfrage zur Lieferüberprüfung nicht gefunden",
     "division_not_validated": "Lieferung nicht validiert",
-    
+
     "downloads_not_found": "Download nicht gefunden",
     "new_downloadable_item_with_title": "Neuer Downloadartikel: `{title}`",
     "new_downloadable_item": "Neuer Downloadartikel",
     "download_link": "[Download]({link})",
-    
+
     "event_not_found": "Event nicht gefunden",
     "event_notification": "Eventbenachrichtigung",
     "event_notification_description": "Dieses Ereignis beginnt bald!",
@@ -185,7 +184,7 @@
     "departure_time": "Abfahrtszeit",
     "new_event_with_title": "Neues Ereignis: `{title}`",
     "new_event": "Neues Ereignis",
-    
+
     "poll_not_found": "Umfrage nicht gefunden",
     "poll_already_ended": "Umfrage bereits beendet",
     "selected_too_many_choices": "Sie haben zu viele Optionen ausgewählt, bis zu {count} Stimmen sind erlaubt.",
@@ -246,7 +245,7 @@
     "from_to_user_must_not_be_same": "Sender und Empfänger dürfen nicht dieselben sein.",
     "cannot_transfer_to_oneself": "Du kannst kein Guthaben an sich selbst übertragen.",
     "merch_not_found": "Merch wurde nicht gefunden",
-    
+
     "notification": "Benachrichtigung",
     "notification_not_found": "Benachrichtigung nicht gefunden",
     "discord_notification_enabled": "Discord Benachrichtigung aktiviert",
