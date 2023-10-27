@@ -2,10 +2,11 @@
 
 ## v2.8.6
 
-1. Added global MFA requirement to **POST** `/user/mfa/disable`
-2. Added member role sync-to-discord feature
-3. Improved string table
-4. Improved config format
+1. Fixed minor issue with dlog statistics
+2. Added global MFA requirement to **POST** `/user/mfa/disable`
+3. Added member role sync-to-discord feature
+4. Improved string table
+5. Improved config format
 
 ## v2.8.5
 

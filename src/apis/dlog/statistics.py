@@ -227,15 +227,20 @@ async def get_summary(request: Request, response: Response, authorization: str =
     totdrivers = 0
     newdrivers = 0
     for rid in app.config.perms.driver:
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0 {quser} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
+        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 {quser} AND join_timestamp <= {before}")
         t = await app.db.fetchall(dhrid)
         for tt in t:
+            if not checkPerm(app, str2list(tt[2]), "driver"):
+                continue
             if tt[0] not in totdid:
                 totdid.append(tt[0])
                 totdrivers += 1
-        await app.db.execute(dhrid, f"SELECT userid FROM user WHERE userid >= 0 {quser} AND join_timestamp >= {after} AND join_timestamp <= {before} AND roles LIKE '%,{rid},%'")
+
+        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 {quser} AND join_timestamp >= {after} AND join_timestamp <= {before}")
         t = await app.db.fetchall(dhrid)
         for tt in t:
+            if not checkPerm(app, str2list(tt[2]), "driver"):
+                continue
             if tt[0] not in newdid:
                 newdid.append(tt[0])
                 newdrivers += 1
@@ -429,7 +434,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
 
     basedriver = 0
     if sum_up:
-        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp < {timerange[1][0]}")
+        await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 {quser} AND join_timestamp < {timerange[1][0]}")
         t = await app.db.fetchall(dhrid)
         for tt in t:
             if not checkPerm(app, str2list(tt[2]), "driver"):
@@ -439,7 +444,7 @@ async def get_chart(request: Request, response: Response, authorization: Optiona
     # NOTE int(sum_up) will be 1 if sum_up is True, hence it will start from timerange[1] as timerange[0] is for base counting
     # driver_changes cannot act like timerange to add a "base" for idx=0 due to later data calculation
     driver_changes = [0] * len(timerange[int(sum_up):]) # init to be 0
-    await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 AND join_timestamp >= {timerange[sum_up][0]} AND join_timestamp < {before}")
+    await app.db.execute(dhrid, f"SELECT userid, join_timestamp, roles FROM user WHERE userid >= 0 {quser} AND join_timestamp >= {timerange[sum_up][0]} AND join_timestamp < {before}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         if not checkPerm(app, str2list(tt[2]), "driver"):
