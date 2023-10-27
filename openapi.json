@@ -2614,6 +2614,24 @@
                         },
                         "name": "userid",
                         "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Sync to Discord?",
+                            "type": "boolean"
+                        },
+                        "name": "sync_to_discord",
+                        "in": "query"
+                    },
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Sync added roles only?",
+                            "type": "boolean"
+                        },
+                        "name": "sync_add_only",
+                        "in": "query"
                     }
                 ],
                 "requestBody": {

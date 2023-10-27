@@ -5,13 +5,14 @@ import json
 import time
 
 from fastapi import Header, Request, Response
+from typing import Optional
 
 import multilang as ml
 from functions import *
 
 # note that the larger the id is, the lower the role is
 
-async def patch_roles(request: Request, response: Response, userid: int, authorization: str = Header(None)):
+async def patch_roles(request: Request, response: Response, userid: int, authorization: str = Header(None), sync_to_discord: Optional[bool] = True, sync_add_only: Optional[bool] = False):
     """Updates the roles of a specific member, returns 204"""
     app = request.app
     dhrid = request.state.dhrid
@@ -167,6 +168,18 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                             opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role)}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when driver role is removed."}, f"add_role,{int(role)},{discordid}")
                     except:
                         pass
+
+    if sync_to_discord:
+        for role in app.config.roles:
+            try:
+                if int(role["id"]) in addedroles:
+                    if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
+                        opqueue.queue(app, "put", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is added on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
+                elif int(role["id"]) in removedroles and not sync_add_only:
+                    if "discord_role_id" in role.keys() and isint(role["discord_role_id"]):
+                        opqueue.queue(app, "delete", app.config.discord_guild_id, f'https://discord.com/api/v10/guilds/{app.config.discord_guild_id}/members/{discordid}/roles/{int(role["discord_role_id"])}', None, {"Authorization": f"Bot {app.config.discord_bot_token}", "X-Audit-Log-Reason": "Automatic role changes when role is removed on Drivers Hub."}, f"add_role,{int(role['discord_role_id'])},{discordid}")
+            except:
+                pass
 
     audit = ml.ctr(request, "updated_user_roles", var = {"username": username, "userid": userid}) + "  \n"
     upd = ""
