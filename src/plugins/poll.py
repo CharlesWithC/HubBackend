@@ -663,7 +663,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     await app.db.commit(dhrid)
     await AuditLog(request, au["uid"], ml.ctr(request, "created_poll", var = {"id": pollid}))
 
-    await notification_to_everyone(request, "new_poll", ml.spl("new_poll_with_title", var = {"title": title}), discord_embed = {"title": title, "description": description, "fields": [{"name": ml.spl("choices"), "value": " - " + "\n - ".join(choices)}], "footer": {"text": ml.spl("new_poll"), "icon_url": app.config.logo_url}}, only_to_members=True)
+    await notification_to_everyone(request, "new_poll", ml.spl("new_poll_with_title", var = {"title": title}), discord_embed = {"title": title, "description": description, "fields": [{"name": ml.spl("choices"), "value": " - " + "\n - ".join(choices), "inline": False}], "footer": {"text": ml.spl("new_poll"), "icon_url": app.config.logo_url}}, only_to_members=True)
 
     def setvar(msg):
         return msg.replace("{mention}", f"<@{au['discordid']}>").replace("{name}", au['name']).replace("{userid}", str(au['userid'])).replace("{uid}", str(au['uid'])).replace("{avatar}", validateUrl(au['avatar'])).replace("{id}", str(pollid)).replace("{title}", title).replace("{description}", description)

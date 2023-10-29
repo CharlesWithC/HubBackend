@@ -220,11 +220,11 @@ async def patch_config(request: Request, response: Response, authorization: str 
         if tt in config_whitelist:
             if tt == "trackers":
                 for tracker in new_config[tt]:
-                    if tracker["type"] not in ["tracksim", "trucky"]:
+                    if "type" not in tracker.keys() or tracker["type"] not in ["tracksim", "trucky"]:
                         response.status_code = 400
                         return {"error": ml.tr(request, "config_invalid_tracker", force_lang = au["language"])}
                     for k in ["api_token", "webhook_secret"]:
-                        if k in tracker.keys() and not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
+                        if k not in tracker.keys() or not unsafe and tracker[k].replace(" ", "").replace("\n","").replace("\t","") == "":
                             response.status_code = 400
                             return {"error": ml.tr(request, "config_invalid_value", var = {"item": f"tracker.{k}"}, force_lang = au["language"])}
 

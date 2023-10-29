@@ -80,7 +80,15 @@ async def post_disable(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {uid}")
+    au = await auth(authorization, request, check_member = False)
+    if au["error"]:
+        response.status_code = au["code"]
+        del au["code"]
+        return au
+    if uid is None:
+        uid = au["uid"]
+
+    await app.db.execute(dhrid, f"SELECT mfa_secret FROM user WHERE uid = {au['uid']}")
     t = await app.db.fetchall(dhrid)
     secret = t[0][0]
     if secret == "":
@@ -98,15 +106,8 @@ async def post_disable(request: Request, response: Response, authorization: str 
         response.status_code = 400
         return {"error": ml.tr(request, "invalid_otp", force_lang = au["language"])}
 
-    if uid is None:
+    if uid == au["uid"]:
         # self-disable mfa
-        au = await auth(authorization, request, check_member = False)
-        if au["error"]:
-            response.status_code = au["code"]
-            del au["code"]
-            return au
-        uid = au["uid"]
-
         await app.db.execute(dhrid, f"UPDATE user SET mfa_secret = '' WHERE uid = {uid}")
         await app.db.commit(dhrid)
 
