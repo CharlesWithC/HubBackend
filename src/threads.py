@@ -61,7 +61,6 @@ async def ClearOutdatedData(app):
             await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE first_request_timestamp <= {round(time.time() - 3600)}")
             await app.db.execute(dhrid, f"DELETE FROM ratelimit WHERE endpoint = '429-error' AND first_request_timestamp <= {round(time.time() - 60)}")
 
-            await app.db.execute(dhrid, f"INSERT INTO ban_history (uid, email, discordid, steamid, truckersmpid, expire_timestamp, reason) SELECT uid, email, discordid, steamid, truckersmpid, expire_timestamp, reason FROM banned WHERE expire_timestamp < {int(time.time())}")
             await app.db.execute(dhrid, f"DELETE FROM banned WHERE expire_timestamp < {int(time.time())}")
             await app.db.commit(dhrid)
 

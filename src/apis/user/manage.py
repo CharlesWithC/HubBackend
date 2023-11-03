@@ -445,6 +445,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         await app.db.execute(dhrid, f"INSERT INTO banned VALUES ({uid}, {email}, {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
+        await app.db.execute(dhrid, f"INSERT INTO ban_history (uid, email, discordid, steamid, truckersmpid, expire_timestamp, reason) VALUES ({uid}, {email}, {discordid}, {steamid}, {truckersmpid}, {expire}, '{reason}')")
         await app.db.execute(dhrid, f"DELETE FROM session WHERE uid = {uid}")
         await app.db.commit(dhrid)
         if uid != "NULL":

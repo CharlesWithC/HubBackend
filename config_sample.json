@@ -39,10 +39,9 @@
     "plugins": ["announcements", "applications", "banner", "challenges", "divisions", "downloads", "events", "polls", "route"],
     "external_plugins": ["example"],
 
-    "discord_guild_id": "",
+    "sync_discord_email": true,
     "must_join_guild": true,
     "use_server_nickname": true,
-    "sync_discord_email": true,
     "allow_custom_profile": true,
     "use_custom_activity": false,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
@@ -79,6 +78,7 @@
         "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
         "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
 
+    "discord_guild_id": "",
     "discord_client_id": "",
     "discord_client_secret": "",
     "discord_bot_token": "",

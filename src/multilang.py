@@ -1,6 +1,7 @@
 # Copyright (C) 2023 CharlesWithC All rights reserved.
 # Author: @CharlesWithC
 
+import inspect
 import json
 import os
 from typing import Optional
@@ -9,8 +10,6 @@ from fastapi import Request
 
 from static import EN_STRINGTABLE
 
-import inspect
-
 abspath = os.path.dirname(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
 
 LANGUAGES = os.listdir(os.path.join(abspath, "languages/"))
@@ -18,9 +17,11 @@ LANGUAGES = [x.split(".")[0].lower() for x in LANGUAGES]
 LANG_DATAS = {}
 for LANGUAGE in LANGUAGES:
     try:
-        LANG_DATAS[LANGUAGE] = json.loads(open(os.path.join(abspath, f"languages/{LANGUAGE}.json"),"r").read())
+        LANG_DATAS[LANGUAGE] = json.loads(open(os.path.join(abspath, f"languages/{LANGUAGE}.json"),"r",encoding="utf-8").read())
     except:
         pass
+if "en" not in LANGUAGES:
+    LANGUAGES.append("en")
 LANGUAGES = sorted(list(LANG_DATAS.keys())) # must be valid language file
 
 def get_lang(request: Request):

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.8.7
+
+1. Reordered config keys
+2. Fixed error loading languages files with `utf-8` encoding
+3. Updated error message for `tracker.{api_token|webhook_secret}` to `trackers[{index}].{api_token|webhook_secret}`
+4. Updated `ban_history` logic to create history record once ban is placed
+
 ## v2.8.6
 
 1. Fixed minor issue with dlog statistics
