@@ -4052,49 +4052,6 @@
                 "responses": {}
             }
         },
-        "/applications/positions": {
-            "get": {
-                "summary": "Get Application Positions",
-                "tags": [
-                    "application"
-                ],
-                "operationId": "get_application_positions",
-                "responses": {}
-            },
-            "patch": {
-                "summary": "Update Application Positions",
-                "tags": [
-                    "application"
-                ],
-                "operationId": "patch_application_positions",
-                "security": [
-                    {
-                        "bearerAuth": [],
-                        "applicationAuth": []
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "positions": {
-                                        "description": "Positions (List)",
-                                        "type": "object"
-                                    }
-                                }
-                            },
-                            "required": [
-                                "positions"
-                            ]
-                        }
-                    }
-                },
-                "responses": {}
-            }
-        },
         "/applications/list": {
             "get": {
                 "summary": "Get Application List",
