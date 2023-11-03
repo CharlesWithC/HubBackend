@@ -263,11 +263,11 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
 
     mod_revenue = revenue # modified revenue
     if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
-            and app.config.__dict__["delivery_rules"].__dict__["action"] != "bypass":
+            and app.config.__dict__["delivery_rules"].__dict__["action"] != "keep_job":
         action = app.config.__dict__["delivery_rules"].__dict__["action"]
         delivery_rules = app.config.__dict__["delivery_rules"].__dict__
         try:
-            if "max_speed" in delivery_rules.keys() and top_speed > int(delivery_rules["max_speed"]) and action == "block":
+            if "max_speed" in delivery_rules.keys() and top_speed > int(delivery_rules["max_speed"]) and action == "block_job":
                 delivery_rule_ok = False
                 delivery_rule_key = "max_speed"
                 delivery_rule_value = str(top_speed)
@@ -275,23 +275,23 @@ async def handle_new_job(request, response, original_data, data, bypass_tracker_
             pass
         try:
             if "max_profit" in delivery_rules.keys() and revenue > int(delivery_rules["max_profit"]):
-                if action == "block":
+                if action == "block_job":
                     delivery_rule_ok = False
                     delivery_rule_key = "max_profit"
                     delivery_rule_value = str(revenue)
-                elif action == "drop":
+                elif action == "drop_data":
                     mod_revenue = 0
         except:
             pass
         try:
-            if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]) and action == "block":
+            if "max_warp" in delivery_rules.keys() and warp > int(delivery_rules["max_warp"]) and action == "block_job":
                 delivery_rule_ok = False
                 delivery_rule_key = "max_warp"
                 delivery_rule_value = str(warp)
         except:
             pass
         try:
-            if d["data"]["object"]["game"]["realistic_settings"] is not None and "required_realistic_settings" in delivery_rules.keys() and isinstance(delivery_rules["required_realistic_settings"], list) and action == "block":
+            if d["data"]["object"]["game"]["realistic_settings"] is not None and "required_realistic_settings" in delivery_rules.keys() and isinstance(delivery_rules["required_realistic_settings"], list) and action == "block_job":
                 enabled_realistic_settings = []
                 for attr in d["data"]["object"]["game"]["realistic_settings"].keys():
                     if d["data"]["object"]["game"]["realistic_settings"][attr] is True:

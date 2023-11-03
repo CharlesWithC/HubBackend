@@ -249,11 +249,11 @@ async def post_update(response: Response, request: Request):
 
     mod_revenue = revenue # modified revenue
     if "action" in app.config.__dict__["delivery_rules"].__dict__.keys() \
-            and app.config.__dict__["delivery_rules"].__dict__["action"] != "bypass":
+            and app.config.__dict__["delivery_rules"].__dict__["action"] != "keep_job":
         action = app.config.__dict__["delivery_rules"].__dict__["action"]
         delivery_rules = app.config.__dict__["delivery_rules"].__dict__
         try:
-            if "max_speed" in delivery_rules.keys() and top_speed > int(delivery_rules["max_speed"]) and action == "block":
+            if "max_speed" in delivery_rules.keys() and top_speed > int(delivery_rules["max_speed"]) and action == "block_job":
                 delivery_rule_ok = False
                 delivery_rule_key = "max_speed"
                 delivery_rule_value = str(top_speed)
@@ -261,21 +261,21 @@ async def post_update(response: Response, request: Request):
             pass
         try:
             if "max_profit" in delivery_rules.keys() and revenue > int(delivery_rules["max_profit"]):
-                if action == "block":
+                if action == "block_job":
                     delivery_rule_ok = False
                     delivery_rule_key = "max_profit"
                     delivery_rule_value = str(revenue)
-                elif action == "drop":
+                elif action == "drop_data":
                     mod_revenue = 0
         except:
             pass
         try:
             if "max_xp" in delivery_rules.keys() and xp > int(delivery_rules["max_xp"]):
-                if action == "block":
+                if action == "block_job":
                     delivery_rule_ok = False
                     delivery_rule_key = "max_xp"
                     delivery_rule_value = str(xp)
-                elif action == "drop":
+                elif action == "drop_data":
                     d["data"]["object"]["events"][-1]["meta"]["earnedXP"] = 0
         except:
             pass

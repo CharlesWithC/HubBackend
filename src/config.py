@@ -90,10 +90,9 @@ default_config = {
     "plugins": [],
     "external_plugins": [],
 
-    "discord_guild_id": "",
+    "sync_discord_email": True,
     "must_join_guild": True,
     "use_server_nickname": True,
-    "sync_discord_email": True,
     "allow_custom_profile": True,
     "use_custom_activity": False,
     "avatar_domain_whitelist": ["charlws.com", "cdn.discordapp.com", "steamstatic.com"],
@@ -113,7 +112,7 @@ default_config = {
         "max_xp": 100000,
         "max_warp": 0,
         "required_realistic_settings": [], # trucky exclusive | choose from: bad_weather_factor, detected, detours, fatigue, fuel_similation, hardcore_simulation, hud_speed_limit, parking_difficulty, police, road_events, show_game_blockers, simple_parking_doubles, traffic_enabled, trailer_advanced_coupling
-        "action": "block"
+        "action": "block_job"
     },
     "hook_delivery_log": {
         "channel_id": "",
@@ -130,6 +129,7 @@ default_config = {
         "https://c.tenor.com/1SPfoAWWejEAAAAC/chevy-truck.gif",
         "https://c.tenor.com/MfGOJIgU22UAAAAC/ford-f100-truck.gif"],
 
+    "discord_guild_id": "",
     "discord_client_id": "",
     "discord_client_secret": "",
     "discord_bot_token": "",
@@ -1249,6 +1249,21 @@ def validateConfig(cfg):
     if "guild_id" in cfg.keys():
         cfg["discord_guild_id"] = cfg["guild_id"]
         del cfg["guild_id"]
+
+    # v2.8.7
+    if 'delivery_rules' not in cfg.keys():
+        cfg["delivery_rules"] = default_config["delivery_rules"]
+    if 'action' not in cfg['delivery_rules'].keys():
+        cfg["delivery_rules"]["action"] = "block_job"
+    else:
+        rename_mapping = {"bypass": "keep_job", "drop": "drop_data", "block": "block_job"}
+        if cfg["delivery_rules"]["action"] in rename_mapping.keys():
+            cfg["delivery_rules"]["action"] = rename_mapping[cfg["delivery_rules"]["action"]]
+        else:
+            cfg["delivery_rules"]["action"] = "block_job"
+    for key in default_config["delivery_rules"].keys():
+        if key not in cfg["delivery_rules"].keys():
+            cfg["delivery_rules"][key] = default_config["delivery_rules"][key]
 
     tcfg = {}
     for key in config_keys_order:
