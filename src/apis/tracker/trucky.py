@@ -78,8 +78,6 @@ def convert_format(data):
         elif et == "transport":
             et = event["attributes"]["transport_type"]
             meta = {"cost": event["attributes"]["amount"], "source_id": event["attributes"]["source_id"], "source_name": event["attributes"]["source"], "target_id": event["attributes"]["target_id"], "target_name": event["attributes"]["target"]}
-        elif et == "refuel":
-            meta = {"amount": event["attributes"]["amount"]}
         events.append({"location": {"x": event["x"], "y": event["y"], "z": event["z"]}, "real_time": event["created_at"].split(".")[0]+"Z", "time": int(datetime.strptime(event["created_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": et, "meta": meta})
     if job_event_type == "job.delivered":
         events.append({"location": None, "real_time": d["completed_at"].split(".")[0]+"Z", "time": int(datetime.strptime(d["completed_at"].split(".")[0]+"Z", "%Y-%m-%dT%H:%M:%SZ").timestamp()), "type": "job.delivered", "meta": {"revenue": d["income"], "revenue_details": d["income_details"], "earnedXP": None, "cargoDamage": round(d["cargo_damage"] / 100, 2), "distance": d["real_driven_distance_km"], "timeTaken": d["real_driving_time_seconds"], "autoParked": d["auto_park"]}}) # revenue_details is trucky exclusive

@@ -4,15 +4,16 @@
 
 1. Reordered config keys
 2. Fixed error loading languages files with `utf-8` encoding
-3. Updated error message for `tracker.{api_token|webhook_secret}` to `trackers[{index}].{api_token|webhook_secret}`
-4. Updated `ban_history` logic to create history record once ban is placed
-5. Renamed values of `config.delivery_rules.action` for easier understanding:
+3. Fixed error handling Trucky job with `refuel` event
+4. Updated error message for `tracker.{api_token|webhook_secret}` to `trackers[{index}].{api_token|webhook_secret}`
+5. Updated `ban_history` logic to create history record once ban is placed
+6. Renamed values of `config.delivery_rules.action` for easier understanding:
    - `bypass` -> `keep_job`
    - `drop` -> `drop_data`
    - `block` -> `block_job`
-6. Added auto-fill for missing attributes in `config.delivery_rules`
-7. Removed application position handling - this should be done by frontend
-8. Added country/region handling for local network
+7. Added auto-fill for missing attributes in `config.delivery_rules`
+8. Removed application position handling - this should be done by frontend
+9. Added country/region handling for local network
 
 ## v2.8.6
 
