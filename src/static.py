@@ -74,8 +74,10 @@ NOTIFICATION_SETTINGS = {"drivershub": False, "discord": False, "login": False, 
 
 pytz.country_names.get("UTC") # ensure pytz loads all country_names first
 ISO_COUNTRIES = pytz.country_names.__dict__["data"]
-ISO_COUNTRIES["XX"] = "Unknown"
+ISO_COUNTRIES["00"] = "Local Network"
+ISO_COUNTRIES["XX"] = "Unknown Region"
 ISO_COUNTRIES["T1"] = "Tor"
+# 00 is added by me for Local Network
 # XX and T1 are provided by CloudFlare, which are not in ISO standard
 
 # Hard-coded English String Table

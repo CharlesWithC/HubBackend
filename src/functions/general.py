@@ -71,6 +71,11 @@ def getFullCountry(abbr):
     else:
         return ""
 
+def is_local_ip(ip):
+    private_ipv4 = re.compile(r'^(127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3})$')
+    private_ipv6 = re.compile(r'^(::1|fc00::/7)$')
+    return bool(private_ipv4.match(ip) or private_ipv6.match(ip))
+
 def getRequestCountry(request, abbr = False):
     if "cf-ipcountry" in request.headers.keys():
         country = request.headers["cf-ipcountry"]
@@ -79,7 +84,15 @@ def getRequestCountry(request, abbr = False):
                 return convertQuotation(request.headers["cf-ipcountry"])
             else:
                 return convertQuotation(ISO_COUNTRIES[country.upper()])
-    return ""
+    if is_local_ip(request.client.host):
+        if abbr:
+            return "00"
+        else:
+            return "Local Network"
+    if abbr:
+        return "XX"
+    else:
+        return "Unknown Region"
 
 def getUserAgent(request):
     if "user-agent" in request.headers.keys():

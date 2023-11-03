@@ -12,6 +12,7 @@
    - `block` -> `block_job`
 6. Added auto-fill for missing attributes in `config.delivery_rules`
 7. Removed application position handling - this should be done by frontend
+8. Added country/region handling for local network
 
 ## v2.8.6
 
