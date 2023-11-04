@@ -302,7 +302,7 @@ async def post_garage_purchase(request: Request, response: Response, garageid: s
         return {"error": ml.tr(request, "garage_already_purchased", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # check access
     if not app.config.economy.allow_purchase_garage and not permok:
@@ -407,7 +407,7 @@ async def post_garage_slot_purchase(request: Request, response: Response, garage
         return {"error": ml.tr(request, "garage_not_purchased_before_purchase_slots", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # check access
     if not app.config.economy.allow_purchase_slot and not permok:
@@ -532,7 +532,7 @@ async def post_garage_transfer(request: Request, response: Response, garageid: s
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -626,7 +626,7 @@ async def post_garage_slot_transfer(request: Request, response: Response, garage
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -677,7 +677,7 @@ async def post_garage_sell(request: Request, response: Response, garageid: str, 
     refund = price * app.config.economy.garage_refund
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -750,7 +750,7 @@ async def post_garage_slot_sell(request: Request, response: Response, garageid: 
         return {"error": ml.tr(request, "garage_slot_is_base_slot", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "garage_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_garage"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage

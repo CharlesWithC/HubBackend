@@ -162,47 +162,48 @@ default_config = {
     },
 
     "perms": {
-        "admin": [0],
-        "config": [],
+        "administrator": [0],
+        "update_config": [],
         "reload_config": [],
-        "restart": [],
+        "restart_service": [],
 
-        "hrm": [],
-        "disable_user_mfa": [],
-        "update_user_connections": [],
-        "delete_user": [],
-        "update_application_positions": [],
-        "delete_application": [],
-        "import_dlog": [],
-        "delete_dlog": [],
+        "accept_members": [],
+        "dismiss_members": [],
+
+        "update_roles": [],
+        "update_points": [],
+        "update_connections": [],
+        "disable_mfa": [],
         "delete_notifications": [],
 
-        "hr": [],
-        "manage_profile": [],
-        "get_user_global_note": [],
-        "update_user_global_note": [],
-        "get_sensitive_profile": [],
-        "get_privacy_protected_data": [],
-        "add_member": [],
-        "update_member_roles": [],
-        "update_member_points": [],
-        "dismiss_member": [],
-        "get_pending_user_list": [],
-        "ban_user": [],
+        "manage_profiles": [],
+        "view_sensitive_profile": [],
+        "view_privacy_protected_data": [],
+        "view_global_note": [],
+        "update_global_note": [],
 
-        "economy_manager": [],
-        "balance_manager": [],
-        "truck_manager": [],
-        "garage_manager": [],
-        "merch_manager": [],
+        "view_external_user_list": [],
+        "ban_users": [],
+        "delete_users": [],
 
-        "audit": [],
-        "announcement": [],
-        "challenge": [],
-        "division": [],
-        "downloads": [],
-        "event": [],
-        "poll": [],
+        "import_dlogs": [],
+        "delete_dlogs": [],
+
+        "view_audit_log": [],
+
+        "manage_announcements": [],
+        "manage_applications": [],
+        "delete_applications": [],
+        "manage_challenges": [],
+        "manage_divisions": [],
+        "manage_downloads": [],
+        "manage_economy": [],
+        "manage_economy_balance": [],
+        "manage_economy_truck": [],
+        "manage_economy_garage": [],
+        "manage_economy_merch": [],
+        "manage_events": [],
+        "manage_polls": [],
 
         "driver": [100]
     },
@@ -592,9 +593,22 @@ def validateConfig(cfg):
         hex_color = "2fc1f7"
         cfg["hex_color"] = "2fc1f7"
 
+    # validate perms
     if 'perms' not in cfg.keys() or type(cfg["perms"]) != dict:
         cfg["perms"] = default_config["perms"]
+
+    # v2.8.7 perm rename
+    PERM_RENAME_MAP = {"admin": "administrator", "config": "update_config", "restart": "restart_service", "add_member": "accept_members", "dismiss_member": "dismiss_members", "update_member_roles": "update_roles", "update_member_points": "update_points", "update_user_connections": "update_connections", "disable_user_mfa": "disable_mfa", "manage_profile": "manage_profiles", "get_sensitive_profile": "view_sensitive_profile", "get_privacy_protected_data": "view_privacy_protected_data", "get_user_global_note": "view_global_note", "update_user_global_note": "update_global_note", "get_pending_user_list": "view_external_user_list", "ban_user": "ban_users", "delete_user": "delete_users", "import_dlog": "import_dlogs", "delete_dlog": "delete_dlogs", "audit": "view_audit_log", "announcement": "manage_announcements", "application": "manage_applications", "delete_application": "delete_applications", "challenge": "manage_challenges", "economy_manager": "manage_economy", "balance_manager": "manage_economy_balance", "truck_manager": "manage_economy_truck", "garage_manager": "manage_economy_garage", "merch_manager": "manage_economy_merch", "division": "manage_divisions", "downloads": "manage_downloads", "event": "manage_events", "poll": "manage_polls"}
+    HRM_PERMS = ["update_connections", "disable_mfa", "delete_notifications", "delete_users", "manage_applications", "delete_applications", "import_dlogs", "delete_dlogs"]
+    HR_PERMS = ["manage_profiles", "view_global_note", "update_global_note", "view_sensitive_profile", "view_privacy_protected_data", "accept_members", "dismiss_members", "update_roles", "update_points", "view_external_user_list", "ban_users"]
+    PERM_RENAME_KEYS = PERM_RENAME_MAP.keys()
     perms = cfg["perms"]
+    for key in PERM_RENAME_KEYS:
+        if key in perms.keys() and PERM_RENAME_MAP[key] not in perms.keys():
+            perms[PERM_RENAME_MAP[key]] = perms[key]
+            del perms[key]
+
+    # after rename, do perm check & validation
     for perm in perms.keys():
         roles = perms[perm]
         newroles = []
@@ -610,6 +624,23 @@ def validateConfig(cfg):
     for perm in default_config["perms"]:
         if perm not in perms.keys():
             perms[perm] = []
+
+    # finally, check hrm & hr roles, this has to be done at last to ensure all necessary perm keys exist
+    if "hrm" in perms.keys():
+        hrm_roles = perms["hrm"]
+        for key in HRM_PERMS + HR_PERMS:
+            for role in hrm_roles:
+                if role not in perms[key]:
+                    perms[key].append(role)
+        del perms["hrm"]
+    if "hr" in perms.keys():
+        hr_roles = perms["hr"]
+        for key in HR_PERMS:
+            for role in hr_roles:
+                if role not in perms[key]:
+                    perms[key].append(role)
+        del perms["hr"]
+
     cfg["perms"] = perms
 
     if 'roles' not in cfg.keys() or type(cfg["roles"]) != list:

@@ -134,7 +134,7 @@ async def get_dlog_division(request: Request, response: Response, logid: int, au
     update_staff_userid = tt[5]
     message = decompress(tt[6])
 
-    isStaff = checkPerm(app, roles, ["admin", "division"])
+    isStaff = checkPerm(app, roles, ["administrator", "manage_divisions"])
 
     if not isStaff:
         if userid != duserid and status != 1:
@@ -201,7 +201,7 @@ async def post_dlog_division(request: Request, response: Response, logid: int, d
                         joined_divisions.append(division["id"])
                 except:
                     pass
-    if not checkPerm(app, roles, "admin") and divisionid not in joined_divisions:
+    if not checkPerm(app, roles, "administrator") and divisionid not in joined_divisions:
         response.status_code = 403
         return {"error": ml.tr(request, "not_division_driver", force_lang = au["language"])}
 
@@ -253,7 +253,7 @@ async def patch_dlog_division(request: Request, response: Response, logid: int, 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -319,7 +319,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "division"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

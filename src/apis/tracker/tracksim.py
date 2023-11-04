@@ -973,7 +973,7 @@ async def put_driver(response: Response, request: Request, userid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr","update_member_roles"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1006,7 +1006,7 @@ async def delete_driver(response: Response, request: Request, userid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr","update_member_roles"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_roles"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

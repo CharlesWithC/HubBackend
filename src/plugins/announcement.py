@@ -154,7 +154,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin","announcement"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -202,7 +202,7 @@ async def post_announcement(request: Request, response: Response, authorization:
     for role in au["roles"]:
         if role in tatype["staff_role_ids"]:
             ok = True
-    if not ok and not checkPerm(app, au["roles"], "admin"):
+    if not ok and not checkPerm(app, au["roles"], "administrator"):
         response.status_code = 403
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
@@ -240,7 +240,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin","announcement"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator","manage_announcements"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -266,7 +266,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
         for role in au["roles"]:
             if role in tatype["staff_role_ids"]:
                 ok = True
-        if not ok and not checkPerm(app, au["roles"], "admin"):
+        if not ok and not checkPerm(app, au["roles"], "administrator"):
             response.status_code = 403
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
@@ -313,7 +313,7 @@ async def patch_announcement(request: Request, response: Response, announcementi
     for role in au["roles"]:
         if role in tatype["staff_role_ids"]:
             ok = True
-    if not ok and not checkPerm(app, au["roles"], "admin"):
+    if not ok and not checkPerm(app, au["roles"], "administrator"):
         response.status_code = 403
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 
@@ -333,7 +333,7 @@ async def delete_announcement(request: Request, response: Response, announcement
         return rl[1]
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "announcement"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_announcements"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -357,7 +357,7 @@ async def delete_announcement(request: Request, response: Response, announcement
         for role in au["roles"]:
             if role in tatype["staff_role_ids"]:
                 ok = True
-        if not ok and not checkPerm(app, au["roles"], "admin"):
+        if not ok and not checkPerm(app, au["roles"], "administrator"):
             response.status_code = 403
             return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 

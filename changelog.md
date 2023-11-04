@@ -14,6 +14,44 @@
 7. Added auto-fill for missing attributes in `config.delivery_rules`
 8. Removed application position handling - this should be done by frontend
 9. Added country/region handling for local network
+10. Renamed permissions
+    - NOTE: Position-based permissions Human Resources Manager (`hrm`) and Human Resources (`hr`) have been removed. Roles with these permissions will be granted relevant function-based permissions automatically. This grant will be done in all future releases as long as `hrm` and `hr` permissions still exist in `config.perms`.
+
+| Old Permission Name   | New Permission Name       |
+| :-------------------- | :------------------------ |
+| admin                 | administrator             |
+| config                | update_config             |
+| restart               | restart_service           |
+| add_member            | accept_members            |
+| dismiss_member        | dismiss_members           |
+| update_member_roles   | update_roles              |
+| update_member_points  | update_points             |
+| update_user_connections | update_connections       |
+| disable_user_mfa      | disable_mfa               |
+| manage_profile        | manage_profiles           |
+| get_sensitive_profile | view_sensitive_profile    |
+| get_privacy_protected_data | view_privacy_protected_data |
+| get_user_global_note  | view_global_note          |
+| update_user_global_note | update_global_note      |
+| get_pending_user_list | view_external_user_list   |
+| ban_user              | ban_users                 |
+| delete_user           | delete_users              |
+| import_dlog           | import_dlogs              |
+| delete_dlog           | delete_dlogs              |
+| audit                 | view_audit_log            |
+| announcement          | manage_announcements      |
+| application           | manage_applications       |
+| delete_application    | delete_applications       |
+| challenge             | manage_challenges         |
+| economy_manager       | manage_economy            |
+| balance_manager       | manage_economy_balance    |
+| truck_manager         | manage_economy_truck      |
+| garage_manager        | manage_economy_garage     |
+| merch_manager         | manage_economy_merch      |
+| division              | manage_divisions          |
+| downloads             | manage_downloads          |
+| event                 | manage_events             |
+| poll                  | manage_polls              |
 
 ## v2.8.6
 

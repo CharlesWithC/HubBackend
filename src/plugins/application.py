@@ -108,7 +108,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             tot = p[0][0]
     else:
         limit = ""
-        if not checkPerm(app, roles, "admin"):
+        if not checkPerm(app, roles, "administrator"):
             allowed_application_types = []
             for tt in app.config.application_types:
                 allowed_roles = tt["staff_role_ids"]
@@ -200,7 +200,7 @@ async def get_application(request: Request, response: Response, applicationid: i
 
     application_type = t[0][1]
 
-    if not checkPerm(app, roles, "admin") and uid != t[0][2]:
+    if not checkPerm(app, roles, "administrator") and uid != t[0][2]:
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
@@ -499,7 +499,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "application"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_applications"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -538,7 +538,7 @@ async def patch_status(request: Request, response: Response, applicationid: int,
         2: ml.tr(request, "declined", force_lang = language)}
     statustxtTR = STATUSTR[status]
 
-    if not checkPerm(app, roles, "admin"):
+    if not checkPerm(app, roles, "administrator"):
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:
@@ -581,7 +581,7 @@ async def delete_application(request: Request, response: Response, applicationid
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "delete_application"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "delete_applications"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -596,7 +596,7 @@ async def delete_application(request: Request, response: Response, applicationid
 
     application_type = t[0][1]
 
-    if not checkPerm(app, roles, "admin"):
+    if not checkPerm(app, roles, "administrator"):
         ok = False
         for tt in app.config.application_types:
             if tt["id"] == application_type:

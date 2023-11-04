@@ -436,7 +436,7 @@ async def post_event(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -532,7 +532,7 @@ async def patch_event(request: Request, response: Response, eventid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -619,7 +619,7 @@ async def delete_event(request: Request, response: Response, eventid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -648,7 +648,7 @@ async def patch_attendees(request: Request, response: Response, eventid: int, au
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "event"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_events"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

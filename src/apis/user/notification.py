@@ -127,7 +127,7 @@ async def delete_notification(request: Request, response: Response, after_notifi
     await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE uid = {uid} AND notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
     await app.db.commit(dhrid)
 
-    if checkPerm(app, au["roles"], ["admin", "hrm", "delete_notifications"]):
+    if checkPerm(app, au["roles"], ["administrator", "delete_notifications"]):
         # then delete for all users
         await app.db.execute(dhrid, f"DELETE FROM user_notification WHERE notificationid >= {after_notificationid} AND notificationid <= {before_notificationid}")
         await app.db.commit(dhrid)

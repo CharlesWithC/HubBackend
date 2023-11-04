@@ -103,7 +103,7 @@ class opqueue:
 
                 run_method = METHOD_MAP[method]
                 try:
-                    r = await run_method(app, url, data = data, headers = headers)
+                    r = await run_method(app, url, data = data, headers = headers, timeout = 30)
 
                     if r.status_code == 429:
                         app.state.discord_opqueue.append((method, key, url, data, headers, error_msg, retry_count + 1))

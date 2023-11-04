@@ -152,7 +152,7 @@ async def post_merch_purchase(request: Request, response: Response, merchid: str
     merchid = convertQuotation(merchid)
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_merch"])
 
     # check access
     if owner == "company" and not permok:
@@ -270,7 +270,7 @@ async def post_merch_transfer(request: Request, response: Response, itemid: int,
         return {"error": ml.tr(request, "new_owner_conflict", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_merch"])
 
     # company garage but not manager or not owned garage
     # manager can transfer anyone's garage
@@ -314,7 +314,7 @@ async def post_merch_sell(request: Request, response: Response, itemid: int, aut
     refund = t[0][1]
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "merch_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_merch"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck

@@ -213,7 +213,7 @@ async def get_challenge(request: Request, response: Response, challengeid: int, 
         return au
     if completed_by is None:
         completed_by = au["userid"]
-    isstaff = checkPerm(app, au["roles"], ["admin", "challenge"])
+    isstaff = checkPerm(app, au["roles"], ["administrator", "manage_challenges"])
 
     await ActivityUpdate(request, au["uid"], "challenges")
 
@@ -307,7 +307,7 @@ async def post_challenge(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -456,7 +456,7 @@ async def patch_challenge(request: Request, response: Response, challengeid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -895,7 +895,7 @@ async def delete_challenge(request: Request, response: Response, challengeid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -937,7 +937,7 @@ async def put_delivery(request: Request, response: Response, challengeid: int, l
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -1127,7 +1127,7 @@ async def delete_delivery(request: Request, response: Response, challengeid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "challenge"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_challenges"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

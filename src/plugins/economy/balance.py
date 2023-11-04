@@ -50,7 +50,7 @@ async def get_balance_leaderboard(request: Request, response: Response, authoriz
     if order not in ["asc", "desc"]:
         order = "asc"
 
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"])
     public_userids = [au["userid"]]
     included_userids = []
 
@@ -157,7 +157,7 @@ async def post_balance_transfer(request: Request, response: Response, authorizat
         response.status_code = 400
         return {"error": ml.tr(request, "amount_must_be_positive", force_lang = au["language"])}
 
-    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"])
     company_balance_perm_ok = balance_manager_perm_ok or checkPerm(app, au["roles"], "accountant")
 
     if from_userid == -1000 and not company_balance_perm_ok:
@@ -236,7 +236,7 @@ async def patch_balance(request: Request, response: Response, userid: int, autho
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission=["admin", "economy_manager", "balance_manager"])
+    au = await auth(authorization, request, required_permission=["administrator", "manage_economy", "manage_economy_balance"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -290,7 +290,7 @@ async def get_balance(request: Request, response: Response, authorization: str =
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"]) or userid == au["userid"]
 
     if not permok:
         await app.db.execute(dhrid, f"SELECT sval FROM settings WHERE sval = '{userid}' AND skey = 'public-balance'")
@@ -400,7 +400,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"])
     permok = balance_manager_perm_ok or userid == au["userid"]
 
     if not permok:
@@ -499,7 +499,7 @@ async def get_balance_transaction_export(request: Request, response: Response, u
             response.status_code = 404
             return {"error": ml.tr(request, "user_not_found", force_lang = au["language"])}
 
-    balance_manager_perm_ok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"])
+    balance_manager_perm_ok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"])
     permok = balance_manager_perm_ok or userid == au["userid"]
 
     if not permok:
@@ -607,7 +607,7 @@ async def post_balance_visibility(request: Request, response: Response, userid: 
     else:
         uid = "NULL"
 
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "balance_manager"]) or userid == au["userid"]
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_balance"]) or userid == au["userid"]
 
     if not permok:
         response.status_code = 403

@@ -222,10 +222,10 @@ async def GetUserInfo(request, userid = -1, discordid = -1, uid = -1, privacy = 
                 request_uid = au["uid"]
                 roles = au["roles"]
                 for i in roles:
-                    if int(i) in app.config.perms.admin or int(i) in app.config.perms.hrm or int(i) in app.config.perms.hr or int(i) in app.config.perms.get_sensitive_profile:
+                    if int(i) in app.config.perms.administrator or int(i) in app.config.perms.view_sensitive_profile:
                         include_sensitive = True
                         include_global_note = True
-                    if int(i) in app.config.perms.get_user_global_note:
+                    if int(i) in app.config.perms.view_global_note:
                         include_global_note = True
                 if au["userid"] >= 0:
                     is_member = True

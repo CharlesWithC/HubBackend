@@ -309,7 +309,7 @@ async def delete_dlog(request: Request, response: Response, logid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "delete_dlog"], allow_application_token = True)
+    au = await auth(authorization, request, required_permission = ["administrator", "delete_dlogs"], allow_application_token = True)
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

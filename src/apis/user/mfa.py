@@ -116,8 +116,8 @@ async def post_disable(request: Request, response: Response, authorization: str 
         return Response(status_code=204)
 
     else:
-        # admin / hrm disable user mfa
-        au = await auth(authorization, request, required_permission = ["admin", "hrm", "disable_user_mfa"])
+        # admin disable user mfa
+        au = await auth(authorization, request, required_permission = ["administrator", "disable_mfa"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]

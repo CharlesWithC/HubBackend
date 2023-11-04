@@ -22,7 +22,7 @@ async def post_accept(request: Request, response: Response, uid: int, authorizat
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "add_member"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "accept_members"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -136,7 +136,7 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_connections"])
+    au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -222,7 +222,7 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "update_user_connections"])
+    au = await auth(authorization, request, required_permission = ["administrator", "update_connections"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -264,7 +264,7 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -317,7 +317,7 @@ async def get_ban(request: Request, response: Response, authorization: str = Hea
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -370,7 +370,7 @@ async def put_ban(request: Request, response: Response, authorization: str = Hea
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -470,7 +470,7 @@ async def delete_ban(request: Request, response: Response, authorization: str = 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "ban_users"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -529,7 +529,7 @@ async def delete_ban_history(request: Request, response: Response, historyid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "ban_user"])
+    au = await auth(authorization, request, required_permission = ["administrator", "ban_users"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -572,7 +572,7 @@ async def delete_user(request: Request, response: Response, uid: int, authorizat
         return {"error": ml.tr(request, "access_sensitive_data", force_lang = au["language"])}
 
     if uid != -1:
-        au = await auth(authorization, request, required_permission = ["admin", "hrm", "delete_user"])
+        au = await auth(authorization, request, required_permission = ["administrator", "delete_users"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -651,7 +651,7 @@ async def patch_note_global(request: Request, response: Response, uid: int, auth
 
     to_uid = uid
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_user_global_note"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_global_note"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

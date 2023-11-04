@@ -267,7 +267,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
             ok = False
             for role in roles:
                 for perm in required_permission:
-                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
+                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["administrator"]:
                         ok = True
 
             if not ok:
@@ -362,7 +362,7 @@ async def auth(authorization, request, allow_application_token = False, check_me
 
             for role in roles:
                 for perm in required_permission:
-                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["admin"]:
+                    if perm in app.config.__dict__["perms"].__dict__.keys() and role in app.config.__dict__["perms"].__dict__[perm] or role in app.config.__dict__["perms"].__dict__["administrator"]:
                         ok = True
 
             if not ok:

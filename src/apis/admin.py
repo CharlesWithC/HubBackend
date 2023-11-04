@@ -41,7 +41,7 @@ async def post_discord_role_connection_enable(request: Request, response: Respon
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin"])
+    au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -70,7 +70,7 @@ async def post_discord_role_connection_disable(request: Request, response: Respo
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin"])
+    au = await auth(authorization, request, required_permission = ["administrator"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -106,7 +106,7 @@ async def get_config(request: Request, response: Response, authorization: str = 
             response.status_code = au["code"]
             del au["code"]
             return au
-        permOk = checkPerm(app, au["roles"], ["admin", "config"])
+        permOk = checkPerm(app, au["roles"], ["administrator", "update_config"])
 
     if not permOk:
         t = copy.deepcopy(app.backup_config)
@@ -194,7 +194,7 @@ async def patch_config(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "config"])
+    au = await auth(authorization, request, required_permission = ["administrator", "update_config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -289,10 +289,10 @@ async def patch_config(request: Request, response: Response, authorization: str 
 
             if tt == "perms":
                 newperms = new_config[tt]
-                if 'admin' not in newperms:
+                if 'administrator' not in newperms:
                     response.status_code = 400
                     return {"error": ml.tr(request, "config_invalid_permission_admin_not_found", force_lang = au["language"])}
-                perm_roles = intify(newperms["admin"])
+                perm_roles = intify(newperms["administrator"])
                 ok = False
                 for role in userroles:
                     if role in perm_roles:
@@ -330,7 +330,7 @@ async def post_config_reload(request: Request, response: Response, authorization
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "reload_config", "restart"])
+    au = await auth(authorization, request, required_permission = ["administrator", "reload_config"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -393,7 +393,7 @@ async def post_restart(request: Request, response: Response, authorization: str 
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "restart"])
+    au = await auth(authorization, request, required_permission = ["administrator", "restart_service"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -457,7 +457,7 @@ async def get_audit_list(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "audit"])
+    au = await auth(authorization, request, required_permission = ["administrator", "view_audit_log"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

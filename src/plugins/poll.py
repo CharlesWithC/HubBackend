@@ -115,7 +115,7 @@ async def PollResultNotification(app):
                 for userid in voted_userid:
                     userinfo = await GetUserInfo(request, userid = userid, ignore_activity = True)
                     uid = userinfo["uid"]
-                    isstaff = checkPerm(app, userinfo["roles"], ["admin", "poll"])
+                    isstaff = checkPerm(app, userinfo["roles"], ["administrator", "manage_polls"])
                     if uid in tonotify.keys() and (isstaff or (config["show_stats_before_vote"] or config["show_stats"] or config["show_stats_when_ended"])):
                         ctxt = ""
                         for choiceid in choices.keys():
@@ -172,7 +172,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         del au["code"]
         return au
     userid = au["userid"]
-    isstaff = checkPerm(app, au["roles"], ["admin", "poll"])
+    isstaff = checkPerm(app, au["roles"], ["administrator", "manage_polls"])
     await ActivityUpdate(request, au["uid"], "poll")
 
     limit = ""
@@ -283,7 +283,7 @@ async def get_poll(request: Request, response: Response, pollid: int, authorizat
         del au["code"]
         return au
     userid = au["userid"]
-    isstaff = checkPerm(app, au["roles"], ["admin", "poll"])
+    isstaff = checkPerm(app, au["roles"], ["administrator", "manage_polls"])
     await ActivityUpdate(request, au["uid"], "poll")
 
     await app.db.execute(dhrid, f"SELECT pollid, userid, title, description, config, orderid, is_pinned, timestamp, end_time FROM poll WHERE pollid = {pollid}")
@@ -572,7 +572,7 @@ async def post_poll(request: Request, response: Response, authorization: str = H
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "poll"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -692,7 +692,7 @@ async def patch_poll(request: Request, response: Response, pollid: int, authoriz
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "poll"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -810,7 +810,7 @@ async def delete_poll(request: Request, response: Response, pollid: int, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "poll"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_polls"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

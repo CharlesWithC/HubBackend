@@ -213,7 +213,7 @@ async def get_truck_operation_history(request: Request, response: Response, vehi
         return {"error": ml.tr(request, "truck_not_found", force_lang = au["language"])}
     ownerid = t[0][0]
 
-    if ownerid != au["userid"] and not checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"]):
+    if ownerid != au["userid"] and not checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"]):
         response.status_code = 403
         return {"error": ml.tr(request, "truck_history_forbidden", force_lang = au["language"])}
 
@@ -354,7 +354,7 @@ async def post_truck_purchase(request: Request, response: Response, truckid: str
         return {"error": ml.tr(request, "bad_json", force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # check access
     if not app.config.economy.allow_purchase_truck and not permok:
@@ -548,7 +548,7 @@ async def post_truck_transfer(request: Request, response: Response, vehicleid: i
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can transfer anyone's truck
@@ -635,7 +635,7 @@ async def post_truck_relocate(request: Request, response: Response, vehicleid: i
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -707,7 +707,7 @@ async def post_truck_activate(request: Request, response: Response, vehicleid: i
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -767,7 +767,7 @@ async def post_truck_deactivate(request: Request, response: Response, vehicleid:
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -819,7 +819,7 @@ async def post_truck_repair(request: Request, response: Response, vehicleid: int
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -904,7 +904,7 @@ async def post_truck_sell(request: Request, response: Response, vehicleid: int, 
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck
@@ -962,7 +962,7 @@ async def post_truck_scrap(request: Request, response: Response, vehicleid: int,
         return {"error": ml.tr(request, "modify_forbidden", var = {"item": ml.tr(request, "economy_truck", force_lang = au["language"])}, force_lang = au["language"])}
 
     # check perm
-    permok = checkPerm(app, au["roles"], ["admin", "economy_manager", "truck_manager"])
+    permok = checkPerm(app, au["roles"], ["administrator", "manage_economy", "manage_economy_truck"])
 
     # company truck but not manager or not owned truck
     # manager can relocate anyone's truck

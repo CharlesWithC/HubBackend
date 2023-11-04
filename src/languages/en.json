@@ -27,7 +27,7 @@
     "access_sensitive_data": "Access Denied: Login with Discord, Steam, or enable MFA to access sensitive data.",
     "mfa_required": "Access Denied: Enable MFA and provide OTP to proceed.",
     "connect_more_to_disable_password": "Access Denied: Connect Discord or Steam account before disabling password login.",
-    
+
     "ban_with_expire": "You are banned {expire}",
     "ban_with_reason_expire": "You are banned for {reason} {expire}",
     "user_pending_deletion": "Your account is pending deletion. Please log in again to recover your account.",
@@ -83,9 +83,9 @@
     "user_position_higher_or_equal": "User's highest role is higher than or equal to yours.",
     "add_role_higher_or_equal": "You are not allowed to add a role higher than or equal to your highest role.",
     "remove_role_higher_or_equal": "You are not allowed to remove a role higher than or equal to your highest role.",
-    "only_division_staff_allowed": "Only division staff and admin are allowed to manage division roles.",
+    "only_division_staff_allowed": "Only administrator and division managers are allowed to manage division roles.",
     "already_have_rank_role": "The rank role has already been given in Discord.",
-    "losing_admin_permission": "Role Update Rejected: You will lose admin permission.",
+    "losing_admin_permission": "Role Update Rejected: You will lose administrator permission.",
 
     "delivery": "Delivery",
     "driver": "Driver",
@@ -111,8 +111,8 @@
     "config_invalid_datatype_integer": "Invalid data type for \"{item}\": Must be integer.",
     "config_invalid_hex_color": "Invalid value for \"hex_color\": Must be a hex string of 6 characters.",
     "config_invalid_data_url": "Invalid data type for \"{item}\": Must be a valid URL.",
-    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"admin\" permission not found.",
-    "config_invalid_permission_admin_protection": "Permission Update Rejected: New \"admin\" permission does not include any role the current user has.",
+    "config_invalid_permission_admin_not_found": "Invalid value for \"perms\": \"administrator\" permission not found.",
+    "config_invalid_permission_admin_protection": "Permission Update Rejected: New \"administrator\" permission does not include any role the current user has.",
     "no_config_reload_available": "No new config has been saved. Unable to reload config.",
     "discord_integrations_disabled": "Discord Integrations Disabled Temporarily: Invalid Discord Bot Token",
     "discord_api_inaccessible": "Discord API Inaccessible",
@@ -163,7 +163,7 @@
     "division_already_requested": "A division validation request has already been submitted.",
     "division_already_validated": "Delivery Already Validated",
     "division_already_denied": "The delivery validation request has been denied and you cannot request again.",
-    "not_division_driver": "You are not a driver for the division.", 
+    "not_division_driver": "You are not a driver for the division.",
     "division_validation_not_found": "Delivery Validation Request Not Found",
     "division_not_validated": "Delivery Not Validated",
 

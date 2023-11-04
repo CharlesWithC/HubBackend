@@ -34,7 +34,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         response.status_code = au["code"]
         del au["code"]
         return au
-    isstaff = checkPerm(app, au["roles"], ["admin", "downloads"])
+    isstaff = checkPerm(app, au["roles"], ["administrator", "manage_downloads"])
     await ActivityUpdate(request, au["uid"], "downloads")
 
     limit = ""
@@ -105,7 +105,7 @@ async def get_downloads(request: Request, response: Response, downloadsid: int, 
         response.status_code = au["code"]
         del au["code"]
         return au
-    isstaff = checkPerm(app, au["roles"], ["admin", "downloads"])
+    isstaff = checkPerm(app, au["roles"], ["administrator", "manage_downloads"])
     await ActivityUpdate(request, au["uid"], "downloads")
 
     await app.db.execute(dhrid, f"SELECT downloadsid, userid, title, description, link, click_count, orderid, is_pinned, timestamp FROM downloads WHERE downloadsid = {downloadsid}")
@@ -171,7 +171,7 @@ async def post_downloads(request: Request, response: Response, authorization: st
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -238,7 +238,7 @@ async def patch_downloads(request: Request, response: Response, downloadsid: int
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -301,7 +301,7 @@ async def delete_downloads(request: Request, response: Response, downloadsid: in
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "downloads"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_downloads"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

@@ -371,7 +371,7 @@ async def delete_role_history(request: Request, response: Response, historyid: i
     if len(t) == 0:
         response.status_code = 404
         return {"error": ml.tr(request, "role_history_not_found", force_lang = au["language"])}
-    if t[0][0] != uid and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "update_member_roles"]):
+    if t[0][0] != uid and not checkPerm(app, au["roles"], ["administrator", "update_roles"]):
         response.status_code = 403
         return {"error": ml.tr(request, "no_access_to_resource", force_lang = au["language"])}
 

@@ -24,7 +24,7 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "division", "update_member_roles"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "manage_divisions", "update_roles"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -97,8 +97,8 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
         return Response(status_code=204)
 
     # division staff are only allowed to update division roles
-    # not admin, no role access, have division access
-    if not checkPerm(app, au["roles"], "admin") and not checkPerm(app, au["roles"], ["hrm", "hr", "update_member_roles"]) and checkPerm(app, au["roles"], "division"):
+    # not administrator, no role access, have division access
+    if not checkPerm(app, au["roles"], "administrator") and not checkPerm(app, au["roles"], ["update_roles"]) and checkPerm(app, au["roles"], "manage_divisions"):
         for add in addedroles:
             if add not in app.division_roles:
                 response.status_code = 403
@@ -108,10 +108,10 @@ async def patch_roles(request: Request, response: Response, userid: int, authori
                 response.status_code = 403
                 return {"error": ml.tr(request, "only_division_staff_allowed", force_lang = au["language"])}
 
-    if checkPerm(app, au["roles"], "admin") and au["userid"] == userid: # check if user will lose admin permission
+    if checkPerm(app, au["roles"], "administrator") and au["userid"] == userid: # check if user will lose administrator permission
         ok = False
         for role in new_roles:
-            if role in app.config.perms.admin:
+            if role in app.config.perms.administrator:
                 ok = True
         if not ok:
             response.status_code = 400
@@ -220,7 +220,7 @@ async def patch_points(request: Request, response: Response, userid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "update_member_points"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "update_points"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -277,7 +277,7 @@ async def post_dismiss(request: Request, response: Response, userid: int, author
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "dismiss_member"])
+    au = await auth(authorization, request, required_permission = ["administrator", "dismiss_members"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]

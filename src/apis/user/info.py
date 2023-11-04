@@ -28,7 +28,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     for k in rl[1].keys():
         response.headers[k] = rl[1][k]
 
-    au = await auth(authorization, request, allow_application_token = True, required_permission = ["admin", "hrm", "hr", "get_pending_user_list"])
+    au = await auth(authorization, request, allow_application_token = True, required_permission = ["administrator", "view_external_user_list"])
     if au["error"]:
         response.status_code = au["code"]
         del au["code"]
@@ -157,7 +157,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
     else:
         userinfo["ban"] = None
 
-    if (await GetUserPrivacy(request, userinfo['uid']))["role_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_privacy_protected_data"])):
+    if (await GetUserPrivacy(request, userinfo['uid']))["role_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["administrator", "view_privacy_protected_data"])):
         userinfo["role_history"] = None
     else:
         await app.db.execute(dhrid, f"SELECT historyid, added_roles, removed_roles, timestamp FROM user_role_history WHERE uid = {userinfo['uid']} ORDER BY historyid DESC LIMIT {role_history_limit}")
@@ -166,7 +166,7 @@ async def get_profile(request: Request, response: Response, authorization: str =
         for pp in p:
             userinfo["role_history"].append({"historyid": pp[0], "added_roles": deduplicate(str2list(pp[1])), "removed_roles": deduplicate(str2list(pp[2])), "timestamp": pp[3]})
 
-    if (await GetUserPrivacy(request, userinfo['uid']))["ban_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["admin", "hrm", "hr", "get_privacy_protected_data"])):
+    if (await GetUserPrivacy(request, userinfo['uid']))["ban_history"] and (au is None or au["error"] or uid != au["uid"] and not checkPerm(app, au["roles"], ["administrator", "view_privacy_protected_data"])):
         userinfo["ban_history"] = None
     else:
         connections = []
@@ -219,7 +219,7 @@ async def patch_profile(request: Request, response: Response, authorization: str
         uid = au["uid"]
         discordid = au["discordid"]
     else:
-        au = await auth(authorization, request, required_permission = ["admin", "hrm", "hr", "manage_profile"])
+        au = await auth(authorization, request, required_permission = ["administrator", "manage_profiles"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
@@ -520,7 +520,7 @@ async def post_tracker_switch(request: Request, response: Response, uid: Optiona
 
     if uid is not None and uid != au["uid"]:
         # updating tracker for another user
-        au = await auth(authorization, request, allow_application_token = True, required_permission=["admin", "hrm", "hr", "update_member_roles"])
+        au = await auth(authorization, request, allow_application_token = True, required_permission=["administrator", "update_roles"])
         if au["error"]:
             response.status_code = au["code"]
             del au["code"]
