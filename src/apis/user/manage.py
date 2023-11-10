@@ -161,17 +161,17 @@ async def patch_connections(request: Request, response: Response, uid: int, auth
     try:
         if "email" in data.keys():
             new_connections[0] = data["email"]
-        elif "discordid" in data.keys():
+        if "discordid" in data.keys():
             new_connections[1] = abs(int(data["discordid"]))
             if new_connections[1] > 18446744073709551615:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "discordid", "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
-        elif "steamid" in data.keys():
+        if "steamid" in data.keys():
             new_connections[2] = abs(int(data["steamid"]))
             if new_connections[2] > 18446744073709551615:
                 response.status_code = 400
                 return {"error": ml.tr(request, "value_too_large", var = {"item": "steamid", "limit": "18,446,744,073,709,551,615"}, force_lang = au["language"])}
-        elif "truckersmpid" in data.keys():
+        if "truckersmpid" in data.keys():
             new_connections[3] = abs(int(data["truckersmpid"]))
             if new_connections[3] > 18446744073709551615:
                 response.status_code = 400

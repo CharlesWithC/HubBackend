@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.8.8
+
+1. Fixed issue updating multiple account connections at the same time
+
 ## v2.8.7
 
 1. Reordered config keys
