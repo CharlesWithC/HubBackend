@@ -86,7 +86,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT announcementid FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC")
+    await app.db.execute(dhrid, f"SELECT announcementid FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, announcementid DESC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -98,7 +98,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT title, content, announcement_type, timestamp, userid, announcementid, is_private, orderid, is_pinned FROM announcement WHERE announcementid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, announcementid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

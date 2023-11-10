@@ -7,6 +7,17 @@
 3. Renamed confusing `query` param key to more specific keys like (`name`, `reason`)
 4. Added `?name` query param to **GET** `/user/ban/list`
 5. Added add/remove driver from tracker company when staff update driver's steam connection
+6. Improved `?order_by` handling
+   - Improved second key
+   - Renamed `user_id` to `userid` in **GET** `/member/list`
+   - Added `timestamp` to **GET** `/notification/list`
+   - Added `steamid`, `truckersmpid` to **GET** `/member/list`
+   - Added `userid`, `timestamp` to **GET** `/dlog/list`
+   - Removed `type`, `status` from **GET** `/applications/list`
+   - Added `txid` to **GET** `/economy/balance/{userid}/transactions/list`
+   - Added `garageid` to **GET** `/economy/garages/list`
+   - Renamed `timestamp` to `create_timestamp` in **GET** `/events/list`
+   - Hint: `timestamp` mostly refers to `timestamp` of resource creation
 
 ## v2.8.7
 

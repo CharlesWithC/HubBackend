@@ -76,7 +76,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     cvt = {"income": "tot_income", "truck": "tot_truck", "slot": "tot_slot"}
     if order_by in cvt.keys():
         order_by = cvt[order_by]
-    if order_by not in ['tot_income', 'tot_truck', 'tot_slot']:
+    if order_by not in ['garageid', 'tot_income', 'tot_truck', 'tot_slot']:
         order_by = "tot_income"
         order = "desc"
 
@@ -89,7 +89,7 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
                          LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 \
-                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order}")
+                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order}, economy_garage.garageid ASC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -104,9 +104,8 @@ async def get_garage_list(request: Request, response: Response, authorization: s
     await app.db.execute(dhrid, f"SELECT economy_garage.garageid, MIN(economy_garage.purchase_timestamp) AS first_purchase, COUNT(DISTINCT economy_garage.slotid) AS tot_slot, COUNT(DISTINCT economy_garage.userid) AS tot_owner, COUNT(DISTINCT economy_truck.vehicleid) AS tot_truck, SUM(economy_truck.income) AS tot_income FROM economy_garage \
                          LEFT JOIN economy_truck ON economy_truck.slotid = economy_garage.slotid \
                          WHERE economy_garage.slotid >= 0 \
-                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+                         GROUP BY economy_garage.garageid {having} ORDER BY {order_by} {order}, economy_garage.garageid ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
-    tot = len(t)
     ret = []
     for tt in t:
         await app.db.execute(dhrid, f"SELECT userid FROM economy_garage WHERE garageid = '{tt[0]}' AND note = 'garage-owner'")

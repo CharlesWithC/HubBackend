@@ -430,7 +430,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
     if max_amount is not None:
         limit += f"AND amount <= {max_amount} "
 
-    if order_by not in ["timestamp", "amount"]:
+    if order_by not in ["txid", "timestamp", "amount"]:
         order_by = "timestamp"
         order = "desc"
 
@@ -440,7 +440,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT txid FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT txid FROM economy_transaction WHERE txid >= 0 AND note LIKE 'regular-tx/%' {limit} ORDER BY {order_by} {order}, txid DESC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -452,7 +452,7 @@ async def get_balance_transaction_list(request: Request, response: Response, use
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND (from_userid = {userid} OR to_userid = {userid}) ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT txid, from_userid, to_userid, amount, note, message, from_new_balance, to_new_balance, timestamp FROM economy_transaction WHERE txid >= 0 AND (from_userid = {userid} OR to_userid = {userid}) ORDER BY {order_by} {order}, txid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

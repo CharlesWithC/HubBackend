@@ -46,7 +46,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["logid", "max_speed", "profit", "fuel", "distance", "views"]:
+    if order_by not in ["logid", "userid", "max_speed", "profit", "fuel", "distance", "views", "timestamp"]:
         order_by = "logid"
         order = "desc"
     order = order.lower()
@@ -115,7 +115,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     await app.db.execute(dhrid, f"SELECT dlog.userid, dlog.data, dlog.timestamp, dlog.logid, dlog.profit, dlog.unit, dlog.distance, dlog.isdelivered, division.divisionid, dlog.topspeed, dlog.fuel, dlog.view_count FROM dlog \
         LEFT JOIN division ON dlog.logid = division.logid AND division.status = 1 \
-        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        WHERE dlog.logid >= 0 {limit} {timelimit} {speed_limit} {gamelimit} {status_limit} ORDER BY dlog.{order_by} {order}, dlog.logid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     ret = []
     t = await app.db.fetchall(dhrid)
     for ti in range(len(t)):

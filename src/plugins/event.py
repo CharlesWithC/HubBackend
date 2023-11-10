@@ -262,9 +262,11 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp", "timestamp"]:
+    if order_by not in ["orderid", "eventid", "title", "meetup_timestamp", "departure_timestamp", "create_timestamp"]:
         order_by = "orderid"
         order = "asc"
+    if order_by == "create_timestamp":
+        order_by = "timestamp"
     order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"

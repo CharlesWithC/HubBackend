@@ -347,7 +347,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
     base_rows = 0
     tot = 0
     await app.db.execute(dhrid, f"SELECT logid FROM division WHERE status = 0 {limit} AND logid >= 0 \
-    ORDER BY {order_by} {order}")
+    ORDER BY {order_by} {order}, logid DESC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -360,7 +360,7 @@ async def get_list_pending(request: Request, response: Response, authorization: 
         tot -= base_rows
 
     await app.db.execute(dhrid, f"SELECT logid, userid, divisionid FROM division WHERE status = 0 {limit} AND logid >= 0 \
-        ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+        ORDER BY {order_by} {order}, logid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

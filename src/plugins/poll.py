@@ -195,7 +195,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     elif page_size >= 250:
         page_size = 250
 
-    if order_by not in ["orderid", "pollid", "timestamp", "end_time", "title"]:
+    if order_by not in ["orderid", "pollid", "title", "timestamp", "end_time"]:
         order_by = "orderid"
         order = "asc"
     order = order.lower()
@@ -204,7 +204,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT pollid FROM poll WHERE pollid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC")
+    await app.db.execute(dhrid, f"SELECT pollid FROM poll WHERE pollid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, pollid DESC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -216,7 +216,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT pollid, userid, title, description, config, orderid, is_pinned, timestamp, end_time FROM poll WHERE pollid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, timestamp DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT pollid, userid, title, description, config, orderid, is_pinned, timestamp, end_time FROM poll WHERE pollid >= 0 {limit} ORDER BY is_pinned DESC, {order_by} {order}, pollid DESC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     idx = {}

@@ -128,7 +128,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT vehicleid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order}, vehicleid ASC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -140,7 +140,7 @@ async def get_truck_list(request: Request, response: Response, authorization: st
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT vehicleid, truckid, garageid, slotid, userid, price, odometer, damage, purchase_timestamp, status, income, service_cost, assigneeid FROM economy_truck WHERE vehicleid >= 0 AND userid >= -1000 {limit} ORDER BY {order_by} {order}, vehicleid ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

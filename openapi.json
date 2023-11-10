@@ -888,7 +888,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (notificationid, content)",
+                            "title": "Order by (notificationid, content, timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -1731,7 +1731,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (name, email, uid, discordid, steamid, truckersmpid)",
+                            "title": "Order by (uid, email, discordid, steamid, truckersmpid)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -2310,7 +2310,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (user_id, name, uid, discordid, highest_role, join_timestamp, last_seen)",
+                            "title": "Order by (uid, userid, name, discordid, steamid, truckersmpid, highest_role, join_timestamp, last_seen)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -3064,7 +3064,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (logid, max_speed, profit, fuel, distance, views)",
+                            "title": "Order by (logid, userid, max_speed, profit, fuel, distance, views, timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -4096,19 +4096,19 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order (asc, desc)",
+                            "title": "Order By (applicationid, submit_timestamp, respond_timestamp, applicant_uid, respond_staff_userid)",
                             "type": "string"
                         },
-                        "name": "order",
+                        "name": "order_by",
                         "in": "query"
                     },
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order By (applicationid, type, status, submit_timestamp, respond_timestamp, applicant_uid, respond_staff_userid)",
+                            "title": "Order (asc, desc)",
                             "type": "string"
                         },
-                        "name": "order_by",
+                        "name": "order",
                         "in": "query"
                     },
                     {
@@ -5175,7 +5175,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (downloadsid, orderid, timestamp, title, click_count)",
+                            "title": "Order by (downloadsid, orderid, title, timestamp, click_count)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -5847,7 +5847,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (timestamp, amount)",
+                            "title": "Order by (txid, timestamp, amount)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -6007,7 +6007,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (income, truck, slot)",
+                            "title": "Order by (garageid, income, truck, slot)",
                             "type": "string"
                         },
                         "name": "order_by",
@@ -7331,7 +7331,7 @@
                     {
                         "required": false,
                         "schema": {
-                            "title": "Order by (orderid, eventid, title, meetup_timestamp, departure_timestamp, timestamp)",
+                            "title": "Order by (orderid, eventid, title, meetup_timestamp, departure_timestamp, create_timestamp)",
                             "type": "string"
                         },
                         "name": "order_by",

@@ -305,7 +305,7 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     if order not in ['asc', 'desc']:
         order = "asc"
 
-    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{reason}%' {query} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{reason}%' {query} ORDER BY {order_by} {order}, uid DESC")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

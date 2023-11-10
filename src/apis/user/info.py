@@ -57,7 +57,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
     if joined_before is not None:
         limit += f"AND user.join_timestamp <= {joined_before} "
 
-    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT DISTINCT user.uid, banned.reason, banned.expire_timestamp FROM user LEFT JOIN banned ON banned.uid = user.uid OR banned.discordid = user.discordid OR banned.steamid = user.steamid OR banned.truckersmpid = user.truckersmpid OR banned.email = user.email AND banned.email LIKE '%@%' WHERE user.userid < 0 AND LOWER(user.name) LIKE '%{name}%' {limit} ORDER BY {order_by} {order}, user.uid DESC")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

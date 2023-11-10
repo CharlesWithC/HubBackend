@@ -122,7 +122,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     ret = []
     await app.db.execute(dhrid, f"SELECT token, ip, timestamp, country, user_agent, last_used_timestamp FROM session \
-        WHERE uid = {uid} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        WHERE uid = {uid} ORDER BY {order_by} {order}, last_used_timestamp DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         tk = tt[0]
@@ -248,7 +248,7 @@ async def get_application_list(request: Request, response: Response, authorizati
 
     ret = []
     await app.db.execute(dhrid, f"SELECT app_name, token, timestamp, last_used_timestamp FROM application_token \
-        WHERE uid = {uid} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        WHERE uid = {uid} ORDER BY {order_by} {order}, last_used_timestamp DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     for tt in t:
         tk = sha256(tt[1].encode()).hexdigest()

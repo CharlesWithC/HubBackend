@@ -46,10 +46,10 @@ async def get_list(request: Request, response: Response, authorization: str = He
     order = order.lower()
     if order not in ["asc", "desc"]:
         order = "asc"
-    if order_by not in ["applicationid", "type", "status", "submit_timestamp", "respond_timestamp", "applicant_uid", "respond_staff_userid"]:
+    if order_by not in ["applicationid", "submit_timestamp", "respond_timestamp", "applicant_uid", "respond_staff_userid"]:
         order_by = "applicationid"
         order = "desc"
-    cvt = {"type": "application_type", "respond_timestamp": "update_staff_timestamp", "applicant_uid": "uid", "respond_staff_userid": "update_staff_userid"}
+    cvt = {"respond_timestamp": "update_staff_timestamp", "applicant_uid": "uid", "respond_staff_userid": "update_staff_userid"}
     if order_by in cvt.keys():
         order_by = cvt[order_by]
 
@@ -99,7 +99,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
             elif order == "desc":
                 limit += f" AND applicationid <= {after_applicationid} "
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY applicationid {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application WHERE uid = {uid} {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application WHERE uid = {uid} {limit}")
@@ -159,7 +159,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         if limit.startswith("AND"):
             limit = "WHERE " + limit[3:]
 
-        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+        await app.db.execute(dhrid, f"SELECT applicationid, application_type, uid, submit_timestamp, status, update_staff_timestamp, update_staff_userid FROM application {limit} ORDER BY {order_by} {order}, applicationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
         t = await app.db.fetchall(dhrid)
 
         await app.db.execute(dhrid, f"SELECT COUNT(*) FROM application {limit}")

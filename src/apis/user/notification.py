@@ -41,7 +41,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
 
     content = convertQuotation(content).lower()
 
-    if order_by not in ['content', 'notificationid']:
+    if order_by not in ['notificationid', 'content', 'timestamp']:
         order_by = "notificationid"
         order = "desc"
 
@@ -51,6 +51,8 @@ async def get_list(request: Request, response: Response, authorization: str = He
             order = "desc"
         elif order_by == "content":
             order = "asc"
+        elif order_by == "timestamp":
+            order = "desc"
 
     limit = ""
     if status == 0:
@@ -63,7 +65,7 @@ async def get_list(request: Request, response: Response, authorization: str = He
         elif order == "desc":
             limit += f"AND notificationid <= {after_notificationid} "
 
-    await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order} LIMIT {max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT notificationid, content, timestamp, status FROM user_notification WHERE uid = {uid} {limit} AND LOWER(content) LIKE '%{content}%' ORDER BY {order_by} {order}, notificationid DESC LIMIT {max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:

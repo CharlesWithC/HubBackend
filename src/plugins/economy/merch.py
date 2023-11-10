@@ -92,7 +92,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
 
     base_rows = 0
     tot = 0
-    await app.db.execute(dhrid, f"SELECT itemid FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT itemid FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order},merchid ASC")
     t = await app.db.fetchall(dhrid)
     if len(t) == 0:
         return {"list": [], "total_items": 0, "total_pages": 0}
@@ -104,7 +104,7 @@ async def get_merch_list(request: Request, response: Response, authorization: st
             base_rows += 1
         tot -= base_rows
 
-    await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order} LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
+    await app.db.execute(dhrid, f"SELECT itemid, merchid, userid, buy_price, sell_price, purchase_timestamp FROM economy_merch WHERE itemid >= 0 AND userid >= 0 {limit} ORDER BY {order_by} {order}, merchid ASC LIMIT {base_rows + max(page-1, 0) * page_size}, {page_size}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
