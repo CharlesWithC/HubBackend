@@ -1758,6 +1758,15 @@
                     {
                         "required": false,
                         "schema": {
+                            "title": "Query with name",
+                            "type": "string"
+                        },
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "schema": {
                             "title": "Query with ban reason",
                             "type": "string"
                         },

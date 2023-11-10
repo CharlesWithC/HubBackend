@@ -251,7 +251,8 @@ async def delete_connections(request: Request, response: Response, uid: int, con
     return Response(status_code=204)
 
 async def get_ban_list(request: Request, response: Response, authorization: str = Header(None), \
-    page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, reason: Optional[str] = "", \
+    page: Optional[int] = 1, page_size: Optional[int] = 10, after_uid: Optional[int] = None, \
+        name: Optional[str] = "", reason: Optional[str] = "", \
         order_by: Optional[str] = "uid", order: Optional[str] = "asc"):
     """Returns the information of a list of banned users"""
     app = request.app
@@ -275,7 +276,17 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     elif page_size >= 250:
         page_size = 250
 
+    name = convertQuotation(name).lower()
     reason = convertQuotation(reason).lower()
+
+    query = ""
+    uid_list = []
+    if name != "":
+        await app.db.execute(dhrid, f"SELECT uid FROM user WHERE name LIKE '%{name}%'")
+        uids = await app.db.fetchall(dhrid)
+        uid_list = [uid[0] for uid in uids]
+        uid_list = ",".join(map(str, uid_list))
+        query = f"AND uid IN ({uid_list})"
 
     if order_by not in ['uid', 'email', 'discordid', 'steamid', 'truckersmpid']:
         order_by = "uid"
@@ -285,7 +296,7 @@ async def get_ban_list(request: Request, response: Response, authorization: str 
     if order not in ['asc', 'desc']:
         order = "asc"
 
-    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{reason}%' ORDER BY {order_by} {order}")
+    await app.db.execute(dhrid, f"SELECT uid, email, discordid, steamid, truckersmpid, reason, expire_timestamp FROM banned WHERE reason LIKE '%{reason}%' {query} ORDER BY {order_by} {order}")
     t = await app.db.fetchall(dhrid)
     ret = []
     for tt in t:
